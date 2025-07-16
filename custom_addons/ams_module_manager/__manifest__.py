@@ -13,7 +13,7 @@
     'website': '',
     'depends': ['base', 'web'],
     'data': [
-        'data/ir_module_module_data.xml',
+        'data/ir_module_data.xml',
         'views/apps_menu_views.xml',
     ],
     'installable': True,

@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    
-    <!-- Customize the Apps menu to show AMS-focused categories -->
-    <record id="apps_menu_custom" model="ir.ui.menu">
-        <field name="name">AMS Apps</field>
-        <field name="sequence">1</field>
-    </record>
-    
+    <data>
+        
+        <!-- Don't override the Apps menu at all - let it work normally -->
+        <!-- The Python filtering will handle hiding Enterprise cards -->
+        
+        <!-- Optional: Add a custom AMS category for better organization -->
+        <record id="module_category_ams" model="ir.module.category">
+            <field name="name">Association Management</field>
+            <field name="description">Applications for managing associations, members, and community organizations</field>
+            <field name="sequence">1</field>
+        </record>
+        
+    </data>
 </odoo>
