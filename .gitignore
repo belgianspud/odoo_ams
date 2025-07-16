@@ -1,0 +1,25 @@
+# Odoo files to ignore
+odoo/
+*.pyc
+__pycache__/
+*.log
+*.pid
+data/
+filestore/
+sessions/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/settings.json
+*.swp
+*.swo
+
+# Database backups
+*.dump
+*.sql
+
+# Configuration files with sensitive data
+odoo.conf

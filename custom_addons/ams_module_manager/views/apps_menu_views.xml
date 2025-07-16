@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Customize the Apps menu to show AMS-focused categories -->
+    <record id="apps_menu_custom" model="ir.ui.menu">
+        <field name="name">AMS Apps</field>
+        <field name="sequence">1</field>
+    </record>
+    
+</odoo>
