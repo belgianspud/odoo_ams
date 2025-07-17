@@ -42,15 +42,18 @@ class AMSSubscription(models.Model):
     
     # NEW: Invoice Integration
     invoice_ids = fields.One2many('account.move', 'subscription_id', 'Invoices')
-    invoice_count = fields.Integer(compute='_compute_invoice_count', string='Invoice Count', store=True)
+    invoice_count = fields.Integer(compute='_compute_invoice_count', string='Invoice Count')
     
     # NEW: Hierarchy for chapters
     parent_subscription_id = fields.Many2one('ams.subscription', 'Parent Subscription',
                                            domain="[('subscription_code', '=', 'membership'), ('partner_id', '=', partner_id)]")
     child_subscription_ids = fields.One2many('ams.subscription', 'parent_subscription_id', 'Child Subscriptions')
     
-    # NEW: Chapter-specific fields
-    chapter_region = fields.Char('Chapter Region')
+    # UPDATED: Chapter-specific fields with lookup
+    chapter_id = fields.Many2one('ams.chapter', 'Chapter', 
+                                domain="[('active', '=', True)]",
+                                help="Select the chapter for this subscription")
+    chapter_region = fields.Char(related='chapter_id.region', store=True, readonly=True, string='Chapter Region')
     
     # NEW: Publication-specific fields
     publication_format = fields.Selection([
@@ -104,6 +107,10 @@ class AMSSubscription(models.Model):
         if self.parent_subscription_id.state not in ['active']:
             raise UserError("Parent membership must be active to add a chapter.")
         
+        # Auto-set chapter fee if chapter is selected and no amount is set
+        if self.chapter_id and not self.amount and self.chapter_id.chapter_fee > 0:
+            self.amount = self.chapter_id.chapter_fee
+        
         # Try to add to existing draft invoice of parent
         parent_invoice = self.parent_subscription_id._get_active_draft_invoice()
         if parent_invoice:
@@ -119,11 +126,18 @@ class AMSSubscription(models.Model):
     def _create_subscription_invoice(self):
         """Create invoice for subscription"""
         if not self.product_id:
-            # Try to get product from subscription type
-            if self.subscription_type_id.product_template_id:
+            # Try to get product from subscription type or chapter
+            if self.subscription_code == 'chapter' and self.chapter_id and self.chapter_id.product_template_id:
+                self.product_id = self.chapter_id.product_template_id.product_variant_id
+            elif self.subscription_type_id.product_template_id:
                 self.product_id = self.subscription_type_id.product_template_id.product_variant_id
             else:
                 return
+        
+        # Prepare invoice description
+        description = f"{self.subscription_type_id.name}: {self.name}"
+        if self.subscription_code == 'chapter' and self.chapter_id:
+            description += f" ({self.chapter_id.name})"
         
         invoice_vals = {
             'partner_id': self.partner_id.id,
@@ -134,7 +148,7 @@ class AMSSubscription(models.Model):
                 'product_id': self.product_id.id,
                 'quantity': 1,
                 'price_unit': self.amount or self.product_id.list_price,
-                'name': f"{self.subscription_type_id.name}: {self.name}",
+                'name': description,
             })]
         }
         
@@ -150,12 +164,17 @@ class AMSSubscription(models.Model):
         if not self.product_id:
             return
             
+        # Prepare line description
+        description = f"{self.subscription_type_id.name}: {self.name}"
+        if self.subscription_code == 'chapter' and self.chapter_id:
+            description += f" ({self.chapter_id.name})"
+            
         invoice.write({
             'invoice_line_ids': [(0, 0, {
                 'product_id': self.product_id.id,
                 'quantity': 1,
                 'price_unit': self.amount or self.product_id.list_price,
-                'name': f"{self.subscription_type_id.name}: {self.name}",
+                'name': description,
             })]
         })
     
@@ -179,6 +198,32 @@ class AMSSubscription(models.Model):
             
             if record.parent_subscription_id and record.parent_subscription_id.subscription_code != 'membership':
                 raise ValidationError("Parent subscription must be a membership type.")
+    
+    @api.constrains('chapter_id', 'subscription_code')
+    def _check_chapter_requirements(self):
+        """Validate chapter requirements for chapter subscriptions"""
+        for record in self:
+            if record.subscription_code == 'chapter' and not record.chapter_id:
+                raise ValidationError("Chapter subscriptions must have a chapter selected.")
+    
+    @api.onchange('chapter_id')
+    def _onchange_chapter_id(self):
+        """Auto-populate amount and product when chapter is selected"""
+        if self.chapter_id and self.subscription_code == 'chapter':
+            if self.chapter_id.chapter_fee > 0:
+                self.amount = self.chapter_id.chapter_fee
+            if self.chapter_id.product_template_id:
+                self.product_id = self.chapter_id.product_template_id.product_variant_id
+    
+    @api.onchange('subscription_type_id')
+    def _onchange_subscription_type_id(self):
+        """Clear fields that don't apply to the selected subscription type"""
+        if self.subscription_type_id:
+            if self.subscription_type_id.code != 'chapter':
+                self.chapter_id = False
+                self.parent_subscription_id = False
+            if self.subscription_type_id.code != 'publication':
+                self.publication_format = False
     
     # Keep existing methods
     def action_activate(self):

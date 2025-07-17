@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Chapter List View -->
+    <record id="view_ams_chapter_list" model="ir.ui.view">
+        <field name="name">ams.chapter.list</field>
+        <field name="model">ams.chapter</field>
+        <field name="arch" type="xml">
+            <list string="Chapters" default_order="name">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="region"/>
+                <field name="state_province"/>
+                <field name="country_id"/>
+                <field name="contact_person"/>
+                <field name="active_member_count"/>
+                <field name="chapter_fee" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Chapter Form View -->
+    <record id="view_ams_chapter_form" model="ir.ui.view">
+        <field name="name">ams.chapter.form</field>
+        <field name="model">ams.chapter</field>
+        <field name="arch" type="xml">
+            <form string="Chapter">
+                <header>
+                    <button name="action_view_active_members" string="View Active Members" type="object" 
+                            class="btn-primary" invisible="active_member_count == 0"/>
+                    <button name="action_view_members" string="View All Members" type="object" 
+                            class="btn-secondary" invisible="member_count == 0"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" 
+                            invisible="active"/>
+                    
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_view_active_members" 
+                                icon="fa-users" invisible="active_member_count == 0">
+                            <field string="Active Members" name="active_member_count" widget="statbutton"/>
+                        </button>
+                        <button class="oe_stat_button" type="object" name="action_view_members" 
+                                icon="fa-list" invisible="member_count == 0">
+                            <field string="Total Members" name="member_count" widget="statbutton"/>
+                        </button>
+                    </div>
+                    
+                    <group>
+                        <group string="Chapter Information">
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="founding_date"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Location">
+                            <field name="region"/>
+                            <field name="state_province"/>
+                            <field name="country_id"/>
+                            <field name="city"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="Contact Information">
+                            <field name="contact_person"/>
+                            <field name="email" widget="email"/>
+                            <field name="phone" widget="phone"/>
+                            <field name="website" widget="url"/>
+                        </group>
+                        <group string="Financial">
+                            <field name="chapter_fee"/>
+                            <field name="currency_id"/>
+                            <field name="product_template_id" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Address">
+                        <field name="address" nolabel="1"/>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Description" name="description">
+                            <field name="description"/>
+                        </page>
+                        
+                        <page string="Members" name="members" invisible="member_count == 0">
+                            <field name="subscription_ids" nolabel="1" readonly="1">
+                                <list editable="false">
+                                    <field name="name"/>
+                                    <field name="partner_id"/>
+                                    <field name="start_date"/>
+                                    <field name="end_date"/>
+                                    <field name="state" decoration-success="state == 'active'" 
+                                           decoration-info="state == 'draft'" 
+                                           decoration-muted="state in ('expired','cancelled')"/>
+                                    <field name="amount" sum="Total Amount"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Chapter Kanban View -->
+    <record id="view_ams_chapter_kanban" model="ir.ui.view">
+        <field name="name">ams.chapter.kanban</field>
+        <field name="model">ams.chapter</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="region"/>
+                <field name="state_province"/>
+                <field name="country_id"/>
+                <field name="active_member_count"/>
+                <field name="chapter_fee"/>
+                <field name="currency_id"/>
+                <field name="contact_person"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="active"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_record_top mb8">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                    <div class="o_kanban_record_subtitle">
+                                        <field name="code"/> - <field name="region"/>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_manage_button_section">
+                                    <a class="o_kanban_manage_toggle_button" href="#">
+                                        <i class="fa fa-ellipsis-v" role="img" aria-label="Manage"/>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <span t-if="record.state_province.raw_value">
+                                            <i class="fa fa-map-marker"/> <field name="state_province"/>
+                                        </span>
+                                        <span t-if="record.country_id.raw_value">
+                                            <br/><field name="country_id"/>
+                                        </span>
+                                    </div>
+                                    <div class="col-6 text-right">
+                                        <span t-if="record.active_member_count.raw_value > 0" class="badge badge-pill badge-info">
+                                            <field name="active_member_count"/> Members
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_left">
+                                    <span t-if="record.contact_person.raw_value">
+                                        <i class="fa fa-user"/> <field name="contact_person"/>
+                                    </span>
+                                </div>
+                                <div class="oe_kanban_bottom_right">
+                                    <span t-if="record.chapter_fee.raw_value > 0" class="badge badge-success">
+                                        <field name="chapter_fee" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                    </span>
+                                    <span t-if="!record.active.raw_value" class="badge badge-danger">Inactive</span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Chapter Search View -->
+    <record id="view_ams_chapter_search" model="ir.ui.view">
+        <field name="name">ams.chapter.search</field>
+        <field name="model">ams.chapter</field>
+        <field name="arch" type="xml">
+            <search string="Chapters">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="region"/>
+                <field name="state_province"/>
+                <field name="country_id"/>
+                <field name="contact_person"/>
+                <separator/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Inactive" name="inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter string="With Members" name="with_members" domain="[('active_member_count', '>', 0)]"/>
+                <filter string="No Members" name="no_members" domain="[('active_member_count', '=', 0)]"/>
+                <separator/>
+                <filter string="With Fees" name="with_fees" domain="[('chapter_fee', '>', 0)]"/>
+                <filter string="No Fees" name="no_fees" domain="[('chapter_fee', '=', 0)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Region" name="group_region" context="{'group_by': 'region'}"/>
+                    <filter string="State/Province" name="group_state" context="{'group_by': 'state_province'}"/>
+                    <filter string="Country" name="group_country" context="{'group_by': 'country_id'}"/>
+                    <filter string="Active Status" name="group_active" context="{'group_by': 'active'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Chapter Action -->
+    <record id="action_ams_chapter" model="ir.actions.act_window">
+        <field name="name">Chapters</field>
+        <field name="res_model">ams.chapter</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first chapter!
+            </p>
+            <p>Manage regional chapters for your association. Each chapter can have its own contact information, fees, and member tracking.</p>
+        </field>
+    </record>
+</odoo>
