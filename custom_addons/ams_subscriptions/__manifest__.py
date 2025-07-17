@@ -30,7 +30,9 @@
     'data': [
         'security/ir.model.access.csv',
         'data/subscription_type_data.xml',  # New: Default subscription types
+        'data/chapter_data.xml',
         'views/subscription_type_views.xml',  # New: Subscription type management
+        'views/chapter_views.xml',
         'views/subscription_views.xml',
         'views/menu_views.xml',
         'views/product_views.xml',  # New: Product integration

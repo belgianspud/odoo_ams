@@ -30,7 +30,7 @@ class AMSSubscription(models.Model):
     subscription_type_id = fields.Many2one('ams.subscription.type', 'Subscription Type', required=True)
     subscription_code = fields.Selection(related='subscription_type_id.code', store=True, string='Type Code')
     
-    amount = fields.Float(string='Amount', required=True)
+    amount = fields.Float(string='Amount', required=True, default=0.0)
     currency_id = fields.Many2one('res.currency', string='Currency', 
                                  default=lambda self: self.env.company.currency_id)
     
@@ -216,8 +216,8 @@ class AMSSubscription(models.Model):
         """Auto-populate amount and product when chapter is selected"""
         if self.chapter_id and self.subscription_code == 'chapter':
             chapter = self.chapter_id  # Get the actual record
-            if chapter.chapter_fee > 0:
-                self.amount = chapter.chapter_fee
+            if chapter.chapter_fee and chapter.chapter_fee > 0:
+                self.amount = float(chapter.chapter_fee)
             if chapter.product_template_id:
                 self.product_id = chapter.product_template_id.product_variant_id
     

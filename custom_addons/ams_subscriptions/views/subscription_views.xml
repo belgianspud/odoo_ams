@@ -206,7 +206,7 @@
                                     <field name="chapter_id"/>
                                 </span>
                                 <br/>
-                                <strong><field name="amount" widget="monetary"/></strong>
+                                <strong><field name="amount"/> <field name="currency_id"/></strong>
                             </div>
                             <div class="o_kanban_record_bottom">
                                 <div class="oe_kanban_bottom_left">

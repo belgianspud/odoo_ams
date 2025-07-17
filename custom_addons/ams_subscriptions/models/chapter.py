@@ -28,7 +28,7 @@ class AMSChapter(models.Model):
     
     # Product Integration
     product_template_id = fields.Many2one('product.template', 'Chapter Product')
-    chapter_fee = fields.Float('Chapter Fee', help="Additional fee for joining this chapter")
+    chapter_fee = fields.Float('Chapter Fee', default=0.0, help="Additional fee for joining this chapter")
     currency_id = fields.Many2one('res.currency', 'Currency', 
                                  default=lambda self: self.env.company.currency_id)
     

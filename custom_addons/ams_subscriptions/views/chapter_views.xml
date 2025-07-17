@@ -87,7 +87,7 @@
                         
                         <page string="Members" name="members" invisible="member_count == 0">
                             <field name="subscription_ids" nolabel="1" readonly="1">
-                                <list editable="false">
+                                <list>
                                     <field name="name"/>
                                     <field name="partner_id"/>
                                     <field name="start_date"/>

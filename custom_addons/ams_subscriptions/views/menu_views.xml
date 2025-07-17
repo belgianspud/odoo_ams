@@ -25,6 +25,10 @@
     <menuitem id="menu_ams_subscription_types" name="Subscription Types" parent="menu_ams_configuration" 
               action="action_ams_subscription_type" sequence="10"/>
     
+    <!-- ADD THIS LINE -->
+    <menuitem id="menu_ams_chapters" name="Chapters" parent="menu_ams_configuration" 
+              action="action_ams_chapter" sequence="20"/>
+    
     <!--<menuitem id="menu_ams_subscription_products" name="Subscription Products" parent="menu_ams_configuration" 
               action="action_subscription_products" sequence="20"/>-->
 

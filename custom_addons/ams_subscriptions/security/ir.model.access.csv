@@ -6,3 +6,5 @@ access_ams_subscription_type_manager,ams.subscription.type.manager,model_ams_sub
 access_ams_subscription_sale_user,ams.subscription.sale.user,model_ams_subscription,sales_team.group_sale_salesman,1,1,1,0
 access_ams_subscription_type_sale_user,ams.subscription.type.sale.user,model_ams_subscription_type,sales_team.group_sale_salesman,1,0,0,0
 access_ams_subscription_portal,ams.subscription.portal,model_ams_subscription,base.group_portal,1,0,0,0
+access_ams_chapter_user,ams.chapter.user,model_ams_chapter,base.group_user,1,1,1,0
+access_ams_chapter_manager,ams.chapter.manager,model_ams_chapter,base.group_system,1,1,1,1
