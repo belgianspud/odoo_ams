@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Main Menu -->
+    <menuitem id="menu_ams_main" name="AMS" sequence="10"/>
+    
+    <!-- Subscriptions Menu -->
+    <menuitem id="menu_ams_subscriptions" name="Subscriptions" 
+              parent="menu_ams_main" sequence="10"/>
+    
+    <!-- Subscriptions Submenu -->
+    <menuitem id="menu_ams_subscription_list" name="Subscriptions" 
+              parent="menu_ams_subscriptions" sequence="10" 
+              action="action_ams_subscription"/>
+</odoo>
