@@ -29,13 +29,14 @@ class AMSSubscription(models.Model):
     
     notes = fields.Text(string='Notes')
     
-    @api.model
-    def create(self, vals):
+    @api.model_create_multi
+    def create(self, vals_list):
         # Auto-generate subscription name if not provided
-        if not vals.get('name'):
-            partner = self.env['res.partner'].browse(vals.get('partner_id'))
-            vals['name'] = f"Subscription - {partner.name}"
-        return super().create(vals)
+        for vals in vals_list:
+            if not vals.get('name'):
+                partner = self.env['res.partner'].browse(vals.get('partner_id'))
+                vals['name'] = f"Subscription - {partner.name}"
+        return super().create(vals_list)
     
     def action_activate(self):
         self.state = 'active'

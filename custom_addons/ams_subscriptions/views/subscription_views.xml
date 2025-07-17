@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Tree View -->
-    <record id="view_ams_subscription_tree" model="ir.ui.view">
-        <field name="name">ams.subscription.tree</field>
+    <!-- List View (was Tree View in older versions) -->
+    <record id="view_ams_subscription_list" model="ir.ui.view">
+        <field name="name">ams.subscription.list</field>
         <field name="model">ams.subscription</field>
         <field name="arch" type="xml">
-            <tree string="Subscriptions">
+            <list string="Subscriptions">
                 <field name="name"/>
                 <field name="partner_id"/>
                 <field name="subscription_type"/>
@@ -13,7 +13,7 @@
                 <field name="end_date"/>
                 <field name="amount"/>
                 <field name="state"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -25,11 +25,11 @@
             <form string="Subscription">
                 <header>
                     <button name="action_activate" string="Activate" type="object" 
-                            class="oe_highlight" states="draft"/>
+                            class="oe_highlight" invisible="state != 'draft'"/>
                     <button name="action_cancel" string="Cancel" type="object" 
-                            states="draft,active"/>
+                            invisible="state not in ('draft', 'active')"/>
                     <button name="action_renew" string="Renew" type="object" 
-                            states="active,expired"/>
+                            invisible="state not in ('active', 'expired')"/>
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>
@@ -58,7 +58,7 @@
     <record id="action_ams_subscription" model="ir.actions.act_window">
         <field name="name">Subscriptions</field>
         <field name="res_model">ams.subscription</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create your first subscription!

@@ -16,6 +16,7 @@
         - Simple subscription plans
     """,
     'author': 'Your Name',
+    'license': 'LGPL-3',
     'depends': ['base', 'sale', 'account'],
     'data': [
         'security/ir.model.access.csv',
