@@ -15,10 +15,11 @@ class AMSSubscription(models.Model):
     ], string='Status', default='draft')
     
     start_date = fields.Date(string='Start Date', required=True, default=fields.Date.today)
-    end_date = fields.Date(string='End Date', required=True)
+    end_date = fields.Date(string='End Date', required=False)
     
     subscription_type = fields.Selection([
         ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),        
         ('yearly', 'Yearly'),
         ('lifetime', 'Lifetime')
     ], string='Subscription Type', default='yearly')

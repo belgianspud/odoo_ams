@@ -15,7 +15,7 @@
         - Member subscription tracking
         - Simple subscription plans
     """,
-    'author': 'Your Name',
+    'author': 'John Janis',
     'license': 'LGPL-3',
     'depends': ['base', 'sale', 'account'],
     'data': [

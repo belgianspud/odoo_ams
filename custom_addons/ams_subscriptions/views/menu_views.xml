@@ -1,14 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Main Menu -->
-    <menuitem id="menu_ams_main" name="AMS" sequence="10"/>
+    <!-- Main AMS Menu - Will contain all AMS modules -->
+    <menuitem id="menu_ams_root" 
+              name="AMS" 
+              sequence="5"/>
     
-    <!-- Subscriptions Menu -->
-    <menuitem id="menu_ams_subscriptions" name="Subscriptions" 
-              parent="menu_ams_main" sequence="10"/>
+    <!-- Subscriptions Section - This module -->
+    <menuitem id="menu_ams_subscriptions" 
+              name="Subscriptions" 
+              parent="menu_ams_root" 
+              sequence="10"/>
     
-    <!-- Subscriptions Submenu -->
-    <menuitem id="menu_ams_subscription_list" name="Subscriptions" 
-              parent="menu_ams_subscriptions" sequence="10" 
-              action="action_ams_subscription"/>
+    <!-- Subscriptions submenu items -->
+    <menuitem id="menu_ams_subscription_list" 
+              name="All Subscriptions" 
+              parent="menu_ams_subscriptions" 
+              action="action_ams_subscription" 
+              sequence="10"/>
+    
+    <!-- Future AMS modules will add their own sections here -->
+    <!-- Example structure for future modules:
+    
+    <menuitem id="menu_ams_members" 
+              name="Members" 
+              parent="menu_ams_root" 
+              sequence="20"/>
+              
+    <menuitem id="menu_ams_events" 
+              name="Events" 
+              parent="menu_ams_root" 
+              sequence="30"/>
+              
+    <menuitem id="menu_ams_accounting" 
+              name="Accounting" 
+              parent="menu_ams_root" 
+              sequence="40"/>
+    -->
 </odoo>
