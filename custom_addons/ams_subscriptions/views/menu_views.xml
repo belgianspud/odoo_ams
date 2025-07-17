@@ -25,8 +25,8 @@
     <menuitem id="menu_ams_subscription_types" name="Subscription Types" parent="menu_ams_configuration" 
               action="action_ams_subscription_type" sequence="10"/>
     
-    <menuitem id="menu_ams_subscription_products" name="Subscription Products" parent="menu_ams_configuration" 
-              action="action_subscription_products" sequence="20"/>
+    <!--<menuitem id="menu_ams_subscription_products" name="Subscription Products" parent="menu_ams_configuration" 
+              action="action_subscription_products" sequence="20"/>-->
 
     <!-- Add context to filter menus -->
     <record id="action_ams_subscription_memberships" model="ir.actions.act_window">

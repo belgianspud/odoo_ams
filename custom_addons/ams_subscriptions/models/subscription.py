@@ -42,7 +42,7 @@ class AMSSubscription(models.Model):
     
     # NEW: Invoice Integration
     invoice_ids = fields.One2many('account.move', 'subscription_id', 'Invoices')
-    invoice_count = fields.Integer(compute='_compute_invoice_count', string='Invoice Count')
+    invoice_count = fields.Integer(compute='_compute_invoice_count', string='Invoice Count', store=True)
     
     # NEW: Hierarchy for chapters
     parent_subscription_id = fields.Many2one('ams.subscription', 'Parent Subscription',
