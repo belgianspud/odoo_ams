@@ -5,7 +5,8 @@ class ProductTemplate(models.Model):
     _inherit = 'product.template'
     
     # Subscription Configuration
-    is_subscription = fields.Boolean('Is Subscription Product', default=False)
+    is_subscription = fields.Boolean('Is Subscription Product', default=False,
+                                    help="Check if this product is used for subscriptions")
     subscription_plan_ids = fields.One2many('ams.subscription.plan', 'product_id', 
                                            'Subscription Plans')
     subscription_plan_count = fields.Integer('Subscription Plans Count', 
@@ -13,11 +14,17 @@ class ProductTemplate(models.Model):
     
     # Default subscription settings
     default_billing_period = fields.Selection([
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
         ('monthly', 'Monthly'),
         ('quarterly', 'Quarterly'),
         ('semi_annual', 'Semi-Annual'),
         ('annual', 'Annual'),
+        ('biennial', 'Biennial'),
     ], string='Default Billing Period', default='annual')
+    
+    default_auto_renew = fields.Boolean('Default Auto Renew', default=True)
+    default_trial_period = fields.Integer('Default Trial Period (Days)', default=0)
     
     @api.depends('subscription_plan_ids')
     def _compute_subscription_plan_count(self):
@@ -25,7 +32,7 @@ class ProductTemplate(models.Model):
             product.subscription_plan_count = len(product.subscription_plan_ids)
     
     def action_view_subscription_plans(self):
-        """View subscription plans for this product"""
+        """Action to view subscription plans for this product"""
         return {
             'type': 'ir.actions.act_window',
             'name': _('Subscription Plans'),
@@ -34,27 +41,44 @@ class ProductTemplate(models.Model):
             'domain': [('product_id', '=', self.id)],
             'context': {'default_product_id': self.id},
         }
+    
+    @api.onchange('is_subscription')
+    def _onchange_is_subscription(self):
+        """Set default values when enabling subscription"""
+        if self.is_subscription:
+            self.type = 'service'
+            self.invoice_policy = 'order'
+            self.purchase_ok = False
+        
+    @api.model
+    def create(self, vals):
+        """Override create to set subscription defaults"""
+        if vals.get('is_subscription'):
+            vals.update({
+                'type': 'service',
+                'invoice_policy': 'order',
+                'purchase_ok': False,
+            })
+        return super().create(vals)
 
 
 class ProductProduct(models.Model):
     _inherit = 'product.product'
     
-    def create_subscription(self, partner_id, plan_id=None):
-        """Create a subscription for this product"""
-        if not self.product_tmpl_id.is_subscription:
-            raise UserError(_('This product is not a subscription product'))
-        
-        # If no plan specified, use the first available plan
-        if not plan_id:
-            plan = self.product_tmpl_id.subscription_plan_ids.filtered('active')[:1]
-            if not plan:
-                raise UserError(_('No active subscription plan found for this product'))
-            plan_id = plan.id
-        
-        subscription_vals = {
-            'partner_id': partner_id,
-            'plan_id': plan_id,
-            'price': self.list_price,
+    def action_create_subscription_plan(self):
+        """Create a subscription plan for this product"""
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Create Subscription Plan'),
+            'res_model': 'ams.subscription.plan',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_product_id': self.id,
+                'default_name': f"{self.name} Plan",
+                'default_price': self.list_price,
+                'default_billing_period': self.default_billing_period or 'annual',
+                'default_auto_renew': self.default_auto_renew,
+                'default_trial_period_days': self.default_trial_period,
+            },
         }
-        
-        return self.env['ams.subscription'].create(subscription_vals)

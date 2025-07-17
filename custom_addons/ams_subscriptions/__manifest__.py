@@ -1,6 +1,6 @@
 {
     'name': 'AMS Subscriptions',
-    'version': '17.0.1.0.0',
+    'version': '18.0.1.0.0',  # Updated for Odoo 18
     'category': 'Association Management',
     'summary': 'Subscription management for associations - memberships, chapters, publications',
     'description': """
@@ -43,13 +43,25 @@ Features:
         'contacts',
     ],
     'data': [
+        # Security
         'security/ir.model.access.csv',
+        
+        # Data files (load order matters)
+        'data/product_category_data.xml',
         'data/subscription_data.xml',
+        'data/subscription_templates_data.xml',
+        'data/ir_cron_data.xml',  # Add cron jobs
         'data/website_menu.xml',
+        
+        # Views
+        'views/menu.xml',
         'views/subscription_plan_views.xml',
         'views/subscription_views.xml',
         'views/product_template_views.xml',
+        'views/res_partner_views.xml',
         'views/website_subscription_templates.xml',
+        
+        # Wizards
         'wizard/subscription_renewal_wizard.xml',
     ],
     'assets': {
