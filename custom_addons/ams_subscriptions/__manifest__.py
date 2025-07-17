@@ -53,13 +53,13 @@ Features:
         'data/ir_cron_data.xml',  # Add cron jobs
         'data/website_menu.xml',
         
-        # Views
-        'views/menu.xml',
+        # Views (load views before menus that reference them)
         'views/subscription_plan_views.xml',
         'views/subscription_views.xml',
         'views/product_template_views.xml',
         'views/res_partner_views.xml',
         'views/website_subscription_templates.xml',
+        'views/menu.xml',  # Menu goes LAST
         
         # Wizards
         'wizard/subscription_renewal_wizard.xml',

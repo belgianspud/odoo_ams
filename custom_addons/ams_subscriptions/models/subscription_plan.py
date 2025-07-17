@@ -14,7 +14,12 @@ class SubscriptionPlan(models.Model):
     code = fields.Char('Plan Code', required=True, tracking=True)
     sequence = fields.Integer('Sequence', default=10)
     active = fields.Boolean('Active', default=True, tracking=True)
-    
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('active', 'Active'),
+        ('inactive', 'Inactive')
+    ], string='Status', default='active', required=True, tracking=True)
+
     # Plan Type
     plan_type = fields.Selection([
         ('membership', 'Membership'),
@@ -101,7 +106,7 @@ class SubscriptionPlan(models.Model):
     def _compute_subscription_count(self):
         for plan in self:
             plan.subscription_count = len(plan.subscription_ids.filtered(
-                lambda s: s.state in ['active', 'trial']
+                lambda s: s.active and s.state in ['active', 'trial'] if hasattr(s, 'state') else s.active
             ))
     
     def get_billing_period_delta(self):
@@ -142,7 +147,7 @@ class SubscriptionPlan(models.Model):
             return (actual_days / full_period_days) * self.price
         return self.price
     
-    @api.constrains('max_subscriptions', 'subscription_count')
+    @api.constrains('max_subscriptions')
     def _check_max_subscriptions(self):
         for plan in self:
             if plan.max_subscriptions > 0 and plan.subscription_count >= plan.max_subscriptions:

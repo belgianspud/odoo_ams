@@ -17,8 +17,8 @@
         <field name="name">Subscriptions</field>
         <field name="res_model">ams.subscription</field>
         <field name="view_mode">tree,form</field>
-        <field name="view_id" ref="view_ams_subscription_tree"/>
-        <field name="search_view_id" ref="view_ams_subscription_search"/>
+        <field name="view_id" ref="view_subscription_tree"/>
+        <field name="search_view_id" ref="view_subscription_search"/>
         <field name="context">{}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">

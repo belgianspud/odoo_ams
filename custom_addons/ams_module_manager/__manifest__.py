@@ -5,15 +5,13 @@
     'summary': 'Hide unnecessary modules and organize AMS interface',
     'description': """
         This module customizes the Odoo interface for Association Management Systems by:
-        - Hiding Enterprise-only modules
-        - Hiding irrelevant community modules
-        - Organizing remaining modules into AMS-focused categories
+        - Filtering Apps menu to show only AMS-relevant modules
+        - Providing a clean, professional interface
     """,
     'author': 'Your AMS Development Team',
     'website': '',
     'depends': ['base', 'web'],
     'data': [
-        'data/ir_module_data.xml',
         'views/apps_menu_views.xml',
     ],
     'installable': True,

@@ -28,7 +28,8 @@ class IrModuleModule(models.Model):
         'calendar',             # Calendar
         'im_livechat',          # Live Chat
         'survey',               # Surveys
-        'mass_mailing_sms'      # SMS Marketing
+        'mass_mailing_sms',     # SMS Marketing
+        'ams_subscriptions'     # AMS Subscriptions
     ]
     
     @api.model
