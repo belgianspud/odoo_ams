@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Subscription Type List View -->
+    <record id="view_ams_subscription_type_list" model="ir.ui.view">
+        <field name="name">ams.subscription.type.list</field>
+        <field name="model">ams.subscription.type</field>
+        <field name="arch" type="xml">
+            <list string="Subscription Types" default_order="sequence">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="is_product"/>
+                <field name="creates_invoice"/>
+                <field name="website_published"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Subscription Type Form View -->
+    <record id="view_ams_subscription_type_form" model="ir.ui.view">
+        <field name="name">ams.subscription.type.form</field>
+        <field name="model">ams.subscription.type</field>
+        <field name="arch" type="xml">
+            <form string="Subscription Type">
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" 
+                            invisible="active"/>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="is_product"/>
+                            <field name="auto_create_product" invisible="not is_product"/>
+                            <field name="product_template_id" readonly="1" invisible="not is_product"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Invoicing" name="invoicing">
+                            <group>
+                                <group>
+                                    <field name="creates_invoice"/>
+                                    <field name="invoice_policy" invisible="not creates_invoice"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <page string="Hierarchy" name="hierarchy">
+                            <group>
+                                <group>
+                                    <field name="can_have_children"/>
+                                    <field name="requires_parent"/>
+                                </group>
+                                <group>
+                                    <field name="parent_type_ids" widget="many2many_tags" 
+                                           invisible="not requires_parent"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <page string="E-commerce" name="ecommerce">
+                            <group>
+                                <group>
+                                    <field name="website_published"/>
+                                    <field name="pos_available"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <page string="Type-Specific" name="type_specific">
+                            <group>
+                                <group>
+                                    <field name="is_regional" invisible="code != 'chapter'"/>
+                                </group>
+                                <group>
+                                    <field name="publication_format" invisible="code != 'publication'"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <page string="Description" name="description">
+                            <field name="description"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Subscription Type Action -->
+    <record id="action_ams_subscription_type" model="ir.actions.act_window">
+        <field name="name">Subscription Types</field>
+        <field name="res_model">ams.subscription.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first subscription type!
+            </p>
+            <p>Define different types of subscriptions like memberships, chapters, and publications.</p>
+        </field>
+    </record>
+</odoo>
