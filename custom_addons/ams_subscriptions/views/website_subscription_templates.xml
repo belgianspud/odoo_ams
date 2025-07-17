@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Subscription Plans Page -->
+    <template id="subscription_plans_page" name="Subscription Plans">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure oe_empty">
+                <div class="container mt-3">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <h1 class="text-center mb-4">Choose Your Subscription Plan</h1>
+                            
+                            <!-- Search and Filter Bar -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <form method="get" class="form-inline">
+                                        <input type="search" name="search" class="form-control me-2" 
+                                               placeholder="Search plans..." t-att-value="search"/>
+                                        <button type="submit" class="btn btn-primary">Search</button>
+                                    </form>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="btn-group float-end" role="group">
+                                        <a href="/subscriptions" 
+                                           t-attf-class="btn btn-outline-primary #{'active' if not category else ''}">
+                                            All Plans
+                                        </a>
+                                        <t t-foreach="plan_types" t-as="plan_type">
+                                            <a t-attf-href="/subscriptions?category=#{plan_type}"
+                                               t-attf-class="btn btn-outline-primary #{'active' if category == plan_type else ''}">
+                                                <t t-esc="plan_type.title()"/>
+                                            </a>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Plans Grid -->
+                            <div class="row">
+                                <t t-foreach="plans" t-as="plan">
+                                    <div class="col-lg-4 col-md-6 mb-4">
+                                        <div class="card h-100 subscription-plan-card">
+                                            <div class="card-header text-center">
+                                                <h4 class="card-title" t-esc="plan.name"/>
+                                                <p class="card-subtitle text-muted" t-esc="plan.plan_type.title()"/>
+                                            </div>
+                                            <div class="card-body text-center">
+                                                <div class="price-container mb-3">
+                                                    <h2 class="price-amount">
+                                                        <span t-field="plan.price" 
+                                                              t-options="{'widget': 'monetary', 'display_currency': plan.currency_id}"/>
+                                                    </h2>
+                                                    <p class="price-period text-muted">
+                                                        per <span t-esc="plan.billing_period.replace('_', ' ')"/>
+                                                    </p>
+                                                </div>
+                                                
+                                                <div class="benefits mb-3" t-if="plan.benefits">
+                                                    <t t-raw="plan.benefits[:200]"/>
+                                                    <span t-if="len(plan.benefits) > 200">...</span>
+                                                </div>
+                                                
+                                                <div class="trial-info mb-3" t-if="plan.trial_period_days > 0">
+                                                    <span class="badge badge-success">
+                                                        <t t-esc="plan.trial_period_days"/> Day Free Trial
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer text-center">
+                                                <a t-attf-href="/subscription/plan/#{plan.id}" 
+                                                   class="btn btn-primary btn-block">
+                                                    View Details
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </t>
+                            </div>
+                            
+                            <div class="row" t-if="not plans">
+                                <div class="col-12 text-center">
+                                    <h4>No subscription plans found</h4>
+                                    <p>Try adjusting your search or filter criteria.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+    
+    <!-- Subscription Plan Detail Page -->
+    <template id="subscription_plan_detail" name="Subscription Plan Detail">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure oe_empty">
+                <div class="container mt-3">
+                    <div class="row">
+                        <div class="col-lg-8 offset-lg-2">
+                            <div class="card subscription-plan-detail">
+                                <div class="card-header text-center">
+                                    <h1 t-esc="plan.name"/>
+                                    <p class="lead" t-esc="plan.plan_type.title()"/>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="price-section text-center mb-4">
+                                                <h2 class="price-display">
+                                                    <span t-field="plan.price" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': plan.currency_id}"/>
+                                                </h2>
+                                                <p class="billing-info">
+                                                    Billed <span t-esc="plan.billing_period.replace('_', ' ')"/>
+                                                    <span t-if="plan.billing_interval > 1">
+                                                        (every <t t-esc="plan.billing_interval"/> 
+                                                        <t t-esc="plan.billing_period.replace('_', ' ')"/>s)
+                                                    </span>
+                                                </p>
+                                                
+                                                <div class="trial-info mb-3" t-if="plan.trial_period_days > 0">
+                                                    <div class="alert alert-success">
+                                                        <strong>Free Trial Available!</strong><br/>
+                                                        Try for <t t-esc="plan.trial_period_days"/> days at no cost.
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="auto-renew-info mb-3" t-if="plan.auto_renew">
+                                                    <small class="text-muted">
+                                                        <i class="fa fa-refresh"/> Auto-renewal enabled
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Subscribe Button -->
+                                            <div class="text-center">
+                                                <t t-if="user and user != website.user_id">
+                                                    <form method="post" t-attf-action="/subscription/subscribe/#{plan.id}">
+                                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                        <button type="submit" class="btn btn-primary btn-lg">
+                                                            <t t-if="plan.trial_period_days > 0">
+                                                                Start Free Trial
+                                                            </t>
+                                                            <t t-else="">
+                                                                Subscribe Now
+                                                            </t>
+                                                        </button>
+                                                    </form>
+                                                </t>
+                                                <t t-else="">
+                                                    <a href="/web/login?redirect=/subscription/plan/#{plan.id}" 
+                                                       class="btn btn-primary btn-lg">
+                                                        Login to Subscribe
+                                                    </a>
+                                                </t>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <!-- Plan Details -->
+                                            <div class="plan-details">
+                                                <h4>Plan Details</h4>
+                                                <ul class="list-unstyled">
+                                                    <li><strong>Type:</strong> <span t-esc="plan.plan_type.title()"/></li>
+                                                    <li><strong>Billing:</strong> <span t-esc="plan.billing_period.replace('_', ' ').title()"/></li>
+                                                    <li t-if="plan.grace_period_days">
+                                                        <strong>Grace Period:</strong> <span t-esc="plan.grace_period_days"/> days
+                                                    </li>
+                                                    <li t-if="plan.membership_grade">
+                                                        <strong>Membership Grade:</strong> <span t-esc="plan.membership_grade.title()"/>
+                                                    </li>
+                                                    <li t-if="plan.chapter_id">
+                                                        <strong>Chapter:</strong> <span t-esc="plan.chapter_id.name"/>
+                                                    </li>
+                                                    <li t-if="plan.publication_type">
+                                                        <strong>Publication Type:</strong> <span t-esc="plan.publication_type.title()"/>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Description -->
+                                    <div class="row mt-4" t-if="plan.website_description">
+                                        <div class="col-12">
+                                            <h4>Description</h4>
+                                            <div t-field="plan.website_description"/>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Benefits -->
+                                    <div class="row mt-4" t-if="plan.benefits">
+                                        <div class="col-12">
+                                            <h4>Benefits</h4>
+                                            <div class="benefits-content">
+                                                <t t-raw="plan.benefits"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mt-3">
+                                <a href="/subscriptions" class="btn btn-outline-secondary">
+                                    <i class="fa fa-arrow-left"/> Back to All Plans
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+    
+    <!-- Portal: My Subscriptions -->
+    <template id="portal_my_subscriptions" name="My Subscriptions">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Subscriptions</t>
+            </t>
+            
+            <t t-if="not subscriptions">
+                <div class="alert alert-warning mt-3" role="alert">
+                    There are no subscriptions to display.
+                    <br/>
+                    <a href="/subscriptions" class="btn btn-primary mt-2">
+                        Browse Available Plans
+                    </a>
+                </div>
+            </t>
+            <t t-else="" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>Subscription #</th>
+                        <th>Plan</th>
+                        <th class="text-center">Start Date</th>
+                        <th class="text-center">End Date</th>
+                        <th class="text-right">Price</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="subscriptions" t-as="subscription">
+                        <tr>
+                            <td>
+                                <a t-attf-href="/my/subscription/#{subscription.id}">
+                                    <t t-esc="subscription.name"/>
+                                </a>
+                            </td>
+                            <td>
+                                <span t-field="subscription.plan_id"/>
+                            </td>
+                            <td class="text-center">
+                                <span t-field="subscription.start_date"/>
+                            </td>
+                            <td class="text-center">
+                                <span t-field="subscription.end_date"/>
+                                <t t-if="subscription.days_until_expiry &lt;= 30 and subscription.days_until_expiry &gt;= 0">
+                                    <br/>
+                                    <small class="text-warning">
+                                        Expires in <t t-esc="subscription.days_until_expiry"/> days
+                                    </small>
+                                </t>
+                            </td>
+                            <td class="text-right">
+                                <span t-field="subscription.price" 
+                                      t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                            </td>
+                            <td class="text-center">
+                                <t t-if="subscription.state == 'active'">
+                                    <span class="badge badge-success">Active</span>
+                                </t>
+                                <t t-elif="subscription.state == 'trial'">
+                                    <span class="badge badge-info">Trial</span>
+                                </t>
+                                <t t-elif="subscription.state == 'expired'">
+                                    <span class="badge badge-danger">Expired</span>
+                                </t>
+                                <t t-elif="subscription.state == 'cancelled'">
+                                    <span class="badge badge-secondary">Cancelled</span>
+                                </t>
+                                <t t-else="">
+                                    <span class="badge badge-light" t-esc="subscription.state.title()"/>
+                                </t>
+                                
+                                <t t-if="subscription.in_grace_period">
+                                    <br/>
+                                    <small class="text-warning">Grace Period</small>
+                                </t>
+                            </td>
+                            <td class="text-center">
+                                <a t-attf-href="/my/subscription/#{subscription.id}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                    </t>
+                </tbody>
+            </t>
+        </t>
+    </template>
+    
+    <!-- Portal: Subscription Detail -->
+    <template id="portal_subscription_detail" name="Subscription Detail">
+        <t t-call="portal.portal_layout">
+            <t t-call="portal.portal_record_layout">
+                <t t-set="card_header">
+                    <div class="row no-gutters">
+                        <div class="col-12">
+                            <h5 class="d-flex mb-1 mb-md-0">
+                                <span t-field="subscription.name"/>
+                                <t t-if="subscription.state == 'active'">
+                                    <span class="badge badge-success ms-2">Active</span>
+                                </t>
+                                <t t-elif="subscription.state == 'trial'">
+                                    <span class="badge badge-info ms-2">Trial</span>
+                                </t>
+                                <t t-elif="subscription.state == 'expired'">
+                                    <span class="badge badge-danger ms-2">Expired</span>
+                                </t>
+                                <t t-elif="subscription.state == 'cancelled'">
+                                    <span class="badge badge-secondary ms-2">Cancelled</span>
+                                </t>
+                            </h5>
+                        </div>
+                    </div>
+                </t>
+                
+                <t t-set="card_body">
+                    <div class="row mb-4">
+                        <div class="col-12 col-md-6">
+                            <strong>Plan:</strong> <span t-field="subscription.plan_id"/><br/>
+                            <strong>Price:</strong> 
+                            <span t-field="subscription.price" 
+                                  t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/><br/>
+                            <strong>Billing:</strong> <span t-esc="subscription.plan_id.billing_period.replace('_', ' ').title()"/><br/>
+                            <strong>Auto Renew:</strong> 
+                            <span t-if="subscription.auto_renew" class="text-success">Yes</span>
+                            <span t-else="" class="text-danger">No</span>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <strong>Start Date:</strong> <span t-field="subscription.start_date"/><br/>
+                            <strong>End Date:</strong> <span t-field="subscription.end_date"/><br/>
+                            <t t-if="subscription.trial_end_date">
+                                <strong>Trial End:</strong> <span t-field="subscription.trial_end_date"/><br/>
+                            </t>
+                            <t t-if="subscription.next_billing_date">
+                                <strong>Next Billing:</strong> <span t-field="subscription.next_billing_date"/><br/>
+                            </t>
+                        </div>
+                    </div>
+                    
+                    <!-- Status Alerts -->
+                    <t t-if="subscription.days_until_expiry &lt;= 30 and subscription.days_until_expiry &gt;= 0">
+                        <div class="alert alert-warning">
+                            <strong>Expiring Soon!</strong> 
+                            Your subscription expires in <t t-esc="subscription.days_until_expiry"/> days.
+                        </div>
+                    </t>
+                    
+                    <t t-if="subscription.in_grace_period">
+                        <div class="alert alert-info">
+                            <strong>Grace Period</strong> 
+                            Your subscription has expired but you still have access until 
+                            <span t-field="subscription.grace_period_end"/>.
+                        </div>
+                    </t>
+                    
+                    <!-- Action Buttons -->
+                    <div class="row">
+                        <div class="col-12">
+                            <t t-if="subscription.can_renew">
+                                <form method="post" t-attf-action="/my/subscription/#{subscription.id}/renew" 
+                                      class="d-inline">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fa fa-refresh"/> Renew Subscription
+                                    </button>
+                                </form>
+                            </t>
+                            
+                            <t t-if="subscription.state in ['active', 'trial']">
+                                <form method="post" t-attf-action="/my/subscription/#{subscription.id}/cancel" 
+                                      class="d-inline ms-2" 
+                                      onsubmit="return confirm('Are you sure you want to cancel this subscription?')">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" class="btn btn-outline-danger">
+                                        <i class="fa fa-times"/> Cancel Subscription
+                                    </button>
+                                </form>
+                            </t>
+                            
+                            <a href="/my/subscriptions" class="btn btn-outline-secondary ms-2">
+                                <i class="fa fa-arrow-left"/> Back to Subscriptions
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Subscription History -->
+                    <div class="row mt-4" t-if="subscription.line_ids">
+                        <div class="col-12">
+                            <h5>Subscription History</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Type</th>
+                                            <th>Description</th>
+                                            <th class="text-right">Amount</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="subscription.line_ids" t-as="line">
+                                            <tr>
+                                                <td><span t-field="line.date"/></td>
+                                                <td><span t-esc="line.line_type.title()"/></td>
+                                                <td><span t-field="line.description"/></td>
+                                                <td class="text-right">
+                                                    <span t-field="line.price" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': line.currency_id}"/>
+                                                </td>
+                                                <td>
+                                                    <t t-if="line.payment_status == 'paid'">
+                                                        <span class="badge badge-success">Paid</span>
+                                                    </t>
+                                                    <t t-elif="line.payment_status == 'pending'">
+                                                        <span class="badge badge-warning">Pending</span>
+                                                    </t>
+                                                    <t t-elif="line.payment_status == 'failed'">
+                                                        <span class="badge badge-danger">Failed</span>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <span class="badge badge-light" t-esc="line.payment_status.title()"/>
+                                                    </t>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+    
+    <!-- Add Subscription Count to Portal Home -->
+    <template id="portal_my_home_subscription" name="Portal My Home : Subscription entries" 
+              inherit_id="portal.portal_my_home" priority="40">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="title">Subscriptions</t>
+                <t t-set="url" t-value="'/my/subscriptions'"/>
+                <t t-set="placeholder_count" t-value="'subscription_count'"/>
+            </t>
+        </xpath>
+    </template>
+    
+</odoo>

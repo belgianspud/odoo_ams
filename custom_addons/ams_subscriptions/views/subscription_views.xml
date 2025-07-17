@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Subscription Form View -->
+    <record id="view_subscription_form" model="ir.ui.view">
+        <field name="name">ams.subscription.form</field>
+        <field name="model">ams.subscription</field>
+        <field name="arch" type="xml">
+            <form string="Subscription">
+                <header>
+                    <button name="action_activate" type="object" string="Activate" 
+                            class="oe_highlight" invisible="state not in ['draft', 'trial']"/>
+                    <button name="action_suspend" type="object" string="Suspend" 
+                            invisible="state != 'active'"/>
+                    <button name="action_renew" type="object" string="Quick Renew" 
+                            invisible="not can_renew"/>
+                    <button name="%(action_subscription_renewal_wizard)d" type="action" 
+                            string="Renew with Options" class="oe_highlight" 
+                            invisible="not can_renew"/>
+                    <button name="action_cancel" type="object" string="Cancel" 
+                            invisible="state in ['cancelled', 'expired']"/>
+                    <button name="action_create_invoice" type="object" string="Create Invoice" 
+                            class="oe_highlight" invisible="state != 'active'"/>
+                    <field name="state" widget="statusbar" 
+                           statusbar_visible="draft,trial,active,expired"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_invoices" type="object" 
+                                class="oe_stat_button" icon="fa-pencil-square-o">
+                            <field name="invoice_count" widget="statinfo" string="Invoices"/>
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1><field name="name" readonly="state != 'draft'"/></h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="partner_id" readonly="state != 'draft'"/>
+                            <field name="plan_id" readonly="state != 'draft'"/>
+                            <field name="price" widget="monetary" readonly="state != 'draft'"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="payment_method"/>
+                        </group>
+                        <group>
+                            <field name="start_date" readonly="state not in ['draft', 'trial']"/>
+                            <field name="end_date" readonly="1"/>
+                            <field name="next_billing_date" readonly="1"/>
+                            <field name="auto_renew"/>
+                            <field name="renewal_count" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Trial Information -->
+                    <group string="Trial Information" invisible="not is_trial">
+                        <group>
+                            <field name="is_trial" readonly="1"/>
+                            <field name="trial_end_date" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Status Information -->
+                    <group string="Status Information">
+                        <group>
+                            <field name="is_expired" readonly="1"/>
+                            <field name="days_until_expiry" readonly="1"/>
+                            <field name="can_renew" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="grace_period_end" readonly="1"/>
+                            <field name="in_grace_period" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Subscription Lines" name="lines">
+                            <field name="line_ids">
+                                <tree>
+                                    <field name="date"/>
+                                    <field name="line_type"/>
+                                    <field name="description"/>
+                                    <field name="price" widget="monetary"/>
+                                    <field name="payment_status"/>
+                                    <field name="invoice_id"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <page string="Invoices" name="invoices">
+                            <field name="invoice_ids" readonly="1">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="invoice_date"/>
+                                    <field name="partner_id"/>
+                                    <field name="amount_total" widget="monetary"/>
+                                    <field name="payment_state"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <page string="Related" name="related">
+                            <group>
+                                <field name="sale_order_id"/>
+                                <field name="last_billing_date"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Subscription Tree View -->
+    <record id="view_subscription_tree" model="ir.ui.view">
+        <field name="name">ams.subscription.tree</field>
+        <field name="model">ams.subscription</field>
+        <field name="arch" type="xml">
+            <tree string="Subscriptions" 
+                  decoration-success="state == 'active'" 
+                  decoration-warning="state == 'trial'"
+                  decoration-danger="state == 'expired'"
+                  decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="plan_id"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="next_billing_date"/>
+                <field name="price" widget="monetary"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="state" widget="badge" 
+                       decoration-success="state == 'active'"
+                       decoration-warning="state == 'trial'"
+                       decoration-danger="state == 'expired'"
+                       decoration-info="state == 'draft'"/>
+                <field name="auto_renew" widget="boolean_toggle"/>
+                <field name="days_until_expiry"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Subscription Search View -->
+    <record id="view_subscription_search" model="ir.ui.view">
+        <field name="name">ams.subscription.search</field>
+        <field name="model">ams.subscription</field>
+        <field name="arch" type="xml">
+            <search string="Subscriptions">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="plan_id"/>
+                <filter string="Active" name="active" domain="[('state', '=', 'active')]"/>
+                <filter string="Trial" name="trial" domain="[('state', '=', 'trial')]"/>
+                <filter string="Expired" name="expired" domain="[('state', '=', 'expired')]"/>
+                <filter string="Cancelled" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter string="Auto Renew" name="auto_renew" domain="[('auto_renew', '=', True)]"/>
+                <filter string="Expiring Soon" name="expiring_soon" 
+                        domain="[('days_until_expiry', '&lt;=', 30), ('days_until_expiry', '&gt;=', 0)]"/>
+                <filter string="In Grace Period" name="grace_period" 
+                        domain="[('in_grace_period', '=', True)]"/>
+                <separator/>
+                <filter string="This Month" name="this_month" 
+                        domain="[('start_date', '&gt;=', (context_today() - relativedelta(day=1)).strftime('%Y-%m-%d')), 
+                                ('start_date', '&lt;', (context_today() + relativedelta(day=31)).strftime('%Y-%m-%d'))]"/>
+                <filter string="This Year" name="this_year" 
+                        domain="[('start_date', '&gt;=', (context_today() - relativedelta(month=1, day=1)).strftime('%Y-%m-%d'))]"/>
+                <group expand="1" string="Group By">
+                    <filter string="Subscriber" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Plan" name="group_plan" context="{'group_by': 'plan_id'}"/>
+                    <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Start Date" name="group_start_date" 
+                            context="{'group_by': 'start_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Subscription Kanban View -->
+    <record id="view_subscription_kanban" model="ir.ui.view">
+        <field name="name">ams.subscription.kanban</field>
+        <field name="model">ams.subscription</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state">
+                <field name="partner_id"/>
+                <field name="plan_id"/>
+                <field name="price"/>
+                <field name="currency_id"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="state"/>
+                <field name="days_until_expiry"/>
+                <field name="auto_renew"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary">
+                                        <field name="partner_id"/>
+                                    </div>
+                                    <div class="o_secondary">
+                                        <field name="plan_id"/>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_card_header_right">
+                                    <span t-attf-class="badge badge-pill badge-#{record.state.raw_value == 'active' ? 'success' : record.state.raw_value == 'trial' ? 'warning' : record.state.raw_value == 'expired' ? 'danger' : 'secondary'}">
+                                        <field name="state"/>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="o_kanban_card_content">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <strong>Price:</strong>
+                                        <field name="price" widget="monetary"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>Auto Renew:</strong>
+                                        <field name="auto_renew" widget="boolean"/>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-6">
+                                        <strong>Start:</strong>
+                                        <field name="start_date"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>End:</strong>
+                                        <field name="end_date"/>
+                                    </div>
+                                </div>
+                                <div class="row mt-2" t-if="record.days_until_expiry.raw_value &lt;= 30 and record.days_until_expiry.raw_value &gt;= 0">
+                                    <div class="col-12">
+                                        <span class="badge badge-warning">
+                                            Expires in <field name="days_until_expiry"/> days
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    
+    <!-- Subscription Calendar View -->
+    <record id="view_subscription_calendar" model="ir.ui.view">
+        <field name="name">ams.subscription.calendar</field>
+        <field name="model">ams.subscription</field>
+        <field name="arch" type="xml">
+            <calendar string="Subscriptions" 
+                      date_start="start_date" 
+                      date_stop="end_date"
+                      color="state"
+                      quick_add="False">
+                <field name="partner_id"/>
+                <field name="plan_id"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+    
+    <!-- Subscription Pivot View -->
+    <record id="view_subscription_pivot" model="ir.ui.view">
+        <field name="name">ams.subscription.pivot</field>
+        <field name="model">ams.subscription</field>
+        <field name="arch" type="xml">
+            <pivot string="Subscription Analysis">
+                <field name="plan_id" type="row"/>
+                <field name="state" type="col"/>
+                <field name="price" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+    
+    <!-- Subscription Graph View -->
+    <record id="view_subscription_graph" model="ir.ui.view">
+        <field name="name">ams.subscription.graph</field>
+        <field name="model">ams.subscription</field>
+        <field name="arch" type="xml">
+            <graph string="Subscription Analysis" type="bar">
+                <field name="plan_id"/>
+                <field name="price" type="measure"/>
+            </graph>
+        </field>
+    </record>
+    
+    <!-- Subscription Actions -->
+    <record id="action_subscription" model="ir.actions.act_window">
+        <field name="name">Subscriptions</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">tree,kanban,form,calendar,pivot,graph</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first subscription!
+            </p>
+            <p>
+                Track all your member subscriptions, renewals, and billing in one place.
+                Monitor subscription health and automate renewal processes.
+            </p>
+        </field>
+    </record>
+    
+    <record id="action_subscription_active" model="ir.actions.act_window">
+        <field name="name">Active Subscriptions</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('state', '=', 'active')]</field>
+        <field name="context">{'search_default_active': 1}</field>
+    </record>
+    
+    <record id="action_subscription_expiring" model="ir.actions.act_window">
+        <field name="name">Expiring Subscriptions</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('days_until_expiry', '&lt;=', 30), ('days_until_expiry', '&gt;=', 0), ('state', '=', 'active')]</field>
+        <field name="context">{'search_default_expiring_soon': 1}</field>
+    </record>
+    
+    <!-- Menu Items -->
+    <menuitem id="menu_subscriptions_root" 
+              name="Subscriptions"
+              web_icon="ams_subscriptions,static/description/icon.png"
+              sequence="50"/>
+    
+    <menuitem id="menu_subscriptions_main" 
+              name="Subscriptions"
+              parent="menu_subscriptions_root"
+              sequence="10"/>
+              
+    <menuitem id="menu_subscription_all" 
+              name="All Subscriptions"
+              parent="menu_subscriptions_main"
+              action="action_subscription"
+              sequence="10"/>
+              
+    <menuitem id="menu_subscription_active" 
+              name="Active Subscriptions"
+              parent="menu_subscriptions_main"
+              action="action_subscription_active"
+              sequence="20"/>
+              
+    <menuitem id="menu_subscription_expiring" 
+              name="Expiring Soon"
+              parent="menu_subscriptions_main"
+              action="action_subscription_expiring"
+              sequence="30"/>
+    
+    <menuitem id="menu_subscriptions_config" 
+              name="Configuration"
+              parent="menu_subscriptions_root"
+              sequence="90"/>
+              
+</odoo>

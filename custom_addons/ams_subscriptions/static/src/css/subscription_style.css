@@ -1,0 +1,185 @@
+/* AMS Subscriptions Styles */
+
+.subscription-plan-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: 1px solid #e3e6f0;
+}
+
+.subscription-plan-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.price-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+
+.price-amount {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.price-period {
+    font-size: 0.9rem;
+    margin: 0;
+    opacity: 0.9;
+}
+
+.subscription-plan-detail .price-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+}
+
+.subscription-plan-detail .price-display {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.billing-info {
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    opacity: 0.9;
+}
+
+.benefits-content ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.benefits-content li {
+    padding: 8px 0;
+    position: relative;
+    padding-left: 25px;
+}
+
+.benefits-content li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #28a745;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.plan-details ul li {
+    padding: 5px 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.plan-details ul li:last-child {
+    border-bottom: none;
+}
+
+/* Portal Styles */
+.subscription-status-active {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.subscription-status-trial {
+    color: #007bff;
+    font-weight: bold;
+}
+
+.subscription-status-expired {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.subscription-status-cancelled {
+    color: #6c757d;
+    font-weight: bold;
+}
+
+.subscription-expiry-warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 12px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.subscription-grace-period {
+    background-color: #d1ecf1;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+    padding: 12px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+/* Card animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.subscription-plan-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .price-amount {
+        font-size: 2rem;
+    }
+    
+    .subscription-plan-detail .price-display {
+        font-size: 2.5rem;
+    }
+    
+    .subscription-plan-card {
+        margin-bottom: 20px;
+    }
+}
+
+/* Backend form styles */
+.o_form_view .subscription-plan-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.subscription-stats {
+    display: flex;
+    justify-content: space-around;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.subscription-stat-item {
+    text-align: center;
+}
+
+.subscription-stat-number {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #495057;
+}
+
+.subscription-stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}

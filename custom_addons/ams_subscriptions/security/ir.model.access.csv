@@ -1,0 +1,14 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ams_subscription_plan_manager,ams.subscription.plan manager,model_ams_subscription_plan,sales_team.group_sale_manager,1,1,1,1
+access_ams_subscription_plan_salesperson,ams.subscription.plan salesperson,model_ams_subscription_plan,sales_team.group_sale_salesman,1,1,1,0
+access_ams_subscription_plan_user,ams.subscription.plan user,model_ams_subscription_plan,base.group_user,1,0,0,0
+access_ams_subscription_plan_portal,ams.subscription.plan portal,model_ams_subscription_plan,base.group_portal,1,0,0,0
+access_ams_subscription_plan_public,ams.subscription.plan public,model_ams_subscription_plan,base.group_public,1,0,0,0
+access_ams_subscription_manager,ams.subscription manager,model_ams_subscription,sales_team.group_sale_manager,1,1,1,1
+access_ams_subscription_salesperson,ams.subscription salesperson,model_ams_subscription,sales_team.group_sale_salesman,1,1,1,0
+access_ams_subscription_user,ams.subscription user,model_ams_subscription,base.group_user,1,0,0,0
+access_ams_subscription_portal,ams.subscription portal,model_ams_subscription,base.group_portal,1,0,0,0
+access_ams_subscription_line_manager,ams.subscription.line manager,model_ams_subscription_line,sales_team.group_sale_manager,1,1,1,1
+access_ams_subscription_line_salesperson,ams.subscription.line salesperson,model_ams_subscription_line,sales_team.group_sale_salesman,1,1,1,0
+access_ams_subscription_line_user,ams.subscription.line user,model_ams_subscription_line,base.group_user,1,0,0,0
+access_ams_subscription_line_portal,ams.subscription.line portal,model_ams_subscription_line,base.group_portal,1,0,0,0

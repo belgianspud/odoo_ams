@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Extend Product Template Form to include Subscription fields -->
+    <record id="view_product_template_form_subscription" model="ir.ui.view">
+        <field name="name">product.template.form.subscription</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add Subscription button in header -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_subscription_plans" type="object"
+                        class="oe_stat_button" icon="fa-calendar-check-o"
+                        invisible="not is_subscription">
+                    <field name="subscription_plan_count" widget="statinfo" 
+                           string="Plans"/>
+                </button>
+            </xpath>
+            
+            <!-- Add Subscription tab -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Subscription" name="subscription" invisible="not is_subscription">
+                    <group>
+                        <group string="Subscription Configuration">
+                            <field name="is_subscription"/>
+                            <field name="default_billing_period" invisible="not is_subscription"/>
+                            <field name="default_auto_renew" invisible="not is_subscription"/>
+                            <field name="default_trial_period" invisible="not is_subscription"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Subscription Plans" invisible="not is_subscription">
+                        <field name="subscription_plan_ids" nolabel="1">
+                            <tree>
+                                <field name="name"/>
+                                <field name="code"/>
+                                <field name="plan_type"/>
+                                <field name="billing_period"/>
+                                <field name="price" widget="monetary"/>
+                                <field name="subscription_count"/>
+                                <field name="active" widget="boolean_toggle"/>
+                                <field name="website_published" widget="boolean_toggle"/>
+                            </tree>
+                        </field>
+                    </group>
+                </page>
+            </xpath>
+            
+            <!-- Add subscription checkbox in general information -->
+            <xpath expr="//field[@name='type']" position="after">
+                <field name="is_subscription"/>
+            </xpath>
+            
+        </field>
+    </record>
+    
+    <!-- Extend Product Product Form -->
+    <record id="view_product_product_form_subscription" model="ir.ui.view">
+        <field name="name">product.product.form.subscription</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add Create Plan button -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_create_subscription_plan" type="object"
+                        class="oe_stat_button" icon="fa-plus"
+                        string="Create Plan"
+                        invisible="not is_subscription"/>
+            </xpath>
+            
+        </field>
+    </record>
+    
+</odoo>
