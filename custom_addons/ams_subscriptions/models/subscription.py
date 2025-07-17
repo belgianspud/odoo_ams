@@ -17,6 +17,7 @@ class Subscription(models.Model):
     # Basic Information
     name = fields.Char('Subscription Reference', required=True, copy=False, 
                       default=lambda self: _('New'), tracking=True)
+    invoice_date = fields.Date(string="Invoice Date")
     display_name = fields.Char('Display Name', compute='_compute_display_name', store=True)
     partner_id = fields.Many2one('res.partner', 'Subscriber', required=True, 
                                 tracking=True, index=True)

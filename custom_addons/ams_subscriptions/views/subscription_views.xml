@@ -80,18 +80,17 @@
                         
                         <notebook>
                             <page string="Subscription Lines" name="lines">
-                            <!--Future subscription lines:
+                            <!--Future subscription lines:-->
                                 <field name="line_ids">
-                                    <tree>
-                                        <field name="date"/>
-                                        <field name="line_type"/>
-                                        <field name="description"/>
-                                        <field name="price" widget="monetary"/>
-                                        <field name="payment_status"/>
-                                        <field name="invoice_id"/>
-                                    </tree>
+                                        <tree editable="bottom">
+                                            <field name="product_id"/>
+                                            <field name="quantity"/>
+                                            <field name="price_unit"/>
+                                            <field name="start_date"/>
+                                            <field name="end_date"/>
+                                        </tree>
                                 </field>
-                                -->
+                                
             <p>Subscription line functionality will be added when the line model is created.</p>
 </page>
                             
@@ -101,8 +100,8 @@
                                         <field name="name"/>
                                         <field name="invoice_date"/>
                                         <field name="partner_id"/>
-                                        <field name="amount_total" widget="monetary"/>
-                                        <field name="payment_state"/>
+                                        <!--<field name="amount_total" widget="monetary"/>
+                                        <field name="payment_state"/>-->
                                         <field name="state"/>
                                     </tree>
                                 </field>
