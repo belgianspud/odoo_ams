@@ -14,10 +14,11 @@
                                 attrs="{'invisible': [('state', '!=', 'active')]}"/>
                         <button name="action_renew" type="object" string="Quick Renew" 
                                 attrs="{'invisible': [('can_renew', '=', False)]}"/>
-                        <!-- Commented out until wizard is created
-                        <button name="%(action_subscription_renewal_wizard)d" type="action" 
-                                string="Renew with Options" class="oe_highlight" 
-                                attrs="{'invisible': [('can_renew', '=', False)]}"/>
+                        <!--
+                            Future renewal wizard button:
+                            <button name="action_subscription_renewal_wizard" type="action" 
+                            string="Renew with Options" class="oe_highlight" 
+                            attrs="{'invisible': [('can_renew', '=', False)]}"/>
                         -->
                         <button name="action_cancel" type="object" string="Cancel" 
                                 attrs="{'invisible': [('state', 'in', ['cancelled', 'expired'])]}"/>
@@ -79,6 +80,7 @@
                         
                         <notebook>
                             <page string="Subscription Lines" name="lines">
+                            <!--Future subscription lines:
                                 <field name="line_ids">
                                     <tree>
                                         <field name="date"/>
@@ -89,7 +91,9 @@
                                         <field name="invoice_id"/>
                                     </tree>
                                 </field>
-                            </page>
+                                -->
+            <p>Subscription line functionality will be added when the line model is created.</p>
+</page>
                             
                             <page string="Invoices" name="invoices">
                                 <field name="invoice_ids" readonly="1">
