@@ -108,8 +108,10 @@ class AMSSubscription(models.Model):
             raise UserError("Parent membership must be active to add a chapter.")
         
         # Auto-set chapter fee if chapter is selected and no amount is set
-        if self.chapter_id and not self.amount and self.chapter_id.chapter_fee > 0:
-            self.amount = self.chapter_id.chapter_fee
+        if self.chapter_id and not self.amount:
+            chapter = self.chapter_id  # Get the actual record
+            if chapter.chapter_fee > 0:
+                self.amount = chapter.chapter_fee
         
         # Try to add to existing draft invoice of parent
         parent_invoice = self.parent_subscription_id._get_active_draft_invoice()
@@ -127,11 +129,14 @@ class AMSSubscription(models.Model):
         """Create invoice for subscription"""
         if not self.product_id:
             # Try to get product from subscription type or chapter
-            if self.subscription_code == 'chapter' and self.chapter_id and self.chapter_id.product_template_id:
-                self.product_id = self.chapter_id.product_template_id.product_variant_id
+            if self.subscription_code == 'chapter' and self.chapter_id:
+                chapter = self.chapter_id  # Get the actual record
+                if chapter.product_template_id:
+                    self.product_id = chapter.product_template_id.product_variant_id
             elif self.subscription_type_id.product_template_id:
                 self.product_id = self.subscription_type_id.product_template_id.product_variant_id
-            else:
+            
+            if not self.product_id:
                 return
         
         # Prepare invoice description
@@ -210,10 +215,11 @@ class AMSSubscription(models.Model):
     def _onchange_chapter_id(self):
         """Auto-populate amount and product when chapter is selected"""
         if self.chapter_id and self.subscription_code == 'chapter':
-            if self.chapter_id.chapter_fee > 0:
-                self.amount = self.chapter_id.chapter_fee
-            if self.chapter_id.product_template_id:
-                self.product_id = self.chapter_id.product_template_id.product_variant_id
+            chapter = self.chapter_id  # Get the actual record
+            if chapter.chapter_fee > 0:
+                self.amount = chapter.chapter_fee
+            if chapter.product_template_id:
+                self.product_id = chapter.product_template_id.product_variant_id
     
     @api.onchange('subscription_type_id')
     def _onchange_subscription_type_id(self):
