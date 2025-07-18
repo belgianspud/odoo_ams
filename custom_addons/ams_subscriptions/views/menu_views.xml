@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- File Path: custom_addons/ams_subscriptions/views/menu_views.xml -->
+    <!-- This REPLACES the existing menu_views.xml file -->
+
     <!-- Main Menu -->
     <menuitem id="menu_ams_root" name="AMS" web_icon="ams_subscriptions,static/description/icon.png" sequence="10"/>
     
@@ -62,7 +65,7 @@
     <record id="action_ams_active_members" model="ir.actions.act_window">
         <field name="name">Active Members</field>
         <field name="res_model">res.partner</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="domain">[('active_membership_count', '>', 0)]</field>
         <field name="context">{
             'search_default_active_members': 1
@@ -79,7 +82,7 @@
     <record id="action_ams_all_members" model="ir.actions.act_window">
         <field name="name">All Members</field>
         <field name="res_model">res.partner</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="domain">[('total_subscription_count', '>', 0)]</field>
         <field name="context">{}</field>
         <field name="help" type="html">
@@ -94,7 +97,7 @@
     <record id="action_ams_members_pending_renewal" model="ir.actions.act_window">
         <field name="name">Members - Pending Renewals</field>
         <field name="res_model">res.partner</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="domain">[('pending_renewal_count', '>', 0)]</field>
         <field name="context">{
             'search_default_pending_renewals': 1
@@ -123,7 +126,7 @@
     <record id="action_ams_subscription_sales" model="ir.actions.act_window">
         <field name="name">Subscription Sales</field>
         <field name="res_model">sale.order</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="domain">[('order_line.product_id.is_subscription_product', '=', True)]</field>
         <field name="context">{}</field>
         <field name="help" type="html">
@@ -138,7 +141,7 @@
     <record id="action_ams_subscription_invoices" model="ir.actions.act_window">
         <field name="name">Subscription Invoices</field>
         <field name="res_model">account.move</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="domain">[('subscription_id', '!=', False)]</field>
         <field name="context">{}</field>
         <field name="help" type="html">
@@ -153,7 +156,7 @@
     <record id="action_ams_renewal_invoices" model="ir.actions.act_window">
         <field name="name">Renewal Invoices</field>
         <field name="res_model">account.move</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="domain">[('is_renewal_invoice', '=', True)]</field>
         <field name="context">{}</field>
         <field name="help" type="html">
