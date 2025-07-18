@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- AMS Accounting Security Groups -->
+        
+        <!-- Basic Accounting User -->
+        <record id="group_ams_accounting_user" model="res.groups">
+            <field name="name">AMS Accounting User</field>
+            <field name="category_id" ref="base.module_category_accounting"/>
+            <field name="comment">Basic access to AMS accounting features</field>
+            <field name="implied_ids" eval="[(4, ref('account.group_account_user'))]"/>
+        </record>
+        
+        <!-- Accounting Manager -->
+        <record id="group_ams_accounting_manager" model="res.groups">
+            <field name="name">AMS Accounting Manager</field>
+            <field name="category_id" ref="base.module_category_accounting"/>
+            <field name="comment">Full access to AMS accounting features</field>
+            <field name="implied_ids" eval="[(4, ref('group_ams_accounting_user')), (4, ref('account.group_account_manager'))]"/>
+        </record>
+        
+        <!-- Financial Reports Access -->
+        <record id="group_ams_financial_reports" model="res.groups">
+            <field name="name">AMS Financial Reports</field>
+            <field name="category_id" ref="base.module_category_accounting"/>
+            <field name="comment">Access to financial reports and analytics</field>
+        </record>
+        
+        <!-- Asset Manager -->
+        <record id="group_ams_asset_manager" model="res.groups">
+            <field name="name">AMS Asset Manager</field>
+            <field name="category_id" ref="base.module_category_accounting"/>
+            <field name="comment">Manage assets and depreciation</field>
+        </record>
+        
+        <!-- Budget Manager -->
+        <record id="group_ams_budget_manager" model="res.groups">
+            <field name="name">AMS Budget Manager</field>
+            <field name="category_id" ref="base.module_category_accounting"/>
+            <field name="comment">Manage budgets and budget analysis</field>
+        </record>
+        
+        <!-- Dashboard Access -->
+        <record id="group_account_dashboard" model="res.groups">
+            <field name="name">AMS Accounting Dashboard</field>
+            <field name="category_id" ref="base.module_category_accounting"/>
+            <field name="comment">Access to accounting dashboard</field>
+            <field name="implied_ids" eval="[(4, ref('group_ams_accounting_user'))]"/>
+        </record>
+        
+        <!-- AMS Integration Groups -->
+        <record id="group_ams_subscription_accounting" model="res.groups">
+            <field name="name">AMS Subscription Accounting</field>
+            <field name="category_id" ref="base.module_category_services"/>
+            <field name="comment">Access to subscription-related accounting features</field>
+        </record>
+        
+        <record id="group_ams_member_financial" model="res.groups">
+            <field name="name">AMS Member Financial Management</field>
+            <field name="category_id" ref="base.module_category_services"/>
+            <field name="comment">Access to member financial tracking and reports</field>
+        </record>
+        
+        <record id="group_ams_chapter_financial" model="res.groups">
+            <field name="name">AMS Chapter Financial Management</field>
+            <field name="category_id" ref="base.module_category_services"/>
+            <field name="comment">Access to chapter-specific financial features</field>
+        </record>
+        
+        <!-- Record Rules for Multi-Company -->
+        <record id="ams_accounting_dashboard_rule" model="ir.rule">
+            <field name="name">AMS Accounting Dashboard: multi-company</field>
+            <field name="model_id" ref="account.model_account_move"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+            <field name="groups" eval="[(4, ref('group_account_dashboard'))]"/>
+        </record>
+        
+        <!-- AMS Subscription Accounting Rules -->
+        <record id="ams_subscription_accounting_rule" model="ir.rule">
+            <field name="name">AMS Subscription Accounting: own company</field>
+            <field name="model_id" ref="ams_subscriptions.model_ams_subscription"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_subscription_accounting'))]"/>
+        </record>
+        
+        <!-- Member Financial Access Rules -->
+        <record id="ams_member_financial_rule" model="ir.rule">
+            <field name="name">AMS Member Financial: multi-company</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_member_financial'))]"/>
+        </record>
+        
+        <!-- Chapter Financial Access Rules -->
+        <record id="ams_chapter_financial_rule" model="ir.rule">
+            <field name="name">AMS Chapter Financial: multi-company</field>
+            <field name="model_id" ref="ams_subscriptions.model_ams_chapter"/>
+            <field name="domain_force">[('active', '=', True)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_chapter_financial'))]"/>
+        </record>
+        
+    </data>
+</odoo>
