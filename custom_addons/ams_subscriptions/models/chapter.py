@@ -26,11 +26,11 @@ class AMSChapter(models.Model):
     member_count = fields.Integer('Member Count', compute='_compute_member_count', store=True)
     founding_date = fields.Date('Founding Date')
     
-    # Product Integration
+    # FIXED: Product Integration with proper defaults
     product_template_id = fields.Many2one('product.template', 'Chapter Product')
     chapter_fee = fields.Float('Chapter Fee', default=0.0, help="Additional fee for joining this chapter")
     currency_id = fields.Many2one('res.currency', 'Currency', 
-                                 default=lambda self: self.env.company.currency_id)
+                                 default=lambda self: self.env.company.currency_id, required=True)
     
     # Relationships
     subscription_ids = fields.One2many('ams.subscription', 'chapter_id', 'Chapter Subscriptions')
@@ -42,31 +42,42 @@ class AMSChapter(models.Model):
     def _compute_member_count(self):
         for chapter in self:
             all_subscriptions = chapter.subscription_ids
-            chapter.member_count = len(all_subscriptions)
-            chapter.active_member_count = len(all_subscriptions.filtered(lambda s: s.state == 'active'))
+            chapter.member_count = len(all_subscriptions) if all_subscriptions else 0
+            active_subscriptions = all_subscriptions.filtered(lambda s: s.state == 'active') if all_subscriptions else self.env['ams.subscription']
+            chapter.active_member_count = len(active_subscriptions)
     
     @api.model
     def create(self, vals):
+        # Ensure chapter_fee has a proper default
+        if 'chapter_fee' not in vals:
+            vals['chapter_fee'] = 0.0
+        elif not vals['chapter_fee']:
+            vals['chapter_fee'] = 0.0
+        
         chapter = super().create(vals)
         # Auto-create chapter product if chapter fee is set
-        if chapter.chapter_fee > 0 and not chapter.product_template_id:
+        if chapter.chapter_fee and chapter.chapter_fee > 0 and not chapter.product_template_id:
             chapter._create_chapter_product()
         return chapter
     
     def write(self, vals):
+        # Ensure chapter_fee updates are handled properly
+        if 'chapter_fee' in vals and not vals['chapter_fee']:
+            vals['chapter_fee'] = 0.0
+            
         result = super().write(vals)
         # Update or create product if chapter fee changes
         if 'chapter_fee' in vals:
             for chapter in self:
-                if chapter.chapter_fee > 0 and not chapter.product_template_id:
+                if chapter.chapter_fee and chapter.chapter_fee > 0 and not chapter.product_template_id:
                     chapter._create_chapter_product()
-                elif chapter.product_template_id and chapter.chapter_fee > 0:
+                elif chapter.product_template_id and chapter.chapter_fee and chapter.chapter_fee > 0:
                     chapter.product_template_id.list_price = chapter.chapter_fee
         return result
     
     def _create_chapter_product(self):
         """Create a product for this chapter"""
-        if not self.product_template_id and self.chapter_fee > 0:
+        if not self.product_template_id and self.chapter_fee and self.chapter_fee > 0:
             # Find or create chapter subscription type
             chapter_type = self.env['ams.subscription.type'].search([('code', '=', 'chapter')], limit=1)
             if not chapter_type:
@@ -76,8 +87,8 @@ class AMSChapter(models.Model):
                 'name': f"Chapter Membership - {self.name}",
                 'type': 'service',
                 'categ_id': self.env.ref('product.product_category_all').id,
-                'list_price': self.chapter_fee,
-                'standard_price': self.chapter_fee,
+                'list_price': float(self.chapter_fee),
+                'standard_price': float(self.chapter_fee),
                 'description_sale': f"Membership fee for {self.name} chapter",
                 'is_subscription_product': True,
                 'subscription_type_id': chapter_type.id if chapter_type else False,
@@ -118,4 +129,5 @@ class AMSChapter(models.Model):
     _sql_constraints = [
         ('code_unique', 'unique(code)', 'Chapter code must be unique!'),
         ('name_unique', 'unique(name)', 'Chapter name must be unique!'),
+        ('chapter_fee_positive', 'CHECK(chapter_fee >= 0)', 'Chapter fee must be positive or zero!'),
     ]

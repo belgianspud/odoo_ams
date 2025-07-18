@@ -25,12 +25,11 @@
     <menuitem id="menu_ams_subscription_types" name="Subscription Types" parent="menu_ams_configuration" 
               action="action_ams_subscription_type" sequence="10"/>
     
-    <!-- ADD THIS LINE -->
     <menuitem id="menu_ams_chapters" name="Chapters" parent="menu_ams_configuration" 
               action="action_ams_chapter" sequence="20"/>
     
-    <!--<menuitem id="menu_ams_subscription_products" name="Subscription Products" parent="menu_ams_configuration" 
-              action="action_subscription_products" sequence="20"/>-->
+    <menuitem id="menu_ams_subscription_products" name="Subscription Products" parent="menu_ams_configuration"
+              action="action_ams_subscription_products" sequence="30"/>
 
     <!-- Add context to filter menus -->
     <record id="action_ams_subscription_memberships" model="ir.actions.act_window">
@@ -57,8 +56,17 @@
         <field name="context">{'default_subscription_code': 'publication', 'search_default_active': 1}</field>
     </record>
 
+    <record id="action_ams_subscription_products" model="ir.actions.act_window">
+        <field name="name">Subscription Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('is_subscription', '=', True)]</field>
+        <field name="context">{'search_default_is_subscription': 1}</field>
+    </record>
+
     <!-- Update menu items to use the filtered actions -->
     <menuitem id="menu_ams_subscription_memberships" action="action_ams_subscription_memberships"/>
     <menuitem id="menu_ams_subscription_chapters" action="action_ams_subscription_chapters"/>
     <menuitem id="menu_ams_subscription_publications" action="action_ams_subscription_publications"/>
+    <menuitem id="menu_ams_subscription_products" action="action_ams_subscription_products"/>    
 </odoo>
