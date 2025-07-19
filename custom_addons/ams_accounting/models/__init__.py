@@ -20,3 +20,5 @@ from . import ams_subscription_accounting
 from . import ams_member_financial
 from . import ams_chapter_financial
 from . import ams_financial_dashboard
+from . import ams_payment_plan
+from . import ams_subscription_modification
