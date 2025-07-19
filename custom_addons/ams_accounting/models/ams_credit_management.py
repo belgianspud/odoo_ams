@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-#############################################################################
-#
-#    AMS Accounting - Credit Management System
-#    Comprehensive credit hold and usage tracking for member accounts
-#
-#############################################################################
-
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime, timedelta
