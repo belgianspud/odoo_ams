@@ -20,8 +20,8 @@ class AccountAccount(models.Model):
     ], string='AMS Account Type', help="Categorize accounts for AMS reporting")
     
     # Product mappings
-    subscription_product_ids = fields.One2many('product.account.mapping', 'account_id', 
-                                              'Mapped Subscription Products')
+    #subscription_product_ids = fields.One2many('product.account.mapping', 'account_id', 
+    #                                          'Mapped Subscription Products')
     
     # Statistics
     ams_balance = fields.Float('AMS Balance', compute='_compute_ams_balance', store=True,
