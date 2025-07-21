@@ -31,6 +31,7 @@ class IrModuleModule(models.Model):
         'mass_mailing_sms',     # SMS Marketing
         'ams_subscriptions',    # AMS Subscriptions
         'ams_accounting',       # AMS Accounting
+        'ams_accounting_module',# Base Accounting Module for AMS
     ]
     
     @api.model
