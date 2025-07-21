@@ -86,17 +86,17 @@ class AccountMove(models.Model):
     
     def button_cancel(self):
         """Override to handle AMS-specific cancellation logic"""
-        # Check for processed revenue recognitions
-        for move in self:
-            revenue_recognitions = self.env['ams.revenue.recognition'].search([
-                ('move_id', '=', move.id),
-                ('state', '=', 'processed')
-            ])
-            if revenue_recognitions:
-                raise ValidationError(
-                    "Cannot cancel this move because it contains processed revenue recognition entries. "
-                    "Please cancel the revenue recognition entries first."
-                )
+        # COMMENTED OUT: Check for processed revenue recognitions (model doesn't exist yet)
+        # for move in self:
+        #     revenue_recognitions = self.env['ams.revenue.recognition'].search([
+        #         ('move_id', '=', move.id),
+        #         ('state', '=', 'processed')
+        #     ])
+        #     if revenue_recognitions:
+        #         raise ValidationError(
+        #             "Cannot cancel this move because it contains processed revenue recognition entries. "
+        #             "Please cancel the revenue recognition entries first."
+        #         )
         
         result = super().button_cancel()
         
@@ -122,9 +122,9 @@ class AccountMoveLine(models.Model):
     subscription_partner_id = fields.Many2one(related='ams_subscription_id.partner_id', store=True, readonly=True)
     chapter_id = fields.Many2one(related='ams_subscription_id.chapter_id', store=True, readonly=True)
     
-    # Revenue recognition tracking
-    revenue_recognition_id = fields.Many2one('ams.revenue.recognition', 'Revenue Recognition',
-                                            help="Link to revenue recognition entry if applicable")
+    # COMMENTED OUT: Revenue recognition tracking (model doesn't exist yet)
+    # revenue_recognition_id = fields.Many2one('ams.revenue.recognition', 'Revenue Recognition',
+    #                                         help="Link to revenue recognition entry if applicable")
     is_deferred_revenue = fields.Boolean('Deferred Revenue', compute='_compute_is_deferred_revenue', store=True)
     
     # Financial categorization
@@ -147,16 +147,17 @@ class AccountMoveLine(models.Model):
         for line in self:
             line.is_deferred_revenue = line.account_id.ams_account_type == 'deferred_revenue'
     
-    @api.depends('account_id.ams_account_type', 'revenue_recognition_id', 'move_id.move_type')
+    @api.depends('account_id.ams_account_type', 'move_id.move_type')  # removed revenue_recognition_id
     def _compute_ams_line_type(self):
         for line in self:
             if not line.is_ams_line:
                 line.ams_line_type = False
                 continue
                 
-            if line.revenue_recognition_id:
-                line.ams_line_type = 'revenue_recognition'
-            elif line.account_id.ams_account_type == 'deferred_revenue':
+            # COMMENTED OUT: Revenue recognition check (model doesn't exist yet)
+            # if line.revenue_recognition_id:
+            #     line.ams_line_type = 'revenue_recognition'
+            if line.account_id.ams_account_type == 'deferred_revenue':
                 line.ams_line_type = 'deferred_revenue'
             elif line.account_id.ams_account_type in ['membership_revenue', 'chapter_revenue', 'publication_revenue']:
                 line.ams_line_type = 'subscription_revenue'
@@ -178,6 +179,7 @@ class AccountMoveLine(models.Model):
             
         return super().read_group(domain, fields, groupby, offset=offset, limit=limit, orderby=orderby, lazy=lazy)
 
+# Rest of the classes remain the same...
 class AccountPayment(models.Model):
     _inherit = 'account.payment'
     
