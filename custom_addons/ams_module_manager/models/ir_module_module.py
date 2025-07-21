@@ -30,7 +30,7 @@ class IrModuleModule(models.Model):
         'survey',               # Surveys
         'mass_mailing_sms',     # SMS Marketing
         'ams_subscriptions',    # AMS Subscriptions
-        'ams_accounting',       # AMS Accounting - ADDED THIS LINE
+        'ams_accounting',       # AMS Accounting
     ]
     
     @api.model
