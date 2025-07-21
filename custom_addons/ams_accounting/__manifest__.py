@@ -1,6 +1,6 @@
 {
     'name': 'AMS Accounting',
-    'version': '1.0.0',
+    'version': '18.0.1.0.0',  # Fixed: Proper Odoo 18 version format
     'category': 'Association Management',
     'summary': 'Basic accounting module for Association Management System',
     'description': """
@@ -56,7 +56,7 @@
         'reports/partner_financial_report.xml',
     ],
     'installable': True,
-    'application': False,
+    'application': True,   # Fixed: This makes it appear in Apps menu
     'auto_install': False,
     'external_dependencies': {
         'python': [],
