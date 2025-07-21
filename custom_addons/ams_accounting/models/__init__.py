@@ -1,3 +1,10 @@
+from . import ams_member_financial
+from . import ams_subscription_accounting
+from . import ams_payment_plan
+from . import ams_chapter_financial
+from . import ams_credit_management
+
+'''
 # Core accounting models (adapted from base_accounting_kit)
 from . import account_account
 from . import account_asset
@@ -22,3 +29,4 @@ from . import ams_chapter_financial
 from . import ams_financial_dashboard
 from . import ams_payment_plan
 from . import ams_subscription_modification
+'''

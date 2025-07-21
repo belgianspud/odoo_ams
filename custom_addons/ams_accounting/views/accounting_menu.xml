@@ -1,183 +1,56 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
-        <!-- Change invoicing menu to Accounting -->
-        <record model="ir.ui.menu" id="account.menu_finance">
-            <field name="name">Accounting</field>
-        </record>
-        
-        <!-- Change settings invoicing menu to Accounting -->
-        <record id="res_config_settings_view_accounting_kit" model="ir.ui.view">
-            <field name="name">res.config.settings.view.form.inherit.ams.accounting</field>
-            <field name="model">res.config.settings</field>
-            <field name="inherit_id" ref="account.res_config_settings_view_form"/>
-            <field name="arch" type="xml">
-                <div data-key="account" position="attributes">
-                    <attribute name="data-string">Accounting</attribute>
-                    <attribute name="string">Accounting</attribute>
-                </div>
-            </field>
-        </record>
+        <!-- AMS Accounting Root Menu -->
+        <menuitem id="menu_ams_accounting_root"
+                  name="AMS Accounting"
+                  sequence="16"
+                  web_icon="ams_accounting,static/description/icon.png"/>
 
-        <!-- Dashboard Menu -->
-        <menuitem name="Dashboard" 
-                  id="menu_ams_accounting_dashboard" 
-                  parent="account.menu_finance"
-                  sequence="1"
-                  groups="group_account_dashboard"
-                  action="action_account_invoice_report_all"/>
+        <!-- Dashboard -->
+        <menuitem id="menu_ams_accounting_dashboard"
+                  name="Dashboard"
+                  parent="menu_ams_accounting_root"
+                  action="action_ams_accounting_dashboard"
+                  sequence="1"/>
 
-        <!-- Financial Reports Structure -->
-        <menuitem id="account_reports_generic_statements" 
-                  sequence="10"
-                  name="Generic Statements" 
-                  parent="account.menu_finance_reports"/>
-                  
-        <menuitem id="account_reports_daily_reports" 
-                  sequence="20"
-                  name="Daily Reports" 
-                  parent="account.menu_finance_reports"/>
-                  
-        <menuitem id="account_reports_partner" 
-                  sequence="30"
-                  name="Partner Reports" 
-                  parent="account.menu_finance_reports"/>
-                  
-        <menuitem id="account_reports_audit" 
-                  sequence="40"
-                  name="Audit Reports" 
-                  parent="account.menu_finance_reports"/>
+        <!-- Member Summary -->
+        <menuitem id="menu_ams_member_summary"
+                  name="Member Summary"
+                  parent="menu_ams_accounting_root"
+                  action="action_ams_member_summary"
+                  sequence="10"/>
 
-        <!-- AMS Integration Menu -->
-        <menuitem id="menu_ams_accounting_integration" 
-                  name="AMS Integration" 
-                  parent="account.menu_finance"
-                  sequence="15"
-                  groups="group_ams_subscription_accounting"/>
+        <!-- Direct Links to Our 5 New Views -->
+        <menuitem id="menu_member_financial_direct"
+                  name="Member Financial Records"
+                  parent="menu_ams_accounting_root"
+                  action="action_ams_member_financial"
+                  sequence="20"/>
 
-        <menuitem id="menu_ams_subscription_revenue" 
-                  name="Subscription Revenue" 
-                  parent="menu_ams_accounting_integration"
-                  sequence="10"
-                  action="action_ams_subscription_revenue"/>
+        <menuitem id="menu_subscription_accounting_direct"
+                  name="Subscription Accounting"
+                  parent="menu_ams_accounting_root"
+                  action="action_ams_subscription_accounting"
+                  sequence="30"/>
 
-        <menuitem id="menu_ams_member_financials" 
-                  name="Member Financials" 
-                  parent="menu_ams_accounting_integration"
-                  sequence="20"
-                  action="action_ams_member_financials"/>
+        <menuitem id="menu_payment_plans_direct"
+                  name="Payment Plans"
+                  parent="menu_ams_accounting_root"
+                  action="action_ams_payment_plan"
+                  sequence="40"/>
 
-        <menuitem id="menu_ams_chapter_financials" 
-                  name="Chapter Financials" 
-                  parent="menu_ams_accounting_integration"
-                  sequence="30"
-                  action="action_ams_chapter_financials"/>
+        <menuitem id="menu_chapter_financial_direct"
+                  name="Chapter Financial Management"
+                  parent="menu_ams_accounting_root"
+                  action="action_ams_chapter_financial"
+                  sequence="50"/>
 
-        <menuitem id="menu_ams_renewal_pipeline" 
-                  name="Renewal Pipeline" 
-                  parent="menu_ams_accounting_integration"
-                  sequence="40"
-                  action="action_ams_renewal_pipeline"/>
-
-        <!-- Asset Management Menu -->
-        <menuitem id="menu_ams_asset_management" 
-                  name="Asset Management" 
-                  parent="account.menu_finance"
-                  sequence="25"
-                  groups="group_ams_asset_manager"/>
-
-        <menuitem id="menu_ams_assets" 
-                  name="Assets" 
-                  parent="menu_ams_asset_management"
-                  sequence="10"
-                  action="action_account_asset_asset"/>
-
-        <menuitem id="menu_ams_asset_categories" 
-                  name="Asset Categories" 
-                  parent="menu_ams_asset_management"
-                  sequence="20"
-                  action="action_account_asset_category"/>
-
-        <menuitem id="menu_ams_asset_depreciation" 
-                  name="Depreciation Schedule" 
-                  parent="menu_ams_asset_management"
-                  sequence="30"
-                  action="action_account_asset_depreciation_line"/>
-
-        <!-- Customer Follow-up Menu -->
-        <menuitem id="menu_ams_followup" 
-                  name="Follow-up" 
-                  parent="account.menu_finance"
-                  sequence="35"
-                  groups="group_ams_accounting_user"/>
-
-        <menuitem id="menu_ams_followup_configuration" 
-                  name="Follow-up Configuration" 
-                  parent="menu_ams_followup"
-                  sequence="10"
-                  action="action_account_followup"/>
-
-        <menuitem id="menu_ams_followup_reports" 
-                  name="Follow-up Reports" 
-                  parent="menu_ams_followup"
-                  sequence="20"
-                  action="action_followup_report"/>
-
-        <!-- Recurring Payments Menu -->
-        <menuitem id="menu_ams_recurring" 
-                  name="Recurring Payments" 
-                  parent="account.menu_finance"
-                  sequence="45"
-                  groups="group_ams_accounting_user"/>
-
-        <menuitem id="menu_ams_recurring_payments" 
-                  name="Recurring Payments" 
-                  parent="menu_ams_recurring"
-                  sequence="10"
-                  action="action_recurring_payments"/>
-
-        <menuitem id="menu_ams_recurring_templates" 
-                  name="Recurring Templates" 
-                  parent="menu_ams_recurring"
-                  sequence="20"
-                  action="action_recurring_payment_templates"/>
-
-        <!-- Multiple Invoice Menu -->
-        <menuitem id="menu_ams_multiple_invoice" 
-                  name="Multiple Invoicing" 
-                  parent="account.menu_finance"
-                  sequence="55"
-                  groups="group_ams_accounting_user"/>
-
-        <menuitem id="menu_ams_multiple_invoice_create" 
-                  name="Create Multiple Invoices" 
-                  parent="menu_ams_multiple_invoice"
-                  sequence="10"
-                  action="action_multiple_invoice"/>
-
-        <menuitem id="menu_ams_multiple_invoice_layouts" 
-                  name="Invoice Layouts" 
-                  parent="menu_ams_multiple_invoice"
-                  sequence="20"
-                  action="action_multiple_invoice_layout"/>
-
-        <!-- Configuration Menu -->
-        <menuitem id="menu_ams_accounting_config" 
-                  name="Configuration" 
-                  parent="account.menu_finance"
-                  sequence="90"
-                  groups="group_ams_accounting_manager"/>
-
-        <menuitem id="menu_ams_accounting_settings" 
-                  name="AMS Accounting Settings" 
-                  parent="menu_ams_accounting_config"
-                  sequence="10"
-                  action="action_ams_accounting_config"/>
-
-        <!-- Change Overview menu name to match original -->
-        <record model="ir.ui.menu" id="account.menu_board_journal_1">
-            <field name="name">Overview</field>
-        </record>
+        <menuitem id="menu_credit_holds_direct"
+                  name="Credit Holds"
+                  parent="menu_ams_accounting_root"
+                  action="action_ams_credit_hold"
+                  sequence="60"/>
 
     </data>
 </odoo>

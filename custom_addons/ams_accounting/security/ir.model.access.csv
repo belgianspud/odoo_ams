@@ -1,28 +1,49 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+# Core Accounting Models
 access_account_asset_asset_user,account.asset.asset.user,model_account_asset_asset,ams_accounting.group_ams_accounting_user,1,1,1,0
 access_account_asset_asset_manager,account.asset.asset.manager,model_account_asset_asset,ams_accounting.group_ams_accounting_manager,1,1,1,1
 access_account_asset_category_user,account.asset.category.user,model_account_asset_category,ams_accounting.group_ams_accounting_user,1,0,0,0
 access_account_asset_category_manager,account.asset.category.manager,model_account_asset_category,ams_accounting.group_ams_accounting_manager,1,1,1,1
 access_account_asset_depreciation_line_user,account.asset.depreciation.line.user,model_account_asset_depreciation_line,ams_accounting.group_ams_accounting_user,1,1,1,0
 access_account_asset_depreciation_line_manager,account.asset.depreciation.line.manager,model_account_asset_depreciation_line,ams_accounting.group_ams_accounting_manager,1,1,1,1
+
+# Follow-up Management
 access_account_followup_user,account.followup.user,model_account_followup,ams_accounting.group_ams_accounting_user,1,0,0,0
 access_account_followup_manager,account.followup.manager,model_account_followup,ams_accounting.group_ams_accounting_manager,1,1,1,1
 access_account_followup_line_user,account.followup.line.user,model_account_followup_line,ams_accounting.group_ams_accounting_user,1,0,0,0
 access_account_followup_line_manager,account.followup.line.manager,model_account_followup_line,ams_accounting.group_ams_accounting_manager,1,1,1,1
+
+# Multiple Invoice System
 access_multiple_invoice_user,multiple.invoice.user,model_multiple_invoice,ams_accounting.group_ams_accounting_user,1,1,1,0
 access_multiple_invoice_manager,multiple.invoice.manager,model_multiple_invoice,ams_accounting.group_ams_accounting_manager,1,1,1,1
 access_multiple_invoice_layout_user,multiple.invoice.layout.user,model_multiple_invoice_layout,ams_accounting.group_ams_accounting_user,1,0,0,0
 access_multiple_invoice_layout_manager,multiple.invoice.layout.manager,model_multiple_invoice_layout,ams_accounting.group_ams_accounting_manager,1,1,1,1
+
+# Recurring Payments
 access_recurring_payments_user,recurring.payments.user,model_recurring_payments,ams_accounting.group_ams_accounting_user,1,1,1,0
 access_recurring_payments_manager,recurring.payments.manager,model_recurring_payments,ams_accounting.group_ams_accounting_manager,1,1,1,1
+
+# Financial Reports
 access_account_financial_report_user,account.financial.report.user,model_account_financial_report,ams_accounting.group_ams_financial_reports,1,0,0,0
 access_account_financial_report_manager,account.financial.report.manager,model_account_financial_report,ams_accounting.group_ams_accounting_manager,1,1,1,1
 access_account_cash_flow_report_user,account.cash.flow.report.user,model_account_cash_flow_report,ams_accounting.group_ams_financial_reports,1,0,0,0
 access_account_cash_flow_report_manager,account.cash.flow.report.manager,model_account_cash_flow_report,ams_accounting.group_ams_accounting_manager,1,1,1,1
+
+# Report Wizards
+access_financial_report_wizard_user,financial.report.wizard.user,model_financial_report_wizard,ams_accounting.group_ams_financial_reports,1,1,1,1
+access_financial_report_wizard_manager,financial.report.wizard.manager,model_financial_report_wizard,ams_accounting.group_ams_accounting_manager,1,1,1,1
+access_financial_report_template_user,financial.report.template.user,model_financial_report_template,ams_accounting.group_ams_financial_reports,1,1,1,0
+access_financial_report_template_manager,financial.report.template.manager,model_financial_report_template,ams_accounting.group_ams_accounting_manager,1,1,1,1
+access_general_ledger_wizard_user,general.ledger.wizard.user,model_general_ledger_wizard,ams_accounting.group_ams_financial_reports,1,1,1,1
+access_general_ledger_wizard_manager,general.ledger.wizard.manager,model_general_ledger_wizard,ams_accounting.group_ams_accounting_manager,1,1,1,1
+
+# AMS Integration Models
 access_ams_subscription_accounting_user,ams.subscription.accounting.user,ams_subscriptions.model_ams_subscription,ams_accounting.group_ams_subscription_accounting,1,1,0,0
 access_ams_subscription_accounting_manager,ams.subscription.accounting.manager,ams_subscriptions.model_ams_subscription,ams_accounting.group_ams_accounting_manager,1,1,1,0
 access_ams_chapter_accounting_user,ams.chapter.accounting.user,ams_subscriptions.model_ams_chapter,ams_accounting.group_ams_chapter_financial,1,1,0,0
 access_ams_chapter_accounting_manager,ams.chapter.accounting.manager,ams_subscriptions.model_ams_chapter,ams_accounting.group_ams_accounting_manager,1,1,1,0
+
+# Standard Odoo Models with AMS Extensions
 access_account_move_ams_user,account.move.ams.user,account.model_account_move,ams_accounting.group_ams_accounting_user,1,1,1,0
 access_account_move_ams_manager,account.move.ams.manager,account.model_account_move,ams_accounting.group_ams_accounting_manager,1,1,1,1
 access_account_move_line_ams_user,account.move.line.ams.user,account.model_account_move_line,ams_accounting.group_ams_accounting_user,1,1,1,0
@@ -31,8 +52,54 @@ access_res_partner_ams_financial_user,res.partner.ams.financial.user,base.model_
 access_res_partner_ams_financial_manager,res.partner.ams.financial.manager,base.model_res_partner,ams_accounting.group_ams_accounting_manager,1,1,1,0
 access_account_payment_ams_user,account.payment.ams.user,account.model_account_payment,ams_accounting.group_ams_accounting_user,1,1,1,0
 access_account_payment_ams_manager,account.payment.ams.manager,account.model_account_payment,ams_accounting.group_ams_accounting_manager,1,1,1,1
+
+# Bank Statement Access
 access_account_bank_statement_ams_user,account.bank.statement.ams.user,account.model_account_bank_statement,ams_accounting.group_ams_accounting_user,1,1,1,0
 access_account_bank_statement_ams_manager,account.bank.statement.ams.manager,account.model_account_bank_statement,ams_accounting.group_ams_accounting_manager,1,1,1,1
 access_account_bank_statement_line_ams_user,account.bank.statement.line.ams.user,account.model_account_bank_statement_line,ams_accounting.group_ams_accounting_user,1,1,1,0
 access_account_bank_statement_line_ams_manager,account.bank.statement.line.ams.manager,account.model_account_bank_statement_line,ams_accounting.group_ams_accounting_manager,1,1,1,1
+
+# Dashboard Access
 access_dashboard_group,access.dashboard.group,account.model_account_move,ams_accounting.group_account_dashboard,1,0,0,0
+
+# Credit Management
+access_credit_limit_user,credit.limit.user,model_credit_limit,ams_accounting.group_ams_accounting_user,1,1,1,0
+access_credit_limit_manager,credit.limit.manager,model_credit_limit,ams_accounting.group_ams_accounting_manager,1,1,1,1
+
+# Payment Plans
+access_payment_plan_user,payment.plan.user,model_payment_plan,ams_accounting.group_ams_accounting_user,1,1,1,0
+access_payment_plan_manager,payment.plan.manager,model_payment_plan,ams_accounting.group_ams_accounting_manager,1,1,1,1
+access_payment_plan_line_user,payment.plan.line.user,model_payment_plan_line,ams_accounting.group_ams_accounting_user,1,1,1,0
+access_payment_plan_line_manager,payment.plan.line.manager,model_payment_plan_line,ams_accounting.group_ams_accounting_manager,1,1,1,1
+
+# Budget Management
+access_budget_user,budget.user,model_budget,ams_accounting.group_ams_budget_manager,1,1,1,0
+access_budget_manager,budget.manager,model_budget,ams_accounting.group_ams_accounting_manager,1,1,1,1
+access_budget_line_user,budget.line.user,model_budget_line,ams_accounting.group_ams_budget_manager,1,1,1,0
+access_budget_line_manager,budget.line.manager,model_budget_line,ams_accounting.group_ams_accounting_manager,1,1,1,1
+
+# Audit Trail
+access_account_audit_trail_user,account.audit.trail.user,model_account_audit_trail,ams_accounting.group_ams_accounting_user,1,0,0,0
+access_account_audit_trail_manager,account.audit.trail.manager,model_account_audit_trail,ams_accounting.group_ams_accounting_manager,1,1,1,1
+
+# Member Financial Analysis
+access_member_financial_summary_user,member.financial.summary.user,model_member_financial_summary,ams_accounting.group_ams_member_financial,1,0,0,0
+access_member_financial_summary_manager,member.financial.summary.manager,model_member_financial_summary,ams_accounting.group_ams_accounting_manager,1,1,1,1
+
+# Chapter Financial Analysis
+access_chapter_financial_summary_user,chapter.financial.summary.user,model_chapter_financial_summary,ams_accounting.group_ams_chapter_financial,1,0,0,0
+access_chapter_financial_summary_manager,chapter.financial.summary.manager,model_chapter_financial_summary,ams_accounting.group_ams_accounting_manager,1,1,1,1
+
+# Subscription Revenue Tracking
+access_subscription_revenue_line_user,subscription.revenue.line.user,model_subscription_revenue_line,ams_accounting.group_ams_subscription_accounting,1,1,1,0
+access_subscription_revenue_line_manager,subscription.revenue.line.manager,model_subscription_revenue_line,ams_accounting.group_ams_accounting_manager,1,1,1,1
+
+# Revenue Recognition
+access_revenue_recognition_user,revenue.recognition.user,model_revenue_recognition,ams_accounting.group_ams_accounting_user,1,1,1,0
+access_revenue_recognition_manager,revenue.recognition.manager,model_revenue_recognition,ams_accounting.group_ams_accounting_manager,1,1,1,1
+access_revenue_recognition_line_user,revenue.recognition.line.user,model_revenue_recognition_line,ams_accounting.group_ams_accounting_user,1,1,1,0
+access_revenue_recognition_line_manager,revenue.recognition.line.manager,model_revenue_recognition_line,ams_accounting.group_ams_accounting_manager,1,1,1,1
+
+# Tax Management
+access_tax_report_user,tax.report.user,model_tax_report,ams_accounting.group_ams_accounting_user,1,0,0,0
+access_tax_report_manager,tax.report.manager,model_tax_report,ams_accounting.group_ams_accounting_manager,1,1,1,1
