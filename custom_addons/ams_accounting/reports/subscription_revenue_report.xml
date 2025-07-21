@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Subscription Revenue Report -->
+    
+    <!-- Report Action -->
+    <record id="action_subscription_revenue_report" model="ir.actions.report">
+        <field name="name">Subscription Revenue Report</field>
+        <field name="model">ams.subscription</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_accounting.subscription_revenue_report_template</field>
+        <field name="report_file">ams_accounting.subscription_revenue_report_template</field>
+        <field name="binding_model_id" ref="ams_subscriptions.model_ams_subscription"/>
+        <field name="paperformat_id" ref="base.paperformat_us"/>
+    </record>
+
+    <!-- Report Template -->
+    <template id="subscription_revenue_report_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="subscription">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        
+                        <!-- Report Header -->
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <h2 class="text-primary">Subscription Revenue Report</h2>
+                                <h4 t-field="subscription.name"/>
+                                <p class="text-muted">Generated on <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%B %d, %Y')"/></p>
+                            </div>
+                        </div>
+                        
+                        <!-- Subscription Overview -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h4 class="text-secondary">Subscription Overview</h4>
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td><strong>Subscriber:</strong></td>
+                                        <td t-field="subscription.partner_id.name"/>
+                                        <td><strong>Subscription Type:</strong></td>
+                                        <td t-field="subscription.subscription_type_id.name"/>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Start Date:</strong></td>
+                                        <td t-field="subscription.start_date"/>
+                                        <td><strong>End Date:</strong></td>
+                                        <td t-field="subscription.end_date"/>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Status:</strong></td>
+                                        <td>
+                                            <span t-field="subscription.state" 
+                                                  t-attf-class="badge badge-#{subscription.state == 'active' and 'success' or subscription.state == 'expired' and 'warning' or 'secondary'}"/>
+                                        </td>
+                                        <td><strong>Accounting Status:</strong></td>
+                                        <td>
+                                            <span t-field="subscription.accounting_status"
+                                                  t-attf-class="badge badge-#{subscription.accounting_status == 'active' and 'success' or subscription.accounting_status == 'pending' and 'warning' or 'secondary'}"/>
+                                        </td>
+                                    </tr>
+                                    <tr t-if="subscription.chapter_id">
+                                        <td><strong>Chapter:</strong></td>
+                                        <td t-field="subscription.chapter_id.name"/>
+                                        <td><strong>Chapter Region:</strong></td>
+                                        <td t-field="subscription.chapter_region"/>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Financial Summary -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h4 class="text-secondary">Financial Summary</h4>
+                                <div class="row">
+                                    <div class="col-md-3 col-sm-6">
+                                        <div class="card text-center">
+                                            <div class="card-body">
+                                                <h5 class="card-title text-primary">Subscription Amount</h5>
+                                                <h3 class="text-success">
+                                                    <span t-field="subscription.amount" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                                                </h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-sm-6">
+                                        <div class="card text-center">
+                                            <div class="card-body">
+                                                <h5 class="card-title text-info">Total Invoiced</h5>
+                                                <h3 class="text-primary">
+                                                    <span t-field="subscription.total_invoiced" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                                                </h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-sm-6">
+                                        <div class="card text-center">
+                                            <div class="card-body">
+                                                <h5 class="card-title text-success">Total Paid</h5>
+                                                <h3 class="text-success">
+                                                    <span t-field="subscription.total_paid" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                                                </h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-sm-6">
+                                        <div class="card text-center">
+                                            <div class="card-body">
+                                                <h5 class="card-title text-warning">Amount Due</h5>
+                                                <h3 t-attf-class="#{subscription.amount_due > 0 and 'text-danger' or 'text-muted'}">
+                                                    <span t-field="subscription.amount_due" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                                                </h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Deferred Revenue Section -->
+                                <div class="row mt-3" t-if="subscription.deferred_revenue_balance > 0">
+                                    <div class="col-md-6">
+                                        <div class="card text-center">
+                                            <div class="card-body">
+                                                <h5 class="card-title text-info">Deferred Revenue Balance</h5>
+                                                <h3 class="text-info">
+                                                    <span t-field="subscription.deferred_revenue_balance" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                                                </h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card text-center">
+                                            <div class="card-body">
+                                                <h5 class="card-title text-secondary">Monthly Recognition</h5>
+                                                <h3 class="text-secondary">
+                                                    <span t-field="subscription.monthly_recognition_amount" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                                                </h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Revenue Recognition Schedule -->
+                        <div class="row mt-4" t-if="subscription.revenue_recognition_ids">
+                            <div class="col-12">
+                                <h4 class="text-secondary">Revenue Recognition Schedule</h4>
+                                <table class="table table-striped">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Recognition Date</th>
+                                            <th>Amount</th>
+                                            <th>Description</th>
+                                            <th>Status</th>
+                                            <th>Journal Entry</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="subscription.revenue_recognition_ids" t-as="recognition">
+                                            <tr>
+                                                <td t-field="recognition.recognition_date"/>
+                                                <td>
+                                                    <span t-field="recognition.amount" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': recognition.currency_id}"/>
+                                                </td>
+                                                <td t-field="recognition.description"/>
+                                                <td>
+                                                    <span t-field="recognition.state"
+                                                          t-attf-class="badge badge-#{recognition.state == 'processed' and 'success' or recognition.state == 'scheduled' and 'warning' or 'secondary'}"/>
+                                                </td>
+                                                <td>
+                                                    <span t-if="recognition.move_id" t-field="recognition.move_id.name"/>
+                                                    <span t-if="not recognition.move_id" class="text-muted">Not Created</span>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="font-weight-bold">
+                                            <td>Total</td>
+                                            <td>
+                                                <span t-esc="sum(subscription.revenue_recognition_ids.mapped('amount'))" 
+                                                      t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                                            </td>
+                                            <td colspan="3"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Invoice History -->
+                        <div class="row mt-4" t-if="subscription.invoice_ids">
+                            <div class="col-12">
+                                <h4 class="text-secondary">Invoice History</h4>
+                                <table class="table table-striped">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Invoice Number</th>
+                                            <th>Date</th>
+                                            <th>Due Date</th>
+                                            <th>Amount</th>
+                                            <th>Amount Due</th>
+                                            <th>Status</th>
+                                            <th>Type</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="subscription.invoice_ids.sorted('invoice_date', reverse=True)" t-as="invoice">
+                                            <tr>
+                                                <td t-field="invoice.name"/>
+                                                <td t-field="invoice.invoice_date"/>
+                                                <td t-field="invoice.invoice_date_due"/>
+                                                <td>
+                                                    <span t-field="invoice.amount_total" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': invoice.currency_id}"/>
+                                                </td>
+                                                <td>
+                                                    <span t-field="invoice.amount_residual" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': invoice.currency_id}"
+                                                          t-attf-class="#{invoice.amount_residual > 0 and 'text-danger' or 'text-success'}"/>
+                                                </td>
+                                                <td>
+                                                    <span t-field="invoice.state"
+                                                          t-attf-class="badge badge-#{invoice.state == 'posted' and 'success' or invoice.state == 'draft' and 'warning' or 'secondary'}"/>
+                                                </td>
+                                                <td>
+                                                    <span t-if="invoice.is_renewal_invoice" class="badge badge-info">Renewal</span>
+                                                    <span t-if="not invoice.is_renewal_invoice" class="badge badge-primary">Initial</span>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="font-weight-bold">
+                                            <td colspan="3">Totals</td>
+                                            <td>
+                                                <span t-esc="sum(subscription.invoice_ids.mapped('amount_total'))" 
+                                                      t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                                            </td>
+                                            <td>
+                                                <span t-esc="sum(subscription.invoice_ids.mapped('amount_residual'))" 
+                                                      t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"
+                                                      t-attf-class="#{sum(subscription.invoice_ids.mapped('amount_residual')) > 0 and 'text-danger' or 'text-success'}"/>
+                                            </td>
+                                            <td colspan="2"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Account Mapping Information -->
+                        <div class="row mt-4" t-if="subscription.account_mapping_id">
+                            <div class="col-12">
+                                <h4 class="text-secondary">Account Configuration</h4>
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td><strong>Income Account:</strong></td>
+                                        <td t-field="subscription.account_mapping_id.income_account_id.display_name"/>
+                                        <td><strong>Receivable Account:</strong></td>
+                                        <td t-field="subscription.account_mapping_id.receivable_account_id.display_name"/>
+                                    </tr>
+                                    <tr t-if="subscription.account_mapping_id.deferred_revenue_account_id">
+                                        <td><strong>Deferred Revenue Account:</strong></td>
+                                        <td t-field="subscription.account_mapping_id.deferred_revenue_account_id.display_name"/>
+                                        <td><strong>Deferral Period:</strong></td>
+                                        <td><span t-field="subscription.account_mapping_id.deferral_period_months"/> months</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Auto Create Entries:</strong></td>
+                                        <td>
+                                            <span t-if="subscription.account_mapping_id.auto_create_entries" class="text-success">Yes</span>
+                                            <span t-if="not subscription.account_mapping_id.auto_create_entries" class="text-muted">No</span>
+                                        </td>
+                                        <td><strong>Use Deferred Revenue:</strong></td>
+                                        <td>
+                                            <span t-if="subscription.account_mapping_id.use_deferred_revenue" class="text-success">Yes</span>
+                                            <span t-if="not subscription.account_mapping_id.use_deferred_revenue" class="text-muted">No</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Child Subscriptions (for memberships with chapters) -->
+                        <div class="row mt-4" t-if="subscription.child_subscription_ids">
+                            <div class="col-12">
+                                <h4 class="text-secondary">Associated Chapter Subscriptions</h4>
+                                <table class="table table-striped">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Chapter</th>
+                                            <th>Region</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Total Invoiced</th>
+                                            <th>Amount Due</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="subscription.child_subscription_ids" t-as="child">
+                                            <tr>
+                                                <td t-field="child.chapter_id.name"/>
+                                                <td t-field="child.chapter_region"/>
+                                                <td>
+                                                    <span t-field="child.amount" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': child.currency_id}"/>
+                                                </td>
+                                                <td>
+                                                    <span t-field="child.state"
+                                                          t-attf-class="badge badge-#{child.state == 'active' and 'success' or child.state == 'expired' and 'warning' or 'secondary'}"/>
+                                                </td>
+                                                <td>
+                                                    <span t-field="child.total_invoiced" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': child.currency_id}"/>
+                                                </td>
+                                                <td>
+                                                    <span t-field="child.amount_due" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': child.currency_id}"
+                                                          t-attf-class="#{child.amount_due > 0 and 'text-danger' or 'text-success'}"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="font-weight-bold">
+                                            <td colspan="2">Totals</td>
+                                            <td>
+                                                <span t-esc="sum(subscription.child_subscription_ids.mapped('amount'))" 
+                                                      t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <span t-esc="sum(subscription.child_subscription_ids.mapped('total_invoiced'))" 
+                                                      t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                                            </td>
+                                            <td>
+                                                <span t-esc="sum(subscription.child_subscription_ids.mapped('amount_due'))" 
+                                                      t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"
+                                                      t-attf-class="#{sum(subscription.child_subscription_ids.mapped('amount_due')) > 0 and 'text-danger' or 'text-success'}"/>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Report Footer -->
+                        <div class="row mt-5">
+                            <div class="col-12 text-center text-muted">
+                                <p>This report was generated automatically by the AMS Accounting system.</p>
+                                <p>For questions about this report, please contact your accounting department.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Add report to subscription form view -->
+    <record id="action_subscription_revenue_report_menu" model="ir.actions.act_window">
+        <field name="name">Generate Revenue Report</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">tree</field>
+        <field name="domain">[('total_invoiced', '>', 0)]</field>
+        <field name="context">{}</field>
+    </record>
+</odoo>

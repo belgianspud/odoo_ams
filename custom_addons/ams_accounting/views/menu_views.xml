@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- AMS Accounting Menu Structure -->
+    
+    <!-- Main AMS Accounting Menu (under existing AMS menu) -->
+    <menuitem id="menu_ams_accounting_root" name="Accounting" 
+              parent="ams_subscriptions.menu_ams_root" sequence="50"/>
+    
+    <!-- Dashboard Menu -->
+    <menuitem id="menu_ams_accounting_dashboard" name="Dashboard" 
+              parent="menu_ams_accounting_root" sequence="10"
+              action="action_ams_accounting_dashboard"/>
+    
+    <!-- Revenue Management Menu -->
+    <menuitem id="menu_ams_revenue_management" name="Revenue Management" 
+              parent="menu_ams_accounting_root" sequence="20"/>
+    
+    <menuitem id="menu_ams_revenue_recognition" name="Revenue Recognition" 
+              parent="menu_ams_revenue_management" sequence="10"
+              action="action_ams_revenue_recognition"/>
+    
+    <menuitem id="menu_ams_due_revenue_recognition" name="Due Recognition" 
+              parent="menu_ams_revenue_management" sequence="20"
+              action="action_due_revenue_recognition"/>
+    
+    <menuitem id="menu_ams_deferred_revenue" name="Deferred Revenue" 
+              parent="menu_ams_revenue_management" sequence="30"
+              action="action_subscription_deferred_revenue"/>
+    
+    <menuitem id="menu_ams_revenue_analytics" name="Revenue Analytics" 
+              parent="menu_ams_revenue_management" sequence="40"
+              action="action_subscription_revenue_analytics"/>
+    
+    <!-- Customer Management Menu -->
+    <menuitem id="menu_ams_customer_management" name="Customers" 
+              parent="menu_ams_accounting_root" sequence="30"/>
+    
+    <menuitem id="menu_ams_all_customers" name="All AMS Customers" 
+              parent="menu_ams_customer_management" sequence="10"
+              action="action_ams_customers"/>
+    
+    <menuitem id="menu_ams_overdue_customers" name="Overdue Customers" 
+              parent="menu_ams_customer_management" sequence="20"
+              action="action_overdue_customers"/>
+    
+    <menuitem id="menu_ams_credit_hold_customers" name="Credit Hold" 
+              parent="menu_ams_customer_management" sequence="30"
+              action="action_credit_hold_customers"/>
+    
+    <menuitem id="menu_ams_high_value_customers" name="High Value Customers" 
+              parent="menu_ams_customer_management" sequence="40"
+              action="action_high_value_customers"/>
+    
+    <!-- Product & Account Configuration Menu -->
+    <menuitem id="menu_ams_accounting_configuration" name="Configuration" 
+              parent="menu_ams_accounting_root" sequence="80"/>
+    
+    <menuitem id="menu_ams_account_mappings" name="Product Account Mappings" 
+              parent="menu_ams_accounting_configuration" sequence="10"
+              action="action_product_account_mapping"/>
+    
+    <menuitem id="menu_ams_subscription_mappings" name="Subscription Mappings" 
+              parent="menu_ams_accounting_configuration" sequence="20"
+              action="action_subscription_product_mappings"/>
+    
+    <menuitem id="menu_ams_deferred_mappings" name="Deferred Revenue Mappings" 
+              parent="menu_ams_accounting_configuration" sequence="30"
+              action="action_deferred_revenue_mappings"/>
+    
+    <menuitem id="menu_ams_quick_mapping_setup" name="Quick Setup Wizard" 
+              parent="menu_ams_accounting_configuration" sequence="40"
+              action="action_quick_mapping_setup"/>
+    
+    <!-- Chart of Accounts Menu -->
+    <menuitem id="menu_ams_chart_of_accounts" name="Chart of Accounts" 
+              parent="menu_ams_accounting_configuration" sequence="50"/>
+    
+    <menuitem id="menu_ams_charts" name="AMS Charts" 
+              parent="menu_ams_chart_of_accounts" sequence="10"
+              action="action_ams_account_chart"/>
+    
+    <menuitem id="menu_ams_chart_templates" name="Chart Templates" 
+              parent="menu_ams_chart_of_accounts" sequence="20"
+              action="action_ams_account_template"/>
+    
+    <menuitem id="menu_ams_accounts" name="AMS Accounts" 
+              parent="menu_ams_chart_of_accounts" sequence="30"
+              action="action_ams_accounts"/>
+    
+    <menuitem id="menu_ams_revenue_accounts" name="Revenue Accounts" 
+              parent="menu_ams_chart_of_accounts" sequence="40"
+              action="action_subscription_revenue_accounts"/>
+    
+    <menuitem id="menu_ams_deferred_accounts" name="Deferred Revenue Accounts" 
+              parent="menu_ams_chart_of_accounts" sequence="50"
+              action="action_deferred_revenue_accounts"/>
+    
+    <!-- Subscription Accounting Menu -->
+    <menuitem id="menu_ams_subscription_accounting" name="Subscription Accounting" 
+              parent="menu_ams_accounting_root" sequence="40"/>
+    
+    <menuitem id="menu_ams_subscription_accounting_active" name="Active Accounting" 
+              parent="menu_ams_subscription_accounting" sequence="10"
+              action="action_subscription_accounting_active"/>
+    
+    <menuitem id="menu_ams_subscription_accounting_pending" name="Pending Setup" 
+              parent="menu_ams_subscription_accounting" sequence="20"
+              action="action_subscription_accounting_pending"/>
+    
+    <menuitem id="menu_ams_subscription_invoices" name="Subscription Invoices" 
+              parent="menu_ams_subscription_accounting" sequence="30"
+              action="ams_subscriptions.action_ams_subscription_invoices"/>
+    
+    <menuitem id="menu_ams_renewal_invoices" name="Renewal Invoices" 
+              parent="menu_ams_subscription_accounting" sequence="40"
+              action="ams_subscriptions.action_ams_renewal_invoices"/>
+    
+    <!-- Analytics & Reports Menu -->
+    <menuitem id="menu_ams_accounting_reports" name="Analytics &amp; Reports" 
+              parent="menu_ams_accounting_root" sequence="70"/>
+    
+    <menuitem id="menu_ams_financial_summary" name="Financial Summary" 
+              parent="menu_ams_accounting_reports" sequence="10"
+              action="action_ams_financial_summary"/>
+    
+    <menuitem id="menu_ams_revenue_recognition_dashboard" name="Revenue Recognition Dashboard" 
+              parent="menu_ams_accounting_reports" sequence="20"
+              action="action_revenue_recognition_dashboard"/>
+    
+    <menuitem id="menu_ams_mapping_analytics" name="Product Revenue Analytics" 
+              parent="menu_ams_accounting_reports" sequence="30"
+              action="action_mapping_revenue_analytics"/>
+    
+    <menuitem id="menu_ams_company_mappings" name="Company Mappings" 
+              parent="menu_ams_accounting_reports" sequence="40"
+              action="action_company_mappings"/>
+    
+    <!-- Integration with Odoo Accounting Menu -->
+    
+    <!-- Add AMS sections to main Accounting menu if exists -->
+    <menuitem id="menu_accounting_ams_section" name="AMS Integration" 
+              parent="account.menu_finance" sequence="25"/>
+    
+    <menuitem id="menu_accounting_ams_revenue" name="AMS Revenue Accounts" 
+              parent="menu_accounting_ams_section" sequence="10"
+              action="action_subscription_revenue_accounts"/>
+    
+    <menuitem id="menu_accounting_ams_deferred" name="AMS Deferred Revenue" 
+              parent="menu_accounting_ams_section" sequence="20"
+              action="action_deferred_revenue_accounts"/>
+    
+    <menuitem id="menu_accounting_ams_recognition" name="AMS Revenue Recognition" 
+              parent="menu_accounting_ams_section" sequence="30"
+              action="action_ams_revenue_recognition"/>
+    
+    <menuitem id="menu_accounting_ams_customers" name="AMS Customers" 
+              parent="menu_accounting_ams_section" sequence="40"
+              action="action_ams_customers"/>
+    
+    <!-- Quick Access Menu Items (for easy navigation) -->
+    <menuitem id="menu_ams_quick_access" name="Quick Access" 
+              parent="menu_ams_accounting_root" sequence="5"/>
+    
+    <menuitem id="menu_quick_due_recognition" name="Process Due Recognition" 
+              parent="menu_ams_quick_access" sequence="10"
+              action="action_due_revenue_recognition"/>
+    
+    <menuitem id="menu_quick_pending_setup" name="Setup Accounting" 
+              parent="menu_ams_quick_access" sequence="20"
+              action="action_subscription_accounting_pending"/>
+    
+    <menuitem id="menu_quick_overdue" name="Overdue Payments" 
+              parent="menu_ams_quick_access" sequence="30"
+              action="action_overdue_customers"/>
+    
+    <!-- Workflow Menu (for process management) -->
+    <menuitem id="menu_ams_accounting_workflow" name="Workflow" 
+              parent="menu_ams_accounting_root" sequence="60"/>
+    
+    <menuitem id="menu_workflow_new_subscriptions" name="New Subscriptions Setup" 
+              parent="menu_ams_accounting_workflow" sequence="10"
+              action="action_subscription_accounting_pending"/>
+    
+    <menuitem id="menu_workflow_revenue_recognition" name="Revenue Recognition Process" 
+              parent="menu_ams_accounting_workflow" sequence="20"
+              action="action_due_revenue_recognition"/>
+    
+    <menuitem id="menu_workflow_collections" name="Collections Process" 
+              parent="menu_ams_accounting_workflow" sequence="30"
+              action="action_overdue_customers"/>
+    
+    <menuitem id="menu_workflow_month_end" name="Month-End Process" 
+              parent="menu_ams_accounting_workflow" sequence="40"
+              action="action_ams_revenue_recognition"/>
+    
+    <!-- Settings Menu -->
+    <menuitem id="menu_ams_accounting_settings" name="Settings" 
+              parent="menu_ams_accounting_root" sequence="90"/>
+    
+    <menuitem id="menu_settings_chart_installation" name="Install Chart of Accounts" 
+              parent="menu_ams_accounting_settings" sequence="10"
+              action="action_ams_account_chart"/>
+    
+    <menuitem id="menu_settings_default_mappings" name="Default Product Mappings" 
+              parent="menu_ams_accounting_settings" sequence="20"
+              action="action_product_account_mapping"/>
+    
+    <menuitem id="menu_settings_revenue_recognition" name="Revenue Recognition Settings" 
+              parent="menu_ams_accounting_settings" sequence="30"
+              action="action_ams_revenue_recognition"/>
+    
+    <!-- Context Actions for Easy Access -->
+    <record id="ir_actions_server_batch_recognition" model="ir.actions.server">
+        <field name="name">Batch Process Recognition</field>
+        <field name="model_id" ref="model_ams_revenue_recognition"/>
+        <field name="binding_model_id" ref="model_ams_revenue_recognition"/>
+        <field name="state">code</field>
+        <field name="code">
+for record in records:
+    if record.state == 'scheduled':
+        record.process_recognition()
+        </field>
+    </record>
+    
+    <record id="ir_actions_server_setup_accounting" model="ir.actions.server">
+        <field name="name">Setup Accounting</field>
+        <field name="model_id" ref="ams_subscriptions.model_ams_subscription"/>
+        <field name="binding_model_id" ref="ams_subscriptions.model_ams_subscription"/>
+        <field name="state">code</field>
+        <field name="code">
+for record in records:
+    if not record.account_mapping_id:
+        record.action_configure_accounting()
+        </field>
+    </record>
+    
+    <record id="ir_actions_server_create_revenue_entry" model="ir.actions.server">
+        <field name="name">Create Revenue Entry</field>
+        <field name="model_id" ref="ams_subscriptions.model_ams_subscription"/>
+        <field name="binding_model_id" ref="ams_subscriptions.model_ams_subscription"/>
+        <field name="state">code</field>
+        <field name="code">
+for record in records:
+    if record.account_mapping_id and record.amount > 0:
+        record.create_accounting_entries()
+        </field>
+    </record>
+</odoo>

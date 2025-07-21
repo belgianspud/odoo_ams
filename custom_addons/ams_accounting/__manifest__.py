@@ -1,46 +1,64 @@
 {
-    'name': 'AMS Accounting - Full Accounting Kit',
-    'version': '18.0.1.0.0',
-    'category': 'Accounting/Accounting',
-    'summary': 'Complete Accounting Features for Association Management System',
+    'name': 'AMS Accounting',
+    'version': '1.0.0',
+    'category': 'Association Management',
+    'summary': 'Basic accounting module for Association Management System',
     'description': """
-AMS Accounting Module
-=====================
-
-Complete accounting functionality adapted for Association Management Systems.
-Built specifically for Odoo 18 with seamless AMS integration.
-
-Core Features:
-- Member financial management
-- Subscription accounting integration
-- Payment plan management
-- Chapter financial tracking
-- Credit management system
+        AMS Accounting Module
+        =====================
+        
+        Basic accounting functionality for Association Management System (AMS).
+        
+        Features:
+        - Chart of accounts management
+        - Product-to-account mapping for subscriptions
+        - Integration with Odoo native accounting
+        - Subscription revenue tracking
+        - Contact-based financial reporting
+        - Automated account entries for subscription products
+        - Financial dashboards and reports
+        
+        Integration:
+        - Links to ams_subscriptions for subscription revenue tracking
+        - Extends Odoo's native accounting functionality
+        - Partner financial summaries
+        - Product-based account automation
     """,
     'author': 'AMS Development Team',
-    'website': 'https://github.com/belgianspud/odoo_ams',
+    'website': '',
     'license': 'LGPL-3',
     'depends': [
         'base',
-        'account',
-        'mail',
-        'ams_subscriptions',
-        'ams_module_manager',
+        'account',  # Odoo native accounting
+        'sale',
+        'product',
+        'contacts',
+        'ams_subscriptions',  # Our subscription module
     ],
     'data': [
-        # Views only - ultra minimal
-        'views/dashboard_views.xml',
-        'views/accounting_menu.xml',
+        # Security
+        'security/ir.model.access.csv',
         
-        # Our 5 new view files
-        'views/ams_member_financial_views.xml',
-        'views/ams_subscription_accounting_views.xml', 
-        'views/ams_payment_plan_views.xml',
-        'views/ams_chapter_financial_views.xml',
-        'views/ams_credit_management_views.xml',
+        # Data files
+        'data/account_chart_data.xml',
+        'data/product_account_mapping_data.xml',
+        
+        # Views
+        'views/account_chart_views.xml',
+        'views/product_account_mapping_views.xml',
+        'views/partner_accounting_views.xml',
+        'views/subscription_accounting_views.xml',
+        'views/accounting_dashboard_views.xml',
+        'views/menu_views.xml',
+        
+        # Reports
+        'reports/subscription_revenue_report.xml',
+        'reports/partner_financial_report.xml',
     ],
     'installable': True,
+    'application': False,
     'auto_install': False,
-    'application': True,
-    'sequence': 15,
+    'external_dependencies': {
+        'python': [],
+    },
 }

@@ -1,3 +1,4 @@
 from . import models
-from . import wizard
-from . import report
+from . import reports
+from . import views
+from . import security

@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Product Account Mapping Views -->
+    
+    <!-- Mapping Form View -->
+    <record id="view_product_account_mapping_form" model="ir.ui.view">
+        <field name="name">product.account.mapping.form</field>
+        <field name="model">product.account.mapping</field>
+        <field name="arch" type="xml">
+            <form string="Product Account Mapping">
+                <header>
+                    <button name="create_revenue_entry" string="Create Revenue Entry" type="object" 
+                            class="btn-primary" invisible="not auto_create_entries"/>
+                    <button name="action_view_account_moves" string="View Account Moves" type="object" 
+                            class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_view_account_moves" 
+                                icon="fa-book">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Account</span>
+                                <span class="o_stat_text">Moves</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <widget name="web_ribbon" title="Inactive" bg_color="bg-danger" 
+                            invisible="active"/>
+                    
+                    <group>
+                        <group string="Product Information">
+                            <field name="product_id" options="{'no_create': True}"/>
+                            <field name="product_template_id" readonly="1"/>
+                            <field name="is_subscription_mapping" readonly="1"/>
+                            <field name="subscription_type_id" readonly="1"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Company">
+                            <field name="company_id"/>
+                            <field name="currency_id"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Account Configuration" name="accounts">
+                            <group>
+                                <group string="Revenue Accounts">
+                                    <field name="income_account_id" 
+                                           domain="[('account_type', 'in', ['income', 'income_other']), ('company_id', '=', company_id)]"
+                                           options="{'no_create': True}"/>
+                                    <field name="deferred_revenue_account_id" 
+                                           domain="[('account_type', 'in', ['liability_current', 'liability_non_current']), ('company_id', '=', company_id)]"
+                                           options="{'no_create': True}"
+                                           invisible="not use_deferred_revenue"/>
+                                </group>
+                                <group string="Other Accounts">
+                                    <field name="expense_account_id" 
+                                           domain="[('account_type', 'in', ['expense', 'expense_direct_cost']), ('company_id', '=', company_id)]"
+                                           options="{'no_create': True}"/>
+                                    <field name="receivable_account_id" 
+                                           domain="[('account_type', '=', 'asset_receivable'), ('company_id', '=', company_id)]"
+                                           options="{'no_create': True}"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <page string="Revenue Recognition" name="revenue_recognition">
+                            <group>
+                                <group string="Settings">
+                                    <field name="auto_create_entries"/>
+                                    <field name="use_deferred_revenue"/>
+                                    <field name="deferral_period_months" invisible="not use_deferred_revenue"/>
+                                </group>
+                                <group string="Statistics">
+                                    <field name="total_revenue_ytd" readonly="1"/>
+                                    <field name="total_invoiced" readonly="1"/>
+                                </group>
+                            </group>
+                            
+                            <group string="Revenue Recognition Schedule" invisible="not use_deferred_revenue">
+                                <p class="text-muted">
+                                    When deferred revenue is enabled, revenue will be recognized over 
+                                    <field name="deferral_period_months" readonly="1"/> months.
+                                </p>
+                            </group>
+                        </page>
+                        
+                        <page string="Automation" name="automation">
+                            <group>
+                                <group string="Entry Creation">
+                                    <field name="auto_create_entries"/>
+                                    <label for="auto_create_entries" string="Automatically create accounting entries when this product is sold"/>
+                                </group>
+                            </group>
+                            
+                            <group string="Configuration Help">
+                                <div class="alert alert-info">
+                                    <h5>Account Configuration Tips:</h5>
+                                    <ul>
+                                        <li><strong>Income Account:</strong> Where revenue is recorded (credit)</li>
+                                        <li><strong>Receivable Account:</strong> Where customer debts are tracked (debit)</li>
+                                        <li><strong>Deferred Revenue:</strong> For subscriptions paid in advance (credit, then moved to income over time)</li>
+                                        <li><strong>Expense Account:</strong> For costs associated with this product</li>
+                                    </ul>
+                                </div>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Mapping List View -->
+    <record id="view_product_account_mapping_list" model="ir.ui.view">
+        <field name="name">product.account.mapping.list</field>
+        <field name="model">product.account.mapping</field>
+        <field name="arch" type="xml">
+            <list string="Product Account Mappings" default_order="sequence">
+                <field name="sequence" widget="handle"/>
+                <field name="product_id"/>
+                <field name="is_subscription_mapping" widget="boolean_toggle"/>
+                <field name="subscription_type_id" optional="hide"/>
+                <field name="income_account_id"/>
+                <field name="receivable_account_id" optional="hide"/>
+                <field name="deferred_revenue_account_id" optional="hide"/>
+                <field name="use_deferred_revenue" widget="boolean_toggle"/>
+                <field name="auto_create_entries" widget="boolean_toggle"/>
+                <field name="total_revenue_ytd" sum="Total YTD Revenue"/>
+                <field name="company_id" optional="hide"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Mapping Kanban View -->
+    <record id="view_product_account_mapping_kanban" model="ir.ui.view">
+        <field name="name">product.account.mapping.kanban</field>
+        <field name="model">product.account.mapping</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="product_id"/>
+                <field name="income_account_id"/>
+                <field name="is_subscription_mapping"/>
+                <field name="use_deferred_revenue"/>
+                <field name="total_revenue_ytd"/>
+                <field name="currency_id"/>
+                <field name="active"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_record_top mb8">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="display_name"/>
+                                    </strong>
+                                </div>
+                                <div class="o_kanban_manage_button_section">
+                                    <a class="o_kanban_manage_toggle_button" href="#">
+                                        <i class="fa fa-ellipsis-v" role="img" aria-label="Manage"/>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <div class="row">
+                                    <div class="col-8">
+                                        <span t-if="record.income_account_id.raw_value">
+                                            <i class="fa fa-arrow-right"/> <field name="income_account_id"/>
+                                        </span>
+                                    </div>
+                                    <div class="col-4 text-right">
+                                        <span t-if="record.is_subscription_mapping.raw_value" class="badge badge-pill badge-info">
+                                            Subscription
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <span t-if="record.use_deferred_revenue.raw_value" class="badge badge-warning">
+                                            Deferred Revenue
+                                        </span>
+                                        <span t-if="!record.active.raw_value" class="badge badge-danger">
+                                            Inactive
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_left">
+                                    <span t-if="record.total_revenue_ytd.raw_value > 0">
+                                        YTD: <field name="total_revenue_ytd" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                    </span>
+                                </div>
+                                <div class="oe_kanban_bottom_right">
+                                    <button name="action_view_account_moves" string="Moves" type="object" 
+                                            class="btn btn-sm btn-secondary">
+                                        Moves
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Mapping Search View -->
+    <record id="view_product_account_mapping_search" model="ir.ui.view">
+        <field name="name">product.account.mapping.search</field>
+        <field name="model">product.account.mapping</field>
+        <field name="arch" type="xml">
+            <search string="Product Account Mappings">
+                <field name="product_id"/>
+                <field name="income_account_id"/>
+                <field name="subscription_type_id"/>
+                <separator/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Inactive" name="inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter string="Subscription Products" name="subscription_products" 
+                        domain="[('is_subscription_mapping', '=', True)]"/>
+                <filter string="Non-Subscription Products" name="non_subscription_products" 
+                        domain="[('is_subscription_mapping', '=', False)]"/>
+                <separator/>
+                <filter string="Uses Deferred Revenue" name="deferred_revenue" 
+                        domain="[('use_deferred_revenue', '=', True)]"/>
+                <filter string="Auto Create Entries" name="auto_create" 
+                        domain="[('auto_create_entries', '=', True)]"/>
+                <separator/>
+                <filter string="Has Revenue YTD" name="has_revenue" 
+                        domain="[('total_revenue_ytd', '>', 0)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Product" name="group_product" context="{'group_by': 'product_id'}"/>
+                    <filter string="Income Account" name="group_income_account" context="{'group_by': 'income_account_id'}"/>
+                    <filter string="Subscription Type" name="group_subscription_type" context="{'group_by': 'subscription_type_id'}"/>
+                    <filter string="Company" name="group_company" context="{'group_by': 'company_id'}"/>
+                    <filter string="Deferred Revenue" name="group_deferred" context="{'group_by': 'use_deferred_revenue'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Quick Create Wizard -->
+    <record id="view_product_mapping_wizard" model="ir.ui.view">
+        <field name="name">product.mapping.wizard.form</field>
+        <field name="model">product.account.mapping</field>
+        <field name="arch" type="xml">
+            <form string="Quick Account Mapping Setup">
+                <group>
+                    <group>
+                        <field name="product_id" required="1"/>
+                        <field name="company_id"/>
+                    </group>
+                    <group>
+                        <field name="income_account_id" required="1"/>
+                        <field name="receivable_account_id"/>
+                    </group>
+                </group>
+                
+                <group string="Revenue Recognition" invisible="not is_subscription_mapping">
+                    <group>
+                        <field name="use_deferred_revenue"/>
+                        <field name="deferral_period_months" invisible="not use_deferred_revenue"/>
+                    </group>
+                    <group>
+                        <field name="deferred_revenue_account_id" invisible="not use_deferred_revenue" required="use_deferred_revenue"/>
+                    </group>
+                </group>
+                
+                <group>
+                    <field name="auto_create_entries"/>
+                </group>
+                
+                <footer>
+                    <button string="Create Mapping" name="create" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_product_account_mapping" model="ir.actions.act_window">
+        <field name="name">Product Account Mappings</field>
+        <field name="res_model">product.account.mapping</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first product account mapping!
+            </p>
+            <p>
+                Configure how products are automatically mapped to accounting accounts for revenue recognition.
+                This is essential for automated subscription billing and revenue tracking.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_subscription_product_mappings" model="ir.actions.act_window">
+        <field name="name">Subscription Product Mappings</field>
+        <field name="res_model">product.account.mapping</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('is_subscription_mapping', '=', True)]</field>
+        <field name="context">{
+            'search_default_subscription_products': 1,
+            'search_default_active': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No subscription product mappings found!
+            </p>
+            <p>
+                Create account mappings for your subscription products to enable automated 
+                revenue recognition and deferred revenue accounting.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_deferred_revenue_mappings" model="ir.actions.act_window">
+        <field name="name">Deferred Revenue Mappings</field>
+        <field name="res_model">product.account.mapping</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('use_deferred_revenue', '=', True)]</field>
+        <field name="context">{
+            'search_default_deferred_revenue': 1,
+            'search_default_active': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No deferred revenue mappings found!
+            </p>
+            <p>
+                Products with deferred revenue settings will automatically create journal entries 
+                to spread revenue recognition over the subscription period.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_quick_mapping_setup" model="ir.actions.act_window">
+        <field name="name">Quick Account Mapping Setup</field>
+        <field name="res_model">product.account.mapping</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_product_mapping_wizard"/>
+        <field name="target">new</field>
+        <field name="context">{'default_auto_create_entries': True}</field>
+    </record>
+
+    <!-- Revenue Analytics Action -->
+    <record id="action_mapping_revenue_analytics" model="ir.actions.act_window">
+        <field name="name">Product Revenue Analytics</field>
+        <field name="res_model">product.account.mapping</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="domain">[('total_revenue_ytd', '>', 0)]</field>
+        <field name="context">{
+            'group_by': ['subscription_type_id', 'product_id'],
+            'search_default_has_revenue': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No revenue data available!
+            </p>
+            <p>
+                Revenue analytics will appear here once products start generating income through the mapping system.
+            </p>
+        </field>
+    </record>
+
+    <!-- Company-specific Mappings Action -->
+    <record id="action_company_mappings" model="ir.actions.act_window">
+        <field name="name">Company Account Mappings</field>
+        <field name="res_model">product.account.mapping</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('company_id', '=', user.company_id.id)]</field>
+        <field name="context">{
+            'default_company_id': user.company_id.id,
+            'search_default_active': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No mappings for this company!
+            </p>
+            <p>
+                Create product account mappings specific to this company's chart of accounts.
+            </p>
+        </field>
+    </record>
+</odoo>

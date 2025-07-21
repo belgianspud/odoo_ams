@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Subscription Accounting Views -->
+    
+    <!-- Extended Subscription Form View with Accounting -->
+    <record id="view_ams_subscription_form_accounting" model="ir.ui.view">
+        <field name="name">ams.subscription.form.accounting</field>
+        <field name="model">ams.subscription</field>
+        <field name="inherit_id" ref="ams_subscriptions.view_ams_subscription_form_enhanced"/>
+        <field name="arch" type="xml">
+            <!-- Add accounting stat buttons -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object" 
+                        name="action_view_accounting_entries" icon="fa-book"
+                        invisible="accounting_status == 'pending'">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Accounting</span>
+                        <span class="o_stat_text">Entries</span>
+                    </div>
+                </button>
+                <button class="oe_stat_button" type="object" 
+                        name="action_view_revenue_recognition" icon="fa-line-chart"
+                        invisible="not revenue_recognition_ids">
+                    <field string="Revenue Recognition" name="monthly_recognition_amount" widget="statbutton"/>
+                </button>
+                <button class="oe_stat_button btn-warning" type="object" 
+                        name="action_configure_accounting" icon="fa-cog"
+                        invisible="accounting_status != 'pending'">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Configure</span>
+                        <span class="o_stat_text">Accounting</span>
+                    </div>
+                </button>
+            </xpath>
+            
+            <!-- Add accounting status in header -->
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="accounting_status" widget="statusbar" 
+                       decoration-success="accounting_status == 'active'"
+                       decoration-warning="accounting_status in ('pending', 'configured')"
+                       decoration-danger="accounting_status in ('suspended', 'closed')"/>
+            </xpath>
+            
+            <!-- Add accounting tab -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Accounting" name="accounting">
+                    <group>
+                        <group string="Account Configuration">
+                            <field name="account_mapping_id" readonly="1"/>
+                            <field name="accounting_status" readonly="1"/>
+                            <button name="action_configure_accounting" string="Configure" type="object" 
+                                    class="btn-primary" invisible="account_mapping_id"/>
+                        </group>
+                        <group string="Financial Totals">
+                            <field name="total_invoiced" widget="monetary"/>
+                            <field name="total_paid" widget="monetary"/>
+                            <field name="amount_due" widget="monetary"/>
+                            <field name="lifetime_value" widget="monetary"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Revenue Recognition" invisible="not deferred_revenue_balance">
+                        <group>
+                            <field name="deferred_revenue_balance" widget="monetary"/>
+                            <field name="monthly_recognition_amount" widget="monetary"/>
+                            <field name="next_recognition_date"/>
+                        </group>
+                        <group>
+                            <button name="process_revenue_recognition" string="Process Recognition" type="object" 
+                                    class="btn-success" invisible="not next_recognition_date"/>
+                            <button name="action_view_revenue_recognition" string="View Schedule" type="object" 
+                                    class="btn-secondary" invisible="not revenue_recognition_ids"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Revenue Recognition Schedule" invisible="not revenue_recognition_ids">
+                        <field name="revenue_recognition_ids" nolabel="1">
+                            <tree>
+                                <field name="recognition_date"/>
+                                <field name="amount" sum="Total Amount"/>
+                                <field name="description"/>
+                                <field name="state" decoration-success="state == 'processed'"
+                                       decoration-warning="state == 'scheduled'"
+                                       decoration-muted="state == 'cancelled'"/>
+                                <field name="move_id"/>
+                                <button name="action_process" string="Process" type="object" 
+                                        icon="fa-check" invisible="state != 'scheduled'"
+                                        class="btn-success"/>
+                                <button name="action_view_journal_entry" string="View Entry" type="object" 
+                                        icon="fa-external-link" invisible="state != 'processed'"
+                                        class="btn-secondary"/>
+                            </tree>
+                        </field>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Extended Subscription List View with Accounting -->
+    <record id="view_ams_subscription_list_accounting" model="ir.ui.view">
+        <field name="name">ams.subscription.list.accounting</field>
+        <field name="model">ams.subscription</field>
+        <field name="inherit_id" ref="ams_subscriptions.view_ams_subscription_list_enhanced"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='next_renewal_date']" position="after">
+                <field name="accounting_status" optional="hide" 
+                       decoration-success="accounting_status == 'active'"
+                       decoration-warning="accounting_status in ('pending', 'configured')"
+                       decoration-danger="accounting_status in ('suspended', 'closed')"/>
+                <field name="total_invoiced" optional="hide" sum="Total Invoiced"/>
+                <field name="amount_due" optional="hide" sum="Total Due"/>
+                <field name="deferred_revenue_balance" optional="hide" sum="Deferred Revenue"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Extended Subscription Search View with Accounting Filters -->
+    <record id="view_ams_subscription_search_accounting" model="ir.ui.view">
+        <field name="name">ams.subscription.search.accounting</field>
+        <field name="model">ams.subscription</field>
+        <field name="inherit_id" ref="ams_subscriptions.view_ams_subscription_search_enhanced"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='auto_renewal']" position="after">
+                <separator/>
+                <filter string="Accounting Active" name="accounting_active" 
+                        domain="[('accounting_status', '=', 'active')]"/>
+                <filter string="Accounting Pending" name="accounting_pending" 
+                        domain="[('accounting_status', '=', 'pending')]"/>
+                <filter string="Has Amount Due" name="has_amount_due" 
+                        domain="[('amount_due', '>', 0)]"/>
+                <filter string="Has Deferred Revenue" name="has_deferred_revenue" 
+                        domain="[('deferred_revenue_balance', '>', 0)]"/>
+                <filter string="Revenue Recognition Due" name="recognition_due" 
+                        domain="[('next_recognition_date', '&lt;=', context_today().strftime('%Y-%m-%d'))]"/>
+            </xpath>
+            
+            <xpath expr="//filter[@name='group_recurring']" position="after">
+                <filter string="Accounting Status" name="group_accounting_status" 
+                        context="{'group_by': 'accounting_status'}"/>
+                <filter string="Account Mapping" name="group_account_mapping" 
+                        context="{'group_by': 'account_mapping_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Revenue Recognition Views -->
+    <record id="view_ams_revenue_recognition_list" model="ir.ui.view">
+        <field name="name">ams.revenue.recognition.list</field>
+        <field name="model">ams.revenue.recognition</field>
+        <field name="arch" type="xml">
+            <list string="Revenue Recognition Schedule" default_order="recognition_date desc">
+                <field name="subscription_id"/>
+                <field name="partner_id"/>
+                <field name="product_id"/>
+                <field name="recognition_date"/>
+                <field name="amount" sum="Total Amount"/>
+                <field name="description"/>
+                <field name="state" decoration-success="state == 'processed'"
+                       decoration-warning="state == 'scheduled'"
+                       decoration-muted="state == 'cancelled'"/>
+                <field name="move_id"/>
+                <field name="company_id" optional="hide"/>
+                <button name="action_process" string="Process" type="object" 
+                        icon="fa-check" invisible="state != 'scheduled'"
+                        class="btn-success"/>
+                <button name="action_view_journal_entry" string="View Entry" type="object" 
+                        icon="fa-external-link" invisible="state != 'processed'"
+                        class="btn-secondary"/>
+                <button name="action_cancel" string="Cancel" type="object" 
+                        icon="fa-times" invisible="state != 'scheduled'"
+                        class="btn-danger"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ams_revenue_recognition_form" model="ir.ui.view">
+        <field name="name">ams.revenue.recognition.form</field>
+        <field name="model">ams.revenue.recognition</field>
+        <field name="arch" type="xml">
+            <form string="Revenue Recognition">
+                <header>
+                    <button name="action_process" string="Process Recognition" type="object" 
+                            class="btn-primary" invisible="state != 'scheduled'"/>
+                    <button name="action_cancel" string="Cancel" type="object" 
+                            invisible="state != 'scheduled'"/>
+                    <button name="action_view_journal_entry" string="View Journal Entry" type="object" 
+                            class="btn-secondary" invisible="state != 'processed'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="subscription_id" readonly="1"/>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="product_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="recognition_date"/>
+                            <field name="amount"/>
+                            <field name="currency_id"/>
+                            <field name="company_id"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <field name="description"/>
+                    </group>
+                    
+                    <group string="Journal Entry" invisible="state != 'processed'">
+                        <field name="move_id" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ams_revenue_recognition_search" model="ir.ui.view">
+        <field name="name">ams.revenue.recognition.search</field>
+        <field name="model">ams.revenue.recognition</field>
+        <field name="arch" type="xml">
+            <search string="Revenue Recognition">
+                <field name="subscription_id"/>
+                <field name="partner_id"/>
+                <field name="product_id"/>
+                <field name="recognition_date"/>
+                <separator/>
+                <filter string="Scheduled" name="scheduled" domain="[('state', '=', 'scheduled')]"/>
+                <filter string="Processed" name="processed" domain="[('state', '=', 'processed')]"/>
+                <filter string="Cancelled" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter string="Due Today" name="due_today" 
+                        domain="[('recognition_date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Overdue" name="overdue" 
+                        domain="[('recognition_date', '&lt;', context_today().strftime('%Y-%m-%d')), ('state', '=', 'scheduled')]"/>
+                <filter string="This Month" name="this_month" 
+                        domain="[('recognition_date', '&gt;=', (context_today().replace(day=1)).strftime('%Y-%m-%d')), 
+                                ('recognition_date', '&lt;', ((context_today().replace(day=1) + relativedelta(months=1))).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Subscription" name="group_subscription" context="{'group_by': 'subscription_id'}"/>
+                    <filter string="Partner" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Product" name="group_product" context="{'group_by': 'product_id'}"/>
+                    <filter string="Status" name="group_status" context="{'group_by': 'state'}"/>
+                    <filter string="Recognition Date" name="group_date" context="{'group_by': 'recognition_date:month'}"/>
+                    <filter string="Company" name="group_company" context="{'group_by': 'company_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Revenue Recognition Calendar View -->
+    <record id="view_ams_revenue_recognition_calendar" model="ir.ui.view">
+        <field name="name">ams.revenue.recognition.calendar</field>
+        <field name="model">ams.revenue.recognition</field>
+        <field name="arch" type="xml">
+            <calendar string="Revenue Recognition Schedule" 
+                      date_start="recognition_date" 
+                      color="state"
+                      event_open_popup="true">
+                <field name="subscription_id"/>
+                <field name="amount"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Revenue Recognition Graph View -->
+    <record id="view_ams_revenue_recognition_graph" model="ir.ui.view">
+        <field name="name">ams.revenue.recognition.graph</field>
+        <field name="model">ams.revenue.recognition</field>
+        <field name="arch" type="xml">
+            <graph string="Revenue Recognition Analytics" type="bar">
+                <field name="recognition_date" interval="month"/>
+                <field name="amount" type="measure"/>
+                <field name="state"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_ams_revenue_recognition" model="ir.actions.act_window">
+        <field name="name">Revenue Recognition Schedule</field>
+        <field name="res_model">ams.revenue.recognition</field>
+        <field name="view_mode">list,form,calendar,graph</field>
+        <field name="context">{'search_default_scheduled': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No revenue recognition entries found!
+            </p>
+            <p>
+                Revenue recognition entries will appear here when subscriptions use deferred revenue accounting.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_due_revenue_recognition" model="ir.actions.act_window">
+        <field name="name">Due Revenue Recognition</field>
+        <field name="res_model">ams.revenue.recognition</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'scheduled'), ('recognition_date', '&lt;=', context_today().strftime('%Y-%m-%d'))]</field>
+        <field name="context">{
+            'search_default_due_today': 1,
+            'search_default_overdue': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No revenue recognition due!
+            </p>
+            <p>
+                Revenue recognition entries that are due for processing will appear here.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_subscription_accounting_pending" model="ir.actions.act_window">
+        <field name="name">Subscriptions Needing Accounting Setup</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('accounting_status', '=', 'pending')]</field>
+        <field name="context">{'search_default_accounting_pending': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                All subscriptions have accounting configured!
+            </p>
+            <p>
+                Subscriptions that need accounting configuration will appear here.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_subscription_accounting_active" model="ir.actions.act_window">
+        <field name="name">Active Subscription Accounting</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('accounting_status', '=', 'active')]</field>
+        <field name="context">{
+            'search_default_accounting_active': 1,
+            'group_by': 'subscription_type_id'
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No active subscription accounting!
+            </p>
+            <p>
+                Subscriptions with active accounting integration will appear here.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_subscription_deferred_revenue" model="ir.actions.act_window">
+        <field name="name">Subscriptions with Deferred Revenue</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">list,graph,pivot</field>
+        <field name="domain">[('deferred_revenue_balance', '>', 0)]</field>
+        <field name="context">{
+            'search_default_has_deferred_revenue': 1,
+            'group_by': ['subscription_type_id', 'accounting_status']
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No deferred revenue found!
+            </p>
+            <p>
+                Subscriptions with outstanding deferred revenue balances will appear here.
+            </p>
+        </field>
+    </record>
+
+    <!-- Accounting Analytics Actions -->
+    <record id="action_subscription_revenue_analytics" model="ir.actions.act_window">
+        <field name="name">Subscription Revenue Analytics</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="domain">[('total_invoiced', '>', 0)]</field>
+        <field name="context">{
+            'group_by': ['subscription_type_id', 'accounting_status'],
+            'search_default_accounting_active': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No subscription revenue data!
+            </p>
+            <p>
+                Analytics for subscription revenue and accounting performance will appear here.
+            </p>
+        </field>
+    </record>
+
+    <!-- Batch Revenue Recognition Action -->
+    <record id="action_batch_process_recognition" model="ir.actions.server">
+        <field name="name">Batch Process Revenue Recognition</field>
+        <field name="model_id" ref="model_ams_revenue_recognition"/>
+        <field name="binding_model_id" ref="model_ams_revenue_recognition"/>
+        <field name="state">code</field>
+        <field name="code">
+            for record in records.filtered(lambda r: r.state == 'scheduled'):
+                record.process_recognition()
+        </field>
+    </record>
+</odoo>

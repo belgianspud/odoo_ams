@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Partner Accounting Extensions -->
+    
+    <!-- Extended Partner Form View with AMS Financials -->
+    <record id="view_partner_form_ams_accounting" model="ir.ui.view">
+        <field name="name">res.partner.form.ams.accounting</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <!-- Add AMS Financial stat buttons -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object" 
+                        name="action_view_ams_invoices" icon="fa-file-text-o"
+                        invisible="ams_total_receivable == 0">
+                    <field string="AMS Receivable" name="ams_total_receivable" widget="statbutton"/>
+                </button>
+                <button class="oe_stat_button" type="object" 
+                        name="action_view_ams_payments" icon="fa-money"
+                        invisible="ams_total_revenue == 0">
+                    <field string="AMS Revenue" name="ams_total_revenue" widget="statbutton"/>
+                </button>
+                <button class="oe_stat_button btn-success" type="object" name="action_create_payment" icon="fa-plus" invisible="ams_total_receivable == 0">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Register</span>
+                        <span class="o_stat_text">Payment</span>
+                    </div>
+                </button>
+                <button class="oe_stat_button btn-warning" type="object" 
+                        name="action_toggle_credit_hold" icon="fa-ban"
+                        invisible="not credit_hold">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Credit</span>
+                        <span class="o_stat_text">Hold</span>
+                    </div>
+                </button>
+            </xpath>
+            
+            <!-- Add AMS Accounting tab -->
+            <xpath expr="//notebook" position="inside">
+                <page string="AMS Accounting" name="ams_accounting" 
+                      invisible="total_subscription_count == 0">
+                    <group>
+                        <group string="Financial Summary">
+                            <field name="ams_total_receivable" widget="monetary"/>
+                            <field name="ams_total_revenue" widget="monetary"/>
+                            <field name="ams_ytd_revenue" widget="monetary"/>
+                            <field name="ams_deferred_revenue" widget="monetary"/>
+                        </group>
+                        <group string="Payment Status">
+                            <field name="ams_payment_status" decoration-success="ams_payment_status == 'current'"
+                                   decoration-warning="ams_payment_status == 'overdue'"
+                                   decoration-danger="ams_payment_status in ('delinquent', 'suspended')"/>
+                            <field name="days_overdue" invisible="ams_payment_status == 'current'"/>
+                            <field name="overdue_amount" widget="monetary" 
+                                   invisible="ams_payment_status == 'current'"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="Revenue by Type">
+                            <field name="membership_revenue_ytd" widget="monetary"/>
+                            <field name="chapter_revenue_ytd" widget="monetary"/>
+                            <field name="publication_revenue_ytd" widget="monetary"/>
+                        </group>
+                        <group string="Credit Management">
+                            <field name="ams_credit_limit" widget="monetary"/>
+                            <field name="credit_hold" widget="boolean_toggle"/>
+                            <label for="credit_hold" string="Available Credit:"/>
+                            <div class="o_row">
+                                <span class="text-success" t-if="not credit_hold">
+                                    <t t-esc="get_available_credit()"/> <field name="currency_id" readonly="1"/>
+                                </span>
+                                <span class="text-danger" t-if="credit_hold">
+                                    Credit Hold Active
+                                </span>
+                            </div>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="Payment Preferences">
+                            <field name="preferred_payment_method"/>
+                            <field name="auto_invoice"/>
+                            <field name="invoice_delivery_method"/>
+                        </group>
+                        <group string="Collection Notes">
+                            <field name="collection_notes" nolabel="1"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Account Move Lines" invisible="not ams_move_line_ids">
+                        <field name="ams_move_line_ids" nolabel="1" readonly="1">
+                            <tree>
+                                <field name="date"/>
+                                <field name="move_id"/>
+                                <field name="account_id"/>
+                                <field name="ams_subscription_id"/>
+                                <field name="debit" sum="Total Debit"/>
+                                <field name="credit" sum="Total Credit"/>
+                                <field name="balance" sum="Balance"/>
+                                <field name="reconciled" widget="boolean_toggle"/>
+                            </tree>
+                        </field>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Extended Partner List View with AMS Fields -->
+    <record id="view_partner_tree_ams_accounting" model="ir.ui.view">
+        <field name="name">res.partner.tree.ams.accounting</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='phone']" position="after">
+                <field name="ams_total_receivable" optional="hide" sum="Total AMS Receivable"/>
+                <field name="ams_ytd_revenue" optional="hide" sum="Total YTD Revenue"/>
+                <field name="ams_payment_status" optional="hide" 
+                       decoration-success="ams_payment_status == 'current'"
+                       decoration-warning="ams_payment_status == 'overdue'"
+                       decoration-danger="ams_payment_status in ('delinquent', 'suspended')"/>
+                <field name="days_overdue" optional="hide"/>
+                <field name="credit_hold" optional="hide" widget="boolean_toggle"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Extended Partner Search View with AMS Filters -->
+    <record id="view_partner_search_ams_accounting" model="ir.ui.view">
+        <field name="name">res.partner.search.ams.accounting</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_res_partner_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='supplier']" position="after">
+                <separator/>
+                <filter string="AMS Customers" name="ams_customers" 
+                        domain="[('total_subscription_count', '>', 0)]"/>
+                <filter string="Current Payment Status" name="current_payment" 
+                        domain="[('ams_payment_status', '=', 'current')]"/>
+                <filter string="Overdue Payments" name="overdue_payment" 
+                        domain="[('ams_payment_status', '=', 'overdue')]"/>
+                <filter string="Delinquent" name="delinquent" 
+                        domain="[('ams_payment_status', '=', 'delinquent')]"/>
+                <filter string="Suspended" name="suspended" 
+                        domain="[('ams_payment_status', '=', 'suspended')]"/>
+                <separator/>
+                <filter string="Credit Hold" name="credit_hold" 
+                        domain="[('credit_hold', '=', True)]"/>
+                <filter string="Has Receivables" name="has_receivables" 
+                        domain="[('ams_total_receivable', '>', 0)]"/>
+                <filter string="Has Deferred Revenue" name="has_deferred" 
+                        domain="[('ams_deferred_revenue', '>', 0)]"/>
+            </xpath>
+            
+            <xpath expr="//group[@name='group_by']" position="inside">
+                <filter string="Payment Status" name="group_payment_status" 
+                        context="{'group_by': 'ams_payment_status'}"/>
+                <filter string="Credit Hold" name="group_credit_hold" 
+                        context="{'group_by': 'credit_hold'}"/>
+                <filter string="Payment Method" name="group_payment_method" 
+                        context="{'group_by': 'preferred_payment_method'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Partner Kanban View with AMS Info -->
+    <record id="view_partner_kanban_ams_accounting" model="ir.ui.view">
+        <field name="name">res.partner.kanban.ams.accounting</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.res_partner_kanban_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='email']" position="after">
+                <field name="ams_total_receivable"/>
+                <field name="ams_payment_status"/>
+                <field name="credit_hold"/>
+                <field name="total_subscription_count"/>
+            </xpath>
+            
+            <xpath expr="//div[contains(@class, 'oe_kanban_details')]" position="inside">
+                <div t-if="record.total_subscription_count.raw_value > 0" class="mt-2">
+                    <span class="badge badge-pill badge-info">
+                        <t t-esc="record.total_subscription_count.value"/> Subscriptions
+                    </span>
+                    <span t-if="record.ams_total_receivable.raw_value > 0" 
+                          class="badge badge-pill badge-warning">
+                        Receivable: <t t-esc="record.ams_total_receivable.value"/>
+                    </span>
+                    <span t-if="record.credit_hold.raw_value" 
+                          class="badge badge-pill badge-danger">
+                        Credit Hold
+                    </span>
+                    <span t-if="record.ams_payment_status.raw_value == 'overdue'" 
+                          class="badge badge-pill badge-warning">
+                        Overdue
+                    </span>
+                    <span t-if="record.ams_payment_status.raw_value in ('delinquent', 'suspended')" 
+                          class="badge badge-pill badge-danger">
+                        <t t-esc="record.ams_payment_status.value"/>
+                    </span>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- AMS Customer Dashboard -->
+    <record id="view_ams_customer_dashboard" model="ir.ui.view">
+        <field name="name">ams.customer.dashboard</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <form string="AMS Customer Dashboard">
+                <header>
+                    <button name="action_create_payment" string="Register Payment" type="object" 
+                            class="btn-primary" invisible="ams_total_receivable == 0"/>
+                    <button name="action_ams_statement_of_account" string="Statement" type="object" 
+                            class="btn-secondary"/>
+                    <button name="action_toggle_credit_hold" string="Toggle Credit Hold" type="object" 
+                            class="btn-warning"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" 
+                                name="action_view_ams_invoices" icon="fa-file-text-o">
+                            <field string="AMS Invoices" name="total_subscription_count" widget="statbutton"/>
+                        </button>
+                        <button class="oe_stat_button" type="object" 
+                                name="action_view_ams_payments" icon="fa-money">
+                            <field string="YTD Revenue" name="ams_ytd_revenue" widget="statbutton"/>
+                        </button>
+                        <button class="oe_stat_button" type="object" 
+                                name="action_view_ams_account_moves" icon="fa-book">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Account</span>
+                                <span class="o_stat_text">Moves</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    
+                    <group>
+                        <group string="Financial Overview">
+                            <field name="ams_total_receivable" widget="monetary" class="oe_inline"/>
+                            <field name="ams_total_revenue" widget="monetary" class="oe_inline"/>
+                            <field name="ams_ytd_revenue" widget="monetary" class="oe_inline"/>
+                            <field name="ams_deferred_revenue" widget="monetary" class="oe_inline"/>
+                        </group>
+                        <group string="Payment Information">
+                            <field name="ams_payment_status" 
+                                   decoration-success="ams_payment_status == 'current'"
+                                   decoration-warning="ams_payment_status == 'overdue'"
+                                   decoration-danger="ams_payment_status in ('delinquent', 'suspended')"/>
+                            <field name="days_overdue" invisible="ams_payment_status == 'current'"/>
+                            <field name="overdue_amount" widget="monetary" 
+                                   invisible="ams_payment_status == 'current'"/>
+                            <field name="credit_hold" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="Revenue Breakdown">
+                            <field name="membership_revenue_ytd" widget="monetary"/>
+                            <field name="chapter_revenue_ytd" widget="monetary"/>
+                            <field name="publication_revenue_ytd" widget="monetary"/>
+                        </group>
+                        <group string="Credit Information">
+                            <field name="ams_credit_limit" widget="monetary"/>
+                            <label for="ams_credit_limit" string="Available Credit:"/>
+                            <div class="o_row">
+                                <span class="text-success" t-if="not credit_hold">
+                                    Available Credit Information
+                                </span>
+                                <span class="text-danger" t-if="credit_hold">
+                                    Account on Credit Hold
+                                </span>
+                            </div>
+                        </group>
+                    </group>
+                    
+                    <group string="Collection Notes">
+                        <field name="collection_notes" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_ams_customers" model="ir.actions.act_window">
+        <field name="name">AMS Customers</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('total_subscription_count', '>', 0)]</field>
+        <field name="context">{
+            'search_default_ams_customers': 1,
+            'default_is_company': False,
+            'default_customer_rank': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No AMS customers found!
+            </p>
+            <p>
+                Customers with AMS subscriptions will appear here with their financial information.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_overdue_customers" model="ir.actions.act_window">
+        <field name="name">Overdue Customers</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('ams_payment_status', 'in', ['overdue', 'delinquent', 'suspended'])]</field>
+        <field name="context">{
+            'search_default_overdue_payment': 1,
+            'search_default_delinquent': 1,
+            'search_default_suspended': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No overdue customers!
+            </p>
+            <p>
+                Customers with overdue AMS payments will appear here for collections follow-up.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_credit_hold_customers" model="ir.actions.act_window">
+        <field name="name">Credit Hold Customers</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('credit_hold', '=', True)]</field>
+        <field name="context">{'search_default_credit_hold': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No customers on credit hold!
+            </p>
+            <p>
+                Customers with active credit holds will appear here.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_high_value_customers" model="ir.actions.act_window">
+        <field name="name">High Value AMS Customers</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('ams_ytd_revenue', '>', 500)]</field>
+        <field name="context">{
+            'search_default_ams_customers': 1,
+            'group_by': 'ams_payment_status'
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No high value customers yet!
+            </p>
+            <p>
+                Customers with high AMS revenue will appear here for special attention and customer success management.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_customer_dashboard" model="ir.actions.act_window">
+        <field name="name">AMS Customer Dashboard</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_ams_customer_dashboard"/>
+        <field name="target">current</field>
+    </record>
+
+    <!-- Statement Wizard Views -->
+    <record id="view_ams_statement_wizard_form" model="ir.ui.view">
+        <field name="name">ams.account.statement.wizard.form</field>
+        <field name="model">ams.account.statement.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generate AMS Account Statement">
+                <group>
+                    <group>
+                        <field name="partner_id" readonly="1"/>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                    </group>
+                    <group>
+                        <field name="include_paid"/>
+                        <field name="include_draft"/>
+                    </group>
+                </group>
+                
+                <footer>
+                    <button string="Generate Statement" name="action_generate_statement" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

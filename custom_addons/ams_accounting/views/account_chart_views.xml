@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- AMS Account Chart Views -->
+    
+    <!-- Chart List View -->
+    <record id="view_ams_account_chart_list" model="ir.ui.view">
+        <field name="name">ams.account.chart.list</field>
+        <field name="model">ams.account.chart</field>
+        <field name="arch" type="xml">
+            <list string="AMS Charts of Accounts" default_order="sequence">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="company_id"/>
+                <field name="is_installed" widget="boolean_toggle"/>
+                <field name="installation_date"/>
+                <field name="active"/>
+                <button name="action_install_chart" string="Install" type="object" 
+                        icon="fa-download" invisible="is_installed"
+                        class="btn-primary"/>
+                <button name="action_view_accounts" string="View Accounts" type="object" 
+                        icon="fa-list" invisible="not is_installed"
+                        class="btn-secondary"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Chart Form View -->
+    <record id="view_ams_account_chart_form" model="ir.ui.view">
+        <field name="name">ams.account.chart.form</field>
+        <field name="model">ams.account.chart</field>
+        <field name="arch" type="xml">
+            <form string="AMS Chart of Accounts">
+                <header>
+                    <button name="action_install_chart" string="Install Chart" type="object" 
+                            class="oe_highlight" invisible="is_installed"/>
+                    <button name="action_view_accounts" string="View Accounts" type="object" 
+                            class="btn-secondary" invisible="not is_installed"/>
+                    <field name="is_installed" widget="statusbar" clickable="False"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Installed" bg_color="bg-success" 
+                            invisible="not is_installed"/>
+                    
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="company_id"/>
+                            <field name="currency_id"/>
+                            <field name="installation_date" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Description">
+                        <field name="description" nolabel="1"/>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Account Templates" name="templates">
+                            <field name="account_template_ids" nolabel="1">
+                                <list editable="bottom" default_order="sequence">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="account_type"/>
+                                    <field name="ams_account_type"/>
+                                    <field name="reconcile"/>
+                                    <field name="deprecated"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Chart Kanban View -->
+    <record id="view_ams_account_chart_kanban" model="ir.ui.view">
+        <field name="name">ams.account.chart.kanban</field>
+        <field name="model">ams.account.chart</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="is_installed"/>
+                <field name="company_id"/>
+                <field name="installation_date"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_record_top mb8">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                    <div class="o_kanban_record_subtitle">
+                                        Code: <field name="code"/>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_manage_button_section">
+                                    <a class="o_kanban_manage_toggle_button" href="#">
+                                        <i class="fa fa-ellipsis-v" role="img" aria-label="Manage"/>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <div class="row">
+                                    <div class="col-8">
+                                        <span t-if="record.company_id.raw_value">
+                                            <i class="fa fa-building-o"/> <field name="company_id"/>
+                                        </span>
+                                    </div>
+                                    <div class="col-4 text-right">
+                                        <span t-if="record.is_installed.raw_value" class="badge badge-success">
+                                            Installed
+                                        </span>
+                                        <span t-if="!record.is_installed.raw_value" class="badge badge-warning">
+                                            Not Installed
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_left">
+                                    <span t-if="record.installation_date.raw_value">
+                                        Installed: <field name="installation_date"/>
+                                    </span>
+                                </div>
+                                <div class="oe_kanban_bottom_right">
+                                    <button name="action_install_chart" string="Install" type="object" 
+                                            class="btn btn-primary btn-sm" t-if="!record.is_installed.raw_value">
+                                        Install
+                                    </button>
+                                    <button name="action_view_accounts" string="View" type="object" 
+                                            class="btn btn-secondary btn-sm" t-if="record.is_installed.raw_value">
+                                        View Accounts
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Account Template Form View -->
+    <record id="view_ams_account_template_form" model="ir.ui.view">
+        <field name="name">ams.account.template.form</field>
+        <field name="model">ams.account.template</field>
+        <field name="arch" type="xml">
+            <form string="Account Template">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="sequence"/>
+                            <field name="chart_id"/>
+                        </group>
+                        <group>
+                            <field name="account_type"/>
+                            <field name="ams_account_type"/>
+                            <field name="reconcile"/>
+                            <field name="deprecated"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Hierarchy">
+                        <group>
+                            <field name="parent_id"/>
+                        </group>
+                        <group>
+                            <field name="child_ids" invisible="1"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Tags">
+                        <field name="tag_ids" widget="many2many_tags"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Account Template List View -->
+    <record id="view_ams_account_template_list" model="ir.ui.view">
+        <field name="name">ams.account.template.list</field>
+        <field name="model">ams.account.template</field>
+        <field name="arch" type="xml">
+            <list string="Account Templates" default_order="sequence">
+                <field name="sequence" widget="handle"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="account_type"/>
+                <field name="ams_account_type"/>
+                <field name="chart_id"/>
+                <field name="reconcile"/>
+                <field name="deprecated"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Extended Account Account View -->
+    <record id="view_account_account_form_ams" model="ir.ui.view">
+        <field name="name">account.account.form.ams</field>
+        <field name="model">account.account</field>
+        <field name="inherit_id" ref="account.view_account_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='account_type']" position="after">
+                <field name="is_ams_account"/>
+                <field name="ams_account_type" invisible="not is_ams_account"/>
+            </xpath>
+            
+            <xpath expr="//notebook" position="inside">
+                <page string="AMS Accounting" name="ams_accounting" invisible="not is_ams_account">
+                    <group>
+                        <group string="AMS Statistics">
+                            <field name="ams_balance"/>
+                            <field name="subscription_revenue_ytd"/>
+                        </group>
+                        <group string="Product Mappings">
+                            <field name="subscription_product_ids" nolabel="1">
+                                <list>
+                                    <field name="product_id"/>
+                                    <field name="is_subscription_mapping"/>
+                                    <field name="use_deferred_revenue"/>
+                                    <field name="total_revenue_ytd"/>
+                                </list>
+                            </field>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Extended Account Account List View -->
+    <record id="view_account_account_list_ams" model="ir.ui.view">
+        <field name="name">account.account.list.ams</field>
+        <field name="model">account.account</field>
+        <field name="inherit_id" ref="account.view_account_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='account_type']" position="after">
+                <field name="is_ams_account" optional="hide"/>
+                <field name="ams_account_type" optional="hide"/>
+                <field name="ams_balance" optional="hide" sum="Total AMS Balance"/>
+                <field name="subscription_revenue_ytd" optional="hide" sum="Total YTD Revenue"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Extended Account Account Search View -->
+    <record id="view_account_account_search_ams" model="ir.ui.view">
+        <field name="name">account.account.search.ams</field>
+        <field name="model">account.account</field>
+        <field name="inherit_id" ref="account.view_account_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='inactive']" position="after">
+                <separator/>
+                <filter string="AMS Accounts" name="ams_accounts" domain="[('is_ams_account', '=', True)]"/>
+                <filter string="Subscription Revenue" name="subscription_revenue" 
+                        domain="[('ams_account_type', 'in', ['membership_revenue', 'chapter_revenue', 'publication_revenue'])]"/>
+                <filter string="Deferred Revenue" name="deferred_revenue" 
+                        domain="[('ams_account_type', '=', 'deferred_revenue')]"/>
+                <filter string="Subscription Receivables" name="subscription_receivables" 
+                        domain="[('ams_account_type', '=', 'subscription_receivable')]"/>
+            </xpath>
+            
+            <xpath expr="//group[@name='groupby']" position="inside">
+                <filter string="AMS Account Type" name="group_ams_type" context="{'group_by': 'ams_account_type'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_ams_account_chart" model="ir.actions.act_window">
+        <field name="name">AMS Charts of Accounts</field>
+        <field name="res_model">ams.account.chart</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first AMS chart of accounts!
+            </p>
+            <p>
+                Define and install charts of accounts specifically designed for Association Management Systems
+                with built-in support for subscription revenue tracking.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_ams_account_template" model="ir.actions.act_window">
+        <field name="name">AMS Account Templates</field>
+        <field name="res_model">ams.account.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create account templates!
+            </p>
+            <p>
+                Design account templates that will be used to create actual accounts when installing a chart.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_ams_accounts" model="ir.actions.act_window">
+        <field name="name">AMS Accounts</field>
+        <field name="res_model">account.account</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_ams_account', '=', True)]</field>
+        <field name="context">{'search_default_ams_accounts': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No AMS accounts found!
+            </p>
+            <p>
+                Install an AMS chart of accounts to get started with subscription revenue tracking.
+            </p>
+        </field>
+    </record>
+
+    <!-- Subscription Revenue Accounts Action -->
+    <record id="action_subscription_revenue_accounts" model="ir.actions.act_window">
+        <field name="name">Subscription Revenue Accounts</field>
+        <field name="res_model">account.account</field>
+        <field name="view_mode">list,form,graph,pivot</field>
+        <field name="domain">[('ams_account_type', 'in', ['membership_revenue', 'chapter_revenue', 'publication_revenue'])]</field>
+        <field name="context">{
+            'search_default_subscription_revenue': 1,
+            'group_by': ['ams_account_type']
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No subscription revenue accounts found!
+            </p>
+            <p>
+                Create revenue accounts for tracking membership, chapter, and publication income.
+            </p>
+        </field>
+    </record>
+
+    <!-- Deferred Revenue Accounts Action -->
+    <record id="action_deferred_revenue_accounts" model="ir.actions.act_window">
+        <field name="name">Deferred Revenue Accounts</field>
+        <field name="res_model">account.account</field>
+        <field name="view_mode">list,form,graph,pivot</field>
+        <field name="domain">[('ams_account_type', '=', 'deferred_revenue')]</field>
+        <field name="context">{'search_default_deferred_revenue': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No deferred revenue accounts found!
+            </p>
+            <p>
+                Create deferred revenue accounts for tracking subscription revenue that will be recognized over time.
+            </p>
+        </field>
+    </record>
+</odoo>
