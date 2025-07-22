@@ -29,23 +29,30 @@ class AccountAccount(models.Model):
     subscription_revenue_ytd = fields.Float('YTD Subscription Revenue', 
                                            compute='_compute_subscription_revenue', store=True)
     
-    @api.depends('balance', 'move_line_ids.ams_subscription_id')
+    @api.depends()
     def _compute_ams_balance(self):
         for account in self:
-            # Calculate balance from AMS-related move lines
-            ams_lines = account.move_line_ids.filtered(lambda l: l.ams_subscription_id)
+            # Get move lines for this account that are AMS-related
+            # Note: We search for move lines instead of using a non-existent relation
+            ams_lines = self.env['account.move.line'].search([
+                ('account_id', '=', account.id),
+                ('is_ams_line', '=', True)  # Use the field that actually exists
+            ])
             account.ams_balance = sum(ams_lines.mapped('balance'))
     
-    @api.depends('move_line_ids.ams_subscription_id', 'move_line_ids.credit', 'move_line_ids.debit')
+    @api.depends() 
     def _compute_subscription_revenue(self):
         for account in self:
             # Calculate YTD subscription revenue
             current_year = fields.Date.today().year
             year_start = fields.Date.from_string(f'{current_year}-01-01')
             
-            subscription_lines = account.move_line_ids.filtered(
-                lambda l: l.ams_subscription_id and l.date >= year_start
-            )
+            # Search for move lines instead of using non-existent relation
+            subscription_lines = self.env['account.move.line'].search([
+                ('account_id', '=', account.id),
+                ('is_ams_line', '=', True),
+                ('date', '>=', year_start)
+            ])
             
             if account.account_type in ['income', 'income_other']:
                 account.subscription_revenue_ytd = sum(subscription_lines.mapped('credit')) - sum(subscription_lines.mapped('debit'))

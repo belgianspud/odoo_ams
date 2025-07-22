@@ -322,19 +322,21 @@ class ProductProduct(models.Model):
             ], limit=1)
             product.account_mapping_id = mapping.id if mapping else False
     
-    @api.depends('move_line_ids')
+    @api.depends()  # Remove the non-existent field dependency
     def _compute_variant_revenue(self):
         for product in self:
             current_year = fields.Date.today().year
             year_start = fields.Date.from_string(f'{current_year}-01-01')
             
-            revenue_lines = product.move_line_ids.filtered(
-                lambda l: l.account_id.account_type in ['income', 'income_other'] and
-                         l.date >= year_start and
-                         l.move_id.state == 'posted'
-            )
+            # Search for move lines instead of using non-existent relation
+            revenue_lines = self.env['account.move.line'].search([
+                ('product_id', '=', product.id),
+                ('account_id.account_type', 'in', ['income', 'income_other']),
+                ('date', '>=', year_start),
+                ('move_id.state', '=', 'posted')
+            ])
             
-            product.variant_revenue_ytd = sum(revenue_lines.mapped('credit')) - sum(revenue_lines.mapped('debit'))
+            product.variant_revenue_ytd = sum(revenue_lines.mapped('credit')) - sum(revenue_lines.mapped('debit')) 
     
     @api.depends('subscription_ids')
     def _compute_variant_subscriptions(self):

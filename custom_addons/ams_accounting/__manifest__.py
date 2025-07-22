@@ -1,6 +1,6 @@
 {
     'name': 'AMS Accounting',
-    'version': '18.0.1.0.0',  # Fixed: Proper Odoo 18 version format
+    'version': '18.0.1.0.0',
     'category': 'Association Management',
     'summary': 'Basic accounting module for Association Management System',
     'description': """
@@ -33,31 +33,32 @@
         'sale',
         'product',
         'contacts',
-        'ams_subscriptions',  # Our subscription module
+        'ams_subscriptions',  # Our subscription module - MUST be installed first
     ],
     'data': [
-        # Security
+        # Security - MUST be first
         'security/ir.model.access.csv',
         
         # Data files
         'data/account_chart_data.xml',
-        'data/product_account_mapping_data.xml',
+        #'data/product_account_mapping_data.xml',
         
-        # Views
+        # Views - ORDER MATTERS!
         'views/account_chart_views.xml',
-        'views/product_account_mapping_views.xml',
+        'views/product_account_mapping_views.xml', 
         'views/partner_accounting_views.xml',
         'views/subscription_accounting_views.xml',
         'views/accounting_dashboard_views.xml',
-        'views/menu_views.xml',
+        'views/menu_views.xml',  # Menu views should be LAST
         
         # Reports
         'reports/subscription_revenue_report.xml',
         'reports/partner_financial_report.xml',
     ],
     'installable': True,
-    'application': True,   # Fixed: This makes it appear in Apps menu
+    'application': True,   # KEEP AS TRUE - this is correct!
     'auto_install': False,
+    'sequence': 130,  # Load after accounting and ams_subscriptions
     'external_dependencies': {
         'python': [],
     },

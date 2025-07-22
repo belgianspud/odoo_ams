@@ -207,7 +207,7 @@
         </field>
     </record>
 
-    <!-- Extended Account Account View -->
+    <!-- Extended Account Account View - FIXED -->
     <record id="view_account_account_form_ams" model="ir.ui.view">
         <field name="name">account.account.form.ams</field>
         <field name="model">account.account</field>
@@ -225,15 +225,10 @@
                             <field name="ams_balance"/>
                             <field name="subscription_revenue_ytd"/>
                         </group>
-                        <group string="Product Mappings">
-                            <field name="subscription_product_ids" nolabel="1">
-                                <list>
-                                    <field name="product_id"/>
-                                    <field name="is_subscription_mapping"/>
-                                    <field name="use_deferred_revenue"/>
-                                    <field name="total_revenue_ytd"/>
-                                </list>
-                            </field>
+                        <!-- REMOVED PROBLEMATIC SECTION -->
+                        <group string="Information">
+                            <p>This account is configured for AMS subscription tracking.</p>
+                            <p>Use Product Account Mappings to link products to this account.</p>
                         </group>
                     </group>
                 </page>

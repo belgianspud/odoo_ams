@@ -69,26 +69,27 @@ class ProductAccountMapping(models.Model):
             else:
                 mapping.display_name = "No Product Selected"
     
-    @api.depends('income_account_id.move_line_ids')
+    @api.depends()  # Remove the non-existent field dependency
     def _compute_revenue_stats(self):
         for mapping in self:
             if not mapping.income_account_id:
                 mapping.total_revenue_ytd = 0.0
                 mapping.total_invoiced = 0.0
                 continue
-                
-            # Get move lines related to this product
-            product_lines = mapping.income_account_id.move_line_ids.filtered(
-                lambda l: l.product_id == mapping.product_id
-            )
             
-            # Calculate YTD revenue
-            current_year = fields.Date.today().year
-            year_start = fields.Date.from_string(f'{current_year}-01-01')
-            ytd_lines = product_lines.filtered(lambda l: l.date >= year_start)
-            
-            mapping.total_revenue_ytd = sum(ytd_lines.mapped('credit')) - sum(ytd_lines.mapped('debit'))
-            mapping.total_invoiced = sum(product_lines.mapped('credit')) - sum(product_lines.mapped('debit'))
+        # Search for move lines related to this product instead of using non-existent relation
+        product_lines = self.env['account.move.line'].search([
+            ('account_id', '=', mapping.income_account_id.id),
+            ('product_id', '=', mapping.product_id.id)
+        ])
+        
+        # Calculate YTD revenue
+        current_year = fields.Date.today().year
+        year_start = fields.Date.from_string(f'{current_year}-01-01')
+        ytd_lines = product_lines.filtered(lambda l: l.date >= year_start)
+        
+        mapping.total_revenue_ytd = sum(ytd_lines.mapped('credit')) - sum(ytd_lines.mapped('debit'))
+        mapping.total_invoiced = sum(product_lines.mapped('credit')) - sum(product_lines.mapped('debit'))
     
     @api.model
     def create(self, vals):
