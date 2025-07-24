@@ -13,8 +13,9 @@ class AccountAgedTrialBalance(models.TransientModel):
 
     name = fields.Char(string="Account Aged Trial balance Report", default="Account Aged Trial balance Report", required=True, translate=True)
 
-    journal_ids = fields.Many2many('account.journal', string='Journals',
-                                   required=True)
+    # Removed duplicate journal_ids field - it's inherited from account.common.partner.report
+    # journal_ids = fields.Many2many('account.journal', string='Journals', required=True)
+    
     period_length = fields.Integer(string='Period Length (days)',
                                    required=True, default=30)
     date_from = fields.Date(default=lambda *a: time.strftime('%Y-%m-%d'))
@@ -44,5 +45,5 @@ class AccountAgedTrialBalance(models.TransientModel):
             start = stop - relativedelta(days=1)
         data['form'].update(res)
         return self.env.ref(
-            'base_accounting_kit.action_report_aged_partner_balance').with_context(
+            'ams_accounting_kit.action_report_aged_partner_balance').with_context(
             landscape=True).report_action(self, data=data)

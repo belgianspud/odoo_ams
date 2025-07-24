@@ -1,38 +1,20 @@
-# -*- coding: utf-8 -*-
-#############################################################################
-#
-#    Cybrosys Technologies Pvt. Ltd.
-#
-#    Copyright (C) 2022-TODAY Cybrosys Technologies(<https://www.cybrosys.com>)
-#    Author: Cybrosys Techno Solutions(<https://www.cybrosys.com>)
-#
-#    You can modify it under the terms of the GNU LESSER
-#    GENERAL PUBLIC LICENSE (LGPL v3), Version 3.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU LESSER GENERAL PUBLIC LICENSE (LGPL v3) for more details.
-#
-#    You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
-#    (LGPL v3) along with this program.
-#    If not, see <http://www.gnu.org/licenses/>.
-#
-#############################################################################
-
-from odoo import models,fields
+from odoo import models, fields
 from odoo.tools.misc import get_lang
 
 class AccountTaxReport(models.TransientModel):
-    _inherit = "account.report"
+    # Removed inheritance from account.report to avoid Many2many conflicts
     _name = 'kit.account.tax.report'
     _description = 'Tax Report'
+    
     company_id = fields.Many2one('res.company', string='Company', required=True, readonly=True, default=lambda self: self.env.company)
-    name = fields.Char(string="Tax Report", default = "Tax Report" ,required=True, translate=True)
+    name = fields.Char(string="Tax Report", default="Tax Report", required=True, translate=True)
     date_from = fields.Date(string='Start Date')
     date_to = fields.Date(string='End Date')
     journal_ids = fields.Many2many(
         comodel_name='account.journal',
+        relation='kit_account_tax_report_journal_rel',  # Explicit relation name
+        column1='report_id',
+        column2='journal_id',
         string='Journals',
         required=True,
         default=lambda self: self.env['account.journal'].search([('company_id', '=', self.company_id.id)]),
@@ -49,7 +31,7 @@ class AccountTaxReport(models.TransientModel):
         result['date_from'] = data['form']['date_from'] or False
         result['date_to'] = data['form']['date_to'] or False
         result['strict_range'] = True if result['date_from'] else False
-        result['company_id'] = data['form']['company_id'][0] or False
+        result['company_id'] = data['form']['company_id'][0] if isinstance(data['form']['company_id'], (list, tuple)) else data['form']['company_id'] or False
         return result
 
     def check_report(self):
@@ -68,5 +50,5 @@ class AccountTaxReport(models.TransientModel):
 
     def _print_report(self, data):
         return self.env.ref(
-            'base_accounting_kit.action_report_account_tax').report_action(
+            'ams_accounting_kit.action_report_account_tax').report_action(
             self, data=data)
