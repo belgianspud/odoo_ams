@@ -1,25 +1,3 @@
-# -*- coding: utf-8 -*-
-#############################################################################
-#
-#    Cybrosys Technologies Pvt. Ltd.
-#
-#    Copyright (C) 2022-TODAY Cybrosys Technologies(<https://www.cybrosys.com>)
-#    Author: Cybrosys Techno Solutions(<https://www.cybrosys.com>)
-#
-#    You can modify it under the terms of the GNU LESSER
-#    GENERAL PUBLIC LICENSE (LGPL v3), Version 3.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU LESSER GENERAL PUBLIC LICENSE (LGPL v3) for more details.
-#
-#    You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
-#    (LGPL v3) along with this program.
-#    If not, see <http://www.gnu.org/licenses/>.
-#
-#############################################################################
-
 import time
 from odoo import api, models, fields, _
 from odoo.tools.misc import get_lang
@@ -30,9 +8,10 @@ class CashFlow(models.Model):
     _inherit = 'account.account'
 
     def get_cash_flow_ids(self):
-        cash_flow_id = self.env.ref('base_accounting_kit.account_financial_report_cash_flow0')
+        cash_flow_id = self.env.ref('ams_accounting_kit.account_financial_report_cash_flow0', raise_if_not_found=False)
         if cash_flow_id:
             return [('parent_id.id', '=', cash_flow_id.id)]
+        return []
 
     cash_flow_type = fields.Many2one('account.financial.report', string="Cash Flow type", domain=get_cash_flow_ids)
 
@@ -103,16 +82,32 @@ class AccountCommonReport(models.Model):
 class AccountCommonJournalReport(models.TransientModel):
     _name = 'account.common.journal.report'
     _description = 'Common Journal Report'
-    _inherit = "account.report"
-
+    
     amount_currency = fields.Boolean('With Currency', help="Print Report with the currency column if the currency differs from the company currency.")
-
     company_id = fields.Many2one('res.company', string='Company', required=True, readonly=True, default=lambda self: self.env.company)
+    journal_ids = fields.Many2many(
+        comodel_name='account.journal',
+        relation='account_common_journal_report_journal_rel',  # Explicit relation name
+        column1='report_id',
+        column2='journal_id',
+        string='Journals',
+        required=True,
+        default=lambda self: self.env['account.journal'].search([('company_id', '=', self.company_id.id)]),
+        domain="[('company_id', '=', company_id)]",
+    )
     date_from = fields.Date(string='Start Date')
     date_to = fields.Date(string='End Date')
     target_move = fields.Selection([('posted', 'All Posted Entries'),
                                     ('all', 'All Entries'),
                                     ], string='Target Moves', required=True, default='posted')
+
+    @api.onchange('company_id')
+    def _onchange_company_id(self):
+        if self.company_id:
+            self.journal_ids = self.env['account.journal'].search(
+                [('company_id', '=', self.company_id.id)])
+        else:
+            self.journal_ids = self.env['account.journal'].search([])
 
     def pre_print_report(self, data):
         data['form'].update({'amount_currency': self.amount_currency})
@@ -138,6 +133,5 @@ class AccountCommonJournalReport(models.TransientModel):
         result['company_id'] = data['form']['company_id'][0] or False
         return result
 
-
-
-
+    def _print_report(self, data):
+        raise NotImplementedError()

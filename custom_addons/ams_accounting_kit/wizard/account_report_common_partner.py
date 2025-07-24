@@ -1,25 +1,3 @@
-# -*- coding: utf-8 -*-
-#############################################################################
-#
-#    Cybrosys Technologies Pvt. Ltd.
-#
-#    Copyright (C) 2022-TODAY Cybrosys Technologies(<https://www.cybrosys.com>)
-#    Author: Cybrosys Techno Solutions(<https://www.cybrosys.com>)
-#
-#    You can modify it under the terms of the GNU LESSER
-#    GENERAL PUBLIC LICENSE (LGPL v3), Version 3.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU LESSER GENERAL PUBLIC LICENSE (LGPL v3) for more details.
-#
-#    You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
-#    (LGPL v3) along with this program.
-#    If not, see <http://www.gnu.org/licenses/>.
-#
-#############################################################################
-
 from odoo import fields, models
 from odoo.tools.misc import get_lang
 
@@ -27,12 +5,15 @@ from odoo.tools.misc import get_lang
 class AccountingCommonPartnerReport(models.TransientModel):
     _name = 'account.common.partner.report'
     _description = 'Account Common Partner Report'
-    _inherit = "account.report"
+    # Removed inheritance from account.report to avoid Many2many conflicts
 
     company_id = fields.Many2one('res.company', string='Company', required=True, readonly=True,
                                  default=lambda self: self.env.company)
     journal_ids = fields.Many2many(
         comodel_name='account.journal',
+        relation='account_common_partner_report_journal_rel',  # Explicit relation name
+        column1='report_id',
+        column2='journal_id',
         string='Journals',
         required=True,
         default=lambda self: self.env['account.journal'].search([('company_id', '=', self.company_id.id)]),
@@ -51,6 +32,20 @@ class AccountingCommonPartnerReport(models.TransientModel):
                                          ], string="Partner's", required=True,
                                         default='customer')
 
+    # Additional fields that might be needed from account.report
+    date_from_cmp = fields.Date(string='Start Date Comparison')
+    date_to_cmp = fields.Date(string='End Date Comparison')
+    debit_credit = fields.Boolean(string='Display Debit/Credit', default=True)
+    filter_cmp = fields.Selection([
+        ('no_comparison', 'No Comparison'),
+        ('previous_period', 'Previous Period'),
+        ('same_last_year', 'Same Period Last Year'),
+        ('custom', 'Custom')
+    ], string='Filter Comparison', default='no_comparison')
+    account_report_id = fields.Many2one('account.financial.report', string='Account Reports')
+    enable_filter = fields.Boolean(string='Enable Comparison')
+    label_filter = fields.Char(string='Column Label')
+
     def _build_contexts(self, data):
         result = {}
         result['journal_ids'] = 'journal_ids' in data['form'] and data['form'][
@@ -67,7 +62,7 @@ class AccountingCommonPartnerReport(models.TransientModel):
         data = {}
         data['ids'] = self.env.context.get('active_ids', [])
         data['model'] = self.env.context.get('active_model', 'ir.ui.menu')
-        data['form'] = self.read(['date_from', 'date_to', 'journal_ids', 'target_move', 'company_id'])[0]
+        data['form'] = self.read(['date_from', 'date_to', 'journal_ids', 'target_move', 'company_id', 'result_selection'])[0]
         used_context = self._build_contexts(data)
         data['form']['used_context'] = dict(used_context, lang=get_lang(self.env).code)
         return self.with_context(discard_logo_check=True)._print_report(data)
@@ -78,7 +73,7 @@ class AccountingCommonPartnerReport(models.TransientModel):
              'account_report_id', 'enable_filter', 'label_filter',
              'target_move'])[0])
         return self.env.ref(
-            'base_accounting_kit.action_report_cash_flow').report_action(self,
+            'ams_accounting_kit.action_report_cash_flow').report_action(self,
                                                                          data=data,
                                                                          config=False)
 

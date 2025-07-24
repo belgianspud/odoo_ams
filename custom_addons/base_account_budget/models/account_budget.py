@@ -1,24 +1,3 @@
-# -*- coding: utf-8 -*-
-#############################################################################
-#
-#    Cybrosys Technologies Pvt. Ltd.
-#
-#    Copyright (C) 2019-TODAY Cybrosys Technologies(<https://www.cybrosys.com>)
-#    Author: Cybrosys Techno Solutions(<https://www.cybrosys.com>)
-#
-#    You can modify it under the terms of the GNU LESSER
-#    GENERAL PUBLIC LICENSE (LGPL v3), Version 3.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU LESSER GENERAL PUBLIC LICENSE (LGPL v3) for more details.
-#
-#    You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
-#    (LGPL v3) along with this program.
-#    If not, see <http://www.gnu.org/licenses/>.
-#
-#############################################################################
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 
@@ -35,9 +14,7 @@ class AccountBudgetPost(models.Model):
     budget_line = fields.One2many('budget.lines', 'general_budget_id',
                                   'Budget Lines')
     company_id = fields.Many2one('res.company', 'Company', required=True,
-                                 default=lambda self: self.env[
-                                     'res.company']._company_default_get(
-                                     'account.budget.post'))
+                                 default=lambda self: self.env.company)
 
     def _check_account_ids(self, vals):
         for val in vals:
@@ -55,7 +32,7 @@ class AccountBudgetPost(models.Model):
         return super(AccountBudgetPost, self).create(vals)
 
     def write(self, vals):
-        self._check_account_ids(vals)
+        self._check_account_ids([vals])
         return super(AccountBudgetPost, self).write(vals)
 
 
@@ -64,14 +41,11 @@ class Budget(models.Model):
     _description = "Budget"
     _inherit = ['mail.thread']
 
-    name = fields.Char('Budget Name', required=True,
-                       states={'done': [('readonly', True)]})
+    name = fields.Char('Budget Name', required=True, readonly=True, states={'draft': [('readonly', False)]})
     creating_user_id = fields.Many2one('res.users', 'Responsible',
                                        default=lambda self: self.env.user)
-    date_from = fields.Date('Start Date', required=True,
-                            states={'done': [('readonly', True)]})
-    date_to = fields.Date('End Date', required=True,
-                          states={'done': [('readonly', True)]})
+    date_from = fields.Date('Start Date', required=True, readonly=True, states={'draft': [('readonly', False)]})
+    date_to = fields.Date('End Date', required=True, readonly=True, states={'draft': [('readonly', False)]})
     state = fields.Selection([
         ('draft', 'Draft'),
         ('cancel', 'Cancelled'),
@@ -79,14 +53,12 @@ class Budget(models.Model):
         ('validate', 'Validated'),
         ('done', 'Done')
     ], 'Status', default='draft', index=True, required=True, readonly=True,
-        copy=False)
+        copy=False, tracking=True)
     budget_line = fields.One2many('budget.lines', 'budget_id', 'Budget Lines',
-                                  states={'done': [('readonly', True)]},
+                                  readonly=True, states={'draft': [('readonly', False)]},
                                   copy=True)
     company_id = fields.Many2one('res.company', 'Company', required=True,
-                                 default=lambda self: self.env[
-                                     'res.company']._company_default_get(
-                                     'account.budget.post'))
+                                 default=lambda self: self.env.company)
 
     def action_budget_confirm(self):
         self.write({'state': 'confirm'})
@@ -118,16 +90,24 @@ class BudgetLines(models.Model):
     date_from = fields.Date('Start Date', required=True)
     date_to = fields.Date('End Date', required=True)
     paid_date = fields.Date('Paid Date')
-    planned_amount = fields.Float('Planned Amount', required=True, digits=0)
+    planned_amount = fields.Float('Planned Amount', required=True)
     practical_amount = fields.Float(compute='_compute_practical_amount',
-                                    string='Practical Amount', digits=0)
+                                    string='Practical Amount')
     theoretical_amount = fields.Float(compute='_compute_theoretical_amount',
-                                      string='Theoretical Amount', digits=0)
+                                      string='Theoretical Amount')
     percentage = fields.Float(compute='_compute_percentage',
                               string='Achievement')
     company_id = fields.Many2one(related='budget_id.company_id',
                                  comodel_name='res.company',
                                  string='Company', store=True, readonly=True)
+
+    @api.model
+    def default_get(self, fields_list):
+        """Set default analytic account from context"""
+        result = super().default_get(fields_list)
+        if self.env.context.get('default_analytic_account_id'):
+            result['analytic_account_id'] = self.env.context.get('default_analytic_account_id')
+        return result
 
     def _compute_practical_amount(self):
         for line in self:

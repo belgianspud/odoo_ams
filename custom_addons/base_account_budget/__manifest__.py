@@ -43,16 +43,14 @@
     'author': 'AMS Development Team',
     'website': 'https://your-ams-website.com',
     'license': 'LGPL-3',
-    'depends': ['base', 'account'],
-    'website': 'https://www.cybrosys.com',
+    'depends': ['base', 'account', 'analytic'],
     'data': [
         'security/ir.model.access.csv',
         'security/account_budget_security.xml',
-        'views/account_analytic_account_views.xml',
-        'views/account_budget_views.xml',
+        'views/account_budget_views.xml',  # Load budget views first
+        'views/account_analytic_account_views.xml',  # Then analytic views
     ],
     'images': ['static/description/banner.png'],
-    'license': 'LGPL-3',
     'installable': True,
     'auto_install': False,
     'application': False,

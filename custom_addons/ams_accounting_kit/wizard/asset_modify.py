@@ -1,39 +1,44 @@
-# -*- coding: utf-8 -*-
-#############################################################################
-#
-#    Cybrosys Technologies Pvt. Ltd.
-#
-#    Copyright (C) 2022-TODAY Cybrosys Technologies(<https://www.cybrosys.com>)
-#    Author: Cybrosys Techno Solutions(<https://www.cybrosys.com>)
-#
-#    You can modify it under the terms of the GNU LESSER
-#    GENERAL PUBLIC LICENSE (LGPL v3), Version 3.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU LESSER GENERAL PUBLIC LICENSE (LGPL v3) for more details.
-#
-#    You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
-#    (LGPL v3) along with this program.
-#    If not, see <http://www.gnu.org/licenses/>.
-#
-#############################################################################
-
 from lxml import etree
 
 from odoo import api, fields, models, _
-from odoo.addons.base.models.ir_ui_view import (
-transfer_field_to_modifiers, transfer_node_to_modifiers, transfer_modifiers_to_node,
-)
+
+# Odoo 18 compatibility: these functions were removed/moved
+try:
+    from odoo.addons.base.models.ir_ui_view import (
+        transfer_field_to_modifiers, transfer_node_to_modifiers, transfer_modifiers_to_node,
+    )
+except ImportError:
+    # Fallback functions for Odoo 18 compatibility
+    def transfer_field_to_modifiers(field, modifiers, context=None, in_tree_view=False):
+        """Fallback for removed function in Odoo 18"""
+        if field.readonly:
+            modifiers['readonly'] = True
+        if field.required:
+            modifiers['required'] = True
+        if hasattr(field, 'invisible') and field.invisible:
+            modifiers['invisible'] = True
+    
+    def transfer_node_to_modifiers(node, modifiers, context=None, in_tree_view=False):
+        """Fallback for removed function in Odoo 18"""
+        if node.get('invisible'):
+            modifiers['invisible'] = node.get('invisible')
+        if node.get('readonly'):
+            modifiers['readonly'] = node.get('readonly')
+        if node.get('required'):
+            modifiers['required'] = node.get('required')
+    
+    def transfer_modifiers_to_node(modifiers, node):
+        """Fallback for removed function in Odoo 18"""
+        for modifier, value in modifiers.items():
+            if value:
+                node.set(modifier, str(value))
 
 
 def setup_modifiers(node, field=None, context=None, in_tree_view=False):
     modifiers = {}
     if field is not None:
-        transfer_field_to_modifiers(field, modifiers)
-    transfer_node_to_modifiers(
-        node, modifiers, context=context)
+        transfer_field_to_modifiers(field, modifiers, context=context, in_tree_view=in_tree_view)
+    transfer_node_to_modifiers(node, modifiers, context=context, in_tree_view=in_tree_view)
     transfer_modifiers_to_node(modifiers, node)
 
 
@@ -47,10 +52,14 @@ class AssetModify(models.TransientModel):
     method_end = fields.Date(string='Ending date')
     asset_method_time = fields.Char(compute='_get_asset_method_time', string='Asset Method Time', readonly=True)
 
+    @api.depends_context('active_id')
     def _get_asset_method_time(self):
-        if self.env.context.get('active_id'):
-            asset = self.env['account.asset.asset'].browse(self.env.context.get('active_id'))
-            self.asset_method_time = asset.method_time
+        for record in self:
+            if self.env.context.get('active_id'):
+                asset = self.env['account.asset.asset'].browse(self.env.context.get('active_id'))
+                record.asset_method_time = asset.method_time
+            else:
+                record.asset_method_time = False
 
     @api.model
     def fields_view_get(self, view_id=None, view_type='form', toolbar=False, submenu=False):
@@ -75,18 +84,17 @@ class AssetModify(models.TransientModel):
     def default_get(self, fields):
         res = super(AssetModify, self).default_get(fields)
         asset_id = self.env.context.get('active_id')
-        asset = self.env['account.asset.asset'].browse(asset_id)
-        if 'name' in fields:
-            res.update({'name': asset.name})
-        if 'method_number' in fields and asset.method_time == 'number':
-            res.update({'method_number': asset.method_number})
-        if 'method_period' in fields:
-            res.update({'method_period': asset.method_period})
-        if 'method_end' in fields and asset.method_time == 'end':
-            res.update({'method_end': asset.method_end})
-        if self.env.context.get('active_id'):
-            active_asset = self.env['account.asset.asset'].browse(self.env.context.get('active_id'))
-            res['asset_method_time'] = active_asset.method_time
+        if asset_id:
+            asset = self.env['account.asset.asset'].browse(asset_id)
+            if 'name' in fields:
+                res.update({'name': asset.name})
+            if 'method_number' in fields and asset.method_time == 'number':
+                res.update({'method_number': asset.method_number})
+            if 'method_period' in fields:
+                res.update({'method_period': asset.method_period})
+            if 'method_end' in fields and asset.method_time == 'end':
+                res.update({'method_end': asset.method_end})
+            res['asset_method_time'] = asset.method_time
         return res
 
     def modify(self):
