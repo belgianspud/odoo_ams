@@ -1,24 +1,3 @@
-# -*- coding: utf-8 -*-
-#############################################################################
-#
-#    Cybrosys Technologies Pvt. Ltd.
-#
-#    Copyright (C) 2022-TODAY Cybrosys Technologies(<https://www.cybrosys.com>)
-#    Author: Cybrosys Techno Solutions(<https://www.cybrosys.com>)
-#
-#    You can modify it under the terms of the GNU LESSER
-#    GENERAL PUBLIC LICENSE (LGPL v3), Version 3.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU LESSER GENERAL PUBLIC LICENSE (LGPL v3) for more details.
-#
-#    You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
-#    (LGPL v3) along with this program.
-#    If not, see <http://www.gnu.org/licenses/>.
-#
-#############################################################################
 from datetime import date
 
 from odoo import models, fields
@@ -31,10 +10,16 @@ class DayBookWizard(models.TransientModel):
     company_id = fields.Many2one('res.company', string='Company',
                                  readonly=True,
                                  default=lambda self: self.env.company)
-    journal_ids = fields.Many2many('account.journal', string='Journals',
-                                   required=True,
-                                   default=lambda self: self.env[
-                                       'account.journal'].search([]))
+    journal_ids = fields.Many2many(
+        comodel_name='account.journal',
+        relation='account_day_book_journal_rel',  # Unique relation table name
+        column1='report_id',
+        column2='journal_id',
+        string='Journals',
+        required=True,
+        default=lambda self: self.env['account.journal'].search([])
+    )
+    
     target_move = fields.Selection([('posted', 'All Posted Entries'),
                                     ('all', 'All Entries')], string='Target Moves', required=True,
                                    default='posted')
