@@ -36,6 +36,9 @@ class AccountCommonReport(models.Model):
     company_id = fields.Many2one('res.company', string='Company', required=True, readonly=True, default=lambda self: self.env.company)
     journal_ids = fields.Many2many(
         comodel_name='account.journal',
+        relation='account_common_report_journal_rel',
+        column1='report_id', 
+        column2='journal_id',
         string='Journals',
         required=True,
         default=lambda self: self.env['account.journal'].search([('company_id', '=', self.company_id.id)]),

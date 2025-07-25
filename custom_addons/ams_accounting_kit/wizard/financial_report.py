@@ -1,24 +1,3 @@
-# -*- coding: utf-8 -*-
-#############################################################################
-#
-#    Cybrosys Technologies Pvt. Ltd.
-#
-#    Copyright (C) 2022-TODAY Cybrosys Technologies(<https://www.cybrosys.com>)
-#    Author: Cybrosys Techno Solutions(<https://www.cybrosys.com>)
-#
-#    You can modify it under the terms of the GNU LESSER
-#    GENERAL PUBLIC LICENSE (LGPL v3), Version 3.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU LESSER GENERAL PUBLIC LICENSE (LGPL v3) for more details.
-#
-#    You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
-#    (LGPL v3) along with this program.
-#    If not, see <http://www.gnu.org/licenses/>.
-#
-#############################################################################
 import re
 
 from odoo import api, models, fields
@@ -41,6 +20,34 @@ class FinancialReport(models.TransientModel):
         default='vertical',
         string="Format")
 
+    # Override journal_ids to avoid conflicts with other models inheriting from account.report
+    journal_ids = fields.Many2many(
+        comodel_name='account.journal',
+        relation='financial_report_journal_rel',  # Unique relation table name
+        column1='report_id',
+        column2='journal_id',
+        string='Journals',
+        required=True,
+        default=lambda self: self.env['account.journal'].search([('company_id', '=', self.company_id.id)]),
+        domain="[('company_id', '=', company_id)]",
+    )
+
+    # Override both section Many2many fields to avoid conflicts with account.report
+    section_report_ids = fields.Many2many(
+        string="Sections", 
+        comodel_name='account.report',
+        relation="financial_report_section_rel",  # Unique relation table name
+        column1="main_report_id", 
+        column2="sub_report_id"
+    )
+    
+    section_main_report_ids = fields.Many2many(
+        string="Section Of", 
+        comodel_name='account.report',
+        relation="financial_report_section_rel",  # Same relation table as above
+        column1="sub_report_id", 
+        column2="main_report_id"
+    )
 
     def _build_contexts(self, data):
         result = {}
@@ -181,12 +188,12 @@ class FinancialReport(models.TransientModel):
     def _compute_report_balance(self, reports):
         """returns a dictionary with key=the ID of a record and
          value=the credit, debit and balance amount
-        computed for this record. If the record is of type :
-        'accounts' : it's the sum of the linked accounts
-        'account_type' : it's the sum of leaf accounts with
+        computed for this record. If the record is of type :
+        'accounts' : it's the sum of the linked accounts
+        'account_type' : it's the sum of leaf accounts with
          such an account_type
-        'account_report' : it's the amount of the related report
-        'sum' : it's the sum of the children of this record
+        'account_report' : it's the amount of the related report
+        'sum' : it's the sum of the children of this record
          (aka a 'view' record)"""
         res = {}
         fields = ['credit', 'debit', 'balance']

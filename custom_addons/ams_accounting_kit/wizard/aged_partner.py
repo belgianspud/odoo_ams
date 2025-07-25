@@ -13,9 +13,16 @@ class AccountAgedTrialBalance(models.TransientModel):
 
     name = fields.Char(string="Account Aged Trial balance Report", default="Account Aged Trial balance Report", required=True, translate=True)
 
-    # Removed duplicate journal_ids field - it's inherited from account.common.partner.report
-    # journal_ids = fields.Many2many('account.journal', string='Journals', required=True)
-    
+    journal_ids = fields.Many2many(
+        comodel_name='account.journal',
+        relation='account_aged_trial_balance_journal_rel',  # Unique relation table
+        column1='aged_trial_id',
+        column2='journal_id',
+        string='Journals',
+        required=True,
+        default=lambda self: self.env['account.journal'].search([('company_id', '=', self.company_id.id)]),
+        domain="[('company_id', '=', company_id)]",
+    )
     period_length = fields.Integer(string='Period Length (days)',
                                    required=True, default=30)
     date_from = fields.Date(default=lambda *a: time.strftime('%Y-%m-%d'))
