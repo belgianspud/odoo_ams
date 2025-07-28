@@ -1,3 +1,7 @@
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError, UserError
+import logging
+
 class PartnerAmsExtension(models.Model):
     """Extend res.partner with AMS financial fields"""
     _inherit = 'res.partner'

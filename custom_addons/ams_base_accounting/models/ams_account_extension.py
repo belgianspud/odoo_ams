@@ -1,3 +1,7 @@
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError, UserError
+import logging
+
 class AmsAccountExtension(models.Model):
     """
     Extend account.account to add association-specific features

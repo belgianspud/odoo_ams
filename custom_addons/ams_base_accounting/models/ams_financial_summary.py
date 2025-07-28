@@ -1,3 +1,7 @@
+from odoo import models, fields, api, tools, _
+from odoo.exceptions import ValidationError, UserError
+import logging
+
 class AmsFinancialSummary(models.Model):
     """
     Provide financial summary views for associations.
@@ -49,7 +53,7 @@ class AmsFinancialSummary(models.Model):
                     SUM(CASE WHEN am.move_type = 'out_invoice' 
                         AND aml.product_id IN (
                             SELECT id FROM product_product pp 
-                            WHERE pp.is_membership = true
+                            -- WHERE pp.is_membership = true
                         ) 
                         THEN aml.credit ELSE 0 END) as membership_revenue,
                         

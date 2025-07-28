@@ -71,7 +71,8 @@ class AmsFinancialTransaction(models.Model):
     # Computed fields
     display_name = fields.Char(compute='_compute_display_name', store=True)
     partner_name = fields.Char(related='partner_id.name', store=True)
-    revenue_category_name = fields.Char(related='revenue_category_id.name', store=True)
+    # commented this out due to error: 
+    # revenue_category_name = fields.Char(related='revenue_category_id.name', store=True)
     chapter_name = fields.Char(related='chapter_id.name', store=True)
     
     @api.depends('name', 'date', 'amount', 'partner_id.name')

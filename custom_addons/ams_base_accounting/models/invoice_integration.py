@@ -1,3 +1,7 @@
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError, UserError
+import logging
+
 class AccountMoveAmsIntegration(models.Model):
     """Extend account.move (invoices) with AMS integration"""
     _inherit = 'account.move'

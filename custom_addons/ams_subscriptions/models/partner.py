@@ -18,7 +18,26 @@ class ResPartner(models.Model):
     membership_status = fields.Selection(related='current_membership_id.state', string='Membership Status', store=True)
     membership_start_date = fields.Date(related='current_membership_id.start_date', string='Membership Start', store=True)
     membership_end_date = fields.Date(related='current_membership_id.end_date', string='Membership End', store=True)
-    membership_amount = fields.Float(related='current_membership_id.amount', string='Membership Amount', store=True)
+    membership_amount = fields.Monetary(
+        related='current_membership_id.amount', 
+        string='Membership Amount', 
+        store=True,
+        currency_field='company_currency_id'
+    )
+    #currency_id = fields.Many2one(
+    #    related='current_membership_id.currency_id',
+    #    string='Currency',
+    #    store=True,
+    #    readonly=True
+    #)
+
+    # Added this field to reference the company currency
+    company_currency_id = fields.Many2one(
+        'res.currency',
+        related='company_id.currency_id',
+        string='Company Currency',
+        readonly=True
+    )
     next_renewal_date = fields.Date(related='current_membership_id.next_renewal_date', string='Next Renewal', store=True)
     auto_renewal_enabled = fields.Boolean(related='current_membership_id.auto_renewal', string='Auto Renewal', store=True)
     

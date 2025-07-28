@@ -81,7 +81,7 @@
     'demo': [
         'demo/subscription_demo_data.xml',
     ],
-    'assets': {
+    ''''assets': {
         'web.assets_backend': [
             'ams_subscriptions/static/src/css/subscription_dashboard.css',
             'ams_subscriptions/static/src/js/subscription_widgets.js',
@@ -90,7 +90,7 @@
             'ams_subscriptions/static/src/css/portal_subscriptions.css',
             'ams_subscriptions/static/src/js/subscription_portal.js',
         ],
-    },
+    },'''
     'installable': True,
     'application': True,
     'auto_install': False,
