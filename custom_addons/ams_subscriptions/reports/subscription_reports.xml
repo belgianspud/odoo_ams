@@ -1,0 +1,710 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Subscription Report Templates -->
+    
+    <!-- Main Report: Subscription Summary Report -->
+    <record id="action_report_subscription_summary" model="ir.actions.report">
+        <field name="name">Subscription Summary Report</field>
+        <field name="model">ams.subscription</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_subscriptions.report_subscription_summary</field>
+        <field name="report_file">ams_subscriptions.report_subscription_summary</field>
+        <field name="binding_model_id" ref="model_ams_subscription"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_subscription_summary">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="subscription">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        
+                        <!-- Header -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="text-center">
+                                    <h2>Subscription Summary Report</h2>
+                                    <p class="text-muted">Generated on <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%B %d, %Y')"/></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Subscription Details -->
+                        <div class="row mt32">
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Member:</strong></td>
+                                        <td><span t-field="subscription.partner_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Subscription:</strong></td>
+                                        <td><span t-field="subscription.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Type:</strong></td>
+                                        <td><span t-field="subscription.subscription_type_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Status:</strong></td>
+                                        <td>
+                                            <span t-field="subscription.state" 
+                                                  t-options-widget="'badge'" 
+                                                  t-att-class="'badge badge-' + ('success' if subscription.state == 'active' else 'warning' if subscription.state == 'pending_renewal' else 'danger' if subscription.state == 'suspended' else 'secondary')"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Start Date:</strong></td>
+                                        <td><span t-field="subscription.start_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>End Date:</strong></td>
+                                        <td><span t-field="subscription.end_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Amount:</strong></td>
+                                        <td><span t-field="subscription.amount" t-options='{"widget": "monetary", "display_currency": subscription.currency_id}'/></td>
+                                    </tr>
+                                    <tr t-if="subscription.is_recurring">
+                                        <td><strong>Next Renewal:</strong></td>
+                                        <td><span t-field="subscription.next_renewal_date"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Chapter Information (if applicable) -->
+                        <div class="row mt16" t-if="subscription.chapter_id">
+                            <div class="col-12">
+                                <h4>Chapter Information</h4>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Chapter:</strong></td>
+                                        <td><span t-field="subscription.chapter_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Region:</strong></td>
+                                        <td><span t-field="subscription.chapter_id.region"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Contact:</strong></td>
+                                        <td><span t-field="subscription.chapter_id.contact_person"/> - <span t-field="subscription.chapter_id.email"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Related Subscriptions -->
+                        <div class="row mt16" t-if="subscription.child_subscription_ids">
+                            <div class="col-12">
+                                <h4>Associated Chapter Subscriptions</h4>
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Chapter</th>
+                                            <th>Region</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>End Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="subscription.child_subscription_ids" t-as="child">
+                                            <td><span t-field="child.chapter_id.name"/></td>
+                                            <td><span t-field="child.chapter_region"/></td>
+                                            <td><span t-field="child.amount" t-options='{"widget": "monetary", "display_currency": child.currency_id}'/></td>
+                                            <td><span t-field="child.state"/></td>
+                                            <td><span t-field="child.end_date"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Payment History -->
+                        <div class="row mt16" t-if="subscription.invoice_ids">
+                            <div class="col-12">
+                                <h4>Payment History</h4>
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Invoice Date</th>
+                                            <th>Invoice Number</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Payment Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="subscription.invoice_ids.sorted('invoice_date', reverse=True)" t-as="invoice">
+                                            <td><span t-field="invoice.invoice_date"/></td>
+                                            <td><span t-field="invoice.name"/></td>
+                                            <td><span t-field="invoice.amount_total" t-options='{"widget": "monetary", "display_currency": invoice.currency_id}'/></td>
+                                            <td><span t-field="invoice.payment_state"/></td>
+                                            <td><span t-field="invoice.invoice_date_due"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Member Report: Member Subscription History -->
+    <record id="action_report_member_subscription_history" model="ir.actions.report">
+        <field name="name">Member Subscription History</field>
+        <field name="model">res.partner</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_subscriptions.report_member_subscription_history</field>
+        <field name="report_file">ams_subscriptions.report_member_subscription_history</field>
+        <field name="binding_model_id" ref="base.model_res_partner"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_member_subscription_history">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="partner">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        
+                        <!-- Header -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="text-center">
+                                    <h2>Member Subscription History</h2>
+                                    <h3><span t-field="partner.name"/></h3>
+                                    <p class="text-muted">Generated on <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%B %d, %Y')"/></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Member Information -->
+                        <div class="row mt32">
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Member ID:</strong></td>
+                                        <td><span t-field="partner.id"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Email:</strong></td>
+                                        <td><span t-field="partner.email"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Phone:</strong></td>
+                                        <td><span t-field="partner.phone"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Current Status:</strong></td>
+                                        <td><span t-field="partner.membership_status"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Member Since:</strong></td>
+                                        <td><span t-field="partner.membership_start_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Total Subscriptions:</strong></td>
+                                        <td><span t-field="partner.total_subscription_count"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Current Active Subscriptions -->
+                        <div class="row mt16" t-if="partner.subscription_ids.filtered(lambda s: s.state == 'active')">
+                            <div class="col-12">
+                                <h4>Current Active Subscriptions</h4>
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Subscription</th>
+                                            <th>Type</th>
+                                            <th>Chapter</th>
+                                            <th>Start Date</th>
+                                            <th>End Date</th>
+                                            <th>Amount</th>
+                                            <th>Next Renewal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="partner.subscription_ids.filtered(lambda s: s.state == 'active')" t-as="subscription">
+                                            <td><span t-field="subscription.name"/></td>
+                                            <td><span t-field="subscription.subscription_type_id.name"/></td>
+                                            <td><span t-field="subscription.chapter_id.name"/></td>
+                                            <td><span t-field="subscription.start_date"/></td>
+                                            <td><span t-field="subscription.end_date"/></td>
+                                            <td><span t-field="subscription.amount" t-options='{"widget": "monetary", "display_currency": subscription.currency_id}'/></td>
+                                            <td><span t-field="subscription.next_renewal_date"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Subscription History -->
+                        <div class="row mt16" t-if="partner.subscription_ids">
+                            <div class="col-12">
+                                <h4>Complete Subscription History</h4>
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Subscription</th>
+                                            <th>Type</th>
+                                            <th>Chapter</th>
+                                            <th>Start Date</th>
+                                            <th>End Date</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="partner.subscription_ids.sorted('start_date', reverse=True)" t-as="subscription">
+                                            <td><span t-field="subscription.name"/></td>
+                                            <td><span t-field="subscription.subscription_type_id.name"/></td>
+                                            <td><span t-field="subscription.chapter_id.name"/></td>
+                                            <td><span t-field="subscription.start_date"/></td>
+                                            <td><span t-field="subscription.end_date"/></td>
+                                            <td><span t-field="subscription.amount" t-options='{"widget": "monetary", "display_currency": subscription.currency_id}'/></td>
+                                            <td><span t-field="subscription.state"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Financial Summary -->
+                        <div class="row mt32">
+                            <div class="col-12">
+                                <h4>Financial Summary</h4>
+                                <div class="row">
+                                    <div class="col-4">
+                                        <div class="card">
+                                            <div class="card-body text-center">
+                                                <h5>Total Lifetime Value</h5>
+                                                <h3><span t-field="partner.total_subscription_value" t-options='{"widget": "monetary"}'/></h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="card">
+                                            <div class="card-body text-center">
+                                                <h5>Active Subscription Value</h5>
+                                                <h3><span t-field="partner.active_subscription_value" t-options='{"widget": "monetary"}'/></h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="card">
+                                            <div class="card-body text-center">
+                                                <h5>Outstanding Balance</h5>
+                                                <h3><span t-field="partner.outstanding_balance" t-options='{"widget": "monetary"}'/></h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Chapter Report: Chapter Member Report -->
+    <record id="action_report_chapter_members" model="ir.actions.report">
+        <field name="name">Chapter Member Report</field>
+        <field name="model">ams.chapter</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_subscriptions.report_chapter_members</field>
+        <field name="report_file">ams_subscriptions.report_chapter_members</field>
+        <field name="binding_model_id" ref="model_ams_chapter"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_chapter_members">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="chapter">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        
+                        <!-- Header -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="text-center">
+                                    <h2>Chapter Member Report</h2>
+                                    <h3><span t-field="chapter.name"/></h3>
+                                    <p class="text-muted">Generated on <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%B %d, %Y')"/></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chapter Information -->
+                        <div class="row mt32">
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Chapter Code:</strong></td>
+                                        <td><span t-field="chapter.code"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Region:</strong></td>
+                                        <td><span t-field="chapter.region"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Location:</strong></td>
+                                        <td><span t-field="chapter.city"/>, <span t-field="chapter.state_province"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Country:</strong></td>
+                                        <td><span t-field="chapter.country_id.name"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Contact Person:</strong></td>
+                                        <td><span t-field="chapter.contact_person"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Email:</strong></td>
+                                        <td><span t-field="chapter.email"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Phone:</strong></td>
+                                        <td><span t-field="chapter.phone"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Chapter Fee:</strong></td>
+                                        <td><span t-field="chapter.chapter_fee" t-options='{"widget": "monetary", "display_currency": chapter.currency_id}'/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Membership Statistics -->
+                        <div class="row mt32">
+                            <div class="col-12">
+                                <h4>Membership Statistics</h4>
+                                <div class="row">
+                                    <div class="col-3">
+                                        <div class="card">
+                                            <div class="card-body text-center">
+                                                <h5>Total Members</h5>
+                                                <h3><span t-field="chapter.member_count"/></h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="card">
+                                            <div class="card-body text-center">
+                                                <h5>Active Members</h5>
+                                                <h3><span t-field="chapter.active_member_count"/></h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="card">
+                                            <div class="card-body text-center">
+                                                <h5>Revenue YTD</h5>
+                                                <h3><span t-field="chapter.revenue_ytd" t-options='{"widget": "monetary"}'/></h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="card">
+                                            <div class="card-body text-center">
+                                                <h5>Avg Member Value</h5>
+                                                <h3><span t-field="chapter.average_member_value" t-options='{"widget": "monetary"}'/></h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Active Members List -->
+                        <div class="row mt16" t-if="chapter.subscription_ids.filtered(lambda s: s.state == 'active')">
+                            <div class="col-12">
+                                <h4>Active Members</h4>
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Member Name</th>
+                                            <th>Email</th>
+                                            <th>Phone</th>
+                                            <th>Join Date</th>
+                                            <th>End Date</th>
+                                            <th>Amount Paid</th>
+                                            <th>Next Renewal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="chapter.subscription_ids.filtered(lambda s: s.state == 'active').sorted('partner_id.name')" t-as="subscription">
+                                            <td><span t-field="subscription.partner_id.name"/></td>
+                                            <td><span t-field="subscription.partner_id.email"/></td>
+                                            <td><span t-field="subscription.partner_id.phone"/></td>
+                                            <td><span t-field="subscription.start_date"/></td>
+                                            <td><span t-field="subscription.end_date"/></td>
+                                            <td><span t-field="subscription.amount" t-options='{"widget": "monetary", "display_currency": subscription.currency_id}'/></td>
+                                            <td><span t-field="subscription.next_renewal_date"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Renewal Report: Due Renewals Report -->
+    <record id="action_report_due_renewals" model="ir.actions.report">
+        <field name="name">Due Renewals Report</field>
+        <field name="model">ams.subscription</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_subscriptions.report_due_renewals</field>
+        <field name="report_file">ams_subscriptions.report_due_renewals</field>
+        <field name="binding_model_id" ref="model_ams_subscription"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_due_renewals">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <div class="oe_structure"/>
+                    
+                    <!-- Header -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="text-center">
+                                <h2>Due Renewals Report</h2>
+                                <p class="text-muted">Generated on <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%B %d, %Y')"/></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Statistics -->
+                    <div class="row mt32">
+                        <div class="col-12">
+                            <h4>Summary</h4>
+                            <div class="row">
+                                <div class="col-3">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <h5>Total Due</h5>
+                                            <h3><span t-esc="len(docs)"/></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <h5>Potential Revenue</h5>
+                                            <h3><span t-esc="sum(docs.mapped('amount'))" t-options='{"widget": "monetary"}'/></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <h5>Auto Renewals</h5>
+                                            <h3><span t-esc="len(docs.filtered('auto_renewal'))"/></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <h5>Manual Renewals</h5>
+                                            <h3><span t-esc="len(docs.filtered(lambda s: not s.auto_renewal))"/></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Due Renewals List -->
+                    <div class="row mt16">
+                        <div class="col-12">
+                            <h4>Renewals Due for Processing</h4>
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Member</th>
+                                        <th>Subscription</th>
+                                        <th>Type</th>
+                                        <th>Chapter</th>
+                                        <th>Due Date</th>
+                                        <th>Amount</th>
+                                        <th>Auto Renewal</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="docs.sorted('next_renewal_date')" t-as="subscription">
+                                        <td><span t-field="subscription.partner_id.name"/></td>
+                                        <td><span t-field="subscription.name"/></td>
+                                        <td><span t-field="subscription.subscription_type_id.name"/></td>
+                                        <td><span t-field="subscription.chapter_id.name"/></td>
+                                        <td>
+                                            <span t-field="subscription.next_renewal_date" 
+                                                  t-att-class="'text-danger' if subscription.next_renewal_date &lt; datetime.date.today() else 'text-warning' if subscription.next_renewal_date &lt;= datetime.date.today() + datetime.timedelta(days=7) else ''"/>
+                                        </td>
+                                        <td><span t-field="subscription.amount" t-options='{"widget": "monetary", "display_currency": subscription.currency_id}'/></td>
+                                        <td>
+                                            <span t-if="subscription.auto_renewal" class="badge badge-success">Yes</span>
+                                            <span t-if="not subscription.auto_renewal" class="badge badge-warning">No</span>
+                                        </td>
+                                        <td><span t-field="subscription.state"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="oe_structure"/>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- Financial Summary Report -->
+    <record id="action_report_subscription_financial_summary" model="ir.actions.report">
+        <field name="name">Subscription Financial Summary</field>
+        <field name="model">ams.subscription</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_subscriptions.report_subscription_financial_summary</field>
+        <field name="report_file">ams_subscriptions.report_subscription_financial_summary</field>
+        <field name="binding_model_id" ref="model_ams_subscription"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_subscription_financial_summary">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <div class="oe_structure"/>
+                    
+                    <!-- Header -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="text-center">
+                                <h2>Subscription Financial Summary</h2>
+                                <p class="text-muted">Period: <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%B %Y')"/></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Financial Overview -->
+                    <div class="row mt32">
+                        <div class="col-12">
+                            <h4>Financial Overview</h4>
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <h5>Total Active Revenue</h5>
+                                            <h3><span t-esc="sum(docs.filtered(lambda s: s.state == 'active').mapped('amount'))" t-options='{"widget": "monetary"}'/></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <h5>Pending Renewals</h5>
+                                            <h3><span t-esc="sum(docs.filtered(lambda s: s.state == 'pending_renewal').mapped('amount'))" t-options='{"widget": "monetary"}'/></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <h5>At Risk Revenue</h5>
+                                            <h3><span t-esc="sum(docs.filtered(lambda s: s.state in ('grace', 'suspended')).mapped('amount'))" t-options='{"widget": "monetary"}'/></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Breakdown by Type -->
+                    <div class="row mt32">
+                        <div class="col-12">
+                            <h4>Revenue by Subscription Type</h4>
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Subscription Type</th>
+                                        <th>Active Count</th>
+                                        <th>Total Revenue</th>
+                                        <th>Average Value</th>
+                                        <th>Renewal Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-set="types" t-value="docs.mapped('subscription_type_id').sorted('name')"/>
+                                    <tr t-foreach="types" t-as="sub_type">
+                                        <t t-set="type_subs" t-value="docs.filtered(lambda s: s.subscription_type_id == sub_type)"/>
+                                        <t t-set="active_subs" t-value="type_subs.filtered(lambda s: s.state == 'active')"/>
+                                        <td><span t-esc="sub_type.name"/></td>
+                                        <td><span t-esc="len(active_subs)"/></td>
+                                        <td><span t-esc="sum(active_subs.mapped('amount'))" t-options='{"widget": "monetary"}'/></td>
+                                        <td><span t-esc="sum(active_subs.mapped('amount')) / len(active_subs) if active_subs else 0" t-options='{"widget": "monetary"}'/></td>
+                                        <td>
+                                            <t t-set="renewal_rate" t-value="len(active_subs.filtered('auto_renewal')) / len(active_subs) * 100 if active_subs else 0"/>
+                                            <span t-esc="'%.1f%%' % renewal_rate"/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="oe_structure"/>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- Add report actions to server actions for easier access -->
+    <record id="server_action_generate_renewal_report" model="ir.actions.server">
+        <field name="name">Generate Renewal Report</field>
+        <field name="model_id" ref="model_ams_subscription"/>
+        <field name="binding_model_id" ref="model_ams_subscription"/>
+        <field name="state">code</field>
+        <field name="code">
+action = {
+    'type': 'ir.actions.report',
+    'report_name': 'ams_subscriptions.report_due_renewals',
+    'report_type': 'qweb-pdf',
+    'context': env.context,
+}
+        </field>
+    </record>
+
+</odoo>

@@ -1,128 +1,502 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- File Path: custom_addons/ams_subscriptions/views/menu_views.xml -->
-    <!-- This REPLACES the existing menu_views.xml file -->
+    <!-- Main AMS Root Menu -->
+    <menuitem id="menu_ams_root" 
+              name="AMS" 
+              web_icon="ams_subscriptions,static/description/icon.png" 
+              sequence="10"/>
+    
+    <!-- Dashboard Menu -->
+    <menuitem id="menu_ams_dashboard" 
+              name="Dashboard" 
+              parent="menu_ams_root" 
+              action="action_ams_dashboard" 
+              sequence="5"/>
 
-    <!-- Main Menu -->
-    <menuitem id="menu_ams_root" name="AMS" web_icon="ams_subscriptions,static/description/icon.png" sequence="10"/>
+    <!-- ========== SUBSCRIPTIONS SECTION ========== -->
+    <menuitem id="menu_ams_subscriptions" 
+              name="Subscriptions" 
+              parent="menu_ams_root" 
+              sequence="10"/>
     
-    <!-- Subscriptions Menu -->
-    <menuitem id="menu_ams_subscriptions" name="Subscriptions" parent="menu_ams_root" sequence="10"/>
+    <!-- All Subscriptions -->
+    <menuitem id="menu_ams_subscription_all" 
+              name="All Subscriptions" 
+              parent="menu_ams_subscriptions" 
+              action="action_ams_subscription" 
+              sequence="10"/>
     
-    <!-- Subscription sub-menus -->
-    <menuitem id="menu_ams_subscription_all" name="All Subscriptions" parent="menu_ams_subscriptions" 
-              action="action_ams_subscription" sequence="10"/>
+    <!-- Subscription Types -->
+    <menuitem id="menu_ams_subscription_memberships" 
+              name="Memberships" 
+              parent="menu_ams_subscriptions" 
+              action="action_ams_subscription_memberships" 
+              sequence="20"/>
     
-    <menuitem id="menu_ams_subscription_memberships" name="Memberships" parent="menu_ams_subscriptions" 
-              action="action_ams_subscription_memberships" sequence="20"/>
+    <menuitem id="menu_ams_subscription_chapters" 
+              name="Chapter Subscriptions" 
+              parent="menu_ams_subscriptions" 
+              action="action_ams_subscription_chapters" 
+              sequence="30"/>
     
-    <menuitem id="menu_ams_subscription_chapters" name="Chapters" parent="menu_ams_subscriptions" 
-              action="action_ams_subscription_chapters" sequence="30"/>
-    
-    <menuitem id="menu_ams_subscription_publications" name="Publications" parent="menu_ams_subscriptions" 
-              action="action_ams_subscription_publications" sequence="40"/>
+    <menuitem id="menu_ams_subscription_publications" 
+              name="Publication Subscriptions" 
+              parent="menu_ams_subscriptions" 
+              action="action_ams_subscription_publications" 
+              sequence="40"/>
 
-    <!-- NEW: Renewal Management Menu -->
-    <menuitem id="menu_ams_renewals" name="Renewal Management" parent="menu_ams_root" sequence="20"/>
-    
-    <menuitem id="menu_ams_renewal_dashboard" name="Renewal Dashboard" parent="menu_ams_renewals" 
-              action="action_renewal_dashboard" sequence="10"/>
-    
-    <menuitem id="menu_ams_due_renewals" name="Due Renewals" parent="menu_ams_renewals" 
-              action="action_due_renewals" sequence="20"/>
-    
-    <menuitem id="menu_ams_pending_renewals" name="Pending Renewals" parent="menu_ams_renewals" 
-              action="action_pending_renewals" sequence="30"/>
+    <!-- Subscription Status Views -->
+    <menuitem id="menu_ams_subscription_status" 
+              name="By Status" 
+              parent="menu_ams_subscriptions" 
+              sequence="50"/>
 
-    <!-- Products Menu -->
-    <menuitem id="menu_ams_products" name="Products" parent="menu_ams_root" sequence="30"/>
-    
-    <menuitem id="menu_ams_subscription_products" name="Subscription Products" parent="menu_ams_products"
-              action="action_subscription_products_enhanced" sequence="10"/>
-    
-    <menuitem id="menu_ams_website_products" name="Website Products" parent="menu_ams_products"
-              action="action_website_subscription_products" sequence="20"/>
-    
-    <menuitem id="menu_ams_pos_products" name="POS Products" parent="menu_ams_products"
-              action="action_pos_subscription_products" sequence="30"/>
+    <menuitem id="menu_ams_subscription_active" 
+              name="Active" 
+              parent="menu_ams_subscription_status" 
+              action="action_ams_subscription_active" 
+              sequence="10"/>
 
-    <!-- Configuration Menu -->
-    <menuitem id="menu_ams_configuration" name="Configuration" parent="menu_ams_root" sequence="90"/>
-    
-    <menuitem id="menu_ams_subscription_types" name="Subscription Types" parent="menu_ams_configuration" 
-              action="action_ams_subscription_type" sequence="10"/>
-    
-    <menuitem id="menu_ams_chapters" name="Chapters" parent="menu_ams_configuration" 
-              action="action_ams_chapter" sequence="20"/>
+    <menuitem id="menu_ams_subscription_grace" 
+              name="Grace Period" 
+              parent="menu_ams_subscription_status" 
+              action="action_ams_subscription_grace" 
+              sequence="20"/>
 
-    <!-- Reports Menu -->
-    <menuitem id="menu_ams_reports" name="Reports" parent="menu_ams_root" sequence="80"/>
+    <menuitem id="menu_ams_subscription_suspended" 
+              name="Suspended" 
+              parent="menu_ams_subscription_status" 
+              action="action_ams_subscription_suspended" 
+              sequence="30"/>
 
-    <!-- Member Management Menu -->
-    <menuitem id="menu_ams_members" name="Members" parent="menu_ams_root" sequence="15"/>
+    <menuitem id="menu_ams_subscription_expired" 
+              name="Expired" 
+              parent="menu_ams_subscription_status" 
+              action="action_ams_subscription_expired" 
+              sequence="40"/>
+
+    <!-- ========== RENEWAL MANAGEMENT SECTION ========== -->
+    <menuitem id="menu_ams_renewals" 
+              name="Renewal Management" 
+              parent="menu_ams_root" 
+              sequence="20"/>
     
-    <!-- Active Members Action -->
-    <record id="action_ams_active_members" model="ir.actions.act_window">
-        <field name="name">Active Members</field>
-        <field name="res_model">res.partner</field>
-        <field name="view_mode">kanban,list,form</field>
-        <field name="domain">[('active_membership_count', '>', 0)]</field>
+    <menuitem id="menu_ams_renewal_dashboard" 
+              name="Renewal Dashboard" 
+              parent="menu_ams_renewals" 
+              action="action_renewal_dashboard" 
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_due_renewals" 
+              name="Due Renewals" 
+              parent="menu_ams_renewals" 
+              action="action_due_renewals" 
+              sequence="20"/>
+    
+    <menuitem id="menu_ams_pending_renewals" 
+              name="Pending Renewals" 
+              parent="menu_ams_renewals" 
+              action="action_pending_renewals" 
+              sequence="30"/>
+
+    <menuitem id="menu_ams_overdue_renewals" 
+              name="Overdue Renewals" 
+              parent="menu_ams_renewals" 
+              action="action_overdue_renewals" 
+              sequence="40"/>
+
+    <menuitem id="menu_ams_renewal_calendar" 
+              name="Renewal Calendar" 
+              parent="menu_ams_renewals" 
+              action="action_renewal_calendar" 
+              sequence="50"/>
+
+    <menuitem id="menu_ams_auto_renewal_management" 
+              name="Auto-Renewal Management" 
+              parent="menu_ams_renewals" 
+              action="action_auto_renewal_management" 
+              sequence="60"/>
+
+    <!-- ========== MEMBER MANAGEMENT SECTION ========== -->
+    <menuitem id="menu_ams_members" 
+              name="Members" 
+              parent="menu_ams_root" 
+              sequence="15"/>
+    
+    <menuitem id="menu_ams_active_members" 
+              name="Active Members" 
+              parent="menu_ams_members" 
+              action="action_ams_active_members" 
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_all_members" 
+              name="All Members" 
+              parent="menu_ams_members" 
+              action="action_ams_all_members" 
+              sequence="20"/>
+    
+    <menuitem id="menu_ams_members_pending_renewal" 
+              name="Pending Renewals" 
+              parent="menu_ams_members" 
+              action="action_ams_members_pending_renewal" 
+              sequence="30"/>
+
+    <menuitem id="menu_ams_members_overdue" 
+              name="Overdue Renewals" 
+              parent="menu_ams_members" 
+              action="action_ams_members_overdue_renewals" 
+              sequence="40"/>
+
+    <menuitem id="menu_ams_high_value_members" 
+              name="High Value Members" 
+              parent="menu_ams_members" 
+              action="action_ams_high_value_members" 
+              sequence="50"/>
+
+    <menuitem id="menu_ams_new_members" 
+              name="New Members" 
+              parent="menu_ams_members" 
+              action="action_ams_new_members" 
+              sequence="60"/>
+
+    <!-- Member Segments -->
+    <menuitem id="menu_ams_member_segments" 
+              name="Member Segments" 
+              parent="menu_ams_members" 
+              sequence="70"/>
+
+    <menuitem id="menu_ams_student_members" 
+              name="Student Members" 
+              parent="menu_ams_member_segments" 
+              action="action_ams_student_members" 
+              sequence="10"/>
+
+    <menuitem id="menu_ams_corporate_members" 
+              name="Corporate Members" 
+              parent="menu_ams_member_segments" 
+              action="action_ams_corporate_members" 
+              sequence="20"/>
+
+    <menuitem id="menu_ams_lifetime_members" 
+              name="Lifetime Members" 
+              parent="menu_ams_member_segments" 
+              action="action_ams_lifetime_members" 
+              sequence="30"/>
+
+    <!-- ========== PRODUCTS SECTION ========== -->
+    <menuitem id="menu_ams_products" 
+              name="Products" 
+              parent="menu_ams_root" 
+              sequence="30"/>
+    
+    <menuitem id="menu_ams_subscription_products" 
+              name="All Subscription Products" 
+              parent="menu_ams_products"
+              action="action_subscription_products_enhanced" 
+              sequence="10"/>
+
+    <!-- Product Types -->
+    <menuitem id="menu_ams_product_types" 
+              name="By Type" 
+              parent="menu_ams_products" 
+              sequence="20"/>
+    
+    <menuitem id="menu_ams_membership_products" 
+              name="Membership Products" 
+              parent="menu_ams_product_types"
+              action="action_membership_products" 
+              sequence="10"/>
+
+    <menuitem id="menu_ams_chapter_products" 
+              name="Chapter Products" 
+              parent="menu_ams_product_types"
+              action="action_chapter_products" 
+              sequence="20"/>
+
+    <menuitem id="menu_ams_publication_products" 
+              name="Publication Products" 
+              parent="menu_ams_product_types"
+              action="action_publication_products" 
+              sequence="30"/>
+
+    <!-- Sales Channels -->
+    <menuitem id="menu_ams_product_channels" 
+              name="By Sales Channel" 
+              parent="menu_ams_products" 
+              sequence="30"/>
+    
+    <menuitem id="menu_ams_website_products" 
+              name="Website Products" 
+              parent="menu_ams_product_channels"
+              action="action_website_subscription_products" 
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_pos_products" 
+              name="POS Products" 
+              parent="menu_ams_product_channels"
+              action="action_pos_subscription_products" 
+              sequence="20"/>
+
+    <!-- Product Performance -->
+    <menuitem id="menu_ams_product_performance" 
+              name="Product Performance" 
+              parent="menu_ams_products"
+              action="action_subscription_product_dashboard" 
+              sequence="40"/>
+
+    <!-- ========== CHAPTERS SECTION ========== -->
+    <menuitem id="menu_ams_chapters_main" 
+              name="Chapters" 
+              parent="menu_ams_root" 
+              sequence="25"/>
+    
+    <menuitem id="menu_ams_chapters" 
+              name="All Chapters" 
+              parent="menu_ams_chapters_main" 
+              action="action_ams_chapter" 
+              sequence="10"/>
+
+    <menuitem id="menu_ams_chapters_by_region" 
+              name="By Region" 
+              parent="menu_ams_chapters_main" 
+              action="action_ams_chapter_by_region" 
+              sequence="20"/>
+
+    <menuitem id="menu_ams_chapter_status" 
+              name="By Status" 
+              parent="menu_ams_chapters_main" 
+              sequence="30"/>
+
+    <menuitem id="menu_ams_chapter_active" 
+              name="Active Chapters" 
+              parent="menu_ams_chapter_status" 
+              action="action_ams_chapter_active" 
+              sequence="10"/>
+
+    <menuitem id="menu_ams_chapter_forming" 
+              name="Forming Chapters" 
+              parent="menu_ams_chapter_status" 
+              action="action_ams_chapter_forming" 
+              sequence="20"/>
+
+    <!-- ========== SALES INTEGRATION SECTION ========== -->
+    <menuitem id="menu_ams_sales" 
+              name="Sales" 
+              parent="menu_ams_root" 
+              sequence="40"/>
+
+    <menuitem id="menu_ams_subscription_sales" 
+              name="Subscription Sales" 
+              parent="menu_ams_sales" 
+              action="action_ams_subscription_sales" 
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_subscription_invoices" 
+              name="Subscription Invoices" 
+              parent="menu_ams_sales" 
+              action="action_ams_subscription_invoices" 
+              sequence="20"/>
+    
+    <menuitem id="menu_ams_renewal_invoices" 
+              name="Renewal Invoices" 
+              parent="menu_ams_sales" 
+              action="action_ams_renewal_invoices" 
+              sequence="30"/>
+
+    <!-- Quick Sales Actions -->
+    <menuitem id="menu_ams_quick_sales" 
+              name="Quick Actions" 
+              parent="menu_ams_sales" 
+              sequence="40"/>
+
+    <menuitem id="menu_ams_create_membership" 
+              name="Create Membership" 
+              parent="menu_ams_quick_sales" 
+              action="action_create_membership_product" 
+              sequence="10"/>
+
+    <menuitem id="menu_ams_create_chapter_product_menu" 
+              name="Create Chapter Product" 
+              parent="menu_ams_quick_sales" 
+              action="action_create_chapter_product" 
+              sequence="20"/>
+
+    <menuitem id="menu_ams_create_publication_product_menu" 
+              name="Create Publication Product" 
+              parent="menu_ams_quick_sales" 
+              action="action_create_publication_product" 
+              sequence="30"/>
+
+    <!-- ========== REPORTS SECTION ========== -->
+    <menuitem id="menu_ams_reports" 
+              name="Reports" 
+              parent="menu_ams_root" 
+              sequence="80"/>
+
+    <menuitem id="menu_ams_subscription_reports" 
+              name="Subscription Reports" 
+              parent="menu_ams_reports" 
+              sequence="10"/>
+
+    <menuitem id="menu_ams_membership_report" 
+              name="Membership Report" 
+              parent="menu_ams_subscription_reports" 
+              action="action_ams_membership_report" 
+              sequence="10"/>
+
+    <menuitem id="menu_ams_renewal_report" 
+              name="Renewal Report" 
+              parent="menu_ams_subscription_reports" 
+              action="action_renewal_analytics" 
+              sequence="20"/>
+
+    <menuitem id="menu_ams_chapter_report" 
+              name="Chapter Performance Report" 
+              parent="menu_ams_subscription_reports" 
+              action="action_ams_chapter_performance_report" 
+              sequence="30"/>
+
+    <!-- Financial Reports -->
+    <menuitem id="menu_ams_financial_reports" 
+              name="Financial Reports" 
+              parent="menu_ams_reports" 
+              sequence="20"/>
+
+    <menuitem id="menu_ams_revenue_report" 
+              name="Subscription Revenue" 
+              parent="menu_ams_financial_reports" 
+              action="action_ams_subscription_revenue_report" 
+              sequence="10"/>
+
+    <menuitem id="menu_ams_member_value_report" 
+              name="Member Lifetime Value" 
+              parent="menu_ams_financial_reports" 
+              action="action_ams_member_value_report" 
+              sequence="20"/>
+
+    <!-- ========== CONFIGURATION SECTION ========== -->
+    <menuitem id="menu_ams_configuration" 
+              name="Configuration" 
+              parent="menu_ams_root" 
+              sequence="90"/>
+    
+    <menuitem id="menu_ams_subscription_types" 
+              name="Subscription Types" 
+              parent="menu_ams_configuration" 
+              action="action_ams_subscription_type" 
+              sequence="10"/>
+
+    <menuitem id="menu_ams_subscription_rules" 
+              name="Subscription Rules" 
+              parent="menu_ams_configuration" 
+              action="action_ams_subscription_rules" 
+              sequence="20"/>
+
+    <menuitem id="menu_ams_email_templates" 
+              name="Email Templates" 
+              parent="menu_ams_configuration" 
+              action="action_ams_email_templates" 
+              sequence="30"/>
+
+    <!-- Advanced Configuration -->
+    <menuitem id="menu_ams_advanced_config" 
+              name="Advanced" 
+              parent="menu_ams_configuration" 
+              sequence="40"/>
+
+    <menuitem id="menu_ams_cron_jobs" 
+              name="Scheduled Jobs" 
+              parent="menu_ams_advanced_config" 
+              action="action_ams_cron_jobs" 
+              sequence="10"/>
+
+    <menuitem id="menu_ams_integration_settings" 
+              name="Integration Settings" 
+              parent="menu_ams_advanced_config" 
+              action="action_ams_integration_settings" 
+              sequence="20"/>
+
+    <!-- ========== SUPPORTING ACTIONS ========== -->
+    
+    <!-- Dashboard Action -->
+    <record id="action_ams_dashboard" model="ir.actions.act_window">
+        <field name="name">AMS Dashboard</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">kanban,list,graph,pivot</field>
         <field name="context">{
-            'search_default_active_members': 1
+            'search_default_active': 1,
+            'search_default_group_state': 1
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                No active members yet!
+                Welcome to your Association Management System!
             </p>
-            <p>Members with active subscriptions will appear here.</p>
+            <p>
+                Your AMS dashboard provides a comprehensive overview of memberships, 
+                subscriptions, renewals, and member engagement across your association.
+            </p>
         </field>
     </record>
 
-    <!-- All Members Action -->
-    <record id="action_ams_all_members" model="ir.actions.act_window">
-        <field name="name">All Members</field>
-        <field name="res_model">res.partner</field>
+    <!-- Subscription Status Actions -->
+    <record id="action_ams_subscription_active" model="ir.actions.act_window">
+        <field name="name">Active Subscriptions</field>
+        <field name="res_model">ams.subscription</field>
         <field name="view_mode">kanban,list,form</field>
-        <field name="domain">[('total_subscription_count', '>', 0)]</field>
-        <field name="context">{}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No members yet!
-            </p>
-            <p>All contacts with subscriptions (past or present) will appear here.</p>
-        </field>
+        <field name="domain">[('state', '=', 'active')]</field>
+        <field name="context">{'search_default_active': 1}</field>
     </record>
 
-    <!-- Members with Pending Renewals Action -->
-    <record id="action_ams_members_pending_renewal" model="ir.actions.act_window">
-        <field name="name">Members - Pending Renewals</field>
+    <record id="action_ams_subscription_grace" model="ir.actions.act_window">
+        <field name="name">Grace Period Subscriptions</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'grace')]</field>
+        <field name="context">{'search_default_grace': 1}</field>
+    </record>
+
+    <record id="action_ams_subscription_suspended" model="ir.actions.act_window">
+        <field name="name">Suspended Subscriptions</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'suspended')]</field>
+        <field name="context">{'search_default_suspended': 1}</field>
+    </record>
+
+    <record id="action_ams_subscription_expired" model="ir.actions.act_window">
+        <field name="name">Expired Subscriptions</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'expired')]</field>
+        <field name="context">{'search_default_expired': 1}</field>
+    </record>
+
+    <!-- Member Segment Actions -->
+    <record id="action_ams_student_members" model="ir.actions.act_window">
+        <field name="name">Student Members</field>
         <field name="res_model">res.partner</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[('pending_renewal_count', '>', 0)]</field>
-        <field name="context">{
-            'search_default_pending_renewals': 1
-        }</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No pending renewals!
-            </p>
-            <p>Members with subscriptions awaiting renewal will appear here.</p>
-        </field>
+        <field name="domain">[('subscription_ids.subscription_type_id.name', 'ilike', 'student')]</field>
+        <field name="context">{'search_default_has_active_subscriptions': 1}</field>
     </record>
-    
-    <menuitem id="menu_ams_active_members" name="Active Members" parent="menu_ams_members" 
-              action="action_ams_active_members" sequence="10"/>
-    
-    <menuitem id="menu_ams_all_members" name="All Members" parent="menu_ams_members" 
-              action="action_ams_all_members" sequence="20"/>
-    
-    <menuitem id="menu_ams_members_pending_renewal" name="Pending Renewals" parent="menu_ams_members" 
-              action="action_ams_members_pending_renewal" sequence="30"/>
 
-    <!-- Sales Integration Menu Items -->
-    <menuitem id="menu_ams_sales" name="Sales" parent="menu_ams_root" sequence="40"/>
+    <record id="action_ams_corporate_members" model="ir.actions.act_window">
+        <field name="name">Corporate Members</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('subscription_ids.subscription_type_id.name', 'ilike', 'corporate')]</field>
+        <field name="context">{'search_default_has_active_subscriptions': 1}</field>
+    </record>
 
-    <!-- Subscription Sales Action -->
+    <record id="action_ams_lifetime_members" model="ir.actions.act_window">
+        <field name="name">Lifetime Members</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('subscription_ids.subscription_type_id.name', 'ilike', 'lifetime')]</field>
+        <field name="context">{'search_default_has_active_subscriptions': 1}</field>
+    </record>
+
+    <!-- Sales Integration Actions -->
     <record id="action_ams_subscription_sales" model="ir.actions.act_window">
         <field name="name">Subscription Sales</field>
         <field name="res_model">sale.order</field>
@@ -137,7 +511,6 @@
         </field>
     </record>
 
-    <!-- Subscription Invoices Action -->
     <record id="action_ams_subscription_invoices" model="ir.actions.act_window">
         <field name="name">Subscription Invoices</field>
         <field name="res_model">account.move</field>
@@ -152,7 +525,6 @@
         </field>
     </record>
 
-    <!-- Renewal Invoices Action -->
     <record id="action_ams_renewal_invoices" model="ir.actions.act_window">
         <field name="name">Renewal Invoices</field>
         <field name="res_model">account.move</field>
@@ -166,32 +538,95 @@
             <p>Invoices for subscription renewals will appear here.</p>
         </field>
     </record>
-    
-    <menuitem id="menu_ams_subscription_sales" name="Subscription Sales" parent="menu_ams_sales" 
-              action="action_ams_subscription_sales" sequence="10"/>
-    
-    <menuitem id="menu_ams_subscription_invoices" name="Subscription Invoices" parent="menu_ams_sales" 
-              action="action_ams_subscription_invoices" sequence="20"/>
-    
-    <menuitem id="menu_ams_renewal_invoices" name="Renewal Invoices" parent="menu_ams_sales" 
-              action="action_ams_renewal_invoices" sequence="30"/>
 
-    <!-- Dashboard Action -->
-    <record id="action_ams_dashboard" model="ir.actions.act_window">
-        <field name="name">AMS Dashboard</field>
-        <field name="res_model">ams.subscription</field>
-        <field name="view_mode">kanban</field>
-        <field name="context">{
-            'search_default_group_state': 1
-        }</field>
+    <!-- Configuration Actions -->
+    <record id="action_ams_subscription_rules" model="ir.actions.act_window">
+        <field name="name">Subscription Rules</field>
+        <field name="res_model">ams.subscription.rule</field>
+        <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Welcome to AMS!
+                Configure subscription lifecycle rules!
             </p>
-            <p>Your Association Management System dashboard.</p>
+            <p>Define rules for grace periods, suspension, and termination of subscriptions.</p>
         </field>
     </record>
-    
-    <menuitem id="menu_ams_dashboard" name="Dashboard" parent="menu_ams_root" 
-              action="action_ams_dashboard" sequence="5"/>
+
+    <record id="action_ams_email_templates" model="ir.actions.act_window">
+        <field name="name">AMS Email Templates</field>
+        <field name="res_model">mail.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('name', 'ilike', 'AMS')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Manage AMS email templates!
+            </p>
+            <p>Customize email templates for renewals, activations, and member communications.</p>
+        </field>
+    </record>
+
+    <record id="action_ams_cron_jobs" model="ir.actions.act_window">
+        <field name="name">AMS Scheduled Jobs</field>
+        <field name="res_model">ir.cron</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('name', 'ilike', 'AMS')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Monitor AMS automation!
+            </p>
+            <p>View and manage scheduled jobs for renewal processing, status updates, and notifications.</p>
+        </field>
+    </record>
+
+    <record id="action_ams_integration_settings" model="ir.actions.act_window">
+        <field name="name">Integration Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'ams_subscriptions'}</field>
+    </record>
+
+    <!-- Report Actions -->
+    <record id="action_ams_membership_report" model="ir.actions.act_window">
+        <field name="name">Membership Report</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="domain">[('subscription_code', '=', 'membership')]</field>
+        <field name="context">{
+            'search_default_group_state': 1,
+            'search_default_group_subscription_type': 1
+        }</field>
+    </record>
+
+    <record id="action_ams_chapter_performance_report" model="ir.actions.act_window">
+        <field name="name">Chapter Performance Report</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="domain">[('subscription_code', '=', 'chapter')]</field>
+        <field name="context">{
+            'search_default_group_chapter': 1,
+            'search_default_group_state': 1
+        }</field>
+    </record>
+
+    <record id="action_ams_subscription_revenue_report" model="ir.actions.act_window">
+        <field name="name">Subscription Revenue Report</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">pivot,graph</field>
+        <field name="context">{
+            'search_default_group_subscription_type': 1,
+            'search_default_group_start_date': 1
+        }</field>
+    </record>
+
+    <record id="action_ams_member_value_report" model="ir.actions.act_window">
+        <field name="name">Member Lifetime Value Report</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="domain">[('total_subscription_count', '>', 0)]</field>
+        <field name="context">{
+            'search_default_group_membership_status': 1
+        }</field>
+    </record>
+
 </odoo>

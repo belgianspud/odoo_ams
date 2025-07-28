@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Create AMS Module Category -->
+        <record id="module_category_association_management" model="ir.module.category">
+            <field name="name">Association Management</field>
+            <field name="description">Applications for managing associations, members, and subscriptions</field>
+            <field name="sequence">50</field>
+        </record>
+        
+        <!-- AMS Subscription Security Groups -->
+        <record id="group_ams_subscription_user" model="res.groups">
+            <field name="name">AMS Subscription User</field>
+            <field name="category_id" ref="module_category_association_management"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="comment">Basic subscription access - can view and manage own subscriptions</field>
+        </record>
+
+        <record id="group_ams_subscription_manager" model="res.groups">
+            <field name="name">AMS Subscription Manager</field>
+            <field name="category_id" ref="module_category_association_management"/>
+            <field name="implied_ids" eval="[(4, ref('group_ams_subscription_user'))]"/>
+            <field name="comment">Advanced subscription management - can manage all subscriptions and settings</field>
+        </record>
+
+        <record id="group_ams_chapter_manager" model="res.groups">
+            <field name="name">AMS Chapter Manager</field>
+            <field name="category_id" ref="module_category_association_management"/>
+            <field name="implied_ids" eval="[(4, ref('group_ams_subscription_user'))]"/>
+            <field name="comment">Chapter management - can create and manage chapters</field>
+        </record>
+
+        <record id="group_ams_renewal_manager" model="res.groups">
+            <field name="name">AMS Renewal Manager</field>
+            <field name="category_id" ref="module_category_association_management"/>
+            <field name="implied_ids" eval="[(4, ref('group_ams_subscription_user'))]"/>
+            <field name="comment">Renewal management - can process renewals and manage renewal workflows</field>
+        </record>
+
+        <!-- Portal Access Rules -->
+        <record id="ams_subscription_rule_portal" model="ir.rule">
+            <field name="name">AMS Subscription: portal users can only see their own</field>
+            <field name="model_id" ref="model_ams_subscription"/>
+            <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+        </record>
+
+        <!-- Manager Access Rules -->
+        <record id="ams_subscription_rule_manager" model="ir.rule">
+            <field name="name">AMS Subscription: managers can see all</field>
+            <field name="model_id" ref="model_ams_subscription"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_subscription_manager'))]"/>
+        </record>
+
+        <!-- Chapter Manager Rules -->
+        <record id="ams_chapter_rule_manager" model="ir.rule">
+            <field name="name">AMS Chapter: chapter managers can manage all chapters</field>
+            <field name="model_id" ref="model_ams_chapter"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_chapter_manager'))]"/>
+        </record>
+
+        <!-- Sales Team Access -->
+        <record id="ams_subscription_rule_sales" model="ir.rule">
+            <field name="name">AMS Subscription: sales team access</field>
+            <field name="model_id" ref="model_ams_subscription"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('sales_team.group_sale_salesman'))]"/>
+        </record>
+
+        <!-- Accounting Team Access -->
+        <record id="ams_subscription_rule_accounting" model="ir.rule">
+            <field name="name">AMS Subscription: accounting team access</field>
+            <field name="model_id" ref="model_ams_subscription"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('account.group_account_user'))]"/>
+        </record>
+
+    </data>
+</odoo>

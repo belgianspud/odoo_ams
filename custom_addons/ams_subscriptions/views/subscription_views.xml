@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Enhanced Subscription Form View -->
     <record id="view_ams_subscription_form_enhanced" model="ir.ui.view">
         <field name="name">ams.subscription.form.enhanced</field>
         <field name="model">ams.subscription</field>
@@ -11,14 +12,22 @@
                     <button name="action_cancel" string="Cancel" type="object" 
                             invisible="state not in ('draft', 'active')"/>
                     <button name="action_renew" string="Renew" type="object" 
-                            invisible="state not in ('active', 'expired')"/>
+                            class="btn-success" invisible="state not in ('active', 'expired')"/>
                     <button name="action_view_renewal_invoice" string="View Renewal Invoice" type="object" 
                             class="btn-info" invisible="not renewal_invoice_id"/>
                     <button name="action_confirm_renewal" string="Confirm Renewal" type="object" 
                             class="btn-success" invisible="state != 'pending_renewal' or not renewal_invoice_id"/>
                     <button name="action_view_invoices" string="View Invoices" type="object" 
                             class="btn-secondary" invisible="invoice_count == 0"/>
-                    <field name="state" widget="statusbar"/>
+                    <button name="action_suspend" string="Suspend" type="object" 
+                            class="btn-warning" invisible="state not in ('active', 'grace')"
+                            confirm="Are you sure you want to suspend this subscription?"/>
+                    <button name="action_terminate" string="Terminate" type="object" 
+                            class="btn-danger" invisible="state not in ('active', 'grace', 'suspended')"
+                            confirm="Are you sure you want to terminate this subscription? This action cannot be undone."/>
+                    <button name="action_reactivate" string="Reactivate" type="object" 
+                            class="btn-primary" invisible="state not in ('suspended', 'expired')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,pending_renewal,expired"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -33,55 +42,117 @@
                                 <span class="o_stat_text">Invoice</span>
                             </div>
                         </button>
+                        <button class="oe_stat_button" type="object" name="action_view_partner" 
+                                icon="fa-user">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">View</span>
+                                <span class="o_stat_text">Member</span>
+                            </div>
+                        </button>
+                        <button class="oe_stat_button" type="object" name="action_view_subscription_history" 
+                                icon="fa-history">
+                            <field string="History" name="status_history_count" widget="statbutton"/>
+                        </button>
+                    </div>
+                    
+                    <!-- Status Alert Ribbon -->
+                    <div class="alert alert-info" role="status" invisible="state != 'grace'">
+                        <strong>Grace Period:</strong> This subscription is in grace period. 
+                        Payment is overdue but access continues.
+                    </div>
+                    <div class="alert alert-warning" role="status" invisible="state != 'suspended'">
+                        <strong>Suspended:</strong> This subscription has been suspended due to non-payment. 
+                        Member benefits are disabled.
+                    </div>
+                    <div class="alert alert-danger" role="status" invisible="state != 'terminated'">
+                        <strong>Terminated:</strong> This subscription has been permanently terminated.
+                    </div>
+                    <div class="alert alert-success" role="status" invisible="state != 'pending_renewal' or not renewal_invoice_id">
+                        <strong>Renewal Pending:</strong> Renewal invoice has been generated. 
+                        Awaiting payment to confirm renewal.
                     </div>
                     
                     <group>
-                        <group>
+                        <group string="Basic Information">
                             <field name="name"/>
-                            <field name="partner_id"/>
+                            <field name="partner_id" options="{'no_create': True}"/>
                             <field name="subscription_type_id" options="{'no_create': True}"/>
                             <field name="subscription_code" invisible="1"/>
                             <field name="product_id" invisible="1"/>
                             <field name="parent_subscription_id" 
                                    invisible="subscription_code != 'chapter'"
-                                   domain="[('subscription_code', '=', 'membership'), ('partner_id', '=', partner_id), ('state', '=', 'active')]"/>
+                                   domain="[('subscription_code', '=', 'membership'), ('partner_id', '=', partner_id), ('state', '=', 'active')]"
+                                   options="{'no_create': True}"/>
                         </group>
-                        <group>
+                        <group string="Subscription Details">
                             <field name="subscription_type" string="Billing Cycle"/>
                             <field name="start_date"/>
                             <field name="end_date"/>
+                            <field name="paid_through_date"/>
                             <field name="amount"/>
                             <field name="currency_id"/>
-                            <field name="is_recurring"/>
-                            <field name="recurring_period" invisible="not is_recurring"/>
-                            <field name="auto_renewal" invisible="not is_recurring"/>
                         </group>
                     </group>
                     
-                    <!-- Renewal Information Group -->
-                    <group string="Renewal Information" invisible="not is_recurring">
+                    <!-- Recurring and Renewal Settings -->
+                    <group string="Renewal Settings">
                         <group>
+                            <field name="is_recurring"/>
+                            <field name="recurring_period" invisible="not is_recurring"/>
+                            <field name="auto_renewal" invisible="not is_recurring"/>
+                            <field name="renewal_reminder_days" invisible="not is_recurring"/>
+                        </group>
+                        <group string="Renewal Information" invisible="not is_recurring">
                             <field name="next_renewal_date"/>
                             <field name="renewal_reminder_sent" readonly="1"/>
-                        </group>
-                        <group>
-                            <field name="renewal_invoice_id" readonly="1"/>
+                            <field name="renewal_invoice_id" readonly="1" options="{'no_create': True}"/>
+                            <field name="last_renewal_date" readonly="1"/>
                         </group>
                     </group>
                     
                     <!-- Type-specific fields -->
                     <group string="Chapter Details" invisible="subscription_code != 'chapter'">
-                        <field name="chapter_id" options="{'no_create': True, 'no_create_edit': True}"
-                               domain="[('active', '=', True)]"/>
-                        <field name="chapter_region" readonly="1"/>
+                        <group>
+                            <field name="chapter_id" options="{'no_create': True, 'no_create_edit': True}"
+                                   domain="[('active', '=', True)]"/>
+                            <field name="chapter_region" readonly="1"/>
+                            <field name="chapter_membership_number"/>
+                        </group>
+                        <group>
+                            <field name="chapter_join_date"/>
+                            <field name="chapter_role"/>
+                            <field name="chapter_committee_ids" widget="many2many_tags"/>
+                        </group>
                     </group>
                     
                     <group string="Publication Details" invisible="subscription_code != 'publication'">
-                        <field name="publication_format"/>
+                        <group>
+                            <field name="publication_format"/>
+                            <field name="delivery_address" invisible="publication_format == 'digital'"/>
+                            <field name="digital_access_email" invisible="publication_format == 'print'"/>
+                        </group>
+                        <group>
+                            <field name="archive_access"/>
+                            <field name="publication_preferences"/>
+                        </group>
+                    </group>
+
+                    <!-- Membership Details -->
+                    <group string="Membership Details" invisible="subscription_code != 'membership'">
+                        <group>
+                            <field name="membership_number"/>
+                            <field name="membership_tier"/>
+                            <field name="member_since"/>
+                        </group>
+                        <group>
+                            <field name="voting_rights"/>
+                            <field name="board_eligible"/>
+                            <field name="committee_memberships" widget="many2many_tags"/>
+                        </group>
                     </group>
                     
                     <!-- Child subscriptions for memberships -->
-                    <group string="Associated Chapters" invisible="subscription_code != 'membership'">
+                    <group string="Associated Chapters" invisible="subscription_code != 'membership' or not child_subscription_ids">
                         <field name="child_subscription_ids" nolabel="1">
                             <list editable="bottom">
                                 <field name="name"/>
@@ -89,15 +160,140 @@
                                 <field name="chapter_id"/>
                                 <field name="chapter_region" readonly="1"/>
                                 <field name="amount"/>
-                                <field name="state"/>
+                                <field name="state" decoration-success="state == 'active'" 
+                                       decoration-info="state == 'draft'" 
+                                       decoration-muted="state in ('expired','cancelled')"
+                                       decoration-warning="state == 'pending_renewal'"/>
+                                <button name="action_view_chapter_subscription" string="View" type="object" 
+                                        icon="fa-external-link"/>
                             </list>
                         </field>
                     </group>
                     
-                    <group string="Notes">
-                        <field name="notes" nolabel="1"/>
+                    <!-- Lifecycle Management -->
+                    <group string="Lifecycle Management">
+                        <group string="Status Tracking">
+                            <field name="lifecycle_stage"/>
+                            <field name="days_since_expiry" readonly="1"/>
+                            <field name="days_until_renewal" readonly="1"/>
+                            <field name="grace_period_expires" readonly="1"/>
+                        </group>
+                        <group string="Actions & Rules">
+                            <field name="applicable_rules_ids" widget="many2many_tags" readonly="1"/>
+                            <field name="last_status_change" readonly="1"/>
+                            <field name="status_change_reason"/>
+                        </group>
                     </group>
+                    
+                    <!-- Financial Information -->
+                    <group string="Financial Information">
+                        <group string="Payment Status">
+                            <field name="payment_status"/>
+                            <field name="outstanding_balance"/>
+                            <field name="last_payment_date" readonly="1"/>
+                            <field name="payment_method"/>
+                        </group>
+                        <group string="Revenue Tracking">
+                            <field name="total_paid" readonly="1"/>
+                            <field name="lifetime_value" readonly="1"/>
+                            <field name="revenue_category_id" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Additional Information">
+                        <field name="notes" nolabel="1"/>
+                        <field name="internal_notes" nolabel="1" groups="ams_subscriptions.group_ams_subscription_manager"/>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Status History" name="status_history">
+                            <field name="status_history_ids" nolabel="1" readonly="1">
+                                <list>
+                                    <field name="date"/>
+                                    <field name="from_status"/>
+                                    <field name="to_status"/>
+                                    <field name="reason"/>
+                                    <field name="user_id"/>
+                                    <field name="automatic"/>
+                                </list>
+                            </field>
+                        </page>
+                        
+                        <page string="Renewal History" name="renewal_history" invisible="not is_recurring">
+                            <field name="renewal_history_ids" nolabel="1" readonly="1">
+                                <list>
+                                    <field name="renewal_date"/>
+                                    <field name="previous_end_date"/>
+                                    <field name="new_end_date"/>
+                                    <field name="amount"/>
+                                    <field name="invoice_id"/>
+                                    <field name="method"/>
+                                </list>
+                            </field>
+                        </page>
+                        
+                        <page string="Communications" name="communications">
+                            <group>
+                                <group string="Email Preferences">
+                                    <field name="email_notifications"/>
+                                    <field name="renewal_reminders"/>
+                                    <field name="marketing_emails"/>
+                                </group>
+                                <group string="Communication Log">
+                                    <button name="action_send_welcome_email" string="Send Welcome Email" 
+                                            type="object" class="btn-info"/>
+                                    <button name="action_send_renewal_reminder" string="Send Renewal Reminder" 
+                                            type="object" class="btn-warning" invisible="not is_recurring"/>
+                                </group>
+                            </group>
+                            
+                            <separator string="Recent Communications"/>
+                            <field name="communication_log_ids" nolabel="1" readonly="1">
+                                <list>
+                                    <field name="date"/>
+                                    <field name="communication_type"/>
+                                    <field name="subject"/>
+                                    <field name="status"/>
+                                    <field name="template_used"/>
+                                </list>
+                            </field>
+                        </page>
+                        
+                        <page string="Integration" name="integration">
+                            <group>
+                                <group string="Source Information">
+                                    <field name="sale_order_line_id" readonly="1" options="{'no_create': True}"/>
+                                    <field name="original_invoice_id" readonly="1" options="{'no_create': True}"/>
+                                    <field name="source_channel"/>
+                                </group>
+                                <group string="External References">
+                                    <field name="external_reference"/>
+                                    <field name="legacy_member_id"/>
+                                    <field name="third_party_sync_id"/>
+                                </group>
+                            </group>
+                            
+                            <group string="API Integration">
+                                <group>
+                                    <field name="api_created"/>
+                                    <field name="last_api_sync" readonly="1"/>
+                                    <field name="sync_status"/>
+                                </group>
+                                <group>
+                                    <button name="action_force_sync" string="Force Sync" type="object" 
+                                            class="btn-info" invisible="not api_created"/>
+                                    <button name="action_export_data" string="Export Data" type="object" 
+                                            class="btn-secondary"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
                 </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
             </form>
         </field>
     </record>
@@ -107,33 +303,42 @@
         <field name="name">ams.subscription.list.enhanced</field>
         <field name="model">ams.subscription</field>
         <field name="arch" type="xml">
-            <list string="Subscriptions">
+            <list string="Subscriptions" multi_edit="1" sample="1">
                 <field name="name"/>
                 <field name="partner_id"/>
                 <field name="subscription_type_id"/>
-                <field name="subscription_code"/>
-                <field name="subscription_type"/>
+                <field name="subscription_code" optional="hide"/>
+                <field name="subscription_type" optional="show"/>
                 <field name="chapter_id" optional="hide"/>
                 <field name="chapter_region" optional="hide"/>
                 <field name="start_date"/>
                 <field name="end_date"/>
+                <field name="paid_through_date" optional="show"/>
+                <field name="next_renewal_date" optional="show" 
+                       decoration-danger="next_renewal_date and next_renewal_date &lt; current_date"/>
                 <field name="amount" sum="Total Amount"/>
-                <field name="currency_id" optional="hide"/>
+                <field name="currency_id" invisible="1"/>
                 <field name="state" decoration-success="state == 'active'" 
                        decoration-info="state == 'draft'" 
-                       decoration-muted="state in ('expired','cancelled')"
-                       decoration-warning="state == 'pending_renewal'"/>
-                <field name="invoice_count"/>
+                       decoration-muted="state in ('expired','cancelled','terminated')"
+                       decoration-warning="state == 'pending_renewal'"
+                       decoration-danger="state == 'suspended'"/>
+                <field name="invoice_count" optional="hide"/>
                 <field name="is_recurring" optional="hide"/>
                 <field name="recurring_period" optional="hide"/>
-                <field name="next_renewal_date" optional="show"/>
                 <field name="auto_renewal" optional="hide"/>
                 <field name="renewal_invoice_id" optional="hide"/>
+                <field name="payment_status" optional="show"/>
+                <field name="lifecycle_stage" optional="hide"/>
+                <button name="action_renew" string="Renew" type="object" 
+                        icon="fa-refresh" invisible="state not in ('active', 'expired')"/>
+                <button name="action_view_partner" string="Member" type="object" 
+                        icon="fa-user"/>
             </list>
         </field>
     </record>
 
-    <!-- Enhanced Search View with Renewal Filters -->
+    <!-- Enhanced Search View with Advanced Filters -->
     <record id="view_ams_subscription_search_enhanced" model="ir.ui.view">
         <field name="name">ams.subscription.search.enhanced</field>
         <field name="model">ams.subscription</field>
@@ -144,23 +349,59 @@
                 <field name="subscription_type_id"/>
                 <field name="chapter_id"/>
                 <field name="chapter_region"/>
+                <field name="membership_number"/>
                 <separator/>
+                
+                <!-- Status Filters -->
                 <filter string="Active" name="active" domain="[('state', '=', 'active')]"/>
                 <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Grace Period" name="grace" domain="[('state', '=', 'grace')]"/>
+                <filter string="Suspended" name="suspended" domain="[('state', '=', 'suspended')]"/>
                 <filter string="Expired" name="expired" domain="[('state', '=', 'expired')]"/>
                 <filter string="Pending Renewal" name="pending_renewal" domain="[('state', '=', 'pending_renewal')]"/>
+                <filter string="Terminated" name="terminated" domain="[('state', '=', 'terminated')]"/>
+                <filter string="Cancelled" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
                 <separator/>
+                
+                <!-- Type Filters -->
                 <filter string="Memberships" name="memberships" domain="[('subscription_code', '=', 'membership')]"/>
                 <filter string="Chapters" name="chapters" domain="[('subscription_code', '=', 'chapter')]"/>
                 <filter string="Publications" name="publications" domain="[('subscription_code', '=', 'publication')]"/>
                 <separator/>
+                
+                <!-- Renewal Filters -->
                 <filter string="Recurring" name="recurring" domain="[('is_recurring', '=', True)]"/>
                 <filter string="Auto Renewal" name="auto_renewal" domain="[('auto_renewal', '=', True)]"/>
                 <filter string="Due for Renewal" name="due_renewal" 
                         domain="[('next_renewal_date', '&lt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Overdue Renewal" name="overdue_renewal" 
+                        domain="[('next_renewal_date', '&lt;', context_today().strftime('%Y-%m-%d')), ('state', '=', 'active')]"/>
+                <filter string="Renewal This Month" name="renewal_this_month" 
+                        domain="[('next_renewal_date', '&gt;=', context_today().strftime('%Y-%m-01')), 
+                                ('next_renewal_date', '&lt;=', (context_today() + relativedelta(months=1)).strftime('%Y-%m-01'))]"/>
                 <separator/>
+                
+                <!-- Financial Filters -->
                 <filter string="With Invoices" name="with_invoices" domain="[('invoice_ids', '!=', False)]"/>
+                <filter string="Outstanding Balance" name="outstanding_balance" domain="[('outstanding_balance', '>', 0)]"/>
+                <filter string="Paid Current" name="paid_current" domain="[('payment_status', '=', 'paid')]"/>
+                <separator/>
+                
+                <!-- Date Filters -->
+                <filter string="Started This Year" name="started_this_year" 
+                        domain="[('start_date', '&gt;=', context_today().strftime('%Y-01-01'))]"/>
+                <filter string="Expiring This Month" name="expiring_this_month" 
+                        domain="[('end_date', '&gt;=', context_today().strftime('%Y-%m-01')), 
+                                ('end_date', '&lt;=', (context_today() + relativedelta(months=1)).strftime('%Y-%m-01'))]"/>
+                <filter string="Recently Created" name="recently_created" 
+                        domain="[('create_date', '&gt;=', (context_today() - relativedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                
+                <!-- Geographic Filters -->
                 <filter string="With Chapters" name="with_chapters" domain="[('chapter_id', '!=', False)]"/>
+                <filter string="US Chapters" name="us_chapters" domain="[('chapter_id.country_id.code', '=', 'US')]"/>
+                <filter string="International" name="international" domain="[('chapter_id.country_id.code', '!=', 'US')]"/>
+                
                 <group expand="0" string="Group By">
                     <filter string="Subscription Type" name="group_subscription_type" context="{'group_by': 'subscription_type_id'}"/>
                     <filter string="Member" name="group_partner" context="{'group_by': 'partner_id'}"/>
@@ -170,17 +411,21 @@
                     <filter string="Chapter Region" name="group_chapter_region" context="{'group_by': 'chapter_region'}"/>
                     <filter string="Renewal Status" name="group_renewal" context="{'group_by': 'auto_renewal'}"/>
                     <filter string="Recurring Period" name="group_recurring" context="{'group_by': 'recurring_period'}"/>
+                    <filter string="Lifecycle Stage" name="group_lifecycle" context="{'group_by': 'lifecycle_stage'}"/>
+                    <filter string="Payment Status" name="group_payment" context="{'group_by': 'payment_status'}"/>
+                    <filter string="Start Date" name="group_start_date" context="{'group_by': 'start_date:month'}"/>
+                    <filter string="End Date" name="group_end_date" context="{'group_by': 'end_date:month'}"/>
                 </group>
             </search>
         </field>
     </record>
 
-    <!-- Enhanced Kanban View -->
+    <!-- Enhanced Kanban View with Status Colors -->
     <record id="view_ams_subscription_kanban_enhanced" model="ir.ui.view">
         <field name="name">ams.subscription.kanban.enhanced</field>
         <field name="model">ams.subscription</field>
         <field name="arch" type="xml">
-            <kanban default_group_by="state" class="o_kanban_small_column">
+            <kanban default_group_by="state" class="o_kanban_small_column" sample="1">
                 <field name="name"/>
                 <field name="partner_id"/>
                 <field name="subscription_type_id"/>
@@ -194,14 +439,24 @@
                 <field name="is_recurring"/>
                 <field name="next_renewal_date"/>
                 <field name="auto_renewal"/>
+                <field name="payment_status"/>
+                <field name="lifecycle_stage"/>
                 <templates>
                     <t t-name="kanban-box">
-                        <div class="oe_kanban_global_click">
+                        <div class="oe_kanban_global_click" 
+                             t-att-class="'border-left-3 border-' + 
+                                         (record.state.raw_value == 'active' ? 'success' : 
+                                          record.state.raw_value == 'pending_renewal' ? 'warning' : 
+                                          record.state.raw_value == 'grace' ? 'info' : 
+                                          record.state.raw_value == 'suspended' ? 'danger' : 'secondary')">
                             <div class="o_kanban_record_top">
                                 <div class="o_kanban_record_headings">
                                     <strong class="o_kanban_record_title">
                                         <field name="name"/>
                                     </strong>
+                                    <div class="o_kanban_record_subtitle">
+                                        <field name="partner_id"/>
+                                    </div>
                                 </div>
                                 <div class="o_kanban_manage_button_section">
                                     <a class="o_kanban_manage_toggle_button" href="#">
@@ -209,24 +464,34 @@
                                     </a>
                                 </div>
                             </div>
+                            
                             <div class="o_kanban_record_body">
-                                <field name="partner_id"/>
-                                <br/>
-                                <span class="badge badge-pill">
-                                    <field name="subscription_type_id"/>
-                                </span>
-                                <span t-if="record.chapter_id.raw_value" class="badge badge-pill badge-info">
-                                    <field name="chapter_id"/>
-                                </span>
-                                <br/>
-                                <strong>
-                                    <field name="amount"/> 
-                                    <field name="currency_id"/>
-                                </strong>
-                                <span t-if="record.is_recurring.raw_value" class="badge badge-success">
-                                    Recurring
-                                </span>
+                                <div class="row">
+                                    <div class="col-8">
+                                        <span class="badge badge-pill badge-primary">
+                                            <field name="subscription_type_id"/>
+                                        </span>
+                                        <span t-if="record.chapter_id.raw_value" class="badge badge-pill badge-info">
+                                            <field name="chapter_id"/>
+                                        </span>
+                                        <br/>
+                                        <strong>
+                                            <field name="amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                        </strong>
+                                        <span t-if="record.is_recurring.raw_value" class="badge badge-success">
+                                            Recurring
+                                        </span>
+                                    </div>
+                                    <div class="col-4 text-right">
+                                        <span t-att-class="'badge badge-' + 
+                                                          (record.payment_status.raw_value == 'paid' ? 'success' : 
+                                                           record.payment_status.raw_value == 'overdue' ? 'danger' : 'warning')">
+                                            <field name="payment_status"/>
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
+                            
                             <div class="o_kanban_record_bottom">
                                 <div class="oe_kanban_bottom_left">
                                     <span t-if="record.invoice_count.raw_value > 0">
@@ -244,6 +509,9 @@
                                     <span t-if="record.subscription_code.raw_value == 'chapter'" class="badge badge-warning">Chapter</span>
                                     <span t-if="record.subscription_code.raw_value == 'publication'" class="badge badge-success">Publication</span>
                                     <span t-if="record.auto_renewal.raw_value" class="badge badge-primary">Auto Renew</span>
+                                    <span t-if="record.lifecycle_stage.raw_value" class="badge badge-secondary">
+                                        <field name="lifecycle_stage"/>
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -263,104 +531,11 @@
             <p class="o_view_nocontent_smiling_face">
                 Create your first subscription!
             </p>
-            <p>Manage memberships, chapters, and publication subscriptions for your association members.</p>
+            <p>
+                Manage memberships, chapters, and publication subscriptions for your association members.
+                Track renewals, lifecycle status, and member benefits all in one place.
+            </p>
         </field>
     </record>
 
-    <!-- Renewal Dashboard Action -->
-    <record id="action_renewal_dashboard" model="ir.actions.act_window">
-        <field name="name">Renewal Dashboard</field>
-        <field name="res_model">ams.subscription</field>
-        <field name="view_mode">kanban,list,form</field>
-        <field name="domain">[('is_recurring', '=', True)]</field>
-        <field name="context">{
-            'search_default_auto_renewal': 1,
-            'search_default_group_state': 1
-        }</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No recurring subscriptions yet!
-            </p>
-            <p>Monitor and manage subscription renewals from this dashboard.</p>
-        </field>
-    </record>
-
-    <!-- Due Renewals Action -->
-    <record id="action_due_renewals" model="ir.actions.act_window">
-        <field name="name">Due Renewals</field>
-        <field name="res_model">ams.subscription</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[
-            ('is_recurring', '=', True),
-            ('state', '=', 'active'),
-            ('next_renewal_date', '&lt;=', context_today().strftime('%Y-%m-%d'))
-        ]</field>
-        <field name="context">{'search_default_due_renewal': 1}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No renewals due today!
-            </p>
-            <p>Subscriptions that are due for renewal will appear here.</p>
-        </field>
-    </record>
-
-    <!-- Pending Renewals Action -->
-    <record id="action_pending_renewals" model="ir.actions.act_window">
-        <field name="name">Pending Renewals</field>
-        <field name="res_model">ams.subscription</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('state', '=', 'pending_renewal')]</field>
-        <field name="context">{'search_default_pending_renewal': 1}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No pending renewals!
-            </p>
-            <p>Subscriptions with renewal invoices waiting for payment will appear here.</p>
-        </field>
-    </record>
-
-    <!-- Chapter-specific Subscription Actions -->
-    <record id="action_ams_subscription_chapters" model="ir.actions.act_window">
-        <field name="name">Chapter Subscriptions</field>
-        <field name="res_model">ams.subscription</field>
-        <field name="view_mode">kanban,list,form</field>
-        <field name="domain">[('subscription_code', '=', 'chapter')]</field>
-        <field name="context">{'default_subscription_code': 'chapter', 'search_default_active': 1}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No chapter subscriptions yet!
-            </p>
-            <p>Chapter subscriptions are regional add-ons to membership subscriptions.</p>
-        </field>
-    </record>
-
-    <!-- Membership-specific Subscription Actions -->
-    <record id="action_ams_subscription_memberships" model="ir.actions.act_window">
-        <field name="name">Membership Subscriptions</field>
-        <field name="res_model">ams.subscription</field>
-        <field name="view_mode">kanban,list,form</field>
-        <field name="domain">[('subscription_code', '=', 'membership')]</field>
-        <field name="context">{'default_subscription_code': 'membership', 'search_default_active': 1}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No membership subscriptions yet!
-            </p>
-            <p>Membership subscriptions are the main subscription type for association members.</p>
-        </field>
-    </record>
-
-    <!-- Publication-specific Subscription Actions -->
-    <record id="action_ams_subscription_publications" model="ir.actions.act_window">
-        <field name="name">Publication Subscriptions</field>
-        <field name="res_model">ams.subscription</field>
-        <field name="view_mode">kanban,list,form</field>
-        <field name="domain">[('subscription_code', '=', 'publication')]</field>
-        <field name="context">{'default_subscription_code': 'publication', 'search_default_active': 1}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No publication subscriptions yet!
-            </p>
-            <p>Publication subscriptions provide access to magazines, journals, and other materials.</p>
-        </field>
-    </record>
 </odoo>

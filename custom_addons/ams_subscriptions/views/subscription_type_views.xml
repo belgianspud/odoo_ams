@@ -1,107 +1,401 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Subscription Type List View -->
+    <!-- Enhanced Subscription Type List View -->
     <record id="view_ams_subscription_type_list" model="ir.ui.view">
         <field name="name">ams.subscription.type.list</field>
         <field name="model">ams.subscription.type</field>
         <field name="arch" type="xml">
-            <list string="Subscription Types" default_order="sequence">
+            <list string="Subscription Types" default_order="sequence, name" multi_edit="1">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
-                <field name="code"/>
-                <field name="is_product"/>
-                <field name="creates_invoice"/>
-                <field name="website_published"/>
+                <field name="code" optional="show"/>
+                <field name="is_product" optional="show"/>
+                <field name="creates_invoice" optional="show"/>
+                <field name="website_published" optional="hide"/>
+                <field name="pos_available" optional="hide"/>
+                <field name="can_have_children" optional="hide"/>
+                <field name="requires_parent" optional="hide"/>
+                <field name="invoice_policy" optional="hide"/>
                 <field name="active"/>
             </list>
         </field>
     </record>
 
-    <!-- Subscription Type Form View -->
+    <!-- Enhanced Subscription Type Form View -->
     <record id="view_ams_subscription_type_form" model="ir.ui.view">
         <field name="name">ams.subscription.type.form</field>
         <field name="model">ams.subscription.type</field>
         <field name="arch" type="xml">
             <form string="Subscription Type">
+                <header>
+                    <button name="action_create_product" string="Create Product" type="object" 
+                            class="btn-primary" invisible="product_template_id or not is_product"/>
+                    <button name="action_view_subscriptions" string="View Subscriptions" type="object" 
+                            class="btn-secondary"/>
+                </header>
                 <sheet>
                     <widget name="web_ribbon" title="Archived" bg_color="bg-danger" 
                             invisible="active"/>
+                    
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_view_subscriptions" 
+                                icon="fa-users">
+                            <field string="Subscriptions" name="subscription_count" widget="statbutton"/>
+                        </button>
+                        <button class="oe_stat_button" type="object" name="action_view_products" 
+                                icon="fa-cube" invisible="not product_template_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">View</span>
+                                <span class="o_stat_text">Product</span>
+                            </div>
+                        </button>
+                    </div>
+                    
                     <group>
-                        <group>
+                        <group string="Basic Information">
                             <field name="name"/>
                             <field name="code"/>
                             <field name="sequence"/>
                             <field name="active"/>
                         </group>
-                        <group>
+                        <group string="Product Integration">
                             <field name="is_product"/>
                             <field name="auto_create_product" invisible="not is_product"/>
-                            <field name="product_template_id" readonly="1" invisible="not is_product"/>
+                            <field name="product_template_id" readonly="1" invisible="not is_product"
+                                   options="{'no_create': True}"/>
                         </group>
                     </group>
                     
                     <notebook>
-                        <page string="Invoicing" name="invoicing">
+                        <page string="Invoicing & Billing" name="invoicing">
                             <group>
-                                <group>
+                                <group string="Invoice Settings">
                                     <field name="creates_invoice"/>
                                     <field name="invoice_policy" invisible="not creates_invoice"/>
                                 </group>
+                                <group string="Pricing">
+                                    <field name="default_price" invisible="not is_product"/>
+                                    <field name="currency_id" invisible="not is_product"/>
+                                </group>
                             </group>
                         </page>
                         
-                        <page string="Hierarchy" name="hierarchy">
+                        <page string="Hierarchy & Relationships" name="hierarchy">
                             <group>
-                                <group>
+                                <group string="Parent/Child Structure">
                                     <field name="can_have_children"/>
                                     <field name="requires_parent"/>
+                                    <field name="max_child_subscriptions" invisible="not can_have_children"/>
                                 </group>
-                                <group>
-                                    <field name="parent_type_ids" widget="many2many_tags" 
-                                           invisible="not requires_parent"/>
+                                <group string="Allowed Parent Types" invisible="not requires_parent">
+                                    <field name="parent_type_ids" widget="many2many_tags" nolabel="1"/>
                                 </group>
+                            </group>
+                            
+                            <group string="Subscription Rules" invisible="not can_have_children">
+                                <field name="child_subscription_rules" nolabel="1">
+                                    <list editable="bottom">
+                                        <field name="child_type_id"/>
+                                        <field name="auto_create"/>
+                                        <field name="required"/>
+                                        <field name="max_quantity"/>
+                                    </list>
+                                </field>
                             </group>
                         </page>
                         
-                        <page string="E-commerce" name="ecommerce">
+                        <page string="E-commerce & Sales" name="ecommerce">
                             <group>
-                                <group>
+                                <group string="Website Settings">
                                     <field name="website_published"/>
+                                    <field name="website_sequence" invisible="not website_published"/>
+                                    <field name="website_ribbon_text" invisible="not website_published"/>
+                                </group>
+                                <group string="Point of Sale">
                                     <field name="pos_available"/>
+                                    <field name="pos_category_id" invisible="not pos_available"
+                                           options="{'no_create': True}"/>
+                                </group>
+                            </group>
+                            
+                            <group string="Sales Features">
+                                <group>
+                                    <field name="allow_quantity_selection"/>
+                                    <field name="min_quantity" invisible="not allow_quantity_selection"/>
+                                    <field name="max_quantity" invisible="not allow_quantity_selection"/>
+                                </group>
+                                <group>
+                                    <field name="allow_custom_duration"/>
+                                    <field name="default_duration_months" invisible="not allow_custom_duration"/>
                                 </group>
                             </group>
                         </page>
                         
-                        <page string="Type-Specific" name="type_specific">
+                        <page string="Type-Specific Settings" name="type_specific">
+                            <!-- Membership Settings -->
+                            <group string="Membership Settings" invisible="code != 'membership'">
+                                <group>
+                                    <field name="membership_tier"/>
+                                    <field name="voting_rights"/>
+                                    <field name="board_eligibility"/>
+                                </group>
+                                <group>
+                                    <field name="auto_create_chapters"/>
+                                    <field name="default_chapter_ids" widget="many2many_tags" 
+                                           invisible="not auto_create_chapters"/>
+                                </group>
+                            </group>
+                            
+                            <!-- Chapter Settings -->
+                            <group string="Chapter Settings" invisible="code != 'chapter'">
+                                <group>
+                                    <field name="is_regional"/>
+                                    <field name="chapter_scope"/>
+                                </group>
+                                <group>
+                                    <field name="requires_membership_validation"/>
+                                    <field name="chapter_meeting_frequency"/>
+                                </group>
+                            </group>
+                            
+                            <!-- Publication Settings -->
+                            <group string="Publication Settings" invisible="code != 'publication'">
+                                <group>
+                                    <field name="publication_format"/>
+                                    <field name="digital_access_only"/>
+                                </group>
+                                <group>
+                                    <field name="issue_frequency"/>
+                                    <field name="archive_access_months"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <page string="Lifecycle & Renewal" name="lifecycle">
                             <group>
-                                <group>
-                                    <field name="is_regional" invisible="code != 'chapter'"/>
+                                <group string="Default Renewal Settings">
+                                    <field name="default_renewal_period"/>
+                                    <field name="auto_renewal_default"/>
+                                    <field name="renewal_reminder_days"/>
                                 </group>
-                                <group>
-                                    <field name="publication_format" invisible="code != 'publication'"/>
+                                <group string="Grace & Suspension">
+                                    <field name="grace_period_days"/>
+                                    <field name="suspension_period_days"/>
+                                    <field name="termination_period_days"/>
                                 </group>
                             </group>
+                            
+                            <separator string="Lifecycle Rules"/>
+                            <field name="subscription_rule_ids" nolabel="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="rule_type"/>
+                                    <field name="trigger_days"/>
+                                    <field name="action"/>
+                                    <field name="active"/>
+                                    <field name="sequence" widget="handle"/>
+                                </list>
+                            </field>
                         </page>
                         
-                        <page string="Description" name="description">
-                            <field name="description"/>
+                        <page string="Description & Marketing" name="description">
+                            <group>
+                                <group string="Marketing">
+                                    <field name="short_description"/>
+                                    <field name="marketing_color" widget="color"/>
+                                </group>
+                                <group string="SEO (Website)">
+                                    <field name="website_meta_title" invisible="not website_published"/>
+                                    <field name="website_meta_description" invisible="not website_published"/>
+                                    <field name="website_meta_keywords" invisible="not website_published"/>
+                                </group>
+                            </group>
+                            
+                            <separator string="Full Description"/>
+                            <field name="description" nolabel="1"/>
+                            
+                            <separator string="Terms and Conditions" invisible="not website_published"/>
+                            <field name="terms_and_conditions" nolabel="1" invisible="not website_published"/>
+                        </page>
+                        
+                        <page string="Statistics" name="statistics">
+                            <group>
+                                <group string="Current Statistics">
+                                    <field name="subscription_count" readonly="1"/>
+                                    <field name="active_subscription_count" readonly="1"/>
+                                    <field name="total_revenue_ytd" readonly="1"/>
+                                </group>
+                                <group string="Performance Metrics">
+                                    <field name="renewal_rate_percentage" readonly="1"/>
+                                    <field name="average_subscription_duration" readonly="1"/>
+                                    <field name="churn_rate_percentage" readonly="1"/>
+                                </group>
+                            </group>
+                            
+                            <separator string="Monthly Revenue Trend"/>
+                            <field name="monthly_revenue_chart" widget="chart" nolabel="1"/>
                         </page>
                     </notebook>
                 </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
             </form>
         </field>
     </record>
 
-    <!-- Subscription Type Action -->
+    <!-- Subscription Type Kanban View -->
+    <record id="view_ams_subscription_type_kanban" model="ir.ui.view">
+        <field name="name">ams.subscription.type.kanban</field>
+        <field name="model">ams.subscription.type</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="subscription_count"/>
+                <field name="active_subscription_count"/>
+                <field name="is_product"/>
+                <field name="website_published"/>
+                <field name="creates_invoice"/>
+                <field name="marketing_color"/>
+                <field name="short_description"/>
+                <field name="active"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click" t-att-style="'border-left: 4px solid ' + (record.marketing_color.raw_value or '#875A7B')">
+                            <div class="o_kanban_record_top mb8">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                    <div class="o_kanban_record_subtitle">
+                                        <field name="code"/> 
+                                        <span t-if="record.short_description.raw_value">
+                                            - <field name="short_description"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_manage_button_section">
+                                    <a class="o_kanban_manage_toggle_button" href="#">
+                                        <i class="fa fa-ellipsis-v" role="img" aria-label="Manage"/>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="o_kanban_record_body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <span t-if="record.subscription_count.raw_value > 0" 
+                                              class="badge badge-pill badge-info">
+                                            <field name="subscription_count"/> Total
+                                        </span>
+                                        <span t-if="record.active_subscription_count.raw_value > 0" 
+                                              class="badge badge-pill badge-success">
+                                            <field name="active_subscription_count"/> Active
+                                        </span>
+                                    </div>
+                                    <div class="col-6 text-right">
+                                        <span t-if="record.is_product.raw_value" 
+                                              class="badge badge-primary">Product</span>
+                                        <span t-if="record.website_published.raw_value" 
+                                              class="badge badge-info">Website</span>
+                                        <span t-if="record.creates_invoice.raw_value" 
+                                              class="badge badge-warning">Billing</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_left">
+                                    <!-- Status indicators -->
+                                </div>
+                                <div class="oe_kanban_bottom_right">
+                                    <span t-if="!record.active.raw_value" class="badge badge-danger">Inactive</span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Enhanced Search View -->
+    <record id="view_ams_subscription_type_search" model="ir.ui.view">
+        <field name="name">ams.subscription.type.search</field>
+        <field name="model">ams.subscription.type</field>
+        <field name="arch" type="xml">
+            <search string="Subscription Types">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="short_description"/>
+                <separator/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Inactive" name="inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter string="Products" name="is_product" domain="[('is_product', '=', True)]"/>
+                <filter string="Creates Invoices" name="creates_invoice" domain="[('creates_invoice', '=', True)]"/>
+                <filter string="Website Published" name="website_published" domain="[('website_published', '=', True)]"/>
+                <filter string="POS Available" name="pos_available" domain="[('pos_available', '=', True)]"/>
+                <separator/>
+                <filter string="Memberships" name="memberships" domain="[('code', '=', 'membership')]"/>
+                <filter string="Chapters" name="chapters" domain="[('code', '=', 'chapter')]"/>
+                <filter string="Publications" name="publications" domain="[('code', '=', 'publication')]"/>
+                <separator/>
+                <filter string="Can Have Children" name="can_have_children" domain="[('can_have_children', '=', True)]"/>
+                <filter string="Requires Parent" name="requires_parent" domain="[('requires_parent', '=', True)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Code" name="group_code" context="{'group_by': 'code'}"/>
+                    <filter string="Product Status" name="group_product" context="{'group_by': 'is_product'}"/>
+                    <filter string="Invoice Policy" name="group_invoice" context="{'group_by': 'invoice_policy'}"/>
+                    <filter string="Active Status" name="group_active" context="{'group_by': 'active'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Main Action -->
     <record id="action_ams_subscription_type" model="ir.actions.act_window">
         <field name="name">Subscription Types</field>
         <field name="res_model">ams.subscription.type</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create your first subscription type!
             </p>
-            <p>Define different types of subscriptions like memberships, chapters, and publications.</p>
+            <p>
+                Define different types of subscriptions like memberships, chapters, and publications.
+                Each type can have its own billing rules, lifecycle management, and product integration.
+            </p>
         </field>
     </record>
+
+    <!-- Quick Actions -->
+    <record id="action_ams_subscription_type_memberships" model="ir.actions.act_window">
+        <field name="name">Membership Types</field>
+        <field name="res_model">ams.subscription.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('code', '=', 'membership')]</field>
+        <field name="context">{'default_code': 'membership', 'search_default_active': 1}</field>
+    </record>
+
+    <record id="action_ams_subscription_type_chapters" model="ir.actions.act_window">
+        <field name="name">Chapter Types</field>
+        <field name="res_model">ams.subscription.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('code', '=', 'chapter')]</field>
+        <field name="context">{'default_code': 'chapter', 'search_default_active': 1}</field>
+    </record>
+
+    <record id="action_ams_subscription_type_publications" model="ir.actions.act_window">
+        <field name="name">Publication Types</field>
+        <field name="res_model">ams.subscription.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('code', '=', 'publication')]</field>
+        <field name="context">{'default_code': 'publication', 'search_default_active': 1}</field>
+    </record>
+
 </odoo>
