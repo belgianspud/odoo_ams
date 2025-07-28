@@ -32,7 +32,7 @@ from . import res_config_settings
 from . import financial_transaction
 
 # Reporting models
-from . import subscription_analytics
+#from . import subscription_analytics
 
 # Wizard models (if any)
 # from . import wizards

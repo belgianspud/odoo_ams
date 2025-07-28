@@ -52,9 +52,11 @@ class AmsFinancialSummary(models.Model):
                     -- Revenue by category (will be enhanced with actual categorization)
                     SUM(CASE WHEN am.move_type = 'out_invoice' 
                         AND aml.product_id IN (
-                            SELECT id FROM product_product pp 
-                            -- WHERE pp.is_membership = true
-                        ) 
+                                    SELECT pp.id 
+                                    FROM product_product pp
+                                    JOIN product_template pt ON pt.id = pp.product_tmpl_id
+                                    WHERE pt.is_subscription_product = true
+                        )
                         THEN aml.credit ELSE 0 END) as membership_revenue,
                         
                     SUM(CASE WHEN am.move_type = 'out_invoice' 
