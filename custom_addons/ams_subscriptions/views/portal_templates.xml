@@ -1,0 +1,530 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Add Subscriptions to Portal Menu -->
+    <template id="portal_my_home_menu_subscription" name="Portal layout : subscription menu entries" inherit_id="portal.portal_breadcrumbs" priority="40">
+        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+            <li t-if="page_name == 'subscription'" t-attf-class="breadcrumb-item #{'active ' if not subscription else ''}">
+                <a t-if="subscription" t-attf-href="/my/subscriptions?{{ keep_query() }}">My Subscriptions</a>
+                <t t-else="">My Subscriptions</t>
+            </li>
+            <li t-if="subscription" class="breadcrumb-item active">
+                <span t-field="subscription.name"/>
+            </li>
+        </xpath>
+    </template>
+
+    <!-- Add Subscriptions to Portal Home -->
+    <template id="portal_my_home_subscription" name="Show Subscriptions" customize_show="True" inherit_id="portal.portal_my_home" priority="40">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="title">Subscriptions</t>
+                <t t-set="url" t-value="'/my/subscriptions'"/>
+                <t t-set="placeholder_count" t-value="'subscription_count'"/>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- My Subscriptions Page -->
+    <template id="portal_my_subscriptions" name="My Subscriptions">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Subscriptions</t>
+            </t>
+            
+            <t t-if="not subscriptions">
+                <div class="alert alert-info" role="alert">
+                    <h4 class="alert-heading">No Subscriptions Found</h4>
+                    <p>You don't have any subscriptions yet.</p>
+                    <hr/>
+                    <p class="mb-0">
+                        <a href="/shop/subscriptions" class="btn btn-primary">
+                            <i class="fa fa-shopping-cart"/> Browse Subscription Products
+                        </a>
+                    </p>
+                </div>
+            </t>
+            
+            <t t-if="subscriptions" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>Subscription</th>
+                        <th>Type</th>
+                        <th>Chapter</th>
+                        <th>Status</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Next Renewal</th>
+                        <th>Amount</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="subscriptions" t-as="subscription">
+                        <tr>
+                            <td>
+                                <a t-attf-href="/my/subscription/#{subscription.id}">
+                                    <span t-field="subscription.name"/>
+                                </a>
+                            </td>
+                            <td>
+                                <span t-field="subscription.subscription_type_id.name"/>
+                            </td>
+                            <td>
+                                <span t-field="subscription.chapter_id.name"/>
+                            </td>
+                            <td>
+                                <span t-field="subscription.state" 
+                                      t-attf-class="badge badge-#{
+                                          'success' if subscription.state == 'active' else
+                                          'warning' if subscription.state == 'pending_renewal' else
+                                          'info' if subscription.state == 'grace' else
+                                          'danger' if subscription.state == 'suspended' else
+                                          'secondary'
+                                      }"/>
+                            </td>
+                            <td><span t-field="subscription.start_date"/></td>
+                            <td><span t-field="subscription.end_date"/></td>
+                            <td>
+                                <span t-if="subscription.next_renewal_date" t-field="subscription.next_renewal_date"/>
+                                <span t-else="">N/A</span>
+                            </td>
+                            <td>
+                                <span t-field="subscription.amount" 
+                                      t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a t-attf-href="/my/subscription/#{subscription.id}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fa fa-eye"/> View
+                                    </a>
+                                    <t t-if="subscription.state == 'active' and subscription.is_recurring">
+                                        <a t-attf-href="/my/subscription/#{subscription.id}/renew" 
+                                           class="btn btn-sm btn-outline-success">
+                                            <i class="fa fa-refresh"/> Renew
+                                        </a>
+                                    </t>
+                                    <t t-if="subscription.renewal_invoice_id">
+                                        <a t-attf-href="/my/invoice/#{subscription.renewal_invoice_id.id}" 
+                                           class="btn btn-sm btn-outline-info">
+                                            <i class="fa fa-file-text-o"/> Invoice
+                                        </a>
+                                    </t>
+                                </div>
+                            </td>
+                        </tr>
+                    </t>
+                </tbody>
+            </t>
+        </t>
+    </template>
+
+    <!-- Subscription Detail Page -->
+    <template id="portal_subscription_page" name="Subscription Detail">
+        <t t-call="portal.portal_layout">
+            <t t-set="o_portal_fullwidth_alert" groups="ams_subscriptions.group_ams_subscription_manager">
+                <t t-call="portal.portal_back_in_edit_mode">
+                    <t t-set="backend_url" t-value="'/web#return_label=Website&amp;model=%s&amp;id=%s&amp;view_type=form' % (subscription._name, subscription.id)"/>
+                </t>
+            </t>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Subscription Header -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <h3 class="card-title mb-0">
+                                        <span t-field="subscription.name"/>
+                                    </h3>
+                                    <small class="text-muted">
+                                        <span t-field="subscription.subscription_type_id.name"/>
+                                    </small>
+                                </div>
+                                <div class="col-auto">
+                                    <span t-field="subscription.state" 
+                                          t-attf-class="badge badge-lg badge-#{
+                                              'success' if subscription.state == 'active' else
+                                              'warning' if subscription.state == 'pending_renewal' else
+                                              'info' if subscription.state == 'grace' else
+                                              'danger' if subscription.state == 'suspended' else
+                                              'secondary'
+                                          }"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <dl class="row">
+                                        <dt class="col-sm-4">Member ID:</dt>
+                                        <dd class="col-sm-8">
+                                            <span t-field="subscription.membership_number"/>
+                                        </dd>
+                                        <dt class="col-sm-4">Start Date:</dt>
+                                        <dd class="col-sm-8">
+                                            <span t-field="subscription.start_date"/>
+                                        </dd>
+                                        <dt class="col-sm-4">End Date:</dt>
+                                        <dd class="col-sm-8">
+                                            <span t-field="subscription.end_date"/>
+                                        </dd>
+                                        <dt class="col-sm-4" t-if="subscription.chapter_id">Chapter:</dt>
+                                        <dd class="col-sm-8" t-if="subscription.chapter_id">
+                                            <span t-field="subscription.chapter_id.name"/>
+                                        </dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-6">
+                                    <dl class="row">
+                                        <dt class="col-sm-4">Amount:</dt>
+                                        <dd class="col-sm-8">
+                                            <span t-field="subscription.amount" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                                        </dd>
+                                        <dt class="col-sm-4" t-if="subscription.next_renewal_date">Next Renewal:</dt>
+                                        <dd class="col-sm-8" t-if="subscription.next_renewal_date">
+                                            <span t-field="subscription.next_renewal_date"/>
+                                        </dd>
+                                        <dt class="col-sm-4">Auto Renewal:</dt>
+                                        <dd class="col-sm-8">
+                                            <span t-if="subscription.auto_renewal" class="badge badge-success">Enabled</span>
+                                            <span t-else="" class="badge badge-secondary">Disabled</span>
+                                        </dd>
+                                        <dt class="col-sm-4" t-if="subscription.is_recurring">Frequency:</dt>
+                                        <dd class="col-sm-8" t-if="subscription.is_recurring">
+                                            <span t-field="subscription.recurring_period"/>
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Renewal Status Alert -->
+                    <div t-if="subscription.state == 'pending_renewal'" class="alert alert-warning" role="alert">
+                        <h5 class="alert-heading"><i class="fa fa-exclamation-triangle"/> Renewal Pending</h5>
+                        <p>Your subscription renewal is pending payment. Please complete your payment to continue your membership.</p>
+                        <hr/>
+                        <p class="mb-0">
+                            <a t-if="subscription.renewal_invoice_id" 
+                               t-attf-href="/my/invoice/#{subscription.renewal_invoice_id.id}" 
+                               class="btn btn-warning">
+                                <i class="fa fa-credit-card"/> Pay Renewal Invoice
+                            </a>
+                        </p>
+                    </div>
+
+                    <!-- Grace Period Alert -->
+                    <div t-if="subscription.state == 'grace'" class="alert alert-info" role="alert">
+                        <h5 class="alert-heading"><i class="fa fa-info-circle"/> Grace Period</h5>
+                        <p>Your subscription has expired but you're in the grace period. Please renew to continue your membership.</p>
+                        <hr/>
+                        <p class="mb-0">
+                            <a t-attf-href="/my/subscription/#{subscription.id}/renew" 
+                               class="btn btn-info">
+                                <i class="fa fa-refresh"/> Renew Now
+                            </a>
+                        </p>
+                    </div>
+
+                    <!-- Suspended Alert -->
+                    <div t-if="subscription.state == 'suspended'" class="alert alert-danger" role="alert">
+                        <h5 class="alert-heading"><i class="fa fa-ban"/> Subscription Suspended</h5>
+                        <p>Your subscription has been suspended due to non-payment. Contact support to reactivate.</p>
+                        <hr/>
+                        <p class="mb-0">
+                            <a href="mailto:support@example.com" class="btn btn-danger">
+                                <i class="fa fa-envelope"/> Contact Support
+                            </a>
+                        </p>
+                    </div>
+
+                    <!-- Chapter Information -->
+                    <div t-if="subscription.chapter_id" class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fa fa-users"/> Chapter Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <dl class="row">
+                                        <dt class="col-sm-4">Chapter:</dt>
+                                        <dd class="col-sm-8">
+                                            <span t-field="subscription.chapter_id.name"/>
+                                        </dd>
+                                        <dt class="col-sm-4">Region:</dt>
+                                        <dd class="col-sm-8">
+                                            <span t-field="subscription.chapter_id.region"/>
+                                        </dd>
+                                        <dt class="col-sm-4">Location:</dt>
+                                        <dd class="col-sm-8">
+                                            <span t-field="subscription.chapter_id.city"/>, 
+                                            <span t-field="subscription.chapter_id.state_province"/>
+                                        </dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-6">
+                                    <dl class="row">
+                                        <dt class="col-sm-4">Contact:</dt>
+                                        <dd class="col-sm-8">
+                                            <span t-field="subscription.chapter_id.contact_person"/>
+                                        </dd>
+                                        <dt class="col-sm-4">Email:</dt>
+                                        <dd class="col-sm-8">
+                                            <a t-attf-href="mailto:#{subscription.chapter_id.email}">
+                                                <span t-field="subscription.chapter_id.email"/>
+                                            </a>
+                                        </dd>
+                                        <dt class="col-sm-4" t-if="subscription.chapter_id.website">Website:</dt>
+                                        <dd class="col-sm-8" t-if="subscription.chapter_id.website">
+                                            <a t-att-href="subscription.chapter_id.website" target="_blank">
+                                                Visit Chapter Website
+                                            </a>
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Child Subscriptions (for Memberships) -->
+                    <div t-if="subscription.child_subscription_ids" class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fa fa-sitemap"/> Associated Chapter Subscriptions
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Chapter</th>
+                                            <th>Region</th>
+                                            <th>Status</th>
+                                            <th>End Date</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="subscription.child_subscription_ids" t-as="child">
+                                            <tr>
+                                                <td><span t-field="child.chapter_id.name"/></td>
+                                                <td><span t-field="child.chapter_region"/></td>
+                                                <td>
+                                                    <span t-field="child.state" 
+                                                          t-attf-class="badge badge-sm badge-#{
+                                                              'success' if child.state == 'active' else
+                                                              'secondary'
+                                                          }"/>
+                                                </td>
+                                                <td><span t-field="child.end_date"/></td>
+                                                <td>
+                                                    <span t-field="child.amount" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': child.currency_id}"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    
+                    <!-- Quick Actions -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fa fa-bolt"/> Quick Actions
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <t t-if="subscription.state == 'active' and subscription.is_recurring">
+                                    <a t-attf-href="/my/subscription/#{subscription.id}/renew" 
+                                       class="btn btn-success">
+                                        <i class="fa fa-refresh"/> Renew Subscription
+                                    </a>
+                                </t>
+                                
+                                <t t-if="subscription.renewal_invoice_id">
+                                    <a t-attf-href="/my/invoice/#{subscription.renewal_invoice_id.id}" 
+                                       class="btn btn-primary">
+                                        <i class="fa fa-file-text-o"/> View Renewal Invoice
+                                    </a>
+                                </t>
+                                
+                                <a t-attf-href="/my/subscription/#{subscription.id}/toggle_auto_renewal" 
+                                   class="btn btn-outline-secondary">
+                                    <i class="fa fa-cog"/> 
+                                    <span t-if="subscription.auto_renewal">Disable Auto-Renewal</span>
+                                    <span t-else="">Enable Auto-Renewal</span>
+                                </a>
+                                
+                                <a href="/shop/subscriptions" class="btn btn-outline-primary">
+                                    <i class="fa fa-plus"/> Add Another Subscription
+                                </a>
+                                
+                                <a href="mailto:support@example.com" class="btn btn-outline-info">
+                                    <i class="fa fa-envelope"/> Contact Support
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subscription Benefits -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fa fa-star"/> Member Benefits
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fa fa-check text-success"/> Access to member resources
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fa fa-check text-success"/> Chapter events and networking
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fa fa-check text-success"/> Professional development
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fa fa-check text-success"/> Industry publications
+                                </li>
+                                <li class="mb-2" t-if="subscription.voting_rights">
+                                    <i class="fa fa-check text-success"/> Voting rights
+                                </li>
+                                <li class="mb-2" t-if="subscription.board_eligible">
+                                    <i class="fa fa-check text-success"/> Board eligibility
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Support Information -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fa fa-life-ring"/> Need Help?
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">
+                                Have questions about your subscription? Our support team is here to help.
+                            </p>
+                            <div class="d-grid gap-2">
+                                <a href="mailto:support@example.com" class="btn btn-outline-primary btn-sm">
+                                    <i class="fa fa-envelope"/> Email Support
+                                </a>
+                                <a href="tel:+1-800-MEMBER" class="btn btn-outline-primary btn-sm">
+                                    <i class="fa fa-phone"/> Call Support
+                                </a>
+                                <a href="/help" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fa fa-question-circle"/> Help Center
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Renewal Page -->
+    <template id="portal_subscription_renew" name="Renew Subscription">
+        <t t-call="portal.portal_layout">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title mb-0">
+                                <i class="fa fa-refresh"/> Renew Subscription
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <!-- Subscription Summary -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h5>Current Subscription</h5>
+                                    <dl class="row">
+                                        <dt class="col-sm-5">Subscription:</dt>
+                                        <dd class="col-sm-7"><span t-field="subscription.name"/></dd>
+                                        <dt class="col-sm-5">Type:</dt>
+                                        <dd class="col-sm-7"><span t-field="subscription.subscription_type_id.name"/></dd>
+                                        <dt class="col-sm-5">Current End Date:</dt>
+                                        <dd class="col-sm-7"><span t-field="subscription.end_date"/></dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Renewal Details</h5>
+                                    <dl class="row">
+                                        <dt class="col-sm-5">Renewal Amount:</dt>
+                                        <dd class="col-sm-7">
+                                            <span t-field="subscription.amount" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                                        </dd>
+                                        <dt class="col-sm-5">New End Date:</dt>
+                                        <dd class="col-sm-7">
+                                            <span t-esc="new_end_date"/>
+                                        </dd>
+                                        <dt class="col-sm-5">Billing Period:</dt>
+                                        <dd class="col-sm-7"><span t-field="subscription.recurring_period"/></dd>
+                                    </dl>
+                                </div>
+                            </div>
+
+                            <!-- Renewal Form -->
+                            <form method="POST" t-attf-action="/my/subscription/#{subscription.id}/process_renewal">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="confirm_renewal" name="confirm_renewal" required="required"/>
+                                    <label class="form-check-label" for="confirm_renewal">
+                                        I confirm that I want to renew my subscription for 
+                                        <strong>
+                                            <span t-field="subscription.amount" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                                        </strong>
+                                    </label>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="auto_renewal" name="auto_renewal" 
+                                           t-att-checked="'checked' if subscription.auto_renewal else None"/>
+                                    <label class="form-check-label" for="auto_renewal">
+                                        Enable automatic renewal for future periods
+                                    </label>
+                                </div>
+
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <a t-attf-href="/my/subscription/#{subscription.id}" class="btn btn-secondary me-md-2">
+                                        <i class="fa fa-arrow-left"/> Back to Subscription
+                                    </a>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fa fa-credit-card"/> Process Renewal
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>
