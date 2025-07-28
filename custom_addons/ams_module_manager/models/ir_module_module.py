@@ -29,9 +29,7 @@ class IrModuleModule(models.Model):
         'im_livechat',          # Live Chat
         'survey',               # Surveys
         'mass_mailing_sms',     # SMS Marketing
-        'ams_subscriptions',    # AMS Subscriptions
-        'ams_accounting_kit',   # AMS Accounting Kit
-        'base_account_budget',  # AMS Base Accounting Budget 
+        'ams_subscriptions'    # AMS Subscriptions
     ]
     
     @api.model
