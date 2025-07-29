@@ -48,7 +48,8 @@ class AmsFinancialTransaction(models.Model):
     partner_id = fields.Many2one('res.partner', string='Contact')
     invoice_id = fields.Many2one('account.move', string='Related Invoice')
     
-    # Subscription reference (uncomment if ams_subscriptions module is installed)
+    # NOTE: Subscription field is commented out to avoid dependency issues
+    # Uncomment the next line if ams_subscriptions module is installed:
     # subscription_id = fields.Many2one('ams.subscription', string='Related Subscription')
     
     # Chapter/regional tracking

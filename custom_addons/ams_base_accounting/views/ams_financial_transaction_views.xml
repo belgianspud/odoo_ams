@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     
-    <!-- Tree View for Financial Transactions -->
-    <record id="view_ams_financial_transaction_tree" model="ir.ui.view">
-        <field name="name">ams.financial.transaction.tree</field>
+    <!-- List View for Financial Transactions -->
+    <record id="view_ams_financial_transaction_list" model="ir.ui.view">
+        <field name="name">ams.financial.transaction.list</field>
         <field name="model">ams.financial.transaction</field>
         <field name="arch" type="xml">
-            <tree string="Financial Transactions" decoration-muted="state=='cancelled'" 
+            <list string="Financial Transactions" decoration-muted="state=='cancelled'" 
                   decoration-success="state=='reconciled'" decoration-info="state=='confirmed'">
                 <field name="date"/>
                 <field name="name"/>
@@ -17,7 +17,7 @@
                 <field name="amount" sum="Total"/>
                 <field name="state"/>
                 <field name="currency_id" invisible="1"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -29,13 +29,13 @@
             <form string="Financial Transaction">
                 <header>
                     <button name="action_confirm" type="object" string="Confirm" 
-                            class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                            class="oe_highlight" invisible="state != 'draft'"/>
                     <button name="action_reconcile" type="object" string="Reconcile" 
-                            class="oe_highlight" attrs="{'invisible': [('state', '!=', 'confirmed')]}"/>
+                            class="oe_highlight" invisible="state != 'confirmed'"/>
                     <button name="action_cancel" type="object" string="Cancel" 
-                            attrs="{'invisible': [('state', 'in', ['cancelled', 'reconciled'])]}"/>
+                            invisible="state in ['cancelled', 'reconciled']"/>
                     <button name="action_reset_to_draft" type="object" string="Reset to Draft" 
-                            attrs="{'invisible': [('state', '!=', 'cancelled')]}"/>
+                            invisible="state != 'cancelled'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,reconciled"/>
                 </header>
                 <sheet>
@@ -53,9 +53,9 @@
                             <field name="currency_id"/>
                         </group>
                         <group name="categorization">
-                            <field name="revenue_category_id" 
-                                   attrs="{'invisible': [('transaction_type', '!=', 'income')], 
-                                          'required': [('transaction_type', '=', 'income')]}"/>
+                            <field name="revenue_category_id"
+                                   invisible="transaction_type != 'income'"
+                                   required="transaction_type == 'income'"/>
                             <field name="partner_id"/>
                             <field name="chapter_id"/>
                         </group>
@@ -64,9 +64,6 @@
                     <group name="related_records" string="Related Records">
                         <group>
                             <field name="invoice_id"/>
-                            <field name="subscription_id"/>
-                        </group>
-                        <group>
                             <field name="reference"/>
                         </group>
                     </group>
@@ -128,7 +125,7 @@
     <record id="action_ams_financial_transaction" model="ir.actions.act_window">
         <field name="name">Financial Transactions</field>
         <field name="res_model">ams.financial.transaction</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_ams_financial_transaction_search"/>
         <field name="context">{'search_default_current_year': 1}</field>
         <field name="help" type="html">
