@@ -17,8 +17,8 @@ class SaleOrder(models.Model):
     has_subscription_products = fields.Boolean(
         'Has Subscription Products',
         compute='_compute_has_subscription_products',
-        store=True,
-        help="Whether this order contains subscription products"
+        #store=True,
+        #help="Whether this order contains subscription products"
     )
     
     @api.depends('order_line.product_id.is_subscription_product')

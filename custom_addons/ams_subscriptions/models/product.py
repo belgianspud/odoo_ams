@@ -109,6 +109,13 @@ class ProductProduct(models.Model):
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
     
+    is_membership = fields.Boolean(
+        'Is Membership Product',
+        compute='_compute_is_membership',
+        store=True,
+        help="Whether this product is specifically a membership product"
+    )
+    
     def _action_launch_stock_rule(self, previous_product_uom_qty=False):
         """Override to create subscriptions for subscription products"""
         result = super()._action_launch_stock_rule(previous_product_uom_qty)

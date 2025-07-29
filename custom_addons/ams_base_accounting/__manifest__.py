@@ -1,6 +1,6 @@
 {
     'name': 'AMS Accounting',  # ← Remove "Base" - it's the main app
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.0.1',
     'category': 'Association Management',
     'summary': 'Financial Management for Association Management System',
     'description': '''
