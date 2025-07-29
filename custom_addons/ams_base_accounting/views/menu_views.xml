@@ -1,4 +1,3 @@
-<!-- views/menu_views.xml -->
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     
@@ -6,13 +5,6 @@
     <menuitem id="menu_ams_accounting_root"
               name="AMS Accounting"
               sequence="12"/>
-    
-    <!-- Dashboard -->
-    <menuitem id="menu_ams_accounting_dashboard"
-              name="Dashboard"
-              parent="menu_ams_accounting_root"
-              action="action_ams_financial_dashboard_form"
-              sequence="5"/>
     
     <!-- Revenue Management -->
     <menuitem id="menu_ams_revenue_management"
@@ -43,35 +35,5 @@
               parent="menu_ams_financial_analysis"
               action="action_ams_financial_summary"
               sequence="10"/>
-    
-    <menuitem id="menu_ams_member_financial_analysis"
-              name="Member Financial Analysis"
-              parent="menu_ams_financial_analysis"
-              action="action_member_financial_analysis"
-              sequence="20"/>
-    
-    <menuitem id="menu_ams_chapter_financial_analysis"
-              name="Chapter Financial Analysis"
-              parent="menu_ams_financial_analysis"
-              action="action_chapter_financial_analysis"
-              sequence="30"/>
-    
-    <!-- Reporting -->
-    <menuitem id="menu_ams_financial_reports"
-              name="Reports"
-              parent="menu_ams_accounting_root"
-              sequence="30"/>
-    
-    <menuitem id="menu_ams_board_reports"
-              name="Board Reports"
-              parent="menu_ams_financial_reports"
-              action="action_board_financial_reports"
-              sequence="10"/>
-    
-    <!-- Configuration -->
-    <menuitem id="menu_ams_accounting_config"
-              name="Configuration"
-              parent="menu_ams_accounting_root"
-              sequence="90"/>
     
 </odoo>

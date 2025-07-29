@@ -1,77 +1,40 @@
 {
-    'name': 'AMS Accounting',  # ← Remove "Base" - it's the main app
-    'version': '18.0.1.0.1',
+    'name': 'AMS Subscriptions',
+    'version': '18.0.1.0.0',
     'category': 'Association Management',
-    'summary': 'Financial Management for Association Management System',
+    'summary': 'Subscription Management for Association Management System',
     'description': '''
-        AMS Accounting - Financial Management for Associations
-        ====================================================
+        AMS Subscriptions - Membership and Subscription Management
+        ========================================================
         
-        Complete financial management solution for associations including:
-        
-        Revenue Management:
-        - Revenue categorization by membership type
-        - Chapter financial performance tracking
-        - Event and training revenue analysis
-        - Donation and sponsorship tracking
-        
-        Financial Analytics:
-        - Member lifetime value analysis
-        - Revenue forecasting and trends
-        - Budget planning and variance analysis
-        - Board-ready financial reports
-        
-        Integration Features:
-        - Seamless integration with AMS Subscriptions
-        - Automatic transaction creation from memberships
-        - Real-time financial dashboard
-        - Export capabilities for external accounting
-        
-        Designed specifically for association needs while working
-        within Odoo Community Edition constraints.
+        Complete subscription management solution for associations.
     ''',
     'author': 'Your Organization',
     'website': 'https://github.com/belgianspud/odoo_ams',
     'depends': [
         'base',
-        'account',      # Community Invoicing
+        'account',
         'sale',
         'product',
         'contacts',
         'mail',
         'web',
-        'ams_subscriptions',  # ← Added this dependency
+        'ams_base_accounting',
     ],
     'data': [
-        # Security
-        'security/ams_accounting_security.xml',
+        # Your data files here
+        'security/ams_subscription_security.xml',
         'security/ir.model.access.csv',
-        
-        # Master data
-        'data/revenue_category_data.xml',
-        
-        # Views with dedicated menu structure
-        'views/ams_revenue_category_views.xml',
-        'views/ams_financial_transaction_views.xml',
-        'views/ams_financial_summary_views.xml',
-        'views/ams_financial_dashboard_views.xml',
-        'views/menu_views.xml',  # ← Own menu structure
-        
-        # Reports
-        'reports/financial_reports.xml',
-        'reports/board_reports.xml',
+        # Add other data files as needed
     ],
     'demo': [
-        'demo/demo_data.xml',
+        # Demo files if any
     ],
     'assets': {
-        'web.assets_backend': [
-            'ams_base_accounting/static/src/css/financial_dashboard.css',
-            'ams_base_accounting/static/src/js/financial_widgets.js',
-        ],
+        # Assets if any
     },
     'installable': True,
-    'application': True,     # ← Standalone app
+    'application': True,
     'auto_install': False,
     'license': 'LGPL-3',
 }

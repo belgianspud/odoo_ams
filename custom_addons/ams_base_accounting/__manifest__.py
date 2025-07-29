@@ -40,6 +40,7 @@
         'contacts',
         'mail',
         'web',
+        'ams_subscriptions',
     ],
     'data': [
         # Security

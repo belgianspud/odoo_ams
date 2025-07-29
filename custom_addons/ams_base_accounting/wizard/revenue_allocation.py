@@ -7,10 +7,9 @@ class RevenueAllocation(models.TransientModel):
     _description = 'Revenue Allocation Wizard'
     
     allocation_type = fields.Selection([
-        ('chapter', 'Allocate by Chapter'),
         ('category', 'Allocate by Category'),
         ('custom', 'Custom Allocation'),
-    ], string='Allocation Type', required=True, default='chapter')
+    ], string='Allocation Type', required=True, default='category')
     
     total_amount = fields.Monetary(
         string='Total Amount to Allocate',
@@ -47,19 +46,10 @@ class RevenueAllocation(models.TransientModel):
         result = super().default_get(fields_list)
         
         if 'allocation_line_ids' in fields_list:
-            allocation_type = result.get('allocation_type', 'chapter')
+            allocation_type = result.get('allocation_type', 'category')
             lines = []
             
-            if allocation_type == 'chapter':
-                # Create lines for all active chapters
-                chapters = self.env['ams.chapter'].search([('active', '=', True)])
-                for chapter in chapters:
-                    lines.append((0, 0, {
-                        'chapter_id': chapter.id,
-                        'percentage': 0.0,
-                        'amount': 0.0,
-                    }))
-            elif allocation_type == 'category':
+            if allocation_type == 'category':
                 # Create lines for all revenue categories
                 categories = self.env['ams.revenue.category'].search([('active', '=', True)])
                 for category in categories:
@@ -95,7 +85,6 @@ class RevenueAllocation(models.TransientModel):
                 'amount': line.amount,
                 'transaction_type': 'income',
                 'revenue_category_id': line.revenue_category_id.id,
-                'chapter_id': line.chapter_id.id,
                 'state': 'confirmed',
                 'notes': f"Allocated from total: {self.total_amount} ({line.percentage}%)",
             }
@@ -107,9 +96,8 @@ class RevenueAllocation(models.TransientModel):
             'type': 'ir.actions.act_window',
             'name': 'Allocated Revenue Transactions',
             'res_model': 'ams.financial.transaction',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('id', 'in', [t.id for t in transactions])],
-            'context': {'search_default_group_by_chapter': 1}
         }
     
     def _validate_allocation(self):
@@ -132,7 +120,8 @@ class RevenueAllocationLine(models.TransientModel):
     
     allocation_id = fields.Many2one('ams.revenue.allocation', required=True, ondelete='cascade')
     
-    chapter_id = fields.Many2one('ams.chapter', string='Chapter')
+    # Removed chapter_id reference since ams.chapter doesn't exist
+    # chapter_id = fields.Many2one('ams.chapter', string='Chapter')
     revenue_category_id = fields.Many2one('ams.revenue.category', string='Revenue Category')
     
     percentage = fields.Float(
