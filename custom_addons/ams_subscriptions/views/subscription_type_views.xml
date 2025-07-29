@@ -67,7 +67,7 @@
                     </group>
                     
                     <notebook>
-                        <page string="Invoicing & Billing" name="invoicing">
+                        <page string="Invoicing &amp; Billing" name="invoicing">
                             <group>
                                 <group string="Invoice Settings">
                                     <field name="creates_invoice"/>
@@ -80,7 +80,7 @@
                             </group>
                         </page>
                         
-                        <page string="Hierarchy & Relationships" name="hierarchy">
+                        <page string="Hierarchy &amp; Relationships" name="hierarchy">
                             <group>
                                 <group string="Parent/Child Structure">
                                     <field name="can_have_children"/>
@@ -92,7 +92,7 @@
                                 </group>
                             </group>
                             
-                            <group string="Subscription Rules" invisible="not can_have_children">
+                            <!--<group string="Subscription Rules" invisible="not can_have_children">
                                 <field name="child_subscription_rules" nolabel="1">
                                     <list editable="bottom">
                                         <field name="child_type_id"/>
@@ -101,10 +101,10 @@
                                         <field name="max_quantity"/>
                                     </list>
                                 </field>
-                            </group>
+                            </group>-->
                         </page>
                         
-                        <page string="E-commerce & Sales" name="ecommerce">
+                        <page string="E-commerce &amp; Sales" name="ecommerce">
                             <group>
                                 <group string="Website Settings">
                                     <field name="website_published"/>
@@ -171,14 +171,14 @@
                             </group>
                         </page>
                         
-                        <page string="Lifecycle & Renewal" name="lifecycle">
+                        <page string="Lifecycle &amp; Renewal" name="lifecycle">
                             <group>
                                 <group string="Default Renewal Settings">
                                     <field name="default_renewal_period"/>
                                     <field name="auto_renewal_default"/>
                                     <field name="renewal_reminder_days"/>
                                 </group>
-                                <group string="Grace & Suspension">
+                                <group string="Grace &amp; Suspension">
                                     <field name="grace_period_days"/>
                                     <field name="suspension_period_days"/>
                                     <field name="termination_period_days"/>
@@ -198,7 +198,7 @@
                             </field>
                         </page>
                         
-                        <page string="Description & Marketing" name="description">
+                        <page string="Description &amp; Marketing" name="description">
                             <group>
                                 <group string="Marketing">
                                     <field name="short_description"/>
@@ -233,7 +233,7 @@
                             </group>
                             
                             <separator string="Monthly Revenue Trend"/>
-                            <field name="monthly_revenue_chart" widget="chart" nolabel="1"/>
+                            <!--<field name="monthly_revenue_chart" widget="chart" nolabel="1"/>-->
                         </page>
                     </notebook>
                 </sheet>

@@ -538,4 +538,52 @@
         </field>
     </record>
 
+    <record id="action_ams_subscription_memberships" model="ir.actions.act_window">
+        <field name="name">Subscriptions Memberships</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first subscription!
+            </p>
+            <p>
+                Manage memberships, chapters, and publication subscriptions for your association members.
+                Track renewals, lifecycle status, and member benefits all in one place.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_ams_subscription_chapters" model="ir.actions.act_window">
+        <field name="name">Subscriptions Chapters</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first subscription!
+            </p>
+            <p>
+                Manage memberships, chapters, and publication subscriptions for your association members.
+                Track renewals, lifecycle status, and member benefits all in one place.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_ams_subscription_publications" model="ir.actions.act_window">
+        <field name="name">Subscriptions Publications</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first subscription!
+            </p>
+            <p>
+                Manage memberships, chapters, and publication subscriptions for your association members.
+                Track renewals, lifecycle status, and member benefits all in one place.
+            </p>
+        </field>
+    </record>
+
 </odoo>

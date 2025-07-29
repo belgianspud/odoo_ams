@@ -20,41 +20,35 @@
         'mail',
         'web',
         'point_of_sale',
-        # NOTE: Do not include 'ams_subscriptions' - that creates circular dependency!
-        # NOTE: Do not include 'ams_base_accounting' initially - add after both work separately
     ],
     'data': [
         # Security first
         'security/ams_subscription_security.xml',
         'security/ir.model.access.csv',
         
-        # Data files
+        # Essential data only
         'data/chapter_data.xml',
         'data/subscription_type_data.xml',
-        'data/subscription_rules_data.xml',
-        'data/cron_data.xml',
-        'data/email_templates.xml',
+        # 'data/subscription_rules_data.xml',  # COMMENTED OUT - has missing references
+        # 'data/cron_data.xml',               # COMMENTED OUT - may have missing references
+        # 'data/email_templates.xml',         # COMMENTED OUT - may have missing references
         
-        # Views
-        'views/menu_views.xml',
-        'views/chapter_views.xml',
-        'views/subscription_views.xml',
+        # Essential views only
         'views/subscription_type_views.xml',
-        'views/subscription_renewal_views.xml',
-        'views/partner_views.xml',
-        'views/product_views.xml',
-        'views/portal_templates.xml',
-        'views/website_templates.xml',
+        'views/subscription_views.xml',
+        # 'views/menu_views.xml',              # COMMENTED OUT - has missing action reference
+        # 'views/chapter_views.xml',          # COMMENTED OUT - may have missing references
+        # 'views/subscription_renewal_views.xml',  # COMMENTED OUT
+        # 'views/partner_views.xml',          # COMMENTED OUT
+        # 'views/product_views.xml',          # COMMENTED OUT
+        # 'views/portal_templates.xml',       # COMMENTED OUT
+        # 'views/website_templates.xml',      # COMMENTED OUT
         
-        # Reports
-        'reports/subscription_reports.xml',
+        # Reports - commented out for now
+        # 'reports/subscription_reports.xml',
     ],
-    'demo': [
-        # Demo files if any
-    ],
-    'assets': {
-        # Assets if any
-    },
+    'demo': [],
+    'assets': {},
     'installable': True,
     'application': True,
     'auto_install': False,

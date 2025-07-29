@@ -7,11 +7,11 @@
               sequence="10"/>
     
     <!-- Dashboard Menu -->
-    <menuitem id="menu_ams_dashboard" 
+    <!--<menuitem id="menu_ams_dashboard" 
               name="Dashboard" 
               parent="menu_ams_root" 
               action="action_ams_dashboard" 
-              sequence="5"/>
+              sequence="5"/>-->
 
     <!-- ========== SUBSCRIPTIONS SECTION ========== -->
     <menuitem id="menu_ams_subscriptions" 
@@ -30,7 +30,7 @@
     <menuitem id="menu_ams_subscription_memberships" 
               name="Memberships" 
               parent="menu_ams_subscriptions" 
-              action="action_ams_subscription_memberships" 
+              action="action_ams_subscription_memberships"
               sequence="20"/>
     
     <menuitem id="menu_ams_subscription_chapters" 
