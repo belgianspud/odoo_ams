@@ -19,6 +19,7 @@
         'contacts',
         'mail',
         'web',
+        'point_of_sale',
         # NOTE: Do not include 'ams_subscriptions' - that creates circular dependency!
         # NOTE: Do not include 'ams_base_accounting' initially - add after both work separately
     ],

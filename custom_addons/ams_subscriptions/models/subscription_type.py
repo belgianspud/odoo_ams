@@ -529,23 +529,46 @@ class AMSSubscriptionType(models.Model):
             'is_subscription_product': True,
             'subscription_type_id': self.id,
             'website_published': self.website_published,
-            'available_in_pos': self.pos_available,
-            'pos_categ_id': self.pos_category_id.id if self.pos_category_id else False,
         }
         
-        # Add subscription-specific settings to product
-        if hasattr(self.env['product.template'], 'is_recurring'):
-            product_vals.update({
-                'is_recurring': True,
-                'recurring_period': self.default_renewal_period,
-                'auto_renewal': self.auto_renewal_default,
-                'grace_period_days': self.grace_period_days,
-            })
+        # Only add POS fields if they exist (POS module is loaded)
+        product_template_model = self.env['product.template']
         
-        product_template = self.env['product.template'].create(product_vals)
-        self.product_template_id = product_template.id
+        if 'available_in_pos' in product_template_model._fields:
+            product_vals['available_in_pos'] = self.pos_available
+            _logger.info("Added available_in_pos field")
+        else:
+            _logger.warning("available_in_pos field not found - POS module may not be loaded")
         
-        _logger.info(f"Created product template for subscription type: {self.name}")
+        if 'pos_categ_id' in product_template_model._fields and self.pos_category_id:
+            product_vals['pos_categ_id'] = self.pos_category_id.id
+            _logger.info("Added pos_categ_id field")
+        else:
+            _logger.warning("pos_categ_id field not found - POS module may not be loaded")
+        
+        # Add subscription-specific settings to product (only fields that exist on product.template)
+        if 'is_recurring' in product_template_model._fields:
+            product_vals['is_recurring'] = True
+            _logger.info("Added is_recurring field")
+        
+        if 'recurring_period' in product_template_model._fields:
+            product_vals['recurring_period'] = self.default_renewal_period
+            _logger.info("Added recurring_period field")
+        
+        if 'auto_renewal' in product_template_model._fields:
+            product_vals['auto_renewal'] = self.auto_renewal_default
+            _logger.info("Added auto_renewal field")
+        
+        # NOTE: grace_period_days is a subscription_type field, not a product field
+        # It stays on the subscription type model, not the product template
+        
+        try:
+            product_template = self.env['product.template'].create(product_vals)
+            self.product_template_id = product_template.id
+            _logger.info(f"Created product template for subscription type: {self.name}")
+        except Exception as e:
+            _logger.error(f"Failed to create product template: {e}")
+            raise
 
     def _create_default_rules(self):
         """Create default lifecycle rules for this subscription type"""

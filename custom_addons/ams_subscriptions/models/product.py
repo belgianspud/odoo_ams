@@ -31,7 +31,7 @@ class ProductTemplate(models.Model):
     
     # E-commerce settings
     website_published = fields.Boolean('Published on Website', default=False)
-    available_in_pos = fields.Boolean('Available in POS', default=True)
+    #available_in_pos = fields.Boolean('Available in POS', default=True)
     
     # Statistics
     subscription_count = fields.Integer('Subscription Count', compute='_compute_subscription_count')

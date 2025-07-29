@@ -39,8 +39,7 @@ class AmsFinancialSummary(models.Model):
         """Create the SQL view for financial summaries"""
         tools.drop_view_if_exists(self.env.cr, self._table)
         
-        # This creates a basic view structure
-        # You'll enhance this as you add more transaction tracking
+        # Create a simplified view that doesn't depend on subscription-specific fields
         self.env.cr.execute(f"""
             CREATE VIEW {self._table} AS (
                 SELECT 
@@ -49,51 +48,66 @@ class AmsFinancialSummary(models.Model):
                     EXTRACT(month FROM am.invoice_date) as period_month,
                     EXTRACT(quarter FROM am.invoice_date) as period_quarter,
                     
-                    -- Revenue by category (will be enhanced with actual categorization)
-                    SUM(CASE WHEN am.move_type = 'out_invoice' 
-                        AND aml.product_id IN (
-                                    SELECT pp.id 
-                                    FROM product_product pp
-                                    JOIN product_template pt ON pt.id = pp.product_tmpl_id
-                                    WHERE pt.is_subscription_product = true
+                    -- Basic revenue categorization without subscription dependencies
+                    SUM(CASE 
+                        WHEN am.move_type = 'out_invoice' 
+                        AND EXISTS (
+                            SELECT 1 FROM ams_revenue_category arc 
+                            WHERE arc.category_type = 'membership'
                         )
-                        THEN aml.credit ELSE 0 END) as membership_revenue,
-                        
-                    SUM(CASE WHEN am.move_type = 'out_invoice' 
-                        AND aml.product_id IN (
-                            SELECT DISTINCT product_id FROM event_registration
-                        ) 
-                        THEN aml.credit ELSE 0 END) as event_revenue,
-                        
-                    SUM(CASE WHEN am.move_type = 'out_invoice' 
-                        AND aml.product_id NOT IN (
-                            SELECT pp.id 
-                            FROM product_product pp
-                            JOIN product_template pt ON pt.id = pp.product_tmpl_id
-                            WHERE pt.is_subscription_product = true
-                        )
-                        AND aml.product_id NOT IN (
-                            SELECT DISTINCT product_id FROM event_registration
-                        )
-                        THEN aml.credit ELSE 0 END) as other_revenue,
-                        
-                    0 as donation_revenue,  -- Will be enhanced with donation tracking
+                        THEN aml.credit 
+                        ELSE 0 
+                    END) as membership_revenue,
                     
-                    SUM(CASE WHEN am.move_type = 'out_invoice' 
-                        THEN aml.credit ELSE 0 END) as total_revenue,
-                        
-                    SUM(CASE WHEN am.move_type = 'in_invoice' 
-                        THEN aml.debit ELSE 0 END) as total_expenses,
-                        
-                    0 as program_expenses,  -- Will be categorized later
-                    0 as admin_expenses,    -- Will be categorized later
+                    SUM(CASE 
+                        WHEN am.move_type = 'out_invoice' 
+                        AND EXISTS (
+                            SELECT 1 FROM ams_revenue_category arc 
+                            WHERE arc.category_type = 'event'
+                        )
+                        THEN aml.credit 
+                        ELSE 0 
+                    END) as event_revenue,
                     
-                    SUM(CASE WHEN am.move_type = 'out_invoice' 
+                    SUM(CASE 
+                        WHEN am.move_type = 'out_invoice' 
+                        AND EXISTS (
+                            SELECT 1 FROM ams_revenue_category arc 
+                            WHERE arc.category_type = 'donation'
+                        )
+                        THEN aml.credit 
+                        ELSE 0 
+                    END) as donation_revenue,
+                    
+                    SUM(CASE 
+                        WHEN am.move_type = 'out_invoice' 
+                        THEN aml.credit 
+                        ELSE 0 
+                    END) as other_revenue,
+                    
+                    SUM(CASE 
+                        WHEN am.move_type = 'out_invoice' 
+                        THEN aml.credit 
+                        ELSE 0 
+                    END) as total_revenue,
+                    
+                    SUM(CASE 
+                        WHEN am.move_type = 'in_invoice' 
+                        THEN aml.debit 
+                        ELSE 0 
+                    END) as total_expenses,
+                    
+                    0 as program_expenses,  -- Will be enhanced later
+                    0 as admin_expenses,    -- Will be enhanced later
+                    
+                    SUM(CASE 
+                        WHEN am.move_type = 'out_invoice' 
                         THEN aml.credit 
                         WHEN am.move_type = 'in_invoice' 
                         THEN -aml.debit 
-                        ELSE 0 END) as net_income,
-                        
+                        ELSE 0 
+                    END) as net_income,
+                    
                     am.partner_id as chapter_id,
                     rc.id as currency_id
                     
@@ -102,11 +116,17 @@ class AmsFinancialSummary(models.Model):
                 JOIN res_company rc ON rc.id = am.company_id
                 WHERE am.state = 'posted'
                     AND am.move_type IN ('out_invoice', 'in_invoice')
+                    AND aml.account_id IS NOT NULL
                 GROUP BY 
                     EXTRACT(year FROM am.invoice_date),
                     EXTRACT(month FROM am.invoice_date),
                     EXTRACT(quarter FROM am.invoice_date),
                     am.partner_id,
                     rc.id
+                HAVING SUM(CASE 
+                    WHEN am.move_type = 'out_invoice' THEN aml.credit 
+                    WHEN am.move_type = 'in_invoice' THEN aml.debit 
+                    ELSE 0 
+                END) > 0
             )
         """)
