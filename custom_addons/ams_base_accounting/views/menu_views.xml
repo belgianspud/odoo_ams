@@ -5,14 +5,13 @@
     <!-- Main AMS Accounting App Menu -->
     <menuitem id="menu_ams_accounting_root"
               name="AMS Accounting"
-              web_icon="ams_accounting,static/description/icon.png"
               sequence="12"/>
     
     <!-- Dashboard -->
     <menuitem id="menu_ams_accounting_dashboard"
               name="Dashboard"
               parent="menu_ams_accounting_root"
-              action="action_ams_financial_dashboard"
+              action="action_ams_financial_dashboard_form"
               sequence="5"/>
     
     <!-- Revenue Management -->

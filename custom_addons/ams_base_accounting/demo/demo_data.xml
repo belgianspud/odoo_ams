@@ -36,7 +36,7 @@
             <field name="date" eval="(DateTime.now() - timedelta(days=30)).strftime('%Y-%m-%d')"/>
             <field name="amount">100.00</field>
             <field name="transaction_type">income</field>
-            <field name="revenue_category_id" ref="ams_base_accounting.revenue_category_membership"/>
+            <field name="revenue_category_id" ref="revenue_category_membership"/>
             <field name="partner_id" ref="demo_member_1"/>
             <field name="chapter_id" ref="demo_chapter_north"/>
             <field name="state">confirmed</field>
@@ -47,7 +47,7 @@
             <field name="date" eval="(DateTime.now() - timedelta(days=15)).strftime('%Y-%m-%d')"/>
             <field name="amount">250.00</field>
             <field name="transaction_type">income</field>
-            <field name="revenue_category_id" ref="ams_base_accounting.revenue_category_events"/>
+            <field name="revenue_category_id" ref="revenue_category_events"/>
             <field name="partner_id" ref="demo_member_2"/>
             <field name="chapter_id" ref="demo_chapter_south"/>
             <field name="state">confirmed</field>
@@ -58,7 +58,7 @@
             <field name="date" eval="(DateTime.now() - timedelta(days=7)).strftime('%Y-%m-%d')"/>
             <field name="amount">150.00</field>
             <field name="transaction_type">income</field>
-            <field name="revenue_category_id" ref="ams_base_accounting.revenue_category_training"/>
+            <field name="revenue_category_id" ref="revenue_category_training"/>
             <field name="partner_id" ref="demo_member_1"/>
             <field name="chapter_id" ref="demo_chapter_north"/>
             <field name="state">confirmed</field>
@@ -69,7 +69,7 @@
             <field name="date" eval="(DateTime.now() - timedelta(days=45)).strftime('%Y-%m-%d')"/>
             <field name="amount">500.00</field>
             <field name="transaction_type">income</field>
-            <field name="revenue_category_id" ref="ams_base_accounting.revenue_category_sponsorship"/>
+            <field name="revenue_category_id" ref="revenue_category_sponsorship"/>
             <field name="chapter_id" ref="demo_chapter_north"/>
             <field name="state">confirmed</field>
         </record>
@@ -79,7 +79,7 @@
             <field name="date" eval="(DateTime.now() - timedelta(days=20)).strftime('%Y-%m-%d')"/>
             <field name="amount">75.00</field>
             <field name="transaction_type">income</field>
-            <field name="revenue_category_id" ref="ams_base_accounting.revenue_category_donations"/>
+            <field name="revenue_category_id" ref="revenue_category_donations"/>
             <field name="partner_id" ref="demo_member_2"/>
             <field name="chapter_id" ref="demo_chapter_south"/>
             <field name="state">confirmed</field>

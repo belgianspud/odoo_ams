@@ -47,7 +47,9 @@ class AmsFinancialTransaction(models.Model):
     # Related records and relationships
     partner_id = fields.Many2one('res.partner', string='Contact')
     invoice_id = fields.Many2one('account.move', string='Related Invoice')
-    subscription_id = fields.Many2one('ams.subscription', string='Related Subscription')
+    
+    # Subscription reference (uncomment if ams_subscriptions module is installed)
+    # subscription_id = fields.Many2one('ams.subscription', string='Related Subscription')
     
     # Chapter/regional tracking
     chapter_id = fields.Many2one(
@@ -71,8 +73,7 @@ class AmsFinancialTransaction(models.Model):
     # Computed fields
     display_name = fields.Char(compute='_compute_display_name', store=True)
     partner_name = fields.Char(related='partner_id.name', store=True)
-    # commented this out due to error: 
-    # revenue_category_name = fields.Char(related='revenue_category_id.name', store=True)
+    revenue_category_name = fields.Char(related='revenue_category_id.name', store=True)
     chapter_name = fields.Char(related='chapter_id.name', store=True)
     
     @api.depends('name', 'date', 'amount', 'partner_id.name')
