@@ -10,11 +10,12 @@ class AmsRevenueCategory(models.Model):
     _description = 'AMS Revenue Category'
     _order = 'sequence, name'
     _rec_name = 'name'
+    _inherit = ['mail.thread', 'mail.activity.mixin']  # Add mail functionality
 
-    name = fields.Char(string='Category Name', required=True)
+    name = fields.Char(string='Category Name', required=True, tracking=True)
     code = fields.Char(string='Category Code', required=True, size=10)
     sequence = fields.Integer(default=10)
-    active = fields.Boolean(default=True)
+    active = fields.Boolean(default=True, tracking=True)
     
     description = fields.Text(string='Description')
     color = fields.Integer(string='Color Index', default=0)
@@ -24,7 +25,8 @@ class AmsRevenueCategory(models.Model):
         'account.account', 
         string='Income Account',
         domain=[('account_type', '=', 'income')],
-        help="Default income account for this revenue category"
+        help="Default income account for this revenue category",
+        tracking=True
     )
     
     # Category classification
@@ -37,13 +39,14 @@ class AmsRevenueCategory(models.Model):
         ('training', 'Training/Education'),
         ('certification', 'Certification Fees'),
         ('other', 'Other Revenue')
-    ], string='Category Type', required=True)
+    ], string='Category Type', required=True, tracking=True)
     
     # Financial planning
     budget_amount = fields.Monetary(
         string='Annual Budget', 
         currency_field='currency_id',
-        help="Budgeted amount for this category this year"
+        help="Budgeted amount for this category this year",
+        tracking=True
     )
     currency_id = fields.Many2one(
         'res.currency', 
@@ -127,7 +130,7 @@ class AmsRevenueCategory(models.Model):
             'type': 'ir.actions.act_window',
             'name': f'{self.name} - Transactions',
             'res_model': 'ams.financial.transaction',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('revenue_category_id', '=', self.id)],
             'context': {
                 'default_revenue_category_id': self.id,
@@ -141,7 +144,7 @@ class AmsRevenueCategory(models.Model):
             'type': 'ir.actions.act_window',
             'name': f'{self.name} - Budget Analysis',
             'res_model': 'ams.financial.summary',
-            'view_mode': 'graph,tree',
+            'view_mode': 'graph,list',
             'domain': [('revenue_category_id', '=', self.id)],
             'context': {
                 'search_default_current_year': 1,

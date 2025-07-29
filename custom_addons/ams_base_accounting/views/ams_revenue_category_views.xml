@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     
-    <!-- Tree View for Revenue Categories -->
-    <record id="view_ams_revenue_category_tree" model="ir.ui.view">
-        <field name="name">ams.revenue.category.tree</field>
+    <!-- List View for Revenue Categories -->
+    <record id="view_ams_revenue_category_list" model="ir.ui.view">
+        <field name="name">ams.revenue.category.list</field>
         <field name="model">ams.revenue.category</field>
         <field name="arch" type="xml">
-            <tree string="Revenue Categories" editable="bottom">
+            <list string="Revenue Categories" editable="bottom">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="code"/>
@@ -16,7 +16,7 @@
                 <field name="budget_percentage"/>
                 <field name="transaction_count"/>
                 <field name="active"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -73,23 +73,18 @@
                             <field name="description" placeholder="Describe this revenue category..."/>
                         </page>
                         <page string="Transactions">
-                            <field name="transaction_ids" context="{'default_revenue_category_id': active_id}">
-                                <tree>
+                            <field name="transaction_ids">
+                                <list>
                                     <field name="date"/>
                                     <field name="name"/>
                                     <field name="partner_id"/>
                                     <field name="amount"/>
                                     <field name="state"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
             </form>
         </field>
     </record>
@@ -123,7 +118,7 @@
     <record id="action_ams_revenue_category" model="ir.actions.act_window">
         <field name="name">Revenue Categories</field>
         <field name="res_model">ams.revenue.category</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_ams_revenue_category_search"/>
         <field name="context">{'search_default_active': 1}</field>
         <field name="help" type="html">
