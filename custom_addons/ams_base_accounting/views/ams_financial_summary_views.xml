@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Tree View for Financial Summary -->
+    <record id="view_ams_financial_summary_tree" model="ir.ui.view">
+        <field name="name">ams.financial.summary.tree</field>
+        <field name="model">ams.financial.summary</field>
+        <field name="arch" type="xml">
+            <tree string="Financial Summary" create="false" edit="false" delete="false">
+                <field name="period_year"/>
+                <field name="period_month"/>
+                <field name="period_quarter"/>
+                <field name="chapter_id"/>
+                <field name="membership_revenue" sum="Total"/>
+                <field name="event_revenue" sum="Total"/>
+                <field name="donation_revenue" sum="Total"/>
+                <field name="other_revenue" sum="Total"/>
+                <field name="total_revenue" sum="Total"/>
+                <field name="total_expenses" sum="Total"/>
+                <field name="net_income" sum="Total"/>
+                <field name="currency_id" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Form View for Financial Summary -->
+    <record id="view_ams_financial_summary_form" model="ir.ui.view">
+        <field name="name">ams.financial.summary.form</field>
+        <field name="model">ams.financial.summary</field>
+        <field name="arch" type="xml">
+            <form string="Financial Summary" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            Financial Summary - <field name="period_year" readonly="1"/>
+                            <span attrs="{'invisible': [('period_month', '=', False)]}">
+                                Month <field name="period_month" readonly="1"/>
+                            </span>
+                            <span attrs="{'invisible': [('period_quarter', '=', False)]}">
+                                Q<field name="period_quarter" readonly="1"/>
+                            </span>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group name="period_info" string="Period Information">
+                            <field name="period_year" readonly="1"/>
+                            <field name="period_month" readonly="1"/>
+                            <field name="period_quarter" readonly="1"/>
+                            <field name="chapter_id" readonly="1"/>
+                        </group>
+                        <group name="totals" string="Summary">
+                            <field name="total_revenue" readonly="1"/>
+                            <field name="total_expenses" readonly="1"/>
+                            <field name="net_income" readonly="1"/>
+                            <field name="currency_id" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Revenue Breakdown">
+                        <group>
+                            <field name="membership_revenue" readonly="1"/>
+                            <field name="event_revenue" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="donation_revenue" readonly="1"/>
+                            <field name="other_revenue" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Expense Breakdown">
+                        <group>
+                            <field name="program_expenses" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="admin_expenses" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Graph View for Financial Summary -->
+    <record id="view_ams_financial_summary_graph" model="ir.ui.view">
+        <field name="name">ams.financial.summary.graph</field>
+        <field name="model">ams.financial.summary</field>
+        <field name="arch" type="xml">
+            <graph string="Financial Summary" type="line">
+                <field name="period_month" type="row"/>
+                <field name="total_revenue" type="measure"/>
+                <field name="total_expenses" type="measure"/>
+                <field name="net_income" type="measure"/>
+            </graph>
+        </field>
+    </record>
+    
+    <!-- Pivot View for Financial Summary -->
+    <record id="view_ams_financial_summary_pivot" model="ir.ui.view">
+        <field name="name">ams.financial.summary.pivot</field>
+        <field name="model">ams.financial.summary</field>
+        <field name="arch" type="xml">
+            <pivot string="Financial Summary">
+                <field name="period_year" type="row"/>
+                <field name="period_month" type="row"/>
+                <field name="chapter_id" type="col"/>
+                <field name="total_revenue" type="measure"/>
+                <field name="total_expenses" type="measure"/>
+                <field name="net_income" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+    
+    <!-- Search View for Financial Summary -->
+    <record id="view_ams_financial_summary_search" model="ir.ui.view">
+        <field name="name">ams.financial.summary.search</field>
+        <field name="model">ams.financial.summary</field>
+        <field name="arch" type="xml">
+            <search string="Financial Summary">
+                <field name="period_year"/>
+                <field name="period_month"/>
+                <field name="period_quarter"/>
+                <field name="chapter_id"/>
+                <separator/>
+                <filter string="Current Year" name="current_year" 
+                        domain="[('period_year','=',datetime.datetime.now().year)]"/>
+                <filter string="Last Year" name="last_year" 
+                        domain="[('period_year','=',datetime.datetime.now().year-1)]"/>
+                <separator/>
+                <filter string="Q1" name="q1" domain="[('period_quarter','=',1)]"/>
+                <filter string="Q2" name="q2" domain="[('period_quarter','=',2)]"/>
+                <filter string="Q3" name="q3" domain="[('period_quarter','=',3)]"/>
+                <filter string="Q4" name="q4" domain="[('period_quarter','=',4)]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter string="Year" name="group_year" domain="[]" context="{'group_by':'period_year'}"/>
+                    <filter string="Month" name="group_month" domain="[]" context="{'group_by':'period_month'}"/>
+                    <filter string="Quarter" name="group_quarter" domain="[]" context="{'group_by':'period_quarter'}"/>
+                    <filter string="Chapter" name="group_chapter" domain="[]" context="{'group_by':'chapter_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Action for Financial Summary -->
+    <record id="action_ams_financial_summary" model="ir.actions.act_window">
+        <field name="name">Financial Summary</field>
+        <field name="res_model">ams.financial.summary</field>
+        <field name="view_mode">tree,graph,pivot,form</field>
+        <field name="search_view_id" ref="view_ams_financial_summary_search"/>
+        <field name="context">{'search_default_current_year': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No financial data available yet!
+            </p>
+            <p>
+                Financial summaries are automatically generated from your transaction data.
+                Start by creating some financial transactions to see summaries here.
+            </p>
+        </field>
+    </record>
+
+</odoo>

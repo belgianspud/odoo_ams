@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Financial Transaction Report -->
+    <record id="action_report_financial_transactions" model="ir.actions.report">
+        <field name="name">Financial Transactions Report</field>
+        <field name="model">ams.financial.transaction</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_accounting.report_financial_transactions</field>
+        <field name="report_file">ams_accounting.report_financial_transactions</field>
+        <field name="binding_model_id" ref="model_ams_financial_transaction"/>
+        <field name="binding_type">report</field>
+    </record>
+    
+    <!-- Revenue Category Report -->
+    <record id="action_report_revenue_categories" model="ir.actions.report">
+        <field name="name">Revenue Categories Report</field>
+        <field name="model">ams.revenue.category</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_accounting.report_revenue_categories</field>
+        <field name="report_file">ams_accounting.report_revenue_categories</field>
+        <field name="binding_model_id" ref="model_ams_revenue_category"/>
+        <field name="binding_type">report</field>
+    </record>
+    
+    <!-- Financial Summary Report -->
+    <record id="action_report_financial_summary" model="ir.actions.report">
+        <field name="name">Financial Summary Report</field>
+        <field name="model">ams.financial.summary</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_accounting.report_financial_summary</field>
+        <field name="report_file">ams_accounting.report_financial_summary</field>
+        <field name="binding_model_id" ref="model_ams_financial_summary"/>
+        <field name="binding_type">report</field>
+    </record>
+    
+    <!-- Report Templates -->
+    <template id="report_financial_transactions">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Financial Transactions Report</h2>
+                        <div class="row mt32 mb32">
+                            <div class="col-6">
+                                <strong>Transaction:</strong> <span t-field="doc.name"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Date:</strong> <span t-field="doc.date"/>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Type:</strong> <span t-field="doc.transaction_type"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Amount:</strong> <span t-field="doc.amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
+                            </div>
+                        </div>
+                        <div class="row" t-if="doc.partner_id">
+                            <div class="col-6">
+                                <strong>Contact:</strong> <span t-field="doc.partner_id.name"/>
+                            </div>
+                        </div>
+                        <div class="row" t-if="doc.revenue_category_id">
+                            <div class="col-6">
+                                <strong>Revenue Category:</strong> <span t-field="doc.revenue_category_id.name"/>
+                            </div>
+                        </div>
+                        <div class="row" t-if="doc.notes">
+                            <div class="col-12">
+                                <strong>Notes:</strong><br/>
+                                <span t-field="doc.notes"/>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+    
+    <template id="report_revenue_categories">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Revenue Category Report</h2>
+                        <div class="row mt32 mb32">
+                            <div class="col-6">
+                                <strong>Category:</strong> <span t-field="doc.name"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Code:</strong> <span t-field="doc.code"/>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Type:</strong> <span t-field="doc.category_type"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Current Year Revenue:</strong> <span t-field="doc.current_year_revenue" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
+                            </div>
+                        </div>
+                        <div class="row" t-if="doc.budget_amount">
+                            <div class="col-6">
+                                <strong>Budget:</strong> <span t-field="doc.budget_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Budget Achievement:</strong> <span t-field="doc.budget_percentage"/>%
+                            </div>
+                        </div>
+                        <div class="row" t-if="doc.description">
+                            <div class="col-12">
+                                <strong>Description:</strong><br/>
+                                <span t-field="doc.description"/>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+    
+    <template id="report_financial_summary">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Financial Summary Report</h2>
+                        <div class="row mt32 mb32">
+                            <div class="col-4">
+                                <strong>Year:</strong> <span t-field="doc.period_year"/>
+                            </div>
+                            <div class="col-4" t-if="doc.period_month">
+                                <strong>Month:</strong> <span t-field="doc.period_month"/>
+                            </div>
+                            <div class="col-4" t-if="doc.period_quarter">
+                                <strong>Quarter:</strong> Q<span t-field="doc.period_quarter"/>
+                            </div>
+                        </div>
+                        
+                        <h3>Revenue Summary</h3>
+                        <table class="table table-sm">
+                            <tr>
+                                <td>Membership Revenue</td>
+                                <td class="text-right"><span t-field="doc.membership_revenue" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></td>
+                            </tr>
+                            <tr>
+                                <td>Event Revenue</td>
+                                <td class="text-right"><span t-field="doc.event_revenue" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></td>
+                            </tr>
+                            <tr>
+                                <td>Donation Revenue</td>
+                                <td class="text-right"><span t-field="doc.donation_revenue" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></td>
+                            </tr>
+                            <tr>
+                                <td>Other Revenue</td>
+                                <td class="text-right"><span t-field="doc.other_revenue" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></td>
+                            </tr>
+                            <tr style="border-top: 1px solid #000;">
+                                <td><strong>Total Revenue</strong></td>
+                                <td class="text-right"><strong><span t-field="doc.total_revenue" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></strong></td>
+                            </tr>
+                        </table>
+                        
+                        <h3>Expense Summary</h3>
+                        <table class="table table-sm">
+                            <tr>
+                                <td>Program Expenses</td>
+                                <td class="text-right"><span t-field="doc.program_expenses" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></td>
+                            </tr>
+                            <tr>
+                                <td>Administrative Expenses</td>
+                                <td class="text-right"><span t-field="doc.admin_expenses" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></td>
+                            </tr>
+                            <tr style="border-top: 1px solid #000;">
+                                <td><strong>Total Expenses</strong></td>
+                                <td class="text-right"><strong><span t-field="doc.total_expenses" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></strong></td>
+                            </tr>
+                        </table>
+                        
+                        <h3>Net Income</h3>
+                        <table class="table table-sm">
+                            <tr style="border-top: 2px solid #000;">
+                                <td><strong>Net Income</strong></td>
+                                <td class="text-right"><strong><span t-field="doc.net_income" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

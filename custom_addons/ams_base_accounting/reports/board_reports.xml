@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Board Financial Report Action -->
+    <record id="action_board_financial_reports" model="ir.actions.act_window">
+        <field name="name">Board Financial Reports</field>
+        <field name="res_model">ams.financial.summary</field>
+        <field name="view_mode">pivot,graph,tree</field>
+        <field name="context">{
+            'search_default_current_year': 1,
+            'group_by': ['period_quarter'],
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Board-level financial reports will appear here!
+            </p>
+            <p>
+                These reports provide high-level financial summaries suitable for board meetings
+                and executive decision making.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Member Financial Analysis Action -->
+    <record id="action_member_financial_analysis" model="ir.actions.act_window">
+        <field name="name">Member Financial Analysis</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('is_company', '=', False)]</field>
+        <field name="context">{
+            'search_default_customers': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Member financial analysis will appear here!
+            </p>
+            <p>
+                Analyze member payment patterns, lifetime value, and outstanding balances.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Chapter Financial Analysis Action -->
+    <record id="action_chapter_financial_analysis" model="ir.actions.act_window">
+        <field name="name">Chapter Financial Analysis</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('is_chapter', '=', True)]</field>
+        <field name="context">{
+            'search_default_is_company': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Chapter financial analysis will appear here!
+            </p>
+            <p>
+                Compare financial performance across different chapters and regions.
+            </p>
+        </field>
+    </record>
+
+</odoo>

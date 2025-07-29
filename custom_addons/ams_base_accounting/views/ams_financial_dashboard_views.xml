@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Financial Dashboard Action -->
+    <record id="action_ams_financial_dashboard" model="ir.actions.client">
+        <field name="name">AMS Financial Dashboard</field>
+        <field name="tag">ams_financial_dashboard</field>
+    </record>
+    
+    <!-- Alternative: Simple Dashboard as Form View -->
+    <record id="view_ams_financial_dashboard_form" model="ir.ui.view">
+        <field name="name">ams.financial.dashboard.form</field>
+        <field name="model">ams.financial.summary</field>
+        <field name="arch" type="xml">
+            <form string="Financial Dashboard" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Financial Dashboard</h1>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="o_form_sheet_bg">
+                                <group string="Current Year Overview">
+                                    <field name="total_revenue" readonly="1" widget="monetary"/>
+                                    <field name="total_expenses" readonly="1" widget="monetary"/>
+                                    <field name="net_income" readonly="1" widget="monetary"/>
+                                </group>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="o_form_sheet_bg">
+                                <group string="Quick Actions">
+                                    <button name="%(action_ams_financial_transaction)d" 
+                                            type="action" string="View Transactions" 
+                                            class="oe_highlight"/>
+                                    <button name="%(action_ams_revenue_category)d" 
+                                            type="action" string="Manage Categories"/>
+                                </group>
+                            </div>
+                        </div>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Dashboard Action as Form -->
+    <record id="action_ams_financial_dashboard_form" model="ir.actions.act_window">
+        <field name="name">Financial Dashboard</field>
+        <field name="res_model">ams.financial.summary</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_ams_financial_dashboard_form"/>
+        <field name="target">current</field>
+        <field name="context">{
+            'search_default_current_year': 1,
+            'create': False,
+            'edit': False,
+            'delete': False
+        }</field>
+    </record>
+
+</odoo>
