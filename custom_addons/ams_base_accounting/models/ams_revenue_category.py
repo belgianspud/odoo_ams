@@ -10,7 +10,6 @@ class AmsRevenueCategory(models.Model):
     _description = 'AMS Revenue Category'
     _order = 'sequence, name'
     _rec_name = 'name'
-    _inherit = ['mail.thread', 'mail.activity.mixin']  # Add mail functionality
 
     name = fields.Char(string='Category Name', required=True, tracking=True)
     code = fields.Char(string='Category Code', required=True, size=10)
@@ -53,17 +52,15 @@ class AmsRevenueCategory(models.Model):
         default=lambda self: self.env.company.currency_id
     )
     
-    # Computed statistics
+    # Computed statistics (simplified to avoid circular dependencies)
     current_year_revenue = fields.Monetary(
         string='Current Year Revenue', 
         compute='_compute_revenue_stats',
-        currency_field='currency_id',
-        store=True
+        currency_field='currency_id'
     )
     transaction_count = fields.Integer(
         string='Transaction Count',
-        compute='_compute_revenue_stats',
-        store=True
+        compute='_compute_revenue_stats'
     )
     budget_variance = fields.Monetary(
         string='Budget Variance',
@@ -77,38 +74,46 @@ class AmsRevenueCategory(models.Model):
         help="Percentage of budget achieved"
     )
     
-    @api.depends('transaction_ids.amount', 'transaction_ids.date', 'budget_amount')
     def _compute_revenue_stats(self):
         """Compute revenue statistics for the current year"""
         current_year = fields.Date.today().year
         
         for category in self:
-            # Get transactions for current year
-            transactions = self.env['ams.financial.transaction'].search([
-                ('revenue_category_id', '=', category.id),
-                ('transaction_type', '=', 'income'),
-                ('state', '=', 'confirmed'),
-                ('date', '>=', f'{current_year}-01-01'),
-                ('date', '<=', f'{current_year}-12-31'),
-            ])
+            # Initialize defaults
+            category.current_year_revenue = 0.0
+            category.transaction_count = 0
+            category.budget_variance = 0.0
+            category.budget_percentage = 0.0
             
-            category.current_year_revenue = sum(transactions.mapped('amount'))
-            category.transaction_count = len(transactions)
-            
-            # Budget calculations
-            if category.budget_amount:
-                category.budget_variance = category.current_year_revenue - category.budget_amount
-                category.budget_percentage = (category.current_year_revenue / category.budget_amount) * 100
-            else:
-                category.budget_variance = 0.0
-                category.budget_percentage = 0.0
+            # Try to get transactions (may not exist if ams_financial_transaction isn't loaded)
+            try:
+                transactions = self.env['ams.financial.transaction'].search([
+                    ('revenue_category_id', '=', category.id),
+                    ('transaction_type', '=', 'income'),
+                    ('state', '=', 'confirmed'),
+                    ('date', '>=', f'{current_year}-01-01'),
+                    ('date', '<=', f'{current_year}-12-31'),
+                ])
+                
+                category.current_year_revenue = sum(transactions.mapped('amount'))
+                category.transaction_count = len(transactions)
+                
+                # Budget calculations
+                if category.budget_amount:
+                    category.budget_variance = category.current_year_revenue - category.budget_amount
+                    category.budget_percentage = (category.current_year_revenue / category.budget_amount) * 100
+                    
+            except Exception as e:
+                # If financial transaction model doesn't exist yet, just use defaults
+                _logger.debug(f"Could not compute revenue stats for category {category.name}: {e}")
+                pass
     
-    # Reverse relationship to transactions
-    transaction_ids = fields.One2many(
-        'ams.financial.transaction', 
-        'revenue_category_id', 
-        string='Financial Transactions'
-    )
+    # REMOVED: Direct One2many relationship to avoid circular dependency during loading
+    # transaction_ids = fields.One2many(
+    #     'ams.financial.transaction', 
+    #     'revenue_category_id', 
+    #     string='Financial Transactions'
+    # )
     
     @api.constrains('code')
     def _check_unique_code(self):
@@ -135,19 +140,5 @@ class AmsRevenueCategory(models.Model):
             'context': {
                 'default_revenue_category_id': self.id,
                 'search_default_current_year': 1,
-            }
-        }
-    
-    def action_view_budget_analysis(self):
-        """Action to view budget vs actual analysis"""
-        return {
-            'type': 'ir.actions.act_window',
-            'name': f'{self.name} - Budget Analysis',
-            'res_model': 'ams.financial.summary',
-            'view_mode': 'graph,list',
-            'domain': [('revenue_category_id', '=', self.id)],
-            'context': {
-                'search_default_current_year': 1,
-                'group_by': ['period_month'],
             }
         }

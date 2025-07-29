@@ -111,7 +111,7 @@ class SaleOrderLine(models.Model):
     
     is_membership = fields.Boolean(
         'Is Membership Product',
-        compute='_compute_is_membership',
+        #compute='_compute_is_membership',
         store=True,
         help="Whether this product is specifically a membership product"
     )

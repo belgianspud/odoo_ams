@@ -19,13 +19,34 @@
         'contacts',
         'mail',
         'web',
-        'ams_base_accounting',
+        # NOTE: Do not include 'ams_subscriptions' - that creates circular dependency!
+        # NOTE: Do not include 'ams_base_accounting' initially - add after both work separately
     ],
     'data': [
-        # Your data files here
+        # Security first
         'security/ams_subscription_security.xml',
         'security/ir.model.access.csv',
-        # Add other data files as needed
+        
+        # Data files
+        'data/chapter_data.xml',
+        'data/subscription_type_data.xml',
+        'data/subscription_rules_data.xml',
+        'data/cron_data.xml',
+        'data/email_templates.xml',
+        
+        # Views
+        'views/menu_views.xml',
+        'views/chapter_views.xml',
+        'views/subscription_views.xml',
+        'views/subscription_type_views.xml',
+        'views/subscription_renewal_views.xml',
+        'views/partner_views.xml',
+        'views/product_views.xml',
+        'views/portal_templates.xml',
+        'views/website_templates.xml',
+        
+        # Reports
+        'reports/subscription_reports.xml',
     ],
     'demo': [
         # Demo files if any

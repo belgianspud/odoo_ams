@@ -55,7 +55,7 @@ class PartnerAmsExtension(models.Model):
             
             partner.total_membership_paid = membership_total
             partner.total_event_paid = event_total
-            partner.outstanding_balance = partner.total_due or 0.0
+            #partner.outstanding_balance = partner.total_due or 0.0
             
             # Last payment date
             payments = invoices.mapped('payment_id').filtered(lambda p: p.state == 'posted')

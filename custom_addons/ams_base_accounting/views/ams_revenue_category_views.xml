@@ -72,17 +72,8 @@
                         <page string="Description">
                             <field name="description" placeholder="Describe this revenue category..."/>
                         </page>
-                        <page string="Transactions">
-                            <field name="transaction_ids">
-                                <list>
-                                    <field name="date"/>
-                                    <field name="name"/>
-                                    <field name="partner_id"/>
-                                    <field name="amount"/>
-                                    <field name="state"/>
-                                </list>
-                            </field>
-                        </page>
+                        <!-- REMOVED: Transactions page since transaction_ids field doesn't exist -->
+                        <!-- We can access transactions via the button in the button box instead -->
                     </notebook>
                 </sheet>
             </form>
