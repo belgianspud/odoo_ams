@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     
-    <!-- Tree View for Financial Summary -->
-    <record id="view_ams_financial_summary_tree" model="ir.ui.view">
-        <field name="name">ams.financial.summary.tree</field>
+    <!-- List View for Financial Summary -->
+    <record id="view_ams_financial_summary_list" model="ir.ui.view">
+        <field name="name">ams.financial.summary.list</field>
         <field name="model">ams.financial.summary</field>
         <field name="arch" type="xml">
-            <tree string="Financial Summary" create="false" edit="false" delete="false">
+            <list string="Financial Summary" create="false" edit="false" delete="false">
                 <field name="period_year"/>
                 <field name="period_month"/>
                 <field name="period_quarter"/>
@@ -19,7 +19,7 @@
                 <field name="total_expenses" sum="Total"/>
                 <field name="net_income" sum="Total"/>
                 <field name="currency_id" invisible="1"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -33,10 +33,10 @@
                     <div class="oe_title">
                         <h1>
                             Financial Summary - <field name="period_year" readonly="1"/>
-                            <span attrs="{'invisible': [('period_month', '=', False)]}">
+                            <span invisible="period_month == False">
                                 Month <field name="period_month" readonly="1"/>
                             </span>
-                            <span attrs="{'invisible': [('period_quarter', '=', False)]}">
+                            <span invisible="period_quarter == False">
                                 Q<field name="period_quarter" readonly="1"/>
                             </span>
                         </h1>
@@ -146,7 +146,7 @@
     <record id="action_ams_financial_summary" model="ir.actions.act_window">
         <field name="name">Financial Summary</field>
         <field name="res_model">ams.financial.summary</field>
-        <field name="view_mode">tree,graph,pivot,form</field>
+        <field name="view_mode">list,graph,pivot,form</field>
         <field name="search_view_id" ref="view_ams_financial_summary_search"/>
         <field name="context">{'search_default_current_year': 1}</field>
         <field name="help" type="html">
