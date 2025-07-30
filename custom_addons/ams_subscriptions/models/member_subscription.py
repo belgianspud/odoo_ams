@@ -276,7 +276,9 @@ class MemberSubscription(models.Model):
             self.unit_price = self.membership_type_id.price
             # Check if chapter is required and allowed
             if self.membership_type_id.chapter_based:
-                if self.chapter_id and not self.membership_type_id.is_available_for_chapter(self.chapter_id.id):
+                # Fix: Safely get chapter ID
+                chapter_id = self.chapter_id.id if self.chapter_id else False
+                if chapter_id and not self.membership_type_id.is_available_for_chapter(chapter_id):
                     self.chapter_id = False
                     return {'warning': {
                         'title': _('Chapter Restriction'),
@@ -286,12 +288,14 @@ class MemberSubscription(models.Model):
     @api.onchange('chapter_id')
     def _onchange_chapter_id(self):
         if self.chapter_id and self.membership_type_id:
-            if not self.membership_type_id.is_available_for_chapter(self.chapter_id.id):
+            # Fix: Check if chapter_id exists before accessing .id
+            chapter_id = self.chapter_id.id if self.chapter_id else False
+            if chapter_id and not self.membership_type_id.is_available_for_chapter(chapter_id):
                 return {'warning': {
                     'title': _('Chapter Restriction'),
                     'message': _('The selected membership type is not available for this chapter.')
                 }}
-
+                
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -381,11 +385,14 @@ class MemberSubscription(models.Model):
         if self.state not in ['active', 'pending_renewal', 'expired']:
             raise UserError(_("Only active, pending renewal, or expired subscriptions can be renewed."))
         
+        # Fix: Safely get chapter ID
+        chapter_id = self.chapter_id.id if self.chapter_id else False
+        
         # Create new subscription
         renewal_vals = {
             'partner_id': self.partner_id.id,
             'membership_type_id': self.membership_type_id.id,
-            'chapter_id': self.chapter_id.id,
+            'chapter_id': chapter_id,
             'start_date': self.end_date + relativedelta(days=1) if self.end_date else fields.Date.today(),
             'unit_price': self.membership_type_id.get_renewal_price(self),
             'parent_subscription_id': self.id,
