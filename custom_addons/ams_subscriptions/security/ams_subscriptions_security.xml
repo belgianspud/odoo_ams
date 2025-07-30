@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Security Categories -->
+        <record id="module_category_ams" model="ir.module.category">
+            <field name="name">Association Management</field>
+            <field name="description">Manage access rights for Association Management System</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <!-- Security Groups -->
+        
+        <!-- AMS User: Basic access to view memberships and own subscription -->
+        <record id="group_ams_user" model="res.groups">
+            <field name="name">AMS User</field>
+            <field name="category_id" ref="module_category_ams"/>
+            <field name="comment">Basic access to view membership information</field>
+        </record>
+
+        <!-- AMS Member: Portal users who are members -->
+        <record id="group_ams_member" model="res.groups">
+            <field name="name">AMS Member</field>
+            <field name="category_id" ref="module_category_ams"/>
+            <field name="comment">Portal access for association members</field>
+            <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
+        </record>
+
+        <!-- AMS Officer: Chapter officers and volunteers -->
+        <record id="group_ams_officer" model="res.groups">
+            <field name="name">AMS Officer</field>
+            <field name="category_id" ref="module_category_ams"/>
+            <field name="comment">Chapter officers and volunteers with elevated access</field>
+            <field name="implied_ids" eval="[(4, ref('group_ams_user'))]"/>
+        </record>
+
+        <!-- AMS Manager: Full management access -->
+        <record id="group_ams_manager" model="res.groups">
+            <field name="name">AMS Manager</field>
+            <field name="category_id" ref="module_category_ams"/>
+            <field name="comment">Full access to all AMS features and settings</field>
+            <field name="implied_ids" eval="[(4, ref('group_ams_officer'))]"/>
+        </record>
+
+        <!-- AMS Administrator: System administration -->
+        <record id="group_ams_admin" model="res.groups">
+            <field name="name">AMS Administrator</field>
+            <field name="category_id" ref="module_category_ams"/>
+            <field name="comment">System administration and configuration</field>
+            <field name="implied_ids" eval="[(4, ref('group_ams_manager'))]"/>
+        </record>
+
+        <!-- Record Rules -->
+
+        <!-- Members can only see their own subscription information -->
+        <record id="rule_member_subscription_member" model="ir.rule">
+            <field name="name">Member: Own Subscriptions Only</field>
+            <field name="model_id" ref="model_ams_member_subscription"/>
+            <field name="domain_force">[('partner_id.user_ids', 'in', [user.id])]</field>
+            <field name="groups" eval="[(4, ref('group_ams_member'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Officers can see subscriptions in their chapter -->
+        <record id="rule_member_subscription_officer" model="ir.rule">
+            <field name="name">Officer: Chapter Subscriptions</field>
+            <field name="model_id" ref="model_ams_member_subscription"/>
+            <field name="domain_force">[
+                '|',
+                ('chapter_id.president_id.user_ids', 'in', [user.id]),
+                '|',
+                ('chapter_id.vice_president_id.user_ids', 'in', [user.id]),
+                '|',
+                ('chapter_id.secretary_id.user_ids', 'in', [user.id]),
+                '|',
+                ('chapter_id.treasurer_id.user_ids', 'in', [user.id]),
+                '|',
+                ('chapter_id.board_member_ids.user_ids', 'in', [user.id]),
+                ('chapter_id.officer_ids.user_ids', 'in', [user.id])
+            ]</field>
+            <field name="groups" eval="[(4, ref('group_ams_officer'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Managers can see all subscriptions -->
+        <record id="rule_member_subscription_manager" model="ir.rule">
+            <field name="name">Manager: All Subscriptions</field>
+            <field name="model_id" ref="model_ams_member_subscription"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Chapter access rules for officers -->
+        <record id="rule_chapter_officer" model="ir.rule">
+            <field name="name">Officer: Own Chapter</field>
+            <field name="model_id" ref="model_ams_chapter"/>
+            <field name="domain_force">[
+                '|',
+                ('president_id.user_ids', 'in', [user.id]),
+                '|',
+                ('vice_president_id.user_ids', 'in', [user.id]),
+                '|',
+                ('secretary_id.user_ids', 'in', [user.id]),
+                '|',
+                ('treasurer_id.user_ids', 'in', [user.id]),
+                '|',
+                ('board_member_ids.user_ids', 'in', [user.id]),
+                ('officer_ids.user_ids', 'in', [user.id])
+            ]</field>
+            <field name="groups" eval="[(4, ref('group_ams_officer'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Managers can access all chapters -->
+        <record id="rule_chapter_manager" model="ir.rule">
+            <field name="name">Manager: All Chapters</field>
+            <field name="model_id" ref="model_ams_chapter"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Partner access - members can only see their own profile -->
+        <record id="rule_partner_member" model="ir.rule">
+            <field name="name">Member: Own Profile Only</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="domain_force">[('user_ids', 'in', [user.id])]</field>
+            <field name="groups" eval="[(4, ref('group_ams_member'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Officers can see chapter members -->
+        <record id="rule_partner_officer" model="ir.rule">
+            <field name="name">Officer: Chapter Members</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="domain_force">[
+                ('subscription_ids.chapter_id', 'in', [
+                    chapter.id for chapter in user.partner_id.president_chapter_ids + 
+                    user.partner_id.vice_president_chapter_ids + 
+                    user.partner_id.secretary_chapter_ids + 
+                    user.partner_id.treasurer_chapter_ids + 
+                    user.partner_id.board_member_chapter_ids + 
+                    user.partner_id.officer_chapter_ids
+                ])
+            ]</field>
+            <field name="groups" eval="[(4, ref('group_ams_officer'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Benefit access rules -->
+        <record id="rule_benefit_member" model="ir.rule">
+            <field name="name">Member: Available Benefits</field>
+            <field name="model_id" ref="model_ams_subscription_benefit"/>
+            <field name="domain_force">[
+                ('membership_type_id', 'in', [
+                    sub.membership_type_id.id for sub in user.partner_id.subscription_ids 
+                    if sub.state in ['active', 'pending_renewal']
+                ])
+            ]</field>
+            <field name="groups" eval="[(4, ref('group_ams_member'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Managers can access all benefits -->
+        <record id="rule_benefit_manager" model="ir.rule">
+            <field name="name">Manager: All Benefits</field>
+            <field name="model_id" ref="model_ams_subscription_benefit"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Membership Type access - all users can read, only managers can modify -->
+        <record id="rule_membership_type_read" model="ir.rule">
+            <field name="name">All Users: Read Membership Types</field>
+            <field name="model_id" ref="model_ams_membership_type"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="rule_membership_type_manager" model="ir.rule">
+            <field name="name">Manager: Manage Membership Types</field>
+            <field name="model_id" ref="model_ams_membership_type"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Blacklist access - only managers -->
+        <record id="rule_blacklist_manager" model="ir.rule">
+            <field name="name">Manager: Member Blacklist</field>
+            <field name="model_id" ref="model_ams_member_blacklist"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Benefit Usage - members can see their own usage -->
+        <record id="rule_benefit_usage_member" model="ir.rule">
+            <field name="name">Member: Own Benefit Usage</field>
+            <field name="model_id" ref="model_ams_benefit_usage"/>
+            <field name="domain_force">[('member_id.user_ids', 'in', [user.id])]</field>
+            <field name="groups" eval="[(4, ref('group_ams_member'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Officers can see benefit usage in their chapters -->
+        <record id="rule_benefit_usage_officer" model="ir.rule">
+            <field name="name">Officer: Chapter Benefit Usage</field>
+            <field name="model_id" ref="model_ams_benefit_usage"/>
+            <field name="domain_force">[
+                ('member_id.subscription_ids.chapter_id', 'in', [
+                    chapter.id for chapter in user.partner_id.president_chapter_ids + 
+                    user.partner_id.vice_president_chapter_ids + 
+                    user.partner_id.secretary_chapter_ids + 
+                    user.partner_id.treasurer_chapter_ids + 
+                    user.partner_id.board_member_chapter_ids + 
+                    user.partner_id.officer_chapter_ids
+                ])
+            ]</field>
+            <field name="groups" eval="[(4, ref('group_ams_officer'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Managers can see all benefit usage -->
+        <record id="rule_benefit_usage_manager" model="ir.rule">
+            <field name="name">Manager: All Benefit Usage</field>
+            <field name="model_id" ref="model_ams_benefit_usage"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Subscription Stages - all users can read, managers can modify -->
+        <record id="rule_subscription_stage_read" model="ir.rule">
+            <field name="name">All Users: Read Subscription Stages</field>
+            <field name="model_id" ref="model_ams_subscription_stage"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="rule_subscription_stage_manager" model="ir.rule">
+            <field name="name">Manager: Manage Subscription Stages</field>
+            <field name="model_id" ref="model_ams_subscription_stage"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Member Categories - read access for all, manage for managers -->
+        <record id="rule_member_category_read" model="ir.rule">
+            <field name="name">All Users: Read Member Categories</field>
+            <field name="model_id" ref="model_ams_member_category"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="rule_member_category_manager" model="ir.rule">
+            <field name="name">Manager: Manage Member Categories</field>
+            <field name="model_id" ref="model_ams_member_category"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Benefit Tags - read access for all, manage for managers -->
+        <record id="rule_benefit_tag_read" model="ir.rule">
+            <field name="name">All Users: Read Benefit Tags</field>
+            <field name="model_id" ref="model_ams_benefit_tag"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="rule_benefit_tag_manager" model="ir.rule">
+            <field name="name">Manager: Manage Benefit Tags</field>
+            <field name="model_id" ref="model_ams_benefit_tag"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Scheduled Changes - only managers -->
+        <record id="rule_scheduled_change_manager" model="ir.rule">
+            <field name="name">Manager: Scheduled Changes</field>
+            <field name="model_id" ref="model_ams_subscription_scheduled_change"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Subscription Backups - only managers -->
+        <record id="rule_subscription_backup_manager" model="ir.rule">
+            <field name="name">Manager: Subscription Backups</field>
+            <field name="model_id" ref="model_ams_subscription_backup"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ams_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+    </data>
+</odoo>
