@@ -517,3 +517,45 @@ class AMSMemberCategory(models.Model):
                 ('id', '!=', record.id)
             ]) > 0:
                 raise ValidationError(_("Member category code must be unique!"))
+                
+class ResPartner(models.Model):
+    _inherit = 'res.partner'
+    
+    def get_portal_dashboard_data(self):
+        """Get member portal dashboard data"""
+        self.ensure_one()
+        
+        current_subscription = self.current_subscription_id
+        
+        # Upcoming renewals
+        renewal_date = None
+        days_until_renewal = None
+        if current_subscription and current_subscription.end_date:
+            renewal_date = current_subscription.end_date
+            days_until_renewal = (renewal_date - fields.Date.today()).days
+        
+        # Recent activity
+        recent_invoices = self.env['account.move'].search([
+            ('partner_id', '=', self.id),
+            ('is_membership_invoice', '=', True),
+            ('state', '=', 'posted')
+        ], order='invoice_date desc', limit=3)
+        
+        # Benefit usage this month
+        month_start = fields.Date.today().replace(day=1)
+        monthly_usage = self.env['ams.benefit.usage'].search_count([
+            ('member_id', '=', self.id),
+            ('usage_date', '>=', month_start)
+        ])
+        
+        return {
+            'membership_status': self.member_status,
+            'membership_type': current_subscription.membership_type_id.name if current_subscription else None,
+            'chapter': current_subscription.chapter_id.name if current_subscription and current_subscription.chapter_id else None,
+            'renewal_date': renewal_date,
+            'days_until_renewal': days_until_renewal,
+            'recent_invoices': recent_invoices,
+            'monthly_benefit_usage': monthly_usage,
+            'auto_renew_enabled': current_subscription.auto_renew if current_subscription else False,
+            'outstanding_balance': self.outstanding_balance
+        }

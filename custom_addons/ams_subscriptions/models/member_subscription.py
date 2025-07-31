@@ -364,3 +364,200 @@ class AMSSubscriptionRecurring(models.Model):
             'recurring_interval': self.recurring_interval,
             'auto_payment': self.auto_collect_payment,
         })
+        
+class MemberSubscription(models.Model):
+    _inherit = 'ams.member.subscription'
+    
+    # Template and Bundle Fields
+    template_id = fields.Many2one(
+        'ams.subscription.template',
+        string='Created from Template'
+    )
+    
+    is_bundle = fields.Boolean(string='Is Bundle Subscription')
+    bundle_component = fields.Boolean(string='Is Bundle Component')
+    bundle_parent_id = fields.Many2one(
+        'ams.member.subscription',
+        string='Bundle Parent'
+    )
+    bundle_component_ids = fields.One2many(
+        'ams.member.subscription',
+        'bundle_parent_id',
+        string='Bundle Components'
+    )
+    
+    # Trial Fields
+    is_trial = fields.Boolean(string='Is Trial Subscription')
+    trial_end_date = fields.Date(string='Trial End Date')
+    trial_converted = fields.Boolean(string='Trial Converted')
+    
+    # Family/Corporate Plan Fields
+    is_family_plan = fields.Boolean(string='Is Family Plan')
+    family_members = fields.One2many(
+        'ams.family.member',
+        'subscription_id',
+        string='Family Members'
+    )
+    max_family_members = fields.Integer(string='Max Family Members', default=4)
+    
+    # Corporate Plan Fields  
+    is_corporate_plan = fields.Boolean(string='Is Corporate Plan')
+    corporate_seats = fields.Integer(string='Corporate Seats')
+    used_seats = fields.Integer(string='Used Seats', compute='_compute_used_seats')
+    
+    def _setup_trial_period(self, trial_days):
+        """Setup trial period for subscription"""
+        self.ensure_one()
+        
+        self.write({
+            'is_trial': True,
+            'trial_end_date': fields.Date.today() + timedelta(days=trial_days),
+            'state': 'active'  # Activate trial immediately
+        })
+        
+        # Schedule trial end check
+        self.env.ref('ams_subscriptions.cron_check_trial_periods').sudo()._trigger()
+
+    @api.depends('family_members', 'family_members.active')
+    def _compute_used_seats(self):
+        """Compute used seats for corporate plans"""
+        for subscription in self:
+            if subscription.is_corporate_plan:
+                subscription.used_seats = len(subscription.family_members.filtered('active'))
+            else:
+                subscription.used_seats = 0
+
+    def add_family_member(self, partner_id, relationship=None):
+        """Add a family member to family plan"""
+        self.ensure_one()
+        
+        if not self.is_family_plan:
+            raise ValidationError(_("This is not a family plan subscription"))
+        
+        current_members = len(self.family_members.filtered('active'))
+        if current_members >= self.max_family_members:
+            raise ValidationError(_("Maximum family members limit reached"))
+        
+        family_member = self.env['ams.family.member'].create({
+            'subscription_id': self.id,
+            'partner_id': partner_id,
+            'relationship': relationship,
+            'added_date': fields.Date.today()
+        })
+        
+        return family_member
+
+    @api.model
+    def check_trial_periods(self):
+        """Cron job to check trial periods"""
+        today = fields.Date.today()
+        
+        expired_trials = self.search([
+            ('is_trial', '=', True),
+            ('trial_end_date', '<=', today),
+            ('trial_converted', '=', False),
+            ('state', '=', 'active')
+        ])
+        
+        for trial in expired_trials:
+            # Check if payment method is available for conversion
+            if trial.payment_token_id:
+                # Auto-convert trial
+                trial._convert_trial()
+            else:
+                # Send conversion notice
+                trial._send_trial_conversion_notice()
+
+    def _convert_trial(self):
+        """Convert trial to paid subscription"""
+        self.ensure_one()
+        
+        try:
+            # Generate invoice for full subscription
+            invoice = self.action_generate_recurring_invoice()
+            
+            # Process payment if auto-payment enabled
+            if self.auto_payment and self.payment_token_id:
+                self._process_automatic_payment(invoice)
+            
+            self.write({
+                'trial_converted': True,
+                'is_trial': False
+            })
+            
+            # Trigger automation
+            self.env['ams.subscription.automation'].trigger_automation(
+                'subscription_activated', self
+            )
+            
+        except Exception as e:
+            _logger.error(f"Trial conversion failed for subscription {self.id}: {e}")
+            self._send_trial_conversion_notice()
+
+    def _send_trial_conversion_notice(self):
+        """Send trial conversion notice"""
+        template = self.env.ref(
+            'ams_subscriptions.email_template_trial_conversion',
+            raise_if_not_found=False
+        )
+        if template:
+            template.send_mail(self.id, force_send=True)
+
+    # Override state changes to trigger automations
+    def write(self, vals):
+        result = super().write(vals)
+        
+        # Trigger automations on state changes
+        if 'state' in vals:
+            for subscription in self:
+                if vals['state'] == 'active':
+                    self.env['ams.subscription.automation'].trigger_automation(
+                        'subscription_activated', subscription
+                    )
+                elif vals['state'] == 'cancelled':
+                    self.env['ams.subscription.automation'].trigger_automation(
+                        'subscription_cancelled', subscription
+                    )
+                elif vals['state'] == 'expired':
+                    self.env['ams.subscription.automation'].trigger_automation(
+                        'subscription_expired', subscription
+                    )
+        
+        return result
+
+
+class AMSFamilyMember(models.Model):
+    """Family members for family plans"""
+    _name = 'ams.family.member'
+    _description = 'Family Member'
+
+    subscription_id = fields.Many2one(
+        'ams.member.subscription',
+        string='Subscription',
+        required=True,
+        ondelete='cascade'
+    )
+    
+    partner_id = fields.Many2one(
+        'res.partner',
+        string='Family Member',
+        required=True
+    )
+    
+    relationship = fields.Selection([
+        ('spouse', 'Spouse'),
+        ('child', 'Child'),
+        ('parent', 'Parent'),
+        ('sibling', 'Sibling'),
+        ('other', 'Other')
+    ], string='Relationship')
+    
+    added_date = fields.Date(string='Added Date', default=fields.Date.today)
+    active = fields.Boolean(string='Active', default=True)
+    
+    # Benefits access
+    has_full_benefits = fields.Boolean(string='Full Benefits Access', default=True)
+    restricted_benefits = fields.Many2many(
+        'ams.subscription.benefit',
+        string='Restricted Benefits'
+    )
