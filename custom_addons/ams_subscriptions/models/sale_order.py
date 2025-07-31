@@ -31,14 +31,10 @@ class SaleOrder(models.Model):
             key = (line.order_id.partner_id.id, line.product_id.ams_product_type)
             
             if key not in subscriptions_to_create:
-                # Find appropriate billing period
-                billing_period = self._get_billing_period_for_product(line.product_id)
-                
                 subscriptions_to_create[key] = {
                     'name': f"{line.product_id.ams_product_type.title()} Subscription - {line.order_id.partner_id.name}",
                     'partner_id': line.order_id.partner_id.id,
                     'subscription_type': line.product_id.ams_product_type,
-                    'billing_period_id': billing_period.id if billing_period else False,
                     'sale_order_id': self.id,
                     'status': 'active',
                     'start_date': fields.Date.today(),
@@ -57,24 +53,6 @@ class SaleOrder(models.Model):
         # Create the subscriptions
         for subscription_data in subscriptions_to_create.values():
             subscription = self.env['ams.subscription'].create(subscription_data)
-            
-            # Set the paid through date based on billing period
-            if subscription.billing_period_id:
-                subscription.paid_through_date = subscription.billing_period_id.get_next_billing_date(subscription.start_date)
-
-    def _get_billing_period_for_product(self, product):
-        """Get the appropriate billing period for an AMS product"""
-        if product.subscription_period == 'monthly':
-            return self.env.ref('ams_subscriptions.billing_period_monthly', raise_if_not_found=False)
-        elif product.subscription_period == 'quarterly':
-            return self.env.ref('ams_subscriptions.billing_period_quarterly', raise_if_not_found=False)
-        elif product.subscription_period == 'semi_annual':
-            return self.env.ref('ams_subscriptions.billing_period_semi_annual', raise_if_not_found=False)
-        elif product.subscription_period == 'annual':
-            return self.env.ref('ams_subscriptions.billing_period_annual', raise_if_not_found=False)
-        
-        # Default to annual if not specified
-        return self.env.ref('ams_subscriptions.billing_period_annual', raise_if_not_found=False)
 
 
 class SaleOrderLine(models.Model):
