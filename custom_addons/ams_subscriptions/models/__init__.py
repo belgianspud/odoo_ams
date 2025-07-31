@@ -1,10 +1,3 @@
-from . import membership_type
-from . import member_subscription
-from . import res_partner
-from . import chapter
-from . import subscription_benefit
-from . import subscription_stage
-from . import sale_order
-from . import account_move
-from . import subscription_scheduled_change
-from . import subscription_backup
+# -*- coding: utf-8 -*-
+from . import ams_subscription
+from . import product_template

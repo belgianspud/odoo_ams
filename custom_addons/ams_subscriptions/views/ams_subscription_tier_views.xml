@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree (List) View for Subscription Tiers -->
+    <record id="view_ams_subscription_tier_tree" model="ir.ui.view">
+        <field name="name">ams.subscription.tier.tree</field>
+        <field name="model">ams.subscription.tier</field>
+        <field name="type">list</field>
+        <field name="arch" type="xml">
+            <list string="Subscription Tiers">
+                <field name="name"/>
+                <field name="membership_type"/>
+                <field name="period_type"/>
+                <field name="price"/>
+                <field name="grace_days"/>
+                <field name="suspend_days"/>
+                <field name="terminate_days"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View for Subscription Tiers -->
+    <record id="view_ams_subscription_tier_form" model="ir.ui.view">
+        <field name="name">ams.subscription.tier.form</field>
+        <field name="model">ams.subscription.tier</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Subscription Tier">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="membership_type"/>
+                        <field name="period_type"/>
+                        <field name="price"/>
+                    </group>
+
+                    <group>
+                        <field name="grace_days"/>
+                        <field name="suspend_days"/>
+                        <field name="terminate_days"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Benefits">
+                            <field name="benefit_product_ids" widget="many2many_tags"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Subscription Tier Action -->
+    <record id="action_ams_subscription_tier" model="ir.actions.act_window">
+        <field name="name">Subscription Tiers</field>
+        <field name="res_model">ams.subscription.tier</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

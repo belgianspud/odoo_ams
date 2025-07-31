@@ -1,60 +1,45 @@
+# -*- coding: utf-8 -*-
 {
     'name': 'AMS Subscriptions',
-    'version': '18.0.1.0.0',
-    'category': 'Association Management',
-    'summary': 'Membership subscription management for associations',
+    'version': '1.0',
+    'summary': 'Association Management Subscriptions for Memberships, Chapters, and Publications',
     'description': """
-        AMS Subscriptions Module
-        ========================
-        
-        This module provides comprehensive membership subscription management for 
-        Association Management Systems including:
-        
-        * Membership Types and Tiers
-        * Subscription Lifecycle Management (New, Active, Renewal, Lapsed, Canceled)
-        * Automated Billing Integration
-        * Member Portal Access
-        * Renewal Notifications and Workflows
-        * Chapter-based Memberships
-        * Membership Benefits Tracking
-        * Member Communication Tools
-        
-        Perfect for organizations like the AMA and other professional associations.
+AMS Subscriptions
+=================
+This module provides subscription management for associations including:
+- Individual and Enterprise Memberships (with seat management)
+- Regional Chapters (multi-chapter support)
+- Publications (Digital and Print)
+- Subscription lifecycle (Active → Grace → Suspended → Terminated)
+- Renewal invoicing and proration
     """,
-    'author': 'Your AMS Development Team',
-    'website': '',
+    'author': 'Your Organization',
+    'website': 'https://yourwebsite.com',
+    'category': 'Association Management',
+    'license': 'LGPL-3',
     'depends': [
-        'base',
-        'sale',
-        'account', 
+        'sale_management',
+        'account',
         'contacts',
         'website',
+        'website_sale',
+        'point_of_sale',
         'mail',
-        'portal',
-        'ams_module_manager',
+        # Removed 'sale_subscription' - Enterprise only
     ],
     'data': [
-        'security/ams_subscriptions_security.xml',
         'security/ir.model.access.csv',
-        'data/membership_type_data.xml',
-        'data/subscription_stage_data.xml',
-        'views/membership_type_views.xml',
-        'views/member_subscription_views.xml',
-        'views/member_views.xml',
-        'views/chapter_views.xml',
-        'views/ams_subscriptions_menus.xml',
-        'templates/portal_templates.xml',
-        'wizard/subscription_renewal_wizard_views.xml',
-        'wizard/bulk_subscription_wizard_views.xml',
-        'reports/membership_reports.xml',
-    ],
-    'demo': [
-        'demo/membership_type_demo.xml',
-        'demo/member_subscription_demo.xml',
+        # Load data FIRST
+        'data/recurring_plans.xml',
+        # Load views and actions BEFORE menus that reference them
+        'views/ams_subscription_views.xml',
+        'views/ams_subscription_tier_views.xml',
+        'views/ams_subscription_seat_views.xml',
+        'views/product_template_views.xml',
+        # Load menus LAST so they can find the actions
+        'views/ams_subscription_menu.xml',
     ],
     'installable': True,
-    'auto_install': False,
     'application': True,
-    'license': 'LGPL-3',
-    'sequence': 10,
+    'auto_install': False,
 }

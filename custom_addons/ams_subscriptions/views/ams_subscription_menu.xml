@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Main AMS Subscriptions Menu -->
+    <menuitem id="menu_ams_root"
+              name="AMS Subscriptions"
+              sequence="10"
+              web_icon="ams_subscriptions,static/description/icon.png"/>
+
+    <!-- Subscriptions Main Menu -->
+    <menuitem id="menu_ams_subscription_main"
+              name="Subscriptions"
+              parent="menu_ams_root"
+              sequence="10"/>
+
+    <!-- Submenus -->
+    <menuitem id="menu_ams_subscription"
+              name="All Subscriptions"
+              parent="menu_ams_subscription_main"
+              action="action_ams_subscription"
+              sequence="10"/>
+
+    <menuitem id="menu_ams_subscription_tiers"
+              name="Subscription Tiers"
+              parent="menu_ams_subscription_main"
+              action="action_ams_subscription_tier"
+              sequence="20"/>
+
+    <menuitem id="menu_ams_subscription_seats"
+              name="Enterprise Seats"
+              parent="menu_ams_subscription_main"
+              action="action_ams_subscription_seat"
+              sequence="30"/>
+</odoo>

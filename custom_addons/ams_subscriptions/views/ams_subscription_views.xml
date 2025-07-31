@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree (List) View for Subscriptions -->
+    <record id="view_ams_subscription_tree" model="ir.ui.view">
+        <field name="name">ams.subscription.tree</field>
+        <field name="model">ams.subscription</field>
+        <field name="type">list</field>
+        <field name="arch" type="xml">
+            <list string="Subscriptions">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="subscription_type"/>
+                <field name="tier_id"/>
+                <field name="status"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="paid_through_date"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View for Subscriptions -->
+    <record id="view_ams_subscription_form" model="ir.ui.view">
+        <field name="name">ams.subscription.form</field>
+        <field name="model">ams.subscription</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Subscription">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="partner_id"/>
+                        <field name="account_id"/>
+                        <field name="subscription_type"/>
+                        <field name="tier_id"/>
+                    </group>
+
+                    <group>
+                        <field name="status"/>
+                        <field name="start_date"/>
+                        <field name="end_date"/>
+                        <field name="paid_through_date"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Subscription Lines">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="quantity"/>
+                                    <field name="price_unit"/>
+                                    <field name="subtotal" readonly="1"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Enterprise Seats" invisible="subscription_type != 'enterprise'">
+                            <field name="seat_ids">
+                                <list editable="bottom">
+                                    <field name="contact_id"/>
+                                    <field name="assigned_date"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Subscription Actions -->
+    <record id="action_ams_subscription" model="ir.actions.act_window">
+        <field name="name">Subscriptions</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

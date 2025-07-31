@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree (List) View for Subscription Seats -->
+    <record id="view_ams_subscription_seat_tree" model="ir.ui.view">
+        <field name="name">ams.subscription.seat.tree</field>
+        <field name="model">ams.subscription.seat</field>
+        <field name="type">list</field>
+        <field name="arch" type="xml">
+            <list string="Enterprise Seats">
+                <field name="subscription_id"/>
+                <field name="contact_id"/>
+                <field name="assigned_date"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View for Subscription Seats -->
+    <record id="view_ams_subscription_seat_form" model="ir.ui.view">
+        <field name="name">ams.subscription.seat.form</field>
+        <field name="model">ams.subscription.seat</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Enterprise Seat">
+                <sheet>
+                    <group>
+                        <field name="subscription_id"/>
+                        <field name="contact_id"/>
+                        <field name="assigned_date"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Subscription Seat Action -->
+    <record id="action_ams_subscription_seat" model="ir.actions.act_window">
+        <field name="name">Enterprise Seats</field>
+        <field name="res_model">ams.subscription.seat</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
