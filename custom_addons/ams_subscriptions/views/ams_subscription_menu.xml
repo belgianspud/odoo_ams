@@ -30,4 +30,16 @@
               parent="menu_ams_subscription_main"
               action="action_ams_subscription_seat"
               sequence="30"/>
+
+    <!-- Configuration Menu -->
+    <menuitem id="menu_ams_configuration"
+              name="Configuration"
+              parent="menu_ams_root"
+              sequence="90"/>
+
+    <menuitem id="menu_ams_billing_periods"
+              name="Billing Periods"
+              parent="menu_ams_configuration"
+              action="action_ams_billing_period"
+              sequence="10"/>
 </odoo>

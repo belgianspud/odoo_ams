@@ -1,6 +1,34 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
 from datetime import date, timedelta
+from dateutil.relativedelta import relativedelta
+
+class AMSBillingPeriod(models.Model):
+    _name = 'ams.billing.period'
+    _description = 'AMS Billing Period'
+    _order = 'period_value, period_unit'
+
+    name = fields.Char(string='Period Name', required=True)
+    period_value = fields.Integer(string='Period Value', required=True, default=1)
+    period_unit = fields.Selection([
+        ('month', 'Month(s)'),
+        ('year', 'Year(s)')
+    ], string='Period Unit', required=True, default='month')
+    
+    grace_days = fields.Integer(string='Default Grace Days', default=30)
+    auto_renew = fields.Boolean(string='Auto Renew', default=True)
+    
+    def get_next_billing_date(self, start_date):
+        """Calculate the next billing date based on this period"""
+        if isinstance(start_date, str):
+            start_date = fields.Date.from_string(start_date)
+        
+        if self.period_unit == 'month':
+            return start_date + relativedelta(months=self.period_value)
+        elif self.period_unit == 'year':
+            return start_date + relativedelta(years=self.period_value)
+        return start_date
+
 
 class AMSSubscription(models.Model):
     _name = 'ams.subscription'
@@ -18,6 +46,7 @@ class AMSSubscription(models.Model):
     ], string='Subscription Type', required=True, tracking=True)
 
     tier_id = fields.Many2one('ams.subscription.tier', string='Subscription Tier', tracking=True)
+    billing_period_id = fields.Many2one('ams.billing.period', string='Billing Period', tracking=True)
     line_ids = fields.One2many('ams.subscription.line', 'subscription_id', string='Subscription Lines')
     seat_ids = fields.One2many('ams.subscription.seat', 'subscription_id', string='Seats')
 
@@ -32,9 +61,21 @@ class AMSSubscription(models.Model):
     start_date = fields.Date(string='Start Date', default=fields.Date.today)
     end_date = fields.Date(string='End Date')
     paid_through_date = fields.Date(string='Paid Through Date')
+    next_billing_date = fields.Date(string='Next Billing Date', compute='_compute_next_billing_date', store=True)
 
     total_seats = fields.Integer(string='Total Seats', default=0)
     used_seats = fields.Integer(string='Used Seats', compute='_compute_used_seats', store=True)
+    
+    # Integration with Sales Orders
+    sale_order_id = fields.Many2one('sale.order', string='Sales Order')
+
+    @api.depends('billing_period_id', 'paid_through_date')
+    def _compute_next_billing_date(self):
+        for sub in self:
+            if sub.billing_period_id and sub.paid_through_date:
+                sub.next_billing_date = sub.billing_period_id.get_next_billing_date(sub.paid_through_date)
+            else:
+                sub.next_billing_date = False
 
     @api.depends('seat_ids')
     def _compute_used_seats(self):
@@ -58,6 +99,30 @@ class AMSSubscription(models.Model):
 
     def action_set_terminated(self):
         self.write({'status': 'terminated'})
+
+    def create_renewal_invoice(self):
+        """Create a renewal invoice for this subscription"""
+        if not self.line_ids:
+            return False
+        
+        invoice_vals = {
+            'partner_id': self.partner_id.id or self.account_id.id,
+            'move_type': 'out_invoice',
+            'invoice_date': fields.Date.today(),
+            'invoice_line_ids': []
+        }
+        
+        for line in self.line_ids:
+            invoice_line_vals = {
+                'product_id': line.product_id.id,
+                'quantity': line.quantity,
+                'price_unit': line.price_unit,
+                'name': f"{line.product_id.name} - Renewal",
+            }
+            invoice_vals['invoice_line_ids'].append((0, 0, invoice_line_vals))
+        
+        invoice = self.env['account.move'].create(invoice_vals)
+        return invoice
 
 
 class AMSSubscriptionLine(models.Model):
@@ -96,6 +161,7 @@ class AMSSubscriptionTier(models.Model):
         ('none', 'No Expiration')
     ], string='Period Type', required=True, default='annual')
 
+    billing_period_id = fields.Many2one('ams.billing.period', string='Billing Period')
     price = fields.Float(string='Price', default=0.0)
     grace_days = fields.Integer(string='Grace Days', default=30)
     suspend_days = fields.Integer(string='Suspend Days', default=60)

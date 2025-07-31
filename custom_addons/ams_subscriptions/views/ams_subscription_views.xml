@@ -11,10 +11,12 @@
                 <field name="partner_id"/>
                 <field name="subscription_type"/>
                 <field name="tier_id"/>
+                <field name="billing_period_id"/>
                 <field name="status"/>
                 <field name="start_date"/>
                 <field name="end_date"/>
                 <field name="paid_through_date"/>
+                <field name="next_billing_date"/>
             </list>
         </field>
     </record>
@@ -40,6 +42,8 @@
                         <field name="start_date"/>
                         <field name="end_date"/>
                         <field name="paid_through_date"/>
+                        <field name="next_billing_date"/>
+                        <field name="billing_period_id"/>
                     </group>
 
                     <notebook>

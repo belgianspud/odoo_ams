@@ -30,6 +30,7 @@
                         <field name="name"/>
                         <field name="membership_type"/>
                         <field name="period_type"/>
+                        <field name="billing_period_id"/>
                         <field name="price"/>
                     </group>
 

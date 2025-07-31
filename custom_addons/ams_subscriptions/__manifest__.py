@@ -30,8 +30,9 @@ This module provides subscription management for associations including:
     'data': [
         'security/ir.model.access.csv',
         # Load data FIRST
-        'data/recurring_plans.xml',
+        'data/billing_periods.xml',
         # Load views and actions BEFORE menus that reference them
+        'views/ams_billing_period_views.xml',
         'views/ams_subscription_views.xml',
         'views/ams_subscription_tier_views.xml',
         'views/ams_subscription_seat_views.xml',
