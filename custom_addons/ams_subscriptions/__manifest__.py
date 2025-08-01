@@ -25,7 +25,7 @@ Custom subscription management for associations, including:
         'website_sale',
         'point_of_sale',
         'mail',
-        'portal',
+        # 'portal',  # Removed - not needed
     ],
     'data': [
         # Security - MUST load in this order
@@ -41,9 +41,8 @@ Custom subscription management for associations, including:
         'views/ams_subscription_seat_views.xml',
         'views/ams_subscription_tier_views.xml',
         
-        # Portal
-        'views/ams_subscription_portal_menu.xml',
-        'views/portal_template.xml',
+        # Portal - TEMPORARILY REMOVED
+        # 'views/portal_template.xml',
         
         # Menu (load last)
         'views/ams_subscription_menu.xml',

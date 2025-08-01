@@ -1,50 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- Portal page to list subscriptions -->
-    <template id="portal_my_subscriptions" name="Portal: My Subscriptions" page="true">
-        <t t-call="portal.layout">
-            <div class="container my-5">
-                <h2>My Subscriptions</h2>
-                <t t-if="subscriptions">
-                    <table class="table table-striped table-hover mt-4">
-                        <thead>
-                            <tr>
-                                <th>Subscription</th>
-                                <th>Type</th>
-                                <th>Tier</th>
-                                <th>Status</th>
-                                <th>Start Date</th>
-                                <th>Paid Through</th>
-                                <th>Seats</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <t t-foreach="subscriptions" t-as="sub">
-                                <tr>
-                                    <td><t t-esc="sub.name"/></td>
-                                    <td><t t-esc="sub.subscription_type"/></td>
-                                    <td><t t-esc="sub.tier_id.name or '-'"/></td>
-                                    <td>
-                                        <span t-attf-class="badge badge-#{sub.state}">
-                                            <t t-esc="sub.state"/>
-                                        </span>
-                                    </td>
-                                    <td><t t-esc="sub.start_date or '-'"/></td>
-                                    <td><t t-esc="sub.paid_through_date or '-'"/></td>
-                                    <td>
-                                        <t t-if="sub.subscription_type == 'enterprise'">
-                                            <t t-esc="sub.total_seats"/>
-                                        </t>
-                                        <t t-else="-"/>
-                                    </td>
-                                </tr>
+    <!-- Member subscriptions page -->
+    <template id="portal_my_subscriptions" name="My Subscriptions" page="true">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure oe_empty">
+                <div class="container my-5">
+                    <div class="row">
+                        <div class="col-12">
+                            <h2>My Subscriptions</h2>
+                            <t t-if="subscriptions">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover mt-4">
+                                        <thead>
+                                            <tr>
+                                                <th>Subscription</th>
+                                                <th>Type</th>
+                                                <th>Tier</th>
+                                                <th>Status</th>
+                                                <th>Start Date</th>
+                                                <th>Paid Through</th>
+                                                <th>Seats</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="subscriptions" t-as="sub">
+                                                <tr>
+                                                    <td><t t-esc="sub.name"/></td>
+                                                    <td><t t-esc="sub.subscription_type"/></td>
+                                                    <td><t t-esc="sub.tier_id.name or '-'"/></td>
+                                                    <td>
+                                                        <span t-attf-class="badge bg-#{sub.state == 'active' and 'success' or 'secondary'}">
+                                                            <t t-esc="sub.state"/>
+                                                        </span>
+                                                    </td>
+                                                    <td><t t-esc="sub.start_date or '-'"/></td>
+                                                    <td><t t-esc="sub.paid_through_date or '-'"/></td>
+                                                    <td>
+                                                        <t t-if="sub.subscription_type == 'enterprise'">
+                                                            <t t-esc="sub.total_seats"/>
+                                                        </t>
+                                                        <t t-else="">-</t>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </t>
-                        </tbody>
-                    </table>
-                </t>
-                <t t-else="">
-                    <p>You currently have no active subscriptions.</p>
-                </t>
+                            <t t-else="">
+                                <div class="alert alert-info">
+                                    <p>You currently have no active subscriptions.</p>
+                                    <a href="/shop" class="btn btn-primary">Browse Memberships</a>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
             </div>
         </t>
     </template>

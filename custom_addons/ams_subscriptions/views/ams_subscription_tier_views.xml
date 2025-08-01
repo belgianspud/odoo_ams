@@ -5,7 +5,7 @@
         <field name="name">ams.subscription.tier.tree</field>
         <field name="model">ams.subscription.tier</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="name"/>
                 <field name="subscription_type"/>
                 <field name="period_length"/>
@@ -14,7 +14,7 @@
                 <field name="terminate_days"/>
                 <field name="is_free"/>
                 <field name="default_seats"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -61,7 +61,7 @@
             <search>
                 <field name="name"/>
                 <field name="subscription_type"/>
-                <filter string="Free Tiers" domain="[('is_free','=',True)]"/>
+                <filter name="filter_free_tiers" string="Free Tiers" domain="[('is_free','=',True)]"/>
             </search>
         </field>
     </record>
@@ -70,6 +70,6 @@
     <record id="action_ams_subscription_tier" model="ir.actions.act_window">
         <field name="name">Subscription Tiers</field>
         <field name="res_model">ams.subscription.tier</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 </odoo>

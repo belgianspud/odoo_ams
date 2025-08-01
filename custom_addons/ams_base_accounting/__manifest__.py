@@ -41,16 +41,8 @@
         # Master data
         'data/revenue_category_data.xml',
         
-        # Views (to be created as needed)
-        # 'views/ams_revenue_category_views.xml',
-        # 'views/ams_financial_transaction_views.xml',
-        # 'views/ams_financial_summary_views.xml',
-        # 'views/ams_financial_dashboard_views.xml',
-        # 'views/menu_views.xml',
-        
-        # Reports (to be created later)
-        # 'reports/financial_reports.xml',
-        # 'reports/board_reports.xml',
+        # Demo data
+        'demo/demo_data.xml',
     ],
     'installable': True,
     'application': True,  

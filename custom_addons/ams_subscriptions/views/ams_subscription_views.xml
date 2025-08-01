@@ -5,7 +5,7 @@
         <field name="name">ams.subscription.tree</field>
         <field name="model">ams.subscription</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="name"/>
                 <field name="subscription_type"/>
                 <field name="partner_id"/>
@@ -13,7 +13,7 @@
                 <field name="state"/>
                 <field name="paid_through_date"/>
                 <field name="total_seats"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -46,11 +46,11 @@
                     <notebook>
                         <page string="Seats">
                             <field name="seat_ids">
-                                <tree editable="bottom">
+                                <list editable="bottom">
                                     <field name="contact_id"/>
                                     <field name="assigned_date"/>
                                     <field name="active"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                     </notebook>
@@ -68,9 +68,9 @@
                 <field name="name"/>
                 <field name="partner_id"/>
                 <field name="subscription_type"/>
-                <filter string="Active" domain="[('state','=','active')]"/>
-                <filter string="Suspended" domain="[('state','=','suspended')]"/>
-                <filter string="Terminated" domain="[('state','=','terminated')]"/>
+                <filter name="filter_active" string="Active" domain="[('state','=','active')]"/>
+                <filter name="filter_suspended" string="Suspended" domain="[('state','=','suspended')]"/>
+                <filter name="filter_terminated" string="Terminated" domain="[('state','=','terminated')]"/>
             </search>
         </field>
     </record>
@@ -79,6 +79,6 @@
     <record id="action_ams_subscription" model="ir.actions.act_window">
         <field name="name">Subscriptions</field>
         <field name="res_model">ams.subscription</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 </odoo>

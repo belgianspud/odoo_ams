@@ -5,12 +5,12 @@
         <field name="name">ams.subscription.seat.tree</field>
         <field name="model">ams.subscription.seat</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="subscription_id"/>
                 <field name="contact_id"/>
                 <field name="assigned_date"/>
                 <field name="active"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -42,8 +42,8 @@
             <search>
                 <field name="subscription_id"/>
                 <field name="contact_id"/>
-                <filter string="Active Seats" domain="[('active','=',True)]"/>
-                <filter string="Inactive Seats" domain="[('active','=',False)]"/>
+                <filter name="filter_active_seats" string="Active Seats" domain="[('active','=',True)]"/>
+                <filter name="filter_inactive_seats" string="Inactive Seats" domain="[('active','=',False)]"/>
             </search>
         </field>
     </record>
@@ -52,6 +52,6 @@
     <record id="action_ams_subscription_seat" model="ir.actions.act_window">
         <field name="name">Subscription Seats</field>
         <field name="res_model">ams.subscription.seat</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 </odoo>

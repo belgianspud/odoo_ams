@@ -10,6 +10,8 @@
                 <group string="AMS Subscription Settings" invisible="ams_product_type == 'none'">
                     <field name="ams_product_type"/>
                     <field name="subscription_period"/>
+                    <field name="subscription_tier_id"/>
+                    <field name="is_seat_addon"/>
                     <field name="is_digital" invisible="ams_product_type != 'publication'"/>
                     <field name="grace_days"/>
                     <field name="suspend_days"/>
@@ -25,7 +27,7 @@
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_tree_view"/>
         <field name="arch" type="xml">
-            <xpath expr="//list" position="inside">
+            <xpath expr="//field[@name='list_price']" position="after">
                 <field name="ams_product_type"/>
                 <field name="subscription_period"/>
             </xpath>
