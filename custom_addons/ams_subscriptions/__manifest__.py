@@ -28,13 +28,24 @@ Custom subscription management for associations, including:
         'portal',
     ],
     'data': [
-        # Security
-        'security/ir.model.access.csv',
+        # Security - MUST load in this order
+        'security/ams_subscription_security.xml',  
+        'security/ir.model.access.csv',            
+        
+        # Data files  
+        'data/ams_subscription_cron.xml',         
+        
         # Views
+        'views/product_template_views.xml',
         'views/ams_subscription_views.xml',
         'views/ams_subscription_seat_views.xml',
         'views/ams_subscription_tier_views.xml',
-        # Menu
+        
+        # Portal
+        'views/ams_subscription_portal_menu.xml',
+        'views/portal_template.xml',
+        
+        # Menu (load last)
         'views/ams_subscription_menu.xml',
     ],
     'installable': True,

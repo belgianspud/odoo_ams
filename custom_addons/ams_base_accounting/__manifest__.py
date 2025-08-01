@@ -31,39 +31,29 @@
         'contacts',
         'mail',
         'web',
-        # NOTE: ams_subscriptions dependency removed for standalone installation
-        # Add 'ams_subscriptions' here after both modules are working
+        # NOTE: Add 'ams_subscriptions' here after both modules are working together
     ],
     'data': [
-        # Security
+        # Security - MUST load in this order
         'security/ams_accounting_security.xml',
         'security/ir.model.access.csv',
         
         # Master data
         'data/revenue_category_data.xml',
         
-        # Views with dedicated menu structure
-        'views/ams_revenue_category_views.xml',
-        'views/ams_financial_transaction_views.xml',
-        'views/ams_financial_summary_views.xml',
-        'views/ams_financial_dashboard_views.xml',
-        'views/menu_views.xml',
+        # Views (to be created as needed)
+        # 'views/ams_revenue_category_views.xml',
+        # 'views/ams_financial_transaction_views.xml',
+        # 'views/ams_financial_summary_views.xml',
+        # 'views/ams_financial_dashboard_views.xml',
+        # 'views/menu_views.xml',
         
-        # Reports
-        'reports/financial_reports.xml',
-        'reports/board_reports.xml',
+        # Reports (to be created later)
+        # 'reports/financial_reports.xml',
+        # 'reports/board_reports.xml',
     ],
-    'demo': [
-        'demo/demo_data.xml',
-    ],
-    'assets': {
-        'web.assets_backend': [
-            'ams_base_accounting/static/src/css/financial_dashboard.css',
-            'ams_base_accounting/static/src/js/financial_widgets.js',
-        ],
-    },
     'installable': True,
-    'application': True,
+    'application': True,  
     'auto_install': False,
     'license': 'LGPL-3',
 }
