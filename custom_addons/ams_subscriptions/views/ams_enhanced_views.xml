@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- =========================== -->
+    <!-- LIFECYCLE SETTINGS VIEWS -->
+    <!-- =========================== -->
+    
+    <record id="view_ams_lifecycle_settings_form" model="ir.ui.view">
+        <field name="name">ams.lifecycle.settings.form</field>
+        <field name="model">ams.lifecycle.settings</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>AMS Lifecycle Settings</h1>
+                        <p>Configure global settings for subscription lifecycle management.</p>
+                    </div>
+                    
+                    <group string="Default Lifecycle Periods">
+                        <field name="default_grace_days"/>
+                        <field name="default_suspend_days"/>
+                        <field name="default_terminate_days"/>
+                    </group>
+                    
+                    <group string="Renewal Settings">
+                        <field name="auto_create_renewal_invoices"/>
+                        <field name="renewal_notice_days"/>
+                    </group>
+                    
+                    <group string="Communication Settings">
+                        <field name="send_lifecycle_emails"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="apply_settings" string="Apply Settings" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- =========================== -->
+    <!-- ENHANCED TIER VIEWS -->
+    <!-- =========================== -->
+    
+    <!-- Grouped Tree View for Subscription Tiers -->
+    <record id="view_ams_subscription_tier_tree_grouped" model="ir.ui.view">
+        <field name="name">ams.subscription.tier.tree.grouped</field>
+        <field name="model">ams.subscription.tier</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="subscription_type" invisible="1"/>
+                <field name="period_length"/>
+                <field name="active_subscriptions_count"/>
+                <field name="total_revenue_ytd"/>
+                <field name="grace_days"/>
+                <field name="is_free"/>
+                <field name="default_seats"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Enhanced Subscription Tier Form -->
+    <record id="view_ams_subscription_tier_form_enhanced" model="ir.ui.view">
+        <field name="name">ams.subscription.tier.form.enhanced</field>
+        <field name="model">ams.subscription.tier</field>
+        <field name="inherit_id" ref="view_ams_subscription_tier_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[last()]" position="after">
+                <group string="Statistics" invisible="context.get('default_subscription_type')">
+                    <field name="active_subscriptions_count" readonly="1"/>
+                    <field name="total_revenue_ytd" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- =========================== -->
+    <!-- ENHANCED PRODUCT VIEWS -->
+    <!-- =========================== -->
+    
+    <!-- Add button to product form -->
+    <record id="view_product_template_form_ams_enhanced" model="ir.ui.view">
+        <field name="name">product.template.form.ams.enhanced</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="view_product_template_form_ams"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button name="action_create_subscription_tier" 
+                            string="Create Tier" 
+                            type="object" 
+                            class="btn-primary"
+                            invisible="ams_product_type == 'none' or subscription_tier_id"/>
+                    <button name="action_view_subscriptions" 
+                            string="View Subscriptions" 
+                            type="object" 
+                            class="btn-secondary"
+                            invisible="active_subscriptions_count == 0"/>
+                    <button name="action_publish_ams_product" 
+                            string="Publish on Website" 
+                            type="object" 
+                            class="btn-secondary"
+                            invisible="website_published or ams_product_type == 'none'"/>
+                </header>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- =========================== -->
+    <!-- DASHBOARD/KANBAN VIEWS -->
+    <!-- =========================== -->
+    
+    <!-- Subscription Kanban View -->
+    <record id="view_ams_subscription_kanban" model="ir.ui.view">
+        <field name="name">ams.subscription.kanban</field>
+        <field name="model">ams.subscription</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="subscription_type"/>
+                <field name="state"/>
+                <field name="paid_through_date"/>
+                <field name="total_seats"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_title">
+                                    <strong><field name="name"/></strong>
+                                </div>
+                                <div class="o_kanban_record_subtitle">
+                                    <field name="partner_id"/>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <span class="badge" 
+                                          t-attf-class="badge-#{record.subscription_type.raw_value == 'enterprise' ? 'primary' : 'secondary'}">
+                                        <field name="subscription_type"/>
+                                    </span>
+                                    <t t-if="record.subscription_type.raw_value == 'enterprise'">
+                                        <br/><small>Seats: <field name="total_seats"/></small>
+                                    </t>
+                                </div>
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <small>Paid Through: <field name="paid_through_date"/></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Update subscription action to include kanban -->
+    <record id="action_ams_subscription" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,form</field>
+    </record>
+    
+    <record id="action_ams_active_subscriptions" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,form</field>
+    </record>
+</odoo>

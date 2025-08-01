@@ -1,27 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Inherit Product Template Form to Add AMS Fields -->
+    <!-- Enhanced Product Template Form to Add AMS Fields -->
     <record id="view_product_template_form_ams" model="ir.ui.view">
         <field name="name">product.template.form.ams</field>
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_only_form_view"/>
         <field name="arch" type="xml">
-            <xpath expr="//notebook" position="after">
-                <group string="AMS Subscription Settings" invisible="ams_product_type == 'none'">
-                    <field name="ams_product_type"/>
-                    <field name="subscription_period"/>
-                    <field name="subscription_tier_id"/>
-                    <field name="is_seat_addon"/>
-                    <field name="is_digital" invisible="ams_product_type != 'publication'"/>
-                    <field name="grace_days"/>
-                    <field name="suspend_days"/>
-                    <field name="terminate_days"/>
-                </group>
+            <!-- Add AMS Product Type field to the main product info -->
+            <xpath expr="//field[@name='detailed_type']" position="after">
+                <field name="ams_product_type"/>
+                <field name="is_subscription_product" invisible="1"/>
+            </xpath>
+            
+            <!-- Add main AMS section after General Information tab -->
+            <xpath expr="//page[@name='general_information']" position="after">
+                <page string="AMS Subscription" invisible="ams_product_type == 'none'">
+                    <group>
+                        <group string="Subscription Configuration">
+                            <field name="subscription_period"/>
+                            <field name="subscription_tier_id" 
+                                   domain="[('subscription_type', '=', ams_product_type)]"
+                                   context="{'default_subscription_type': ams_product_type}"/>
+                            <field name="is_seat_addon" invisible="ams_product_type != 'enterprise'"/>
+                        </group>
+                        <group string="Publication Settings" invisible="ams_product_type != 'publication'">
+                            <field name="is_digital"/>
+                            <field name="publication_type"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Lifecycle Settings">
+                        <field name="grace_days"/>
+                        <field name="suspend_days"/>
+                        <field name="terminate_days"/>
+                    </group>
+                    
+                    <group string="Related Products" invisible="ams_product_type in ['none', 'seat']">
+                        <field name="child_product_ids" widget="many2many_tags">
+                            <tree>
+                                <field name="name"/>
+                                <field name="ams_product_type"/>
+                                <field name="list_price"/>
+                            </tree>
+                        </field>
+                    </group>
+                    
+                    <group string="Statistics" invisible="ams_product_type == 'none'">
+                        <field name="active_subscriptions_count" readonly="1"/>
+                        <field name="total_revenue_ytd" readonly="1"/>
+                    </group>
+                </page>
             </xpath>
         </field>
     </record>
 
-    <!-- Add AMS Fields to Product Tree View (optional) -->
+    <!-- Enhanced Product Tree View -->
     <record id="view_product_template_tree_ams" model="ir.ui.view">
         <field name="name">product.template.tree.ams</field>
         <field name="model">product.template</field>
@@ -30,6 +63,28 @@
             <xpath expr="//field[@name='list_price']" position="after">
                 <field name="ams_product_type"/>
                 <field name="subscription_period"/>
+                <field name="active_subscriptions_count"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Search View for AMS Products -->
+    <record id="view_product_template_search_ams" model="ir.ui.view">
+        <field name="name">product.template.search.ams</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='services']" position="after">
+                <separator/>
+                <filter name="filter_ams_products" string="AMS Products" domain="[('ams_product_type', '!=', 'none')]"/>
+                <filter name="filter_memberships" string="Memberships" domain="[('ams_product_type', 'in', ['individual', 'enterprise'])]"/>
+                <filter name="filter_chapters" string="Chapters" domain="[('ams_product_type', '=', 'chapter')]"/>
+                <filter name="filter_publications" string="Publications" domain="[('ams_product_type', '=', 'publication')]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter name="group_by_ams_type" string="AMS Product Type" domain="[]" context="{'group_by': 'ams_product_type'}"/>
+                    <filter name="group_by_subscription_period" string="Subscription Period" domain="[]" context="{'group_by': 'subscription_period'}"/>
+                </group>
             </xpath>
         </field>
     </record>

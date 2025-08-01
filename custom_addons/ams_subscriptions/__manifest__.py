@@ -29,6 +29,8 @@ Custom subscription management for associations, including:
     ],
     'data': [
         # Security - MUST load in this order
+        'views/ams_menu_actions.xml',
+        'views/ams_enhanced_views.xml',
         'security/ams_subscription_security.xml',  
         'security/ir.model.access.csv',            
         
