@@ -1,71 +1,54 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api
+from odoo import models, fields
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
-    def action_confirm(self):
-        """Override to create AMS subscriptions when order is confirmed"""
-        result = super().action_confirm()
-        
-        # Create subscriptions for AMS products
-        for order in self:
-            order._create_ams_subscriptions()
-        
-        return result
-
     def _create_ams_subscriptions(self):
-        """Create AMS subscriptions for subscription products in this order"""
-        ams_lines = self.order_line.filtered(lambda line: 
-            line.product_id.ams_product_type != 'none' and 
-            line.product_id.subscription_period != 'none'
-        )
-        
-        if not ams_lines:
-            return
-        
-        # Group by customer (partner_id) and subscription type
-        subscriptions_to_create = {}
-        
-        for line in ams_lines:
-            key = (line.order_id.partner_id.id, line.product_id.ams_product_type)
-            
-            if key not in subscriptions_to_create:
-                subscriptions_to_create[key] = {
-                    'name': f"{line.product_id.ams_product_type.title()} Subscription - {line.order_id.partner_id.name}",
-                    'partner_id': line.order_id.partner_id.id,
-                    'subscription_type': line.product_id.ams_product_type,
-                    'sale_order_id': self.id,
-                    'status': 'active',
+        """Create AMS subscriptions or add seats after order confirmation."""
+        for order in self:
+            for line in order.order_line:
+                product = line.product_id.product_tmpl_id
+                if product.ams_product_type == 'none':
+                    continue  # Not an AMS product
+
+                # -----------------------------
+                # Handle Enterprise Seat Add-ons
+                # -----------------------------
+                if product.is_seat_addon:
+                    # Find active enterprise subscription for this partner
+                    enterprise_sub = self.env['ams.subscription'].search([
+                        ('partner_id', '=', order.partner_id.id),
+                        ('subscription_type', '=', 'enterprise'),
+                        ('state', '=', 'active'),
+                    ], limit=1)
+                    if enterprise_sub:
+                        enterprise_sub.extra_seats += int(line.product_uom_qty)
+                        enterprise_sub._compute_total_seats()
+                        enterprise_sub.message_post(
+                            body=f"{int(line.product_uom_qty)} seats added via sale order {order.name}."
+                        )
+                        continue  # Skip subscription creation for seat add-ons
+
+                # -----------------------------
+                # Create a new subscription
+                # -----------------------------
+                self.env['ams.subscription'].create({
+                    'name': f"Subscription for {order.partner_id.name} - {product.name}",
+                    'subscription_type': product.ams_product_type,
+                    'tier_id': product.subscription_tier_id.id,
+                    'partner_id': order.partner_id.id,
+                    'account_id': order.partner_id.parent_id.id if order.partner_id.parent_id else False,
                     'start_date': fields.Date.today(),
-                    'paid_through_date': fields.Date.today(),
-                    'line_ids': []
-                }
-            
-            # Add subscription line
-            subscription_line = {
-                'product_id': line.product_id.id,
-                'quantity': line.product_qty,
-                'price_unit': line.price_unit,
-            }
-            subscriptions_to_create[key]['line_ids'].append((0, 0, subscription_line))
-        
-        # Create the subscriptions
-        for subscription_data in subscriptions_to_create.values():
-            subscription = self.env['ams.subscription'].create(subscription_data)
+                    'paid_through_date': fields.Date.today(),  # Will be updated on payment
+                    'base_seats': product.subscription_tier_id.default_seats if product.ams_product_type == 'enterprise' else 0,
+                    'extra_seats': 0,
+                    'state': 'active',
+                    'product_id': line.product_id.id,
+                })
 
-
-class SaleOrderLine(models.Model):
-    _inherit = 'sale.order.line'
-
-    ams_subscription_id = fields.Many2one('ams.subscription', string='AMS Subscription', readonly=True)
-    
-    @api.onchange('product_id')
-    def _onchange_product_id_ams(self):
-        """Auto-set description for AMS products"""
-        if self.product_id and self.product_id.ams_product_type != 'none':
-            subscription_desc = ""
-            if self.product_id.subscription_period != 'none':
-                subscription_desc = f" ({self.product_id.subscription_period.replace('_', ' ').title()})"
-            
-            self.name = f"{self.product_id.name}{subscription_desc}"
+    def action_confirm(self):
+        """Override: trigger subscription creation after confirming the sale."""
+        res = super().action_confirm()
+        self._create_ams_subscriptions()
+        return res

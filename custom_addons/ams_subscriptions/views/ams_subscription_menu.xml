@@ -1,45 +1,32 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- Main AMS Subscriptions Menu -->
+    <!-- Main AMS Menu -->
     <menuitem id="menu_ams_root"
-              name="AMS Subscriptions"
+              name="AMS"
               sequence="10"
-              web_icon="ams_subscriptions,static/description/icon.png"/>
+              groups="ams_subscriptions.group_ams_subscription_user"/>
 
-    <!-- Subscriptions Main Menu -->
-    <menuitem id="menu_ams_subscription_main"
+    <!-- Subscriptions -->
+    <menuitem id="menu_ams_subscriptions"
               name="Subscriptions"
               parent="menu_ams_root"
               sequence="10"/>
 
-    <!-- Submenus -->
-    <menuitem id="menu_ams_subscription"
-              name="All Subscriptions"
-              parent="menu_ams_subscription_main"
+    <menuitem id="menu_ams_subscription_items"
+              name="Subscription Records"
+              parent="menu_ams_subscriptions"
               action="action_ams_subscription"
               sequence="10"/>
 
-    <menuitem id="menu_ams_subscription_tiers"
-              name="Subscription Tiers"
-              parent="menu_ams_subscription_main"
-              action="action_ams_subscription_tier"
+    <menuitem id="menu_ams_subscription_seats"
+              name="Subscription Seats"
+              parent="menu_ams_subscriptions"
+              action="action_ams_subscription_seat"
               sequence="20"/>
 
-    <menuitem id="menu_ams_subscription_seats"
-              name="Enterprise Seats"
-              parent="menu_ams_subscription_main"
-              action="action_ams_subscription_seat"
+    <menuitem id="menu_ams_subscription_tiers"
+              name="Subscription Tiers"
+              parent="menu_ams_subscriptions"
+              action="action_ams_subscription_tier"
               sequence="30"/>
-
-    <!-- Configuration Menu -->
-    <menuitem id="menu_ams_configuration"
-              name="Configuration"
-              parent="menu_ams_root"
-              sequence="90"/>
-
-    <menuitem id="menu_ams_billing_periods"
-              name="Billing Periods"
-              parent="menu_ams_configuration"
-              action="action_ams_billing_period"
-              sequence="10"/>
 </odoo>

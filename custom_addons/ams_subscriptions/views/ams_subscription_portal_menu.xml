@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Add Subscriptions to Portal Menu -->
+    <template id="portal_my_home_subscriptions" inherit_id="portal.portal_my_home" name="Portal: My Subscriptions">
+        <xpath expr="//div[@id='portal_my_home']" position="inside">
+            <div class="row mt16 mb16">
+                <div class="col-12 col-md-6">
+                    <a class="btn btn-primary w-100" href="/my/subscriptions">
+                        <i class="fa fa-id-card"></i> My Subscriptions
+                    </a>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>

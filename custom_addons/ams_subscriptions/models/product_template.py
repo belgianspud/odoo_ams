@@ -4,6 +4,7 @@ from odoo import models, fields, api
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
+    # AMS Product Types
     ams_product_type = fields.Selection([
         ('none', 'None'),
         ('individual', 'Membership - Individual'),
@@ -28,6 +29,26 @@ class ProductTemplate(models.Model):
     grace_days = fields.Integer(string='Grace Days', default=30)
     suspend_days = fields.Integer(string='Suspend Days', default=60)
     terminate_days = fields.Integer(string='Terminate Days', default=30)
+
+    # 🔹 NEW: Link to default subscription tier
+    subscription_tier_id = fields.Many2one(
+        'ams.subscription.tier',
+        string='Default Subscription Tier',
+        help='When this product is purchased, the subscription will be created using this tier.'
+    )
+
+    # 🔹 NEW: Special flag for enterprise seat add-on
+    is_seat_addon = fields.Boolean(
+        string='Enterprise Seat Add-On',
+        help='If checked, purchasing this product adds seats to an existing Enterprise subscription.'
+    )
+
+    # 🔹 NEW: Reverse link to created subscriptions
+    subscription_ids = fields.One2many(
+        'ams.subscription',
+        'product_id',
+        string='Generated Subscriptions'
+    )
 
     # Auto-configure AMS products for sales and website
     @api.onchange('ams_product_type')
@@ -66,7 +87,6 @@ class ProductTemplate(models.Model):
 
     def _set_ams_category(self):
         """Set appropriate product category for AMS products"""
-        # Try to find or create AMS categories
         category_obj = self.env['product.category']
         
         if self.ams_product_type == 'individual':

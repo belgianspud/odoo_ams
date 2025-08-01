@@ -1,5 +1,9 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_ams_subscription_user,ams.subscription user,model_ams_subscription,base.group_user,1,1,1,1
-access_ams_subscription_line_user,ams.subscription.line user,model_ams_subscription_line,base.group_user,1,1,1,1
-access_ams_subscription_tier_user,ams.subscription.tier user,model_ams_subscription_tier,base.group_user,1,1,1,1
-access_ams_subscription_seat_user,ams.subscription.seat user,model_ams_subscription_seat,base.group_user,1,1,1,1
+access_ams_subscription_admin,ams.subscription admin,model_ams_subscription,ams_subscriptions.group_ams_subscription_admin,1,1,1,1
+access_ams_subscription_user,ams.subscription user,model_ams_subscription,ams_subscriptions.group_ams_subscription_user,1,1,1,0
+
+access_ams_subscription_seat_admin,ams.subscription.seat admin,model_ams_subscription_seat,ams_subscriptions.group_ams_subscription_admin,1,1,1,1
+access_ams_subscription_seat_user,ams.subscription.seat user,model_ams_subscription_seat,ams_subscriptions.group_ams_subscription_user,1,1,1,0
+
+access_ams_subscription_tier_admin,ams.subscription.tier admin,model_ams_subscription_tier,ams_subscriptions.group_ams_subscription_admin,1,1,1,1
+access_ams_subscription_tier_user,ams.subscription.tier user,model_ams_subscription_tier,ams_subscriptions.group_ams_subscription_user,1,1,1,0

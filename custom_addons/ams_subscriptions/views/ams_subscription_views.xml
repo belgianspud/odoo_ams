@@ -1,69 +1,56 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- Tree (List) View for Subscriptions -->
+    <!-- Tree View -->
     <record id="view_ams_subscription_tree" model="ir.ui.view">
         <field name="name">ams.subscription.tree</field>
         <field name="model">ams.subscription</field>
-        <field name="type">list</field>
         <field name="arch" type="xml">
-            <list string="Subscriptions">
+            <tree>
                 <field name="name"/>
-                <field name="partner_id"/>
                 <field name="subscription_type"/>
+                <field name="partner_id"/>
                 <field name="tier_id"/>
-                <field name="billing_period_id"/>
-                <field name="status"/>
-                <field name="start_date"/>
-                <field name="end_date"/>
+                <field name="state"/>
                 <field name="paid_through_date"/>
-                <field name="next_billing_date"/>
-            </list>
+                <field name="total_seats"/>
+            </tree>
         </field>
     </record>
 
-    <!-- Form View for Subscriptions -->
+    <!-- Form View -->
     <record id="view_ams_subscription_form" model="ir.ui.view">
         <field name="name">ams.subscription.form</field>
         <field name="model">ams.subscription</field>
-        <field name="type">form</field>
         <field name="arch" type="xml">
-            <form string="Subscription">
+            <form>
                 <sheet>
                     <group>
                         <field name="name"/>
-                        <field name="partner_id"/>
-                        <field name="account_id"/>
                         <field name="subscription_type"/>
                         <field name="tier_id"/>
+                        <field name="state"/>
                     </group>
-
                     <group>
-                        <field name="status"/>
-                        <field name="start_date"/>
-                        <field name="end_date"/>
-                        <field name="paid_through_date"/>
-                        <field name="next_billing_date"/>
-                        <field name="billing_period_id"/>
+                        <field name="partner_id"/>
+                        <field name="account_id"/>
                     </group>
-
+                    <group>
+                        <field name="start_date"/>
+                        <field name="paid_through_date"/>
+                    </group>
+                    <group>
+                        <field name="base_seats"/>
+                        <field name="extra_seats"/>
+                        <field name="total_seats" readonly="1"/>
+                    </group>
                     <notebook>
-                        <page string="Subscription Lines">
-                            <field name="line_ids">
-                                <list editable="bottom">
-                                    <field name="product_id"/>
-                                    <field name="quantity"/>
-                                    <field name="price_unit"/>
-                                    <field name="subtotal" readonly="1"/>
-                                </list>
-                            </field>
-                        </page>
-
-                        <page string="Enterprise Seats" invisible="subscription_type != 'enterprise'">
+                        <page string="Seats">
                             <field name="seat_ids">
-                                <list editable="bottom">
+                                <tree editable="bottom">
                                     <field name="contact_id"/>
                                     <field name="assigned_date"/>
-                                </list>
+                                    <field name="active"/>
+                                </tree>
                             </field>
                         </page>
                     </notebook>
@@ -72,10 +59,26 @@
         </field>
     </record>
 
-    <!-- Subscription Actions -->
+    <!-- Search View -->
+    <record id="view_ams_subscription_search" model="ir.ui.view">
+        <field name="name">ams.subscription.search</field>
+        <field name="model">ams.subscription</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="subscription_type"/>
+                <filter string="Active" domain="[('state','=','active')]"/>
+                <filter string="Suspended" domain="[('state','=','suspended')]"/>
+                <filter string="Terminated" domain="[('state','=','terminated')]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action Window -->
     <record id="action_ams_subscription" model="ir.actions.act_window">
         <field name="name">Subscriptions</field>
         <field name="res_model">ams.subscription</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">tree,form</field>
     </record>
 </odoo>

@@ -6,20 +6,6 @@
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_only_form_view"/>
         <field name="arch" type="xml">
-            <!-- Add smart button for quick publishing -->
-            <div name="button_box" position="inside">
-                <button name="action_publish_ams_product" 
-                        type="object" 
-                        class="oe_stat_button" 
-                        icon="fa-globe"
-                        invisible="ams_product_type == 'none' or website_published">
-                    <div class="o_field_widget o_stat_info">
-                        <span class="o_stat_text">Publish on</span>
-                        <span class="o_stat_text">Website</span>
-                    </div>
-                </button>
-            </div>
-            
             <xpath expr="//notebook" position="after">
                 <group string="AMS Subscription Settings" invisible="ams_product_type == 'none'">
                     <field name="ams_product_type"/>
