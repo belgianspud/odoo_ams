@@ -120,18 +120,20 @@ class ProductTemplate(models.Model):
             self.sale_ok = True
             self.website_published = True
             
-            # Set appropriate product type
+            # Set appropriate product type - handle different field names across Odoo versions
+            product_type_field = 'detailed_type' if hasattr(self, 'detailed_type') else 'type'
+            
             if self.ams_product_type in ['individual', 'enterprise']:
-                self.detailed_type = 'service'  # Memberships are services
+                setattr(self, product_type_field, 'service')  # Memberships are services
                 if self.subscription_period == 'none':
                     self.subscription_period = 'annual'
             elif self.ams_product_type == 'publication':
                 if self.is_digital:
-                    self.detailed_type = 'service'  # Digital publications are services
+                    setattr(self, product_type_field, 'service')  # Digital publications are services
                 else:
-                    self.detailed_type = 'product'  # Physical publications are products
+                    setattr(self, product_type_field, 'product')  # Physical publications are products
             elif self.ams_product_type == 'chapter':
-                self.detailed_type = 'service'  # Chapters are services
+                setattr(self, product_type_field, 'service')  # Chapters are services
             
             # Auto-set categories for website organization
             self._set_ams_category()
@@ -145,10 +147,13 @@ class ProductTemplate(models.Model):
     def _onchange_is_digital(self):
         """Update product type when digital flag changes"""
         if self.ams_product_type == 'publication':
+            # Handle different field names across Odoo versions
+            product_type_field = 'detailed_type' if hasattr(self, 'detailed_type') else 'type'
+            
             if self.is_digital:
-                self.detailed_type = 'service'
+                setattr(self, product_type_field, 'service')
             else:
-                self.detailed_type = 'product'
+                setattr(self, product_type_field, 'product')
 
     def _set_ams_category(self):
         """Set appropriate product category for AMS products"""

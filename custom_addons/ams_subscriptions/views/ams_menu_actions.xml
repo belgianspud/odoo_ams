@@ -74,8 +74,7 @@
         <field name="domain">[('ams_product_type', 'in', ['individual', 'enterprise'])]</field>
         <field name="context">{
             'default_ams_product_type': 'individual',
-            'default_sale_ok': True,
-            'default_detailed_type': 'service'
+            'default_sale_ok': True
         }</field>
     </record>
 
@@ -87,8 +86,7 @@
         <field name="domain">[('ams_product_type', '=', 'chapter')]</field>
         <field name="context">{
             'default_ams_product_type': 'chapter',
-            'default_sale_ok': True,
-            'default_detailed_type': 'service'
+            'default_sale_ok': True
         }</field>
     </record>
 
@@ -113,8 +111,7 @@
         <field name="context">{
             'default_ams_product_type': 'individual',
             'default_sale_ok': True,
-            'default_website_published': True,
-            'default_detailed_type': 'service'
+            'default_website_published': True
         }</field>
     </record>
 
