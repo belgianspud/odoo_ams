@@ -29,19 +29,19 @@ Custom subscription management for associations, including:
     ],
     'data': [
         # Security - MUST load in this order
-        'views/ams_menu_actions.xml',
-        'views/ams_enhanced_views.xml',
         'security/ams_subscription_security.xml',  
         'security/ir.model.access.csv',            
         
         # Data files  
         'data/ams_subscription_cron.xml',         
         
-        # Views
+        # Views - FIXED ORDER: Views must load before actions that reference them
         'views/product_template_views.xml',
         'views/ams_subscription_views.xml',
         'views/ams_subscription_seat_views.xml',
         'views/ams_subscription_tier_views.xml',
+        'views/ams_enhanced_views.xml',         # ← Load enhanced views BEFORE actions
+        'views/ams_menu_actions.xml',           # ← Load actions AFTER views
         
         # Portal - TEMPORARILY REMOVED
         # 'views/portal_template.xml',

@@ -6,8 +6,8 @@
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_only_form_view"/>
         <field name="arch" type="xml">
-            <!-- Add AMS Product Type field to the main product info -->
-            <xpath expr="//field[@name='detailed_type']" position="after">
+            <!-- Add AMS Product Type field after the category field -->
+            <xpath expr="//field[@name='categ_id']" position="after">
                 <field name="ams_product_type"/>
                 <field name="is_subscription_product" invisible="1"/>
             </xpath>
@@ -36,13 +36,7 @@
                     </group>
                     
                     <group string="Related Products" invisible="ams_product_type in ['none', 'seat']">
-                        <field name="child_product_ids" widget="many2many_tags">
-                            <tree>
-                                <field name="name"/>
-                                <field name="ams_product_type"/>
-                                <field name="list_price"/>
-                            </tree>
-                        </field>
+                        <field name="child_product_ids" widget="many2many_tags"/>
                     </group>
                     
                     <group string="Statistics" invisible="ams_product_type == 'none'">

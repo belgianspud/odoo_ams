@@ -127,7 +127,6 @@
         <field name="name">Subscription Types</field>
         <field name="res_model">ams.subscription.tier</field>
         <field name="view_mode">list,form</field>
-        <field name="view_id" ref="view_ams_subscription_tier_tree_grouped"/>
         <field name="context">{'group_by': 'subscription_type'}</field>
     </record>
 
