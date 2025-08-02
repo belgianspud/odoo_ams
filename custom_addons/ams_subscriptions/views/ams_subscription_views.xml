@@ -23,25 +23,53 @@
         <field name="model">ams.subscription</field>
         <field name="arch" type="xml">
             <form>
+                <header>
+                    <button name="action_activate" string="Activate" type="object" 
+                            invisible="state != 'draft'" class="btn-primary"/>
+                    <button name="action_set_grace" string="Set Grace" type="object" 
+                            invisible="state != 'active'" class="btn-warning"/>
+                    <button name="action_suspend" string="Suspend" type="object" 
+                            invisible="state not in ['active', 'grace']" class="btn-warning"/>
+                    <button name="action_terminate" string="Terminate" type="object" 
+                            invisible="state == 'terminated'" class="btn-danger"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,grace,suspended,terminated"/>
+                </header>
                 <sheet>
                     <group>
-                        <field name="name"/>
-                        <field name="subscription_type"/>
-                        <field name="tier_id"/>
-                        <field name="state"/>
+                        <group string="Basic Information">
+                            <field name="name"/>
+                            <field name="product_id" options="{'no_create': True}"/>
+                            <field name="subscription_type"/>
+                            <field name="tier_id" domain="[('subscription_type', '=', subscription_type)]"/>
+                        </group>
+                        <group string="Customer Information">
+                            <field name="partner_id"/>
+                            <field name="account_id"/>
+                        </group>
                     </group>
                     <group>
-                        <field name="partner_id"/>
-                        <field name="account_id"/>
+                        <group string="Dates">
+                            <field name="start_date"/>
+                            <field name="paid_through_date"/>
+                            <field name="grace_end_date" readonly="1"/>
+                            <field name="suspend_end_date" readonly="1"/>
+                            <field name="terminate_date" readonly="1"/>
+                        </group>
+                        <group string="Enterprise Seats" invisible="subscription_type != 'enterprise'">
+                            <field name="base_seats"/>
+                            <field name="extra_seats"/>
+                            <field name="total_seats" readonly="1"/>
+                        </group>
                     </group>
                     <group>
-                        <field name="start_date"/>
-                        <field name="paid_through_date"/>
-                    </group>
-                    <group>
-                        <field name="base_seats"/>
-                        <field name="extra_seats"/>
-                        <field name="total_seats" readonly="1"/>
+                        <group string="Settings">
+                            <field name="auto_renew"/>
+                            <field name="is_free"/>
+                        </group>
+                        <group string="Related Records">
+                            <field name="sale_order_id" readonly="1"/>
+                            <field name="invoice_id" readonly="1"/>
+                        </group>
                     </group>
                     <notebook>
                         <page string="Seats">

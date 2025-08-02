@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
 from odoo import models, fields, api
 from datetime import date, timedelta
+from dateutil.relativedelta import relativedelta
 
 class AMSSubscription(models.Model):
     _name = 'ams.subscription'
@@ -42,9 +42,9 @@ class AMSSubscription(models.Model):
 
     start_date = fields.Date(string='Start Date', default=fields.Date.context_today)
     paid_through_date = fields.Date(string='Paid Through Date')
-    grace_end_date = fields.Date(string='Grace Period End')
-    suspend_end_date = fields.Date(string='Suspension End')
-    terminate_date = fields.Date(string='Termination Date')
+    grace_end_date = fields.Date(string='Grace Period End', compute='_compute_lifecycle_dates', store=True)
+    suspend_end_date = fields.Date(string='Suspension End', compute='_compute_lifecycle_dates', store=True)
+    terminate_date = fields.Date(string='Termination Date', compute='_compute_lifecycle_dates', store=True)
 
     # Enterprise Seat Management
     base_seats = fields.Integer(string='Base Seats', default=0)
@@ -62,12 +62,51 @@ class AMSSubscription(models.Model):
         for sub in self:
             sub.total_seats = (sub.base_seats or 0) + (sub.extra_seats or 0)
 
+    @api.depends('paid_through_date', 'tier_id.grace_days', 'tier_id.suspend_days', 'tier_id.terminate_days')
+    def _compute_lifecycle_dates(self):
+        for sub in self:
+            if sub.paid_through_date and sub.tier_id:
+                sub.grace_end_date = sub.paid_through_date + timedelta(days=sub.tier_id.grace_days or 30)
+                sub.suspend_end_date = sub.grace_end_date + timedelta(days=sub.tier_id.suspend_days or 60)
+                sub.terminate_date = sub.suspend_end_date + timedelta(days=sub.tier_id.terminate_days or 30)
+            else:
+                sub.grace_end_date = False
+                sub.suspend_end_date = False
+                sub.terminate_date = False
+
+    @api.onchange('product_id')
+    def _onchange_product_id(self):
+        """Auto-populate fields when product is selected"""
+        if self.product_id:
+            product_tmpl = self.product_id.product_tmpl_id
+            self.subscription_type = product_tmpl.ams_product_type
+            self.tier_id = product_tmpl.subscription_tier_id.id
+            
+            # Set default paid through date based on product subscription period
+            if product_tmpl.subscription_period and not self.paid_through_date:
+                self.paid_through_date = self._calculate_end_date(self.start_date or fields.Date.today(), product_tmpl.subscription_period)
+
+    def _calculate_end_date(self, start_date, period):
+        """Calculate end date based on subscription period"""
+        if period == 'monthly':
+            return start_date + relativedelta(months=1) - timedelta(days=1)
+        elif period == 'quarterly':
+            return start_date + relativedelta(months=3) - timedelta(days=1)
+        elif period == 'semi_annual':
+            return start_date + relativedelta(months=6) - timedelta(days=1)
+        elif period == 'annual':
+            # Annual subscriptions run calendar year
+            return date(start_date.year, 12, 31)
+        else:
+            return start_date + relativedelta(years=1) - timedelta(days=1)
+
     def action_activate(self):
         for sub in self:
             sub.state = 'active'
             if not sub.paid_through_date:
                 # Default to 1 year if not set; can be overridden by tier or product period
-                sub.paid_through_date = date.today() + timedelta(days=365)
+                product_period = sub.product_id.product_tmpl_id.subscription_period
+                sub.paid_through_date = sub._calculate_end_date(sub.start_date, product_period or 'annual')
 
     def action_set_grace(self):
         self.write({'state': 'grace'})
@@ -77,6 +116,76 @@ class AMSSubscription(models.Model):
 
     def action_terminate(self):
         self.write({'state': 'terminated'})
+
+    @api.model
+    def create_from_invoice_payment(self, invoice_line):
+        """Create subscription when invoice line is paid"""
+        product = invoice_line.product_id.product_tmpl_id
+        
+        # Only create subscriptions for AMS products
+        if not product or product.ams_product_type == 'none':
+            return False
+            
+        # Handle Enterprise Seat Add-ons differently
+        if product.is_seat_addon:
+            return self._handle_seat_addon_payment(invoice_line)
+        
+        # Check if subscription already exists for this invoice line
+        existing_sub = self.search([('invoice_line_id', '=', invoice_line.id)], limit=1)
+        if existing_sub:
+            return existing_sub
+        
+        # Create new subscription
+        partner = invoice_line.move_id.partner_id
+        start_date = fields.Date.today()
+        
+        subscription_vals = {
+            'name': f"{partner.name} - {product.name}",
+            'partner_id': partner.id,
+            'account_id': partner.parent_id.id if partner.parent_id else partner.id,
+            'product_id': invoice_line.product_id.id,
+            'subscription_type': product.ams_product_type,
+            'tier_id': product.subscription_tier_id.id if product.subscription_tier_id else False,
+            'start_date': start_date,
+            'paid_through_date': self._calculate_end_date(start_date, product.subscription_period or 'annual'),
+            'state': 'active',
+            'invoice_id': invoice_line.move_id.id,
+            'invoice_line_id': invoice_line.id,
+            'base_seats': product.subscription_tier_id.default_seats if product.ams_product_type == 'enterprise' else 0,
+            'extra_seats': 0,
+            'auto_renew': product.subscription_tier_id.auto_renew if product.subscription_tier_id else True,
+            'is_free': product.subscription_tier_id.is_free if product.subscription_tier_id else False,
+        }
+        
+        subscription = self.create(subscription_vals)
+        subscription.message_post(body=f"Subscription created from invoice payment: {invoice_line.move_id.name}")
+        
+        return subscription
+
+    def _handle_seat_addon_payment(self, invoice_line):
+        """Add seats to existing enterprise subscription"""
+        partner = invoice_line.move_id.partner_id
+        
+        # Find active enterprise subscription for this partner
+        enterprise_sub = self.search([
+            ('partner_id', '=', partner.id),
+            ('subscription_type', '=', 'enterprise'),
+            ('state', '=', 'active'),
+        ], limit=1)
+        
+        if enterprise_sub:
+            seats_to_add = int(invoice_line.quantity)
+            enterprise_sub.extra_seats += seats_to_add
+            enterprise_sub.message_post(
+                body=f"{seats_to_add} seats added via invoice payment: {invoice_line.move_id.name}"
+            )
+            return enterprise_sub
+        else:
+            # No active enterprise subscription found - log warning
+            invoice_line.move_id.message_post(
+                body="Warning: Seat add-on purchased but no active enterprise subscription found."
+            )
+            return False
 
     # ------------------------------------------------
     # Subscription Lifecycle & Renewal Automation
@@ -136,3 +245,106 @@ class AMSSubscription(models.Model):
 
             # Optional: email notification could be added here
             sub.message_post(body=f"Renewal invoice {invoice.name or invoice.id} generated.")
+
+
+class AccountMove(models.Model):
+    """Hook into invoice payments to create subscriptions"""
+    _inherit = 'account.move'
+
+    def _post(self, soft=True):
+        """Override to trigger subscription creation when invoice is posted and paid"""
+        result = super()._post(soft=soft)
+        
+        # Check for paid invoices after posting
+        for move in self.filtered(lambda m: m.move_type == 'out_invoice'):
+            if move.payment_state in ['paid', 'in_payment']:
+                self._create_subscriptions_from_payment(move)
+        
+        return result
+
+    def _create_subscriptions_from_payment(self, invoice):
+        """Create subscriptions for AMS products when invoice is paid"""
+        for line in invoice.invoice_line_ids:
+            if line.product_id and line.product_id.product_tmpl_id.ams_product_type != 'none':
+                # Check if subscription already exists
+                existing_sub = self.env['ams.subscription'].search([
+                    ('invoice_line_id', '=', line.id)
+                ], limit=1)
+                if not existing_sub:
+                    self.env['ams.subscription'].create_from_invoice_payment(line)
+
+
+class AccountPartialReconcile(models.Model):
+    """Hook into payment reconciliation to create subscriptions"""
+    _inherit = 'account.partial.reconcile'
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Override to trigger subscription creation when payments are reconciled"""
+        reconciles = super().create(vals_list)
+        
+        for reconcile in reconciles:
+            # Check if this reconciliation involves an invoice payment
+            debit_move = reconcile.debit_move_id.move_id
+            credit_move = reconcile.credit_move_id.move_id
+            
+            # Find the invoice (could be either debit or credit depending on the reconciliation)
+            invoice = None
+            if debit_move.move_type == 'out_invoice':
+                invoice = debit_move
+            elif credit_move.move_type == 'out_invoice':
+                invoice = credit_move
+            
+            if invoice and invoice.payment_state in ['paid', 'in_payment']:
+                invoice._create_subscriptions_from_payment(invoice)
+        
+        return reconciles
+
+
+class AccountPayment(models.Model):
+    """Hook into payment posting to create subscriptions"""
+    _inherit = 'account.payment'
+
+    def action_post(self):
+        """Override to trigger subscription creation when payment is posted"""
+        result = super().action_post()
+        
+        # After payment is posted, check related invoices
+        for payment in self:
+            if payment.state == 'posted' and payment.partner_type == 'customer':
+                # Find invoices that this payment reconciles with
+                reconciled_moves = payment.line_ids.mapped('matched_debit_ids.debit_move_id.move_id') | \
+                                 payment.line_ids.mapped('matched_credit_ids.credit_move_id.move_id')
+                
+                invoices = reconciled_moves.filtered(lambda m: m.move_type == 'out_invoice')
+                for invoice in invoices:
+                    if invoice.payment_state in ['paid', 'in_payment']:
+                        invoice._create_subscriptions_from_payment(invoice)
+        
+        return result
+
+
+class AccountPaymentRegister(models.TransientModel):
+    """Hook into payment registration wizard"""
+    _inherit = 'account.payment.register'
+
+    def action_create_payments(self):
+        """Override to trigger subscription creation after payment creation"""
+        result = super().action_create_payments()
+        
+        # Get the invoices being paid
+        active_ids = self.env.context.get('active_ids', [])
+        invoices = self.env['account.move'].browse(active_ids).filtered(
+            lambda m: m.move_type == 'out_invoice'
+        )
+        
+        # Check each invoice for AMS products and create subscriptions
+        for invoice in invoices:
+            # Refresh invoice state from database
+            invoice._cr.commit()
+            invoice.invalidate_recordset()
+            
+            if invoice.payment_state in ['paid', 'in_payment']:
+                invoice._create_subscriptions_from_payment(invoice)
+        
+        return result

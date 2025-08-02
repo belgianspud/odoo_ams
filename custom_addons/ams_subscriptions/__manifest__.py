@@ -40,6 +40,7 @@ Custom subscription management for associations, including:
         'views/ams_subscription_views.xml',
         'views/ams_subscription_seat_views.xml',
         'views/ams_subscription_tier_views.xml',
+        'views/res_partner_views.xml',          # ← Add contact/account enhancements
         'views/ams_enhanced_views.xml',         # ← Load enhanced views BEFORE actions
         'views/ams_menu_actions.xml',           # ← Load actions AFTER views
         
