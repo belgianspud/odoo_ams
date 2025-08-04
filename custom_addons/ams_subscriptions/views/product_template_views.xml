@@ -6,42 +6,96 @@
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_only_form_view"/>
         <field name="arch" type="xml">
-            <!-- Add AMS Product Type field after the category field -->
+            <!-- Add smart buttons for subscription management -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_subscriptions" 
+                        type="object" 
+                        class="oe_stat_button" 
+                        icon="fa-id-card"
+                        invisible="not is_subscription_product or active_subscriptions_count == 0">
+                    <field name="active_subscriptions_count" widget="statinfo" string="Active Subscriptions"/>
+                </button>
+                <button name="action_configure_subscription_tier" 
+                        type="object" 
+                        class="oe_stat_button" 
+                        icon="fa-cog"
+                        invisible="not is_subscription_product">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Configure</span>
+                        <span class="o_stat_text">Tier</span>
+                    </div>
+                </button>
+            </xpath>
+            
+            <!-- Add Subscription Product checkbox after the category field -->
             <xpath expr="//field[@name='categ_id']" position="after">
-                <field name="ams_product_type"/>
-                <field name="is_subscription_product" invisible="1"/>
+                <field name="is_subscription_product" string="🔄 Subscription Product" 
+                       help="Check this box to make this product create subscriptions when purchased"/>
+                <field name="ams_product_type" invisible="1"/>
             </xpath>
             
             <!-- Add main AMS section after General Information tab -->
             <xpath expr="//page[@name='general_information']" position="after">
-                <page string="AMS Subscription" invisible="ams_product_type == 'none'">
+                <page string="AMS Subscription" invisible="not is_subscription_product">
+                    <div class="alert alert-info" role="alert" invisible="not is_subscription_product">
+                        <h6><i class="fa fa-info-circle"/> Subscription Product Settings</h6>
+                        <p>This product will automatically create subscriptions when purchased through sales orders, website, or POS.</p>
+                        <p><strong>Quick Setup:</strong> Select a subscription type below, then configure or create a tier to get started.</p>
+                    </div>
+                    
+                    <!-- Quick Setup Section for new subscription products -->
+                    <div class="alert alert-warning" role="alert" invisible="subscription_tier_id or ams_product_type == 'none'">
+                        <h6><i class="fa fa-exclamation-triangle"/> Setup Required</h6>
+                        <p>You need to configure a subscription tier before this product can create subscriptions.</p>
+                        <button name="action_configure_subscription_tier" type="object" class="btn btn-primary btn-sm">
+                            <i class="fa fa-plus"/> Create Subscription Tier
+                        </button>
+                    </div>
+                    
                     <group>
                         <group string="Subscription Configuration">
-                            <field name="subscription_period"/>
+                            <field name="ams_product_type" string="Subscription Type" 
+                                   widget="radio" options="{'horizontal': true}" 
+                                   invisible="not is_subscription_product"/>
+                            <field name="subscription_period" 
+                                   help="How often customers will be billed for this subscription"/>
                             <field name="subscription_tier_id" 
                                    domain="[('subscription_type', '=', ams_product_type)]"
-                                   context="{'default_subscription_type': ams_product_type}"/>
-                            <field name="is_seat_addon" invisible="ams_product_type != 'enterprise'"/>
+                                   context="{'default_subscription_type': ams_product_type}"
+                                   invisible="ams_product_type == 'none'"
+                                   help="The tier defines benefits and lifecycle rules for this subscription"/>
                         </group>
-                        <group string="Publication Settings" invisible="ams_product_type != 'publication'">
-                            <field name="is_digital"/>
-                            <field name="publication_type"/>
+                        <group string="Subscription Options">
+                            <field name="allow_mid_cycle_changes" 
+                                   help="Allow customers to upgrade/downgrade this subscription mid-cycle"/>
+                            <field name="allow_pausing" 
+                                   help="Allow customers to pause this subscription"/>
+                            <field name="proration_policy" 
+                                   help="How to handle billing when subscription changes mid-cycle"/>
                         </group>
                     </group>
                     
-                    <group string="Lifecycle Settings">
-                        <field name="grace_days"/>
-                        <field name="suspend_days"/>
-                        <field name="terminate_days"/>
+                    <group string="Enterprise Settings" invisible="ams_product_type != 'enterprise'">
+                        <field name="is_seat_addon" 
+                               help="This product adds seats to existing enterprise subscriptions instead of creating new ones"/>
                     </group>
                     
-                    <!--<group string="Related Products" invisible="ams_product_type in ['none', 'seat']">
-                        <field name="child_product_ids" widget="many2many_tags"/>
-                    </group>-->
+                    <group string="Publication Settings" invisible="ams_product_type != 'publication'">
+                        <field name="is_digital" help="This is a digital publication (not physical)"/>
+                        <field name="publication_type"/>
+                    </group>
+                    
+                    <group string="Lifecycle Settings" col="2">
+                        <field name="grace_days" help="Days after expiration before suspension"/>
+                        <field name="suspend_days" help="Days in suspension before termination"/>
+                        <field name="terminate_days" help="Days until permanent termination"/>
+                    </group>
                     
                     <group string="Statistics" invisible="ams_product_type == 'none'">
                         <field name="active_subscriptions_count" readonly="1"/>
                         <field name="total_revenue_ytd" readonly="1"/>
+                        <field name="nsf_flag" readonly="1" invisible="not nsf_flag"/>
+                        <field name="last_payment_failure_date" readonly="1" invisible="not nsf_flag"/>
                     </group>
                 </page>
             </xpath>
@@ -55,9 +109,10 @@
         <field name="inherit_id" ref="product.product_template_tree_view"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='list_price']" position="after">
-                <field name="ams_product_type"/>
-                <field name="subscription_period"/>
-                <field name="active_subscriptions_count"/>
+                <field name="is_subscription_product" string="Subscription"/>
+                <field name="ams_product_type" string="Type"/>
+                <field name="subscription_period" string="Period"/>
+                <field name="active_subscriptions_count" string="Active Subs"/>
             </xpath>
         </field>
     </record>
@@ -70,12 +125,14 @@
         <field name="arch" type="xml">
             <xpath expr="//filter[@name='services']" position="after">
                 <separator/>
+                <filter name="filter_subscription_products" string="Subscription Products" domain="[('is_subscription_product', '=', True)]"/>
                 <filter name="filter_ams_products" string="AMS Products" domain="[('ams_product_type', '!=', 'none')]"/>
                 <filter name="filter_memberships" string="Memberships" domain="[('ams_product_type', 'in', ['individual', 'enterprise'])]"/>
                 <filter name="filter_chapters" string="Chapters" domain="[('ams_product_type', '=', 'chapter')]"/>
                 <filter name="filter_publications" string="Publications" domain="[('ams_product_type', '=', 'publication')]"/>
                 <separator/>
                 <group expand="0" string="Group By">
+                    <filter name="group_by_is_subscription" string="Subscription Product" domain="[]" context="{'group_by': 'is_subscription_product'}"/>
                     <filter name="group_by_ams_type" string="AMS Product Type" domain="[]" context="{'group_by': 'ams_product_type'}"/>
                     <filter name="group_by_subscription_period" string="Subscription Period" domain="[]" context="{'group_by': 'subscription_period'}"/>
                 </group>

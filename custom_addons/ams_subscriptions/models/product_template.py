@@ -8,7 +8,7 @@ from datetime import timedelta, date
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
-    # Replace the basic ams_product_type with a cleaner approach
+    # Main subscription field - this is what users interact with
     is_subscription_product = fields.Boolean(
         string='Subscription Product',
         default=False,
@@ -39,7 +39,8 @@ class ProductTemplate(models.Model):
         ('quarterly', 'Quarterly'),
         ('semi_annual', 'Semi-Annual'),
         ('annual', 'Annual'),
-    ], string='Subscription Period', default='none')
+    ], string='Subscription Period', default='annual',
+       help='How often customers will be billed for this subscription')
 
     # Subscription modification capabilities
     allow_mid_cycle_changes = fields.Boolean(
@@ -100,16 +101,6 @@ class ProductTemplate(models.Model):
         default=30,
         help='Termination period for this product (overrides tier setting if set)'
     )
-
-    # Related products
-    '''child_product_ids = fields.Many2many(
-        'product.product',
-        'product_template_child_rel',
-        'parent_id',
-        'child_id',
-        string='Related Products',
-        help='Products that come with this subscription (like free publications)'
-    )'''
 
     # Statistics fields
     active_subscriptions_count = fields.Integer(
@@ -195,10 +186,19 @@ class ProductTemplate(models.Model):
                 
             # Auto-set category
             self._set_ams_category()
+            
+            # Show a helpful message
+            return {
+                'warning': {
+                    'title': 'Subscription Product Enabled',
+                    'message': 'This product will now create subscriptions when purchased. Configure the subscription type and tier below.'
+                }
+            }
         else:
             # Reset subscription-related fields
             self.ams_product_type = 'none'
             self.subscription_tier_id = False
+            self.subscription_period = 'none'
 
     @api.onchange('ams_product_type')
     def _onchange_ams_product_type(self):
@@ -212,9 +212,17 @@ class ProductTemplate(models.Model):
             if self.ams_product_type == 'publication':
                 # Publications might be physical or digital
                 self.is_digital = True  # Default to digital
+                self.subscription_period = 'monthly' if not self.subscription_period or self.subscription_period == 'none' else self.subscription_period
             elif self.ams_product_type == 'enterprise':
                 # Enterprise memberships typically don't allow pausing
                 self.allow_pausing = False
+                self.subscription_period = 'annual' if not self.subscription_period or self.subscription_period == 'none' else self.subscription_period
+            elif self.ams_product_type == 'chapter':
+                # Chapters are typically annual
+                self.subscription_period = 'annual' if not self.subscription_period or self.subscription_period == 'none' else self.subscription_period
+            
+            # Update category
+            self._set_ams_category()
 
     def _set_ams_category(self):
         """Set appropriate product category for AMS products"""
@@ -253,60 +261,12 @@ class ProductTemplate(models.Model):
             }
         }
 
-    def action_publish_ams_product(self):
-        """Action to publish AMS product on website"""
-        self.ensure_one()
-        
-        if self.ams_product_type == 'none':
-            raise UserError("This is not an AMS product.")
-        
-        self.website_published = True
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'message': f'{self.name} has been published on the website.',
-                'type': 'success',
-                'sticky': False,
-            }
-        }
-
-    def action_create_subscription_tier(self):
-        """Create a subscription tier based on this product"""
-        self.ensure_one()
-        
-        if self.ams_product_type == 'none':
-            raise UserError("This is not an AMS subscription product.")
-        
-        tier_vals = {
-            'name': f"{self.name} Tier",
-            'description': f"Default tier for {self.name}",
-            'subscription_type': self.ams_product_type,
-            'period_length': self.subscription_period if self.subscription_period != 'none' else 'annual',
-            'grace_days': self.grace_days or 30,
-            'suspend_days': self.suspend_days or 60,
-            'terminate_days': self.terminate_days or 30,
-        }
-        
-        tier = self.env['ams.subscription.tier'].create(tier_vals)
-        self.subscription_tier_id = tier.id
-        
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Created Subscription Tier',
-            'res_model': 'ams.subscription.tier',
-            'res_id': tier.id,
-            'view_mode': 'form',
-            'target': 'new',
-        }
-
     def action_configure_subscription_tier(self):
         """Smart action to create or configure subscription tier"""
         self.ensure_one()
         
         if not self.is_subscription_product:
-            raise UserError("This is not a subscription product.")
+            raise UserError("This is not a subscription product. Please check 'Subscription Product' first.")
         
         if self.subscription_tier_id:
             # Edit existing tier
@@ -336,7 +296,17 @@ class ProductTemplate(models.Model):
                 'context': {'default_' + k: v for k, v in tier_vals.items()},
             }
 
-    @api.model
+    def action_quick_setup_subscription(self):
+        """Quick setup wizard for subscription products"""
+        self.ensure_one()
+        
+        if not self.is_subscription_product:
+            raise UserError("This is not a subscription product.")
+        
+        # This could open a wizard for quick setup
+        # For now, just redirect to tier configuration
+        return self.action_configure_subscription_tier()
+
     def create_subscription_from_payment(self, invoice_line):
         """Enhanced subscription creation from invoice payment"""
         product = invoice_line.product_id.product_tmpl_id
@@ -452,3 +422,28 @@ class ProductTemplate(models.Model):
             return start_date + relativedelta(years=1) - timedelta(days=1)
         else:
             return start_date + relativedelta(years=1) - timedelta(days=1)
+    def action_publish_ams_product(self):
+        """Publish/unpublish AMS product on website"""
+        self.ensure_one()
+    
+        if not self.is_subscription_product:
+            raise UserError("Only subscription products can be published to AMS.")
+    
+        # Toggle the website published status
+        self.website_published = not self.website_published
+    
+        action_type = "published" if self.website_published else "unpublished"
+    
+        # Log the action
+        self.message_post(
+            body=f"Product {action_type} on website by {self.env.user.name}"
+        )
+    
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'message': f'Product successfully {action_type}!',
+                'type': 'success',
+            }
+        }
