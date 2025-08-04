@@ -27,10 +27,12 @@
                 </button>
             </xpath>
             
-            <!-- Move Subscription Product checkbox after Point of Sale -->
-            <xpath expr="//field[@name='available_in_pos']" position="after">
-                <field name="is_subscription_product" string="Subscription" 
-                       help="This product creates subscriptions when purchased"/>
+            <!-- Move Subscription Product checkbox into the options section -->
+            <xpath expr="//div[@name='options']//span[last()]" position="after">
+                <span class="d-inline-flex">
+                    <field name="is_subscription_product"/>
+                    <label for="is_subscription_product" string="Subscription"/>
+                </span>
             </xpath>
             
             <!-- Keep ams_product_type hidden for computation -->
