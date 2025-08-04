@@ -45,7 +45,7 @@ Custom subscription management for associations, including:
         'views/ams_menu_actions.xml',           # ← Load actions AFTER views
         
         # Portal - TEMPORARILY REMOVED
-        # 'views/portal_template.xml',
+        'views/portal_template.xml',
         
         # Menu (load last)
         'views/ams_subscription_menu.xml',
