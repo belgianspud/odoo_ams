@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
 from odoo.exceptions import UserError
+from dateutil.relativedelta import relativedelta
+from datetime import timedelta, date
+
 
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
@@ -29,6 +32,15 @@ class ProductTemplate(models.Model):
         domain="[('subscription_type', '=', ams_product_type)]"
     )
 
+    # Subscription period configuration
+    subscription_period = fields.Selection([
+        ('none', 'Not Applicable'),
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+        ('semi_annual', 'Semi-Annual'),
+        ('annual', 'Annual'),
+    ], string='Subscription Period', default='none')
+
     # Subscription modification capabilities
     allow_mid_cycle_changes = fields.Boolean(
         string='Allow Mid-Cycle Changes',
@@ -49,16 +61,81 @@ class ProductTemplate(models.Model):
     ], string='Mid-Cycle Billing Policy', default='prorated',
     help='How to handle billing when subscription changes mid-cycle')
 
-    # Payment failure tracking
+    # Enterprise seat configuration
+    is_seat_addon = fields.Boolean(
+        string='Enterprise Seat Add-On',
+        help='This product adds seats to existing enterprise subscriptions'
+    )
+
+    # Publication-specific fields
+    is_digital = fields.Boolean(
+        string='Digital Publication',
+        help='This is a digital publication (not physical)'
+    )
+    
+    publication_type = fields.Selection([
+        ('journal', 'Journal'),
+        ('magazine', 'Magazine'),
+        ('newsletter', 'Newsletter'),
+        ('report', 'Report'),
+        ('book', 'Book'),
+        ('other', 'Other'),
+    ], string='Publication Type')
+
+    # Lifecycle settings (can override tier defaults)
+    grace_days = fields.Integer(
+        string='Grace Period (Days)',
+        default=30,
+        help='Grace period for this product (overrides tier setting if set)'
+    )
+    
+    suspend_days = fields.Integer(
+        string='Suspension Period (Days)',
+        default=60,
+        help='Suspension period for this product (overrides tier setting if set)'
+    )
+    
+    terminate_days = fields.Integer(
+        string='Termination Period (Days)',
+        default=30,
+        help='Termination period for this product (overrides tier setting if set)'
+    )
+
+    # Related products
+    '''child_product_ids = fields.Many2many(
+        'product.product',
+        'product_template_child_rel',
+        'parent_id',
+        'child_id',
+        string='Related Products',
+        help='Products that come with this subscription (like free publications)'
+    )'''
+
+    # Statistics fields
+    active_subscriptions_count = fields.Integer(
+        string='Active Subscriptions',
+        compute='_compute_subscription_stats',
+        help='Number of active subscriptions for this product'
+    )
+    
+    total_revenue_ytd = fields.Float(
+        string='Revenue YTD',
+        compute='_compute_subscription_stats',
+        help='Total revenue year-to-date from this product'
+    )
+
+    # Payment failure tracking - compute every time they're accessed
     nsf_flag = fields.Boolean(
         string='NSF Flag',
         help='This product has payment failures',
-        compute='_compute_payment_flags'
+        compute='_compute_payment_flags',
+        store=False  # Don't store, compute fresh each time
     )
     
     last_payment_failure_date = fields.Datetime(
         string='Last Payment Failure',
-        compute='_compute_payment_flags'
+        compute='_compute_payment_flags',
+        store=False  # Don't store, compute fresh each time
     )
 
     @api.depends('is_subscription_product')
@@ -69,8 +146,27 @@ class ProductTemplate(models.Model):
             elif product.ams_product_type == 'none':
                 product.ams_product_type = 'individual'  # Default to individual
 
-    @api.depends('subscription_ids')
+    @api.depends('ams_product_type')
+    def _compute_subscription_stats(self):
+        """Compute subscription statistics for this product"""
+        for product in self:
+            if product.ams_product_type == 'none':
+                product.active_subscriptions_count = 0
+                product.total_revenue_ytd = 0.0
+            else:
+                # Count active subscriptions
+                active_subs = self.env['ams.subscription'].search_count([
+                    ('product_id.product_tmpl_id', '=', product.id),
+                    ('state', '=', 'active')
+                ])
+                product.active_subscriptions_count = active_subs
+                
+                # Calculate YTD revenue (simplified)
+                product.total_revenue_ytd = active_subs * product.list_price
+
+    # No @api.depends decorator since we're searching records directly
     def _compute_payment_flags(self):
+        """Compute payment failure flags by searching payment history"""
         for product in self:
             # Look for payment failures in related subscriptions
             payment_failures = self.env['ams.payment.history'].search([
@@ -80,7 +176,7 @@ class ProductTemplate(models.Model):
             
             product.nsf_flag = bool(payment_failures)
             product.last_payment_failure_date = payment_failures.failure_date if payment_failures else False
-
+    
     @api.onchange('is_subscription_product')
     def _onchange_is_subscription_product(self):
         """Smart defaults when subscription product is enabled"""
@@ -94,7 +190,7 @@ class ProductTemplate(models.Model):
             setattr(self, product_type_field, 'service')  # Subscriptions are typically services
             
             # Set default subscription period if not set
-            if not hasattr(self, 'subscription_period') or self.subscription_period == 'none':
+            if self.subscription_period == 'none':
                 self.subscription_period = 'annual'
                 
             # Auto-set category
@@ -115,8 +211,7 @@ class ProductTemplate(models.Model):
             # Set type-specific defaults
             if self.ams_product_type == 'publication':
                 # Publications might be physical or digital
-                if not hasattr(self, 'is_digital'):
-                    self.is_digital = True  # Default to digital
+                self.is_digital = True  # Default to digital
             elif self.ams_product_type == 'enterprise':
                 # Enterprise memberships typically don't allow pausing
                 self.allow_pausing = False
@@ -132,7 +227,7 @@ class ProductTemplate(models.Model):
             'individual': 'Individual Memberships',
             'enterprise': 'Enterprise Memberships', 
             'chapter': 'Chapters',
-            'publication': 'Digital Publications' if getattr(self, 'is_digital', True) else 'Print Publications'
+            'publication': 'Digital Publications' if self.is_digital else 'Print Publications'
         }
         
         if self.ams_product_type in category_mapping:
@@ -141,6 +236,70 @@ class ProductTemplate(models.Model):
             if not category:
                 category = category_obj.create({'name': category_name})
             self.categ_id = category.id
+
+    def action_view_subscriptions(self):
+        """Action to view subscriptions for this product"""
+        self.ensure_one()
+        
+        return {
+            'name': f'Subscriptions for {self.name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'ams.subscription',
+            'view_mode': 'list,form',
+            'domain': [('product_id.product_tmpl_id', '=', self.id)],
+            'context': {
+                'default_product_id': self.product_variant_id.id if self.product_variant_id else False,
+                'search_default_active': 1,
+            }
+        }
+
+    def action_publish_ams_product(self):
+        """Action to publish AMS product on website"""
+        self.ensure_one()
+        
+        if self.ams_product_type == 'none':
+            raise UserError("This is not an AMS product.")
+        
+        self.website_published = True
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'message': f'{self.name} has been published on the website.',
+                'type': 'success',
+                'sticky': False,
+            }
+        }
+
+    def action_create_subscription_tier(self):
+        """Create a subscription tier based on this product"""
+        self.ensure_one()
+        
+        if self.ams_product_type == 'none':
+            raise UserError("This is not an AMS subscription product.")
+        
+        tier_vals = {
+            'name': f"{self.name} Tier",
+            'description': f"Default tier for {self.name}",
+            'subscription_type': self.ams_product_type,
+            'period_length': self.subscription_period if self.subscription_period != 'none' else 'annual',
+            'grace_days': self.grace_days or 30,
+            'suspend_days': self.suspend_days or 60,
+            'terminate_days': self.terminate_days or 30,
+        }
+        
+        tier = self.env['ams.subscription.tier'].create(tier_vals)
+        self.subscription_tier_id = tier.id
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Created Subscription Tier',
+            'res_model': 'ams.subscription.tier',
+            'res_id': tier.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
 
     def action_configure_subscription_tier(self):
         """Smart action to create or configure subscription tier"""
@@ -165,7 +324,7 @@ class ProductTemplate(models.Model):
                 'name': f"{self.name} Tier",
                 'description': f"Default tier for {self.name}",
                 'subscription_type': self.ams_product_type,
-                'period_length': getattr(self, 'subscription_period', 'annual'),
+                'period_length': self.subscription_period if self.subscription_period != 'none' else 'annual',
             }
             
             return {
@@ -209,7 +368,7 @@ class ProductTemplate(models.Model):
             'subscription_type': product.ams_product_type,
             'tier_id': product.subscription_tier_id.id if product.subscription_tier_id else False,
             'start_date': start_date,
-            'paid_through_date': self._calculate_end_date(start_date, getattr(product, 'subscription_period', 'annual')),
+            'paid_through_date': self._calculate_end_date(start_date, product.subscription_period or 'annual'),
             'state': 'active',
             'invoice_id': invoice_line.move_id.id,
             'invoice_line_id': invoice_line.id,
@@ -231,6 +390,31 @@ class ProductTemplate(models.Model):
         subscription.message_post(body=f"Subscription created from invoice payment: {invoice_line.move_id.name}")
         
         return subscription
+
+    def _handle_seat_addon_payment(self, invoice_line):
+        """Add seats to existing enterprise subscription"""
+        partner = invoice_line.move_id.partner_id
+        
+        # Find active enterprise subscription for this partner
+        enterprise_sub = self.env['ams.subscription'].search([
+            ('partner_id', '=', partner.id),
+            ('subscription_type', '=', 'enterprise'),
+            ('state', '=', 'active'),
+        ], limit=1)
+        
+        if enterprise_sub:
+            seats_to_add = int(invoice_line.quantity)
+            enterprise_sub.extra_seats += seats_to_add
+            enterprise_sub.message_post(
+                body=f"{seats_to_add} seats added via invoice payment: {invoice_line.move_id.name}"
+            )
+            return enterprise_sub
+        else:
+            # No active enterprise subscription found - log warning
+            invoice_line.move_id.message_post(
+                body="Warning: Seat add-on purchased but no active enterprise subscription found."
+            )
+            return False
 
     def _update_partner_subscription_status(self, partner, subscription):
         """Update partner record with active subscription information"""
@@ -257,9 +441,6 @@ class ProductTemplate(models.Model):
 
     def _calculate_end_date(self, start_date, period):
         """Calculate end date based on subscription period"""
-        from dateutil.relativedelta import relativedelta
-        from datetime import timedelta, date
-        
         if period == 'monthly':
             return start_date + relativedelta(months=1) - timedelta(days=1)
         elif period == 'quarterly':

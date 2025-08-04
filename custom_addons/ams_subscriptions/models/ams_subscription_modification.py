@@ -108,14 +108,15 @@ class AMSSubscriptionModification(models.Model):
             body=f"Modification cancelled: {self.modification_type} - {self.reason}"
         )
 
-    @api.model
-    def create(self, vals):
+    @api.model_create_multi
+    def create(self, vals_list):
         """Override create to auto-confirm simple modifications"""
-        record = super().create(vals)
+        records = super().create(vals_list)
         
         # Auto-confirm certain types of modifications
-        if record.modification_type in ['pause', 'resume']:
-            record.action_confirm()
-            record.action_apply()
+        for record in records:
+            if record.modification_type in ['pause', 'resume']:
+                record.action_confirm()
+                record.action_apply()
         
-        return record
+        return records

@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 from odoo.exceptions import UserError
 
 class AMSSubscription(models.Model):
-    _name = 'ams.subscription'  # ✅ CORRECT - creates the base model
+    _name = 'ams.subscription'  # creates the base model
     _description = 'AMS Subscription'
     _inherit = ['mail.thread', 'mail.activity.mixin']  # For chatter and tracking
 

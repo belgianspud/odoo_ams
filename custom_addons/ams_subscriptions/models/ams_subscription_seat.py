@@ -30,11 +30,12 @@ class AMSSubscriptionSeat(models.Model):
         help='When unchecked, the seat is freed for reassignment.'
     )
 
-    @api.model
-    def create(self, vals):
-        seat = super().create(vals)
-        seat._activate_contact_membership()
-        return seat
+    @api.model_create_multi
+    def create(self, vals_list):
+        seats = super().create(vals_list)
+        for seat in seats:
+            seat._activate_contact_membership()
+        return seats
 
     def unlink(self):
         for seat in self:

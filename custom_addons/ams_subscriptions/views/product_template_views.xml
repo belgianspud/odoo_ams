@@ -35,9 +35,9 @@
                         <field name="terminate_days"/>
                     </group>
                     
-                    <group string="Related Products" invisible="ams_product_type in ['none', 'seat']">
+                    <!--<group string="Related Products" invisible="ams_product_type in ['none', 'seat']">
                         <field name="child_product_ids" widget="many2many_tags"/>
-                    </group>
+                    </group>-->
                     
                     <group string="Statistics" invisible="ams_product_type == 'none'">
                         <field name="active_subscriptions_count" readonly="1"/>
