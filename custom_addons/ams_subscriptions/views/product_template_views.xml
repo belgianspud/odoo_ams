@@ -27,10 +27,14 @@
                 </button>
             </xpath>
             
-            <!-- Add Subscription Product checkbox after the category field -->
+            <!-- Move Subscription Product checkbox after Point of Sale -->
+            <xpath expr="//field[@name='available_in_pos']" position="after">
+                <field name="is_subscription_product" string="Subscription" 
+                       help="This product creates subscriptions when purchased"/>
+            </xpath>
+            
+            <!-- Keep ams_product_type hidden for computation -->
             <xpath expr="//field[@name='categ_id']" position="after">
-                <field name="is_subscription_product" string="🔄 Subscription Product" 
-                       help="Check this box to make this product create subscriptions when purchased"/>
                 <field name="ams_product_type" invisible="1"/>
             </xpath>
             
