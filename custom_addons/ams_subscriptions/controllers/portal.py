@@ -6,21 +6,14 @@ from odoo.tools import groupby as groupbyelem
 from operator import itemgetter
 import json
 
-try:
-    from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
-except ImportError:
-    # Fallback for different Odoo versions
-    from odoo.addons.website.controllers.main import Website as CustomerPortal
-    from odoo.addons.website.controllers.main import pager as portal_pager
+# Import portal controller - works with both Enterprise and Community
+from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager
 
 class AMSPortal(CustomerPortal):
 
     def _prepare_portal_layout_values(self):
         """Add subscription count to portal home - compatible with Community"""
-        try:
-            values = super()._prepare_portal_layout_values()
-        except:
-            values = {}
+        values = super()._prepare_portal_layout_values()
         
         partner = request.env.user.partner_id
         
@@ -32,25 +25,6 @@ class AMSPortal(CustomerPortal):
             ('state', '!=', 'terminated')
         ])
         values['subscription_count'] = subscription_count
-        
-        return values
-
-    def _prepare_home_portal_values(self, counters):
-        """Add subscription count to portal home counters"""
-        try:
-            values = super()._prepare_home_portal_values(counters)
-        except:
-            values = {}
-        
-        partner = request.env.user.partner_id
-        if 'subscription_count' in counters:
-            subscription_count = request.env['ams.subscription'].search_count([
-                '|',
-                ('partner_id', '=', partner.id),
-                ('account_id', '=', partner.id),
-                ('state', '!=', 'terminated')
-            ])
-            values['subscription_count'] = subscription_count
         
         return values
 
@@ -415,103 +389,3 @@ class AMSPortal(CustomerPortal):
         }
         
         return request.render('ams_subscriptions.portal_enterprise_seats', values)
-
-    @http.route(['/my/enterprise-seats/assign'], type='http', auth='user', website=True, methods=['POST'], csrf=True)
-    def assign_enterprise_seat(self, **post):
-        """Assign an enterprise seat to a contact"""
-        partner = request.env.user.partner_id
-        subscription_id = int(post.get('subscription_id', 0))
-        contact_id = int(post.get('contact_id', 0))
-        
-        if not subscription_id or not contact_id:
-            request.session['message'] = {'type': 'danger', 'text': 'Invalid subscription or contact selected.'}
-            return request.redirect('/my/enterprise-seats')
-        
-        subscription = request.env['ams.subscription'].browse(subscription_id)
-        
-        # Security check
-        if subscription.account_id != partner:
-            request.session['message'] = {'type': 'danger', 'text': 'Access denied.'}
-            return request.redirect('/my/enterprise-seats')
-        
-        # Check if seats are available
-        active_seats = len(subscription.seat_ids.filtered('active'))
-        if active_seats >= subscription.total_seats:
-            request.session['message'] = {'type': 'danger', 'text': 'No available seats in this subscription.'}
-            return request.redirect('/my/enterprise-seats')
-        
-        # Check if contact is already assigned
-        existing_seat = request.env['ams.subscription.seat'].search([
-            ('subscription_id', '=', subscription_id),
-            ('contact_id', '=', contact_id),
-            ('active', '=', True)
-        ])
-        
-        if existing_seat:
-            request.session['message'] = {'type': 'warning', 'text': 'This contact is already assigned to this subscription.'}
-            return request.redirect('/my/enterprise-seats')
-        
-        try:
-            # Create seat assignment
-            request.env['ams.subscription.seat'].sudo().create({
-                'subscription_id': subscription_id,
-                'contact_id': contact_id,
-                'assigned_date': fields.Date.today(),
-                'active': True,
-            })
-            
-            request.session['message'] = {'type': 'success', 'text': 'Seat assigned successfully!'}
-        except Exception as e:
-            request.session['message'] = {'type': 'danger', 'text': f'Error assigning seat: {str(e)}'}
-        
-        return request.redirect('/my/enterprise-seats')
-
-    @http.route(['/my/enterprise-seats/<int:seat_id>/unassign'], type='http', auth='user', website=True, methods=['POST'], csrf=True)
-    def unassign_enterprise_seat(self, seat_id, **post):
-        """Unassign an enterprise seat"""
-        partner = request.env.user.partner_id
-        seat = request.env['ams.subscription.seat'].browse(seat_id)
-        
-        # Security check
-        if not seat.exists() or seat.subscription_id.account_id != partner:
-            request.session['message'] = {'type': 'danger', 'text': 'Access denied.'}
-            return request.redirect('/my/enterprise-seats')
-        
-        try:
-            seat.sudo().write({'active': False})
-            request.session['message'] = {'type': 'success', 'text': 'Seat unassigned successfully!'}
-        except Exception as e:
-            request.session['message'] = {'type': 'danger', 'text': f'Error unassigning seat: {str(e)}'}
-        
-        return request.redirect('/my/enterprise-seats')
-
-    @http.route(['/my/subscription/calculate-proration'], type='json', auth='user')
-    def calculate_proration(self, subscription_id, new_tier_id):
-        """AJAX endpoint to calculate proration for subscription changes"""
-        try:
-            subscription = request.env['ams.subscription'].browse(subscription_id)
-            new_tier = request.env['ams.subscription.tier'].browse(new_tier_id)
-            partner = request.env.user.partner_id
-            
-            # Security check
-            if not subscription.exists() or (subscription.partner_id != partner and subscription.account_id != partner):
-                return {'error': 'Unauthorized'}
-            
-            if not new_tier.exists():
-                return {'error': 'Invalid tier selected'}
-            
-            # Determine modification type
-            modification_type = 'upgrade' if new_tier_id > subscription.tier_id.id else 'downgrade'
-            
-            proration_amount = subscription._calculate_proration(
-                subscription.tier_id, new_tier, modification_type
-            )
-            
-            return {
-                'proration_amount': proration_amount,
-                'formatted_amount': f"${abs(proration_amount):.2f}",
-                'is_charge': proration_amount > 0,
-                'is_credit': proration_amount < 0,
-            }
-        except Exception as e:
-            return {'error': str(e)}

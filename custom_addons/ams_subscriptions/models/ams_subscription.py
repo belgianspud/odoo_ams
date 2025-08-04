@@ -357,6 +357,115 @@ class AMSSubscription(models.Model):
 
             # Optional: email notification could be added here
             sub.message_post(body=f"Renewal invoice {invoice.name or invoice.id} generated.")
+    
+    def _calculate_proration(self, old_tier, new_tier, modification_type):
+        """Calculate proration amount for subscription changes"""
+        self.ensure_one()
+    
+        if not old_tier or not new_tier:
+            return 0.0
+    
+        # Get current subscription product
+        if not self.product_id:
+            return 0.0
+    
+        # Calculate daily rates
+        old_price = self.product_id.list_price  # Could be enhanced to use tier-specific pricing
+        new_price = self.product_id.list_price  # This is simplified - in reality you'd have tier-specific pricing
+    
+        # Calculate remaining days in period
+        if not self.paid_through_date:
+            return 0.0
+    
+        today = fields.Date.today()
+        if self.paid_through_date <= today:
+            return 0.0
+    
+        remaining_days = (self.paid_through_date - today).days
+    
+        # Get period length in days
+        period_days = self._get_period_days(self.tier_id.period_length if self.tier_id else 'annual')
+    
+        if period_days <= 0:
+            return 0.0
+    
+        # Calculate daily rates
+        old_daily_rate = old_price / period_days
+        new_daily_rate = new_price / period_days
+    
+        # Calculate proration
+        old_remaining_value = old_daily_rate * remaining_days
+        new_remaining_value = new_daily_rate * remaining_days
+    
+        proration_amount = new_remaining_value - old_remaining_value
+    
+        return proration_amount
+
+    def action_modify_subscription(self, new_tier_id, modification_type):
+        """Modify subscription to new tier"""
+        self.ensure_one()
+    
+        if not self.allow_modifications:
+            raise UserError("This subscription does not allow modifications.")
+    
+        if self.state != 'active':
+            raise UserError("Only active subscriptions can be modified.")
+    
+        new_tier = self.env['ams.subscription.tier'].browse(new_tier_id)
+        if not new_tier.exists():
+            raise UserError("Invalid tier selected.")
+    
+        old_tier = self.tier_id
+    
+        # Calculate proration
+        proration_amount = self._calculate_proration(old_tier, new_tier, modification_type)
+    
+        # Create modification record
+        modification = self.env['ams.subscription.modification'].create({
+            'subscription_id': self.id,
+            'modification_type': modification_type,
+            'old_tier_id': old_tier.id,
+            'new_tier_id': new_tier.id,
+            'proration_amount': proration_amount,
+            'reason': f'Customer requested {modification_type} via portal',
+            'modification_date': fields.Date.today(),
+        })
+
+        # Update subscription
+        self.tier_id = new_tier.id
+
+        # Create invoice for proration if needed
+        if abs(proration_amount) > 0.01:  # Only if significant amount
+            self._create_proration_invoice(proration_amount, modification)
+
+        self.message_post(
+            body=f"Subscription modified: {modification_type} from {old_tier.name} to {new_tier.name}. "
+                 f"Proration: {proration_amount:+.2f}"
+        )
+
+        return modification
+
+    def _create_proration_invoice(self, proration_amount, modification):
+        """Create invoice for proration amount"""
+        if not self.product_id:
+            return
+    
+        invoice_vals = {
+            'move_type': 'out_invoice' if proration_amount > 0 else 'out_refund',
+            'partner_id': self.partner_id.id,
+            'invoice_origin': f"Proration - {self.name}",
+            'invoice_line_ids': [(0, 0, {
+                'product_id': self.product_id.id,
+                'quantity': 1,
+                'price_unit': abs(proration_amount),
+                'name': f"Subscription {modification.modification_type} proration - {self.name}",
+            })],
+        }
+    
+        invoice = self.env['account.move'].create(invoice_vals)
+        modification.proration_invoice_id = invoice.id
+    
+        return invoice
 
 
 # Enhanced Account Move model for subscription creation
