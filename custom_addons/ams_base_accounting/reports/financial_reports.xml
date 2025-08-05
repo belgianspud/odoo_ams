@@ -1,0 +1,731 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ==============================================
+         AMS FINANCIAL REPORTS
+         ============================================== -->
+    
+    <!-- ==============================================
+         REPORT TEMPLATES
+         ============================================== -->
+    
+    <!-- Revenue Recognition Report Template -->
+    <template id="report_revenue_recognition_document" name="Revenue Recognition Report">
+        <t t-call="web.external_layout">
+            <t t-set="doc" t-value="doc.with_context(lang=doc.partner_id.lang)"/>
+            <div class="page">
+                <div class="oe_structure"/>
+                
+                <h2>Revenue Recognition Report</h2>
+                
+                <div class="row mt32 mb32">
+                    <div class="col-6">
+                        <strong>Report Period:</strong>
+                        <span t-esc="period_start"/> to <span t-esc="period_end"/>
+                    </div>
+                    <div class="col-6">
+                        <strong>Generated:</strong>
+                        <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')"/>
+                    </div>
+                </div>
+                
+                <!-- Summary Section -->
+                <h3>Summary</h3>
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>Total Revenue Recognized:</strong></td>
+                        <td class="text-right">
+                            <span t-esc="total_recognized" t-options="{'widget': 'monetary', 'display_currency': company.currency_id}"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Deferred Revenue:</strong></td>
+                        <td class="text-right">
+                            <span t-esc="total_deferred" t-options="{'widget': 'monetary', 'display_currency': company.currency_id}"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Recognition Entries:</strong></td>
+                        <td class="text-right"><span t-esc="entry_count"/></td>
+                    </tr>
+                </table>
+                
+                <!-- Detailed Entries -->
+                <h3>Revenue Recognition Entries</h3>
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Subscription</th>
+                            <th>Customer</th>
+                            <th>Period</th>
+                            <th class="text-right">Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="recognition_entries" t-as="entry">
+                            <tr>
+                                <td><span t-esc="entry.recognition_date"/></td>
+                                <td><span t-esc="entry.subscription_id.name"/></td>
+                                <td><span t-esc="entry.partner_id.name"/></td>
+                                <td>
+                                    <span t-esc="entry.period_start"/> - <span t-esc="entry.period_end"/>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="entry.recognition_amount" t-options="{'widget': 'monetary', 'display_currency': entry.company_id.currency_id}"/>
+                                </td>
+                                <td>
+                                    <span t-if="entry.state == 'posted'" class="badge badge-success">Posted</span>
+                                    <span t-if="entry.state == 'confirmed'" class="badge badge-info">Confirmed</span>
+                                    <span t-if="entry.state == 'draft'" class="badge badge-secondary">Draft</span>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                
+                <div class="oe_structure"/>
+            </div>
+        </t>
+    </template>
+    
+    <!-- Subscription Financial Summary Template -->
+    <template id="report_subscription_financial_summary_document" name="Subscription Financial Summary">
+        <t t-call="web.external_layout">
+            <div class="page">
+                <div class="oe_structure"/>
+                
+                <h2>Subscription Financial Summary</h2>
+                
+                <div class="row mt32 mb32">
+                    <div class="col-6">
+                        <strong>Subscription:</strong> <span t-esc="doc.name"/>
+                    </div>
+                    <div class="col-6">
+                        <strong>Customer:</strong> <span t-esc="doc.partner_id.name"/>
+                    </div>
+                </div>
+                
+                <div class="row mb32">
+                    <div class="col-6">
+                        <strong>Product:</strong> <span t-esc="doc.product_id.name"/>
+                    </div>
+                    <div class="col-6">
+                        <strong>Period:</strong> <span t-esc="doc.subscription_period"/>
+                    </div>
+                </div>
+                
+                <!-- Financial Overview -->
+                <h3>Financial Overview</h3>
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>Total Contract Value:</strong></td>
+                        <td class="text-right">
+                            <span t-esc="doc.total_invoiced_amount" t-options="{'widget': 'monetary', 'display_currency': doc.company_id.currency_id}"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Revenue Recognized:</strong></td>
+                        <td class="text-right">
+                            <span t-esc="doc.total_recognized_revenue" t-options="{'widget': 'monetary', 'display_currency': doc.company_id.currency_id}"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Deferred Revenue Balance:</strong></td>
+                        <td class="text-right">
+                            <span t-esc="doc.deferred_revenue_balance" t-options="{'widget': 'monetary', 'display_currency': doc.company_id.currency_id}"/>
+                        </td>
+                    </tr>
+                    <tr class="table-active">
+                        <td><strong>Recognition Percentage:</strong></td>
+                        <td class="text-right">
+                            <span t-esc="doc.recognition_percentage" t-options="{'widget': 'percentage'}"/>
+                        </td>
+                    </tr>
+                </table>
+                
+                <!-- Recognition Schedule -->
+                <h3>Revenue Recognition Schedule</h3>
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Recognition Date</th>
+                            <th>Period Start</th>
+                            <th>Period End</th>
+                            <th class="text-right">Amount</th>
+                            <th>Status</th>
+                            <th>Journal Entry</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="doc.revenue_recognition_ids" t-as="recognition">
+                            <tr>
+                                <td><span t-esc="recognition.recognition_date"/></td>
+                                <td><span t-esc="recognition.period_start"/></td>
+                                <td><span t-esc="recognition.period_end"/></td>
+                                <td class="text-right">
+                                    <span t-esc="recognition.recognition_amount" t-options="{'widget': 'monetary', 'display_currency': recognition.company_id.currency_id}"/>
+                                </td>
+                                <td>
+                                    <span t-if="recognition.state == 'posted'" class="badge badge-success">Posted</span>
+                                    <span t-if="recognition.state == 'confirmed'" class="badge badge-info">Confirmed</span>
+                                    <span t-if="recognition.state == 'draft'" class="badge badge-secondary">Draft</span>
+                                </td>
+                                <td>
+                                    <span t-if="recognition.move_id" t-esc="recognition.move_id.name"/>
+                                    <span t-if="not recognition.move_id" class="text-muted">-</span>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                
+                <!-- Journal Entries -->
+                <h3>Related Journal Entries</h3>
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Entry</th>
+                            <th>Journal</th>
+                            <th>Reference</th>
+                            <th class="text-right">Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="doc.journal_entry_ids" t-as="entry">
+                            <tr>
+                                <td><span t-esc="entry.date"/></td>
+                                <td><span t-esc="entry.name"/></td>
+                                <td><span t-esc="entry.journal_id.name"/></td>
+                                <td><span t-esc="entry.ref or '-'"/></td>
+                                <td class="text-right">
+                                    <span t-esc="entry.amount_total" t-options="{'widget': 'monetary', 'display_currency': entry.company_id.currency_id}"/>
+                                </td>
+                                <td>
+                                    <span t-if="entry.state == 'posted'" class="badge badge-success">Posted</span>
+                                    <span t-if="entry.state == 'draft'" class="badge badge-secondary">Draft</span>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                
+                <div class="oe_structure"/>
+            </div>
+        </t>
+    </template>
+    
+    <!-- Chart of Accounts Report Template -->
+    <template id="report_chart_of_accounts_document" name="Chart of Accounts Report">
+        <t t-call="web.external_layout">
+            <div class="page">
+                <div class="oe_structure"/>
+                
+                <h2>Chart of Accounts</h2>
+                
+                <div class="row mt32 mb32">
+                    <div class="col-6">
+                        <strong>Company:</strong> <span t-esc="company.name"/>
+                    </div>
+                    <div class="col-6">
+                        <strong>Generated:</strong>
+                        <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')"/>
+                    </div>
+                </div>
+                
+                <!-- Assets -->
+                <h3>Assets</h3>
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Account Name</th>
+                            <th>Type</th>
+                            <th>AMS Category</th>
+                            <th class="text-right">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="asset_accounts" t-as="account">
+                            <tr>
+                                <td><span t-esc="account.code"/></td>
+                                <td><span t-esc="account.name"/></td>
+                                <td><span t-esc="account.account_type"/></td>
+                                <td><span t-esc="account.ams_category"/></td>
+                                <td class="text-right">
+                                    <span t-esc="account.balance" t-options="{'widget': 'monetary', 'display_currency': account.company_id.currency_id}"/>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                
+                <!-- Liabilities -->
+                <h3>Liabilities</h3>
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Account Name</th>
+                            <th>Type</th>
+                            <th>AMS Category</th>
+                            <th class="text-right">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="liability_accounts" t-as="account">
+                            <tr>
+                                <td><span t-esc="account.code"/></td>
+                                <td><span t-esc="account.name"/></td>
+                                <td><span t-esc="account.account_type"/></td>
+                                <td><span t-esc="account.ams_category"/></td>
+                                <td class="text-right">
+                                    <span t-esc="account.balance" t-options="{'widget': 'monetary', 'display_currency': account.company_id.currency_id}"/>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                
+                <!-- Equity -->
+                <h3>Equity</h3>
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Account Name</th>
+                            <th>Type</th>
+                            <th>AMS Category</th>
+                            <th class="text-right">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="equity_accounts" t-as="account">
+                            <tr>
+                                <td><span t-esc="account.code"/></td>
+                                <td><span t-esc="account.name"/></td>
+                                <td><span t-esc="account.account_type"/></td>
+                                <td><span t-esc="account.ams_category"/></td>
+                                <td class="text-right">
+                                    <span t-esc="account.balance" t-options="{'widget': 'monetary', 'display_currency': account.company_id.currency_id}"/>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                
+                <!-- Income -->
+                <h3>Income</h3>
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Account Name</th>
+                            <th>Type</th>
+                            <th>AMS Category</th>
+                            <th class="text-right">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="income_accounts" t-as="account">
+                            <tr>
+                                <td><span t-esc="account.code"/></td>
+                                <td><span t-esc="account.name"/></td>
+                                <td><span t-esc="account.account_type"/></td>
+                                <td><span t-esc="account.ams_category"/></td>
+                                <td class="text-right">
+                                    <span t-esc="account.balance" t-options="{'widget': 'monetary', 'display_currency': account.company_id.currency_id}"/>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                
+                <!-- Expenses -->
+                <h3>Expenses</h3>
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Account Name</th>
+                            <th>Type</th>
+                            <th>AMS Category</th>
+                            <th class="text-right">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="expense_accounts" t-as="account">
+                            <tr>
+                                <td><span t-esc="account.code"/></td>
+                                <td><span t-esc="account.name"/></td>
+                                <td><span t-esc="account.account_type"/></td>
+                                <td><span t-esc="account.ams_category"/></td>
+                                <td class="text-right">
+                                    <span t-esc="account.balance" t-options="{'widget': 'monetary', 'display_currency': account.company_id.currency_id}"/>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                
+                <div class="oe_structure"/>
+            </div>
+        </t>
+    </template>
+    
+    <!-- Deferred Revenue Report Template -->
+    <template id="report_deferred_revenue_document" name="Deferred Revenue Report">
+        <t t-call="web.external_layout">
+            <div class="page">
+                <div class="oe_structure"/>
+                
+                <h2>Deferred Revenue Report</h2>
+                
+                <div class="row mt32 mb32">
+                    <div class="col-6">
+                        <strong>As of Date:</strong> <span t-esc="as_of_date"/>
+                    </div>
+                    <div class="col-6">
+                        <strong>Total Deferred Revenue:</strong>
+                        <span t-esc="total_deferred_revenue" t-options="{'widget': 'monetary', 'display_currency': company.currency_id}"/>
+                    </div>
+                </div>
+                
+                <!-- Summary by Product Type -->
+                <h3>Summary by Product Type</h3>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Product Type</th>
+                            <th class="text-right">Number of Subscriptions</th>
+                            <th class="text-right">Deferred Revenue</th>
+                            <th class="text-right">Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="deferred_summary" t-as="summary">
+                            <tr>
+                                <td><span t-esc="summary['product_type']"/></td>
+                                <td class="text-right"><span t-esc="summary['subscription_count']"/></td>
+                                <td class="text-right">
+                                    <span t-esc="summary['deferred_amount']" t-options="{'widget': 'monetary', 'display_currency': company.currency_id}"/>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="summary['percentage']" t-options="{'widget': 'percentage'}"/>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                
+                <!-- Detailed Deferred Revenue -->
+                <h3>Detailed Deferred Revenue</h3>
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Subscription</th>
+                            <th>Customer</th>
+                            <th>Product</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th class="text-right">Total Value</th>
+                            <th class="text-right">Recognized</th>
+                            <th class="text-right">Deferred</th>
+                            <th class="text-right">%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="deferred_subscriptions" t-as="subscription">
+                            <tr>
+                                <td><span t-esc="subscription.name"/></td>
+                                <td><span t-esc="subscription.partner_id.name"/></td>
+                                <td><span t-esc="subscription.product_id.name"/></td>
+                                <td><span t-esc="subscription.start_date"/></td>
+                                <td><span t-esc="subscription.paid_through_date"/></td>
+                                <td class="text-right">
+                                    <span t-esc="subscription.total_invoiced_amount" t-options="{'widget': 'monetary', 'display_currency': subscription.company_id.currency_id}"/>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="subscription.total_recognized_revenue" t-options="{'widget': 'monetary', 'display_currency': subscription.company_id.currency_id}"/>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="subscription.deferred_revenue_balance" t-options="{'widget': 'monetary', 'display_currency': subscription.company_id.currency_id}"/>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="subscription.recognition_percentage" t-options="{'widget': 'percentage'}"/>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                
+                <div class="oe_structure"/>
+            </div>
+        </t>
+    </template>
+    
+    <!-- ==============================================
+         REPORT DEFINITIONS
+         ============================================== -->
+    
+    <!-- Revenue Recognition Report -->
+    <record id="report_revenue_recognition" model="ir.actions.report">
+        <field name="name">Revenue Recognition Report</field>
+        <field name="model">ams.revenue.recognition</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_base_accounting.report_revenue_recognition_document</field>
+        <field name="report_file">ams_base_accounting.report_revenue_recognition_document</field>
+        <field name="binding_model_id" ref="model_ams_revenue_recognition"/>
+        <field name="binding_type">report</field>
+    </record>
+    
+    <!-- Subscription Financial Summary Report -->
+    <record id="report_subscription_financial_summary" model="ir.actions.report">
+        <field name="name">Subscription Financial Summary</field>
+        <field name="model">ams.subscription</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_base_accounting.report_subscription_financial_summary_document</field>
+        <field name="report_file">ams_base_accounting.report_subscription_financial_summary_document</field>
+        <field name="binding_model_id" ref="ams_subscriptions.model_ams_subscription"/>
+        <field name="binding_type">report</field>
+    </record>
+    
+    <!-- Chart of Accounts Report -->
+    <record id="report_chart_of_accounts" model="ir.actions.report">
+        <field name="name">Chart of Accounts</field>
+        <field name="model">ams.account.account</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_base_accounting.report_chart_of_accounts_document</field>
+        <field name="report_file">ams_base_accounting.report_chart_of_accounts_document</field>
+        <field name="binding_model_id" ref="model_ams_account_account"/>
+        <field name="binding_type">report</field>
+    </record>
+    
+    <!-- Deferred Revenue Report -->
+    <record id="report_deferred_revenue" model="ir.actions.report">
+        <field name="name">Deferred Revenue Report</field>
+        <field name="model">ams.subscription</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_base_accounting.report_deferred_revenue_document</field>
+        <field name="report_file">ams_base_accounting.report_deferred_revenue_document</field>
+        <field name="binding_model_id" ref="ams_subscriptions.model_ams_subscription"/>
+        <field name="binding_type">report</field>
+    </record>
+    
+    <!-- ==============================================
+         REPORT ACTIONS FOR MENUS
+         ============================================== -->
+    
+    <!-- Monthly Revenue Recognition Report Action -->
+    <record id="action_monthly_revenue_recognition_report" model="ir.actions.act_window">
+        <field name="name">Monthly Revenue Recognition Report</field>
+        <field name="res_model">ams.revenue.recognition.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_report_type': 'monthly',
+            'default_period_start': context_today().strftime('%Y-%m-01'),
+            'default_period_end': (context_today().replace(day=1) + relativedelta(months=1) - relativedelta(days=1)).strftime('%Y-%m-%d')
+        }</field>
+    </record>
+    
+    <!-- Annual Financial Summary Action -->
+    <record id="action_annual_financial_summary" model="ir.actions.act_window">
+        <field name="name">Annual Financial Summary</field>
+        <field name="res_model">ams.financial.summary.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_report_type': 'annual',
+            'default_year': context_today().year
+        }</field>
+    </record>
+    
+    <!-- Subscription Aging Report Action -->
+    <record id="action_subscription_aging_report" model="ir.actions.act_window">
+        <field name="name">Subscription Aging Report</field>
+        <field name="res_model">ams.subscription.aging.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_as_of_date': context_today()
+        }</field>
+    </record>
+    
+    <!-- ==============================================
+         DASHBOARD REPORT WIDGETS
+         ============================================== -->
+    
+    <!-- Revenue Recognition Dashboard Widget -->
+    <template id="revenue_recognition_dashboard_widget" name="Revenue Recognition Widget">
+        <div class="o_kanban_card o_dashboard_revenue_recognition">
+            <div class="o_kanban_card_header">
+                <div class="o_kanban_card_header_title">
+                    <div class="o_primary">Revenue Recognition</div>
+                    <div class="o_secondary">This Month</div>
+                </div>
+            </div>
+            <div class="container o_kanban_card_content">
+                <div class="row">
+                    <div class="col-6 o_kanban_primary_left">
+                        <button class="btn btn-primary" name="action_view_monthly_recognition" type="object">
+                            <span t-esc="monthly_recognition_amount" t-options="{'widget': 'monetary'}"/>
+                        </button>
+                        <span class="text-muted">This Month</span>
+                    </div>
+                    <div class="col-6 o_kanban_primary_right">
+                        <button class="btn btn-secondary" name="action_view_pending_recognition" type="object">
+                            <span t-esc="pending_recognition_count"/>
+                        </button>
+                        <span class="text-muted">Pending</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Deferred Revenue Dashboard Widget -->
+    <template id="deferred_revenue_dashboard_widget" name="Deferred Revenue Widget">
+        <div class="o_kanban_card o_dashboard_deferred_revenue">
+            <div class="o_kanban_card_header">
+                <div class="o_kanban_card_header_title">
+                    <div class="o_primary">Deferred Revenue</div>
+                    <div class="o_secondary">Current Balance</div>
+                </div>
+            </div>
+            <div class="container o_kanban_card_content">
+                <div class="row">
+                    <div class="col-12">
+                        <button class="btn btn-primary btn-block" name="action_view_deferred_revenue_detail" type="object">
+                            <span t-esc="total_deferred_revenue" t-options="{'widget': 'monetary'}"/>
+                        </button>
+                        <div class="mt-2">
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" 
+                                     t-attf-style="width: #{deferred_revenue_percentage}%"
+                                     t-attf-aria-valuenow="#{deferred_revenue_percentage}" 
+                                     aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                            <small class="text-muted">vs Total Contract Value</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Subscription Health Dashboard Widget -->
+    <template id="subscription_health_dashboard_widget" name="Subscription Health Widget">
+        <div class="o_kanban_card o_dashboard_subscription_health">
+            <div class="o_kanban_card_header">
+                <div class="o_kanban_card_header_title">
+                    <div class="o_primary">Subscription Health</div>
+                    <div class="o_secondary">Accounting Status</div>
+                </div>
+            </div>
+            <div class="container o_kanban_card_content">
+                <div class="row">
+                    <div class="col-4">
+                        <div class="text-center">
+                            <div class="o_stat_value text-success">
+                                <span t-esc="setup_complete_count"/>
+                            </div>
+                            <div class="o_stat_text">Complete</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center">
+                            <div class="o_stat_value text-warning">
+                                <span t-esc="setup_partial_count"/>
+                            </div>
+                            <div class="o_stat_text">Partial</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center">
+                            <div class="o_stat_value text-danger">
+                                <span t-esc="setup_required_count"/>
+                            </div>
+                            <div class="o_stat_text">Required</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <button class="btn btn-outline-primary btn-sm btn-block" 
+                                name="action_view_setup_required" type="object">
+                            Review Setup Status
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- ==============================================
+         REPORT WIZARD PLACEHOLDERS
+         ============================================== -->
+    
+    <!-- Revenue Recognition Report Wizard (placeholder) -->
+    <record id="model_ams_revenue_recognition_report_wizard" model="ir.model">
+        <field name="name">ams.revenue.recognition.report.wizard</field>
+        <field name="model">ams.revenue.recognition.report.wizard</field>
+        <field name="state">manual</field>
+        <field name="info">Revenue Recognition Report Wizard (to be implemented)</field>
+    </record>
+    
+    <!-- Financial Summary Wizard (placeholder) -->
+    <record id="model_ams_financial_summary_wizard" model="ir.model">
+        <field name="name">ams.financial.summary.wizard</field>
+        <field name="model">ams.financial.summary.wizard</field>
+        <field name="state">manual</field>
+        <field name="info">Financial Summary Wizard (to be implemented)</field>
+    </record>
+    
+    <!-- Subscription Aging Wizard (placeholder) -->
+    <record id="model_ams_subscription_aging_wizard" model="ir.model">
+        <field name="name">ams.subscription.aging.wizard</field>
+        <field name="model">ams.subscription.aging.wizard</field>
+        <field name="state">manual</field>
+        <field name="info">Subscription Aging Wizard (to be implemented)</field>
+    </record>
+    
+    <!-- ==============================================
+         REPORT MENU ITEMS
+         ============================================== -->
+    
+    <!-- Add these to the existing menu structure -->
+    <menuitem id="menu_revenue_recognition_report" 
+              name="Revenue Recognition Report" 
+              parent="menu_ams_reporting" 
+              action="action_monthly_revenue_recognition_report"
+              sequence="15"/>
+    
+    <menuitem id="menu_deferred_revenue_report_menu" 
+              name="Deferred Revenue Report" 
+              parent="menu_ams_reporting" 
+              action="report_deferred_revenue"
+              sequence="25"/>
+    
+    <menuitem id="menu_chart_of_accounts_report" 
+              name="Chart of Accounts Report" 
+              parent="menu_ams_reporting" 
+              action="report_chart_of_accounts"
+              sequence="35"/>
+    
+    <menuitem id="menu_annual_financial_summary" 
+              name="Annual Financial Summary" 
+              parent="menu_ams_reporting" 
+              action="action_annual_financial_summary"
+              sequence="45"/>
+    
+    <menuitem id="menu_subscription_aging_report" 
+              name="Subscription Aging Report" 
+              parent="menu_ams_reporting" 
+              action="action_subscription_aging_report"
+              sequence="55"/>
+    
+</odoo>

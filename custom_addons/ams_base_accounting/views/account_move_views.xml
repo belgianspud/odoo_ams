@@ -1,0 +1,730 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ==============================================
+         AMS ACCOUNT MOVE (JOURNAL ENTRY) VIEWS
+         ============================================== -->
+    
+    <!-- Journal Entry Tree View -->
+    <record id="view_ams_account_move_tree" model="ir.ui.view">
+        <field name="name">ams.account.move.tree</field>
+        <field name="model">ams.account.move</field>
+        <field name="arch" type="xml">
+            <tree string="Journal Entries" 
+                  decoration-success="state == 'posted'"
+                  decoration-info="state == 'draft'"
+                  decoration-warning="move_type == 'adjustment'"
+                  decoration-muted="state == 'cancel'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="journal_id"/>
+                <field name="partner_id"/>
+                <field name="ref"/>
+                <field name="move_type" invisible="1"/>
+                <field name="subscription_id" 
+                       attrs="{'column_invisible': [('parent.context.get', 'hide_subscription', True)]}"/>
+                <field name="amount_total" sum="Total Amount"/>
+                <field name="state"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <button name="action_post" type="object" 
+                        string="Post" class="btn-link"
+                        attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                <button name="button_cancel" type="object" 
+                        string="Cancel" class="btn-link"
+                        attrs="{'invisible': [('state', '!=', 'posted')]}"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Journal Entry Form View -->
+    <record id="view_ams_account_move_form" model="ir.ui.view">
+        <field name="name">ams.account.move.form</field>
+        <field name="model">ams.account.move</field>
+        <field name="arch" type="xml">
+            <form string="Journal Entry">
+                <header>
+                    <button name="action_post" type="object" 
+                            class="btn-primary" string="Post"
+                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="button_cancel" type="object" 
+                            class="btn-secondary" string="Cancel"
+                            attrs="{'invisible': [('state', '!=', 'posted')]}"/>
+                    <button name="button_draft" type="object" 
+                            class="btn-secondary" string="Reset to Draft"
+                            attrs="{'invisible': [('state', '!=', 'cancel')]}"/>
+                    <button name="action_reverse" type="object" 
+                            class="btn-secondary" string="Reverse"
+                            attrs="{'invisible': ['|', ('state', '!=', 'posted'), ('reversed_entry_id', '!=', False)]}"/>
+                    <field name="state" widget="statusbar" 
+                           statusbar_visible="draft,posted"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_subscription" type="object" 
+                                class="oe_stat_button" icon="fa-refresh"
+                                attrs="{'invisible': [('subscription_id', '=', False)]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Subscription</span>
+                            </div>
+                        </button>
+                        
+                        <button name="action_view_revenue_recognition" type="object" 
+                                class="oe_stat_button" icon="fa-line-chart"
+                                attrs="{'invisible': [('revenue_recognition_id', '=', False)]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Revenue Recognition</span>
+                            </div>
+                        </button>
+                        
+                        <button name="action_view_reversed_entry" type="object" 
+                                class="oe_stat_button" icon="fa-undo"
+                                attrs="{'invisible': [('reversed_entry_id', '=', False)]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Reversed Entry</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <!-- Automated Entry Banner -->
+                    <div class="alert alert-info" role="alert" 
+                         attrs="{'invisible': [('is_automated', '=', False)]}">
+                        <p><strong><i class="fa fa-robot"/> Automated Entry</strong></p>
+                        <p>This journal entry was created automatically by the AMS system.</p>
+                    </div>
+                    
+                    <!-- Subscription Entry Banner -->
+                    <div class="alert alert-success" role="alert" 
+                         attrs="{'invisible': [('subscription_id', '=', False)]}">
+                        <p><strong><i class="fa fa-refresh"/> Subscription Entry</strong></p>
+                        <p>This entry is linked to subscription: <field name="subscription_id" readonly="1" nolabel="1" class="oe_inline"/></p>
+                    </div>
+                    
+                    <!-- Revenue Recognition Banner -->
+                    <div class="alert alert-warning" role="alert" 
+                         attrs="{'invisible': [('revenue_recognition_id', '=', False)]}">
+                        <p><strong><i class="fa fa-line-chart"/> Revenue Recognition Entry</strong></p>
+                        <p>This entry is part of automated revenue recognition processing.</p>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="journal_id" 
+                                   attrs="{'readonly': [('state', '!=', 'draft')]}"
+                                   domain="[('company_id', '=', company_id)]"/>
+                            <field name="date" 
+                                   attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="ref" 
+                                   attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="partner_id" 
+                                   attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        </group>
+                        <group>
+                            <field name="move_type" 
+                                   attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="company_id" groups="base.group_multi_company" readonly="1"/>
+                            <field name="currency_id" groups="base.group_multi_currency" readonly="1"/>
+                            <field name="is_automated" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page name="journal_items" string="Journal Items">
+                            <field name="line_ids" nolabel="1" 
+                                   attrs="{'readonly': [('state', '!=', 'draft')]}">
+                                <tree string="Journal Items" editable="bottom">
+                                    <field name="account_id" 
+                                           domain="[('deprecated', '=', False), ('company_id', '=', parent.company_id)]"/>
+                                    <field name="partner_id" optional="show"/>
+                                    <field name="name"/>
+                                    <field name="analytic_account_id" groups="analytic.group_analytic_accounting" optional="show"/>
+                                    <field name="debit" sum="Total Debit"/>
+                                    <field name="credit" sum="Total Credit"/>
+                                    <field name="balance" invisible="1"/>
+                                    <field name="currency_id" groups="base.group_multi_currency" optional="show"/>
+                                    <field name="amount_currency" groups="base.group_multi_currency" optional="show"/>
+                                    <field name="tax_ids" widget="many2many_tags" optional="hide"/>
+                                    <field name="company_id" invisible="1"/>
+                                </tree>
+                            </field>
+                            
+                            <!-- Balance Check -->
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="amount_total_signed" string="Difference" 
+                                       widget="monetary" 
+                                       class="oe_subtotal_footer_separator"
+                                       attrs="{'invisible': [('amount_total_signed', '=', 0)]}"/>
+                            </group>
+                            
+                            <div class="alert alert-warning" role="alert" 
+                                 attrs="{'invisible': [('amount_total_signed', '=', 0)]}">
+                                <p><strong>Entry is not balanced!</strong></p>
+                                <p>Total debits must equal total credits. Current difference: 
+                                   <field name="amount_total_signed" readonly="1" nolabel="1" widget="monetary" class="oe_inline"/>
+                                </p>
+                            </div>
+                        </page>
+                        
+                        <page name="subscription_details" string="Subscription Details"
+                              attrs="{'invisible': [('subscription_id', '=', False)]}">
+                            <group>
+                                <group string="Subscription Information">
+                                    <field name="subscription_id" readonly="1"/>
+                                    <field name="subscription_state" readonly="1"/>
+                                    <field name="subscription_period" readonly="1"/>
+                                    <field name="subscription_amount" readonly="1"/>
+                                </group>
+                                <group string="Revenue Recognition">
+                                    <field name="revenue_recognition_id" readonly="1"/>
+                                    <field name="recognition_period_start" readonly="1"/>
+                                    <field name="recognition_period_end" readonly="1"/>
+                                    <field name="requires_revenue_recognition" readonly="1"/>
+                                </group>
+                            </group>
+                            
+                            <separator string="Subscription Timeline"/>
+                            <field name="subscription_timeline" readonly="1" nolabel="1" widget="html"/>
+                        </page>
+                        
+                        <page name="accounting_info" string="Accounting Information">
+                            <group>
+                                <group string="Entry Details">
+                                    <field name="amount_total" readonly="1"/>
+                                    <field name="amount_total_signed" readonly="1"/>
+                                    <field name="line_count" readonly="1"/>
+                                    <field name="posted_date" readonly="1"/>
+                                </group>
+                                <group string="Reconciliation">
+                                    <field name="auto_reconcile" 
+                                           attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                    <field name="reconcile_method" 
+                                           attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                    <field name="is_reconciled" readonly="1"/>
+                                </group>
+                            </group>
+                            
+                            <separator string="Tax Information" 
+                                       attrs="{'invisible': [('tax_line_ids', '=', [])]}"/>
+                            <field name="tax_line_ids" readonly="1"
+                                   attrs="{'invisible': [('tax_line_ids', '=', [])]}">
+                                <tree string="Tax Lines">
+                                    <field name="tax_id"/>
+                                    <field name="account_id"/>
+                                    <field name="base_amount"/>
+                                    <field name="tax_amount"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <page name="reversal_info" string="Reversal Information"
+                              attrs="{'invisible': ['&amp;', ('reversed_entry_id', '=', False), ('reversal_entry_ids', '=', [])]}">
+                            <group>
+                                <group string="Reversal Details">
+                                    <field name="reversed_entry_id" readonly="1"/>
+                                    <field name="reversal_date" readonly="1"/>
+                                    <field name="reversal_reason" readonly="1"/>
+                                </group>
+                                <group string="This Entry Reversed By">
+                                    <field name="reversal_entry_ids" readonly="1" nolabel="1">
+                                        <tree string="Reversal Entries">
+                                            <field name="name"/>
+                                            <field name="date"/>
+                                            <field name="amount_total"/>
+                                            <field name="state"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <page name="additional_info" string="Additional Information">
+                            <group>
+                                <group string="Processing">
+                                    <field name="processing_notes" 
+                                           attrs="{'readonly': [('state', '=', 'posted')]}"/>
+                                    <field name="auto_created" readonly="1"/>
+                                    <field name="creation_method" readonly="1"/>
+                                </group>
+                                <group string="Timestamps">
+                                    <field name="create_date" readonly="1"/>
+                                    <field name="create_uid" readonly="1"/>
+                                    <field name="write_date" readonly="1"/>
+                                    <field name="write_uid" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Journal Entry Search View -->
+    <record id="view_ams_account_move_search" model="ir.ui.view">
+        <field name="name">ams.account.move.search</field>
+        <field name="model">ams.account.move</field>
+        <field name="arch" type="xml">
+            <search string="Search Journal Entries">
+                <field name="name" filter_domain="['|', ('name', 'ilike', self), ('ref', 'ilike', self)]"/>
+                <field name="journal_id"/>
+                <field name="partner_id"/>
+                <field name="subscription_id"/>
+                <field name="date"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                
+                <separator/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="posted" string="Posted" domain="[('state', '=', 'posted')]"/>
+                <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
+                
+                <separator/>
+                <filter name="automated" string="Automated" domain="[('is_automated', '=', True)]"/>
+                <filter name="manual" string="Manual" domain="[('is_automated', '=', False)]"/>
+                <filter name="subscription_entries" string="Subscription Entries" domain="[('subscription_id', '!=', False)]"/>
+                <filter name="revenue_recognition_entries" string="Revenue Recognition" domain="[('revenue_recognition_id', '!=', False)]"/>
+                
+                <separator/>
+                <filter name="current_month" string="Current Month" 
+                        domain="[('date', '>=', context_today().strftime('%Y-%m-01')), ('date', '&lt;', (context_today().replace(day=1) + relativedelta(months=1)).strftime('%Y-%m-%d'))]"/>
+                <filter name="last_month" string="Last Month" 
+                        domain="[('date', '>=', (context_today().replace(day=1) - relativedelta(months=1)).strftime('%Y-%m-%d')), ('date', '&lt;', context_today().strftime('%Y-%m-01'))]"/>
+                <filter name="current_year" string="Current Year" 
+                        domain="[('date', '>=', context_today().strftime('%Y-01-01')), ('date', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
+                
+                <separator/>
+                <filter name="unbalanced" string="Unbalanced" domain="[('amount_total_signed', '!=', 0)]"/>
+                <filter name="reconciled" string="Reconciled" domain="[('is_reconciled', '=', True)]"/>
+                <filter name="unreconciled" string="Unreconciled" domain="[('is_reconciled', '=', False)]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="group_journal" string="Journal" context="{'group_by': 'journal_id'}"/>
+                    <filter name="group_partner" string="Partner" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_date" string="Date" context="{'group_by': 'date'}"/>
+                    <filter name="group_move_type" string="Entry Type" context="{'group_by': 'move_type'}"/>
+                    <filter name="group_subscription" string="Subscription" context="{'group_by': 'subscription_id'}"/>
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Journal Entry Calendar View -->
+    <record id="view_ams_account_move_calendar" model="ir.ui.view">
+        <field name="name">ams.account.move.calendar</field>
+        <field name="model">ams.account.move</field>
+        <field name="arch" type="xml">
+            <calendar string="Journal Entries Calendar" 
+                      date_start="date" 
+                      color="journal_id"
+                      quick_add="False"
+                      event_open_popup="true">
+                <field name="name"/>
+                <field name="journal_id"/>
+                <field name="partner_id"/>
+                <field name="amount_total"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+    
+    <!-- Journal Entry Kanban View -->
+    <record id="view_ams_account_move_kanban" model="ir.ui.view">
+        <field name="name">ams.account.move.kanban</field>
+        <field name="model">ams.account.move</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" default_group_by="state">
+                <field name="name"/>
+                <field name="journal_id"/>
+                <field name="partner_id"/>
+                <field name="date"/>
+                <field name="amount_total"/>
+                <field name="state"/>
+                <field name="is_automated"/>
+                <field name="subscription_id"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="row">
+                                <div class="col-8">
+                                    <strong t-esc="record.name.value"/>
+                                </div>
+                                <div class="col-4 text-right">
+                                    <span t-if="record.is_automated.raw_value" 
+                                          class="badge badge-info" title="Automated">
+                                        <i class="fa fa-robot"/>
+                                    </span>
+                                    <span t-if="record.subscription_id.raw_value" 
+                                          class="badge badge-success" title="Subscription Entry">
+                                        <i class="fa fa-refresh"/>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <i class="fa fa-book"/> <span t-esc="record.journal_id.value"/>
+                                </div>
+                            </div>
+                            <div class="row" t-if="record.partner_id.raw_value">
+                                <div class="col-12">
+                                    <i class="fa fa-user"/> <span t-esc="record.partner_id.value"/>
+                                </div>
+                            </div>
+                            
+                            <hr class="mt-2 mb-2"/>
+                            
+                            <div class="row">
+                                <div class="col-6">
+                                    <small>
+                                        <strong>Date:</strong><br/>
+                                        <span t-esc="record.date.value"/>
+                                    </small>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <small>
+                                        <strong>Amount:</strong><br/>
+                                        <span t-esc="record.amount_total.value" t-options="{'widget': 'monetary'}"/>
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-2" t-if="record.subscription_id.raw_value">
+                                <div class="col-12">
+                                    <small class="text-muted">
+                                        <i class="fa fa-refresh"/> <span t-esc="record.subscription_id.value"/>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    
+    <!-- Journal Entry Pivot View -->
+    <record id="view_ams_account_move_pivot" model="ir.ui.view">
+        <field name="name">ams.account.move.pivot</field>
+        <field name="model">ams.account.move</field>
+        <field name="arch" type="xml">
+            <pivot string="Journal Entry Analysis">
+                <field name="date" type="row" interval="month"/>
+                <field name="journal_id" type="col"/>
+                <field name="amount_total" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+    
+    <!-- Journal Entry Graph View -->
+    <record id="view_ams_account_move_graph" model="ir.ui.view">
+        <field name="name">ams.account.move.graph</field>
+        <field name="model">ams.account.move</field>
+        <field name="arch" type="xml">
+            <graph string="Journal Entry Trends" type="line">
+                <field name="date" type="row" interval="month"/>
+                <field name="amount_total" type="measure"/>
+            </graph>
+        </field>
+    </record>
+    
+    <!-- ==============================================
+         JOURNAL ENTRY LINE VIEWS
+         ============================================== -->
+    
+    <!-- Journal Entry Line Tree View -->
+    <record id="view_ams_account_move_line_tree" model="ir.ui.view">
+        <field name="name">ams.account.move.line.tree</field>
+        <field name="model">ams.account.move.line</field>
+        <field name="arch" type="xml">
+            <tree string="Journal Items" 
+                  decoration-info="account_id.account_type in ('asset_cash', 'asset_receivable')"
+                  decoration-success="account_id.account_type in ('income', 'income_membership', 'income_chapter', 'income_publication')"
+                  decoration-warning="account_id.account_type == 'liability_deferred_revenue'">
+                <field name="date"/>
+                <field name="move_id"/>
+                <field name="journal_id"/>
+                <field name="account_id"/>
+                <field name="partner_id"/>
+                <field name="name"/>
+                <field name="debit" sum="Total Debit"/>
+                <field name="credit" sum="Total Credit"/>
+                <field name="balance" sum="Balance"/>
+                <field name="reconciled" invisible="1"/>
+                <field name="full_reconcile_id" groups="base.group_no_one"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <button name="action_reconcile" type="object" 
+                        string="Reconcile" class="btn-link"
+                        attrs="{'invisible': ['|', ('reconciled', '=', True), ('account_id.reconcile', '=', False)]}"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Journal Entry Line Form View -->
+    <record id="view_ams_account_move_line_form" model="ir.ui.view">
+        <field name="name">ams.account.move.line.form</field>
+        <field name="model">ams.account.move.line</field>
+        <field name="arch" type="xml">
+            <form string="Journal Item">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_journal_entry" type="object" 
+                                class="oe_stat_button" icon="fa-book">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Journal Entry</span>
+                            </div>
+                        </button>
+                        
+                        <button name="action_view_reconciliation" type="object" 
+                                class="oe_stat_button" icon="fa-check-square-o"
+                                attrs="{'invisible': [('reconciled', '=', False)]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Reconciliation</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="move_id" readonly="1"/>
+                            <field name="journal_id" readonly="1"/>
+                            <field name="date" readonly="1"/>
+                            <field name="account_id" readonly="1"/>
+                            <field name="partner_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="debit" readonly="1"/>
+                            <field name="credit" readonly="1"/>
+                            <field name="balance" readonly="1"/>
+                            <field name="reconciled" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page name="general_info" string="General Information">
+                            <group>
+                                <group string="Amounts">
+                                    <field name="currency_id" groups="base.group_multi_currency" readonly="1"/>
+                                    <field name="amount_currency" groups="base.group_multi_currency" readonly="1"/>
+                                    <field name="company_currency_id" invisible="1"/>
+                                    <field name="company_id" groups="base.group_multi_company" readonly="1"/>
+                                </group>
+                                <group string="Analytics" groups="analytic.group_analytic_accounting">
+                                    <field name="analytic_account_id" readonly="1"/>
+                                    <field name="analytic_tag_ids" widget="many2many_tags" readonly="1"/>
+                                </group>
+                            </group>
+                            
+                            <group string="Tax Information" attrs="{'invisible': [('tax_ids', '=', [])]}">
+                                <field name="tax_ids" widget="many2many_tags" readonly="1"/>
+                                <field name="tax_base_amount" readonly="1"/>
+                                <field name="tax_exigible" readonly="1"/>
+                            </group>
+                        </page>
+                        
+                        <page name="reconciliation" string="Reconciliation"
+                              attrs="{'invisible': [('account_id.reconcile', '=', False)]}">
+                            <group>
+                                <group string="Reconciliation Status">
+                                    <field name="reconciled" readonly="1"/>
+                                    <field name="full_reconcile_id" readonly="1"/>
+                                    <field name="matched_debit_ids" readonly="1" invisible="1"/>
+                                    <field name="matched_credit_ids" readonly="1" invisible="1"/>
+                                </group>
+                                <group string="Reconciliation Details">
+                                    <field name="amount_residual" readonly="1"/>
+                                    <field name="amount_residual_currency" groups="base.group_multi_currency" readonly="1"/>
+                                </group>
+                            </group>
+                            
+                            <separator string="Partial Reconciliations"/>
+                            <field name="matched_debit_ids" readonly="1">
+                                <tree string="Matched Debits">
+                                    <field name="create_date"/>
+                                    <field name="amount"/>
+                                    <field name="credit_move_id"/>
+                                </tree>
+                            </field>
+                            
+                            <field name="matched_credit_ids" readonly="1">
+                                <tree string="Matched Credits">
+                                    <field name="create_date"/>
+                                    <field name="amount"/>
+                                    <field name="debit_move_id"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Journal Entry Line Search View -->
+    <record id="view_ams_account_move_line_search" model="ir.ui.view">
+        <field name="name">ams.account.move.line.search</field>
+        <field name="model">ams.account.move.line</field>
+        <field name="arch" type="xml">
+            <search string="Search Journal Items">
+                <field name="name" filter_domain="['|', ('name', 'ilike', self), ('move_id.name', 'ilike', self)]"/>
+                <field name="account_id"/>
+                <field name="partner_id"/>
+                <field name="journal_id"/>
+                <field name="move_id"/>
+                <field name="date"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                
+                <separator/>
+                <filter name="reconciled" string="Reconciled" domain="[('reconciled', '=', True)]"/>
+                <filter name="unreconciled" string="Unreconciled" domain="[('reconciled', '=', False)]"/>
+                <filter name="reconcilable" string="Reconcilable" domain="[('account_id.reconcile', '=', True)]"/>
+                
+                <separator/>
+                <filter name="posted" string="Posted" domain="[('move_id.state', '=', 'posted')]"/>
+                <filter name="draft" string="Draft" domain="[('move_id.state', '=', 'draft')]"/>
+                
+                <separator/>
+                <filter name="debit_lines" string="Debit Lines" domain="[('debit', '>', 0)]"/>
+                <filter name="credit_lines" string="Credit Lines" domain="[('credit', '>', 0)]"/>
+                
+                <separator/>
+                <filter name="current_month" string="Current Month" 
+                        domain="[('date', '>=', context_today().strftime('%Y-%m-01')), ('date', '&lt;', (context_today().replace(day=1) + relativedelta(months=1)).strftime('%Y-%m-%d'))]"/>
+                <filter name="current_year" string="Current Year" 
+                        domain="[('date', '>=', context_today().strftime('%Y-01-01')), ('date', '&lt;=', context_today().strftime('%Y-12-31'))]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter name="group_account" string="Account" context="{'group_by': 'account_id'}"/>
+                    <filter name="group_journal" string="Journal" context="{'group_by': 'journal_id'}"/>
+                    <filter name="group_partner" string="Partner" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_date" string="Date" context="{'group_by': 'date'}"/>
+                    <filter name="group_move" string="Journal Entry" context="{'group_by': 'move_id'}"/>
+                    <filter name="group_reconciled" string="Reconciled" context="{'group_by': 'reconciled'}"/>
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- ==============================================
+         ACTIONS
+         ============================================== -->
+    
+    <!-- Create Journal Entry Action -->
+    <record id="action_create_journal_entry" model="ir.actions.act_window">
+        <field name="name">Create Journal Entry</field>
+        <field name="res_model">ams.account.move</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{
+            'default_move_type': 'entry',
+            'default_date': context_today()
+        }</field>
+    </record>
+    
+    <!-- Journal Items Action -->
+    <record id="action_ams_account_move_line" model="ir.actions.act_window">
+        <field name="name">Journal Items</field>
+        <field name="res_model">ams.account.move.line</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_ams_account_move_line_tree"/>
+        <field name="search_view_id" ref="view_ams_account_move_line_search"/>
+        <field name="context">{
+            'search_default_posted': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No journal items found!
+            </p>
+            <p>
+                Journal items are the individual lines that make up journal entries.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Unposted Entries Action -->
+    <record id="action_unposted_journal_entries" model="ir.actions.act_window">
+        <field name="name">Unposted Journal Entries</field>
+        <field name="res_model">ams.account.move</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('state', '=', 'draft')]</field>
+        <field name="context">{'search_default_draft': 1}</field>
+    </record>
+    
+    <!-- Subscription Journal Entries Action -->
+    <record id="action_subscription_journal_entries" model="ir.actions.act_window">
+        <field name="name">Subscription Journal Entries</field>
+        <field name="res_model">ams.account.move</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('subscription_id', '!=', False)]</field>
+        <field name="context">{'search_default_subscription_entries': 1}</field>
+    </record>
+    
+    <!-- Automated Journal Entries Action -->
+    <record id="action_automated_journal_entries" model="ir.actions.act_window">
+        <field name="name">Automated Journal Entries</field>
+        <field name="res_model">ams.account.move</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('is_automated', '=', True)]</field>
+        <field name="context">{'search_default_automated': 1}</field>
+    </record>
+    
+    <!-- ==============================================
+         SERVER ACTIONS
+         ============================================== -->
+    
+    <!-- Post Journal Entry Server Action -->
+    <record id="server_action_post_journal_entry" model="ir.actions.server">
+        <field name="name">Post Journal Entry</field>
+        <field name="model_id" ref="model_ams_account_move"/>
+        <field name="binding_model_id" ref="model_ams_account_move"/>
+        <field name="binding_view_types">form,list</field>
+        <field name="state">code</field>
+        <field name="code">
+for record in records:
+    if record.state == 'draft':
+        record.action_post()
+        </field>
+    </record>
+    
+    <!-- Cancel Journal Entry Server Action -->
+    <record id="server_action_cancel_journal_entry" model="ir.actions.server">
+        <field name="name">Cancel Journal Entry</field>
+        <field name="model_id" ref="model_ams_account_move"/>
+        <field name="binding_model_id" ref="model_ams_account_move"/>
+        <field name="binding_view_types">form,list</field>
+        <field name="state">code</field>
+        <field name="code">
+for record in records:
+    if record.state == 'posted':
+        record.button_cancel()
+        </field>
+    </record>
+    
+    <!-- Reset to Draft Server Action -->
+    <record id="server_action_reset_to_draft" model="ir.actions.server">
+        <field name="name">Reset to Draft</field>
+        <field name="model_id" ref="model_ams_account_move"/>
+        <field name="binding_model_id" ref="model_ams_account_move"/>
+        <field name="binding_view_types">form,list</field>
+        <field name="state">code</field>
+        <field name="code">
+for record in records:
+    if record.state == 'cancel':
+        record.button_draft()
+        </field>
+    </record>
+    
+</odoo>

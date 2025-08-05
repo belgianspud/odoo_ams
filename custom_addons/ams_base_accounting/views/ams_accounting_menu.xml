@@ -1,0 +1,542 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ==============================================
+         AMS ACCOUNTING MAIN MENU STRUCTURE
+         ============================================== -->
+    
+    <!-- Root Menu -->
+    <menuitem id="menu_ams_accounting_root" 
+              name="AMS Accounting" 
+              web_icon="ams_base_accounting,static/description/icon.png" 
+              sequence="15"/>
+    
+    <!-- ==============================================
+         DASHBOARD & OVERVIEW
+         ============================================== -->
+    
+    <menuitem id="menu_ams_accounting_dashboard" 
+              name="Dashboard" 
+              parent="menu_ams_accounting_root" 
+              action="action_ams_journal_dashboard"
+              sequence="10"/>
+    
+    <!-- ==============================================
+         SUBSCRIPTION ACCOUNTING
+         ============================================== -->
+    
+    <menuitem id="menu_ams_subscription_accounting" 
+              name="Subscription Accounting" 
+              parent="menu_ams_accounting_root" 
+              sequence="20"/>
+    
+    <menuitem id="menu_subscription_accounting_overview" 
+              name="Overview" 
+              parent="menu_ams_subscription_accounting" 
+              action="action_ams_subscription_accounting"
+              sequence="10"/>
+    
+    <menuitem id="menu_subscription_accounting_setup_required" 
+              name="Setup Required" 
+              parent="menu_ams_subscription_accounting" 
+              action="action_subscription_accounting_setup_required"
+              sequence="20"/>
+    
+    <menuitem id="menu_subscription_products" 
+              name="Subscription Products" 
+              parent="menu_ams_subscription_accounting" 
+              action="action_subscription_products"
+              sequence="30"/>
+    
+    <menuitem id="menu_subscription_products_setup_required" 
+              name="Products Setup Required" 
+              parent="menu_ams_subscription_accounting" 
+              action="action_products_financial_setup_required"
+              sequence="40"/>
+    
+    <!-- ==============================================
+         REVENUE RECOGNITION
+         ============================================== -->
+    
+    <menuitem id="menu_ams_revenue_recognition" 
+              name="Revenue Recognition" 
+              parent="menu_ams_accounting_root" 
+              sequence="30"/>
+    
+    <menuitem id="menu_revenue_recognition_entries" 
+              name="Recognition Entries" 
+              parent="menu_ams_revenue_recognition" 
+              action="action_ams_revenue_recognition"
+              sequence="10"/>
+    
+    <menuitem id="menu_revenue_recognition_due" 
+              name="Due for Processing" 
+              parent="menu_ams_revenue_recognition" 
+              action="action_revenue_recognition_due"
+              sequence="20"/>
+    
+    <menuitem id="menu_revenue_recognition_schedules" 
+              name="Recognition Schedules" 
+              parent="menu_ams_revenue_recognition" 
+              action="action_ams_revenue_recognition_schedule"
+              sequence="30"/>
+    
+    <menuitem id="menu_revenue_recognition_automated" 
+              name="Automated Entries" 
+              parent="menu_ams_revenue_recognition" 
+              action="action_revenue_recognition_automated"
+              sequence="40"/>
+    
+    <menuitem id="menu_deferred_revenue" 
+              name="Deferred Revenue" 
+              parent="menu_ams_revenue_recognition" 
+              action="action_subscription_accounting_deferred_revenue"
+              sequence="50"/>
+    
+    <!-- ==============================================
+         JOURNALS & ENTRIES
+         ============================================== -->
+    
+    <menuitem id="menu_ams_journals_entries" 
+              name="Journals &amp; Entries" 
+              parent="menu_ams_accounting_root" 
+              sequence="40"/>
+    
+    <menuitem id="menu_ams_journals" 
+              name="Journals" 
+              parent="menu_ams_journals_entries" 
+              action="action_ams_account_journal"
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_journal_entries" 
+              name="Journal Entries" 
+              parent="menu_ams_journals_entries" 
+              action="action_ams_account_move"
+              sequence="20"/>
+    
+    <menuitem id="menu_ams_membership_journals" 
+              name="Membership Journals" 
+              parent="menu_ams_journals_entries" 
+              action="action_ams_membership_journals"
+              sequence="30"/>
+    
+    <menuitem id="menu_ams_revenue_recognition_journals" 
+              name="Revenue Recognition Journals" 
+              parent="menu_ams_journals_entries" 
+              action="action_ams_revenue_recognition_journals"
+              sequence="40"/>
+    
+    <!-- ==============================================
+         CHART OF ACCOUNTS
+         ============================================== -->
+    
+    <menuitem id="menu_ams_chart_of_accounts" 
+              name="Chart of Accounts" 
+              parent="menu_ams_accounting_root" 
+              sequence="50"/>
+    
+    <menuitem id="menu_ams_accounts" 
+              name="Accounts" 
+              parent="menu_ams_chart_of_accounts" 
+              action="action_ams_account_account"
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_asset_accounts" 
+              name="Asset Accounts" 
+              parent="menu_ams_chart_of_accounts" 
+              action="action_ams_account_asset"
+              sequence="20"/>
+    
+    <menuitem id="menu_ams_revenue_accounts" 
+              name="Revenue Accounts" 
+              parent="menu_ams_chart_of_accounts" 
+              action="action_ams_account_revenue"
+              sequence="30"/>
+    
+    <menuitem id="menu_ams_deferred_revenue_accounts" 
+              name="Deferred Revenue Accounts" 
+              parent="menu_ams_chart_of_accounts" 
+              action="action_ams_account_deferred_revenue"
+              sequence="40"/>
+    
+    <menuitem id="menu_ams_reconcilable_accounts" 
+              name="Reconcilable Accounts" 
+              parent="menu_ams_chart_of_accounts" 
+              action="action_ams_account_reconcilable"
+              sequence="50"/>
+    
+    <!-- ==============================================
+         PROCESSING & WIZARDS
+         ============================================== -->
+    
+    <menuitem id="menu_ams_processing" 
+              name="Processing" 
+              parent="menu_ams_accounting_root" 
+              sequence="60"/>
+    
+    <menuitem id="menu_monthly_revenue_recognition" 
+              name="Monthly Revenue Recognition" 
+              parent="menu_ams_processing" 
+              action="action_monthly_revenue_recognition"
+              sequence="10"/>
+    
+    <menuitem id="menu_bulk_revenue_recognition" 
+              name="Bulk Revenue Recognition" 
+              parent="menu_ams_processing" 
+              action="action_bulk_revenue_recognition"
+              sequence="20"/>
+    
+    <menuitem id="menu_bulk_financial_setup" 
+              name="Bulk Financial Setup" 
+              parent="menu_ams_processing" 
+              action="action_bulk_financial_setup_wizard"
+              sequence="30"/>
+    
+    <menuitem id="menu_revenue_recognition_wizard" 
+              name="Revenue Recognition Wizard" 
+              parent="menu_ams_processing" 
+              action="action_revenue_recognition_wizard"
+              sequence="40"/>
+    
+    <!-- ==============================================
+         REPORTING & ANALYSIS
+         ============================================== -->
+    
+    <menuitem id="menu_ams_reporting" 
+              name="Reporting" 
+              parent="menu_ams_accounting_root" 
+              sequence="70"/>
+    
+    <menuitem id="menu_ams_financial_reports" 
+              name="Financial Reports" 
+              parent="menu_ams_reporting" 
+              action="action_ams_financial_reports"
+              sequence="10"/>
+    
+    <menuitem id="menu_subscription_financial_analysis" 
+              name="Subscription Analysis" 
+              parent="menu_ams_reporting" 
+              action="action_ams_subscription_accounting"
+              sequence="20"/>
+    
+    <menuitem id="menu_revenue_recognition_analysis" 
+              name="Revenue Recognition Analysis" 
+              parent="menu_ams_reporting" 
+              action="action_revenue_recognition_posted"
+              sequence="30"/>
+    
+    <menuitem id="menu_deferred_revenue_report" 
+              name="Deferred Revenue Report" 
+              parent="menu_ams_reporting" 
+              action="action_products_deferred_revenue"
+              sequence="40"/>
+    
+    <!-- ==============================================
+         CONFIGURATION
+         ============================================== -->
+    
+    <menuitem id="menu_ams_configuration" 
+              name="Configuration" 
+              parent="menu_ams_accounting_root" 
+              sequence="80"
+              groups="ams_base_accounting.group_ams_accounting_manager"/>
+    
+    <menuitem id="menu_ams_accounting_setup" 
+              name="Accounting Setup" 
+              parent="menu_ams_configuration" 
+              action="action_ams_chart_setup_wizard"
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_journal_configuration" 
+              name="Journal Configuration" 
+              parent="menu_ams_configuration" 
+              action="action_ams_account_journal"
+              sequence="20"/>
+    
+    <menuitem id="menu_ams_account_configuration" 
+              name="Account Configuration" 
+              parent="menu_ams_configuration" 
+              action="action_ams_account_account"
+              sequence="30"/>
+    
+    <menuitem id="menu_ams_company_settings" 
+              name="Company Settings" 
+              parent="menu_ams_configuration" 
+              action="base.action_res_company_form"
+              sequence="40"/>
+    
+    <!-- ==============================================
+         TOOLS & UTILITIES
+         ============================================== -->
+    
+    <menuitem id="menu_ams_tools" 
+              name="Tools" 
+              parent="menu_ams_accounting_root" 
+              sequence="90"
+              groups="ams_base_accounting.group_ams_accounting_manager"/>
+    
+    <menuitem id="menu_ams_reconciliation" 
+              name="Reconciliation" 
+              parent="menu_ams_tools" 
+              action="action_ams_account_reconciliation"
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_year_end_closing" 
+              name="Year End Closing" 
+              parent="menu_ams_tools" 
+              action="action_ams_year_end_closing"
+              sequence="20"/>
+    
+    <menuitem id="menu_ams_audit_trail" 
+              name="Audit Trail" 
+              parent="menu_ams_tools" 
+              action="action_ams_audit_trail"
+              sequence="30"/>
+    
+    <menuitem id="menu_ams_data_integrity" 
+              name="Data Integrity Check" 
+              parent="menu_ams_tools" 
+              action="action_ams_data_integrity_check"
+              sequence="40"/>
+    
+    <!-- ==============================================
+         QUICK ACTIONS (TOP LEVEL)
+         ============================================== -->
+    
+    <!-- Quick Create Actions -->
+    <menuitem id="menu_quick_create_journal_entry" 
+              name="New Journal Entry" 
+              parent="menu_ams_accounting_root" 
+              action="action_create_journal_entry"
+              sequence="95"/>
+    
+    <menuitem id="menu_quick_create_revenue_recognition" 
+              name="New Revenue Recognition" 
+              parent="menu_ams_accounting_root" 
+              action="action_revenue_recognition_wizard"
+              sequence="96"/>
+    
+    <!-- ==============================================
+         INTEGRATION MENUS (if AMS Subscriptions installed)
+         ============================================== -->
+    
+    <!-- Add Accounting submenu to AMS Subscriptions if it exists -->
+    <menuitem id="menu_subscription_accounting_integration" 
+              name="Accounting" 
+              parent="ams_subscriptions.menu_ams_subscriptions_root" 
+              action="action_ams_subscription_accounting"
+              sequence="50"
+              groups="ams_base_accounting.group_ams_accounting_user"/>
+    
+    <menuitem id="menu_subscription_financial_setup_integration" 
+              name="Financial Setup" 
+              parent="ams_subscriptions.menu_ams_subscriptions_configuration" 
+              action="action_products_financial_setup_required"
+              sequence="30"
+              groups="ams_base_accounting.group_ams_accounting_user"/>
+    
+    <!-- ==============================================
+         SHORTCUT ACTIONS FOR DASHBOARD
+         ============================================== -->
+    
+    <!-- Dashboard Shortcut Actions -->
+    <record id="action_ams_accounting_dashboard_shortcuts" model="ir.actions.act_window">
+        <field name="name">AMS Accounting Dashboard</field>
+        <field name="res_model">ams.account.journal</field>
+        <field name="view_mode">kanban</field>
+        <field name="view_id" ref="view_ams_account_journal_dashboard"/>
+        <field name="domain">[('show_on_dashboard', '=', True)]</field>
+        <field name="context">{}</field>
+    </record>
+    
+    <!-- Quick Access to Setup Required Items -->
+    <record id="action_quick_setup_required" model="ir.actions.act_window">
+        <field name="name">Setup Required</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('is_subscription_product', '=', True), ('financial_setup_complete', '=', False)]</field>
+        <field name="context">{'search_default_financial_setup_required': 1}</field>
+    </record>
+    
+    <!-- Quick Access to Due Revenue Recognition -->
+    <record id="action_quick_due_recognition" model="ir.actions.act_window">
+        <field name="name">Due for Recognition</field>
+        <field name="res_model">ams.revenue.recognition</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('recognition_date', '<=', context_today()), ('state', 'in', ['draft', 'confirmed'])]</field>
+        <field name="context">{'search_default_due_today': 1}</field>
+    </record>
+    
+    <!-- ==============================================
+         DYNAMIC MENU ITEMS (Computed based on data)
+         ============================================== -->
+    
+    <!-- These menu items could be shown/hidden based on data or configuration -->
+    <menuitem id="menu_ams_setup_wizard_dynamic" 
+              name="Complete Setup" 
+              parent="menu_ams_accounting_root" 
+              action="action_ams_chart_setup_wizard"
+              sequence="5"
+              groups="ams_base_accounting.group_ams_accounting_manager"/>
+    
+    <!-- ==============================================
+         HELP & DOCUMENTATION
+         ============================================== -->
+    
+    <menuitem id="menu_ams_help" 
+              name="Help" 
+              parent="menu_ams_accounting_root" 
+              sequence="99"/>
+    
+    <menuitem id="menu_ams_documentation" 
+              name="Documentation" 
+              parent="menu_ams_help" 
+              action="action_ams_documentation"
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_getting_started" 
+              name="Getting Started" 
+              parent="menu_ams_help" 
+              action="action_ams_getting_started_guide"
+              sequence="20"/>
+    
+    <menuitem id="menu_ams_best_practices" 
+              name="Best Practices" 
+              parent="menu_ams_help" 
+              action="action_ams_best_practices_guide"
+              sequence="30"/>
+    
+    <!-- ==============================================
+         CONTEXT ACTIONS FOR EASY ACCESS
+         ============================================== -->
+    
+    <!-- These actions can be called from anywhere -->
+    <record id="action_ams_quick_setup" model="ir.actions.act_window">
+        <field name="name">Quick Setup</field>
+        <field name="res_model">ams.accounting.setup.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_setup_type': 'quick'}</field>
+    </record>
+    
+    <record id="action_ams_revenue_recognition_today" model="ir.actions.act_window">
+        <field name="name">Today's Revenue Recognition</field>
+        <field name="res_model">ams.revenue.recognition</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('recognition_date', '=', context_today())]</field>
+        <field name="context">{'search_default_due_today': 1}</field>
+    </record>
+    
+    <!-- ==============================================
+         PLACEHOLDER ACTIONS (to be implemented)
+         ============================================== -->
+    
+    <!-- Financial Reports Action (placeholder) -->
+    <record id="action_ams_financial_reports" model="ir.actions.act_window">
+        <field name="name">Financial Reports</field>
+        <field name="res_model">ams.financial.report</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Financial reports coming soon!
+            </p>
+            <p>
+                Advanced financial reporting for associations will be available
+                in a future update.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Reconciliation Action (placeholder) -->
+    <record id="action_ams_account_reconciliation" model="ir.actions.act_window">
+        <field name="name">Account Reconciliation</field>
+        <field name="res_model">ams.account.reconciliation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Account reconciliation tools coming soon!
+            </p>
+        </field>
+    </record>
+    
+    <!-- Year End Closing Action (placeholder) -->
+    <record id="action_ams_year_end_closing" model="ir.actions.act_window">
+        <field name="name">Year End Closing</field>
+        <field name="res_model">ams.year.end.closing</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Year end closing wizard coming soon!
+            </p>
+        </field>
+    </record>
+    
+    <!-- Audit Trail Action (placeholder) -->
+    <record id="action_ams_audit_trail" model="ir.actions.act_window">
+        <field name="name">Audit Trail</field>
+        <field name="res_model">ams.audit.trail</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Audit trail functionality coming soon!
+            </p>
+        </field>
+    </record>
+    
+    <!-- Data Integrity Check Action (placeholder) -->
+    <record id="action_ams_data_integrity_check" model="ir.actions.act_window">
+        <field name="name">Data Integrity Check</field>
+        <field name="res_model">ams.data.integrity.check</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Data integrity check wizard coming soon!
+            </p>
+        </field>
+    </record>
+    
+    <!-- Documentation Action (placeholder) -->
+    <record id="action_ams_documentation" model="ir.actions.act_url">
+        <field name="name">AMS Accounting Documentation</field>
+        <field name="url">https://docs.example.com/ams-accounting</field>
+        <field name="target">new</field>
+    </record>
+    
+    <!-- Getting Started Guide Action (placeholder) -->
+    <record id="action_ams_getting_started_guide" model="ir.actions.act_url">
+        <field name="name">Getting Started Guide</field>
+        <field name="url">https://docs.example.com/ams-accounting/getting-started</field>
+        <field name="target">new</field>
+    </record>
+    
+    <!-- Best Practices Guide Action (placeholder) -->
+    <record id="action_ams_best_practices_guide" model="ir.actions.act_url">
+        <field name="name">Best Practices Guide</field>
+        <field name="url">https://docs.example.com/ams-accounting/best-practices</field>
+        <field name="target">new</field>
+    </record>
+    
+    <!-- ==============================================
+         JOURNAL ENTRY ACTIONS
+         ============================================== -->
+    
+    <!-- Main Journal Entries Action -->
+    <record id="action_ams_account_move" model="ir.actions.act_window">
+        <field name="name">Journal Entries</field>
+        <field name="res_model">ams.account.move</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_ams_account_move_search"/>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first journal entry!
+            </p>
+            <p>
+                Journal entries record the financial impact of subscription
+                transactions and revenue recognition.
+            </p>
+        </field>
+    </record>
+    
+</odoo>
