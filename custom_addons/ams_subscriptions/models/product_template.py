@@ -22,7 +22,7 @@ class ProductTemplate(models.Model):
         ('enterprise', 'Membership - Enterprise'),
         ('chapter', 'Chapter'),
         ('publication', 'Publication'),
-    ], string='Subscription Type', default='none', compute='_compute_ams_product_type', store=True)
+    ], string='Subscription Type', default='none')
 
     # Enhanced subscription configuration
     subscription_tier_id = fields.Many2one(
@@ -129,14 +129,15 @@ class ProductTemplate(models.Model):
         store=False  # Don't store, compute fresh each time
     )
 
-    @api.depends('is_subscription_product')
+    """@api.depends('is_subscription_product')
     def _compute_ams_product_type(self):
         for product in self:
             if not product.is_subscription_product:
                 product.ams_product_type = 'none'
             elif product.ams_product_type == 'none':
                 product.ams_product_type = 'individual'  # Default to individual
-
+    """
+    
     @api.depends('ams_product_type')
     def _compute_subscription_stats(self):
         """Compute subscription statistics for this product"""
@@ -175,18 +176,22 @@ class ProductTemplate(models.Model):
             # Set smart defaults
             self.sale_ok = True
             self.website_published = True
-            
+        
             # Handle different field names across Odoo versions
             product_type_field = 'detailed_type' if hasattr(self, 'detailed_type') else 'type'
             setattr(self, product_type_field, 'service')  # Subscriptions are typically services
-            
+        
+            # Set default subscription type if not set
+            if self.ams_product_type == 'none':
+                self.ams_product_type = 'individual'  # Default to individual
+        
             # Set default subscription period if not set
             if self.subscription_period == 'none':
                 self.subscription_period = 'annual'
-                
+            
             # Auto-set category
             self._set_ams_category()
-            
+        
             # Show a helpful message
             return {
                 'warning': {
