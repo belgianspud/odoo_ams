@@ -1,83 +1,72 @@
+# -*- coding: utf-8 -*-
 {
     'name': 'AMS Base Accounting',
-    'version': '18.0.2.0.0',
-    'category': 'Association Management',
-    'summary': 'Financial Management Foundation for Association Management System',
-    'description': '''
-        AMS Base Accounting - Financial Management Foundation
-        ==================================================
-        
-        Complete accounting foundation for associations including:
-        
-        Core Features:
-        - GL Account mapping framework for AMS products
-        - Deferred revenue and revenue recognition automation
-        - Prorated billing and mid-period membership changes  
-        - Multi-year membership revenue scheduling
-        - Enterprise seat tracking and accounting
-        
-        Revenue Management:
-        - Automatic deferred revenue posting on invoice payment
-        - Monthly revenue recognition with journal entries
-        - Proration handling for upgrades/downgrades
-        - Credit management for membership changes
-        
-        Integration:
-        - Seamless integration with ams_subscriptions
-        - Contact/Account membership tracking
-        - Product-to-GL account mapping
-        - Invoice posting customization
-        
-        Financial Analytics:
-        - Deferred revenue aging reports
-        - Revenue recognition forecasting
-        - Member lifetime value analysis
-        - Board-ready financial summaries
-    ''',
-    'author': 'Your Organization',
-    'website': 'https://github.com/belgianspud/odoo_ams',
+    'version': '18.0.1.0.0',
+    'summary': 'Accounting foundation for Association Management Systems',
+    'description': """
+AMS Base Accounting
+==================
+Complete accounting foundation for Association Management Systems including:
+
+Core Features:
+- Chart of Accounts management
+- GL account setup and configuration
+- Revenue recognition for subscriptions
+- Deferred revenue handling
+- Financial reporting foundation
+
+Product Integration:
+- Financial tab on all products
+- GL account assignments per product
+- Revenue recognition settings
+- Cost accounting setup
+
+Subscription Integration:
+- Automatic journal entries for subscriptions
+- Monthly revenue recognition automation
+- Deferred revenue management
+- Payment failure accounting
+
+This module provides the accounting backbone for AMS operations while
+integrating seamlessly with existing subscription management.
+    """,
+    'author': 'AMS Development Team',
+    'website': 'https://yourwebsite.com',
+    'category': 'Accounting/Accounting',
+    'license': 'LGPL-3',
     'depends': [
         'base',
-        'account',
-        'sale',
         'product',
-        'contacts',
-        'mail',
-        'web',
-        'ams_subscriptions',  # Required integration
+        'sale_management',
+        'account',  # We'll use some base accounting concepts but build our own
     ],
     'data': [
-        # Security - MUST load in this order
+        # Security
         'security/ams_accounting_security.xml',
         'security/ir.model.access.csv',
         
-        # Data files
-        'data/ams_account_types_data.xml',
-        'data/ams_accounting_cron.xml',
+        # Data - Chart of Accounts Templates
+        'data/account_account_data.xml',
+        'data/account_journal_data.xml',
         
         # Views
-        'views/ams_gl_account_views.xml',
-        'views/ams_revenue_schedule_views.xml',
-        'views/ams_membership_credit_views.xml',
-        'views/res_partner_views.xml',  # Contact/Account enhancements
-        'views/product_template_views.xml',  # GL account mapping
-        'views/account_move_views.xml',  # Invoice enhancements
+        'views/account_account_views.xml',
+        'views/account_journal_views.xml',
+        'views/product_template_views.xml',
+        'views/ams_subscription_accounting_views.xml',
+        'views/revenue_recognition_views.xml',
+        
+        # Menus
+        'views/ams_accounting_menu.xml',
         
         # Reports
-        'reports/ams_deferred_revenue_report.xml',
-        'reports/ams_recognition_forecast_report.xml',
-        'reports/ams_member_lifetime_value_report.xml',
-        'reports/ams_financial_summary_report.xml',
-        
-        # Menu (load last)
-        'views/ams_accounting_menu.xml',
+        'reports/financial_reports.xml',
     ],
     'demo': [
-        'demo/ams_gl_accounts_demo.xml',
-        'demo/ams_revenue_schedules_demo.xml',
+        'demo/demo_chart_of_accounts.xml',
     ],
     'installable': True,
-    'application': True,  
+    'application': True,
     'auto_install': False,
-    'license': 'LGPL-3',
+    'sequence': 10,
 }
