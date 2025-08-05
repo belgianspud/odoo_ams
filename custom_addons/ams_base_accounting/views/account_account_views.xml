@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ==============================================
+         AMS ACCOUNT ACCOUNT VIEWS
+         ============================================== -->
+    
+    <!-- Account Tree View -->
+    <record id="view_ams_account_account_tree" model="ir.ui.view">
+        <field name="name">ams.account.account.tree</field>
+        <field name="model">ams.account.account</field>
+        <field name="arch" type="xml">
+            <tree string="Chart of Accounts" default_order="code" expand="1" 
+                  decoration-info="account_type in ('asset_cash', 'asset_receivable')"
+                  decoration-success="account_type in ('income', 'income_membership', 'income_chapter', 'income_publication')"
+                  decoration-warning="account_type in ('liability_deferred_revenue')"
+                  decoration-muted="not active">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="account_type" string="Type"/>
+                <field name="ams_category" string="AMS Category"/>
+                <field name="reconcile" string="Reconcile"/>
+                <field name="active" invisible="1"/>
+                <field name="balance" string="Balance" sum="Balance"/>
+                <field name="debit_total" string="Debit" sum="Total Debit"/>
+                <field name="credit_total" string="Credit" sum="Total Credit"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Account Form View -->
+    <record id="view_ams_account_account_form" model="ir.ui.view">
+        <field name="name">ams.account.account.form</field>
+        <field name="model">ams.account.account</field>
+        <field name="arch" type="xml">
+            <form string="Account">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_moves" type="object" 
+                                class="oe_stat_button" icon="fa-list-alt"
+                                attrs="{'invisible': [('move_line_count', '=', 0)]}">
+                            <field name="move_line_count" widget="statinfo" string="Journal Items"/>
+                        </button>
+                        <button name="action_view_reconciliations" type="object" 
+                                class="oe_stat_button" icon="fa-check-square-o"
+                                attrs="{'invisible': [('reconcile', '=', False)]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Reconciliations</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" 
+                            attrs="{'invisible': [('active', '=', True)]}"/>
+                    
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="code" placeholder="e.g. 1000" class="oe_inline" style="width: 100px;"/>
+                            <field name="name" placeholder="Account Name" class="oe_inline"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="account_type" widget="selection"/>
+                            <field name="ams_category" widget="selection"/>
+                            <field name="parent_id" domain="[('account_type', '=', account_type), ('company_id', '=', company_id)]"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="reconcile"/>
+                            <field name="deprecated" groups="base.group_no_one"/>
+                            <field name="active"/>
+                            <field name="currency_id" groups="base.group_multi_currency"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page name="account_info" string="Account Information">
+                            <group>
+                                <group string="Configuration">
+                                    <field name="internal_group"/>
+                                    <field name="tax_ids" widget="many2many_tags" 
+                                           attrs="{'invisible': [('account_type', 'not in', ['income', 'expense'])]}"/>
+                                    <field name="tag_ids" widget="many2many_tags"/>
+                                </group>
+                                <group string="Financial Information">
+                                    <field name="balance" readonly="1"/>
+                                    <field name="debit_total" readonly="1"/>
+                                    <field name="credit_total" readonly="1"/>
+                                    <field name="move_line_count" readonly="1"/>
+                                </group>
+                            </group>
+                            
+                            <group string="Description" col="1">
+                                <field name="note" nolabel="1" placeholder="Internal notes about this account..."/>
+                            </group>
+                        </page>
+                        
+                        <page name="subscription_integration" string="Subscription Integration"
+                              attrs="{'invisible': [('ams_category', 'not in', ['membership', 'chapter', 'publication'])]}">
+                            <group>
+                                <group string="Automated Recognition">
+                                    <field name="auto_revenue_recognition"
+                                           attrs="{'invisible': [('account_type', 'not in', ['liability_deferred_revenue'])]}"/>
+                                    <field name="recognition_frequency"
+                                           attrs="{'invisible': ['|', ('account_type', 'not in', ['liability_deferred_revenue']), ('auto_revenue_recognition', '=', False)]}"/>
+                                </group>
+                                <group string="Product Defaults">
+                                    <field name="default_for_product_types" widget="many2many_tags"/>
+                                </group>
+                            </group>
+                            
+                            <separator string="Related Subscriptions"/>
+                            <field name="subscription_ids" nolabel="1" readonly="1">
+                                <tree string="Related Subscriptions" limit="10">
+                                    <field name="name"/>
+                                    <field name="partner_id"/>
+                                    <field name="state"/>
+                                    <field name="total_invoiced_amount" sum="Total"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <page name="journal_items" string="Journal Items" 
+                              attrs="{'invisible': [('move_line_count', '=', 0)]}">
+                            <field name="move_line_ids" nolabel="1" readonly="1">
+                                <tree string="Journal Items" limit="20" default_order="date desc">
+                                    <field name="date"/>
+                                    <field name="move_id"/>
+                                    <field name="partner_id"/>
+                                    <field name="name"/>
+                                    <field name="debit" sum="Total Debit"/>
+                                    <field name="credit" sum="Total Credit"/>
+                                    <field name="balance" sum="Balance"/>
+                                    <field name="reconciled" invisible="1"/>
+                                    <field name="full_reconcile_id" groups="base.group_no_one"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <page name="child_accounts" string="Sub-Accounts"
+                              attrs="{'invisible': [('child_ids', '=', [])]}">
+                            <field name="child_ids" nolabel="1">
+                                <tree string="Sub-Accounts">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="account_type"/>
+                                    <field name="balance" sum="Total Balance"/>
+                                    <field name="active"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Account Search View -->
+    <record id="view_ams_account_account_search" model="ir.ui.view">
+        <field name="name">ams.account.account.search</field>
+        <field name="model">ams.account.account</field>
+        <field name="arch" type="xml">
+            <search string="Search Accounts">
+                <field name="name" filter_domain="['|', ('name', 'ilike', self), ('code', 'ilike', self)]" string="Account"/>
+                <field name="code"/>
+                <field name="account_type"/>
+                <field name="ams_category"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                
+                <separator/>
+                <filter name="reconcilable" string="Reconcilable" domain="[('reconcile', '=', True)]"/>
+                <filter name="non_reconcilable" string="Non Reconcilable" domain="[('reconcile', '=', False)]"/>
+                <filter name="deprecated" string="Deprecated" domain="[('deprecated', '=', True)]"/>
+                <filter name="inactive" string="Archived" domain="[('active', '=', False)]"/>
+                
+                <separator/>
+                <filter name="asset_accounts" string="Assets" domain="[('account_type', 'in', ['asset_receivable', 'asset_cash', 'asset_current', 'asset_non_current', 'asset_prepayments', 'asset_fixed'])]"/>
+                <filter name="liability_accounts" string="Liabilities" domain="[('account_type', 'in', ['liability_payable', 'liability_credit_card', 'liability_current', 'liability_non_current', 'liability_deferred_revenue'])]"/>
+                <filter name="equity_accounts" string="Equity" domain="[('account_type', 'in', ['equity', 'equity_unaffected'])]"/>
+                <filter name="income_accounts" string="Income" domain="[('account_type', 'in', ['income', 'income_membership', 'income_chapter', 'income_publication', 'income_other'])]"/>
+                <filter name="expense_accounts" string="Expenses" domain="[('account_type', 'in', ['expense', 'expense_depreciation', 'expense_direct_cost'])]"/>
+                
+                <separator/>
+                <filter name="membership_accounts" string="Membership" domain="[('ams_category', '=', 'membership')]"/>
+                <filter name="chapter_accounts" string="Chapter" domain="[('ams_category', '=', 'chapter')]"/>
+                <filter name="publication_accounts" string="Publication" domain="[('ams_category', '=', 'publication')]"/>
+                <filter name="event_accounts" string="Event" domain="[('ams_category', '=', 'event')]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter name="group_account_type" string="Account Type" context="{'group_by': 'account_type'}"/>
+                    <filter name="group_ams_category" string="AMS Category" context="{'group_by': 'ams_category'}"/>
+                    <filter name="group_internal_group" string="Internal Group" context="{'group_by': 'internal_group'}"/>
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Account Kanban View -->
+    <record id="view_ams_account_account_kanban" model="ir.ui.view">
+        <field name="name">ams.account.account.kanban</field>
+        <field name="model">ams.account.account</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="account_type"/>
+                <field name="ams_category"/>
+                <field name="balance"/>
+                <field name="active"/>
+                <field name="reconcile"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click #{record.active.raw_value ? '' : 'o_kanban_color_muted'}">
+                            <div class="row">
+                                <div class="col-6">
+                                    <strong>
+                                        <span t-esc="record.code.value"/>
+                                    </strong>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <span t-esc="record.balance.value" t-options="{'widget': 'monetary'}"/>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <span t-esc="record.name.value"/>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <span class="badge badge-pill badge-info" t-esc="record.account_type.value"/>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <span class="badge badge-pill badge-secondary" t-esc="record.ams_category.value"/>
+                                </div>
+                            </div>
+                            <div class="row" t-if="record.reconcile.raw_value">
+                                <div class="col-12">
+                                    <i class="fa fa-check-square-o text-success"/> Reconcilable
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    
+    <!-- Account Pivot View for Analysis -->
+    <record id="view_ams_account_account_pivot" model="ir.ui.view">
+        <field name="name">ams.account.account.pivot</field>
+        <field name="model">ams.account.account</field>
+        <field name="arch" type="xml">
+            <pivot string="Account Analysis">
+                <field name="account_type" type="row"/>
+                <field name="ams_category" type="row"/>
+                <field name="balance" type="measure"/>
+                <field name="debit_total" type="measure"/>
+                <field name="credit_total" type="measure"/>
+                <field name="move_line_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+    
+    <!-- Account Graph View -->
+    <record id="view_ams_account_account_graph" model="ir.ui.view">
+        <field name="name">ams.account.account.graph</field>
+        <field name="model">ams.account.account</field>
+        <field name="arch" type="xml">
+            <graph string="Account Balances" type="bar">
+                <field name="account_type"/>
+                <field name="balance" type="measure"/>
+            </graph>
+        </field>
+    </record>
+    
+    <!-- ==============================================
+         ACTIONS
+         ============================================== -->
+    
+    <!-- Main Account Action -->
+    <record id="action_ams_account_account" model="ir.actions.act_window">
+        <field name="name">Chart of Accounts</field>
+        <field name="res_model">ams.account.account</field>
+        <field name="view_mode">tree,kanban,form,pivot,graph</field>
+        <field name="view_id" ref="view_ams_account_account_tree"/>
+        <field name="search_view_id" ref="view_ams_account_account_search"/>
+        <field name="context">{
+            'search_default_asset_accounts': 1,
+            'search_default_liability_accounts': 1,
+            'search_default_equity_accounts': 1,
+            'search_default_income_accounts': 1,
+            'search_default_expense_accounts': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first account!
+            </p>
+            <p>
+                Configure your chart of accounts to categorize your membership,
+                chapter, and publication revenues properly.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Asset Accounts Action -->
+    <record id="action_ams_account_asset" model="ir.actions.act_window">
+        <field name="name">Asset Accounts</field>
+        <field name="res_model">ams.account.account</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('account_type', 'in', ['asset_receivable', 'asset_cash', 'asset_current', 'asset_non_current', 'asset_prepayments', 'asset_fixed'])]</field>
+        <field name="context">{'default_account_type': 'asset_current'}</field>
+    </record>
+    
+    <!-- Revenue Accounts Action -->
+    <record id="action_ams_account_revenue" model="ir.actions.act_window">
+        <field name="name">Revenue Accounts</field>
+        <field name="res_model">ams.account.account</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('account_type', 'in', ['income', 'income_membership', 'income_chapter', 'income_publication', 'income_other'])]</field>
+        <field name="context">{'default_account_type': 'income'}</field>
+    </record>
+    
+    <!-- Deferred Revenue Accounts Action -->
+    <record id="action_ams_account_deferred_revenue" model="ir.actions.act_window">
+        <field name="name">Deferred Revenue Accounts</field>
+        <field name="res_model">ams.account.account</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('account_type', '=', 'liability_deferred_revenue')]</field>
+        <field name="context">{'default_account_type': 'liability_deferred_revenue'}</field>
+    </record>
+    
+    <!-- Reconcilable Accounts Action -->
+    <record id="action_ams_account_reconcilable" model="ir.actions.act_window">
+        <field name="name">Reconcilable Accounts</field>
+        <field name="res_model">ams.account.account</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('reconcile', '=', True)]</field>
+        <field name="context">{'search_default_reconcilable': 1}</field>
+    </record>
+    
+    <!-- ==============================================
+         WIZARDS AND ACTIONS
+         ============================================== -->
+    
+    <!-- Chart of Accounts Setup Wizard Action -->
+    <record id="action_ams_chart_setup_wizard" model="ir.actions.act_window">
+        <field name="name">Setup Chart of Accounts</field>
+        <field name="res_model">ams.accounting.setup.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_setup_type': 'quick'}</field>
+    </record>
+    
+    <!-- Account Creation Wizard (if needed) -->
+    <record id="action_ams_account_create_wizard" model="ir.actions.act_window">
+        <field name="name">Create Account</field>
+        <field name="res_model">ams.account.account</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    
+</odoo>

@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ==============================================
+         AMS ACCOUNTING SECURITY GROUPS
+         ============================================== -->
+    
+    <!-- Base AMS Accounting Access -->
+    <record id="group_ams_accounting_user" model="res.groups">
+        <field name="name">AMS Accounting User</field>
+        <field name="category_id" ref="base.module_category_accounting_and_finance"/>
+        <field name="comment">Basic access to AMS accounting features - can view and create entries</field>
+    </record>
+
+    <!-- AMS Accounting Manager -->
+    <record id="group_ams_accounting_manager" model="res.groups">
+        <field name="name">AMS Accounting Manager</field>
+        <field name="category_id" ref="base.module_category_accounting_and_finance"/>
+        <field name="implied_ids" eval="[(4, ref('group_ams_accounting_user'))]"/>
+        <field name="comment">Full access to AMS accounting - can configure accounts, journals, and manage all entries</field>
+    </record>
+
+    <!-- AMS Revenue Recognition Specialist -->
+    <record id="group_ams_revenue_recognition" model="res.groups">
+        <field name="name">AMS Revenue Recognition Specialist</field>
+        <field name="category_id" ref="base.module_category_accounting_and_finance"/>
+        <field name="implied_ids" eval="[(4, ref('group_ams_accounting_user'))]"/>
+        <field name="comment">Specialized access for managing revenue recognition schedules and processing</field>
+    </record>
+
+    <!-- AMS Financial Reports Access -->
+    <record id="group_ams_financial_reports" model="res.groups">
+        <field name="name">AMS Financial Reports</field>
+        <field name="category_id" ref="base.module_category_reporting"/>
+        <field name="implied_ids" eval="[(4, ref('group_ams_accounting_user'))]"/>
+        <field name="comment">Access to financial reports and analytics</field>
+    </record>
+
+    <!-- ==============================================
+         RECORD RULES - ROW LEVEL SECURITY
+         ============================================== -->
+
+    <!-- AMS Account Access Rules -->
+    <record id="ams_account_account_user_rule" model="ir.rule">
+        <field name="name">AMS Account: User Access</field>
+        <field name="model_id" ref="model_ams_account_account"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_user'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="ams_account_account_manager_rule" model="ir.rule">
+        <field name="name">AMS Account: Manager Full Access</field>
+        <field name="model_id" ref="model_ams_account_account"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- AMS Journal Access Rules -->
+    <record id="ams_account_journal_user_rule" model="ir.rule">
+        <field name="name">AMS Journal: User Access</field>
+        <field name="model_id" ref="model_ams_account_journal"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_user'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="ams_account_journal_manager_rule" model="ir.rule">
+        <field name="name">AMS Journal: Manager Full Access</field>
+        <field name="model_id" ref="model_ams_account_journal"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- AMS Journal Entry Access Rules -->
+    <record id="ams_account_move_user_rule" model="ir.rule">
+        <field name="name">AMS Journal Entry: User Access</field>
+        <field name="model_id" ref="model_ams_account_move"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_user'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="ams_account_move_manager_rule" model="ir.rule">
+        <field name="name">AMS Journal Entry: Manager Full Access</field>
+        <field name="model_id" ref="model_ams_account_move"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Restrict deletion of posted entries -->
+    <record id="ams_account_move_posted_protection" model="ir.rule">
+        <field name="name">AMS Journal Entry: Protect Posted Entries</field>
+        <field name="model_id" ref="model_ams_account_move"/>
+        <field name="domain_force">[('state', '!=', 'posted')]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_user'))]"/>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- AMS Journal Entry Line Access Rules -->
+    <record id="ams_account_move_line_user_rule" model="ir.rule">
+        <field name="name">AMS Journal Line: User Access</field>
+        <field name="model_id" ref="model_ams_account_move_line"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_user'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Revenue Recognition Access Rules -->
+    <record id="ams_revenue_recognition_user_rule" model="ir.rule">
+        <field name="name">AMS Revenue Recognition: User Access</field>
+        <field name="model_id" ref="model_ams_revenue_recognition"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_user'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="ams_revenue_recognition_specialist_rule" model="ir.rule">
+        <field name="name">AMS Revenue Recognition: Specialist Access</field>
+        <field name="model_id" ref="model_ams_revenue_recognition"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('group_ams_revenue_recognition'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="ams_revenue_recognition_manager_rule" model="ir.rule">
+        <field name="name">AMS Revenue Recognition: Manager Full Access</field>
+        <field name="model_id" ref="model_ams_revenue_recognition"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Revenue Recognition Schedule Access -->
+    <record id="ams_revenue_recognition_schedule_user_rule" model="ir.rule">
+        <field name="name">AMS Revenue Recognition Schedule: User Access</field>
+        <field name="model_id" ref="model_ams_revenue_recognition_schedule"/>
+        <field name="domain_force">[('subscription_id.company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_user'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="ams_revenue_recognition_schedule_specialist_rule" model="ir.rule">
+        <field name="name">AMS Revenue Recognition Schedule: Specialist Access</field>
+        <field name="model_id" ref="model_ams_revenue_recognition_schedule"/>
+        <field name="domain_force">[('subscription_id.company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('group_ams_revenue_recognition'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- ==============================================
+         FIELD LEVEL SECURITY
+         ============================================== -->
+
+    <!-- Restrict sensitive financial fields to managers only -->
+    <record id="ams_account_balance_field_security" model="ir.model.fields">
+        <field name="name">balance</field>
+        <field name="model_id" ref="model_ams_account_account"/>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_manager')), (4, ref('group_ams_financial_reports'))]"/>
+    </record>
+
+    <record id="ams_account_debit_total_field_security" model="ir.model.fields">
+        <field name="name">debit_total</field>
+        <field name="model_id" ref="model_ams_account_account"/>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_manager')), (4, ref('group_ams_financial_reports'))]"/>
+    </record>
+
+    <record id="ams_account_credit_total_field_security" model="ir.model.fields">
+        <field name="name">credit_total</field>
+        <field name="model_id" ref="model_ams_account_account"/>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_manager')), (4, ref('group_ams_financial_reports'))]"/>
+    </record>
+
+    <!-- ==============================================
+         AUTOMATION SECURITY
+         ============================================== -->
+
+    <!-- Allow system user to create automated entries -->
+    <record id="ams_account_move_system_rule" model="ir.rule">
+        <field name="name">AMS Journal Entry: System Automation</field>
+        <field name="model_id" ref="model_ams_account_move"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="ams_revenue_recognition_system_rule" model="ir.rule">
+        <field name="name">AMS Revenue Recognition: System Automation</field>
+        <field name="model_id" ref="model_ams_revenue_recognition"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- ==============================================
+         INTEGRATION SECURITY - AMS SUBSCRIPTIONS
+         ============================================== -->
+
+    <!-- Allow AMS subscription users to view accounting data -->
+    <record id="ams_subscription_accounting_integration" model="ir.rule">
+        <field name="name">AMS Subscription Integration: Accounting Read Access</field>
+        <field name="model_id" ref="model_ams_account_move"/>
+        <field name="domain_force">[('subscription_id', '!=', False), ('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('ams_subscriptions.group_ams_subscription_user'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Allow subscription managers to create accounting entries -->
+    <record id="ams_subscription_manager_accounting_integration" model="ir.rule">
+        <field name="name">AMS Subscription Manager: Accounting Integration</field>
+        <field name="model_id" ref="model_ams_account_move"/>
+        <field name="domain_force">[('subscription_id', '!=', False), ('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('ams_subscriptions.group_ams_subscription_admin'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- ==============================================
+         PORTAL SECURITY - CUSTOMER ACCESS
+         ============================================== -->
+
+    <!-- Allow portal users to view their own subscription accounting data -->
+    <record id="ams_portal_subscription_accounting" model="ir.rule">
+        <field name="name">AMS Portal: Own Subscription Accounting</field>
+        <field name="model_id" ref="model_ams_account_move"/>
+        <field name="domain_force">[
+            '|',
+            ('subscription_id.partner_id', '=', user.partner_id.id),
+            ('subscription_id.account_id', '=', user.partner_id.id)
+        ]</field>
+        <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- ==============================================
+         MULTI-COMPANY SECURITY
+         ============================================== -->
+
+    <!-- Reconciliation records - company specific -->
+    <record id="ams_account_full_reconcile_company_rule" model="ir.rule">
+        <field name="name">AMS Full Reconcile: Company Access</field>
+        <field name="model_id" ref="model_ams_account_full_reconcile"/>
+        <field name="domain_force">[('reconciled_line_ids.company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_user'))]"/>
+    </record>
+
+    <record id="ams_account_partial_reconcile_company_rule" model="ir.rule">
+        <field name="name">AMS Partial Reconcile: Company Access</field>
+        <field name="model_id" ref="model_ams_account_partial_reconcile"/>
+        <field name="domain_force">[('debit_move_id.company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_user'))]"/>
+    </record>
+
+    <!-- ==============================================
+         SPECIAL PERMISSIONS
+         ============================================== -->
+
+    <!-- Allow accounting managers to modify posted entries (with restrictions) -->
+    <record id="ams_posted_entry_modification" model="ir.rule">
+        <field name="name">AMS Posted Entry: Manager Modification Rights</field>
+        <field name="model_id" ref="model_ams_account_move"/>
+        <field name="domain_force">[
+            ('state', '=', 'posted'),
+            ('company_id', 'in', company_ids),
+            ('posted_date', '>=', (context_today() - datetime.timedelta(days=30)).strftime('%Y-%m-%d'))
+        ]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Restrict year-end closing operations to managers -->
+    <record id="ams_year_end_operations" model="ir.rule">
+        <field name="name">AMS Year-End Operations: Manager Only</field>
+        <field name="model_id" ref="model_ams_account_move"/>
+        <field name="domain_force">[
+            ('move_type', 'in', ['year_end_closing', 'opening_balance']),
+            ('company_id', 'in', company_ids)
+        ]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- ==============================================
+         AUDIT TRAIL SECURITY
+         ============================================== -->
+
+    <!-- Ensure all accounting changes are tracked -->
+    <record id="ams_account_move_tracking" model="ir.model">
+        <field name="model">ams.account.move</field>
+        <field name="info">All changes to journal entries are tracked for audit purposes</field>
+    </record>
+
+    <record id="ams_account_move_line_tracking" model="ir.model">
+        <field name="model">ams.account.move.line</field>
+        <field name="info">All changes to journal entry lines are tracked for audit purposes</field>
+    </record>
+
+    <!-- ==============================================
+         DATA INTEGRITY RULES
+         ============================================== -->
+
+    <!-- Prevent deletion of accounts with transactions -->
+    <record id="ams_account_with_transactions_protection" model="ir.rule">
+        <field name="name">AMS Account: Protect Accounts with Transactions</field>
+        <field name="model_id" ref="model_ams_account_account"/>
+        <field name="domain_force">[('move_line_ids', '=', False)]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_user'))]"/>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Prevent deletion of journals with entries -->
+    <record id="ams_journal_with_entries_protection" model="ir.rule">
+        <field name="name">AMS Journal: Protect Journals with Entries</field>
+        <field name="model_id" ref="model_ams_account_journal"/>
+        <field name="domain_force">[('move_ids', '=', False)]</field>
+        <field name="groups" eval="[(4, ref('group_ams_accounting_user'))]"/>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+</odoo>

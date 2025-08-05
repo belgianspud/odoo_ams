@@ -1,0 +1,647 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ==============================================
+         AMS SUBSCRIPTION ACCOUNTING VIEWS
+         ============================================== -->
+    
+    <!-- Subscription Accounting Tree View -->
+    <record id="view_ams_subscription_accounting_tree" model="ir.ui.view">
+        <field name="name">ams.subscription.accounting.tree</field>
+        <field name="model">ams.subscription.accounting</field>
+        <field name="arch" type="xml">
+            <tree string="Subscription Accounting" 
+                  decoration-success="accounting_status == 'complete'"
+                  decoration-warning="accounting_status == 'partial'"
+                  decoration-danger="accounting_status == 'error'"
+                  decoration-muted="subscription_state != 'active'">
+                <field name="subscription_id"/>
+                <field name="partner_id"/>
+                <field name="product_id"/>
+                <field name="subscription_state" invisible="1"/>
+                <field name="accounting_status"/>
+                <field name="total_invoiced_amount" sum="Total Invoiced"/>
+                <field name="total_recognized_revenue" sum="Total Recognized"/>
+                <field name="deferred_revenue_balance" sum="Deferred Balance"/>
+                <field name="next_recognition_date"/>
+                <field name="auto_recognize_revenue" widget="boolean_toggle"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Subscription Accounting Form View -->
+    <record id="view_ams_subscription_accounting_form" model="ir.ui.view">
+        <field name="name">ams.subscription.accounting.form</field>
+        <field name="model">ams.subscription.accounting</field>
+        <field name="arch" type="xml">
+            <form string="Subscription Accounting">
+                <header>
+                    <button name="action_setup_accounting" type="object" 
+                            class="btn-primary" string="Setup Accounting"
+                            attrs="{'invisible': [('accounting_setup_complete', '=', True)]}"/>
+                    <button name="action_create_journal_entry" type="object" 
+                            class="btn-secondary" string="Create Entry"
+                            attrs="{'invisible': [('accounting_setup_complete', '=', False)]}"/>
+                    <button name="action_recognize_revenue" type="object" 
+                            class="btn-secondary" string="Recognize Revenue"
+                            attrs="{'invisible': ['|', ('accounting_setup_complete', '=', False), ('deferred_revenue_balance', '<=', 0)]}"/>
+                    <button name="action_open_accounting_wizard" type="object" 
+                            class="btn-secondary" string="Accounting Wizard"/>
+                    <field name="accounting_status" widget="statusbar" 
+                           statusbar_visible="setup,partial,complete"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_journal_entries" type="object" 
+                                class="oe_stat_button" icon="fa-book">
+                            <field name="journal_entry_count" widget="statinfo" string="Journal Entries"/>
+                        </button>
+                        <button name="action_view_revenue_recognitions" type="object" 
+                                class="oe_stat_button" icon="fa-line-chart">
+                            <field name="revenue_recognition_count" widget="statinfo" string="Revenue Recognition"/>
+                        </button>
+                        <button name="action_view_financial_analysis" type="object" 
+                                class="oe_stat_button" icon="fa-pie-chart">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Analysis</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <!-- Status Banner -->
+                    <div class="alert alert-success" role="alert" 
+                         attrs="{'invisible': [('accounting_status', '!=', 'complete')]}">
+                        <p><strong><i class="fa fa-check-circle"/> Accounting Setup Complete</strong></p>
+                        <p>This subscription is fully configured for automated accounting.</p>
+                    </div>
+                    
+                    <div class="alert alert-warning" role="alert" 
+                         attrs="{'invisible': [('accounting_status', '!=', 'partial')]}">
+                        <p><strong><i class="fa fa-exclamation-triangle"/> Partial Setup</strong></p>
+                        <p>Some accounting configuration is missing. Complete setup for full automation.</p>
+                    </div>
+                    
+                    <div class="alert alert-info" role="alert" 
+                         attrs="{'invisible': [('accounting_status', '!=', 'setup')]}">
+                        <p><strong><i class="fa fa-info-circle"/> Setup Required</strong></p>
+                        <p>Click "Setup Accounting" to configure financial accounts for this subscription.</p>
+                    </div>
+                    
+                    <div class="alert alert-danger" role="alert" 
+                         attrs="{'invisible': [('accounting_status', '!=', 'error')]}">
+                        <p><strong><i class="fa fa-exclamation-circle"/> Accounting Error</strong></p>
+                        <p>There are issues with the accounting configuration. Please review and correct.</p>
+                        <field name="error_message" readonly="1" nolabel="1" attrs="{'invisible': [('error_message', '=', False)]}"/>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="subscription_id" readonly="1"/>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="product_id" readonly="1"/>
+                            <field name="subscription_state" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="accounting_setup_complete" readonly="1"/>
+                            <field name="auto_recognize_revenue"/>
+                            <field name="company_id" groups="base.group_multi_company" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page name="financial_summary" string="Financial Summary">
+                            <group>
+                                <group string="Revenue Tracking">
+                                    <field name="total_invoiced_amount" readonly="1"/>
+                                    <field name="total_recognized_revenue" readonly="1"/>
+                                    <field name="deferred_revenue_balance" readonly="1"/>
+                                    <field name="recognition_percentage" readonly="1" widget="percentage"/>
+                                </group>
+                                <group string="Recognition Schedule">
+                                    <field name="next_recognition_date" readonly="1"/>
+                                    <field name="last_recognition_date" readonly="1"/>
+                                    <field name="recognition_frequency" readonly="1"/>
+                                    <field name="monthly_recognition_amount" readonly="1"/>
+                                </group>
+                            </group>
+                            
+                            <!-- Financial Chart/Graph -->
+                            <separator string="Revenue Recognition Progress"/>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <field name="revenue_chart_data" widget="char" readonly="1" invisible="1"/>
+                                    <!-- This would be replaced with an actual chart widget in a real implementation -->
+                                    <div class="text-center">
+                                        <h4>Revenue Recognition Progress</h4>
+                                        <div style="height: 200px; background: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; justify-content: center;">
+                                            <span class="text-muted">Chart placeholder - Revenue progress visualization</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4>Key Metrics</h4>
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td><strong>Total Contract Value:</strong></td>
+                                            <td class="text-right"><field name="total_invoiced_amount" readonly="1"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Recognized to Date:</strong></td>
+                                            <td class="text-right"><field name="total_recognized_revenue" readonly="1"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Remaining Deferred:</strong></td>
+                                            <td class="text-right"><field name="deferred_revenue_balance" readonly="1"/></td>
+                                        </tr>
+                                        <tr class="table-active">
+                                            <td><strong>Recognition %:</strong></td>
+                                            <td class="text-right"><field name="recognition_percentage" readonly="1" widget="percentage"/></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </page>
+                        
+                        <page name="account_configuration" string="Account Configuration">
+                            <group>
+                                <group string="Revenue Accounts">
+                                    <field name="revenue_account_id" 
+                                           domain="[('account_type', 'in', ['income', 'income_membership', 'income_chapter', 'income_publication']), ('company_id', '=', company_id)]"/>
+                                    <field name="deferred_revenue_account_id" 
+                                           domain="[('account_type', '=', 'liability_deferred_revenue'), ('company_id', '=', company_id)]"/>
+                                    <field name="recognition_journal_id" 
+                                           domain="[('ams_journal_type', '=', 'revenue_recognition'), ('company_id', '=', company_id)]"/>
+                                </group>
+                                <group string="Other Accounts">
+                                    <field name="receivable_account_id" 
+                                           domain="[('account_type', '=', 'asset_receivable'), ('company_id', '=', company_id)]"/>
+                                    <field name="cash_account_id" 
+                                           domain="[('account_type', '=', 'asset_cash'), ('company_id', '=', company_id)]"/>
+                                    <field name="default_journal_id" 
+                                           domain="[('company_id', '=', company_id)]"/>
+                                </group>
+                            </group>
+                            
+                            <separator string="Validation"/>
+                            <field name="configuration_issues" readonly="1" nolabel="1" widget="html"
+                                   attrs="{'invisible': [('configuration_issues', '=', False)]}"/>
+                        </page>
+                        
+                        <page name="journal_entries" string="Journal Entries">
+                            <field name="journal_entry_ids" nolabel="1" readonly="1">
+                                <tree string="Journal Entries" create="false" edit="false">
+                                    <field name="date"/>
+                                    <field name="name"/>
+                                    <field name="journal_id"/>
+                                    <field name="ref"/>
+                                    <field name="state"/>
+                                    <field name="amount_total" sum="Total"/>
+                                    <button name="action_view_entry" type="object" 
+                                            string="View" class="btn-link"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <page name="revenue_recognition" string="Revenue Recognition">
+                            <field name="revenue_recognition_ids" nolabel="1">
+                                <tree string="Revenue Recognition Entries" create="false">
+                                    <field name="recognition_date"/>
+                                    <field name="period_start"/>
+                                    <field name="period_end"/>
+                                    <field name="recognition_amount" sum="Total"/>
+                                    <field name="recognition_method"/>
+                                    <field name="state"/>
+                                    <field name="move_id"/>
+                                    <button name="action_post" type="object" 
+                                            string="Post" class="btn-link"
+                                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                                </tree>
+                            </field>
+                            
+                            <div class="mt-3">
+                                <button name="action_create_recognition_entry" type="object" 
+                                        class="btn btn-primary" string="Create Recognition Entry"
+                                        attrs="{'invisible': [('deferred_revenue_balance', '<=', 0)]}"/>
+                                <button name="action_setup_recognition_schedule" type="object" 
+                                        class="btn btn-secondary" string="Setup Recognition Schedule"/>
+                            </div>
+                        </page>
+                        
+                        <page name="history" string="History &amp; Audit">
+                            <group>
+                                <group string="Important Dates">
+                                    <field name="accounting_setup_date" readonly="1"/>
+                                    <field name="first_journal_entry_date" readonly="1"/>
+                                    <field name="last_recognition_date" readonly="1"/>
+                                    <field name="next_recognition_date" readonly="1"/>
+                                </group>
+                                <group string="Automation">
+                                    <field name="auto_recognize_revenue"/>
+                                    <field name="last_auto_recognition_run" readonly="1"/>
+                                    <field name="auto_recognition_errors" readonly="1"/>
+                                </group>
+                            </group>
+                            
+                            <separator string="Activity Log"/>
+                            <field name="activity_log" readonly="1" nolabel="1" widget="html"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Subscription Accounting Search View -->
+    <record id="view_ams_subscription_accounting_search" model="ir.ui.view">
+        <field name="name">ams.subscription.accounting.search</field>
+        <field name="model">ams.subscription.accounting</field>
+        <field name="arch" type="xml">
+            <search string="Search Subscription Accounting">
+                <field name="subscription_id" filter_domain="[('subscription_id.name', 'ilike', self)]"/>
+                <field name="partner_id"/>
+                <field name="product_id"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                
+                <separator/>
+                <filter name="setup_complete" string="Setup Complete" 
+                        domain="[('accounting_setup_complete', '=', True)]"/>
+                <filter name="setup_required" string="Setup Required" 
+                        domain="[('accounting_setup_complete', '=', False)]"/>
+                <filter name="auto_recognition" string="Auto Recognition" 
+                        domain="[('auto_recognize_revenue', '=', True)]"/>
+                <filter name="has_deferred_revenue" string="Has Deferred Revenue" 
+                        domain="[('deferred_revenue_balance', '>', 0)]"/>
+                
+                <separator/>
+                <filter name="status_complete" string="Complete" 
+                        domain="[('accounting_status', '=', 'complete')]"/>
+                <filter name="status_partial" string="Partial" 
+                        domain="[('accounting_status', '=', 'partial')]"/>
+                <filter name="status_setup" string="Setup Required" 
+                        domain="[('accounting_status', '=', 'setup')]"/>
+                <filter name="status_error" string="Error" 
+                        domain="[('accounting_status', '=', 'error')]"/>
+                
+                <separator/>
+                <filter name="active_subscriptions" string="Active Subscriptions" 
+                        domain="[('subscription_state', '=', 'active')]"/>
+                <filter name="due_for_recognition" string="Due for Recognition" 
+                        domain="[('next_recognition_date', '<=', context_today())]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter name="group_status" string="Status" context="{'group_by': 'accounting_status'}"/>
+                    <filter name="group_partner" string="Customer" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_product" string="Product" context="{'group_by': 'product_id'}"/>
+                    <filter name="group_subscription_state" string="Subscription State" context="{'group_by': 'subscription_state'}"/>
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Subscription Accounting Kanban View -->
+    <record id="view_ams_subscription_accounting_kanban" model="ir.ui.view">
+        <field name="name">ams.subscription.accounting.kanban</field>
+        <field name="model">ams.subscription.accounting</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" default_group_by="accounting_status">
+                <field name="subscription_id"/>
+                <field name="partner_id"/>
+                <field name="product_id"/>
+                <field name="accounting_status"/>
+                <field name="total_invoiced_amount"/>
+                <field name="total_recognized_revenue"/>
+                <field name="deferred_revenue_balance"/>
+                <field name="recognition_percentage"/>
+                <field name="auto_recognize_revenue"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="row">
+                                <div class="col-8">
+                                    <strong t-esc="record.subscription_id.value"/>
+                                </div>
+                                <div class="col-4 text-right">
+                                    <span t-if="record.accounting_status.raw_value == 'complete'" 
+                                          class="badge badge-success">Complete</span>
+                                    <span t-if="record.accounting_status.raw_value == 'partial'" 
+                                          class="badge badge-warning">Partial</span>
+                                    <span t-if="record.accounting_status.raw_value == 'setup'" 
+                                          class="badge badge-info">Setup</span>
+                                    <span t-if="record.accounting_status.raw_value == 'error'" 
+                                          class="badge badge-danger">Error</span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <span t-esc="record.partner_id.value"/>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <small class="text-muted">
+                                        <i class="fa fa-cube"/> <span t-esc="record.product_id.value"/>
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <hr class="mt-2 mb-2"/>
+                            
+                            <div class="row">
+                                <div class="col-6">
+                                    <small>
+                                        <strong>Invoiced:</strong><br/>
+                                        <span t-esc="record.total_invoiced_amount.value" t-options="{'widget': 'monetary'}"/>
+                                    </small>
+                                </div>
+                                <div class="col-6">
+                                    <small>
+                                        <strong>Recognized:</strong><br/>
+                                        <span t-esc="record.total_recognized_revenue.value" t-options="{'widget': 'monetary'}"/>
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="row mt-1">
+                                <div class="col-6">
+                                    <small>
+                                        <strong>Deferred:</strong><br/>
+                                        <span t-esc="record.deferred_revenue_balance.value" t-options="{'widget': 'monetary'}"/>
+                                    </small>
+                                </div>
+                                <div class="col-6">
+                                    <small>
+                                        <strong>Progress:</strong><br/>
+                                        <span t-esc="record.recognition_percentage.value" t-options="{'widget': 'percentage'}"/>
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-2" t-if="record.auto_recognize_revenue.raw_value">
+                                <div class="col-12">
+                                    <i class="fa fa-cog text-success"/> Auto Recognition
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    
+    <!-- Subscription Accounting Pivot View -->
+    <record id="view_ams_subscription_accounting_pivot" model="ir.ui.view">
+        <field name="name">ams.subscription.accounting.pivot</field>
+        <field name="model">ams.subscription.accounting</field>
+        <field name="arch" type="xml">
+            <pivot string="Subscription Accounting Analysis">
+                <field name="accounting_status" type="col"/>
+                <field name="product_id" type="row"/>
+                <field name="total_invoiced_amount" type="measure"/>
+                <field name="total_recognized_revenue" type="measure"/>
+                <field name="deferred_revenue_balance" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+    
+    <!-- ==============================================
+         ACTIONS
+         ============================================== -->
+    
+    <!-- Main Subscription Accounting Action -->
+    <record id="action_ams_subscription_accounting" model="ir.actions.act_window">
+        <field name="name">Subscription Accounting</field>
+        <field name="res_model">ams.subscription.accounting</field>
+        <field name="view_mode">kanban,tree,form,pivot</field>
+        <field name="view_id" ref="view_ams_subscription_accounting_kanban"/>
+        <field name="search_view_id" ref="view_ams_subscription_accounting_search"/>
+        <field name="context">{
+            'search_default_active_subscriptions': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No subscription accounting records found!
+            </p>
+            <p>
+                Subscription accounting records are automatically created when 
+                subscriptions are linked to financial accounts.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Setup Required Action -->
+    <record id="action_subscription_accounting_setup_required" model="ir.actions.act_window">
+        <field name="name">Subscriptions Requiring Accounting Setup</field>
+        <field name="res_model">ams.subscription.accounting</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('accounting_setup_complete', '=', False)]</field>
+        <field name="context">{'search_default_setup_required': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Great! All subscriptions have accounting setup complete.
+            </p>
+            <p>
+                This view shows subscriptions that need financial configuration.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Due for Recognition Action -->
+    <record id="action_subscription_accounting_due_recognition" model="ir.actions.act_window">
+        <field name="name">Due for Revenue Recognition</field>
+        <field name="res_model">ams.subscription.accounting</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('next_recognition_date', '<=', context_today()), ('deferred_revenue_balance', '>', 0)]</field>
+        <field name="context">{'search_default_due_for_recognition': 1}</field>
+    </record>
+    
+    <!-- Deferred Revenue Action -->
+    <record id="action_subscription_accounting_deferred_revenue" model="ir.actions.act_window">
+        <field name="name">Subscriptions with Deferred Revenue</field>
+        <field name="res_model">ams.subscription.accounting</field>
+        <field name="view_mode">tree,form,pivot</field>
+        <field name="domain">[('deferred_revenue_balance', '>', 0)]</field>
+        <field name="context">{'search_default_has_deferred_revenue': 1}</field>
+    </record>
+    
+    <!-- ==============================================
+         WIZARD ACTIONS
+         ============================================== -->
+    
+    <!-- Subscription Accounting Wizard -->
+    <record id="action_subscription_accounting_wizard" model="ir.actions.act_window">
+        <field name="name">Subscription Accounting Wizard</field>
+        <field name="res_model">ams.subscription.accounting.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_subscription_id': active_id,
+            'default_action_type': 'setup'
+        }</field>
+    </record>
+    
+    <!-- Bulk Revenue Recognition Wizard -->
+    <record id="action_bulk_revenue_recognition_wizard" model="ir.actions.act_window">
+        <field name="name">Bulk Revenue Recognition</field>
+        <field name="res_model">ams.revenue.recognition.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_wizard_type': 'bulk_subscriptions',
+            'active_ids': active_ids
+        }</field>
+    </record>
+    
+    <!-- ==============================================
+         SERVER ACTIONS
+         ============================================== -->
+    
+    <!-- Setup Accounting Server Action -->
+    <record id="server_action_setup_subscription_accounting" model="ir.actions.server">
+        <field name="name">Setup Accounting</field>
+        <field name="model_id" ref="model_ams_subscription_accounting"/>
+        <field name="binding_model_id" ref="model_ams_subscription_accounting"/>
+        <field name="binding_view_types">form,list</field>
+        <field name="state">code</field>
+        <field name="code">
+action = {
+    'type': 'ir.actions.act_window',
+    'res_model': 'ams.subscription.accounting.wizard',
+    'view_mode': 'form',
+    'target': 'new',
+    'context': {
+        'default_subscription_id': records[0].subscription_id.id if len(records) == 1 else False,
+        'default_action_type': 'setup',
+        'active_ids': records.ids
+    }
+}
+        </field>
+    </record>
+    
+    <!-- Create Journal Entry Server Action -->
+    <record id="server_action_create_journal_entry" model="ir.actions.server">
+        <field name="name">Create Journal Entry</field>
+        <field name="model_id" ref="model_ams_subscription_accounting"/>
+        <field name="binding_model_id" ref="model_ams_subscription_accounting"/>
+        <field name="binding_view_types">form,list</field>
+        <field name="state">code</field>
+        <field name="code">
+action = {
+    'type': 'ir.actions.act_window',
+    'res_model': 'ams.subscription.accounting.wizard',
+    'view_mode': 'form',
+    'target': 'new',
+    'context': {
+        'default_subscription_id': records[0].subscription_id.id if len(records) == 1 else False,
+        'default_action_type': 'journal_entry',
+        'active_ids': records.ids
+    }
+}
+        </field>
+    </record>
+    
+    <!-- Recognize Revenue Server Action -->
+    <record id="server_action_recognize_revenue" model="ir.actions.server">
+        <field name="name">Recognize Revenue</field>
+        <field name="model_id" ref="model_ams_subscription_accounting"/>
+        <field name="binding_model_id" ref="model_ams_subscription_accounting"/>
+        <field name="binding_view_types">form,list</field>
+        <field name="state">code</field>
+        <field name="code">
+if records.filtered(lambda r: r.deferred_revenue_balance > 0):
+    action = {
+        'type': 'ir.actions.act_window',
+        'res_model': 'ams.revenue.recognition.wizard',
+        'view_mode': 'form',
+        'target': 'new',
+        'context': {
+            'default_wizard_type': 'single_subscription' if len(records) == 1 else 'bulk_subscriptions',
+            'default_subscription_id': records[0].subscription_id.id if len(records) == 1 else False,
+            'active_ids': records.ids
+        }
+    }
+else:
+    raise UserError('Selected subscriptions have no deferred revenue to recognize.')
+        </field>
+    </record>
+    
+    <!-- ==============================================
+         INHERIT SUBSCRIPTION VIEWS TO ADD ACCOUNTING
+         ============================================== -->
+    
+    <!-- Add Accounting button to Subscription form -->
+    <record id="view_ams_subscription_form_inherit_accounting" model="ir.ui.view">
+        <field name="name">ams.subscription.form.inherit.accounting</field>
+        <field name="model">ams.subscription</field>
+        <field name="inherit_id" ref="ams_subscriptions.view_ams_subscription_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_view_accounting_record" type="object" 
+                        class="oe_stat_button" icon="fa-calculator">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="accounting_setup_complete" widget="boolean_toggle"/>
+                        </span>
+                        <span class="o_stat_text">Accounting</span>
+                    </div>
+                </button>
+                
+                <button name="action_view_journal_entries" type="object" 
+                        class="oe_stat_button" icon="fa-book"
+                        attrs="{'invisible': [('journal_entry_count', '=', 0)]}">
+                    <field name="journal_entry_count" widget="statinfo" string="Journal Entries"/>
+                </button>
+            </div>
+            
+            <!-- Add accounting tab -->
+            <xpath expr="//notebook" position="inside">
+                <page name="accounting" string="Accounting"
+                      attrs="{'invisible': [('is_subscription_product', '=', False)]}">
+                    
+                    <div class="alert alert-info" role="alert" 
+                         attrs="{'invisible': [('accounting_setup_complete', '=', True)]}">
+                        <p><strong>Accounting Setup Required</strong></p>
+                        <p>Configure financial accounts to enable automated journal entries and revenue recognition.</p>
+                        <button name="action_setup_subscription_accounting" type="object" 
+                                class="btn btn-primary btn-sm">
+                            <i class="fa fa-magic"/> Setup Accounting
+                        </button>
+                    </div>
+                    
+                    <group attrs="{'invisible': [('accounting_setup_complete', '=', False)]}">
+                        <group string="Financial Summary">
+                            <field name="total_invoiced_amount" readonly="1"/>
+                            <field name="total_recognized_revenue" readonly="1"/>
+                            <field name="deferred_revenue_balance" readonly="1"/>
+                        </group>
+                        <group string="Recognition Settings">
+                            <field name="auto_recognize_revenue"/>
+                            <field name="next_recognition_date" readonly="1"/>
+                            <field name="last_recognition_date" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <separator string="Recent Journal Entries" 
+                               attrs="{'invisible': [('journal_entry_count', '=', 0)]}"/>
+                    <field name="recent_journal_entries" nolabel="1" readonly="1"
+                           attrs="{'invisible': [('journal_entry_count', '=', 0)]}">
+                        <tree string="Recent Entries" limit="5" create="false" edit="false">
+                            <field name="date"/>
+                            <field name="name"/>
+                            <field name="journal_id"/>
+                            <field name="amount_total"/>
+                            <field name="state"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+    
+</odoo>
