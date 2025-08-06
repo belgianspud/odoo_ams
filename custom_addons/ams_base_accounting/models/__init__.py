@@ -1,21 +1,30 @@
 # -*- coding: utf-8 -*-
 
-# Import in strict dependency order to avoid circular imports
-# Base models with no internal dependencies first
+# Import in very careful order to avoid circular dependencies
+# Start with models that have no internal dependencies
+
+# Company extensions first (no deps on AMS models)
 from . import res_company
 
-# Core accounting models with minimal cross-references
+# Basic models with minimal cross-references
 from . import account_account
+
+# Journal model (depends on account_account for default account)
 from . import account_journal
 
-# Transaction models - import lines before moves
+# Move line model (depends on account_account and account_journal)
 from . import account_move_line
+
+# Move model (depends on account_journal and account_move_line)
 from . import account_move
 
-# Revenue recognition models
+# Revenue recognition models (depend on account_move)
 from . import revenue_recognition
 
-# Integration models (depend on others)
+# Basic subscription model (minimal dependencies)
+from . import ams_subscription_stub
+
+# Integration models (depend on subscription and accounting models)
 from . import ams_subscription_accounting
 
 # Product extensions (depend on account models)

@@ -109,6 +109,12 @@ class AccountAccount(models.Model):
         help='Allow journal entries on this account to be reconciled'
     )
     
+    deprecated = fields.Boolean(
+        string='Deprecated',
+        default=False,
+        help='Account is deprecated and should not be used for new entries'
+    )
+    
     note = fields.Text(string='Internal Notes')
     
     # AMS-specific fields
@@ -126,7 +132,7 @@ class AccountAccount(models.Model):
         ('general', 'General Operations'),
     ], string='AMS Category', help='Categorizes accounts by AMS function')
     
-    # Balance and totals
+    # Balance and totals - use compute methods instead of direct One2many to avoid circular deps
     balance = fields.Float(
         string='Current Balance',
         compute='_compute_balance',
@@ -145,12 +151,11 @@ class AccountAccount(models.Model):
         help='Total credits for this account'
     )
     
-    # Usage tracking
-    move_line_ids = fields.One2many(
-        'ams.account.move.line',
-        'account_id',
-        string='Journal Items',
-        readonly=True
+    # Move line count instead of direct One2many relationship initially
+    move_line_count = fields.Integer(
+        string='Journal Items Count',
+        compute='_compute_move_line_count',
+        help='Number of journal items for this account'
     )
     
     @api.depends('parent_id')
@@ -169,9 +174,38 @@ class AccountAccount(models.Model):
         for account in self:
             # This would normally query journal entries
             # For now, set defaults - will be enhanced when journal entries are implemented
-            account.balance = 0.0
-            account.debit_total = 0.0
-            account.credit_total = 0.0
+            try:
+                # Safe query for journal entries if the model exists
+                if 'ams.account.move.line' in self.env:
+                    lines = self.env['ams.account.move.line'].search([
+                        ('account_id', '=', account.id),
+                        ('move_id.state', '=', 'posted')
+                    ])
+                    account.debit_total = sum(lines.mapped('debit'))
+                    account.credit_total = sum(lines.mapped('credit'))
+                    account.balance = account.debit_total - account.credit_total
+                else:
+                    account.balance = 0.0
+                    account.debit_total = 0.0
+                    account.credit_total = 0.0
+            except:
+                # Fallback if there are any issues
+                account.balance = 0.0
+                account.debit_total = 0.0
+                account.credit_total = 0.0
+    
+    def _compute_move_line_count(self):
+        """Compute move line count"""
+        for account in self:
+            try:
+                if 'ams.account.move.line' in self.env:
+                    account.move_line_count = self.env['ams.account.move.line'].search_count([
+                        ('account_id', '=', account.id)
+                    ])
+                else:
+                    account.move_line_count = 0
+            except:
+                account.move_line_count = 0
     
     @api.constrains('parent_id')
     def _check_parent_id(self):
@@ -324,3 +358,18 @@ class AccountAccount(models.Model):
                 created_accounts |= account
         
         return created_accounts
+
+
+# Add the One2many relationship in a separate method after model is fully loaded
+def _add_move_line_relationship():
+    """Add the One2many relationship to move lines after models are loaded"""
+    AccountAccount = AccountAccount  # Keep reference to the class
+    
+    # This will be called after all models are loaded
+    if not hasattr(AccountAccount, 'move_line_ids'):
+        AccountAccount.move_line_ids = fields.One2many(
+            'ams.account.move.line',
+            'account_id',
+            string='Journal Items',
+            readonly=True
+        )

@@ -39,6 +39,8 @@ integrating seamlessly with existing subscription management.
         'product',
         'sale_management',
         'account',  # We'll use some base accounting concepts but build our own
+        # Add subscription dependency if it exists, or make it optional
+        'ams_subscriptions',
     ],
     'data': [
         # Security
@@ -48,6 +50,7 @@ integrating seamlessly with existing subscription management.
         # Data - Chart of Accounts Templates
         'data/account_account_data.xml',
         'data/account_journal_data.xml',
+        'data/subscription_sequence.xml',
         
         # Views
         'views/account_account_views.xml',
