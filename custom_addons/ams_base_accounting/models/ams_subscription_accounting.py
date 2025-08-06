@@ -1,620 +1,608 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
 from odoo.exceptions import UserError, ValidationError
-from datetime import datetime, date
-from dateutil.relativedelta import relativedelta
 
-class AMSSubscription(models.Model):
-    """Extend AMS Subscription with accounting functionality"""
-    _inherit = 'ams.subscription'
+class AMSSubscriptionAccounting(models.Model):
+    """Bridge model connecting subscriptions to accounting configuration"""
+    _name = 'ams.subscription.accounting'
+    _description = 'AMS Subscription Accounting Configuration'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _check_company_auto = True
     
-    # ==============================================
-    # ACCOUNTING INTEGRATION FIELDS
-    # ==============================================
-    
-    # Journal entries related to this subscription
-    move_ids = fields.One2many(
-        'ams.account.move',
-        'subscription_id',
-        string='Journal Entries',
-        readonly=True,
-        help='All journal entries related to this subscription'
+    # Subscription Reference
+    subscription_id = fields.Many2one(
+        'ams.subscription',
+        string='Subscription',
+        required=True,
+        ondelete='cascade',
+        tracking=True
     )
     
-    move_count = fields.Integer(
-        string='Journal Entries Count',
-        compute='_compute_move_count'
-    )
-    
-    # Revenue recognition
-    revenue_recognition_ids = fields.One2many(
-        'ams.revenue.recognition',
-        'subscription_id',
-        string='Revenue Recognition Entries',
+    # Related Subscription Information (safe references)
+    partner_id = fields.Many2one(
+        'res.partner',
+        string='Customer',
+        related='subscription_id.partner_id',
+        store=True,
         readonly=True
     )
     
-    revenue_recognition_count = fields.Integer(
-        string='Revenue Recognition Count',
-        compute='_compute_revenue_recognition_count'
+    product_id = fields.Many2one(
+        'product.template',
+        string='Product',
+        related='subscription_id.product_id',
+        store=True,
+        readonly=True
     )
     
-    # Financial amounts
-    total_invoiced_amount = fields.Float(
-        string='Total Invoiced',
-        compute='_compute_financial_amounts',
+    subscription_name = fields.Char(
+        string='Subscription Name',
+        related='subscription_id.name',
         store=True,
-        digits='Account',
-        help='Total amount invoiced for this subscription'
+        readonly=True
+    )
+    
+    subscription_state = fields.Selection(
+        string='Subscription State',
+        related='subscription_id.state',
+        store=True,
+        readonly=True
+    )
+    
+    # Company
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        required=True,
+        default=lambda self: self.env.company
+    )
+    
+    # Accounting Configuration
+    revenue_account_id = fields.Many2one(
+        'ams.account.account',
+        string='Revenue Account',
+        required=True,
+        domain="[('account_type', 'in', ['income', 'income_membership', 'income_chapter', 'income_publication']), ('company_id', '=', company_id)]",
+        tracking=True,
+        help="Account for recognizing subscription revenue"
+    )
+    
+    deferred_revenue_account_id = fields.Many2one(
+        'ams.account.account',
+        string='Deferred Revenue Account',
+        required=True,
+        domain="[('account_type', '=', 'liability_deferred_revenue'), ('company_id', '=', company_id)]",
+        tracking=True,
+        help="Account for storing unearned subscription revenue"
+    )
+    
+    receivable_account_id = fields.Many2one(
+        'ams.account.account',
+        string='Receivable Account',
+        domain="[('account_type', '=', 'asset_receivable'), ('company_id', '=', company_id)]",
+        help="Account for subscription receivables"
+    )
+    
+    # Journal Configuration
+    journal_id = fields.Many2one(
+        'ams.account.journal',
+        string='Journal',
+        required=True,
+        domain="[('company_id', '=', company_id)]",
+        tracking=True,
+        help="Journal for subscription accounting entries"
+    )
+    
+    revenue_recognition_journal_id = fields.Many2one(
+        'ams.account.journal',
+        string='Revenue Recognition Journal',
+        domain="[('company_id', '=', company_id)]",
+        help="Specific journal for revenue recognition entries"
+    )
+    
+    # Revenue Recognition Settings
+    revenue_recognition_method = fields.Selection([
+        ('immediate', 'Immediate Recognition'),
+        ('subscription', 'Subscription-based'),
+        ('milestone', 'Milestone-based'),
+        ('percentage', 'Percentage Completion'),
+    ], string='Revenue Recognition Method', 
+       default='subscription', required=True, tracking=True)
+    
+    recognition_frequency = fields.Selection([
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+        ('annual', 'Annual'),
+    ], string='Recognition Frequency', default='monthly', tracking=True)
+    
+    # Automation Settings
+    auto_create_entries = fields.Boolean(
+        string='Auto-Create Entries',
+        default=True,
+        help="Automatically create accounting entries for subscription events"
+    )
+    
+    auto_post_entries = fields.Boolean(
+        string='Auto-Post Entries',
+        default=True,
+        help="Automatically post created accounting entries"
+    )
+    
+    auto_revenue_recognition = fields.Boolean(
+        string='Auto Revenue Recognition',
+        default=True,
+        help="Automatically create revenue recognition entries"
+    )
+    
+    # Financial Status
+    setup_complete = fields.Boolean(
+        string='Setup Complete',
+        compute='_compute_setup_status',
+        store=True,
+        help="Indicates if accounting setup is complete"
+    )
+    
+    setup_issues = fields.Text(
+        string='Setup Issues',
+        compute='_compute_setup_status',
+        help="List of issues preventing complete setup"
+    )
+    
+    # Financial Data (computed from subscription - safe references)
+    total_subscription_value = fields.Float(
+        string='Total Subscription Value',
+        compute='_compute_financial_data',
+        store=True,
+        digits='Account'
     )
     
     total_recognized_revenue = fields.Float(
         string='Total Recognized Revenue',
-        compute='_compute_financial_amounts',
+        compute='_compute_financial_data',
         store=True,
-        digits='Account',
-        help='Total revenue recognized to date'
+        digits='Account'
     )
     
     deferred_revenue_balance = fields.Float(
         string='Deferred Revenue Balance',
-        compute='_compute_financial_amounts',
+        compute='_compute_financial_data',
         store=True,
-        digits='Account',
-        help='Remaining deferred revenue balance'
+        digits='Account'
     )
     
-    # Accounting status
-    accounting_setup_complete = fields.Boolean(
-        string='Accounting Setup Complete',
-        compute='_compute_accounting_setup_complete',
-        help='All required accounting accounts are configured'
+    recognition_percentage = fields.Float(
+        string='Recognition Percentage',
+        compute='_compute_financial_data',
+        store=True,
+        digits=(12, 2)
     )
     
-    # Revenue recognition settings
-    auto_recognize_revenue = fields.Boolean(
-        string='Auto Recognize Revenue',
-        default=True,
-        help='Automatically create revenue recognition entries'
+    # Related Records Count
+    journal_entry_count = fields.Integer(
+        string='Journal Entries',
+        compute='_compute_entry_counts'
+    )
+    
+    revenue_recognition_count = fields.Integer(
+        string='Revenue Recognition Entries',
+        compute='_compute_entry_counts'
+    )
+    
+    # Status and Processing
+    last_processed_date = fields.Date(
+        string='Last Processed Date',
+        readonly=True,
+        help="Date when this subscription was last processed for accounting"
     )
     
     next_recognition_date = fields.Date(
         string='Next Recognition Date',
         compute='_compute_next_recognition_date',
-        help='Date when next revenue recognition is due'
+        help="Date for next revenue recognition entry"
     )
     
-    # Last accounting activities
-    last_journal_entry_date = fields.Datetime(
-        string='Last Journal Entry Date',
-        compute='_compute_last_activities',
-        help='Date of last journal entry'
+    processing_notes = fields.Text(
+        string='Processing Notes',
+        help="Notes about accounting processing for this subscription"
     )
     
-    last_revenue_recognition_date = fields.Date(
-        string='Last Revenue Recognition Date',
-        compute='_compute_last_activities',
-        help='Date of last revenue recognition'
-    )
+    # Constraints
+    _sql_constraints = [
+        ('subscription_company_uniq', 'unique (subscription_id, company_id)', 
+         'Each subscription can only have one accounting configuration per company!'),
+    ]
     
-    @api.depends('move_ids')
-    def _compute_move_count(self):
-        """Compute number of journal entries"""
-        for subscription in self:
-            subscription.move_count = len(subscription.move_ids)
-    
-    @api.depends('revenue_recognition_ids')
-    def _compute_revenue_recognition_count(self):
-        """Compute number of revenue recognition entries"""
-        for subscription in self:
-            subscription.revenue_recognition_count = len(subscription.revenue_recognition_ids)
-    
-    @api.depends('move_ids.amount_total', 'revenue_recognition_ids.recognition_amount')
-    def _compute_financial_amounts(self):
-        """Compute financial amounts"""
-        for subscription in self:
-            # Total invoiced (from subscription journal entries)
-            subscription_moves = subscription.move_ids.filtered(
-                lambda m: m.move_type == 'subscription' and m.state == 'posted'
-            )
-            subscription.total_invoiced_amount = sum(subscription_moves.mapped('amount_total'))
+    # Computed Methods
+    @api.depends('revenue_account_id', 'deferred_revenue_account_id', 'journal_id')
+    def _compute_setup_status(self):
+        """Compute accounting setup status"""
+        for record in self:
+            issues = []
             
-            # Total recognized revenue
-            posted_recognitions = subscription.revenue_recognition_ids.filtered(
-                lambda r: r.state == 'posted'
-            )
-            subscription.total_recognized_revenue = sum(posted_recognitions.mapped('recognition_amount'))
+            if not record.revenue_account_id:
+                issues.append("Revenue account not configured")
             
-            # Deferred revenue balance
-            subscription.deferred_revenue_balance = (
-                subscription.total_invoiced_amount - subscription.total_recognized_revenue
-            )
+            if not record.deferred_revenue_account_id:
+                issues.append("Deferred revenue account not configured")
+            
+            if not record.journal_id:
+                issues.append("Journal not configured")
+            
+            # Check product configuration
+            if record.product_id:
+                if hasattr(record.product_id, 'financial_setup_complete'):
+                    if not record.product_id.financial_setup_complete:
+                        issues.append("Product financial setup incomplete")
+            
+            # Check subscription status
+            if record.subscription_id:
+                if hasattr(record.subscription_id, 'state'):
+                    if record.subscription_id.state not in ['active', 'pending']:
+                        issues.append(f"Subscription state is {record.subscription_id.state}")
+            
+            record.setup_complete = len(issues) == 0
+            record.setup_issues = '\n'.join(issues) if issues else ''
     
-    @api.depends('product_id.product_tmpl_id.financial_setup_complete')
-    def _compute_accounting_setup_complete(self):
-        """Check if accounting setup is complete"""
-        for subscription in self:
-            if subscription.product_id and subscription.product_id.product_tmpl_id:
-                subscription.accounting_setup_complete = subscription.product_id.product_tmpl_id.financial_setup_complete
-            else:
-                subscription.accounting_setup_complete = False
-    
-    @api.depends('revenue_recognition_ids', 'subscription_period', 'last_revenue_recognition_date')
-    def _compute_next_recognition_date(self):
-        """Compute next revenue recognition date"""
-        for subscription in self:
-            if not subscription.auto_recognize_revenue or subscription.state != 'active':
-                subscription.next_recognition_date = False
+    @api.depends('subscription_id')
+    def _compute_financial_data(self):
+        """Compute financial data from subscription"""
+        for record in self:
+            # Initialize defaults
+            record.total_subscription_value = 0.0
+            record.total_recognized_revenue = 0.0
+            record.deferred_revenue_balance = 0.0
+            record.recognition_percentage = 0.0
+            
+            if not record.subscription_id:
                 continue
             
-            last_recognition = subscription.revenue_recognition_ids.filtered(
-                lambda r: r.state == 'posted'
-            ).sorted('recognition_date', reverse=True)
+            # Get subscription total value (safe field access)
+            subscription = record.subscription_id
+            total_value = 0.0
             
-            if last_recognition:
-                last_date = last_recognition[0].recognition_date
-            else:
-                last_date = subscription.start_date or fields.Date.today()
+            if hasattr(subscription, 'total_invoiced_amount'):
+                total_value = subscription.total_invoiced_amount or 0.0
+            elif hasattr(subscription, 'total_amount'):
+                total_value = subscription.total_amount or 0.0
+            elif hasattr(subscription, 'amount'):
+                total_value = subscription.amount or 0.0
             
-            # Calculate next date based on subscription period
-            if subscription.subscription_period == 'monthly':
-                subscription.next_recognition_date = last_date + relativedelta(months=1)
-            elif subscription.subscription_period == 'quarterly':
-                subscription.next_recognition_date = last_date + relativedelta(months=3)
-            elif subscription.subscription_period == 'semi_annual':
-                subscription.next_recognition_date = last_date + relativedelta(months=6)
-            elif subscription.subscription_period == 'annual':
-                subscription.next_recognition_date = last_date + relativedelta(years=1)
-            else:
-                subscription.next_recognition_date = False
+            record.total_subscription_value = total_value
+            
+            # Calculate recognized revenue from recognition entries
+            recognized_revenue = sum(
+                self.env['ams.revenue.recognition'].search([
+                    ('subscription_id', '=', subscription.id),
+                    ('state', '=', 'posted')
+                ]).mapped('recognition_amount')
+            )
+            
+            record.total_recognized_revenue = recognized_revenue
+            record.deferred_revenue_balance = total_value - recognized_revenue
+            
+            if total_value > 0:
+                record.recognition_percentage = (recognized_revenue / total_value) * 100
     
-    @api.depends('move_ids.posted_date', 'revenue_recognition_ids.recognition_date')
-    def _compute_last_activities(self):
-        """Compute last accounting activities"""
-        for subscription in self:
-            # Last journal entry
-            posted_moves = subscription.move_ids.filtered(lambda m: m.state == 'posted')
-            if posted_moves:
-                subscription.last_journal_entry_date = max(posted_moves.mapped('posted_date'))
-            else:
-                subscription.last_journal_entry_date = False
+    def _compute_entry_counts(self):
+        """Compute related entry counts"""
+        for record in self:
+            record.journal_entry_count = self.env['ams.account.move'].search_count([
+                ('subscription_id', '=', record.subscription_id.id)
+            ])
             
-            # Last revenue recognition
-            posted_recognitions = subscription.revenue_recognition_ids.filtered(lambda r: r.state == 'posted')
-            if posted_recognitions:
-                subscription.last_revenue_recognition_date = max(posted_recognitions.mapped('recognition_date'))
-            else:
-                subscription.last_revenue_recognition_date = False
+            record.revenue_recognition_count = self.env['ams.revenue.recognition'].search_count([
+                ('subscription_id', '=', record.subscription_id.id)
+            ])
     
+    @api.depends('recognition_frequency', 'last_processed_date')
+    def _compute_next_recognition_date(self):
+        """Compute next revenue recognition date"""
+        for record in self:
+            if not record.last_processed_date:
+                record.next_recognition_date = fields.Date.today()
+            else:
+                from dateutil.relativedelta import relativedelta
+                
+                if record.recognition_frequency == 'monthly':
+                    record.next_recognition_date = record.last_processed_date + relativedelta(months=1)
+                elif record.recognition_frequency == 'quarterly':
+                    record.next_recognition_date = record.last_processed_date + relativedelta(months=3)
+                elif record.recognition_frequency == 'annual':
+                    record.next_recognition_date = record.last_processed_date + relativedelta(years=1)
+                else:
+                    record.next_recognition_date = False
+    
+    # Validation Methods
+    @api.constrains('revenue_account_id', 'deferred_revenue_account_id')
+    def _check_accounts(self):
+        """Validate account configurations"""
+        for record in self:
+            if record.revenue_account_id == record.deferred_revenue_account_id:
+                raise ValidationError(
+                    "Revenue account and deferred revenue account cannot be the same."
+                )
+            
+            # Check account types
+            if record.revenue_account_id:
+                if record.revenue_account_id.account_type not in [
+                    'income', 'income_membership', 'income_chapter', 'income_publication'
+                ]:
+                    raise ValidationError(
+                        f"Revenue account must be an income account type, "
+                        f"got '{record.revenue_account_id.account_type}'"
+                    )
+            
+            if record.deferred_revenue_account_id:
+                if record.deferred_revenue_account_id.account_type != 'liability_deferred_revenue':
+                    raise ValidationError(
+                        "Deferred revenue account must be a deferred revenue liability account."
+                    )
+    
+    # Lifecycle Methods
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Override create to set default values"""
+        for vals in vals_list:
+            # Set default accounts from product if available
+            if 'subscription_id' in vals and not vals.get('revenue_account_id'):
+                subscription = self.env['ams.subscription'].browse(vals['subscription_id'])
+                if subscription.product_id:
+                    product = subscription.product_id
+                    if hasattr(product, 'revenue_account_id') and product.revenue_account_id:
+                        vals['revenue_account_id'] = product.revenue_account_id.id
+                    if hasattr(product, 'deferred_revenue_account_id') and product.deferred_revenue_account_id:
+                        vals['deferred_revenue_account_id'] = product.deferred_revenue_account_id.id
+        
+        return super().create(vals_list)
+    
+    # Business Methods
+    def setup_subscription_accounting(self):
+        """Complete setup for subscription accounting"""
+        self.ensure_one()
+        
+        if not self.setup_complete:
+            raise UserError(f"Cannot complete setup due to issues:\n{self.setup_issues}")
+        
+        # Update product configuration if needed
+        if self.product_id and hasattr(self.product_id, 'financial_setup_complete'):
+            if not self.product_id.financial_setup_complete:
+                self.product_id.write({
+                    'financial_setup_complete': True,
+                    'revenue_account_id': self.revenue_account_id.id,
+                    'deferred_revenue_account_id': self.deferred_revenue_account_id.id,
+                })
+        
+        # Create initial revenue recognition schedule if needed
+        if self.auto_revenue_recognition and self.recognition_frequency:
+            self._create_revenue_recognition_schedule()
+        
+        # Mark as processed
+        self.last_processed_date = fields.Date.today()
+        
+        self.message_post(
+            body="Subscription accounting setup completed successfully.",
+            message_type='notification'
+        )
+    
+    def _create_revenue_recognition_schedule(self):
+        """Create revenue recognition schedule for this subscription"""
+        # Check if schedule already exists
+        existing_schedule = self.env['ams.revenue.recognition.schedule'].search([
+            ('subscription_id', '=', self.subscription_id.id)
+        ], limit=1)
+        
+        if existing_schedule:
+            return existing_schedule
+        
+        # Get subscription dates
+        start_date = fields.Date.today()
+        end_date = start_date
+        
+        if hasattr(self.subscription_id, 'start_date') and self.subscription_id.start_date:
+            start_date = self.subscription_id.start_date
+        
+        if hasattr(self.subscription_id, 'end_date') and self.subscription_id.end_date:
+            end_date = self.subscription_id.end_date
+        elif hasattr(self.subscription_id, 'paid_through_date') and self.subscription_id.paid_through_date:
+            end_date = self.subscription_id.paid_through_date
+        
+        # Create schedule
+        schedule_vals = {
+            'subscription_id': self.subscription_id.id,
+            'start_date': start_date,
+            'end_date': end_date,
+            'total_amount': self.total_subscription_value,
+            'recognition_method': self.recognition_frequency,
+            'frequency': self.recognition_frequency,
+            'revenue_account_id': self.revenue_account_id.id,
+            'deferred_revenue_account_id': self.deferred_revenue_account_id.id,
+            'journal_id': self.journal_id.id,
+            'auto_create_entries': self.auto_create_entries,
+            'auto_post_entries': self.auto_post_entries,
+            'company_id': self.company_id.id,
+        }
+        
+        schedule = self.env['ams.revenue.recognition.schedule'].create(schedule_vals)
+        return schedule
+    
+    def process_revenue_recognition(self):
+        """Process revenue recognition for this subscription"""
+        self.ensure_one()
+        
+        if not self.setup_complete:
+            raise UserError("Accounting setup is not complete.")
+        
+        # Create revenue recognition entry for current period
+        recognition_vals = self._prepare_recognition_entry()
+        
+        if recognition_vals:
+            entry = self.env['ams.revenue.recognition'].create(recognition_vals)
+            
+            if self.auto_post_entries:
+                entry.action_confirm()
+                entry.action_post()
+            
+            self.last_processed_date = fields.Date.today()
+            
+            return entry
+        
+        return False
+    
+    def _prepare_recognition_entry(self):
+        """Prepare values for revenue recognition entry"""
+        if not self.deferred_revenue_balance > 0:
+            return False  # Nothing to recognize
+        
+        # Calculate recognition amount based on frequency
+        total_amount = self.total_subscription_value
+        
+        if self.recognition_frequency == 'monthly':
+            recognition_amount = total_amount / 12  # Assume annual subscription
+        elif self.recognition_frequency == 'quarterly':
+            recognition_amount = total_amount / 4
+        else:  # annual
+            recognition_amount = total_amount
+        
+        # Don't recognize more than remaining balance
+        recognition_amount = min(recognition_amount, self.deferred_revenue_balance)
+        
+        today = fields.Date.today()
+        
+        return {
+            'subscription_id': self.subscription_id.id,
+            'recognition_date': today,
+            'period_start': today.replace(day=1),
+            'period_end': today,  # Simplified
+            'total_subscription_amount': total_amount,
+            'recognition_amount': recognition_amount,
+            'recognition_method': self.recognition_frequency,
+            'revenue_account_id': self.revenue_account_id.id,
+            'deferred_revenue_account_id': self.deferred_revenue_account_id.id,
+            'journal_id': self.revenue_recognition_journal_id.id or self.journal_id.id,
+            'is_automated': True,
+            'auto_post': self.auto_post_entries,
+            'company_id': self.company_id.id,
+        }
+    
+    # View Actions
     def action_view_journal_entries(self):
-        """View journal entries for this subscription"""
+        """View related journal entries"""
         self.ensure_one()
         
         return {
-            'name': f'Journal Entries - {self.name}',
+            'name': f'Journal Entries - {self.subscription_name}',
             'type': 'ir.actions.act_window',
             'res_model': 'ams.account.move',
-            'view_mode': 'list,form',
-            'domain': [('subscription_id', '=', self.id)],
-            'context': {
-                'default_subscription_id': self.id,
-                'search_default_subscription_id': self.id,
-            }
+            'view_mode': 'tree,form',
+            'domain': [('subscription_id', '=', self.subscription_id.id)],
+            'context': {'create': False}
         }
     
     def action_view_revenue_recognition(self):
-        """View revenue recognition entries for this subscription"""
+        """View revenue recognition entries"""
         self.ensure_one()
         
         return {
-            'name': f'Revenue Recognition - {self.name}',
+            'name': f'Revenue Recognition - {self.subscription_name}',
             'type': 'ir.actions.act_window',
             'res_model': 'ams.revenue.recognition',
-            'view_mode': 'list,form',
-            'domain': [('subscription_id', '=', self.id)],
-            'context': {
-                'default_subscription_id': self.id,
-                'search_default_subscription_id': self.id,
-            }
+            'view_mode': 'tree,form',
+            'domain': [('subscription_id', '=', self.subscription_id.id)],
+            'context': {'default_subscription_id': self.subscription_id.id}
         }
     
-    def action_create_initial_journal_entry(self):
-        """Create initial journal entry for subscription"""
-        self.ensure_one()
-        
-        if not self.accounting_setup_complete:
-            raise UserError('Accounting setup is not complete for this subscription')
-        
-        # Check if initial entry already exists
-        existing_entry = self.move_ids.filtered(
-            lambda m: m.move_type == 'subscription' and m.state in ['draft', 'posted']
-        )
-        if existing_entry:
-            raise UserError('Initial journal entry already exists')
-        
-        # Get invoice amount (use product price if not available)
-        invoice_amount = self.product_id.list_price
-        if not invoice_amount:
-            raise UserError('Cannot determine invoice amount for subscription')
-        
-        # Create journal entry
-        move = self.env['ams.account.move'].create_subscription_entry(
-            subscription=self,
-            invoice_amount=invoice_amount,
-            description=f'Initial payment - {self.name}'
-        )
-        
-        self.message_post(body=f'Initial journal entry created: {move.name}')
-        
-        return {
-            'name': 'Initial Journal Entry',
-            'type': 'ir.actions.act_window',
-            'res_model': 'ams.account.move',
-            'res_id': move.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
-    
-    def action_create_revenue_recognition(self):
-        """Create revenue recognition entry"""
-        self.ensure_one()
-        
-        if not self.accounting_setup_complete:
-            raise UserError('Accounting setup is not complete for this subscription')
-        
-        if not self.auto_recognize_revenue:
-            raise UserError('Auto revenue recognition is disabled for this subscription')
-        
-        # Check if we need deferred revenue accounting
-        product = self.product_id.product_tmpl_id
-        if product.revenue_recognition_method != 'subscription':
-            raise UserError('This subscription does not use subscription-based revenue recognition')
-        
-        # Calculate current month period
-        today = fields.Date.today()
-        period_start = date(today.year, today.month, 1)
-        
-        # Calculate period end
-        if today.month == 12:
-            period_end = date(today.year + 1, 1, 1) - relativedelta(days=1)
-        else:
-            period_end = date(today.year, today.month + 1, 1) - relativedelta(days=1)
-        
-        # Check if recognition already exists for this period
-        existing = self.revenue_recognition_ids.filtered(
-            lambda r: r.period_start <= today <= r.period_end and r.state != 'cancelled'
-        )
-        if existing:
-            raise UserError(f'Revenue recognition already exists for current period: {existing[0].name}')
-        
-        # Calculate recognition amount
-        total_amount = self.product_id.list_price
-        if self.subscription_period == 'monthly':
-            recognition_amount = total_amount
-        elif self.subscription_period == 'quarterly':
-            recognition_amount = total_amount / 3
-        elif self.subscription_period == 'semi_annual':
-            recognition_amount = total_amount / 6
-        elif self.subscription_period == 'annual':
-            recognition_amount = total_amount / 12
-        else:
-            raise UserError(f'Unsupported subscription period: {self.subscription_period}')
-        
-        # Create revenue recognition
-        recognition_vals = {
-            'subscription_id': self.id,
-            'recognition_date': period_end,
-            'period_start': period_start,
-            'period_end': period_end,
-            'total_subscription_amount': total_amount,
-            'recognition_amount': recognition_amount,
-            'recognition_method': 'monthly',
-            'auto_post': True,
-        }
-        
-        recognition = self.env['ams.revenue.recognition'].create(recognition_vals)
-        
-        self.message_post(body=f'Revenue recognition created: {recognition.name}')
-        
-        return {
-            'name': 'Revenue Recognition',
-            'type': 'ir.actions.act_window',
-            'res_model': 'ams.revenue.recognition',
-            'res_id': recognition.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
-    
-    def action_setup_accounting(self):
-        """Set up accounting for this subscription"""
+    def action_setup_wizard(self):
+        """Open setup wizard"""
         self.ensure_one()
         
         return {
-            'name': f'Accounting Setup - {self.name}',
+            'name': 'Configure Subscription Accounting',
             'type': 'ir.actions.act_window',
             'res_model': 'ams.subscription.accounting.wizard',
             'view_mode': 'form',
             'target': 'new',
             'context': {
-                'default_subscription_id': self.id,
+                'default_wizard_type': 'setup',
+                'default_subscription_id': self.subscription_id.id,
+                'default_revenue_account_id': self.revenue_account_id.id,
+                'default_deferred_revenue_account_id': self.deferred_revenue_account_id.id,
+                'default_journal_id': self.journal_id.id,
             }
         }
     
-    @api.model
-    def create_from_invoice_payment_enhanced(self, invoice_line):
-        """Enhanced subscription creation with accounting integration"""
-        # Call original method
-        subscription = super().create_from_invoice_payment(invoice_line)
-        
-        if not subscription:
-            return False
-        
-        # Create initial accounting entries if accounting is set up
-        try:
-            if subscription.accounting_setup_complete:
-                # Create initial journal entry
-                invoice_amount = invoice_line.price_subtotal
-                move = self.env['ams.account.move'].create_subscription_entry(
-                    subscription=subscription,
-                    invoice_amount=invoice_amount,
-                    description=f'Payment from invoice {invoice_line.move_id.name}'
-                )
-                
-                # Auto-post if configured
-                if move.journal_id.auto_post:
-                    move.action_post()
-                
-                subscription.message_post(
-                    body=f'Accounting entry created automatically: {move.name}'
-                )
-        except Exception as e:
-            # Log error but don't fail subscription creation
-            subscription.message_post(
-                body=f'Warning: Could not create accounting entry: {str(e)}'
-            )
-        
-        return subscription
-    
-    def _handle_state_change_accounting(self, old_state, new_state):
-        """Handle accounting implications of state changes"""
+    def action_process_recognition(self):
+        """Process revenue recognition"""
         self.ensure_one()
         
-        if not self.accounting_setup_complete:
-            return
+        entry = self.process_revenue_recognition()
         
-        # Handle specific state transitions
-        if old_state == 'active' and new_state in ['suspended', 'terminated']:
-            self._handle_subscription_suspension()
-        elif old_state in ['suspended', 'paused'] and new_state == 'active':
-            self._handle_subscription_reactivation()
-        elif new_state == 'terminated':
-            self._handle_subscription_termination()
-    
-    def _handle_subscription_suspension(self):
-        """Handle accounting when subscription is suspended"""
-        # Stop revenue recognition for suspended subscriptions
-        pending_recognitions = self.revenue_recognition_ids.filtered(
-            lambda r: r.state == 'draft' and r.recognition_date >= fields.Date.today()
-        )
-        
-        if pending_recognitions:
-            pending_recognitions.action_cancel()
-            self.message_post(
-                body=f'Cancelled {len(pending_recognitions)} pending revenue recognition entries due to suspension'
-            )
-    
-    def _handle_subscription_reactivation(self):
-        """Handle accounting when subscription is reactivated"""
-        # Resume revenue recognition if needed
-        if self.auto_recognize_revenue and self.next_recognition_date:
-            if self.next_recognition_date <= fields.Date.today():
-                try:
-                    self.action_create_revenue_recognition()
-                except Exception as e:
-                    self.message_post(
-                        body=f'Could not auto-create revenue recognition on reactivation: {str(e)}'
-                    )
-    
-    def _handle_subscription_termination(self):
-        """Handle accounting when subscription is terminated"""
-        # Check for remaining deferred revenue
-        if self.deferred_revenue_balance > 0.01:  # Allow for rounding
-            # Create adjustment entry to recognize remaining revenue or write off
-            self._create_termination_adjustment()
-    
-    def _create_termination_adjustment(self):
-        """Create adjustment entry for terminated subscription"""
-        if self.deferred_revenue_balance <= 0.01:
-            return
-        
-        # Get accounts
-        product = self.product_id.product_tmpl_id
-        deferred_revenue_account = product.get_deferred_revenue_account()
-        
-        # For termination, we might recognize remaining revenue or write it off
-        # This is a business decision - for now, recognize remaining revenue
-        revenue_account = product.get_revenue_account()
-        
-        # Get journal
-        journal = self.env['ams.account.journal'].search([
-            ('type', '=', 'general'),
-            ('company_id', '=', self.env.company.id)
-        ], limit=1)
-        
-        if not journal:
-            self.message_post(body='Could not create termination adjustment: No general journal found')
-            return
-        
-        # Create adjustment entry
-        description = f'Termination adjustment - {self.name} (remaining deferred revenue)'
-        
-        move_vals = {
-            'journal_id': journal.id,
-            'date': fields.Date.today(),
-            'ref': description,
-            'move_type': 'adjustment',
-            'subscription_id': self.id,
-            'partner_id': self.partner_id.id,
-            'line_ids': [
-                # Debit Deferred Revenue (clear remaining balance)
-                (0, 0, {
-                    'account_id': deferred_revenue_account.id,
-                    'partner_id': self.partner_id.id,
-                    'debit': self.deferred_revenue_balance,
-                    'credit': 0.0,
-                    'name': description,
-                }),
-                # Credit Revenue (recognize remaining or write off)
-                (0, 0, {
-                    'account_id': revenue_account.id,
-                    'partner_id': self.partner_id.id,
-                    'debit': 0.0,
-                    'credit': self.deferred_revenue_balance,
-                    'name': description,
-                }),
-            ]
-        }
-        
-        move = self.env['ams.account.move'].create(move_vals)
-        move.action_post()
-        
-        self.message_post(
-            body=f'Termination adjustment created: {move.name} (${self.deferred_revenue_balance:.2f})'
-        )
-    
-    def write(self, vals):
-        """Override write to handle state changes"""
-        # Track state changes for accounting
-        state_changes = {}
-        if 'state' in vals:
-            for subscription in self:
-                state_changes[subscription.id] = {
-                    'old_state': subscription.state,
-                    'new_state': vals['state']
+        if entry:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Success!',
+                    'message': f'Revenue recognition entry created: {entry.name}',
+                    'type': 'success',
                 }
+            }
+        else:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Information',
+                    'message': 'No revenue recognition needed at this time.',
+                    'type': 'info',
+                }
+            }
+    
+    # Utility Methods
+    @api.model
+    def setup_subscription_accounting_bulk(self, subscription_ids):
+        """Bulk setup for multiple subscriptions"""
+        created_records = []
         
-        result = super().write(vals)
+        for subscription_id in subscription_ids:
+            existing = self.search([('subscription_id', '=', subscription_id)], limit=1)
+            
+            if not existing:
+                # Create basic accounting record
+                vals = {
+                    'subscription_id': subscription_id,
+                    # Other fields would be set via onchange or defaults
+                }
+                record = self.create(vals)
+                created_records.append(record)
         
-        # Handle accounting implications of state changes
-        for subscription in self:
-            if subscription.id in state_changes:
-                old_state = state_changes[subscription.id]['old_state']
-                new_state = state_changes[subscription.id]['new_state']
-                if old_state != new_state:
-                    subscription._handle_state_change_accounting(old_state, new_state)
-        
-        return result
+        return created_records
     
     @api.model
-    def _cron_process_revenue_recognition(self):
-        """Cron job to process revenue recognition for all subscriptions"""
-        # Get subscriptions that need revenue recognition
-        subscriptions = self.search([
-            ('state', '=', 'active'),
-            ('auto_recognize_revenue', '=', True),
-            ('accounting_setup_complete', '=', True),
-            ('next_recognition_date', '<=', fields.Date.today()),
+    def process_all_revenue_recognition(self):
+        """Process revenue recognition for all eligible subscriptions"""
+        records = self.search([
+            ('setup_complete', '=', True),
+            ('auto_revenue_recognition', '=', True),
+            ('subscription_state', '=', 'active'),
         ])
         
-        processed = 0
-        errors = []
+        processed_count = 0
+        error_count = 0
         
-        for subscription in subscriptions:
+        for record in records:
             try:
-                subscription.action_create_revenue_recognition()
-                processed += 1
+                entry = record.process_revenue_recognition()
+                if entry:
+                    processed_count += 1
             except Exception as e:
-                errors.append(f'{subscription.name}: {str(e)}')
-        
-        # Log results
-        if processed > 0 or errors:
-            message = f'Revenue Recognition Processing Complete:\n'
-            message += f'- Processed: {processed} subscriptions\n'
-            if errors:
-                message += f'- Errors: {len(errors)}\n'
-                for error in errors[:5]:  # Limit to first 5 errors
-                    message += f'  * {error}\n'
-                if len(errors) > 5:
-                    message += f'  * ... and {len(errors) - 5} more errors\n'
-            
-            # Create system notification
-            self.env['mail.mail'].create({
-                'subject': 'AMS Revenue Recognition Processing',
-                'body_html': f'<pre>{message}</pre>',
-                'email_to': self.env.user.partner_id.email,
-            }).send()
-    
-    def get_financial_summary(self):
-        """Get financial summary for this subscription"""
-        self.ensure_one()
+                error_count += 1
+                record.message_post(
+                    body=f"Revenue recognition processing failed: {str(e)}",
+                    message_type='notification'
+                )
         
         return {
-            'subscription_name': self.name,
-            'total_invoiced': self.total_invoiced_amount,
-            'total_recognized': self.total_recognized_revenue,
-            'deferred_balance': self.deferred_revenue_balance,
-            'recognition_percentage': (
-                (self.total_recognized_revenue / self.total_invoiced_amount * 100) 
-                if self.total_invoiced_amount > 0 else 0
-            ),
-            'journal_entries_count': self.move_count,
-            'revenue_recognition_count': self.revenue_recognition_count,
-            'next_recognition_date': self.next_recognition_date,
-            'accounting_setup_complete': self.accounting_setup_complete,
+            'processed': processed_count,
+            'errors': error_count,
+            'total': len(records)
         }
-
-
-class AMSPaymentHistory(models.Model):
-    """Extend Payment History with accounting integration"""
-    _inherit = 'ams.payment.history'
-    
-    # Related journal entry
-    journal_entry_id = fields.Many2one(
-        'ams.account.move',
-        string='Journal Entry',
-        readonly=True,
-        help='Journal entry created for this payment'
-    )
-    
-    def _handle_payment_success(self):
-        """Enhanced payment success handling with accounting"""
-        result = super()._handle_payment_success()
-        
-        # Create accounting entry for successful payment
-        for payment in self:
-            if payment.subscription_id.accounting_setup_complete and not payment.journal_entry_id:
-                try:
-                    move = self.env['ams.account.move'].create_subscription_entry(
-                        subscription=payment.subscription_id,
-                        invoice_amount=payment.amount,
-                        description=f'Payment received - {payment.subscription_id.name}'
-                    )
-                    
-                    payment.journal_entry_id = move.id
-                    
-                    if move.journal_id.auto_post:
-                        move.action_post()
-                
-                except Exception as e:
-                    payment.subscription_id.message_post(
-                        body=f'Warning: Could not create journal entry for payment: {str(e)}'
-                    )
-        
-        return result
-    
-    def _handle_payment_failure(self):
-        """Enhanced payment failure handling with accounting"""
-        result = super()._handle_payment_failure()
-        
-        # Handle accounting implications of payment failures
-        for payment in self:
-            if payment.subscription_id.accounting_setup_complete:
-                # Stop revenue recognition for failed payments
-                subscription = payment.subscription_id
-                if subscription.state == 'active':
-                    # Don't automatically change state, but flag for attention
-                    subscription.message_post(
-                        body=f'Payment failure recorded - review revenue recognition: {payment.failure_reason}'
-                    )
-        
-        return result

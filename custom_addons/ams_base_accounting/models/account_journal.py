@@ -2,288 +2,351 @@
 from odoo import models, fields, api
 from odoo.exceptions import UserError, ValidationError
 
-class AccountJournal(models.Model):
+class AMSAccountJournal(models.Model):
+    """AMS Journal with Association-specific journal types"""
     _name = 'ams.account.journal'
-    _description = 'AMS Accounting Journals'
-    _order = 'sequence, name'
+    _description = 'AMS Journal'
+    _order = 'sequence, type, code'
+    _check_company_auto = True
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     
-    name = fields.Char(
-        string='Journal Name',
-        required=True,
-        translate=True,
-        help='Name of the journal'
-    )
+    # Basic Information
+    name = fields.Char(string='Journal Name', required=True, tracking=True)
+    code = fields.Char(string='Short Code', size=5, required=True, tracking=True, help="Unique code for the journal")
     
-    code = fields.Char(
-        string='Short Code',
-        size=5,
-        required=True,
-        help='Short code for the journal (max 5 characters)'
-    )
-    
+    # Journal Type
     type = fields.Selection([
         ('sale', 'Sales'),
         ('purchase', 'Purchase'),
         ('cash', 'Cash'),
         ('bank', 'Bank'),
+        ('general', 'Miscellaneous'),
+    ], string='Type', required=True, default='general', tracking=True)
+    
+    # AMS-Specific Journal Types
+    ams_journal_type = fields.Selection([
         ('general', 'General'),
         ('membership', 'Membership'),
         ('chapter', 'Chapter'),
         ('publication', 'Publication'),
-        ('deferred_revenue', 'Deferred Revenue'),
-    ], string='Type', required=True,
-       help='Type of journal determines its usage and behavior')
+        ('revenue_recognition', 'Revenue Recognition'),
+        ('event', 'Event'),
+    ], string='AMS Journal Type', default='general', required=True, tracking=True)
     
-    sequence = fields.Integer(
-        string='Sequence',
-        default=10,
-        help='Used to order journals in selection lists'
+    # Settings
+    active = fields.Boolean(string='Active', default=True, tracking=True)
+    
+    sequence = fields.Integer(string='Sequence', default=10, help="Used to order journals in the dashboard")
+    
+    color = fields.Integer(string='Color', default=0, help="Color for the journal in kanban view")
+    
+    # Default Account
+    default_account_id = fields.Many2one(
+        'ams.account.account',
+        string='Default Account',
+        ondelete='restrict',
+        domain="[('deprecated', '=', False), ('company_id', '=', company_id)]",
+        tracking=True,
+        help="Default account for journal entries"
     )
     
-    active = fields.Boolean(
-        string='Active',
-        default=True,
-        help='Inactive journals are hidden from selection'
-    )
-    
+    # Company
     company_id = fields.Many2one(
         'res.company',
         string='Company',
         required=True,
+        readonly=True,
         default=lambda self: self.env.company
     )
     
-    currency_id = fields.Many2one(
-        'res.currency',
-        string='Currency',
-        help='Journal currency if different from company currency'
-    )
-    
-    # Default accounts for this journal type
-    default_account_id = fields.Many2one(
-        'ams.account.account',
-        string='Default Account',
-        help='Default account for journal entries in this journal'
-    )
-    
-    # AMS-specific configurations
-    is_ams_journal = fields.Boolean(
-        string='AMS Journal',
-        default=True,
-        help='This journal is managed by AMS accounting'
-    )
-    
-    auto_post = fields.Boolean(
-        string='Auto Post Entries',
-        default=False,
-        help='Automatically post journal entries created in this journal'
-    )
-    
-    # Subscription-specific settings
-    subscription_journal = fields.Boolean(
-        string='Subscription Journal',
-        help='This journal is used for subscription-related transactions'
-    )
-    
-    revenue_recognition_journal = fields.Boolean(
-        string='Revenue Recognition Journal',
-        help='This journal is used for revenue recognition entries'
-    )
-    
-    # Entry sequence settings
+    # Sequence
     sequence_id = fields.Many2one(
         'ir.sequence',
         string='Entry Sequence',
-        help='Sequence used for journal entry numbering'
+        help="Sequence for journal entry numbers",
+        copy=False
     )
     
-    # Security and controls
+    # Dashboard Settings
+    show_on_dashboard = fields.Boolean(
+        string='Show on Dashboard',
+        default=True,
+        help="Show this journal on the accounting dashboard"
+    )
+    
+    kanban_dashboard = fields.Text(string='Kanban Dashboard', compute='_compute_kanban_dashboard')
+    
+    # Journal Entries Count
+    entries_count = fields.Integer(string='Journal Entries', compute='_compute_entries_count')
+    
+    # Currency
+    currency_id = fields.Many2one(
+        'res.currency',
+        string='Currency',
+        help="The currency used to enter statement",
+        default=lambda self: self.env.company.currency_id
+    )
+    
+    # Automation Settings
+    auto_post = fields.Boolean(
+        string='Auto-Post Entries',
+        default=False,
+        help="Automatically post entries in this journal"
+    )
+    
     restrict_mode_hash_table = fields.Boolean(
         string='Lock Posted Entries',
+        default=False,
+        help="Forbid cancellation of journal entries"
+    )
+    
+    # Journal Configuration
+    update_posted = fields.Boolean(
+        string='Allow Cancelling Entries',
         default=True,
-        help='Lock posted entries to prevent modification'
+        help="Check this box to allow the cancellation of journal entries"
     )
     
-    # Journal entries
-    move_ids = fields.One2many(
-        'ams.account.move',
-        'journal_id',
-        string='Journal Entries',
-        readonly=True
-    )
+    at_least_one_inbound = fields.Boolean(string='At Least One Inbound', compute='_compute_at_least_one_inbound')
+    at_least_one_outbound = fields.Boolean(string='At Least One Outbound', compute='_compute_at_least_one_outbound')
     
-    # Statistics
-    entries_count = fields.Integer(
-        string='Entries Count',
-        compute='_compute_entries_count'
-    )
+    # Constraints
+    _sql_constraints = [
+        ('code_company_uniq', 'unique (code, company_id)', 'Journal codes must be unique per company!'),
+    ]
     
-    @api.depends('move_ids')
+    @api.depends('type')
+    def _compute_at_least_one_inbound(self):
+        for journal in self:
+            journal.at_least_one_inbound = journal.type in ('sale', 'cash', 'bank')
+    
+    @api.depends('type')
+    def _compute_at_least_one_outbound(self):
+        for journal in self:
+            journal.at_least_one_outbound = journal.type in ('purchase', 'cash', 'bank')
+    
     def _compute_entries_count(self):
         """Compute number of journal entries"""
         for journal in self:
-            journal.entries_count = len(journal.move_ids)
+            # Safe computation during module loading
+            try:
+                journal.entries_count = self.env['ams.account.move'].search_count([
+                    ('journal_id', '=', journal.id)
+                ])
+            except:
+                journal.entries_count = 0
     
-    @api.constrains('code', 'company_id')
-    def _check_code_company_unique(self):
-        """Ensure journal codes are unique per company"""
+    def _compute_kanban_dashboard(self):
+        """Compute kanban dashboard data"""
         for journal in self:
-            if self.search_count([
-                ('code', '=', journal.code),
-                ('company_id', '=', journal.company_id.id),
-                ('id', '!=', journal.id)
-            ]) > 0:
-                raise ValidationError(f'Journal code "{journal.code}" already exists for company "{journal.company_id.name}"')
+            # Basic dashboard data
+            dashboard_data = {
+                'number_draft': 0,
+                'number_posted': 0,
+                'sum_draft': 0.0,
+                'sum_posted': 0.0,
+                'currency_symbol': journal.currency_id.symbol or '$',
+            }
+            journal.kanban_dashboard = str(dashboard_data)
     
-    @api.model_create_multi
-    def create(self, vals_list):
-        """Override create to set up sequences and defaults"""
-        journals = super().create(vals_list)
-        
-        for journal in journals:
-            if not journal.sequence_id:
-                journal._create_sequence()
-        
-        return journals
+    @api.constrains('type', 'ams_journal_type')
+    def _check_journal_type_consistency(self):
+        """Check consistency between journal type and AMS type"""
+        for journal in self:
+            if journal.ams_journal_type == 'revenue_recognition' and journal.type != 'general':
+                raise ValidationError("Revenue recognition journals must be of type 'Miscellaneous'")
     
-    def _create_sequence(self):
-        """Create sequence for journal entry numbering"""
-        self.ensure_one()
-        
-        sequence_vals = {
-            'name': f'{self.name} Sequence',
-            'code': f'ams.journal.{self.code.lower()}',
-            'prefix': f'{self.code}/',
-            'suffix': '',
-            'number_next': 1,
-            'number_increment': 1,
-            'padding': 4,
-            'company_id': self.company_id.id,
-        }
-        
-        sequence = self.env['ir.sequence'].create(sequence_vals)
-        self.sequence_id = sequence.id
+    @api.constrains('default_account_id', 'type')
+    def _check_default_account_type(self):
+        """Check default account type matches journal type"""
+        for journal in self:
+            if not journal.default_account_id:
+                continue
+                
+            account_type = journal.default_account_id.account_type
+            journal_type = journal.type
+            
+            valid_combinations = {
+                'sale': ['income', 'income_membership', 'income_chapter', 'income_publication', 'income_other'],
+                'purchase': ['expense', 'expense_depreciation', 'expense_direct_cost'],
+                'cash': ['asset_cash'],
+                'bank': ['asset_cash'],
+                'general': ['asset_receivable', 'liability_payable', 'equity', 'income', 'expense'],
+            }
+            
+            if journal_type in valid_combinations:
+                if account_type not in valid_combinations[journal_type]:
+                    raise ValidationError(
+                        f"Default account type '{account_type}' is not compatible with journal type '{journal_type}'"
+                    )
     
     def name_get(self):
-        """Display format: [CODE] Journal Name"""
+        """Custom display name"""
         result = []
         for journal in self:
-            name = f'[{journal.code}] {journal.name}'
+            name = f"[{journal.code}] {journal.name}"
             result.append((journal.id, name))
         return result
     
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
-        """Allow searching by code or name"""
-        args = args or []
-        if name:
-            domain = ['|', ('code', operator, name), ('name', operator, name)]
-            journal_ids = self._search(domain + args, limit=limit, access_rights_uid=name_get_uid)
-            return self.browse(journal_ids).name_get()
-        return super()._name_search(name, args=args, operator=operator, limit=limit, name_get_uid=name_get_uid)
-    
-    def action_view_entries(self):
-        """Action to view journal entries for this journal"""
-        self.ensure_one()
+    def _name_search(self, name, domain=None, operator='ilike', limit=None, order=None):
+        """Search by name or code"""
+        if domain is None:
+            domain = []
         
+        if name:
+            journals = self.search([
+                '|',
+                ('code', operator, name),
+                ('name', operator, name)
+            ] + domain, limit=limit, order=order)
+            return journals.ids
+        
+        return super()._name_search(name, domain, operator, limit, order)
+    
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Override create to generate sequences"""
+        journals = super().create(vals_list)
+        
+        for journal, vals in zip(journals, vals_list):
+            if not journal.sequence_id:
+                # Create sequence for this journal
+                sequence_vals = {
+                    'name': f"{journal.name} Sequence",
+                    'code': f"ams.journal.{journal.code.lower()}",
+                    'prefix': f"{journal.code}/%(year)s/",
+                    'suffix': '',
+                    'padding': 4,
+                    'company_id': journal.company_id.id,
+                }
+                sequence = self.env['ir.sequence'].create(sequence_vals)
+                journal.sequence_id = sequence.id
+        
+        return journals
+    
+    def copy(self, default=None):
+        """Override copy to handle code uniqueness"""
+        self.ensure_one()
+        default = dict(default or {})
+        
+        if 'code' not in default:
+            default['code'] = f"{self.code}2"
+        if 'name' not in default:
+            default['name'] = f"{self.name} (Copy)"
+        
+        default['sequence_id'] = False  # Will be created automatically
+        
+        return super().copy(default)
+    
+    def unlink(self):
+        """Prevent deletion of journals with entries"""
+        for journal in self:
+            if journal.entries_count > 0:
+                raise UserError(
+                    f"You cannot delete journal '{journal.display_name}' "
+                    "that has journal entries."
+                )
+        return super().unlink()
+    
+    # Actions
+    def action_view_entries(self):
+        """Action to view journal entries"""
+        self.ensure_one()
         return {
-            'name': f'Journal Entries - {self.name}',
+            'name': f'Journal Entries - {self.display_name}',
             'type': 'ir.actions.act_window',
             'res_model': 'ams.account.move',
-            'view_mode': 'list,form',
+            'view_mode': 'tree,form',
             'domain': [('journal_id', '=', self.id)],
             'context': {
                 'default_journal_id': self.id,
-                'search_default_journal_id': self.id,
+                'search_default_posted': 1,
             }
         }
     
     def action_create_entry(self):
-        """Action to create new journal entry in this journal"""
+        """Action to create new journal entry"""
         self.ensure_one()
-        
         return {
-            'name': f'New Entry - {self.name}',
+            'name': f'New Journal Entry - {self.display_name}',
             'type': 'ir.actions.act_window',
             'res_model': 'ams.account.move',
             'view_mode': 'form',
-            'target': 'new',
             'context': {
                 'default_journal_id': self.id,
                 'default_move_type': 'entry',
             }
         }
     
+    def open_dashboard(self):
+        """Open journal dashboard"""
+        return {
+            'name': f'Dashboard - {self.display_name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'ams.account.move',
+            'view_mode': 'kanban,tree,form',
+            'domain': [('journal_id', '=', self.id)],
+            'context': {
+                'default_journal_id': self.id,
+                'search_default_posted': 1,
+            }
+        }
+    
     @api.model
-    def create_default_journals(self, company_id=None):
-        """Create default journals for AMS"""
+    def create_default_journals(self, company_id):
+        """Create default journals for a company"""
         if not company_id:
-            company_id = self.env.company.id
+            return False
         
-        # Get default accounts (create if needed)
-        account_model = self.env['ams.account.account']
-        cash_account = account_model.search([
-            ('code', '=', '1000'),
-            ('company_id', '=', company_id)
-        ], limit=1)
+        company = self.env['res.company'].browse(company_id)
         
-        if not cash_account:
-            # Create default accounts first
-            account_model.create_default_accounts(company_id)
-            cash_account = account_model.search([
-                ('code', '=', '1000'),
-                ('company_id', '=', company_id)
-            ], limit=1)
-        
-        # Define default journals
         default_journals = [
             {
                 'name': 'Membership Sales',
                 'code': 'MEMB',
-                'type': 'membership',
+                'type': 'sale',
+                'ams_journal_type': 'membership',
                 'sequence': 10,
-                'subscription_journal': True,
-                'auto_post': False,
             },
             {
                 'name': 'Chapter Operations',
                 'code': 'CHAP',
-                'type': 'chapter',
+                'type': 'general',
+                'ams_journal_type': 'chapter',
                 'sequence': 20,
             },
             {
                 'name': 'Publication Sales',
                 'code': 'PUB',
-                'type': 'publication',
+                'type': 'sale',
+                'ams_journal_type': 'publication',
                 'sequence': 30,
-                'subscription_journal': True,
             },
             {
                 'name': 'Revenue Recognition',
-                'code': 'REVR',
-                'type': 'deferred_revenue',
-                'sequence': 40,
-                'revenue_recognition_journal': True,
-                'auto_post': True,
-            },
-            {
-                'name': 'General Journal',
-                'code': 'GEN',
+                'code': 'REV',
                 'type': 'general',
-                'sequence': 50,
-                'default_account_id': cash_account.id if cash_account else False,
+                'ams_journal_type': 'revenue_recognition',
+                'sequence': 40,
             },
             {
                 'name': 'Cash Receipts',
                 'code': 'CASH',
                 'type': 'cash',
+                'ams_journal_type': 'general',
+                'sequence': 50,
+            },
+            {
+                'name': 'General Journal',
+                'code': 'GEN',
+                'type': 'general',
+                'ams_journal_type': 'general',
                 'sequence': 60,
-                'default_account_id': cash_account.id if cash_account else False,
             },
         ]
         
-        created_journals = self.env['ams.account.journal']
-        
+        created_journals = []
         for journal_data in default_journals:
             journal_data['company_id'] = company_id
             
@@ -291,46 +354,10 @@ class AccountJournal(models.Model):
             existing = self.search([
                 ('code', '=', journal_data['code']),
                 ('company_id', '=', company_id)
-            ])
+            ], limit=1)
             
             if not existing:
                 journal = self.create(journal_data)
-                created_journals |= journal
+                created_journals.append(journal)
         
         return created_journals
-    
-    @api.model
-    def get_subscription_journal(self):
-        """Get the default subscription journal"""
-        journal = self.search([
-            ('subscription_journal', '=', True),
-            ('company_id', '=', self.env.company.id)
-        ], limit=1)
-        
-        if not journal:
-            # Create default journals if none exist
-            self.create_default_journals()
-            journal = self.search([
-                ('subscription_journal', '=', True),
-                ('company_id', '=', self.env.company.id)
-            ], limit=1)
-        
-        return journal
-    
-    @api.model
-    def get_revenue_recognition_journal(self):
-        """Get the revenue recognition journal"""
-        journal = self.search([
-            ('revenue_recognition_journal', '=', True),
-            ('company_id', '=', self.env.company.id)
-        ], limit=1)
-        
-        if not journal:
-            # Create default journals if none exist
-            self.create_default_journals()
-            journal = self.search([
-                ('revenue_recognition_journal', '=', True),
-                ('company_id', '=', self.env.company.id)
-            ], limit=1)
-        
-        return journal

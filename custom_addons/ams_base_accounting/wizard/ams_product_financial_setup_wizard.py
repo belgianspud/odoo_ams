@@ -3,688 +3,614 @@ from odoo import models, fields, api
 from odoo.exceptions import UserError, ValidationError
 
 class AMSProductFinancialSetupWizard(models.TransientModel):
-    """Wizard to set up financial accounts for AMS products"""
-    _name = 'ams.product.financial.wizard'
+    """Wizard for configuring financial settings for products"""
+    _name = 'ams.product.financial.setup.wizard'
     _description = 'AMS Product Financial Setup Wizard'
     
-    # ==============================================
-    # PRODUCT INFORMATION
-    # ==============================================
+    # Wizard Type
+    wizard_type = fields.Selection([
+        ('single_product', 'Single Product'),
+        ('bulk_products', 'Multiple Products'),
+        ('category_setup', 'Product Category Setup'),
+        ('template_setup', 'Template Setup'),
+    ], string='Setup Type', required=True, default='single_product')
     
+    # Product Selection
     product_id = fields.Many2one(
         'product.template',
         string='Product',
-        required=True,
-        readonly=True
+        help="Select a product to configure"
     )
     
+    product_ids = fields.Many2many(
+        'product.template',
+        string='Products',
+        help="Select multiple products for bulk configuration"
+    )
+    
+    # Product Category Filter
+    category_id = fields.Many2one(
+        'product.category',
+        string='Product Category',
+        help="Filter products by category"
+    )
+    
+    # Company
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        required=True,
+        default=lambda self: self.env.company
+    )
+    
+    # Product Information (for single product setup)
     product_name = fields.Char(
         string='Product Name',
         related='product_id.name',
         readonly=True
     )
     
-    ams_product_type = fields.Selection(
-        related='product_id.ams_product_type',
-        string='AMS Product Type',
+    current_setup_status = fields.Boolean(
+        string='Currently Setup',
+        related='product_id.financial_setup_complete',
         readonly=True
     )
+    
+    # Financial Configuration
+    ams_product_type = fields.Selection([
+        ('individual', 'Individual Membership'),
+        ('enterprise', 'Enterprise Membership'),
+        ('chapter', 'Chapter Membership'),
+        ('publication', 'Publication'),
+        ('event', 'Event'),
+        ('general', 'General Product'),
+    ], string='AMS Product Type', required=True, default='general')
     
     is_subscription_product = fields.Boolean(
-        related='product_id.is_subscription_product',
-        string='Subscription Product',
-        readonly=True
+        string='Is Subscription Product',
+        default=False
     )
     
-    subscription_period = fields.Selection(
-        related='product_id.subscription_period',
-        string='Subscription Period',
-        readonly=True
-    )
+    subscription_period = fields.Selection([
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+        ('annual', 'Annual'),
+        ('biennial', 'Biennial'),
+    ], string='Subscription Period')
+    
+    # Revenue Recognition
+    revenue_recognition_method = fields.Selection([
+        ('immediate', 'Immediate Recognition'),
+        ('subscription', 'Subscription-based'),
+        ('milestone', 'Milestone-based'),
+        ('percentage', 'Percentage Completion'),
+    ], string='Revenue Recognition Method', default='immediate')
     
     requires_deferred_revenue = fields.Boolean(
         string='Requires Deferred Revenue',
-        compute='_compute_requires_deferred_revenue',
-        help='This product requires deferred revenue accounting'
+        default=False
     )
     
-    # ==============================================
-    # SETUP OPTIONS
-    # ==============================================
-    
-    setup_mode = fields.Selection([
-        ('guided', 'Guided Setup (Recommended)'),
-        ('manual', 'Manual Account Selection'),
-        ('create_new', 'Create New Accounts'),
-    ], string='Setup Mode', required=True, default='guided',
-       help='How to configure financial accounts for this product')
-    
-    use_company_defaults = fields.Boolean(
-        string='Use Company Defaults',
-        default=True,
-        help='Use company default accounts where appropriate'
-    )
-    
-    # ==============================================
-    # REVENUE RECOGNITION SETTINGS
-    # ==============================================
-    
-    revenue_recognition_method = fields.Selection([
-        ('immediate', 'Recognize Immediately'),
-        ('deferred', 'Deferred Recognition'),
-        ('subscription', 'Subscription-based'),
-    ], string='Revenue Recognition Method',
-       help='How revenue should be recognized for this product')
-    
-    # ==============================================
-    # ACCOUNT SELECTIONS
-    # ==============================================
-    
-    # Revenue Accounts
+    # Account Configuration
     revenue_account_id = fields.Many2one(
         'ams.account.account',
         string='Revenue Account',
-        domain="[('account_type', 'in', ['income', 'income_membership', 'income_chapter', 'income_publication', 'income_other']), ('company_id', '=', current_company_id)]",
-        help='Account used for recognizing revenue from this product'
+        required=True,
+        domain="[('account_type', 'in', ['income', 'income_membership', 'income_chapter', 'income_publication']), ('company_id', '=', company_id)]"
     )
     
     deferred_revenue_account_id = fields.Many2one(
         'ams.account.account',
         string='Deferred Revenue Account',
-        domain="[('account_type', '=', 'liability_deferred_revenue'), ('company_id', '=', current_company_id)]",
-        help='Account used for storing unearned revenue (for subscription products)'
+        domain="[('account_type', '=', 'liability_deferred_revenue'), ('company_id', '=', company_id)]"
     )
     
-    # Receivables & Cash
-    receivable_account_id = fields.Many2one(
-        'ams.account.account',
-        string='Accounts Receivable Account',
-        domain="[('account_type', '=', 'asset_receivable'), ('company_id', '=', current_company_id)]",
-        help='Account for tracking money owed by customers'
-    )
-    
-    cash_account_id = fields.Many2one(
-        'ams.account.account',
-        string='Cash Account',
-        domain="[('account_type', 'in', ['asset_cash', 'asset_current']), ('company_id', '=', current_company_id)]",
-        help='Account where payments for this product are deposited'
-    )
-    
-    # Cost Management
     expense_account_id = fields.Many2one(
         'ams.account.account',
         string='Expense Account',
-        domain="[('account_type', 'in', ['expense', 'expense_direct_cost']), ('company_id', '=', current_company_id)]",
-        help='Account for expenses related to this product'
+        domain="[('account_type', 'in', ['expense', 'expense_direct_cost']), ('company_id', '=', company_id)]"
     )
     
-    cogs_account_id = fields.Many2one(
+    # Bulk Setup Options
+    apply_to_all = fields.Boolean(
+        string='Apply to All Selected',
+        default=True,
+        help="Apply the same configuration to all selected products"
+    )
+    
+    filter_by_type = fields.Boolean(
+        string='Filter by Product Type',
+        default=False
+    )
+    
+    product_type_filter = fields.Selection([
+        ('individual', 'Individual Membership'),
+        ('enterprise', 'Enterprise Membership'),
+        ('chapter', 'Chapter Membership'),
+        ('publication', 'Publication'),
+        ('event', 'Event'),
+        ('general', 'General Product'),
+    ], string='Product Type Filter')
+    
+    only_incomplete = fields.Boolean(
+        string='Only Incomplete Setup',
+        default=True,
+        help="Only configure products that don't have complete financial setup"
+    )
+    
+    # Template Configuration (for bulk setup)
+    use_template = fields.Boolean(
+        string='Use Template Configuration',
+        default=False,
+        help="Use predefined templates for configuration"
+    )
+    
+    template_type = fields.Selection([
+        ('membership_individual', 'Individual Membership Template'),
+        ('membership_enterprise', 'Enterprise Membership Template'),
+        ('chapter_standard', 'Standard Chapter Template'),
+        ('publication_standard', 'Standard Publication Template'),
+        ('event_standard', 'Standard Event Template'),
+    ], string='Configuration Template')
+    
+    # Validation and Status
+    configuration_valid = fields.Boolean(
+        string='Configuration Valid',
+        compute='_compute_configuration_status'
+    )
+    
+    validation_errors = fields.Text(
+        string='Validation Errors',
+        compute='_compute_configuration_status'
+    )
+    
+    # Processing Results
+    processed_count = fields.Integer(
+        string='Processed Products',
+        readonly=True,
+        default=0
+    )
+    
+    error_count = fields.Integer(
+        string='Errors',
+        readonly=True,
+        default=0
+    )
+    
+    processing_log = fields.Text(
+        string='Processing Log',
+        readonly=True
+    )
+    
+    # Company Account Defaults (for easy selection)
+    default_individual_account_id = fields.Many2one(
         'ams.account.account',
-        string='Cost of Goods Sold Account',
-        domain="[('account_type', '=', 'expense_direct_cost'), ('company_id', '=', current_company_id)]",
-        help='Account for cost of goods sold (for physical products)'
+        string='Default Individual Membership Account',
+        related='company_id.individual_membership_revenue_account_id',
+        readonly=True
     )
     
-    # Other Financial Settings
-    bad_debt_account_id = fields.Many2one(
+    default_enterprise_account_id = fields.Many2one(
         'ams.account.account',
-        string='Bad Debt Account',
-        domain="[('account_type', '=', 'expense'), ('company_id', '=', current_company_id)]",
-        help='Account for recording bad debt expenses'
+        string='Default Enterprise Membership Account',
+        related='company_id.enterprise_membership_revenue_account_id',
+        readonly=True
     )
     
-    discount_account_id = fields.Many2one(
+    default_chapter_account_id = fields.Many2one(
         'ams.account.account',
-        string='Discount Account',
-        domain="[('account_type', 'in', ['expense', 'income']), ('company_id', '=', current_company_id)]",
-        help='Account for recording discounts given'
+        string='Default Chapter Account',
+        related='company_id.chapter_revenue_account_id',
+        readonly=True
     )
     
-    # ==============================================
-    # ACCOUNT CREATION OPTIONS
-    # ==============================================
-    
-    create_revenue_account = fields.Boolean(
-        string='Create Revenue Account',
-        help='Create a new revenue account for this product'
+    default_publication_account_id = fields.Many2one(
+        'ams.account.account',
+        string='Default Publication Account',
+        related='company_id.publication_revenue_account_id',
+        readonly=True
     )
     
-    create_deferred_revenue_account = fields.Boolean(
-        string='Create Deferred Revenue Account',
-        help='Create a new deferred revenue account for this product'
-    )
-    
-    new_revenue_account_name = fields.Char(
-        string='New Revenue Account Name',
-        help='Name for new revenue account'
-    )
-    
-    new_deferred_revenue_account_name = fields.Char(
-        string='New Deferred Revenue Account Name',
-        help='Name for new deferred revenue account'
-    )
-    
-    # ==============================================
-    # HELPER FIELDS
-    # ==============================================
-    
-    current_company_id = fields.Many2one(
-        'res.company',
-        string='Current Company',
-        compute='_compute_current_company',
-        help='Current company for domain filtering'
-    )
-    
-    setup_summary = fields.Html(
-        string='Setup Summary',
-        compute='_compute_setup_summary',
-        help='Summary of financial setup'
-    )
-    
-    missing_accounts = fields.Text(
-        string='Missing Accounts',
-        compute='_compute_missing_accounts',
-        help='List of accounts that need to be configured'
-    )
-    
-    recommended_accounts = fields.Html(
-        string='Recommended Accounts',
-        compute='_compute_recommended_accounts',
-        help='Recommended account configuration for this product'
-    )
-    
-    @api.depends()
-    def _compute_current_company(self):
-        """Compute current company for domain filtering"""
+    # Computed Methods
+    @api.depends('revenue_account_id', 'requires_deferred_revenue', 'deferred_revenue_account_id')
+    def _compute_configuration_status(self):
+        """Validate the configuration"""
         for wizard in self:
-            wizard.current_company_id = self.env.company.id
+            errors = []
+            
+            if not wizard.revenue_account_id:
+                errors.append("Revenue account is required")
+            
+            if wizard.requires_deferred_revenue and not wizard.deferred_revenue_account_id:
+                errors.append("Deferred revenue account is required when deferred revenue is enabled")
+            
+            if wizard.is_subscription_product and not wizard.subscription_period:
+                errors.append("Subscription period is required for subscription products")
+            
+            if wizard.is_subscription_product and wizard.revenue_recognition_method == 'immediate':
+                errors.append("Subscription products should not use immediate revenue recognition")
+            
+            wizard.configuration_valid = len(errors) == 0
+            wizard.validation_errors = '\n'.join([f"• {error}" for error in errors])
     
-    @api.depends('is_subscription_product', 'subscription_period', 'ams_product_type')
-    def _compute_requires_deferred_revenue(self):
-        """Determine if product requires deferred revenue accounting"""
-        for wizard in self:
-            wizard.requires_deferred_revenue = (
-                wizard.is_subscription_product and 
-                wizard.subscription_period in ['quarterly', 'semi_annual', 'annual']
-            )
+    # Onchange Methods
+    @api.onchange('product_id')
+    def _onchange_product_id(self):
+        """Load current product configuration"""
+        if self.product_id:
+            product = self.product_id
+            
+            # Load existing configuration
+            if hasattr(product, 'ams_product_type'):
+                self.ams_product_type = product.ams_product_type or 'general'
+            if hasattr(product, 'is_subscription_product'):
+                self.is_subscription_product = product.is_subscription_product
+            if hasattr(product, 'subscription_period'):
+                self.subscription_period = product.subscription_period
+            if hasattr(product, 'revenue_recognition_method'):
+                self.revenue_recognition_method = product.revenue_recognition_method or 'immediate'
+            if hasattr(product, 'requires_deferred_revenue'):
+                self.requires_deferred_revenue = product.requires_deferred_revenue
+            if hasattr(product, 'revenue_account_id'):
+                self.revenue_account_id = product.revenue_account_id
+            if hasattr(product, 'deferred_revenue_account_id'):
+                self.deferred_revenue_account_id = product.deferred_revenue_account_id
+            if hasattr(product, 'expense_account_id'):
+                self.expense_account_id = product.expense_account_id
     
-    @api.depends('setup_mode', 'revenue_account_id', 'deferred_revenue_account_id', 'requires_deferred_revenue')
-    def _compute_missing_accounts(self):
-        """Compute list of missing required accounts"""
-        for wizard in self:
-            missing = []
-            
-            if not wizard.revenue_account_id and not wizard.create_revenue_account:
-                missing.append('Revenue Account')
-            
-            if wizard.requires_deferred_revenue and not wizard.deferred_revenue_account_id and not wizard.create_deferred_revenue_account:
-                missing.append('Deferred Revenue Account')
-            
-            if not wizard.receivable_account_id:
-                missing.append('Receivable Account (recommended)')
-            
-            if not wizard.cash_account_id:
-                missing.append('Cash Account (recommended)')
-            
-            wizard.missing_accounts = '\n'.join(missing) if missing else 'All required accounts configured'
-    
-    @api.depends('ams_product_type', 'is_subscription_product', 'use_company_defaults')
-    def _compute_recommended_accounts(self):
-        """Compute recommended account configuration"""
-        for wizard in self:
-            recommendations = ['<h5>Recommended Account Configuration:</h5>']
-            
-            if wizard.ams_product_type == 'individual':
-                recommendations.append('<p><strong>Individual Membership Product</strong></p>')
-                recommendations.append('<ul>')
-                recommendations.append('<li>Revenue Account: Individual Membership Revenue</li>')
-                if wizard.requires_deferred_revenue:
-                    recommendations.append('<li>Deferred Revenue: Membership Deferred Revenue</li>')
-                recommendations.append('<li>Recognition Method: Subscription-based</li>')
-                recommendations.append('</ul>')
-                
-            elif wizard.ams_product_type == 'enterprise':
-                recommendations.append('<p><strong>Enterprise Membership Product</strong></p>')
-                recommendations.append('<ul>')
-                recommendations.append('<li>Revenue Account: Enterprise Membership Revenue</li>')
-                if wizard.requires_deferred_revenue:
-                    recommendations.append('<li>Deferred Revenue: Membership Deferred Revenue</li>')
-                recommendations.append('<li>Recognition Method: Subscription-based</li>')
-                recommendations.append('</ul>')
-                
-            elif wizard.ams_product_type == 'chapter':
-                recommendations.append('<p><strong>Chapter Product</strong></p>')
-                recommendations.append('<ul>')
-                recommendations.append('<li>Revenue Account: Chapter Revenue</li>')
-                if wizard.requires_deferred_revenue:
-                    recommendations.append('<li>Deferred Revenue: Chapter Deferred Revenue</li>')
-                recommendations.append('<li>Recognition Method: Subscription-based</li>')
-                recommendations.append('</ul>')
-                
-            elif wizard.ams_product_type == 'publication':
-                recommendations.append('<p><strong>Publication Product</strong></p>')
-                recommendations.append('<ul>')
-                recommendations.append('<li>Revenue Account: Publication Revenue</li>')
-                if wizard.requires_deferred_revenue:
-                    recommendations.append('<li>Deferred Revenue: Publication Deferred Revenue</li>')
-                recommendations.append('<li>Recognition Method: Subscription-based</li>')
-                recommendations.append('</ul>')
-            else:
-                recommendations.append('<p><strong>General Product</strong></p>')
-                recommendations.append('<ul>')
-                recommendations.append('<li>Revenue Account: General Revenue</li>')
-                recommendations.append('<li>Recognition Method: Immediate</li>')
-                recommendations.append('</ul>')
-            
-            if wizard.use_company_defaults:
-                recommendations.append('<p><em>Using company default accounts for receivables and cash.</em></p>')
-            
-            wizard.recommended_accounts = ''.join(recommendations)
-    
-    @api.depends('revenue_account_id', 'deferred_revenue_account_id', 'revenue_recognition_method')
-    def _compute_setup_summary(self):
-        """Compute setup summary"""
-        for wizard in self:
-            summary_parts = ['<h4>Financial Setup Summary</h4>']
-            summary_parts.append(f'<p><strong>Product:</strong> {wizard.product_name}</p>')
-            summary_parts.append(f'<p><strong>Product Type:</strong> {dict(wizard.product_id._fields["ams_product_type"].selection).get(wizard.ams_product_type, "None")}</p>')
-            
-            if wizard.is_subscription_product:
-                summary_parts.append(f'<p><strong>Subscription Period:</strong> {dict(wizard.product_id._fields["subscription_period"].selection).get(wizard.subscription_period, "None")}</p>')
-            
-            summary_parts.append('<h5>Account Configuration:</h5>')
-            summary_parts.append('<ul>')
-            
-            if wizard.revenue_account_id:
-                summary_parts.append(f'<li><strong>Revenue:</strong> {wizard.revenue_account_id.name}</li>')
-            elif wizard.create_revenue_account:
-                summary_parts.append(f'<li><strong>Revenue:</strong> Will create "{wizard.new_revenue_account_name}"</li>')
-            
-            if wizard.requires_deferred_revenue:
-                if wizard.deferred_revenue_account_id:
-                    summary_parts.append(f'<li><strong>Deferred Revenue:</strong> {wizard.deferred_revenue_account_id.name}</li>')
-                elif wizard.create_deferred_revenue_account:
-                    summary_parts.append(f'<li><strong>Deferred Revenue:</strong> Will create "{wizard.new_deferred_revenue_account_name}"</li>')
-            
-            if wizard.receivable_account_id:
-                summary_parts.append(f'<li><strong>Receivable:</strong> {wizard.receivable_account_id.name}</li>')
-            
-            if wizard.cash_account_id:
-                summary_parts.append(f'<li><strong>Cash:</strong> {wizard.cash_account_id.name}</li>')
-            
-            summary_parts.append('</ul>')
-            
-            if wizard.revenue_recognition_method:
-                method_name = dict(wizard._fields['revenue_recognition_method'].selection)[wizard.revenue_recognition_method]
-                summary_parts.append(f'<p><strong>Revenue Recognition:</strong> {method_name}</p>')
-            
-            wizard.setup_summary = ''.join(summary_parts)
-    
-    @api.model
-    def default_get(self, fields_list):
-        """Set default values from context"""
-        res = super().default_get(fields_list)
+    @api.onchange('ams_product_type')
+    def _onchange_ams_product_type(self):
+        """Set default configuration based on product type"""
+        if not self.ams_product_type:
+            return
         
-        product_id = self.env.context.get('default_product_id')
-        if product_id:
-            product = self.env['product.template'].browse(product_id)
+        company = self.company_id
+        
+        # Set default accounts based on product type
+        account_mapping = {
+            'individual': company.individual_membership_revenue_account_id,
+            'enterprise': company.enterprise_membership_revenue_account_id,
+            'chapter': company.chapter_revenue_account_id,
+            'publication': company.publication_revenue_account_id,
+        }
+        
+        deferred_account_mapping = {
+            'individual': company.membership_deferred_revenue_account_id,
+            'enterprise': company.membership_deferred_revenue_account_id,
+            'chapter': company.chapter_deferred_revenue_account_id,
+            'publication': company.publication_deferred_revenue_account_id,
+        }
+        
+        if self.ams_product_type in account_mapping:
+            self.revenue_account_id = account_mapping[self.ams_product_type]
+            self.deferred_revenue_account_id = deferred_account_mapping.get(self.ams_product_type)
             
-            # Set revenue recognition method based on product
-            if product.is_subscription_product:
-                if product.subscription_period in ['quarterly', 'semi_annual', 'annual']:
-                    res['revenue_recognition_method'] = 'subscription'
-                else:
-                    res['revenue_recognition_method'] = 'deferred'
-            else:
-                res['revenue_recognition_method'] = 'immediate'
-        
-        return res
-    
-    @api.onchange('setup_mode')
-    def _onchange_setup_mode(self):
-        """Update options when setup mode changes"""
-        if self.setup_mode == 'guided':
-            self.use_company_defaults = True
-            self._set_guided_defaults()
-        elif self.setup_mode == 'create_new':
-            self._set_create_new_defaults()
-    
-    @api.onchange('use_company_defaults')
-    def _onchange_use_company_defaults(self):
-        """Set company defaults when enabled"""
-        if self.use_company_defaults:
-            self._set_company_defaults()
-    
-    @api.onchange('ams_product_type', 'requires_deferred_revenue')
-    def _onchange_product_type(self):
-        """Set account defaults based on product type"""
-        if self.setup_mode == 'guided':
-            self._set_guided_defaults()
-    
-    def _set_guided_defaults(self):
-        """Set guided setup defaults"""
-        company = self.env.company
-        
-        # Set revenue recognition method
-        if self.is_subscription_product:
-            if self.subscription_period in ['quarterly', 'semi_annual', 'annual']:
+            # Set subscription defaults for membership products
+            if self.ams_product_type in ['individual', 'enterprise', 'chapter', 'publication']:
+                self.is_subscription_product = True
+                self.requires_deferred_revenue = True
                 self.revenue_recognition_method = 'subscription'
-            else:
-                self.revenue_recognition_method = 'deferred'
+                self.subscription_period = 'annual'
+    
+    @api.onchange('template_type')
+    def _onchange_template_type(self):
+        """Load template configuration"""
+        if not self.template_type:
+            return
+        
+        templates = {
+            'membership_individual': {
+                'ams_product_type': 'individual',
+                'is_subscription_product': True,
+                'subscription_period': 'annual',
+                'revenue_recognition_method': 'subscription',
+                'requires_deferred_revenue': True,
+            },
+            'membership_enterprise': {
+                'ams_product_type': 'enterprise',
+                'is_subscription_product': True,
+                'subscription_period': 'annual',
+                'revenue_recognition_method': 'subscription',
+                'requires_deferred_revenue': True,
+            },
+            'chapter_standard': {
+                'ams_product_type': 'chapter',
+                'is_subscription_product': True,
+                'subscription_period': 'annual',
+                'revenue_recognition_method': 'subscription',
+                'requires_deferred_revenue': True,
+            },
+            'publication_standard': {
+                'ams_product_type': 'publication',
+                'is_subscription_product': True,
+                'subscription_period': 'annual',
+                'revenue_recognition_method': 'subscription',
+                'requires_deferred_revenue': True,
+            },
+            'event_standard': {
+                'ams_product_type': 'event',
+                'is_subscription_product': False,
+                'revenue_recognition_method': 'immediate',
+                'requires_deferred_revenue': False,
+            },
+        }
+        
+        if self.template_type in templates:
+            template = templates[self.template_type]
+            for field, value in template.items():
+                setattr(self, field, value)
+            
+            # Trigger onchange for ams_product_type to set accounts
+            self._onchange_ams_product_type()
+    
+    @api.onchange('is_subscription_product')
+    def _onchange_is_subscription_product(self):
+        """Update related fields when subscription status changes"""
+        if self.is_subscription_product:
+            self.requires_deferred_revenue = True
+            if self.revenue_recognition_method == 'immediate':
+                self.revenue_recognition_method = 'subscription'
+            if not self.subscription_period:
+                self.subscription_period = 'annual'
         else:
+            self.requires_deferred_revenue = False
             self.revenue_recognition_method = 'immediate'
-        
-        # Set accounts based on product type
-        if self.ams_product_type == 'individual':
-            self.revenue_account_id = company.individual_membership_revenue_account_id
-            if self.requires_deferred_revenue:
-                self.deferred_revenue_account_id = company.membership_deferred_revenue_account_id
-        elif self.ams_product_type == 'enterprise':
-            self.revenue_account_id = company.enterprise_membership_revenue_account_id
-            if self.requires_deferred_revenue:
-                self.deferred_revenue_account_id = company.membership_deferred_revenue_account_id
-        elif self.ams_product_type == 'chapter':
-            self.revenue_account_id = company.chapter_revenue_account_id
-            if self.requires_deferred_revenue:
-                self.deferred_revenue_account_id = company.chapter_deferred_revenue_account_id
-        elif self.ams_product_type == 'publication':
-            self.revenue_account_id = company.publication_revenue_account_id
-            if self.requires_deferred_revenue:
-                self.deferred_revenue_account_id = company.publication_deferred_revenue_account_id
-        else:
-            self.revenue_account_id = company.ams_default_revenue_account_id
-            if self.requires_deferred_revenue:
-                self.deferred_revenue_account_id = company.ams_default_deferred_revenue_account_id
-        
-        # Set company defaults
-        self._set_company_defaults()
+            self.subscription_period = False
     
-    def _set_company_defaults(self):
-        """Set company default accounts"""
-        company = self.env.company
-        
-        if not self.receivable_account_id:
-            self.receivable_account_id = company.ams_default_receivable_account_id
-        
-        if not self.cash_account_id:
-            self.cash_account_id = company.ams_default_cash_account_id
-        
-        if not self.bad_debt_account_id:
-            self.bad_debt_account_id = company.ams_bad_debt_account_id
-        
-        if not self.discount_account_id:
-            self.discount_account_id = company.ams_discount_account_id
-    
-    def _set_create_new_defaults(self):
-        """Set defaults for creating new accounts"""
-        if not self.new_revenue_account_name:
-            self.new_revenue_account_name = f'{self.product_name} Revenue'
-        
-        if self.requires_deferred_revenue and not self.new_deferred_revenue_account_name:
-            self.new_deferred_revenue_account_name = f'{self.product_name} Deferred Revenue'
-        
-        self.create_revenue_account = True
-        if self.requires_deferred_revenue:
-            self.create_deferred_revenue_account = True
-    
-    def action_apply_financial_setup(self):
-        """Apply financial setup to the product"""
+    # Action Methods
+    def action_configure_products(self):
+        """Main action to configure products"""
         self.ensure_one()
         
-        if not self.product_id:
-            raise UserError('Product is required')
+        if not self.configuration_valid:
+            raise UserError(f"Configuration is not valid:\n{self.validation_errors}")
         
-        created_accounts = []
+        if self.wizard_type == 'single_product':
+            return self._configure_single_product()
+        elif self.wizard_type == 'bulk_products':
+            return self._configure_bulk_products()
+        elif self.wizard_type == 'category_setup':
+            return self._configure_category_products()
+        elif self.wizard_type == 'template_setup':
+            return self._configure_template_products()
+    
+    def _configure_single_product(self):
+        """Configure a single product"""
+        if not self.product_id:
+            raise UserError("Please select a product to configure.")
         
         try:
-            # Create new accounts if requested
-            if self.create_revenue_account:
-                revenue_account = self._create_revenue_account()
-                created_accounts.append(revenue_account)
-                self.revenue_account_id = revenue_account.id
+            self._apply_configuration_to_product(self.product_id)
             
-            if self.create_deferred_revenue_account:
-                deferred_account = self._create_deferred_revenue_account()
-                created_accounts.append(deferred_account)
-                self.deferred_revenue_account_id = deferred_account.id
+            self.write({
+                'processed_count': 1,
+                'processing_log': f"✓ {self.product_id.name}: Configuration applied successfully"
+            })
             
-            # Update product with account settings
-            self._update_product_accounts()
-            
-            return self._show_success_message(created_accounts)
+            return self._show_results()
             
         except Exception as e:
-            return self._show_error_message(str(e), created_accounts)
+            raise UserError(f"Error configuring product: {str(e)}")
     
-    def _create_revenue_account(self):
-        """Create revenue account for the product"""
-        account_obj = self.env['ams.account.account']
+    def _configure_bulk_products(self):
+        """Configure multiple products"""
+        if not self.product_ids:
+            raise UserError("Please select products to configure.")
         
-        # Determine account type based on product type
-        account_type_mapping = {
-            'individual': 'income_membership',
-            'enterprise': 'income_membership',
-            'chapter': 'income_chapter',
-            'publication': 'income_publication',
-        }
-        
-        account_type = account_type_mapping.get(self.ams_product_type, 'income')
-        
-        # Generate account code
-        code = account_obj._generate_account_code(account_type)
-        
-        account_vals = {
-            'name': self.new_revenue_account_name,
-            'code': code,
-            'account_type': account_type,
-            'company_id': self.env.company.id,
-            'ams_category': self.ams_product_type if self.ams_product_type in ['membership', 'chapter', 'publication'] else 'general',
-        }
-        
-        return account_obj.create(account_vals)
+        return self._process_multiple_products(self.product_ids)
     
-    def _create_deferred_revenue_account(self):
-        """Create deferred revenue account for the product"""
-        account_obj = self.env['ams.account.account']
+    def _configure_category_products(self):
+        """Configure all products in a category"""
+        if not self.category_id:
+            raise UserError("Please select a product category.")
         
-        # Generate account code
-        code = account_obj._generate_account_code('liability_deferred_revenue')
+        domain = [('categ_id', '=', self.category_id.id)]
         
-        account_vals = {
-            'name': self.new_deferred_revenue_account_name,
-            'code': code,
-            'account_type': 'liability_deferred_revenue',
-            'company_id': self.env.company.id,
-            'ams_category': self.ams_product_type if self.ams_product_type in ['membership', 'chapter', 'publication'] else 'general',
-        }
+        if self.only_incomplete:
+            domain.append(('financial_setup_complete', '=', False))
         
-        return account_obj.create(account_vals)
+        if self.filter_by_type:
+            domain.append(('ams_product_type', '=', self.product_type_filter))
+        
+        products = self.env['product.template'].search(domain)
+        
+        if not products:
+            raise UserError("No products found matching the criteria.")
+        
+        return self._process_multiple_products(products)
     
-    def _update_product_accounts(self):
-        """Update product with selected accounts"""
-        product_vals = {
+    def _process_multiple_products(self, products):
+        """Process multiple products"""
+        processed = 0
+        errors = 0
+        log_messages = []
+        
+        for product in products:
+            try:
+                self._apply_configuration_to_product(product)
+                processed += 1
+                log_messages.append(f"✓ {product.name}: Configuration applied")
+                
+            except Exception as e:
+                errors += 1
+                log_messages.append(f"✗ {product.name}: {str(e)}")
+        
+        self.write({
+            'processed_count': processed,
+            'error_count': errors,
+            'processing_log': '\n'.join(log_messages)
+        })
+        
+        return self._show_results()
+    
+    def _apply_configuration_to_product(self, product):
+        """Apply configuration to a single product"""
+        vals = {
+            'ams_product_type': self.ams_product_type,
+            'is_subscription_product': self.is_subscription_product,
             'revenue_recognition_method': self.revenue_recognition_method,
+            'requires_deferred_revenue': self.requires_deferred_revenue,
+            'revenue_account_id': self.revenue_account_id.id,
+            'financial_setup_complete': True,
         }
         
-        # Set accounts
-        if self.revenue_account_id:
-            product_vals['revenue_account_id'] = self.revenue_account_id.id
+        if self.subscription_period:
+            vals['subscription_period'] = self.subscription_period
         
         if self.deferred_revenue_account_id:
-            product_vals['deferred_revenue_account_id'] = self.deferred_revenue_account_id.id
-        
-        if self.receivable_account_id:
-            product_vals['receivable_account_id'] = self.receivable_account_id.id
-        
-        if self.cash_account_id:
-            product_vals['cash_account_id'] = self.cash_account_id.id
+            vals['deferred_revenue_account_id'] = self.deferred_revenue_account_id.id
         
         if self.expense_account_id:
-            product_vals['expense_account_id'] = self.expense_account_id.id
+            vals['expense_account_id'] = self.expense_account_id.id
         
-        if self.cogs_account_id:
-            product_vals['cogs_account_id'] = self.cogs_account_id.id
+        # Additional subscription product fields
+        if self.is_subscription_product:
+            vals.update({
+                'auto_renew': True,  # Default for subscription products
+            })
         
-        if self.bad_debt_account_id:
-            product_vals['bad_debt_account_id'] = self.bad_debt_account_id.id
+        product.write(vals)
         
-        if self.discount_account_id:
-            product_vals['discount_account_id'] = self.discount_account_id.id
-        
-        self.product_id.write(product_vals)
+        # Create subscription accounting record if product is used in subscriptions
+        self._ensure_subscription_accounting(product)
     
-    def _show_success_message(self, created_accounts):
-        """Show success message"""
-        message_parts = [f'<h4>Financial Setup Complete for {self.product_name}!</h4>']
+    def _ensure_subscription_accounting(self, product):
+        """Ensure subscription accounting is set up for subscription products"""
+        if not product.is_subscription_product:
+            return
         
-        if created_accounts:
-            message_parts.append(f'<p><strong>Created {len(created_accounts)} new accounts:</strong></p>')
-            message_parts.append('<ul>')
-            for account in created_accounts:
-                message_parts.append(f'<li>[{account.code}] {account.name}</li>')
-            message_parts.append('</ul>')
+        # Find subscriptions using this product
+        subscriptions = self.env['ams.subscription'].search([
+            ('product_id', '=', product.id),
+            ('state', 'in', ['active', 'pending'])
+        ])
         
-        message_parts.append('<p><strong>Configured Accounts:</strong></p>')
-        message_parts.append('<ul>')
-        if self.revenue_account_id:
-            message_parts.append(f'<li>Revenue: {self.revenue_account_id.name}</li>')
-        if self.deferred_revenue_account_id:
-            message_parts.append(f'<li>Deferred Revenue: {self.deferred_revenue_account_id.name}</li>')
-        if self.receivable_account_id:
-            message_parts.append(f'<li>Receivable: {self.receivable_account_id.name}</li>')
-        if self.cash_account_id:
-            message_parts.append(f'<li>Cash: {self.cash_account_id.name}</li>')
-        message_parts.append('</ul>')
+        for subscription in subscriptions:
+            # Check if accounting record exists
+            existing = self.env['ams.subscription.accounting'].search([
+                ('subscription_id', '=', subscription.id)
+            ], limit=1)
+            
+            if not existing:
+                # Create accounting record
+                accounting_vals = {
+                    'subscription_id': subscription.id,
+                    'revenue_account_id': self.revenue_account_id.id,
+                    'deferred_revenue_account_id': self.deferred_revenue_account_id.id or False,
+                    'revenue_recognition_method': self.revenue_recognition_method,
+                    'auto_create_entries': True,
+                    'auto_post_entries': self.company_id.auto_post_subscription_entries,
+                    'auto_revenue_recognition': self.company_id.auto_create_revenue_recognition,
+                    'company_id': self.company_id.id,
+                }
+                
+                # Set default journal
+                if self.company_id.default_membership_journal_id:
+                    accounting_vals['journal_id'] = self.company_id.default_membership_journal_id.id
+                
+                self.env['ams.subscription.accounting'].create(accounting_vals)
+    
+    def _show_results(self):
+        """Show processing results"""
+        return {
+            'name': 'Product Financial Setup Results',
+            'type': 'ir.actions.act_window',
+            'res_model': 'ams.product.financial.setup.wizard',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'show_results': True}
+        }
+    
+    def action_view_configured_products(self):
+        """View the configured products"""
+        products_to_show = []
         
-        recognition_method = dict(self._fields['revenue_recognition_method'].selection)[self.revenue_recognition_method]
-        message_parts.append(f'<p><strong>Revenue Recognition Method:</strong> {recognition_method}</p>')
+        if self.wizard_type == 'single_product' and self.product_id:
+            products_to_show = [self.product_id.id]
+        elif self.wizard_type in ['bulk_products', 'category_setup'] and self.product_ids:
+            products_to_show = self.product_ids.ids
         
-        message_parts.append('<p>Your product is now ready for subscription accounting!</p>')
+        if not products_to_show:
+            raise UserError("No products to display.")
         
         return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': 'Setup Complete!',
-                'message': ''.join(message_parts),
-                'type': 'success',
-                'sticky': True,
+            'name': 'Configured Products',
+            'type': 'ir.actions.act_window',
+            'res_model': 'product.template',
+            'view_mode': 'tree,form',
+            'domain': [('id', 'in', products_to_show)],
+            'context': {'create': False}
+        }
+    
+    def action_setup_more_products(self):
+        """Setup more products"""
+        return {
+            'name': 'Product Financial Setup',
+            'type': 'ir.actions.act_window',
+            'res_model': 'ams.product.financial.setup.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_wizard_type': 'bulk_products',
+                'default_company_id': self.company_id.id,
             }
         }
     
-    def _show_error_message(self, error, created_accounts):
-        """Show error message"""
-        message_parts = [f'<h4>Error Setting Up {self.product_name}</h4>']
-        message_parts.append(f'<p><strong>Error:</strong> {error}</p>')
+    # Utility Methods
+    @api.model
+    def get_products_needing_setup(self, company_id=None):
+        """Get products that need financial setup"""
+        domain = [('financial_setup_complete', '=', False)]
         
-        if created_accounts:
-            message_parts.append(f'<p>Successfully created {len(created_accounts)} accounts before error:</p>')
-            message_parts.append('<ul>')
-            for account in created_accounts:
-                message_parts.append(f'<li>[{account.code}] {account.name}</li>')
-            message_parts.append('</ul>')
+        if company_id:
+            domain.append(('company_id', '=', company_id))
         
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': 'Setup Error',
-                'message': ''.join(message_parts),
-                'type': 'danger',
-                'sticky': True,
-            }
+        return self.env['product.template'].search(domain)
+    
+    @api.model
+    def bulk_setup_by_type(self, product_type, company_id=None):
+        """Bulk setup products by type using templates"""
+        if not company_id:
+            company_id = self.env.company.id
+        
+        template_mapping = {
+            'individual': 'membership_individual',
+            'enterprise': 'membership_enterprise',
+            'chapter': 'chapter_standard',
+            'publication': 'publication_standard',
+            'event': 'event_standard',
         }
-    
-    def action_validate_configuration(self):
-        """Validate the current configuration"""
-        self.ensure_one()
         
-        issues = []
-        warnings = []
+        if product_type not in template_mapping:
+            raise UserError(f"No template available for product type: {product_type}")
         
-        # Check required accounts
-        if not self.revenue_account_id and not self.create_revenue_account:
-            issues.append('Revenue account is required')
+        # Find products of this type
+        products = self.env['product.template'].search([
+            ('ams_product_type', '=', product_type),
+            ('financial_setup_complete', '=', False),
+        ])
         
-        if self.requires_deferred_revenue and not self.deferred_revenue_account_id and not self.create_deferred_revenue_account:
-            issues.append('Deferred revenue account is required for subscription products')
+        if not products:
+            return {'processed': 0, 'message': 'No products found'}
         
-        if not self.receivable_account_id:
-            warnings.append('Receivable account is recommended')
+        # Create wizard and process
+        wizard = self.create({
+            'wizard_type': 'bulk_products',
+            'product_ids': [(6, 0, products.ids)],
+            'template_type': template_mapping[product_type],
+            'use_template': True,
+            'company_id': company_id,
+        })
         
-        if not self.cash_account_id:
-            warnings.append('Cash account is recommended')
+        # Load template configuration
+        wizard._onchange_template_type()
         
-        # Check account creation settings
-        if self.create_revenue_account and not self.new_revenue_account_name:
-            issues.append('Revenue account name is required when creating new account')
-        
-        if self.create_deferred_revenue_account and not self.new_deferred_revenue_account_name:
-            issues.append('Deferred revenue account name is required when creating new account')
-        
-        # Show validation results
-        return self._show_validation_results(issues, warnings)
-    
-    def _show_validation_results(self, issues, warnings):
-        """Show validation results"""
-        if not issues and not warnings:
-            message = '✓ Configuration is valid and ready to apply!'
-            msg_type = 'success'
-        else:
-            message_parts = ['<h4>Configuration Validation</h4>']
-            
-            if issues:
-                message_parts.append('<p><strong>Issues (must be resolved):</strong></p>')
-                message_parts.append('<ul>')
-                for issue in issues:
-                    message_parts.append(f'<li>❌ {issue}</li>')
-                message_parts.append('</ul>')
-            
-            if warnings:
-                message_parts.append('<p><strong>Warnings (recommended):</strong></p>')
-                message_parts.append('<ul>')
-                for warning in warnings:
-                    message_parts.append(f'<li>⚠️ {warning}</li>')
-                message_parts.append('</ul>')
-            
-            message = ''.join(message_parts)
-            msg_type = 'warning' if issues else 'info'
+        # Process products
+        result = wizard._process_multiple_products(products)
         
         return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': 'Validation Results',
-                'message': message,
-                'type': msg_type,
-                'sticky': True,
-            }
-        }
-    
-    def action_reset_to_defaults(self):
-        """Reset to default configuration"""
-        self.ensure_one()
-        
-        # Reset to defaults
-        self.setup_mode = 'guided'
-        self.use_company_defaults = True
-        self.create_revenue_account = False
-        self.create_deferred_revenue_account = False
-        
-        # Clear manual selections
-        self.revenue_account_id = False
-        self.deferred_revenue_account_id = False
-        self.receivable_account_id = False
-        self.cash_account_id = False
-        
-        # Trigger guided setup
-        self._set_guided_defaults()
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'message': 'Configuration reset to recommended defaults',
-                'type': 'info',
-            }
+            'processed': wizard.processed_count,
+            'errors': wizard.error_count,
+            'message': f'Processed {wizard.processed_count} products with {wizard.error_count} errors'
         }
