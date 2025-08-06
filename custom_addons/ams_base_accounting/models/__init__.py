@@ -1,11 +1,22 @@
 # -*- coding: utf-8 -*-
 
-# Import order is important - base models first, then dependent models
-from . import account_account           # Core GL accounts
-from . import account_journal          # Journals for transactions
-from . import account_move             # Journal entries
-from . import account_move_line        # Journal entry lines
-from . import product_template         # Product financial settings
-from . import revenue_recognition      # Revenue recognition engine
-from . import ams_subscription_accounting  # Subscription accounting integration
-from . import res_company             # Company accounting settings
+# Import in strict dependency order to avoid circular imports
+# Base models with no internal dependencies first
+from . import res_company
+
+# Core models with minimal cross-references  
+from . import account_account
+from . import account_journal
+
+# Transaction models - import lines before moves
+from . import account_move_line  
+from . import account_move
+
+# Revenue recognition (depends on above)
+from . import revenue_recognition
+
+# Integration models (depends on all others)
+from . import ams_subscription_accounting
+
+# Product extensions (depends on account models)
+from . import product_template
