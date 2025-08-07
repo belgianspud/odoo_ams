@@ -6,6 +6,42 @@ class ProductTemplate(models.Model):
     _inherit = 'product.template'
     
     # ==============================================
+    # AMS PRODUCT TYPE FIELDS
+    # ==============================================
+    
+    ams_product_type = fields.Selection([
+        ('none', 'Not AMS Product'),
+        ('individual', 'Individual Membership'),
+        ('enterprise', 'Enterprise Membership'),
+        ('chapter', 'Chapter Membership'),
+        ('publication', 'Publication'),
+        ('event', 'Event'),
+        ('general', 'General AMS Product'),
+    ], string='AMS Product Type', default='none',
+       help='Type of AMS product for accounting and membership management')
+    
+    is_subscription_product = fields.Boolean(
+        string='Is Subscription Product',
+        default=False,
+        help='This product is used for subscriptions'
+    )
+    
+    subscription_period = fields.Selection([
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+        ('semi_annual', 'Semi-Annual'),
+        ('annual', 'Annual'),
+        ('biennial', 'Biennial'),
+    ], string='Default Subscription Period',
+       help='Default subscription period for this product')
+    
+    auto_renew = fields.Boolean(
+        string='Auto-Renew by Default',
+        default=True,
+        help='Subscriptions using this product auto-renew by default'
+    )
+    
+    # ==============================================
     # REVENUE RECOGNITION FIELDS
     # ==============================================
     
@@ -32,7 +68,7 @@ class ProductTemplate(models.Model):
        help='How revenue should be recognized for this product')
     
     # ==============================================
-    # RECEIVABLES & CASH FIELDS
+    # OTHER FINANCIAL FIELDS
     # ==============================================
     
     receivable_account_id = fields.Many2one(
@@ -49,16 +85,6 @@ class ProductTemplate(models.Model):
         help='Account where payments for this product are deposited'
     )
     
-    payment_terms_id = fields.Many2one(
-        'account.payment.term',
-        string='Payment Terms',
-        help='Default payment terms for this product'
-    )
-    
-    # ==============================================
-    # COST MANAGEMENT FIELDS
-    # ==============================================
-    
     expense_account_id = fields.Many2one(
         'ams.account.account',
         string='Expense Account',
@@ -66,46 +92,8 @@ class ProductTemplate(models.Model):
         help='Account for expenses related to this product'
     )
     
-    cogs_account_id = fields.Many2one(
-        'ams.account.account',
-        string='Cost of Goods Sold Account',
-        domain="[('account_type', '=', 'expense_direct_cost'), ('company_id', '=', current_company_id)]",
-        help='Account for cost of goods sold (for physical products)'
-    )
-    
-    inventory_account_id = fields.Many2one(
-        'ams.account.account',
-        string='Inventory Account',
-        domain="[('account_type', 'in', ['asset_current', 'asset_non_current']), ('company_id', '=', current_company_id)]",
-        help='Account for inventory valuation (for physical products)'
-    )
-    
-    standard_cost = fields.Float(
-        string='Standard Cost',
-        digits='Product Price',
-        help='Standard cost for this product'
-    )
-    
     # ==============================================
-    # OTHER FINANCIAL SETTINGS
-    # ==============================================
-    
-    bad_debt_account_id = fields.Many2one(
-        'ams.account.account',
-        string='Bad Debt Account',
-        domain="[('account_type', '=', 'expense'), ('company_id', '=', current_company_id)]",
-        help='Account for recording bad debt expenses'
-    )
-    
-    discount_account_id = fields.Many2one(
-        'ams.account.account',
-        string='Discount Account',
-        domain="[('account_type', 'in', ['expense', 'income']), ('company_id', '=', current_company_id)]",
-        help='Account for recording discounts given'
-    )
-    
-    # ==============================================
-    # AMS-SPECIFIC FINANCIAL SETTINGS
+    # FINANCIAL STATUS FIELDS
     # ==============================================
     
     financial_setup_complete = fields.Boolean(
@@ -144,17 +132,18 @@ class ProductTemplate(models.Model):
             # Subscription products with periods longer than monthly typically need deferred revenue
             product.requires_deferred_revenue = (
                 product.is_subscription_product and 
-                product.subscription_period in ['quarterly', 'semi_annual', 'annual']
+                product.subscription_period in ['quarterly', 'semi_annual', 'annual', 'biennial']
             )
     
-    @api.depends(
-        'revenue_account_id', 'deferred_revenue_account_id', 'receivable_account_id',
-        'cash_account_id', 'requires_deferred_revenue', 'is_subscription_product'
-    )
+    @api.depends('revenue_account_id', 'deferred_revenue_account_id', 'receivable_account_id', 'requires_deferred_revenue')
     def _compute_financial_setup_complete(self):
         """Check if financial setup is complete"""
         for product in self:
-            required_fields = ['revenue_account_id', 'receivable_account_id', 'cash_account_id']
+            if product.ams_product_type == 'none':
+                product.financial_setup_complete = True  # Non-AMS products don't need AMS setup
+                continue
+                
+            required_fields = ['revenue_account_id']
             
             # Add deferred revenue account if required
             if product.requires_deferred_revenue:
@@ -169,7 +158,7 @@ class ProductTemplate(models.Model):
         """Set smart defaults when subscription settings change"""
         if self.is_subscription_product:
             # Set revenue recognition method
-            if self.subscription_period in ['quarterly', 'semi_annual', 'annual']:
+            if self.subscription_period in ['quarterly', 'semi_annual', 'annual', 'biennial']:
                 self.revenue_recognition_method = 'subscription'
             else:
                 self.revenue_recognition_method = 'deferred'
@@ -185,68 +174,49 @@ class ProductTemplate(models.Model):
     
     def _set_default_accounts(self):
         """Set default accounts based on product type"""
+        if self.ams_product_type == 'none':
+            return
+            
         company_id = self.env.company.id
         account_obj = self.env['ams.account.account']
         
-        # Mapping of AMS product types to account types
-        account_mappings = {
-            'individual': {
-                'revenue_account': ('income_membership', '4100'),
-                'deferred_revenue_account': ('liability_deferred_revenue', '2400'),
-            },
-            'enterprise': {
-                'revenue_account': ('income_membership', '4110'),
-                'deferred_revenue_account': ('liability_deferred_revenue', '2400'),
-            },
-            'chapter': {
-                'revenue_account': ('income_chapter', '4200'),
-                'deferred_revenue_account': ('liability_deferred_revenue', '2420'),
-            },
-            'publication': {
-                'revenue_account': ('income_publication', '4300'),
-                'deferred_revenue_account': ('liability_deferred_revenue', '2410'),
-            },
+        # Try to get company default accounts safely
+        company = self.env.company
+        
+        # Mapping of AMS product types to account lookups
+        account_type_mapping = {
+            'individual': 'income_membership',
+            'enterprise': 'income_membership',
+            'chapter': 'income_chapter',
+            'publication': 'income_publication',
+            'event': 'income_other',
+            'general': 'income',
         }
         
-        # Get mapping for current product type
-        mapping = account_mappings.get(self.ams_product_type, {})
-        
         # Set revenue account
-        if not self.revenue_account_id and 'revenue_account' in mapping:
-            account_type, fallback_code = mapping['revenue_account']
+        if not self.revenue_account_id:
+            account_type = account_type_mapping.get(self.ams_product_type, 'income')
+            
+            # Try to find appropriate account
             account = account_obj.search([
                 ('account_type', '=', account_type),
                 ('company_id', '=', company_id)
             ], limit=1)
-            if not account:
-                # Try fallback by code
-                account = account_obj.search([
-                    ('code', '=', fallback_code),
-                    ('company_id', '=', company_id)
-                ], limit=1)
+            
             if account:
                 self.revenue_account_id = account.id
         
         # Set deferred revenue account for subscriptions
-        if (not self.deferred_revenue_account_id and 
-            self.requires_deferred_revenue and 
-            'deferred_revenue_account' in mapping):
-            
-            account_type, fallback_code = mapping['deferred_revenue_account']
-            account = account_obj.search([
-                ('account_type', '=', account_type),
+        if self.requires_deferred_revenue and not self.deferred_revenue_account_id:
+            deferred_account = account_obj.search([
+                ('account_type', '=', 'liability_deferred_revenue'),
                 ('company_id', '=', company_id)
             ], limit=1)
-            if not account:
-                # Try fallback by code
-                account = account_obj.search([
-                    ('code', '=', fallback_code),
-                    ('company_id', '=', company_id)
-                ], limit=1)
-            if account:
-                self.deferred_revenue_account_id = account.id
+            
+            if deferred_account:
+                self.deferred_revenue_account_id = deferred_account.id
         
-        # Set common defaults if not already set
+        # Set receivable account if not set
         if not self.receivable_account_id:
             ar_account = account_obj.search([
                 ('account_type', '=', 'asset_receivable'),
@@ -255,6 +225,7 @@ class ProductTemplate(models.Model):
             if ar_account:
                 self.receivable_account_id = ar_account.id
         
+        # Set cash account if not set
         if not self.cash_account_id:
             cash_account = account_obj.search([
                 ('account_type', '=', 'asset_cash'),
@@ -270,7 +241,7 @@ class ProductTemplate(models.Model):
         return {
             'name': f'Financial Setup - {self.name}',
             'type': 'ir.actions.act_window',
-            'res_model': 'ams.product.financial.wizard',
+            'res_model': 'ams.product.financial.setup.wizard',
             'view_mode': 'form',
             'target': 'new',
             'context': {
@@ -281,59 +252,6 @@ class ProductTemplate(models.Model):
                 'default_requires_deferred_revenue': self.requires_deferred_revenue,
             }
         }
-    
-    def action_create_missing_accounts(self):
-        """Create missing accounts for this product"""
-        self.ensure_one()
-        
-        if self.financial_setup_complete:
-            raise UserError('Financial setup is already complete for this product')
-        
-        account_obj = self.env['ams.account.account']
-        company_id = self.env.company.id
-        created_accounts = []
-        
-        # Create revenue account if missing
-        if not self.revenue_account_id:
-            account_vals = {
-                'name': f'{self.name} Revenue',
-                'code': account_obj._generate_account_code('income'),
-                'account_type': 'income',
-                'company_id': company_id,
-                'ams_category': self.ams_product_type if self.ams_product_type in ['membership', 'chapter', 'publication'] else 'general',
-            }
-            revenue_account = account_obj.create(account_vals)
-            self.revenue_account_id = revenue_account.id
-            created_accounts.append(revenue_account.name)
-        
-        # Create deferred revenue account if needed
-        if self.requires_deferred_revenue and not self.deferred_revenue_account_id:
-            account_vals = {
-                'name': f'{self.name} Deferred Revenue',
-                'code': account_obj._generate_account_code('liability_deferred_revenue'),
-                'account_type': 'liability_deferred_revenue',
-                'company_id': company_id,
-                'ams_category': self.ams_product_type if self.ams_product_type in ['membership', 'chapter', 'publication'] else 'general',
-            }
-            deferred_account = account_obj.create(account_vals)
-            self.deferred_revenue_account_id = deferred_account.id
-            created_accounts.append(deferred_account.name)
-        
-        if created_accounts:
-            message = f"Created accounts: {', '.join(created_accounts)}"
-            self.message_post(body=message)
-            
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'message': message,
-                    'type': 'success',
-                    'sticky': False,
-                }
-            }
-        else:
-            raise UserError('No accounts needed to be created')
     
     @api.constrains('revenue_recognition_method', 'is_subscription_product')
     def _check_revenue_recognition_method(self):
@@ -372,17 +290,3 @@ class ProductTemplate(models.Model):
                 raise UserError('No receivable account configured')
             return default_ar
         return self.receivable_account_id
-    
-    def get_cash_account(self):
-        """Get the cash account for this product"""
-        self.ensure_one()
-        if not self.cash_account_id:
-            # Fall back to default cash account
-            default_cash = self.env['ams.account.account'].search([
-                ('account_type', '=', 'asset_cash'),
-                ('company_id', '=', self.env.company.id)
-            ], limit=1)
-            if not default_cash:
-                raise UserError('No cash account configured')
-            return default_cash
-        return self.cash_account_id

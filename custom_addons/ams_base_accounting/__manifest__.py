@@ -38,23 +38,26 @@ integrating seamlessly with existing subscription management.
         'base',
         'product',
         'sale_management',
-        'account',  # We'll use some base accounting concepts but build our own
-        # Add subscription dependency if it exists, or make it optional
-        'ams_subscriptions',
+        'mail',
+        'analytic',
     ],
+    'external_dependencies': {
+        'python': ['dateutil'],
+    },
     'data': [
         # Security
         'security/ams_accounting_security.xml',
         'security/ir.model.access.csv',
         
-        # Data - Chart of Accounts Templates
+        # Data - Chart of Accounts Templates and Sequences
         'data/account_account_data.xml',
         'data/account_journal_data.xml',
         'data/subscription_sequence.xml',
         
-        # Views
-        #'views/account_account_views.xml',
+        # Views - in dependency order
+        'views/account_account_views.xml',
         'views/account_journal_views.xml',
+        'views/account_move_views.xml',
         'views/product_template_views.xml',
         'views/ams_subscription_accounting_views.xml',
         'views/revenue_recognition_views.xml',
@@ -66,10 +69,12 @@ integrating seamlessly with existing subscription management.
         'reports/financial_reports.xml',
     ],
     'demo': [
-        'demo/demo_chart_of_accounts.xml',
+        # Only include demo data if no dependency issues
+        # 'demo/demo_chart_of_accounts.xml',
     ],
     'installable': True,
     'application': True,
     'auto_install': False,
     'sequence': 10,
+    'post_init_hook': '_ams_accounting_post_init',
 }

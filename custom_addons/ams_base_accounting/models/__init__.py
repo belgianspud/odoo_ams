@@ -21,8 +21,15 @@ from . import account_move
 # Revenue recognition models (depend on account_move)
 from . import revenue_recognition
 
-# Basic subscription model (minimal dependencies)
-from . import ams_subscription_stub
+# Check if subscription model already exists before loading stub
+try:
+    import odoo
+    if 'ams.subscription' not in odoo.registry().get('ams.subscription', {}):
+        # Only load stub if real subscription model doesn't exist
+        from . import ams_subscription_stub
+except:
+    # Load stub as fallback
+    from . import ams_subscription_stub
 
 # Integration models (depend on subscription and accounting models)
 from . import ams_subscription_accounting

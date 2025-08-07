@@ -10,6 +10,14 @@ from odoo import models, fields, api
 from odoo.exceptions import UserError
 from dateutil.relativedelta import relativedelta
 
+# Only create stub models if they don't already exist
+def _model_exists(env, model_name):
+    """Check if a model already exists"""
+    try:
+        return model_name in env.registry
+    except:
+        return False
+
 class AMSSubscriptionStub(models.Model):
     """
     Basic subscription model for accounting integration
@@ -22,6 +30,14 @@ class AMSSubscriptionStub(models.Model):
     _description = 'AMS Subscription (Basic)'
     _order = 'name desc'
     _inherit = ['mail.thread', 'mail.activity.mixin']
+    
+    @api.model
+    def _check_model_exists(self):
+        """Check if this stub should be active"""
+        # If a more complete subscription model exists, don't interfere
+        if hasattr(self.env, '_ams_subscription_full_model'):
+            return False
+        return True
     
     # Basic Information
     name = fields.Char(
@@ -41,46 +57,12 @@ class AMSSubscriptionStub(models.Model):
         help='Customer associated with this subscription'
     )
     
-    # ADDED: This field was missing and causing the KeyError
-    account_id = fields.Many2one(
-        'res.partner',
-        string='Account',
-        help='Used for enterprise memberships and account management'
-    )
-    
     product_id = fields.Many2one(
         'product.product',
         string='Product',
         required=True,
         tracking=True,
         help='Product/service being subscribed to'
-    )
-    
-    # ADDED: This field was missing and referenced by related fields
-    tier_id = fields.Many2one(
-        'ams.subscription.tier',
-        string='Tier / Level',
-        help='Subscription tier for this subscription'
-    )
-    
-    # ADDED: Enterprise Seat Management fields - missing and causing compute errors
-    base_seats = fields.Integer(
-        string='Base Seats',
-        default=0,
-        help='Base number of seats included with subscription'
-    )
-    
-    extra_seats = fields.Integer(
-        string='Extra Seats',
-        default=0,
-        help='Additional seats purchased'
-    )
-    
-    total_seats = fields.Integer(
-        string='Total Seats',
-        compute='_compute_total_seats',
-        store=True,
-        help='Total number of seats (base + extra)'
     )
     
     # Dates
@@ -187,35 +169,6 @@ class AMSSubscriptionStub(models.Model):
         help='Automatically create revenue recognition entries'
     )
     
-    # Related Records Count
-    move_ids = fields.One2many(
-        'ams.account.move',
-        'subscription_id',
-        string='Journal Entries',
-        readonly=True,
-        help='Related journal entries'
-    )
-    
-    revenue_recognition_ids = fields.One2many(
-        'ams.revenue.recognition',
-        'subscription_id',
-        string='Revenue Recognition Entries',
-        readonly=True,
-        help='Related revenue recognition entries'
-    )
-    
-    journal_entry_count = fields.Integer(
-        string='Journal Entries Count',
-        compute='_compute_entry_counts',
-        help='Number of related journal entries'
-    )
-    
-    revenue_recognition_count = fields.Integer(
-        string='Revenue Recognition Count',
-        compute='_compute_entry_counts',
-        help='Number of revenue recognition entries'
-    )
-    
     # Company
     company_id = fields.Many2one(
         'res.company',
@@ -226,12 +179,6 @@ class AMSSubscriptionStub(models.Model):
     )
     
     # Computed Methods
-    @api.depends('base_seats', 'extra_seats')
-    def _compute_total_seats(self):
-        """Compute total seats (base + extra)"""
-        for subscription in self:
-            subscription.total_seats = (subscription.base_seats or 0) + (subscription.extra_seats or 0)
-    
     @api.depends('amount', 'product_id.list_price')
     def _compute_financial_amounts(self):
         """Compute financial amounts based on available data"""
@@ -256,31 +203,16 @@ class AMSSubscriptionStub(models.Model):
             
             subscription.deferred_revenue_balance = base_amount - subscription.total_recognized_revenue
     
-    @api.depends('move_ids', 'revenue_recognition_ids')
-    def _compute_entry_counts(self):
-        """Compute counts of related entries"""
-        for subscription in self:
-            subscription.journal_entry_count = len(subscription.move_ids)
-            subscription.revenue_recognition_count = len(subscription.revenue_recognition_ids)
-    
     # Lifecycle Methods
     @api.model_create_multi
     def create(self, vals_list):
         """Override create to generate sequence numbers"""
         for vals in vals_list:
             if vals.get('name', 'New') == 'New':
-                vals['name'] = self.env['ir.sequence'].next_by_code('ams.subscription') or 'SUB001'
+                sequence = self.env['ir.sequence'].next_by_code('ams.subscription')
+                vals['name'] = sequence or f'SUB{self.env["ir.sequence"].next_by_code("base.sequence")}'
         return super().create(vals_list)
     
-    def write(self, vals):
-        """Override write to handle state changes"""
-        if 'state' in vals:
-            for subscription in self:
-                # Trigger recomputation of financial amounts when state changes
-                subscription._compute_financial_amounts()
-        return super().write(vals)
-    
-    # Business Methods
     def _get_subscription_days(self):
         """Get total number of days in subscription period"""
         period_days = {
@@ -309,77 +241,6 @@ class AMSSubscriptionStub(models.Model):
                 elif subscription.subscription_period == 'biennial':
                     subscription.paid_through_date = subscription.start_date + relativedelta(years=2)
     
-    def action_suspend(self):
-        """Suspend the subscription"""
-        for subscription in self:
-            subscription.state = 'suspended'
-    
-    def action_cancel(self):
-        """Cancel the subscription"""
-        for subscription in self:
-            subscription.state = 'cancelled'
-    
-    def action_renew(self):
-        """Renew the subscription"""
-        for subscription in self:
-            if subscription.paid_through_date:
-                # Extend paid through date by one period
-                if subscription.subscription_period == 'monthly':
-                    subscription.paid_through_date = subscription.paid_through_date + relativedelta(months=1)
-                elif subscription.subscription_period == 'quarterly':
-                    subscription.paid_through_date = subscription.paid_through_date + relativedelta(months=3)
-                elif subscription.subscription_period == 'semi_annual':
-                    subscription.paid_through_date = subscription.paid_through_date + relativedelta(months=6)
-                elif subscription.subscription_period == 'annual':
-                    subscription.paid_through_date = subscription.paid_through_date + relativedelta(years=1)
-                elif subscription.subscription_period == 'biennial':
-                    subscription.paid_through_date = subscription.paid_through_date + relativedelta(years=2)
-                
-                subscription.state = 'active'
-    
-    # Accounting Integration Methods
-    def action_setup_accounting(self):
-        """Set up accounting for this subscription"""
-        self.ensure_one()
-        
-        return {
-            'name': 'Setup Subscription Accounting',
-            'type': 'ir.actions.act_window',
-            'res_model': 'ams.subscription.accounting.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_subscription_id': self.id,
-                'default_action_type': 'setup',
-            }
-        }
-    
-    def action_view_journal_entries(self):
-        """View related journal entries"""
-        self.ensure_one()
-        
-        return {
-            'name': f'Journal Entries - {self.name}',
-            'type': 'ir.actions.act_window',
-            'res_model': 'ams.account.move',
-            'view_mode': 'tree,form',
-            'domain': [('subscription_id', '=', self.id)],
-            'context': {'default_subscription_id': self.id}
-        }
-    
-    def action_view_revenue_recognition(self):
-        """View revenue recognition entries"""
-        self.ensure_one()
-        
-        return {
-            'name': f'Revenue Recognition - {self.name}',
-            'type': 'ir.actions.act_window',
-            'res_model': 'ams.revenue.recognition',
-            'view_mode': 'tree,form',
-            'domain': [('subscription_id', '=', self.id)],
-            'context': {'default_subscription_id': self.id}
-        }
-    
     def name_get(self):
         """Custom display name"""
         result = []
@@ -389,20 +250,6 @@ class AMSSubscriptionStub(models.Model):
                 name += f' - {subscription.partner_id.name}'
             result.append((subscription.id, name))
         return result
-    
-    @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
-        """Enhanced name search"""
-        args = args or []
-        if name:
-            domain = [
-                '|', '|',
-                ('name', operator, name),
-                ('partner_id.name', operator, name),
-                ('product_id.name', operator, name)
-            ]
-            return self._search(domain + args, limit=limit, access_rights_uid=name_get_uid)
-        return super()._name_search(name, args, operator, limit, name_get_uid)
 
 
 # Minimal subscription tier model for the stub
@@ -443,24 +290,6 @@ class AMSSubscriptionTierStub(models.Model):
     ], string='Period Length', default='annual', required=True,
        help='Billing period length')
     
-    grace_days = fields.Integer(
-        string='Grace Period (Days)',
-        default=30,
-        help='Grace period in days'
-    )
-    
-    suspend_days = fields.Integer(
-        string='Suspension Period (Days)',
-        default=60,
-        help='Suspension period in days'
-    )
-    
-    terminate_days = fields.Integer(
-        string='Termination Period (Days)',
-        default=30,
-        help='Termination period in days'
-    )
-    
     auto_renew = fields.Boolean(
         string='Auto Renew By Default',
         default=True,
@@ -471,10 +300,4 @@ class AMSSubscriptionTierStub(models.Model):
         string='Free Tier',
         default=False,
         help='This is a free subscription tier'
-    )
-    
-    default_seats = fields.Integer(
-        string='Default Seats',
-        default=0,
-        help='Default number of seats for enterprise subscriptions'
     )
