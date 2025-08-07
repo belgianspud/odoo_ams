@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Enhanced Invoice Action for AMS -->
+    <record id="action_move_ams_invoices" model="ir.actions.act_window">
+        <field name="name">AMS Invoices</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('move_type', '=', 'out_invoice'), ('has_ams_products', '=', True)]</field>
+        <field name="context">{
+            'default_move_type': 'out_invoice',
+            'search_default_has_ams_products': 1
+        }</field>
+    </record>
+
     <!-- Add Accounting section to existing AMS menu -->
     <menuitem id="menu_ams_accounting"
               name="Accounting"
@@ -13,12 +25,12 @@
               action="action_account_account_ams"
               sequence="10"/>
 
-    <!-- AMS Invoices/Transactions 
+    <!-- AMS Invoices/Transactions -->
     <menuitem id="menu_ams_invoices"
               name="AMS Invoices"
               parent="menu_ams_accounting"
               action="action_move_ams_invoices"
-              sequence="20"/>-->
+              sequence="20"/>
 
     <!-- Configuration submenu -->
     <menuitem id="menu_ams_accounting_config"
@@ -26,16 +38,4 @@
               parent="ams_subscriptions.menu_ams_configurations"
               action="action_ams_accounting_setup_wizard"
               sequence="40"/>
-
-    <!-- Enhanced Invoice Action for AMS -->
-    <record id="action_move_ams_invoices" model="ir.actions.act_window">
-        <field name="name">AMS Invoices</field>
-        <field name="res_model">account.move</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('move_type', '=', 'out_invoice'), ('has_ams_products', '=', True)]</field>
-        <field name="context">{
-            'default_move_type': 'out_invoice',
-            'search_default_has_ams_products': 1
-        }</field>
-    </record>
 </odoo>
