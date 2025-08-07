@@ -53,7 +53,7 @@ integrating seamlessly with existing subscription management.
         'data/subscription_sequence.xml',
         
         # Views
-        'views/account_account_views.xml',
+        #'views/account_account_views.xml',
         'views/account_journal_views.xml',
         'views/product_template_views.xml',
         'views/ams_subscription_accounting_views.xml',

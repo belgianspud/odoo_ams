@@ -8,6 +8,7 @@ module is not installed, allowing the accounting module to function independentl
 
 from odoo import models, fields, api
 from odoo.exceptions import UserError
+from dateutil.relativedelta import relativedelta
 
 class AMSSubscriptionStub(models.Model):
     """
@@ -40,12 +41,46 @@ class AMSSubscriptionStub(models.Model):
         help='Customer associated with this subscription'
     )
     
+    # ADDED: This field was missing and causing the KeyError
+    account_id = fields.Many2one(
+        'res.partner',
+        string='Account',
+        help='Used for enterprise memberships and account management'
+    )
+    
     product_id = fields.Many2one(
         'product.product',
         string='Product',
         required=True,
         tracking=True,
         help='Product/service being subscribed to'
+    )
+    
+    # ADDED: This field was missing and referenced by related fields
+    tier_id = fields.Many2one(
+        'ams.subscription.tier',
+        string='Tier / Level',
+        help='Subscription tier for this subscription'
+    )
+    
+    # ADDED: Enterprise Seat Management fields - missing and causing compute errors
+    base_seats = fields.Integer(
+        string='Base Seats',
+        default=0,
+        help='Base number of seats included with subscription'
+    )
+    
+    extra_seats = fields.Integer(
+        string='Extra Seats',
+        default=0,
+        help='Additional seats purchased'
+    )
+    
+    total_seats = fields.Integer(
+        string='Total Seats',
+        compute='_compute_total_seats',
+        store=True,
+        help='Total number of seats (base + extra)'
     )
     
     # Dates
@@ -191,6 +226,12 @@ class AMSSubscriptionStub(models.Model):
     )
     
     # Computed Methods
+    @api.depends('base_seats', 'extra_seats')
+    def _compute_total_seats(self):
+        """Compute total seats (base + extra)"""
+        for subscription in self:
+            subscription.total_seats = (subscription.base_seats or 0) + (subscription.extra_seats or 0)
+    
     @api.depends('amount', 'product_id.list_price')
     def _compute_financial_amounts(self):
         """Compute financial amounts based on available data"""
@@ -362,3 +403,78 @@ class AMSSubscriptionStub(models.Model):
             ]
             return self._search(domain + args, limit=limit, access_rights_uid=name_get_uid)
         return super()._name_search(name, args, operator, limit, name_get_uid)
+
+
+# Minimal subscription tier model for the stub
+class AMSSubscriptionTierStub(models.Model):
+    """
+    Basic subscription tier model for accounting integration
+    """
+    _name = 'ams.subscription.tier'
+    _description = 'AMS Subscription Tier (Basic)'
+    
+    name = fields.Char(
+        string='Tier Name',
+        required=True,
+        help='Name of the subscription tier'
+    )
+    
+    description = fields.Text(
+        string='Description',
+        help='Description of the subscription tier'
+    )
+    
+    subscription_type = fields.Selection([
+        ('individual', 'Individual Membership'),
+        ('enterprise', 'Enterprise Membership'),
+        ('chapter', 'Chapter Membership'),
+        ('publication', 'Publication Subscription'),
+        ('event', 'Event Registration'),
+        ('general', 'General Subscription'),
+    ], string='Subscription Type', default='general', required=True,
+       help='Type of subscription this tier applies to')
+    
+    period_length = fields.Selection([
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+        ('semi_annual', 'Semi-Annual'),
+        ('annual', 'Annual'),
+        ('biennial', 'Biennial'),
+    ], string='Period Length', default='annual', required=True,
+       help='Billing period length')
+    
+    grace_days = fields.Integer(
+        string='Grace Period (Days)',
+        default=30,
+        help='Grace period in days'
+    )
+    
+    suspend_days = fields.Integer(
+        string='Suspension Period (Days)',
+        default=60,
+        help='Suspension period in days'
+    )
+    
+    terminate_days = fields.Integer(
+        string='Termination Period (Days)',
+        default=30,
+        help='Termination period in days'
+    )
+    
+    auto_renew = fields.Boolean(
+        string='Auto Renew By Default',
+        default=True,
+        help='Whether subscriptions auto-renew by default'
+    )
+    
+    is_free = fields.Boolean(
+        string='Free Tier',
+        default=False,
+        help='This is a free subscription tier'
+    )
+    
+    default_seats = fields.Integer(
+        string='Default Seats',
+        default=0,
+        help='Default number of seats for enterprise subscriptions'
+    )
