@@ -11,42 +11,42 @@ class AMSAccountingConfig(models.TransientModel):
     default_membership_revenue_account_id = fields.Many2one(
         'account.account',
         string='Default Membership Revenue Account',
-        domain="[('account_type', 'in', ['income', 'income_other']), ('company_id', '=', current_company_id)]",
+        domain="[('account_type', 'in', ['income', 'income_other'])]",
         help='Default revenue account for membership products'
     )
     
     default_publication_revenue_account_id = fields.Many2one(
         'account.account', 
         string='Default Publication Revenue Account',
-        domain="[('account_type', 'in', ['income', 'income_other']), ('company_id', '=', current_company_id)]",
+        domain="[('account_type', 'in', ['income', 'income_other'])]",
         help='Default revenue account for publication products'
     )
     
     default_chapter_revenue_account_id = fields.Many2one(
         'account.account',
         string='Default Chapter Revenue Account', 
-        domain="[('account_type', 'in', ['income', 'income_other']), ('company_id', '=', current_company_id)]",
+        domain="[('account_type', 'in', ['income', 'income_other'])]",
         help='Default revenue account for chapter products'
     )
     
     default_subscription_ar_account_id = fields.Many2one(
         'account.account',
         string='Default Subscription A/R Account',
-        domain="[('account_type', '=', 'asset_receivable'), ('company_id', '=', current_company_id)]", 
+        domain="[('account_type', '=', 'asset_receivable')]", 
         help='Default accounts receivable account for subscriptions'
     )
     
     default_deferred_revenue_account_id = fields.Many2one(
         'account.account',
         string='Default Deferred Revenue Account',
-        domain="[('account_type', '=', 'liability_current'), ('company_id', '=', current_company_id')]",
+        domain="[('account_type', '=', 'liability_current')]",
         help='Default deferred revenue account for prepaid subscriptions'
     )
     
     default_cash_account_id = fields.Many2one(
         'account.account',
         string='Default Cash Account',
-        domain="[('account_type', '=', 'asset_cash'), ('company_id', '=', current_company_id')]",
+        domain="[('account_type', '=', 'asset_cash')]",
         help='Default cash account for subscription payments'
     )
     
@@ -66,7 +66,7 @@ class AMSAccountingConfig(models.TransientModel):
     ams_journal_id = fields.Many2one(
         'account.journal',
         string='AMS Journal',
-        domain="[('type', 'in', ['sale', 'general']), ('company_id', '=', current_company_id)]",
+        domain="[('type', 'in', ['sale', 'general'])]",
         help='Journal to use for AMS-specific entries'
     )
     

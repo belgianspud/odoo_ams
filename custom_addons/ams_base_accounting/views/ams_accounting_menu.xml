@@ -13,12 +13,12 @@
               action="action_account_account_ams"
               sequence="10"/>
 
-    <!-- AMS Invoices/Transactions -->
+    <!-- AMS Invoices/Transactions 
     <menuitem id="menu_ams_invoices"
               name="AMS Invoices"
               parent="menu_ams_accounting"
               action="action_move_ams_invoices"
-              sequence="20"/>
+              sequence="20"/>-->
 
     <!-- Configuration submenu -->
     <menuitem id="menu_ams_accounting_config"

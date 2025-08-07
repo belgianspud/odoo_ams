@@ -72,7 +72,7 @@
                 <field name="use_ams_accounting" string="AMS Acct"/>
                 <field name="ams_accounts_configured" string="Configured" 
                        widget="boolean_toggle" 
-                       invisible="not parent.use_ams_accounting"/>
+                       optional="hide"/>
             </xpath>
         </field>
     </record>
@@ -87,10 +87,8 @@
                 <separator/>
                 <filter name="filter_ams_accounting" string="AMS Accounting Enabled" 
                         domain="[('use_ams_accounting', '=', True)]"/>
-                <filter name="filter_accounts_configured" string="Accounts Configured" 
-                        domain="[('ams_accounts_configured', '=', True)]"/>
-                <filter name="filter_unconfigured" string="Needs Configuration" 
-                        domain="[('use_ams_accounting', '=', True), ('ams_accounts_configured', '=', False)]"/>
+                <filter name="filter_subscription_products" string="Subscription Products" 
+                        domain="[('is_subscription_product', '=', True)]"/>
             </xpath>
         </field>
     </record>

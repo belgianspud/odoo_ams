@@ -1,31 +1,43 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'AMS Base Accounting',
-    'version': '1.0.0',
-    'summary': 'Base accounting functionality for Association Management System',
+    'version': '18.0.1.0.0',
+    'summary': 'Base accounting functionality for AMS (Association Management System)',
     'description': """
 AMS Base Accounting
-==================
-Provides essential accounting functionality for associations:
-- Association-specific chart of accounts categories
-- Product-level GL account configuration  
-- Basic journal entry automation for subscriptions
-- Simple accounting integration with AMS subscriptions
+===================
+
+This module provides basic accounting functionality for the AMS (Association Management System):
+
+* GL account configuration for subscription products
+* Chart of accounts for associations
+* Integration with standard Odoo accounting
+* Setup wizard for account configuration
+
+Features:
+---------
+* Product-specific GL account mapping
+* AMS-specific chart of accounts
+* Revenue recognition for subscriptions  
+* Accounts receivable management
+* Deferred revenue handling
+* Setup and configuration wizards
+
     """,
-    'author': 'Your Organization',
-    'website': 'https://yourwebsite.com',
-    'category': 'Accounting/Accounting',
-    'license': 'LGPL-3',
+    'author': 'Your Company',
+    'website': 'https://yourcompany.com',
+    'category': 'Association Management/Accounting',
     'depends': [
-        'account',              # Core accounting (Community)
-        'sale_management',      # Sales integration
-        'ams_subscriptions',    # AMS subscription integration
+        'base',
+        'account', 
+        'product',
+        'ams_subscriptions',
     ],
     'data': [
         # Security
         'security/ir.model.access.csv',
         
-        # Data - Chart of accounts setup
+        # Data files
         'data/ams_account_types.xml',
         'data/ams_account_templates.xml', 
         'data/ams_journals.xml',
@@ -35,15 +47,13 @@ Provides essential accounting functionality for associations:
         'views/product_template_views.xml',
         'views/ams_accounting_config_views.xml',
         'views/account_move_views.xml',
-        
-        # Configuration wizard
         'wizard/ams_accounting_setup_wizard_views.xml',
-        
-        # Menu integration
         'views/ams_accounting_menu.xml',
     ],
+    'demo': [],
     'installable': True,
-    'application': False,
+    'application': True,
     'auto_install': False,
     'post_init_hook': 'post_init_hook',
+    'license': 'LGPL-3',
 }

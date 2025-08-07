@@ -64,6 +64,7 @@ class ProductTemplate(models.Model):
     ams_accounts_configured = fields.Boolean(
         string='AMS Accounts Configured',
         compute='_compute_ams_accounts_configured',
+        store=True,
         help='All required AMS accounts are configured'
     )
     
@@ -71,7 +72,7 @@ class ProductTemplate(models.Model):
     # COMPUTED FIELDS
     # =============================================================================
     
-    @api.depends('ams_revenue_account_id', 'ams_receivable_account_id', 'is_subscription_product')
+    @api.depends('ams_revenue_account_id', 'ams_receivable_account_id', 'is_subscription_product', 'use_ams_accounting')
     def _compute_ams_accounts_configured(self):
         """Check if required AMS accounts are configured"""
         for product in self:
@@ -156,8 +157,7 @@ class ProductTemplate(models.Model):
     def _find_account_by_category(self, category):
         """Find an account by AMS category"""
         return self.env['account.account'].search([
-            ('ams_account_category', '=', category),
-            ('company_id', '=', self.env.company.id)
+            ('ams_account_category', '=', category)
         ], limit=1)
     
     # =============================================================================
