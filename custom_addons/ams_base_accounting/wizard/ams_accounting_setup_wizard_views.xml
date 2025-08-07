@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- AMS Accounting Setup Wizard -->
+    <record id="view_ams_accounting_setup_wizard_form" model="ir.ui.view">
+        <field name="name">ams.accounting.setup.wizard.form</field>
+        <field name="model">ams.accounting.setup.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>AMS Accounting Setup</h1>
+                        <p>Set up your association's chart of accounts and configure default GL accounts for AMS products.</p>
+                    </div>
+                    
+                    <group string="Setup Options">
+                        <field name="create_ams_accounts"/>
+                        <field name="configure_existing_products"/>
+                        <field name="setup_default_journals"/>
+                    </group>
+                    
+                    <group string="Current Status" col="4">
+                        <field name="existing_ams_accounts" readonly="1"/>
+                        <field name="unconfigured_product_count" readonly="1"/>
+                    </group>
+                    
+                    <group string="Account Creation" invisible="not create_ams_accounts">
+                        <div class="alert alert-info">
+                            <p>The following AMS-specific accounts will be created:</p>
+                            <ul>
+                                <li>Membership Revenue - Individual (4100)</li>
+                                <li>Membership Revenue - Enterprise (4110)</li>
+                                <li>Publication Revenue (4200)</li>
+                                <li>Chapter Revenue (4300)</li>
+                                <li>Deferred Membership Revenue (2300)</li>
+                                <li>Accounts Receivable - Memberships (1200)</li>
+                            </ul>
+                        </div>
+                    </group>
+                    
+                    <group string="Product Configuration" invisible="not configure_existing_products">
+                        <div class="alert alert-warning" invisible="unconfigured_product_count == 0">
+                            <p>There are <field name="unconfigured_product_count" readonly="1"/> AMS products that need account configuration.</p>
+                        </div>
+                        <div class="alert alert-success" invisible="unconfigured_product_count != 0">
+                            <p>All AMS products are already configured.</p>
+                        </div>
+                    </group>
+                    
+                    <group string="Journal Setup" invisible="not setup_default_journals">
+                        <div class="alert alert-info">
+                            <p>An AMS Sales journal will be created if it doesn't already exist.</p>
+                            <p>This journal can be used for AMS-specific sales transactions.</p>
+                        </div>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_run_setup" string="Run Setup" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Setup Wizard Action -->
+    <record id="action_ams_accounting_setup_wizard" model="ir.actions.act_window">
+        <field name="name">AMS Accounting Setup</field>
+        <field name="res_model">ams.accounting.setup.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

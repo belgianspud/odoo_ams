@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Enhanced Product Form with AMS Accounting Tab -->
+    <record id="view_product_template_form_ams_accounting" model="ir.ui.view">
+        <field name="name">product.template.form.ams.accounting</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="ams_subscriptions.view_product_template_form_ams"/>
+        <field name="arch" type="xml">
+            <!-- Add AMS Accounting tab after AMS Subscription tab -->
+            <xpath expr="//page[@string='AMS Subscription']" position="after">
+                <page string="AMS Accounting" invisible="not is_subscription_product">
+                    <div class="alert alert-info" role="alert" invisible="ams_accounts_configured">
+                        <h6><i class="fa fa-exclamation-triangle"/> Account Configuration Required</h6>
+                        <p>Configure GL accounts for proper accounting of this subscription product.</p>
+                        <button name="action_auto_configure_accounts" type="object" class="btn btn-primary btn-sm">
+                            <i class="fa fa-magic"/> Auto-Configure Accounts
+                        </button>
+                        <button name="action_configure_ams_accounts" type="object" class="btn btn-secondary btn-sm">
+                            <i class="fa fa-cog"/> Manual Setup
+                        </button>
+                    </div>
+                    
+                    <div class="alert alert-success" role="alert" invisible="not ams_accounts_configured">
+                        <h6><i class="fa fa-check-circle"/> Accounts Configured</h6>
+                        <p>This product has been properly configured for AMS accounting.</p>
+                    </div>
+                    
+                    <group>
+                        <field name="use_ams_accounting"/>
+                        <field name="ams_accounts_configured" invisible="1"/>
+                    </group>
+                    
+                    <group string="Revenue Accounts" invisible="not use_ams_accounting">
+                        <field name="ams_revenue_account_id" 
+                               options="{'no_create': True}"
+                               context="{'default_ams_account_category': 'membership_revenue'}"/>
+                        <field name="ams_deferred_account_id" 
+                               options="{'no_create': True}"
+                               context="{'default_ams_account_category': 'deferred_revenue'}"/>
+                    </group>
+                    
+                    <group string="Asset Accounts" invisible="not use_ams_accounting">
+                        <field name="ams_receivable_account_id" 
+                               options="{'no_create': True}"
+                               context="{'default_ams_account_category': 'subscription_ar'}"/>
+                        <field name="ams_cash_account_id" 
+                               options="{'no_create': True}"
+                               context="{'default_ams_account_category': 'cash_membership'}"/>
+                    </group>
+                    
+                    <group string="Expense Accounts" invisible="not use_ams_accounting">
+                        <field name="ams_expense_account_id" 
+                               options="{'no_create': True}"
+                               context="{'default_ams_account_category': 'membership_expense'}"/>
+                    </group>
+                    
+                    <group string="Notes" invisible="not use_ams_accounting">
+                        <field name="ams_accounting_notes" nolabel="1"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Enhanced Product List View -->
+    <record id="view_product_template_tree_ams_accounting" model="ir.ui.view">
+        <field name="name">product.template.tree.ams.accounting</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="ams_subscriptions.view_product_template_tree_ams"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='active_subscriptions_count']" position="after">
+                <field name="use_ams_accounting" string="AMS Acct"/>
+                <field name="ams_accounts_configured" string="Configured" 
+                       widget="boolean_toggle" 
+                       invisible="not parent.use_ams_accounting"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Search View Enhancement -->
+    <record id="view_product_template_search_ams_accounting" model="ir.ui.view">
+        <field name="name">product.template.search.ams.accounting</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="ams_subscriptions.view_product_template_search_ams"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='filter_publications']" position="after">
+                <separator/>
+                <filter name="filter_ams_accounting" string="AMS Accounting Enabled" 
+                        domain="[('use_ams_accounting', '=', True)]"/>
+                <filter name="filter_accounts_configured" string="Accounts Configured" 
+                        domain="[('ams_accounts_configured', '=', True)]"/>
+                <filter name="filter_unconfigured" string="Needs Configuration" 
+                        domain="[('use_ams_accounting', '=', True), ('ams_accounts_configured', '=', False)]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
