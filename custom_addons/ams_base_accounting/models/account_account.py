@@ -1,375 +1,187 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
-from odoo.exceptions import UserError, ValidationError
 
 class AccountAccount(models.Model):
-    _name = 'ams.account.account'
-    _description = 'AMS Chart of Accounts'
-    _order = 'code, name'
-    _parent_store = True
-    _parent_name = 'parent_id'
+    """Enhanced Chart of Accounts with AMS-specific categories"""
+    _inherit = 'account.account'
+
+    # AMS-specific account categorization
+    ams_account_category = fields.Selection([
+        ('membership_revenue', 'Membership Revenue'),
+        ('dues_revenue', 'Dues Revenue'),
+        ('publication_revenue', 'Publication Revenue'), 
+        ('chapter_revenue', 'Chapter Revenue'),
+        ('event_revenue', 'Event Revenue'),
+        ('donation_revenue', 'Donation Revenue'),
+        ('grant_revenue', 'Grant Revenue'),
+        ('subscription_ar', 'Subscription A/R'),
+        ('membership_expense', 'Membership Expenses'),
+        ('publication_expense', 'Publication Expenses'),
+        ('chapter_expense', 'Chapter Expenses'),
+        ('event_expense', 'Event Expenses'),
+        ('deferred_revenue', 'Deferred Revenue'),
+        ('cash_membership', 'Cash - Membership'),
+        ('cash_events', 'Cash - Events'),
+        ('other', 'Other'),
+    ], string='AMS Category', help='Association-specific account category')
     
-    name = fields.Char(
-        string='Account Name',
-        required=True,
-        index=True,
-        translate=True
+    # Enhanced description for association context
+    ams_description = fields.Text(
+        string='AMS Description',
+        help='Additional description specific to association use case'
     )
     
-    code = fields.Char(
-        string='Account Code',
-        size=64,
-        required=True,
-        index=True,
-        help='Account code must be unique'
-    )
-    
-    account_type = fields.Selection([
-        # Assets
-        ('asset_receivable', 'Receivable'),
-        ('asset_cash', 'Bank and Cash'),
-        ('asset_current', 'Current Assets'),
-        ('asset_non_current', 'Non-current Assets'),
-        ('asset_prepayments', 'Prepayments'),
-        ('asset_fixed', 'Fixed Assets'),
-        
-        # Liabilities  
-        ('liability_payable', 'Payable'),
-        ('liability_credit_card', 'Credit Card'),
-        ('liability_current', 'Current Liabilities'),
-        ('liability_non_current', 'Non-current Liabilities'),
-        ('liability_deferred_revenue', 'Deferred Revenue'),
-        
-        # Equity
-        ('equity', 'Equity'),
-        ('equity_unaffected', 'Current Year Earnings'),
-        
-        # Revenue
-        ('income', 'Income'),
-        ('income_membership', 'Membership Revenue'),
-        ('income_chapter', 'Chapter Revenue'),
-        ('income_publication', 'Publication Revenue'),
-        ('income_other', 'Other Revenue'),
-        
-        # Expenses
-        ('expense', 'Expenses'),
-        ('expense_direct_cost', 'Cost of Revenue'),
-        ('expense_depreciation', 'Depreciation'),
-        
-        # Off Balance Sheet
-        ('off_balance', 'Off-Balance Sheet'),
-    ], string='Account Type', required=True, 
-       help='The account type determines where this account appears in financial reports')
-    
-    parent_id = fields.Many2one(
-        'ams.account.account',
-        string='Parent Account',
-        index=True,
-        ondelete='cascade',
-        help='The parent account for creating account hierarchies'
-    )
-    
-    parent_path = fields.Char(index=True)
-    
-    child_ids = fields.One2many(
-        'ams.account.account',
-        'parent_id',
-        string='Child Accounts'
-    )
-    
-    level = fields.Integer(
-        string='Level',
-        compute='_compute_level',
-        store=True,
-        help='Account hierarchy level (0 = top level)'
-    )
-    
-    company_id = fields.Many2one(
-        'res.company',
-        string='Company',
-        required=True,
-        default=lambda self: self.env.company
-    )
-    
-    currency_id = fields.Many2one(
-        'res.currency',
-        string='Account Currency',
-        help='Forces all journal entries on this account to have this currency'
-    )
-    
-    active = fields.Boolean(
-        string='Active',
-        default=True,
-        help='Inactive accounts are hidden from selection lists'
-    )
-    
-    reconcile = fields.Boolean(
-        string='Allow Reconciliation',
-        default=False,
-        help='Allow journal entries on this account to be reconciled'
-    )
-    
-    deprecated = fields.Boolean(
-        string='Deprecated',
-        default=False,
-        help='Account is deprecated and should not be used for new entries'
-    )
-    
-    note = fields.Text(string='Internal Notes')
-    
-    # AMS-specific fields
+    # Flag for AMS-managed accounts
     is_ams_account = fields.Boolean(
-        string='AMS Account',
-        default=True,
-        help='This account is managed by AMS accounting'
+        string='AMS Managed Account',
+        default=False,
+        help='This account is managed by the AMS system'
     )
     
-    ams_category = fields.Selection([
-        ('membership', 'Membership Related'),
-        ('chapter', 'Chapter Related'),
-        ('publication', 'Publication Related'),
-        ('event', 'Event Related'),
-        ('general', 'General Operations'),
-    ], string='AMS Category', help='Categorizes accounts by AMS function')
-    
-    # Balance and totals - use compute methods instead of direct One2many to avoid circular deps
-    balance = fields.Float(
-        string='Current Balance',
-        compute='_compute_balance',
-        help='Current account balance'
+    # Usage tracking
+    subscription_count = fields.Integer(
+        string='Subscription Usage Count',
+        compute='_compute_ams_usage',
+        help='Number of products using this account for subscriptions'
     )
     
-    debit_total = fields.Float(
-        string='Total Debit',
-        compute='_compute_balance',
-        help='Total debits for this account'
-    )
-    
-    credit_total = fields.Float(
-        string='Total Credit', 
-        compute='_compute_balance',
-        help='Total credits for this account'
-    )
-    
-    # Move line count instead of direct One2many relationship initially
-    move_line_count = fields.Integer(
-        string='Journal Items Count',
-        compute='_compute_move_line_count',
-        help='Number of journal items for this account'
-    )
-    
-    @api.depends('parent_id')
-    def _compute_level(self):
-        """Compute account hierarchy level"""
+    def _compute_ams_usage(self):
+        """Compute how many products are using this account"""
         for account in self:
-            level = 0
-            parent = account.parent_id
-            while parent:
-                level += 1
-                parent = parent.parent_id
-            account.level = level
-    
-    def _compute_balance(self):
-        """Compute account balances from journal entries"""
-        for account in self:
-            # This would normally query journal entries
-            # For now, set defaults - will be enhanced when journal entries are implemented
-            try:
-                # Safe query for journal entries if the model exists
-                if 'ams.account.move.line' in self.env:
-                    lines = self.env['ams.account.move.line'].search([
-                        ('account_id', '=', account.id),
-                        ('move_id.state', '=', 'posted')
-                    ])
-                    account.debit_total = sum(lines.mapped('debit'))
-                    account.credit_total = sum(lines.mapped('credit'))
-                    account.balance = account.debit_total - account.credit_total
-                else:
-                    account.balance = 0.0
-                    account.debit_total = 0.0
-                    account.credit_total = 0.0
-            except:
-                # Fallback if there are any issues
-                account.balance = 0.0
-                account.debit_total = 0.0
-                account.credit_total = 0.0
-    
-    def _compute_move_line_count(self):
-        """Compute move line count"""
-        for account in self:
-            try:
-                if 'ams.account.move.line' in self.env:
-                    account.move_line_count = self.env['ams.account.move.line'].search_count([
-                        ('account_id', '=', account.id)
-                    ])
-                else:
-                    account.move_line_count = 0
-            except:
-                account.move_line_count = 0
-    
-    @api.constrains('parent_id')
-    def _check_parent_id(self):
-        """Ensure no circular references in account hierarchy"""
-        if not self._check_recursion():
-            raise ValidationError('Error! You cannot create recursive account hierarchies.')
-    
-    @api.constrains('code', 'company_id')
-    def _check_code_company_unique(self):
-        """Ensure account codes are unique per company"""
-        for account in self:
-            if self.search_count([
-                ('code', '=', account.code),
-                ('company_id', '=', account.company_id.id),
-                ('id', '!=', account.id)
-            ]) > 0:
-                raise ValidationError(f'Account code "{account.code}" already exists for company "{account.company_id.name}"')
-    
-    @api.model_create_multi
-    def create(self, vals_list):
-        """Override create to validate account creation"""
-        for vals in vals_list:
-            # Auto-generate code if not provided
-            if not vals.get('code'):
-                vals['code'] = self._generate_account_code(vals.get('account_type'))
-        
-        return super().create(vals_list)
-    
-    def _generate_account_code(self, account_type):
-        """Generate account code based on type"""
-        code_prefixes = {
-            'asset_receivable': '1200',
-            'asset_cash': '1000',
-            'asset_current': '1300',
-            'asset_non_current': '1500',
-            'asset_fixed': '1600',
-            'liability_payable': '2000',
-            'liability_current': '2100',
-            'liability_deferred_revenue': '2400',
-            'equity': '3000',
-            'income_membership': '4100',
-            'income_chapter': '4200', 
-            'income_publication': '4300',
-            'income': '4000',
-            'expense': '5000',
-            'expense_direct_cost': '5100',
-        }
-        
-        prefix = code_prefixes.get(account_type, '9000')
-        
-        # Find next available number
-        existing_codes = self.search([
-            ('code', 'like', f'{prefix}%'),
-            ('company_id', '=', self.env.company.id)
-        ]).mapped('code')
-        
-        for i in range(1, 100):
-            new_code = f'{prefix}{i:02d}'
-            if new_code not in existing_codes:
-                return new_code
-        
-        return f'{prefix}99'
-    
-    def name_get(self):
-        """Display format: [CODE] Account Name"""
-        result = []
-        for account in self:
-            name = f'[{account.code}] {account.name}'
-            result.append((account.id, name))
-        return result
+            # Count products using this account in any capacity
+            product_count = self.env['product.template'].search_count([
+                '|', '|', '|', '|',
+                ('ams_revenue_account_id', '=', account.id),
+                ('ams_receivable_account_id', '=', account.id),
+                ('ams_cash_account_id', '=', account.id),
+                ('ams_deferred_account_id', '=', account.id),
+                ('ams_expense_account_id', '=', account.id),
+            ])
+            account.subscription_count = product_count
     
     @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
-        """Allow searching by code or name"""
-        args = args or []
-        if name:
-            domain = ['|', ('code', operator, name), ('name', operator, name)]
-            account_ids = self._search(domain + args, limit=limit, access_rights_uid=name_get_uid)
-            return self.browse(account_ids).name_get()
-        return super()._name_search(name, args=args, operator=operator, limit=limit, name_get_uid=name_get_uid)
-    
-    def action_view_journal_entries(self):
-        """Action to view journal entries for this account"""
-        self.ensure_one()
+    def create_ams_account_structure(self):
+        """Create default AMS account structure"""
+        company = self.env.company
         
-        return {
-            'name': f'Journal Entries - {self.name}',
-            'type': 'ir.actions.act_window',
-            'res_model': 'ams.account.move.line',
-            'view_mode': 'list,form',
-            'domain': [('account_id', '=', self.id)],
-            'context': {
-                'default_account_id': self.id,
-                'search_default_account_id': self.id,
-            }
-        }
-    
-    def toggle_reconcile(self):
-        """Toggle reconciliation setting"""
-        for account in self:
-            account.reconcile = not account.reconcile
-        return True
-    
-    @api.model
-    def create_default_accounts(self, company_id=None):
-        """Create default chart of accounts for AMS"""
-        if not company_id:
-            company_id = self.env.company.id
-        
-        # Define default accounts structure
-        default_accounts = [
-            # Assets
-            {'code': '1000', 'name': 'Cash and Bank', 'account_type': 'asset_cash', 'ams_category': 'general'},
-            {'code': '1200', 'name': 'Accounts Receivable', 'account_type': 'asset_receivable', 'reconcile': True, 'ams_category': 'general'},
-            {'code': '1210', 'name': 'Membership A/R', 'account_type': 'asset_receivable', 'reconcile': True, 'ams_category': 'membership'},
-            
-            # Liabilities
-            {'code': '2000', 'name': 'Accounts Payable', 'account_type': 'liability_payable', 'reconcile': True, 'ams_category': 'general'},
-            {'code': '2400', 'name': 'Deferred Revenue - Memberships', 'account_type': 'liability_deferred_revenue', 'ams_category': 'membership'},
-            {'code': '2410', 'name': 'Deferred Revenue - Publications', 'account_type': 'liability_deferred_revenue', 'ams_category': 'publication'},
-            {'code': '2420', 'name': 'Deferred Revenue - Chapters', 'account_type': 'liability_deferred_revenue', 'ams_category': 'chapter'},
-            
-            # Equity
-            {'code': '3000', 'name': 'Retained Earnings', 'account_type': 'equity', 'ams_category': 'general'},
-            
-            # Revenue
-            {'code': '4100', 'name': 'Individual Membership Revenue', 'account_type': 'income_membership', 'ams_category': 'membership'},
-            {'code': '4110', 'name': 'Enterprise Membership Revenue', 'account_type': 'income_membership', 'ams_category': 'membership'},
-            {'code': '4200', 'name': 'Chapter Revenue', 'account_type': 'income_chapter', 'ams_category': 'chapter'},
-            {'code': '4300', 'name': 'Publication Revenue', 'account_type': 'income_publication', 'ams_category': 'publication'},
-            
-            # Expenses
-            {'code': '5000', 'name': 'Operating Expenses', 'account_type': 'expense', 'ams_category': 'general'},
-            {'code': '5100', 'name': 'Bad Debt Expense', 'account_type': 'expense', 'ams_category': 'general'},
+        # Define default AMS accounts to create
+        ams_accounts = [
+            {
+                'code': '4100',
+                'name': 'Membership Revenue - Individual',
+                'account_type': 'income_other',
+                'ams_account_category': 'membership_revenue',
+                'ams_description': 'Revenue from individual membership subscriptions',
+            },
+            {
+                'code': '4110', 
+                'name': 'Membership Revenue - Enterprise',
+                'account_type': 'income_other',
+                'ams_account_category': 'membership_revenue',
+                'ams_description': 'Revenue from enterprise membership subscriptions',
+            },
+            {
+                'code': '4200',
+                'name': 'Publication Revenue',
+                'account_type': 'income_other', 
+                'ams_account_category': 'publication_revenue',
+                'ams_description': 'Revenue from publication subscriptions',
+            },
+            {
+                'code': '4300',
+                'name': 'Chapter Revenue',
+                'account_type': 'income_other',
+                'ams_account_category': 'chapter_revenue', 
+                'ams_description': 'Revenue from chapter memberships',
+            },
+            {
+                'code': '2300',
+                'name': 'Deferred Membership Revenue',
+                'account_type': 'liability_current',
+                'ams_account_category': 'deferred_revenue',
+                'ams_description': 'Unearned revenue from prepaid memberships',
+            },
+            {
+                'code': '1200',
+                'name': 'Accounts Receivable - Memberships',
+                'account_type': 'asset_receivable',
+                'ams_account_category': 'subscription_ar',
+                'ams_description': 'Outstanding membership invoices',
+            },
         ]
         
-        created_accounts = self.env['ams.account.account']
-        
-        for account_data in default_accounts:
-            account_data['company_id'] = company_id
-            
+        created_accounts = []
+        for account_data in ams_accounts:
             # Check if account already exists
             existing = self.search([
                 ('code', '=', account_data['code']),
-                ('company_id', '=', company_id)
-            ])
+                ('company_id', '=', company.id)
+            ], limit=1)
             
             if not existing:
+                account_data.update({
+                    'company_id': company.id,
+                    'is_ams_account': True,
+                })
                 account = self.create(account_data)
-                created_accounts |= account
+                created_accounts.append(account)
         
         return created_accounts
-
-
-# Add the One2many relationship in a separate method after model is fully loaded
-def _add_move_line_relationship():
-    """Add the One2many relationship to move lines after models are loaded"""
-    AccountAccount = AccountAccount  # Keep reference to the class
     
-    # This will be called after all models are loaded
-    if not hasattr(AccountAccount, 'move_line_ids'):
-        AccountAccount.move_line_ids = fields.One2many(
-            'ams.account.move.line',
-            'account_id',
-            string='Journal Items',
-            readonly=True
-        )
+    def action_view_related_products(self):
+        """Action to view products using this account"""
+        self.ensure_one()
+        
+        domain = [
+            '|', '|', '|', '|',
+            ('ams_revenue_account_id', '=', self.id),
+            ('ams_receivable_account_id', '=', self.id), 
+            ('ams_cash_account_id', '=', self.id),
+            ('ams_deferred_account_id', '=', self.id),
+            ('ams_expense_account_id', '=', self.id),
+        ]
+        
+        return {
+            'name': f'Products Using Account: {self.name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'product.template',
+            'view_mode': 'list,form',
+            'domain': domain,
+            'context': {'search_default_ams_products': 1}
+        }
+
+
+class AccountAccountType(models.Model):
+    """Add AMS-specific account type information"""
+    _inherit = 'account.account'
+    
+    @api.model
+    def _get_ams_account_type_mapping(self):
+        """Mapping of AMS categories to appropriate Odoo account types"""
+        return {
+            'membership_revenue': 'income_other',
+            'dues_revenue': 'income_other', 
+            'publication_revenue': 'income_other',
+            'chapter_revenue': 'income_other',
+            'event_revenue': 'income_other',
+            'donation_revenue': 'income_other',
+            'grant_revenue': 'income_other',
+            'subscription_ar': 'asset_receivable',
+            'membership_expense': 'expense',
+            'publication_expense': 'expense', 
+            'chapter_expense': 'expense',
+            'event_expense': 'expense',
+            'deferred_revenue': 'liability_current',
+            'cash_membership': 'asset_cash',
+            'cash_events': 'asset_cash',
+            'other': 'expense',
+        }
+    
+    @api.onchange('ams_account_category')
+    def _onchange_ams_account_category(self):
+        """Auto-set account type based on AMS category"""
+        if self.ams_account_category:
+            mapping = self._get_ams_account_type_mapping()
+            suggested_type = mapping.get(self.ams_account_category)
+            if suggested_type:
+                self.account_type = suggested_type
