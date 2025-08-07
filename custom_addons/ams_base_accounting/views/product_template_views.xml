@@ -6,8 +6,8 @@
         <field name="model">product.template</field>
         <field name="inherit_id" ref="ams_subscriptions.view_product_template_form_ams"/>
         <field name="arch" type="xml">
-            <!-- Add AMS Accounting tab after AMS Subscription tab -->
-            <xpath expr="//page[@string='AMS Subscription']" position="after">
+            <!-- Add AMS Accounting tab after the last page -->
+            <xpath expr="//notebook" position="inside">
                 <page string="AMS Accounting" invisible="not is_subscription_product">
                     <div class="alert alert-info" role="alert" invisible="ams_accounts_configured">
                         <h6><i class="fa fa-exclamation-triangle"/> Account Configuration Required</h6>

@@ -14,14 +14,14 @@ class ProductTemplate(models.Model):
     ams_revenue_account_id = fields.Many2one(
         'account.account',
         string='Revenue Account',
-        domain="[('account_type', 'in', ['income', 'income_other']), ('company_id', '=', current_company_id)]",
+        domain="[('account_type', 'in', ['income', 'income_other'])]",
         help='General Ledger account for revenue recognition when this product is sold'
     )
     
     ams_deferred_account_id = fields.Many2one(
         'account.account', 
         string='Deferred Revenue Account',
-        domain="[('account_type', '=', 'liability_current'), ('company_id', '=', current_company_id)]",
+        domain="[('account_type', '=', 'liability_current')]",
         help='Account for deferred/unearned revenue (used for prepaid subscriptions)'
     )
     
@@ -29,14 +29,14 @@ class ProductTemplate(models.Model):
     ams_receivable_account_id = fields.Many2one(
         'account.account',
         string='A/R Account', 
-        domain="[('account_type', '=', 'asset_receivable'), ('company_id', '=', current_company_id)]",
+        domain="[('account_type', '=', 'asset_receivable')]",
         help='Accounts Receivable account for this product'
     )
     
     ams_cash_account_id = fields.Many2one(
         'account.account',
         string='Cash Account',
-        domain="[('account_type', '=', 'asset_cash'), ('company_id', '=', current_company_id)]", 
+        domain="[('account_type', '=', 'asset_cash')]", 
         help='Cash account to use when payments are received'
     )
     
@@ -44,7 +44,7 @@ class ProductTemplate(models.Model):
     ams_expense_account_id = fields.Many2one(
         'account.account',
         string='Expense Account',
-        domain="[('account_type', '=', 'expense'), ('company_id', '=', current_company_id)]",
+        domain="[('account_type', '=', 'expense')]",
         help='Expense account for costs related to this product'
     )
     
