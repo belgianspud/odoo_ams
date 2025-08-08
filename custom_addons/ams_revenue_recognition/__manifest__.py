@@ -2,44 +2,39 @@
 {
     'name': 'AMS Revenue Recognition',
     'version': '18.0.1.0.0',
-    'summary': 'Automated revenue recognition for AMS subscription organizations (ASC 606/IFRS 15)',
+    'summary': 'Revenue recognition for AMS subscription products',
     'description': """
 AMS Revenue Recognition
 =======================
 
-This module provides automated revenue recognition for subscription-based membership organizations 
-according to accounting standards (ASC 606/IFRS 15).
+This module provides revenue recognition functionality for AMS subscription products:
 
 Key Features:
 -------------
-* Automated monthly revenue recognition jobs
-* Deferred revenue management for prepaid subscriptions
-* Proration logic for mid-cycle changes and cancellations
-* Recognition schedules with visual timeline
-* Contract modification handling with proper revenue adjustment
-* Recognition dashboard and detailed reporting
-* ASC 606/IFRS 15 compliance automation
-
-Integration:
-------------
-* Seamlessly integrates with AMS Base Accounting
-* Automatically processes AMS subscription revenue
-* Creates proper journal entries for recognition
-* Handles complex scenarios like upgrades, downgrades, and cancellations
+* Automated revenue recognition schedules for subscriptions
+* Straight-line recognition over subscription periods
+* Deferred revenue handling for prepaid memberships
+* Integration with subscription lifecycle (Active → Grace → Suspended)
+* Manual and automated recognition processing
+* Revenue recognition dashboard and reporting
 
 Workflow:
 ---------
-1. Subscription invoices create deferred revenue entries
-2. Recognition schedules are automatically generated
-3. Monthly cron jobs recognize revenue based on schedules
-4. Contract modifications trigger proper revenue adjustments
-5. Dashboard provides visibility into recognition status
+1. When subscription invoices are posted, recognition schedules are created
+2. For annual memberships: revenue is deferred and recognized monthly
+3. For monthly memberships: revenue is recognized immediately  
+4. Automated cron processes recognition entries
+5. Integration with subscription state changes
 
-This module is essential for associations that need:
-- Accurate financial reporting
-- Compliance with revenue recognition standards
-- Automated processing of subscription revenue
-- Professional-grade accounting practices
+Supported Subscription Types:
+-----------------------------
+* Individual and Enterprise Memberships
+* Chapter Memberships
+* Publication Subscriptions
+* Enterprise Seat Add-ons
+
+This module integrates seamlessly with AMS Subscriptions and AMS Base Accounting
+to provide professional revenue recognition for membership organizations.
     """,
     'author': 'Your AMS Development Team',
     'website': 'https://yourcompany.com',
@@ -49,7 +44,7 @@ This module is essential for associations that need:
         'base',
         'account',
         'ams_base_accounting',
-        'ams_subscriptions',
+        'ams_subscriptions',  # Now we can properly depend on this
     ],
     'data': [
         # Security
@@ -58,23 +53,19 @@ This module is essential for associations that need:
         
         # Data files
         'data/ams_revenue_recognition_cron.xml',
-        'data/ams_revenue_recognition_data.xml',
         
-        # Views
+        # Views - Load in proper order
         'views/ams_revenue_schedule_views.xml',
         'views/ams_revenue_recognition_views.xml',
-        'views/ams_contract_modification_views.xml',
-        'views/ams_revenue_dashboard_views.xml',
-        'wizard/ams_revenue_adjustment_wizard_views.xml',
-        'wizard/ams_recognition_manual_wizard_views.xml',
+        'views/product_template_views.xml',  # Extend product forms
+        'views/ams_subscription_views.xml',   # Extend subscription forms  
+        'views/account_move_views.xml',       # Extend invoice forms
+        
+        # Menu and actions
+        'views/ams_revenue_recognition_menu.xml',
         
         # Reports
-        'reports/ams_revenue_recognition_reports.xml',
-        'reports/ams_revenue_schedule_report.xml',
-        'reports/ams_deferred_revenue_report.xml',
-        
-        # Menu
-        'views/ams_revenue_recognition_menu.xml',
+        'reports/ams_revenue_reports.xml',
     ],
     'demo': [
         'demo/ams_revenue_recognition_demo.xml',
@@ -83,7 +74,4 @@ This module is essential for associations that need:
     'application': False,
     'auto_install': False,
     'post_init_hook': 'post_init_hook',
-    'external_dependencies': {
-        'python': ['dateutil'],
-    },
 }
