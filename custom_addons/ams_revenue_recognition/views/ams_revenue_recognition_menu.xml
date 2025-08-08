@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Revenue Recognition Menu Items -->
+    <!-- Add to existing AMS Accounting menu structure -->
+    
+    <!-- Revenue Recognition Schedules -->
+    <menuitem id="menu_ams_revenue_schedules"
+              name="Revenue Schedules"
+              parent="ams_base_accounting.menu_ams_accounting"
+              action="action_ams_revenue_schedule"
+              sequence="30"/>
+
+    <!-- Revenue Recognition Entries -->
+    <menuitem id="menu_ams_revenue_recognition_entries"
+              name="Recognition Entries"
+              parent="ams_base_accounting.menu_ams_accounting"
+              action="action_ams_revenue_recognition"
+              sequence="31"/>
+
+    <!-- Due Revenue Recognition -->
+    <menuitem id="menu_ams_revenue_recognition_due"
+              name="Recognition Due"
+              parent="ams_base_accounting.menu_ams_accounting"
+              action="action_ams_revenue_recognition_due"
+              sequence="32"/>
+
+    <!-- Revenue Recognition Dashboard -->
+    <menuitem id="menu_ams_revenue_recognition_dashboard"
+              name="Recognition Dashboard"
+              parent="ams_base_accounting.menu_ams_accounting"
+              action="action_ams_revenue_recognition_dashboard"
+              sequence="33"/>
+
+    <!-- Reporting Menu Items -->
+    <menuitem id="menu_ams_revenue_reporting"
+              name="Revenue Reporting"
+              parent="ams_base_accounting.menu_ams_accounting"
+              sequence="40"/>
+
+    <!-- Products with Revenue Recognition -->
+    <menuitem id="menu_ams_products_revenue_recognition"
+              name="Products - Revenue Recognition"
+              parent="menu_ams_revenue_reporting"
+              action="action_product_revenue_recognition"
+              sequence="10"/>
+
+    <!-- Subscriptions with Revenue Recognition -->
+    <menuitem id="menu_ams_subscriptions_revenue_recognition"
+              name="Subscriptions - Revenue Recognition"
+              parent="menu_ams_revenue_reporting"
+              action="action_subscription_revenue_recognition_dashboard"
+              sequence="20"/>
+
+    <!-- Invoices with Revenue Recognition -->
+    <menuitem id="menu_ams_invoices_revenue_recognition"
+              name="Invoices - Revenue Recognition"
+              parent="menu_ams_revenue_reporting"
+              action="action_invoice_revenue_recognition"
+              sequence="30"/>
+
+    <!-- Invoice Lines Needing Recognition -->
+    <menuitem id="menu_ams_invoice_lines_need_recognition"
+              name="Lines Needing Recognition"
+              parent="menu_ams_revenue_reporting"
+              action="action_invoice_lines_need_revenue_recognition"
+              sequence="40"/>
+
+    <!-- Add to AMS Members section for easy access to subscription revenue -->
+    <menuitem id="menu_ams_subscription_revenue_schedules"
+              name="Revenue Recognition"
+              parent="ams_subscriptions.menu_ams_members"
+              action="action_subscription_revenue_recognition_dashboard"
+              sequence="40"/>
+
+</odoo>

@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ams_revenue_schedule_user,ams.revenue.schedule user,model_ams_revenue_schedule,group_ams_revenue_recognition_user,1,0,0,0
+access_ams_revenue_schedule_manager,ams.revenue.schedule manager,model_ams_revenue_schedule,group_ams_revenue_recognition_manager,1,1,1,1
+access_ams_revenue_schedule_account_user,ams.revenue.schedule account user,model_ams_revenue_schedule,account.group_account_user,1,0,0,0
+access_ams_revenue_schedule_account_manager,ams.revenue.schedule account manager,model_ams_revenue_schedule,account.group_account_manager,1,1,1,0
+access_ams_revenue_recognition_user,ams.revenue.recognition user,model_ams_revenue_recognition,group_ams_revenue_recognition_user,1,0,0,0
+access_ams_revenue_recognition_manager,ams.revenue.recognition manager,model_ams_revenue_recognition,group_ams_revenue_recognition_manager,1,1,1,1
+access_ams_revenue_recognition_account_user,ams.revenue.recognition account user,model_ams_revenue_recognition,account.group_account_user,1,0,0,0
+access_ams_revenue_recognition_account_manager,ams.revenue.recognition account manager,model_ams_revenue_recognition,account.group_account_manager,1,1,1,0
+access_ams_revenue_schedule_system,ams.revenue.schedule system,model_ams_revenue_schedule,base.group_system,1,1,1,1
+access_ams_revenue_recognition_system,ams.revenue.recognition system,model_ams_revenue_recognition,base.group_system,1,1,1,1

@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Revenue Recognition Schedule Report -->
+    <record id="action_report_revenue_schedule" model="ir.actions.report">
+        <field name="name">Revenue Recognition Schedule</field>
+        <field name="model">ams.revenue.schedule</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_revenue_recognition.report_revenue_schedule</field>
+        <field name="report_file">ams_revenue_recognition.report_revenue_schedule</field>
+        <field name="binding_model_id" ref="model_ams_revenue_schedule"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_us"/>
+    </record>
+
+    <!-- Revenue Recognition Summary Report -->
+    <record id="action_report_revenue_recognition_summary" model="ir.actions.report">
+        <field name="name">Revenue Recognition Summary</field>
+        <field name="model">ams.revenue.recognition</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_revenue_recognition.report_revenue_recognition_summary</field>
+        <field name="report_file">ams_revenue_recognition.report_revenue_recognition_summary</field>
+        <field name="binding_model_id" ref="model_ams_revenue_recognition"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_us"/>
+    </record>
+
+    <!-- Revenue Recognition Schedule Template -->
+    <template id="report_revenue_schedule">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="schedule">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <h2>Revenue Recognition Schedule</h2>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt32">
+                            <div class="col-6">
+                                <strong>Schedule Information:</strong>
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td>Schedule:</td>
+                                        <td><span t-field="schedule.display_name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Customer:</td>
+                                        <td><span t-field="schedule.partner_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Product:</td>
+                                        <td><span t-field="schedule.product_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Invoice:</td>
+                                        <td><span t-field="schedule.invoice_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Status:</td>
+                                        <td><span t-field="schedule.state"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <strong>Recognition Details:</strong>
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td>Method:</td>
+                                        <td><span t-field="schedule.recognition_method"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Start Date:</td>
+                                        <td><span t-field="schedule.start_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>End Date:</td>
+                                        <td><span t-field="schedule.end_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Period Length:</td>
+                                        <td><span t-field="schedule.period_length"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Total Periods:</td>
+                                        <td><span t-field="schedule.total_periods"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt32">
+                            <div class="col-12">
+                                <strong>Financial Summary:</strong>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Total Amount:</strong></td>
+                                        <td class="text-right">
+                                            <span t-field="schedule.total_amount" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': schedule.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Recognized Amount:</strong></td>
+                                        <td class="text-right">
+                                            <span t-field="schedule.recognized_amount" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': schedule.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Deferred Amount:</strong></td>
+                                        <td class="text-right">
+                                            <span t-field="schedule.deferred_amount" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': schedule.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt32">
+                            <div class="col-12">
+                                <strong>Recognition Lines:</strong>
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Recognition Date</th>
+                                            <th>Description</th>
+                                            <th class="text-right">Scheduled Amount</th>
+                                            <th class="text-right">Recognized Amount</th>
+                                            <th>Status</th>
+                                            <th>Processed Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="schedule.recognition_line_ids" t-as="line">
+                                            <tr>
+                                                <td><span t-field="line.recognition_date"/></td>
+                                                <td><span t-field="line.description"/></td>
+                                                <td class="text-right">
+                                                    <span t-field="line.scheduled_amount" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': line.currency_id}"/>
+                                                </td>
+                                                <td class="text-right">
+                                                    <span t-field="line.recognized_amount" 
+                                                          t-options="{'widget': 'monetary', 'display_currency': line.currency_id}"/>
+                                                </td>
+                                                <td><span t-field="line.state"/></td>
+                                                <td><span t-field="line.processed_date"/></td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Revenue Recognition Summary Template -->
+    <template id="report_revenue_recognition_summary">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <div class="oe_structure"/>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <h2>Revenue Recognition Summary</h2>
+                            <p>Report generated on <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')"/></p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt32">
+                        <div class="col-12">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Recognition Date</th>
+                                        <th>Customer</th>
+                                        <th>Product</th>
+                                        <th>Description</th>
+                                        <th class="text-right">Scheduled Amount</th>
+                                        <th class="text-right">Recognized Amount</th>
+                                        <th>Status</th>
+                                        <th>Processed Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-set="total_scheduled" t-value="0"/>
+                                    <t t-set="total_recognized" t-value="0"/>
+                                    <t t-foreach="docs" t-as="recognition">
+                                        <tr>
+                                            <td><span t-field="recognition.recognition_date"/></td>
+                                            <td><span t-field="recognition.partner_id.name"/></td>
+                                            <td><span t-field="recognition.product_id.name"/></td>
+                                            <td><span t-field="recognition.description"/></td>
+                                            <td class="text-right">
+                                                <span t-field="recognition.scheduled_amount" 
+                                                      t-options="{'widget': 'monetary', 'display_currency': recognition.currency_id}"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-field="recognition.recognized_amount" 
+                                                      t-options="{'widget': 'monetary', 'display_currency': recognition.currency_id}"/>
+                                            </td>
+                                            <td><span t-field="recognition.state"/></td>
+                                            <td><span t-field="recognition.processed_date"/></td>
+                                        </tr>
+                                        <t t-set="total_scheduled" t-value="total_scheduled + recognition.scheduled_amount"/>
+                                        <t t-set="total_recognized" t-value="total_recognized + recognition.recognized_amount"/>
+                                    </t>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-active">
+                                        <td colspan="4"><strong>Totals:</strong></td>
+                                        <td class="text-right">
+                                            <strong t-esc="total_scheduled" t-options="{'widget': 'monetary'}"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <strong t-esc="total_recognized" t-options="{'widget': 'monetary'}"/>
+                                        </td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="oe_structure"/>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- Monthly Revenue Recognition Report Action -->
+    <record id="action_monthly_revenue_recognition_report" model="ir.actions.act_window">
+        <field name="name">Monthly Revenue Recognition Report</field>
+        <field name="res_model">ams.revenue.recognition</field>
+        <field name="view_mode">pivot,graph,tree</field>
+        <field name="domain">[('state', '=', 'recognized')]</field>
+        <field name="context">{
+            'search_default_group_by_recognition_month': 1,
+            'search_default_filter_recognized': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Monthly Revenue Recognition Report
+            </p>
+            <p>
+                Analyze recognized revenue by month to understand revenue patterns.
+            </p>
+        </field>
+    </record>
+
+    <!-- Deferred Revenue Report Action -->
+    <record id="action_deferred_revenue_report" model="ir.actions.act_window">
+        <field name="name">Deferred Revenue Report</field>
+        <field name="res_model">ams.revenue.schedule</field>
+        <field name="view_mode">pivot,graph,tree</field>
+        <field name="domain">[('state', '=', 'active'), ('deferred_amount', '>', 0)]</field>
+        <field name="context">{
+            'search_default_group_by_product': 1,
+            'search_default_filter_active': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Deferred Revenue Report
+            </p>
+            <p>
+                Monitor deferred revenue balances by product and customer.
+            </p>
+        </field>
+    </record>
+
+</odoo>
