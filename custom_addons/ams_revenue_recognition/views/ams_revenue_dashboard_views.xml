@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Revenue Recognition Dashboard -->
+    <template id="revenue_recognition_dashboard" name="Revenue Recognition Dashboard">
+        <div class="o_revenue_dashboard">
+            <div class="container-fluid">
+                <!-- Header with Key Metrics -->
+                <div class="row">
+                    <div class="col-12">
+                        <h2 class="mb-4">
+                            <i class="fa fa-chart-line me-2"/>Revenue Recognition Dashboard
+                        </h2>
+                    </div>
+                </div>
+
+                <!-- Overview Cards -->
+                <div class="row mb-4">
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card border-primary">
+                            <div class="card-body text-center">
+                                <i class="fa fa-dollar-sign fa-2x text-primary mb-2"></i>
+                                <h4 class="text-primary" t-esc="data.get('overview', {}).get('total_contract_value', 0)"/>
+                                <p class="card-text">Total Contract Value</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <i class="fa fa-check-circle fa-2x text-success mb-2"></i>
+                                <h4 class="text-success" t-esc="data.get('overview', {}).get('total_recognized', 0)"/>
+                                <p class="card-text">Total Recognized</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card border-warning">
+                            <div class="card-body text-center">
+                                <i class="fa fa-clock fa-2x text-warning mb-2"></i>
+                                <h4 class="text-warning" t-esc="data.get('overview', {}).get('total_deferred', 0)"/>
+                                <p class="card-text">Total Deferred</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card border-info">
+                            <div class="card-body text-center">
+                                <i class="fa fa-calendar fa-2x text-info mb-2"></i>
+                                <h4 class="text-info" t-esc="data.get('overview', {}).get('active_schedules_count', 0)"/>
+                                <p class="card-text">Active Schedules</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="row mb-4">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fa fa-line-chart me-2"/>Recognition Trends</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="recognitionTrendsChart" height="100"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fa fa-pie-chart me-2"/>Schedule Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="scheduleStatusChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tables Row -->
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5><i class="fa fa-calendar-check me-2"/>Upcoming Recognitions</h5>
+                                <a href="/web#action=ams_revenue_recognition.action_ams_revenue_recognition_due" class="btn btn-outline-primary btn-sm">View All</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Week</th>
+                                                <th class="text-end">Count</th>
+                                                <th class="text-end">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="data.get('upcoming_recognitions', {}).get('upcoming_weeks', [])" t-as="week">
+                                                <tr>
+                                                    <td><t t-esc="week.get('week_label', '')"/></td>
+                                                    <td class="text-end"><t t-esc="week.get('recognition_count', 0)"/></td>
+                                                    <td class="text-end">$<t t-esc="'{:,.2f}'.format(week.get('total_amount', 0))"/></td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5><i class="fa fa-edit me-2"/>Recent Modifications</h5>
+                                <a href="/web#action=ams_revenue_recognition.action_ams_contract_modification" class="btn btn-outline-primary btn-sm">View All</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Type</th>
+                                                <th class="text-end">Count</th>
+                                                <th class="text-end">Impact</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="data.get('contract_modifications', {}).get('type_breakdown', {}).items()" t-as="item">
+                                                <tr>
+                                                    <td><t t-esc="item[0].title()"/></td>
+                                                    <td class="text-end"><t t-esc="item[1].get('count', 0)"/></td>
+                                                    <td class="text-end">$<t t-esc="'{:,.2f}'.format(item[1].get('total_value_impact', 0))"/></td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart.js Scripts -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Recognition Trends Chart
+                var trendsCtx = document.getElementById('recognitionTrendsChart').getContext('2d');
+                var trendsData = <t t-raw="json.dumps(data.get('recognition_trends', []))"/>;
+                
+                new Chart(trendsCtx, {
+                    type: 'line',
+                    data: {
+                        labels: trendsData.map(item => item.month_name),
+                        datasets: [{
+                            label: 'Recognized Revenue',
+                            data: trendsData.map(item => item.recognized_amount),
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Schedule Status Chart
+                var statusCtx = document.getElementById('scheduleStatusChart').getContext('2d');
+                var statusData = <t t-raw="json.dumps(data.get('schedule_status', {}).get('status_breakdown', {}))"/>;
+                
+                new Chart(statusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(statusData).map(key => key.charAt(0).toUpperCase() + key.slice(1)),
+                        datasets: [{
+                            data: Object.values(statusData).map(item => item.count),
+                            backgroundColor: [
+                                '#007bff',  // active
+                                '#ffc107',  // paused
+                                '#28a745',  // completed
+                                '#6c757d'   // cancelled
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            });
+        </script>
+    </template>
+
+    <!-- Dashboard Action -->
+    <record id="action_revenue_recognition_dashboard" model="ir.actions.act_url">
+        <field name="name">Revenue Recognition Dashboard</field>
+        <field name="url">/revenue_recognition/dashboard</field>
+        <field name="target">self</field>
+    </record>
+
+    <!-- Enhanced Product Template Form - Revenue Recognition Tab -->
+    <record id="view_product_template_form_revenue_recognition" model="ir.ui.view">
+        <field name="name">product.template.form.revenue.recognition</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="ams_base_accounting.view_product_template_form_ams_accounting"/>
+        <field name="arch" type="xml">
+            <!-- Add Revenue Recognition tab after AMS Accounting tab -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Revenue Recognition" invisible="not use_ams_accounting">
+                    <div class="alert alert-info" role="alert" invisible="revenue_recognition_method and auto_create_recognition_schedule">
+                        <h6><i class="fa fa-info-circle"/> Revenue Recognition Setup</h6>
+                        <p>Configure how revenue should be recognized for this product when subscriptions are created.</p>
+                        <button name="action_configure_revenue_recognition" type="object" class="btn btn-primary btn-sm">
+                            <i class="fa fa-cog"/> Configure Recognition
+                        </button>
+                    </div>
+
+                    <group>
+                        <group string="Recognition Method">
+                            <field name="revenue_recognition_method"/>
+                            <field name="revenue_recognition_period"/>
+                            <field name="custom_recognition_days" invisible="revenue_recognition_period != 'custom'"/>
+                            <field name="recognition_frequency"/>
+                        </group>
+                        <group string="Performance Obligations (ASC 606)">
+                            <field name="is_distinct_service"/>
+                            <field name="standalone_selling_price"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Automation Settings">
+                            <field name="auto_create_recognition_schedule"/>
+                            <field name="enable_proration"/>
+                            <field name="minimum_recognition_amount"/>
+                        </group>
+                        <group string="Contract Modifications">
+                            <field name="allow_contract_modifications"/>
+                            <field name="modification_treatment"/>
+                        </group>
+                    </group>
+
+                    <group string="Advanced Settings">
+                        <field name="revenue_recognition_journal_id" options="{'no_create': True}"/>
+                    </group>
+
+                    <group string="Performance Obligation Description">
+                        <field name="performance_obligation_description" nolabel="1" colspan="2"/>
+                    </group>
+
+                    <group string="Revenue Recognition Statistics" invisible="not auto_create_recognition_schedule">
+                        <group>
+                            <field name="active_recognition_schedules" readonly="1"/>
+                            <field name="total_deferred_revenue" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="monthly_recognized_revenue" readonly="1"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+
+            <!-- Add smart button for revenue schedules -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_recognition_schedules" type="object" class="oe_stat_button" 
+                        icon="fa-calendar-check-o" invisible="active_recognition_schedules == 0">
+                    <field name="active_recognition_schedules" widget="statinfo" string="Revenue Schedules"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Enhanced Subscription Form - Revenue Recognition Tab -->
+    <record id="view_ams_subscription_form_revenue_recognition" model="ir.ui.view">
+        <field name="name">ams.subscription.form.revenue.recognition</field>
+        <field name="model">ams.subscription</field>
+        <field name="inherit_id" ref="ams_subscriptions.view_ams_subscription_form"/>
+        <field name="arch" type="xml">
+            <!-- Add Revenue Recognition tab to subscription -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Revenue Recognition" invisible="revenue_recognition_status == 'not_applicable'">
+                    <div class="alert alert-warning" role="alert" invisible="revenue_recognition_status != 'pending'">
+                        <h6><i class="fa fa-exclamation-triangle"/> Revenue Recognition Pending</h6>
+                        <p>Revenue recognition has not been set up for this subscription.</p>
+                        <button name="action_create_revenue_schedule" type="object" class="btn btn-primary btn-sm">
+                            <i class="fa fa-plus"/> Create Revenue Schedule
+                        </button>
+                    </div>
+
+                    <div class="alert alert-success" role="alert" invisible="revenue_recognition_status != 'active'">
+                        <h6><i class="fa fa-check-circle"/> Revenue Recognition Active</h6>
+                        <p>Revenue is being automatically recognized for this subscription.</p>
+                    </div>
+
+                    <group>
+                        <group string="Recognition Status">
+                            <field name="revenue_recognition_status" readonly="1"/>
+                            <field name="auto_revenue_recognition"/>
+                            <field name="active_revenue_schedule_id" readonly="1"/>
+                        </group>
+                        <group string="Revenue Amounts">
+                            <field name="total_contract_value" readonly="1"/>
+                            <field name="recognized_revenue_amount" readonly="1"/>
+                            <field name="deferred_revenue_amount" readonly="1"/>
+                            <field name="revenue_recognition_progress" widget="progressbar" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Recognition Schedule">
+                            <field name="last_recognition_date" readonly="1"/>
+                            <field name="last_recognition_amount" readonly="1"/>
+                            <field name="next_recognition_date" readonly="1"/>
+                            <field name="next_recognition_amount" readonly="1"/>
+                        </group>
+                        <group string="Contract Modifications">
+                            <field name="has_pending_modifications" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Notes">
+                        <field name="revenue_recognition_notes" nolabel="1" colspan="2"/>
+                    </group>
+
+                    <!-- Revenue Schedule Details -->
+                    <group string="Revenue Schedules" invisible="not revenue_schedule_ids">
+                        <field name="revenue_schedule_ids" nolabel="1">
+                            <tree>
+                                <field name="name"/>
+                                <field name="state"/>
+                                <field name="total_contract_value"/>
+                                <field name="recognized_revenue"/>
+                                <field name="deferred_revenue_balance"/>
+                                <field name="completion_percentage" widget="progressbar"/>
+                                <button name="action_view_schedule" string="View" type="object" icon="fa-eye" class="btn-sm"/>
+                            </tree>
+                        </field>
+                    </group>
+
+                    <!-- Contract Modifications -->
+                    <group string="Contract Modifications" invisible="not contract_modification_ids">
+                        <field name="contract_modification_ids" nolabel="1">
+                            <tree>
+                                <field name="modification_date"/>
+                                <field name="modification_type"/>
+                                <field name="value_change"/>
+                                <field name="state"/>
+                                <button name="action_view_modification" string="View" type="object" icon="fa-eye" class="btn-sm"/>
+                            </tree>
+                        </field>
+                    </group>
+                </page>
+            </xpath>
+
+            <!-- Add smart buttons for revenue recognition -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_revenue_schedules" type="object" class="oe_stat_button" 
+                        icon="fa-calendar-check-o" invisible="not revenue_schedule_ids">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value"><t t-esc="len(revenue_schedule_ids)"/></span>
+                        <span class="o_stat_text">Revenue Schedules</span>
+                    </div>
+                </button>
+                <button name="action_view_revenue_recognitions" type="object" class="oe_stat_button" 
+                        icon="fa-money" invisible="revenue_recognition_status == 'not_applicable'">
+                    <field name="recognized_revenue_amount" widget="statinfo" string="Recognized Revenue"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

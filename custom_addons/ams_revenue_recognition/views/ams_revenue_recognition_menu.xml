@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- =========================== -->
+    <!-- REVENUE RECOGNITION Section -->
+    <!-- =========================== -->
+    <menuitem id="menu_ams_revenue_recognition"
+              name="Revenue Recognition"
+              parent="ams_subscriptions.menu_ams_root"
+              sequence="80"/>
+
+    <!-- Dashboard -->
+    <menuitem id="menu_ams_revenue_recognition_dashboard"
+              name="Dashboard"
+              parent="menu_ams_revenue_recognition"
+              action="action_revenue_recognition_dashboard"
+              sequence="10"/>
+
+    <!-- =========================== -->
+    <!-- REVENUE SCHEDULES Submenu -->
+    <!-- =========================== -->
+    <menuitem id="menu_ams_revenue_schedules"
+              name="Revenue Schedules"
+              parent="menu_ams_revenue_recognition"
+              sequence="20"/>
+
+    <menuitem id="menu_ams_revenue_schedule_active"
+              name="Active Schedules"
+              parent="menu_ams_revenue_schedules"
+              action="action_ams_revenue_schedule_active"
+              sequence="10"/>
+
+    <menuitem id="menu_ams_revenue_schedule_all"
+              name="All Schedules"
+              parent="menu_ams_revenue_schedules"
+              action="action_ams_revenue_schedule"
+              sequence="20"/>
+
+    <menuitem id="menu_ams_revenue_schedule_due"
+              name="Recognition Due"
+              parent="menu_ams_revenue_schedules"
+              action="action_ams_revenue_schedule_due"
+              sequence="30"/>
+
+    <!-- =========================== -->
+    <!-- REVENUE RECOGNITION Submenu -->
+    <!-- =========================== -->
+    <menuitem id="menu_ams_revenue_recognition_entries"
+              name="Recognition Entries"
+              parent="menu_ams_revenue_recognition"
+              sequence="30"/>
+
+    <menuitem id="menu_ams_revenue_recognition_due"
+              name="Due for Recognition"
+              parent="menu_ams_revenue_recognition_entries"
+              action="action_ams_revenue_recognition_due"
+              sequence="10"/>
+
+    <menuitem id="menu_ams_revenue_recognition_draft"
+              name="Draft Entries"
+              parent="menu_ams_revenue_recognition_entries"
+              action="action_ams_revenue_recognition_draft"
+              sequence="20"/>
+
+    <menuitem id="menu_ams_revenue_recognition_all"
+              name="All Entries"
+              parent="menu_ams_revenue_recognition_entries"
+              action="action_ams_revenue_recognition"
+              sequence="30"/>
+
+    <menuitem id="menu_ams_revenue_recognition_errors"
+              name="Recognition Errors"
+              parent="menu_ams_revenue_recognition_entries"
+              action="action_ams_revenue_recognition_errors"
+              sequence="40"/>
+
+    <!-- =========================== -->
+    <!-- CONTRACT MODIFICATIONS Submenu -->
+    <!-- =========================== -->
+    <menuitem id="menu_ams_contract_modifications"
+              name="Contract Modifications"
+              parent="menu_ams_revenue_recognition"
+              sequence="40"/>
+
+    <menuitem id="menu_ams_contract_modification_pending"
+              name="Pending Modifications"
+              parent="menu_ams_contract_modifications"
+              action="action_ams_contract_modification_pending"
+              sequence="10"/>
+
+    <menuitem id="menu_ams_contract_modification_all"
+              name="All Modifications"
+              parent="menu_ams_contract_modifications"
+              action="action_ams_contract_modification"
+              sequence="20"/>
+
+    <!-- =========================== -->
+    <!-- ANALYSIS & REPORTS Submenu -->
+    <!-- =========================== -->
+    <menuitem id="menu_ams_revenue_analysis"
+              name="Analysis"
+              parent="menu_ams_revenue_recognition"
+              sequence="50"/>
+
+    <menuitem id="menu_ams_revenue_recognition_analysis"
+              name="Recognition Analysis"
+              parent="menu_ams_revenue_analysis"
+              action="action_ams_revenue_recognition_analysis"
+              sequence="10"/>
+
+    <menuitem id="menu_ams_contract_modification_analysis"
+              name="Modification Analysis"
+              parent="menu_ams_revenue_analysis"
+              action="action_ams_contract_modification_analysis"
+              sequence="20"/>
+
+    <!-- =========================== -->
+    <!-- CONFIGURATION Submenu (Manager Only) -->
+    <!-- =========================== -->
+    <menuitem id="menu_ams_revenue_recognition_config"
+              name="Revenue Recognition Setup"
+              parent="ams_subscriptions.menu_ams_configurations"
+              action="action_ams_revenue_recognition_config_wizard"
+              sequence="50"
+              groups="ams_revenue_recognition.group_ams_revenue_recognition_manager"/>
+
+    <!-- =========================== -->
+    <!-- Quick Actions -->
+    <!-- =========================== -->
+    
+    <!-- Process Revenue Recognition Action -->
+    <record id="action_process_revenue_recognition" model="ir.actions.server">
+        <field name="name">Process Revenue Recognition</field>
+        <field name="model_id" ref="model_ams_revenue_recognition"/>
+        <field name="binding_model_id" ref="model_ams_revenue_recognition"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+if records:
+    processed = 0
+    for record in records.filtered(lambda r: r.state == 'draft'):
+        try:
+            record.action_recognize()
+            processed += 1
+        except Exception as e:
+            pass
+    if processed:
+        env.user.notify_success(message=f'{processed} revenue recognition entries processed successfully!')
+    else:
+        env.user.notify_warning(message='No draft entries found to process.')
+        </field>
+    </record>
+
+    <!-- Batch Validate Contract Modifications Action -->
+    <record id="action_batch_validate_modifications" model="ir.actions.server">
+        <field name="name">Validate Modifications</field>
+        <field name="model_id" ref="model_ams_contract_modification"/>
+        <field name="binding_model_id" ref="model_ams_contract_modification"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+if records:
+    validated = 0
+    for record in records.filtered(lambda r: r.state == 'draft'):
+        try:
+            record.action_validate()
+            validated += 1
+        except Exception as e:
+            pass
+    if validated:
+        env.user.notify_success(message=f'{validated} contract modifications validated successfully!')
+    else:
+        env.user.notify_warning(message='No draft modifications found to validate.')
+        </field>
+    </record>
+
+    <!-- Generate Recognition Entries Action -->
+    <record id="action_generate_recognition_entries" model="ir.actions.server">
+        <field name="name">Generate Recognition Entries</field>
+        <field name="model_id" ref="model_ams_revenue_schedule"/>
+        <field name="binding_model_id" ref="model_ams_revenue_schedule"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+if records:
+    generated = 0
+    for record in records.filtered(lambda r: r.state == 'active'):
+        try:
+            record._generate_recognition_entries()
+            generated += 1
+        except Exception as e:
+            pass
+    if generated:
+        env.user.notify_success(message=f'Recognition entries generated for {generated} schedules!')
+    else:
+        env.user.notify_warning(message='No active schedules found to generate entries for.')
+        </field>
+    </record>
+
+    <!-- =========================== -->
+    <!-- Shortcuts in Main Menu -->
+    <!-- =========================== -->
+
+    <!-- Add shortcut to main AMS menu for quick access -->
+    <menuitem id="menu_ams_revenue_recognition_shortcut"
+              name="Revenue Due Today"
+              parent="ams_subscriptions.menu_ams_root"
+              action="action_ams_revenue_recognition_due"
+              sequence="15"
+              groups="ams_revenue_recognition.group_ams_revenue_recognition_user"/>
+</odoo>
