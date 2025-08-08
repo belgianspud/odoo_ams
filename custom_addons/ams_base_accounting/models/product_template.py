@@ -86,20 +86,28 @@ class ProductTemplate(models.Model):
                 product.ams_accounts_configured = True  # Not required
     
     # =============================================================================
-    # ONCHANGE METHODS
+    # ONCHANGE METHODS - RENAMED to avoid conflicts with other modules
     # =============================================================================
     
     @api.onchange('is_subscription_product')
-    def _onchange_is_subscription_product(self):
+    def _onchange_is_subscription_product_accounting(self):
         """Auto-enable AMS accounting for subscription products"""
+        # Call parent module's onchange first if it exists (ams_subscriptions)
+        if hasattr(super(), '_onchange_is_subscription_product'):
+            super()._onchange_is_subscription_product()
+        
         if self.is_subscription_product:
             self.use_ams_accounting = True
             # Set default accounts based on subscription type
             self._set_default_ams_accounts()
     
     @api.onchange('ams_product_type')
-    def _onchange_ams_product_type(self):
+    def _onchange_ams_product_type_accounting(self):
         """Update default accounts when subscription type changes"""
+        # Call parent module's onchange first if it exists (ams_subscriptions)
+        if hasattr(super(), '_onchange_ams_product_type'):
+            super()._onchange_ams_product_type()
+            
         if self.ams_product_type != 'none':
             self._set_default_ams_accounts()
     
@@ -107,6 +115,17 @@ class ProductTemplate(models.Model):
         """Set default AMS accounts based on product type"""
         if not self.ams_product_type or self.ams_product_type == 'none':
             return
+        
+        # Only set accounts if they haven't been manually configured
+        # This prevents overriding user choices
+        accounts_already_configured = (
+            self.ams_revenue_account_id and 
+            self.ams_receivable_account_id
+        )
+        
+        if accounts_already_configured:
+            # Only set missing accounts, don't override existing ones
+            pass
         
         # Get suggested accounts based on subscription type
         account_mapping = self._get_default_account_mapping()
@@ -127,8 +146,9 @@ class ProductTemplate(models.Model):
                 if ar_account:
                     self.ams_receivable_account_id = ar_account.id
             
-            # Set deferred account for annual subscriptions
-            if self.subscription_period == 'annual' and not self.ams_deferred_account_id:
+            # Set deferred account for annual subscriptions (if not already set)
+            if (self.subscription_period == 'annual' and 
+                not self.ams_deferred_account_id):
                 deferred_account = self._find_account_by_category('deferred_revenue')
                 if deferred_account:
                     self.ams_deferred_account_id = deferred_account.id
@@ -248,3 +268,74 @@ class ProductTemplate(models.Model):
         }
         
         return entry_data
+    
+    # =============================================================================
+    # ADDITIONAL HELPER METHODS
+    # =============================================================================
+    
+    def setup_ams_accounting_configuration(self):
+        """Explicit method to setup AMS accounting (called manually or from other modules)"""
+        self.ensure_one()
+        
+        if not self.is_subscription_product:
+            return False
+        
+        # Enable AMS accounting
+        if not self.use_ams_accounting:
+            self.use_ams_accounting = True
+        
+        # Set up accounts
+        self._set_default_ams_accounts()
+        
+        return True
+    
+    def reset_ams_accounts(self):
+        """Reset AMS account configuration"""
+        self.ensure_one()
+        
+        self.write({
+            'ams_revenue_account_id': False,
+            'ams_deferred_account_id': False,
+            'ams_receivable_account_id': False,
+            'ams_cash_account_id': False,
+            'ams_expense_account_id': False,
+        })
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'message': 'AMS account configuration reset',
+                'type': 'info',
+            }
+        }
+    
+    def validate_ams_accounting_setup(self):
+        """Validate that AMS accounting is properly set up"""
+        self.ensure_one()
+        
+        if not self.is_subscription_product:
+            return {'status': 'not_applicable', 'message': 'Not a subscription product'}
+        
+        if not self.use_ams_accounting:
+            return {'status': 'disabled', 'message': 'AMS accounting not enabled'}
+        
+        issues = []
+        
+        if not self.ams_revenue_account_id:
+            issues.append('Missing revenue account')
+        
+        if not self.ams_receivable_account_id:
+            issues.append('Missing A/R account')
+        
+        if self.subscription_period == 'annual' and not self.ams_deferred_account_id:
+            issues.append('Missing deferred revenue account (recommended for annual subscriptions)')
+        
+        if issues:
+            return {
+                'status': 'incomplete',
+                'message': f'Configuration issues: {", ".join(issues)}',
+                'issues': issues
+            }
+        
+        return {'status': 'complete', 'message': 'AMS accounting properly configured'}
