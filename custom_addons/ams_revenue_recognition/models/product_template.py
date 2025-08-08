@@ -114,125 +114,76 @@ class ProductTemplate(models.Model):
         help='Minimum amount to recognize in each period (prevents tiny amounts)'
     )
     
-    # Computed Fields - RENAMED to avoid conflicts
-    @api.depends('ams_product_type')
+    # FIXED: Computed fields with safer dependencies
+    @api.depends('is_subscription_product', 'use_ams_accounting')
     def _compute_revenue_recognition_stats(self):
-        """Compute revenue recognition statistics"""
+        """Compute revenue recognition statistics - Only if AMS accounting is enabled"""
         for product in self:
-            if product.ams_product_type == 'none':
+            if not (product.is_subscription_product and product.use_ams_accounting):
                 product.active_recognition_schedules = 0
                 product.total_deferred_revenue = 0
                 product.monthly_recognized_revenue = 0
-            else:
-                # Count active schedules
-                schedules = self.env['ams.revenue.schedule'].search([
-                    ('product_id.product_tmpl_id', '=', product.id),
-                    ('state', '=', 'active')
-                ])
-                product.active_recognition_schedules = len(schedules)
+                continue
                 
-                # Sum deferred revenue
-                product.total_deferred_revenue = sum(schedules.mapped('deferred_revenue_balance'))
-                
-                # Calculate monthly recognized revenue
-                import datetime
-                current_month_start = datetime.date.today().replace(day=1)
-                current_month_recognitions = self.env['ams.revenue.recognition'].search([
-                    ('product_id.product_tmpl_id', '=', product.id),
-                    ('recognition_date', '>=', current_month_start),
-                    ('state', '=', 'posted')
-                ])
-                product.monthly_recognized_revenue = sum(current_month_recognitions.mapped('recognized_amount'))
-    
-    # FIXED: Use unique method names and call super() to avoid conflicts
-    @api.onchange('subscription_period')
-    def _onchange_subscription_period_for_revenue_recognition(self):
-        """Update recognition settings when subscription period changes"""
-        # Call super to ensure other modules' logic runs
-        super()._onchange_subscription_period_for_revenue_recognition() if hasattr(super(), '_onchange_subscription_period_for_revenue_recognition') else None
-        
-        if self.subscription_period and self.revenue_recognition_period == 'subscription_period':
-            # Match recognition frequency to subscription period for logical defaults
-            if self.subscription_period == 'monthly':
-                self.recognition_frequency = 'monthly'
-            elif self.subscription_period == 'quarterly':
-                self.recognition_frequency = 'monthly'  # Still recognize monthly even for quarterly billing
-            elif self.subscription_period == 'annual':
-                self.recognition_frequency = 'monthly'  # Monthly recognition for annual subscriptions
-    
-    # ALTERNATIVE: Use computed fields with @api.depends instead of onchange
-    revenue_recognition_defaults_set = fields.Boolean(
-        string='Revenue Recognition Defaults Set',
-        compute='_compute_revenue_recognition_defaults',
-        store=False,
-        help='Technical field to trigger revenue recognition defaults'
-    )
-    
-    @api.depends('ams_product_type', 'is_subscription_product')
-    def _compute_revenue_recognition_defaults(self):
-        """Set revenue recognition defaults based on product type"""
-        for product in self:
-            if product.is_subscription_product and product.ams_product_type != 'none':
-                # Set defaults only if not already set
-                if not product.revenue_recognition_method:
-                    if product.ams_product_type == 'publication':
-                        product.revenue_recognition_method = 'straight_line'
-                        product.recognition_frequency = 'monthly'
-                    elif product.ams_product_type in ['individual', 'enterprise']:
-                        product.revenue_recognition_method = 'straight_line'
-                        product.recognition_frequency = 'monthly'
-                    elif product.ams_product_type == 'chapter':
-                        product.revenue_recognition_method = 'straight_line'
-                        product.recognition_frequency = 'monthly'
-                
-                # Enable auto-creation of schedules
-                if not hasattr(product, '_revenue_recognition_setup_done'):
-                    product.auto_create_recognition_schedule = True
-                
-                # Set performance obligation description
-                if not product.performance_obligation_description:
-                    obligation_map = {
-                        'individual': 'Provision of individual membership services and benefits',
-                        'enterprise': 'Provision of enterprise membership services and seat access',
-                        'chapter': 'Provision of chapter membership services and local benefits',
-                        'publication': 'Delivery of publication content over subscription period'
-                    }
-                    product.performance_obligation_description = obligation_map.get(product.ams_product_type, '')
+            # Count active schedules
+            schedules = self.env['ams.revenue.schedule'].search([
+                ('product_id.product_tmpl_id', '=', product.id),
+                ('state', '=', 'active')
+            ])
+            product.active_recognition_schedules = len(schedules)
             
-            product.revenue_recognition_defaults_set = True
+            # Sum deferred revenue
+            product.total_deferred_revenue = sum(schedules.mapped('deferred_revenue_balance'))
+            
+            # Calculate monthly recognized revenue
+            import datetime
+            current_month_start = datetime.date.today().replace(day=1)
+            current_month_recognitions = self.env['ams.revenue.recognition'].search([
+                ('product_id.product_tmpl_id', '=', product.id),
+                ('recognition_date', '>=', current_month_start),
+                ('state', '=', 'posted')
+            ])
+            product.monthly_recognized_revenue = sum(current_month_recognitions.mapped('recognized_amount'))
     
-    def setup_revenue_recognition_configuration(self):
-        """Setup revenue recognition configuration for this product (called explicitly)"""
-        self.ensure_one()
-        
-        if not self.is_subscription_product or not self.use_ams_accounting:
+    # FIXED: Removed conflicting onchange methods, using model method instead
+    def _setup_revenue_recognition_defaults(self):
+        """Setup revenue recognition defaults - called explicitly to avoid conflicts"""
+        if not (self.is_subscription_product and self.use_ams_accounting):
             return
-        
-        # Set default recognition method if not set
+            
+        # Set defaults only if not already configured
         if not self.revenue_recognition_method:
-            self.revenue_recognition_method = 'straight_line'
+            if hasattr(self, 'ams_product_type'):
+                type_defaults = {
+                    'publication': 'straight_line',
+                    'individual': 'straight_line', 
+                    'enterprise': 'straight_line',
+                    'chapter': 'straight_line',
+                }
+                self.revenue_recognition_method = type_defaults.get(self.ams_product_type, 'straight_line')
+            else:
+                self.revenue_recognition_method = 'straight_line'
         
-        # Set default recognition frequency if not set
         if not self.recognition_frequency:
             self.recognition_frequency = 'monthly'
-        
-        # Set performance obligation description if not set
-        if not self.performance_obligation_description and self.ams_product_type != 'none':
-            obligation_map = {
+            
+        if not self.auto_create_recognition_schedule:
+            self.auto_create_recognition_schedule = True
+            
+        # Set performance obligation description
+        if not self.performance_obligation_description and hasattr(self, 'ams_product_type'):
+            descriptions = {
                 'individual': 'Provision of individual membership services and benefits over the subscription period',
                 'enterprise': 'Provision of enterprise membership services including seat access and enterprise features',
                 'chapter': 'Provision of chapter membership services and access to local chapter benefits',
                 'publication': 'Delivery and access to publication content over the subscription period'
             }
-            self.performance_obligation_description = obligation_map.get(self.ams_product_type, '')
+            self.performance_obligation_description = descriptions.get(self.ams_product_type, '')
         
         # Set standalone selling price if not set
         if not self.standalone_selling_price and self.list_price:
             self.standalone_selling_price = self.list_price
-        
-        # Enable auto-creation of recognition schedules
-        self.auto_create_recognition_schedule = True
-    
+
     def get_recognition_schedule_values(self, subscription, contract_value):
         """Get values for creating recognition schedule"""
         self.ensure_one()
@@ -341,20 +292,17 @@ class ProductTemplate(models.Model):
             }
         }
     
-    def action_configure_revenue_recognition(self):
-        """Open wizard to configure revenue recognition"""
+    def action_setup_revenue_recognition(self):
+        """Setup revenue recognition for this product"""
         self.ensure_one()
+        self._setup_revenue_recognition_defaults()
         
         return {
-            'type': 'ir.actions.act_window',
-            'name': 'Configure Revenue Recognition',
-            'res_model': 'ams.revenue.recognition.config.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_product_id': self.id,
-                'default_revenue_recognition_method': self.revenue_recognition_method,
-                'default_recognition_frequency': self.recognition_frequency,
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'message': 'Revenue recognition configured successfully!',
+                'type': 'success',
             }
         }
     

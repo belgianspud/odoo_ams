@@ -1,0 +1,583 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Revenue Recognition Summary Report -->
+    <record id="action_report_revenue_recognition_summary" model="ir.actions.report">
+        <field name="name">Revenue Recognition Summary</field>
+        <field name="model">ams.revenue.recognition</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_revenue_recognition.report_revenue_recognition_summary</field>
+        <field name="report_file">ams_revenue_recognition.report_revenue_recognition_summary</field>
+        <field name="binding_model_id" ref="model_ams_revenue_recognition"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="ams_revenue_recognition.paperformat_revenue_recognition"/>
+    </record>
+
+    <!-- Revenue Recognition Summary Template -->
+    <template id="report_revenue_recognition_summary">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        
+                        <h2>Revenue Recognition Summary</h2>
+                        
+                        <div class="row mt32 mb32">
+                            <div class="col-auto">
+                                <strong>Recognition Entry:</strong> <span t-field="doc.name"/>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Customer:</strong></td>
+                                        <td><span t-field="doc.partner_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Product:</strong></td>
+                                        <td><span t-field="doc.product_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Subscription:</strong></td>
+                                        <td><span t-field="doc.subscription_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Schedule:</strong></td>
+                                        <td><span t-field="doc.schedule_id.name"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Recognition Date:</strong></td>
+                                        <td><span t-field="doc.recognition_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Recognition Method:</strong></td>
+                                        <td><span t-field="doc.recognition_method"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Period Number:</strong></td>
+                                        <td><span t-field="doc.period_number"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Status:</strong></td>
+                                        <td><span t-field="doc.state"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <h3>Financial Details</h3>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th class="text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Planned Recognition Amount</td>
+                                    <td class="text-right">
+                                        <span t-field="doc.planned_amount" 
+                                              t-options='{"widget": "monetary", "display_currency": doc.company_id.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Actual Recognition Amount</td>
+                                    <td class="text-right">
+                                        <span t-field="doc.recognized_amount" 
+                                              t-options='{"widget": "monetary", "display_currency": doc.company_id.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr t-if="doc.adjustment_amount != 0">
+                                    <td>Adjustment Amount</td>
+                                    <td class="text-right">
+                                        <span t-field="doc.adjustment_amount" 
+                                              t-options='{"widget": "monetary", "display_currency": doc.company_id.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <div t-if="doc.is_adjustment" class="alert alert-warning">
+                            <strong>Adjustment Entry</strong>
+                            <p><strong>Reason:</strong> <span t-field="doc.adjustment_reason"/></p>
+                        </div>
+                        
+                        <h3>Accounting Information</h3>
+                        <div class="row">
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Deferred Revenue Account:</strong></td>
+                                        <td><span t-field="doc.deferred_account_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Revenue Account:</strong></td>
+                                        <td><span t-field="doc.revenue_account_id.name"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Journal Entry:</strong></td>
+                                        <td><span t-field="doc.journal_entry_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Processed Date:</strong></td>
+                                        <td><span t-field="doc.processed_date"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Revenue Schedule Detail Report -->
+    <record id="action_report_revenue_schedule_detail" model="ir.actions.report">
+        <field name="name">Revenue Schedule Detail</field>
+        <field name="model">ams.revenue.schedule</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_revenue_recognition.report_revenue_schedule_detail</field>
+        <field name="report_file">ams_revenue_recognition.report_revenue_schedule_detail</field>
+        <field name="binding_model_id" ref="model_ams_revenue_schedule"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="ams_revenue_recognition.paperformat_revenue_recognition"/>
+    </record>
+
+    <!-- Revenue Schedule Detail Template -->
+    <template id="report_revenue_schedule_detail">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        
+                        <h2>Revenue Recognition Schedule</h2>
+                        
+                        <div class="row mt32 mb32">
+                            <div class="col-auto">
+                                <strong>Schedule:</strong> <span t-field="doc.name"/>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Customer:</strong></td>
+                                        <td><span t-field="doc.partner_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Product:</strong></td>
+                                        <td><span t-field="doc.product_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Subscription:</strong></td>
+                                        <td><span t-field="doc.subscription_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Performance Obligation:</strong></td>
+                                        <td><span t-field="doc.performance_obligation_id"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Start Date:</strong></td>
+                                        <td><span t-field="doc.start_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>End Date:</strong></td>
+                                        <td><span t-field="doc.end_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Recognition Method:</strong></td>
+                                        <td><span t-field="doc.recognition_method"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Recognition Frequency:</strong></td>
+                                        <td><span t-field="doc.recognition_frequency"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <h3>Financial Summary</h3>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th class="text-right">Amount</th>
+                                    <th class="text-right">Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Total Contract Value</td>
+                                    <td class="text-right">
+                                        <span t-field="doc.total_contract_value" 
+                                              t-options='{"widget": "monetary", "display_currency": doc.company_id.currency_id}'/>
+                                    </td>
+                                    <td class="text-right">100.0%</td>
+                                </tr>
+                                <tr>
+                                    <td>Recognized Revenue</td>
+                                    <td class="text-right">
+                                        <span t-field="doc.recognized_revenue" 
+                                              t-options='{"widget": "monetary", "display_currency": doc.company_id.currency_id}'/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="'%.1f' % doc.completion_percentage"/>%
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Deferred Revenue Balance</td>
+                                    <td class="text-right">
+                                        <span t-field="doc.deferred_revenue_balance" 
+                                              t-options='{"widget": "monetary", "display_currency": doc.company_id.currency_id}'/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="'%.1f' % (100 - doc.completion_percentage)"/>%
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <h3>Recognition Progress</h3>
+                        <div class="progress mb-3" style="height: 30px;">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                 t-attf-style="width: #{doc.completion_percentage}%" 
+                                 t-attf-aria-valuenow="#{doc.completion_percentage}" 
+                                 aria-valuemin="0" aria-valuemax="100">
+                                <span t-esc="'%.1f' % doc.completion_percentage"/>% Complete
+                            </div>
+                        </div>
+                        
+                        <h3>Recognition Schedule</h3>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Period</th>
+                                    <th>Recognition Date</th>
+                                    <th class="text-right">Planned Amount</th>
+                                    <th class="text-right">Recognized Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="doc.recognition_ids.sorted('recognition_date')" t-as="recognition">
+                                    <tr>
+                                        <td><span t-field="recognition.period_number"/></td>
+                                        <td><span t-field="recognition.recognition_date"/></td>
+                                        <td class="text-right">
+                                            <span t-field="recognition.planned_amount" 
+                                                  t-options='{"widget": "monetary", "display_currency": doc.company_id.currency_id}'/>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="recognition.recognized_amount" 
+                                                  t-options='{"widget": "monetary", "display_currency": doc.company_id.currency_id}'/>
+                                        </td>
+                                        <td>
+                                            <span t-field="recognition.state" 
+                                                  t-attf-class="badge badge-#{recognition.state == 'posted' and 'success' or recognition.state == 'error' and 'danger' or 'secondary'}"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Monthly Revenue Recognition Report -->
+    <record id="action_report_monthly_revenue_recognition" model="ir.actions.report">
+        <field name="name">Monthly Revenue Recognition Report</field>
+        <field name="model">ams.revenue.dashboard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_revenue_recognition.report_monthly_revenue_recognition</field>
+        <field name="report_file">ams_revenue_recognition.report_monthly_revenue_recognition</field>
+        <field name="binding_model_id" ref="model_ams_revenue_dashboard"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="ams_revenue_recognition.paperformat_revenue_recognition"/>
+    </record>
+
+    <!-- Monthly Revenue Recognition Template -->
+    <template id="report_monthly_revenue_recognition">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <div class="oe_structure"/>
+                    
+                    <h2>Monthly Revenue Recognition Report</h2>
+                    <h4><span t-esc="context_today().strftime('%B %Y')"/></h4>
+                    
+                    <t t-set="dashboard_data" t-value="docs.env['ams.revenue.dashboard'].get_dashboard_data()"/>
+                    
+                    <h3>Executive Summary</h3>
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <td><strong>Total Contract Value</strong></td>
+                                <td class="text-right">
+                                    <span t-esc="'{:,.2f}'.format(dashboard_data['overview']['total_contract_value'])"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Revenue Recognized This Month</strong></td>
+                                <td class="text-right">
+                                    <span t-esc="'{:,.2f}'.format(dashboard_data['overview']['period_recognized'])"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Recognized to Date</strong></td>
+                                <td class="text-right">
+                                    <span t-esc="'{:,.2f}'.format(dashboard_data['overview']['total_recognized'])"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Deferred Revenue Balance</strong></td>
+                                <td class="text-right">
+                                    <span t-esc="'{:,.2f}'.format(dashboard_data['overview']['total_deferred'])"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Recognition Completion Rate</strong></td>
+                                <td class="text-right">
+                                    <span t-esc="'{:.1f}%'.format(dashboard_data['overview']['recognition_completion_rate'])"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3>Active Revenue Schedules</h3>
+                    <t t-set="active_schedules" t-value="docs.env['ams.revenue.schedule'].search([('state', '=', 'active')])"/>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Schedule</th>
+                                <th>Customer</th>
+                                <th>Product</th>
+                                <th class="text-right">Contract Value</th>
+                                <th class="text-right">Recognized</th>
+                                <th class="text-right">Remaining</th>
+                                <th class="text-right">% Complete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="active_schedules" t-as="schedule">
+                                <tr>
+                                    <td><span t-field="schedule.name"/></td>
+                                    <td><span t-field="schedule.partner_id.name"/></td>
+                                    <td><span t-field="schedule.product_id.name"/></td>
+                                    <td class="text-right">
+                                        <span t-field="schedule.total_contract_value" 
+                                              t-options='{"widget": "monetary", "display_currency": schedule.company_id.currency_id}'/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-field="schedule.recognized_revenue" 
+                                              t-options='{"widget": "monetary", "display_currency": schedule.company_id.currency_id}'/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-field="schedule.remaining_revenue" 
+                                              t-options='{"widget": "monetary", "display_currency": schedule.company_id.currency_id}'/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="'{:.1f}%'.format(schedule.completion_percentage)"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                    
+                    <div style="page-break-before: always;"></div>
+                    
+                    <h3>Recognition Trends</h3>
+                    <p>Revenue recognition trends for the past 12 months:</p>
+                    
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th class="text-right">Recognized Amount</th>
+                                <th class="text-right">Recognition Count</th>
+                                <th class="text-right">Growth Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="dashboard_data['recognition_trends']" t-as="trend">
+                                <tr>
+                                    <td><span t-esc="trend['month_name']"/></td>
+                                    <td class="text-right">
+                                        <span t-esc="'{:,.2f}'.format(trend['recognized_amount'])"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="trend['recognition_count']"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="'{:.1f}%'.format(trend.get('growth_rate', 0))"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                    
+                    <div class="oe_structure"/>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- Contract Modifications Report -->
+    <record id="action_report_contract_modifications" model="ir.actions.report">
+        <field name="name">Contract Modifications Report</field>
+        <field name="model">ams.contract.modification</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_revenue_recognition.report_contract_modifications</field>
+        <field name="report_file">ams_revenue_recognition.report_contract_modifications</field>
+        <field name="binding_model_id" ref="model_ams_contract_modification"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="ams_revenue_recognition.paperformat_revenue_recognition"/>
+    </record>
+
+    <!-- Contract Modifications Template -->
+    <template id="report_contract_modifications">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        
+                        <h2>Contract Modification Report</h2>
+                        
+                        <div class="row mt32 mb32">
+                            <div class="col-auto">
+                                <strong>Modification:</strong> <span t-field="doc.name"/>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Customer:</strong></td>
+                                        <td><span t-field="doc.partner_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Subscription:</strong></td>
+                                        <td><span t-field="doc.subscription_id.name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Schedule:</strong></td>
+                                        <td><span t-field="doc.schedule_id.name"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Modification Type:</strong></td>
+                                        <td><span t-field="doc.modification_type"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Modification Date:</strong></td>
+                                        <td><span t-field="doc.modification_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Effective Date:</strong></td>
+                                        <td><span t-field="doc.effective_date"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Status:</strong></td>
+                                        <td><span t-field="doc.state"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <h3>Financial Impact</h3>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th class="text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Original Contract Value</td>
+                                    <td class="text-right">
+                                        <span t-field="doc.original_contract_value" 
+                                              t-options='{"widget": "monetary", "display_currency": doc.company_id.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>New Contract Value</td>
+                                    <td class="text-right">
+                                        <span t-field="doc.new_contract_value" 
+                                              t-options='{"widget": "monetary", "display_currency": doc.company_id.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Value Change</td>
+                                    <td class="text-right">
+                                        <span t-field="doc.value_change" 
+                                              t-options='{"widget": "monetary", "display_currency": doc.company_id.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Revenue Recognized to Date</td>
+                                    <td class="text-right">
+                                        <span t-field="doc.recognized_to_date" 
+                                              t-options='{"widget": "monetary", "display_currency": doc.company_id.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Revenue Adjustment</td>
+                                    <td class="text-right">
+                                        <span t-field="doc.adjustment_amount" 
+                                              t-options='{"widget": "monetary", "display_currency": doc.company_id.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <h3>Modification Details</h3>
+                        <p><strong>Reason:</strong> <span t-field="doc.reason"/></p>
+                        <p><strong>Processing Method:</strong> <span t-field="doc.processing_method"/></p>
+                        <p><strong>Modification Accounting:</strong> <span t-field="doc.modification_accounting"/></p>
+                        
+                        <div t-if="doc.performance_obligation_impact">
+                            <h4>Performance Obligation Impact</h4>
+                            <p t-field="doc.performance_obligation_impact"/>
+                        </div>
+                        
+                        <div t-if="doc.approved_by">
+                            <h4>Approval Information</h4>
+                            <p><strong>Approved by:</strong> <span t-field="doc.approved_by.name"/></p>
+                            <p><strong>Approval Date:</strong> <span t-field="doc.approval_date"/></p>
+                        </div>
+                        
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

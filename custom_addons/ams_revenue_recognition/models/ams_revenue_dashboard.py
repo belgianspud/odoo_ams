@@ -11,8 +11,12 @@ class AMSRevenueDashboard(models.Model):
     """AMS Revenue Recognition Dashboard and Analytics"""
     _name = 'ams.revenue.dashboard'
     _description = 'AMS Revenue Recognition Dashboard'
-    _auto = False  # This is a reporting model, no database table needed
-
+    _rec_name = 'name'
+    
+    # Add basic fields for the model to work properly
+    name = fields.Char(string='Dashboard Name', default='Revenue Recognition Dashboard')
+    company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
+    
     # Dashboard Data Methods
     @api.model
     def get_dashboard_data(self, date_from=None, date_to=None):
@@ -48,7 +52,8 @@ class AMSRevenueDashboard(models.Model):
         
         # Total Contract Value (TCV)
         active_schedules = self.env['ams.revenue.schedule'].search([
-            ('state', 'in', ['active', 'completed'])
+            ('state', 'in', ['active', 'completed']),
+            ('company_id', 'in', [self.env.company.id, False])
         ])
         total_contract_value = sum(active_schedules.mapped('total_contract_value'))
         
@@ -56,7 +61,8 @@ class AMSRevenueDashboard(models.Model):
         period_recognitions = self.env['ams.revenue.recognition'].search([
             ('recognition_date', '>=', date_from),
             ('recognition_date', '<=', date_to),
-            ('state', '=', 'posted')
+            ('state', '=', 'posted'),
+            ('schedule_id.company_id', 'in', [self.env.company.id, False])
         ])
         period_recognized = sum(period_recognitions.mapped('recognized_amount'))
         
@@ -65,14 +71,18 @@ class AMSRevenueDashboard(models.Model):
         
         # Total recognized to date
         all_recognitions = self.env['ams.revenue.recognition'].search([
-            ('state', '=', 'posted')
+            ('state', '=', 'posted'),
+            ('schedule_id.company_id', 'in', [self.env.company.id, False])
         ])
         total_recognized = sum(all_recognitions.mapped('recognized_amount'))
         
-        # Active subscriptions with revenue recognition
-        active_subscriptions = self.env['ams.subscription'].search([
-            ('revenue_recognition_status', '=', 'active')
-        ])
+        # Active subscriptions with revenue recognition (if ams.subscription exists)
+        active_subscriptions_count = 0
+        if 'ams.subscription' in self.env:
+            active_subscriptions = self.env['ams.subscription'].search([
+                ('revenue_recognition_status', '=', 'active')
+            ])
+            active_subscriptions_count = len(active_subscriptions)
         
         # Monthly Recurring Revenue (MRR) - approximation
         monthly_recognition_amount = sum(
@@ -95,7 +105,7 @@ class AMSRevenueDashboard(models.Model):
             'period_recognized': period_recognized,
             'total_deferred': total_deferred,
             'total_recognized': total_recognized,
-            'active_subscriptions_count': len(active_subscriptions),
+            'active_subscriptions_count': active_subscriptions_count,
             'monthly_recurring_revenue': monthly_recognition_amount,
             'annual_recurring_revenue': annual_recurring_revenue,
             'recognition_completion_rate': recognition_completion_rate,
@@ -109,7 +119,8 @@ class AMSRevenueDashboard(models.Model):
         recognitions = self.env['ams.revenue.recognition'].search([
             ('recognition_date', '>=', date_from),
             ('recognition_date', '<=', date_to),
-            ('state', '=', 'posted')
+            ('state', '=', 'posted'),
+            ('schedule_id.company_id', 'in', [self.env.company.id, False])
         ])
         
         # Group by month
@@ -161,7 +172,9 @@ class AMSRevenueDashboard(models.Model):
     def _get_schedule_status_breakdown(self):
         """Get breakdown of schedule statuses"""
         
-        schedules = self.env['ams.revenue.schedule'].search([])
+        schedules = self.env['ams.revenue.schedule'].search([
+            ('company_id', 'in', [self.env.company.id, False])
+        ])
         
         status_breakdown = {}
         for status in ['draft', 'active', 'paused', 'completed', 'cancelled']:
@@ -202,7 +215,8 @@ class AMSRevenueDashboard(models.Model):
         
         modifications = self.env['ams.contract.modification'].search([
             ('modification_date', '>=', date_from),
-            ('modification_date', '<=', date_to)
+            ('modification_date', '<=', date_to),
+            ('schedule_id.company_id', 'in', [self.env.company.id, False])
         ])
         
         # Type breakdown
@@ -240,7 +254,8 @@ class AMSRevenueDashboard(models.Model):
         upcoming = self.env['ams.revenue.recognition'].search([
             ('state', '=', 'draft'),
             ('recognition_date', '>=', date.today()),
-            ('recognition_date', '<=', future_date)
+            ('recognition_date', '<=', future_date),
+            ('schedule_id.company_id', 'in', [self.env.company.id, False])
         ], order='recognition_date asc')
         
         # Group by week
@@ -291,7 +306,8 @@ class AMSRevenueDashboard(models.Model):
         
         # Get all active schedules
         schedules = self.env['ams.revenue.schedule'].search([
-            ('state', 'in', ['active', 'completed'])
+            ('state', 'in', ['active', 'completed']),
+            ('company_id', 'in', [self.env.company.id, False])
         ])
         
         # Group by performance obligation ID
@@ -348,7 +364,7 @@ class AMSRevenueDashboard(models.Model):
             ])) if po_data else 0,
         }
     
-    # Specific Metric Methods
+    # Additional utility methods
     @api.model
     def get_mrr_metrics(self):
         """Get Monthly Recurring Revenue metrics"""
@@ -356,7 +372,8 @@ class AMSRevenueDashboard(models.Model):
         # Get all active schedules with monthly recognition
         monthly_schedules = self.env['ams.revenue.schedule'].search([
             ('state', '=', 'active'),
-            ('recognition_frequency', '=', 'monthly')
+            ('recognition_frequency', '=', 'monthly'),
+            ('company_id', 'in', [self.env.company.id, False])
         ])
         
         current_mrr = sum(monthly_schedules.mapped('monthly_recognition_amount'))
@@ -370,7 +387,8 @@ class AMSRevenueDashboard(models.Model):
             ('start_date', '<=', last_month),
             '|',
             ('end_date', '>=', last_month_start),
-            ('state', '=', 'active')
+            ('state', '=', 'active'),
+            ('company_id', 'in', [self.env.company.id, False])
         ])
         
         last_month_mrr = sum(last_month_schedules.mapped('monthly_recognition_amount'))
@@ -386,191 +404,6 @@ class AMSRevenueDashboard(models.Model):
             'active_monthly_schedules': len(monthly_schedules),
         }
     
-    @api.model
-    def get_deferred_revenue_aging(self):
-        """Get deferred revenue aging analysis"""
-        
-        active_schedules = self.env['ams.revenue.schedule'].search([
-            ('state', '=', 'active'),
-            ('deferred_revenue_balance', '>', 0)
-        ])
-        
-        aging_buckets = {
-            '0-30': {'count': 0, 'amount': 0},
-            '31-90': {'count': 0, 'amount': 0}, 
-            '91-180': {'count': 0, 'amount': 0},
-            '181-365': {'count': 0, 'amount': 0},
-            '365+': {'count': 0, 'amount': 0},
-        }
-        
-        today = date.today()
-        
-        for schedule in active_schedules:
-            if not schedule.end_date:
-                continue
-                
-            days_to_completion = (schedule.end_date - today).days
-            
-            if days_to_completion <= 30:
-                bucket = '0-30'
-            elif days_to_completion <= 90:
-                bucket = '31-90'
-            elif days_to_completion <= 180:
-                bucket = '91-180'
-            elif days_to_completion <= 365:
-                bucket = '181-365'
-            else:
-                bucket = '365+'
-            
-            aging_buckets[bucket]['count'] += 1
-            aging_buckets[bucket]['amount'] += schedule.deferred_revenue_balance
-        
-        return aging_buckets
-    
-    @api.model
-    def get_customer_revenue_concentration(self, limit=10):
-        """Get top customers by revenue concentration"""
-        
-        # Get all schedules grouped by customer
-        schedules = self.env['ams.revenue.schedule'].search([
-            ('state', 'in', ['active', 'completed'])
-        ])
-        
-        customer_data = {}
-        for schedule in schedules:
-            partner_id = schedule.partner_id.id
-            
-            if partner_id not in customer_data:
-                customer_data[partner_id] = {
-                    'customer_name': schedule.partner_id.name,
-                    'total_contract_value': 0,
-                    'recognized_amount': 0,
-                    'deferred_amount': 0,
-                    'schedule_count': 0,
-                }
-            
-            customer_data[partner_id]['total_contract_value'] += schedule.total_contract_value
-            customer_data[partner_id]['recognized_amount'] += schedule.recognized_revenue
-            customer_data[partner_id]['deferred_amount'] += schedule.deferred_revenue_balance
-            customer_data[partner_id]['schedule_count'] += 1
-        
-        # Convert to list and sort by total contract value
-        customers = list(customer_data.values())
-        customers.sort(key=lambda x: x['total_contract_value'], reverse=True)
-        
-        # Calculate percentages
-        total_contract_value = sum(c['total_contract_value'] for c in customers)
-        
-        for customer in customers:
-            customer['percentage'] = (
-                (customer['total_contract_value'] / total_contract_value * 100)
-                if total_contract_value > 0 else 0
-            )
-        
-        return {
-            'top_customers': customers[:limit],
-            'total_customers': len(customers),
-            'total_contract_value': total_contract_value,
-        }
-    
-    @api.model
-    def get_recognition_accuracy_metrics(self):
-        """Get metrics on recognition accuracy and adjustments"""
-        
-        # Get all recognitions with adjustments
-        recognitions = self.env['ams.revenue.recognition'].search([
-            ('state', '=', 'posted')
-        ])
-        
-        total_recognitions = len(recognitions)
-        recognitions_with_adjustments = recognitions.filtered(lambda r: abs(r.adjustment_amount) > 0.01)
-        adjustments_count = len(recognitions_with_adjustments)
-        
-        # Calculate accuracy rate
-        accuracy_rate = ((total_recognitions - adjustments_count) / total_recognitions * 100) if total_recognitions > 0 else 100
-        
-        # Get contract modifications
-        modifications = self.env['ams.contract.modification'].search([
-            ('state', '=', 'processed')
-        ])
-        
-        return {
-            'total_recognitions': total_recognitions,
-            'adjustments_count': adjustments_count,
-            'accuracy_rate': accuracy_rate,
-            'total_adjustment_amount': sum(recognitions_with_adjustments.mapped('adjustment_amount')),
-            'contract_modifications_count': len(modifications),
-            'total_modification_impact': sum(modifications.mapped('adjustment_amount')),
-        }
-    
-    # Chart Data Methods
-    @api.model
-    def get_recognition_timeline_chart(self, months=12):
-        """Get data for recognition timeline chart"""
-        
-        start_date = date.today() - relativedelta(months=months)
-        
-        recognitions = self.env['ams.revenue.recognition'].search([
-            ('recognition_date', '>=', start_date),
-            ('state', '=', 'posted')
-        ])
-        
-        # Group by month
-        chart_data = {}
-        current = start_date.replace(day=1)
-        
-        while current <= date.today():
-            month_key = current.strftime('%Y-%m')
-            chart_data[month_key] = {
-                'month': month_key,
-                'month_label': current.strftime('%b %Y'),
-                'recognized_amount': 0,
-                'planned_amount': 0,
-                'count': 0,
-            }
-            current += relativedelta(months=1)
-        
-        # Fill with actual data
-        for recognition in recognitions:
-            month_key = recognition.recognition_date.strftime('%Y-%m')
-            if month_key in chart_data:
-                chart_data[month_key]['recognized_amount'] += recognition.recognized_amount
-                chart_data[month_key]['planned_amount'] += recognition.planned_amount
-                chart_data[month_key]['count'] += 1
-        
-        return list(chart_data.values())
-    
-    @api.model
-    def get_product_revenue_chart(self, limit=10):
-        """Get data for product revenue breakdown chart"""
-        
-        schedules = self.env['ams.revenue.schedule'].search([
-            ('state', 'in', ['active', 'completed'])
-        ])
-        
-        product_data = {}
-        for schedule in schedules:
-            product_name = schedule.product_id.name
-            
-            if product_name not in product_data:
-                product_data[product_name] = {
-                    'product_name': product_name,
-                    'total_contract_value': 0,
-                    'recognized_amount': 0,
-                    'schedule_count': 0,
-                }
-            
-            product_data[product_name]['total_contract_value'] += schedule.total_contract_value
-            product_data[product_name]['recognized_amount'] += schedule.recognized_revenue
-            product_data[product_name]['schedule_count'] += 1
-        
-        # Convert to list and sort
-        products = list(product_data.values())
-        products.sort(key=lambda x: x['total_contract_value'], reverse=True)
-        
-        return products[:limit]
-    
-    # Export Methods
     @api.model
     def export_dashboard_data(self, format='json'):
         """Export dashboard data in various formats"""

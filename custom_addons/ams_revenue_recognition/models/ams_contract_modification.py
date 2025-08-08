@@ -232,6 +232,14 @@ class AMSContractModification(models.Model):
         help='Description of how this modification affects performance obligations'
     )
     
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        related='schedule_id.company_id',
+        store=True,
+        help='Company from revenue schedule'
+    )
+    
     # Computed Fields
     @api.depends('new_contract_value', 'original_contract_value', 'recognized_to_date')
     def _compute_financial_impact(self):

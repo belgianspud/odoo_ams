@@ -212,6 +212,14 @@ class AMSRevenueRecognition(models.Model):
         help='Number of days in this recognition period'
     )
     
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        related='schedule_id.company_id',
+        store=True,
+        help='Company from revenue schedule'
+    )
+    
     # Computed Fields
     @api.depends('schedule_id.name', 'recognition_date', 'period_number')
     def _compute_name(self):

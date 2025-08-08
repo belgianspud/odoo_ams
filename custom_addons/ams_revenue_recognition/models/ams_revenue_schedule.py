@@ -256,6 +256,14 @@ class AMSRevenueSchedule(models.Model):
         help='Amount to recognize per month'
     )
     
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        default=lambda self: self.env.company,
+        required=True,
+        help='Company this revenue schedule belongs to'
+    )
+    
     # Technical Fields
     create_uid = fields.Many2one('res.users', string='Created by', readonly=True)
     create_date = fields.Datetime(string='Created on', readonly=True)
