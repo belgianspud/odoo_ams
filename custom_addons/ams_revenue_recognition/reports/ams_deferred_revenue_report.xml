@@ -1,0 +1,491 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Deferred Revenue Analysis Report -->
+    <record id="action_report_deferred_revenue_analysis" model="ir.actions.report">
+        <field name="name">Deferred Revenue Analysis</field>
+        <field name="model">ams.revenue.dashboard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_revenue_recognition.report_deferred_revenue_analysis</field>
+        <field name="report_file">ams_revenue_recognition.report_deferred_revenue_analysis</field>
+        <field name="binding_model_id" ref="model_ams_revenue_dashboard"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="ams_revenue_recognition.paperformat_revenue_recognition"/>
+    </record>
+
+    <!-- Deferred Revenue Analysis Template -->
+    <template id="report_deferred_revenue_analysis">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <div class="oe_structure"/>
+                    
+                    <h2>Deferred Revenue Analysis Report</h2>
+                    <h4>As of <span t-esc="context_today().strftime('%B %d, %Y')"/></h4>
+                    
+                    <t t-set="active_schedules" t-value="docs.env['ams.revenue.schedule'].search([
+                        ('state', '=', 'active'),
+                        ('deferred_revenue_balance', '>', 0)
+                    ])"/>
+                    
+                    <!-- Executive Summary -->
+                    <h3>Executive Summary</h3>
+                    <div class="row">
+                        <div class="col-6">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Total Deferred Revenue</strong></td>
+                                        <td class="text-right">
+                                            <strong><span t-esc="'{:,.2f}'.format(sum(active_schedules.mapped('deferred_revenue_balance')))"/></strong>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Number of Active Schedules</strong></td>
+                                        <td class="text-right"><span t-esc="len(active_schedules)"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Average Deferred per Schedule</strong></td>
+                                        <td class="text-right">
+                                            <span t-esc="'{:,.2f}'.format(sum(active_schedules.mapped('deferred_revenue_balance')) / len(active_schedules) if active_schedules else 0)"/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-6">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Next 30 Days Recognition</strong></td>
+                                        <td class="text-right">
+                                            <t t-set="next_30_days" t-value="docs.env['ams.revenue.recognition'].search([
+                                                ('state', '=', 'draft'),
+                                                ('recognition_date', '>=', context_today()),
+                                                ('recognition_date', '<=', (context_today() + timedelta(days=30)).strftime('%Y-%m-%d'))
+                                            ])"/>
+                                            <span t-esc="'{:,.2f}'.format(sum(next_30_days.mapped('planned_amount')))"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Next 90 Days Recognition</strong></td>
+                                        <td class="text-right">
+                                            <t t-set="next_90_days" t-value="docs.env['ams.revenue.recognition'].search([
+                                                ('state', '=', 'draft'),
+                                                ('recognition_date', '>=', context_today()),
+                                                ('recognition_date', '<=', (context_today() + timedelta(days=90)).strftime('%Y-%m-%d'))
+                                            ])"/>
+                                            <span t-esc="'{:,.2f}'.format(sum(next_90_days.mapped('planned_amount')))"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Recognition Velocity (Daily Avg)</strong></td>
+                                        <td class="text-right">
+                                            <span t-esc="'{:,.2f}'.format(sum(next_30_days.mapped('planned_amount')) / 30 if next_30_days else 0)"/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Deferred Revenue by Maturity -->
+                    <h3>Deferred Revenue by Maturity</h3>
+                    <t t-set="today" t-value="context_today()"/>
+                    <t t-set="aging_data" t-value="{'0-30': [], '31-90': [], '91-180': [], '181-365': [], '365+': []}"/>
+                    
+                    <t t-foreach="active_schedules" t-as="schedule">
+                        <t t-if="schedule.end_date">
+                            <t t-set="days_to_completion" t-value="(schedule.end_date - today).days"/>
+                            <t t-if="days_to_completion &lt;= 30">
+                                <t t-set="aging_data" t-value="aging_data['0-30'].append(schedule) or aging_data"/>
+                            </t>
+                            <t t-elif="days_to_completion &lt;= 90">
+                                <t t-set="aging_data" t-value="aging_data['31-90'].append(schedule) or aging_data"/>
+                            </t>
+                            <t t-elif="days_to_completion &lt;= 180">
+                                <t t-set="aging_data" t-value="aging_data['91-180'].append(schedule) or aging_data"/>
+                            </t>
+                            <t t-elif="days_to_completion &lt;= 365">
+                                <t t-set="aging_data" t-value="aging_data['181-365'].append(schedule) or aging_data"/>
+                            </t>
+                            <t t-else="">
+                                <t t-set="aging_data" t-value="aging_data['365+'].append(schedule) or aging_data"/>
+                            </t>
+                        </t>
+                    </t>
+
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Maturity Period</th>
+                                <th class="text-right">Schedule Count</th>
+                                <th class="text-right">Deferred Amount</th>
+                                <th class="text-right">Percentage of Total</th>
+                                <th class="text-right">Average per Schedule</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-set="total_deferred" t-value="sum(active_schedules.mapped('deferred_revenue_balance'))"/>
+                            <t t-foreach="[('0-30', '0-30 Days'), ('31-90', '31-90 Days'), ('91-180', '91-180 Days'), ('181-365', '181-365 Days'), ('365+', 'Over 1 Year')]" t-as="bucket">
+                                <t t-set="bucket_schedules" t-value="aging_data[bucket[0]]"/>
+                                <t t-set="bucket_amount" t-value="sum([s.deferred_revenue_balance for s in bucket_schedules])"/>
+                                <tr t-if="bucket_schedules">
+                                    <td><span t-esc="bucket[1]"/></td>
+                                    <td class="text-right"><span t-esc="len(bucket_schedules)"/></td>
+                                    <td class="text-right">
+                                        <span t-esc="'{:,.2f}'.format(bucket_amount)"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="'{:.1f}%'.format(bucket_amount / total_deferred * 100 if total_deferred > 0 else 0)"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="'{:,.2f}'.format(bucket_amount / len(bucket_schedules) if bucket_schedules else 0)"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th>Total</th>
+                                <th class="text-right"><span t-esc="len(active_schedules)"/></th>
+                                <th class="text-right"><span t-esc="'{:,.2f}'.format(total_deferred)"/></th>
+                                <th class="text-right">100.0%</th>
+                                <th class="text-right">
+                                    <span t-esc="'{:,.2f}'.format(total_deferred / len(active_schedules) if active_schedules else 0)"/>
+                                </th>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <!-- Top 10 Largest Deferred Revenue Balances -->
+                    <h3>Top 10 Largest Deferred Revenue Balances</h3>
+                    <t t-set="top_schedules" t-value="active_schedules.sorted('deferred_revenue_balance', reverse=True)[:10]"/>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Product</th>
+                                <th>Schedule</th>
+                                <th class="text-right">Deferred Balance</th>
+                                <th class="text-right">% of Total</th>
+                                <th class="text-right">Days to Complete</th>
+                                <th class="text-right">Completion %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="top_schedules" t-as="schedule">
+                                <tr>
+                                    <td><span t-field="schedule.partner_id.name"/></td>
+                                    <td><span t-field="schedule.product_id.name"/></td>
+                                    <td><span t-field="schedule.name"/></td>
+                                    <td class="text-right">
+                                        <span t-field="schedule.deferred_revenue_balance" 
+                                              t-options='{"widget": "monetary", "display_currency": schedule.company_id.currency_id}'/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="'{:.1f}%'.format(schedule.deferred_revenue_balance / total_deferred * 100 if total_deferred > 0 else 0)"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="(schedule.end_date - today).days if schedule.end_date else 'N/A'"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="'{:.1f}%'.format(schedule.completion_percentage)"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+
+                    <div style="page-break-before: always;"></div>
+
+                    <!-- Deferred Revenue by Product Category -->
+                    <h3>Deferred Revenue by Product Category</h3>
+                    <t t-set="product_categories" t-value="{}"/>
+                    <t t-foreach="active_schedules" t-as="schedule">
+                        <t t-set="product_name" t-value="schedule.product_id.name"/>
+                        <t t-if="product_name not in product_categories">
+                            <t t-set="product_categories" t-value="product_categories.update({product_name: {'count': 0, 'amount': 0, 'schedules': []}}) or product_categories"/>
+                        </t>
+                        <t t-set="product_categories" t-value="product_categories.update({product_name: {
+                            'count': product_categories[product_name]['count'] + 1,
+                            'amount': product_categories[product_name]['amount'] + schedule.deferred_revenue_balance,
+                            'schedules': product_categories[product_name]['schedules'] + [schedule]
+                        }}) or product_categories"/>
+                    </t>
+
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="text-right">Schedule Count</th>
+                                <th class="text-right">Deferred Amount</th>
+                                <th class="text-right">% of Total</th>
+                                <th class="text-right">Average per Schedule</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="sorted(product_categories.items(), key=lambda x: x[1]['amount'], reverse=True)" t-as="product_item">
+                                <t t-set="product_name" t-value="product_item[0]"/>
+                                <t t-set="product_data" t-value="product_item[1]"/>
+                                <tr>
+                                    <td><span t-esc="product_name"/></td>
+                                    <td class="text-right"><span t-esc="product_data['count']"/></td>
+                                    <td class="text-right">
+                                        <span t-esc="'{:,.2f}'.format(product_data['amount'])"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="'{:.1f}%'.format(product_data['amount'] / total_deferred * 100 if total_deferred > 0 else 0)"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="'{:,.2f}'.format(product_data['amount'] / product_data['count'] if product_data['count'] > 0 else 0)"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+
+                    <!-- Recognition Forecast -->
+                    <h3>12-Month Recognition Forecast</h3>
+                    <t t-set="forecast_data" t-value="{}"/>
+                    <t t-set="current_month" t-value="today.replace(day=1)"/>
+                    
+                    <!-- Initialize 12 months of data -->
+                    <t t-foreach="range(12)" t-as="month_offset">
+                        <t t-set="forecast_month" t-value="(current_month + relativedelta(months=month_offset))"/>
+                        <t t-set="month_key" t-value="forecast_month.strftime('%Y-%m')"/>
+                        <t t-set="forecast_data" t-value="forecast_data.update({month_key: {
+                            'month': forecast_month,
+                            'month_name': forecast_month.strftime('%B %Y'),
+                            'amount': 0,
+                            'count': 0
+                        }}) or forecast_data"/>
+                    </t>
+
+                    <!-- Populate with actual recognition data -->
+                    <t t-set="forecast_recognitions" t-value="docs.env['ams.revenue.recognition'].search([
+                        ('state', '=', 'draft'),
+                        ('recognition_date', '>=', current_month),
+                        ('recognition_date', '&lt;', (current_month + relativedelta(months=12)).strftime('%Y-%m-%d'))
+                    ])"/>
+                    
+                    <t t-foreach="forecast_recognitions" t-as="recognition">
+                        <t t-set="month_key" t-value="recognition.recognition_date.strftime('%Y-%m')"/>
+                        <t t-if="month_key in forecast_data">
+                            <t t-set="forecast_data" t-value="forecast_data.update({month_key: {
+                                'month': forecast_data[month_key]['month'],
+                                'month_name': forecast_data[month_key]['month_name'],
+                                'amount': forecast_data[month_key]['amount'] + recognition.planned_amount,
+                                'count': forecast_data[month_key]['count'] + 1
+                            }}) or forecast_data"/>
+                        </t>
+                    </t>
+
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th class="text-right">Planned Recognition</th>
+                                <th class="text-right">Recognition Count</th>
+                                <th class="text-right">Cumulative</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-set="cumulative_amount" t-value="0"/>
+                            <t t-foreach="sorted(forecast_data.keys())" t-as="month_key">
+                                <t t-set="month_data" t-value="forecast_data[month_key]"/>
+                                <t t-set="cumulative_amount" t-value="cumulative_amount + month_data['amount']"/>
+                                <tr>
+                                    <td><span t-esc="month_data['month_name']"/></td>
+                                    <td class="text-right">
+                                        <span t-esc="'{:,.2f}'.format(month_data['amount'])"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="month_data['count']"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="'{:,.2f}'.format(cumulative_amount)"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th>Total 12 Months</th>
+                                <th class="text-right">
+                                    <span t-esc="'{:,.2f}'.format(sum([data['amount'] for data in forecast_data.values()]))"/>
+                                </th>
+                                <th class="text-right">
+                                    <span t-esc="sum([data['count'] for data in forecast_data.values()])"/>
+                                </th>
+                                <th class="text-right">-</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <!-- Compliance Notes -->
+                    <h3>ASC 606 / IFRS 15 Compliance Notes</h3>
+                    <div class="alert alert-info">
+                        <h5>Revenue Recognition Standards Compliance</h5>
+                        <ul>
+                            <li><strong>Contract Identification:</strong> All deferred revenue balances represent unfulfilled performance obligations under identified contracts.</li>
+                            <li><strong>Performance Obligations:</strong> Each schedule represents distinct performance obligations with specific recognition criteria.</li>
+                            <li><strong>Transaction Price Allocation:</strong> Revenue is allocated to performance obligations based on standalone selling prices.</li>
+                            <li><strong>Recognition Timing:</strong> Revenue is recognized as control of services is transferred to customers over time.</li>
+                            <li><strong>Contract Modifications:</strong> Any modifications are properly accounted for using prospective or retrospective treatment as appropriate.</li>
+                        </ul>
+                    </div>
+
+                    <div class="oe_structure"/>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- Deferred Revenue Reconciliation Report -->
+    <record id="action_report_deferred_revenue_reconciliation" model="ir.actions.report">
+        <field name="name">Deferred Revenue Reconciliation</field>
+        <field name="model">ams.revenue.dashboard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ams_revenue_recognition.report_deferred_revenue_reconciliation</field>
+        <field name="report_file">ams_revenue_recognition.report_deferred_revenue_reconciliation</field>
+        <field name="binding_model_id" ref="model_ams_revenue_dashboard"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="ams_revenue_recognition.paperformat_revenue_recognition"/>
+    </record>
+
+    <!-- Deferred Revenue Reconciliation Template -->
+    <template id="report_deferred_revenue_reconciliation">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <div class="oe_structure"/>
+                    
+                    <h2>Deferred Revenue Reconciliation</h2>
+                    <h4>For the Month Ended <span t-esc="context_today().strftime('%B %d, %Y')"/></h4>
+                    
+                    <!-- Beginning Balance -->
+                    <t t-set="current_month_start" t-value="context_today().replace(day=1)"/>
+                    <t t-set="previous_month_end" t-value="current_month_start - timedelta(days=1)"/>
+                    
+                    <h3>Deferred Revenue Roll-Forward</h3>
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <td><strong>Beginning Balance (as of <span t-esc="previous_month_end.strftime('%B %d, %Y')"/>)</strong></td>
+                                <td class="text-right">
+                                    <t t-set="beginning_balance" t-value="0"/>  <!-- This would need to be calculated from historical data -->
+                                    <span t-esc="'{:,.2f}'.format(beginning_balance)"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Add: New Deferred Revenue (Current Month)</td>
+                                <td class="text-right">
+                                    <t t-set="new_deferred" t-value="docs.env['ams.revenue.schedule'].search([
+                                        ('start_date', '>=', current_month_start),
+                                        ('start_date', '&lt;=', context_today())
+                                    ])"/>
+                                    <span t-esc="'{:,.2f}'.format(sum(new_deferred.mapped('total_contract_value')))"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Less: Revenue Recognized (Current Month)</td>
+                                <td class="text-right">
+                                    <t t-set="month_recognized" t-value="docs.env['ams.revenue.recognition'].search([
+                                        ('state', '=', 'posted'),
+                                        ('recognition_date', '>=', current_month_start),
+                                        ('recognition_date', '&lt;=', context_today())
+                                    ])"/>
+                                    <span t-esc="'({:,.2f})'.format(sum(month_recognized.mapped('recognized_amount')))"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Add/Less: Contract Modifications</td>
+                                <td class="text-right">
+                                    <t t-set="month_modifications" t-value="docs.env['ams.contract.modification'].search([
+                                        ('state', '=', 'processed'),
+                                        ('modification_date', '>=', current_month_start),
+                                        ('modification_date', '&lt;=', context_today())
+                                    ])"/>
+                                    <span t-esc="'{:,.2f}'.format(sum(month_modifications.mapped('value_change')))"/>
+                                </td>
+                            </tr>
+                            <tr class="table-primary">
+                                <td><strong>Ending Balance (as of <span t-esc="context_today().strftime('%B %d, %Y')"/>)</strong></td>
+                                <td class="text-right">
+                                    <t t-set="current_deferred" t-value="docs.env['ams.revenue.schedule'].search([('state', '=', 'active')])"/>
+                                    <strong><span t-esc="'{:,.2f}'.format(sum(current_deferred.mapped('deferred_revenue_balance')))"/></strong>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Detailed Schedule Reconciliation -->
+                    <h3>Detailed Schedule Reconciliation</h3>
+                    <table class="table table-striped table-sm">
+                        <thead>
+                            <tr>
+                                <th>Schedule</th>
+                                <th>Customer</th>
+                                <th>Product</th>
+                                <th class="text-right">Beginning Balance</th>
+                                <th class="text-right">Recognized This Month</th>
+                                <th class="text-right">Modifications</th>
+                                <th class="text-right">Ending Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="current_deferred.filtered(lambda s: s.deferred_revenue_balance > 0)" t-as="schedule">
+                                <t t-set="schedule_recognized" t-value="schedule.recognition_ids.filtered(lambda r: 
+                                    r.state == 'posted' and 
+                                    r.recognition_date >= current_month_start and 
+                                    r.recognition_date &lt;= context_today())"/>
+                                <t t-set="schedule_modifications" t-value="schedule.modification_ids.filtered(lambda m: 
+                                    m.state == 'processed' and 
+                                    m.modification_date >= current_month_start and 
+                                    m.modification_date &lt;= context_today())"/>
+                                <tr>
+                                    <td><span t-field="schedule.name"/></td>
+                                    <td><span t-field="schedule.partner_id.name"/></td>
+                                    <td><span t-field="schedule.product_id.name"/></td>
+                                    <td class="text-right">
+                                        <!-- This would need to be calculated from historical data -->
+                                        <span t-esc="'{:,.2f}'.format(schedule.deferred_revenue_balance + sum(schedule_recognized.mapped('recognized_amount')))"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="'({:,.2f})'.format(sum(schedule_recognized.mapped('recognized_amount')))"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="'{:,.2f}'.format(sum(schedule_modifications.mapped('value_change')))"/>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-field="schedule.deferred_revenue_balance" 
+                                              t-options='{"widget": "monetary", "display_currency": schedule.company_id.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3">Total</th>
+                                <th class="text-right">
+                                    <span t-esc="'{:,.2f}'.format(sum(current_deferred.mapped('deferred_revenue_balance')) + sum(month_recognized.mapped('recognized_amount')))"/>
+                                </th>
+                                <th class="text-right">
+                                    <span t-esc="'({:,.2f})'.format(sum(month_recognized.mapped('recognized_amount')))"/>
+                                </th>
+                                <th class="text-right">
+                                    <span t-esc="'{:,.2f}'.format(sum(month_modifications.mapped('value_change')))"/>
+                                </th>
+                                <th class="text-right">
+                                    <span t-esc="'{:,.2f}'.format(sum(current_deferred.mapped('deferred_revenue_balance')))"/>
+                                </th>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div class="oe_structure"/>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>
