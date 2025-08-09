@@ -99,9 +99,6 @@
                                     <field name="scheduled_amount" sum="Total Scheduled"/>
                                     <field name="recognized_amount" sum="Total Recognized"/>
                                     <field name="state"/>
-                                    <button name="action_recognize_revenue" type="object" 
-                                            string="Recognize" class="btn-primary btn-sm"
-                                            invisible="state != 'pending'"/>
                                 </tree>
                             </field>
                         </page>
@@ -138,10 +135,6 @@
                 <field name="deferred_amount" sum="Deferred"/>
                 <field name="next_recognition_date"/>
                 <field name="state"/>
-                <button name="action_activate" type="object" string="Activate" 
-                        class="btn-primary btn-sm" invisible="state != 'draft'"/>
-                <button name="process_due_recognitions" type="object" string="Process" 
-                        class="btn-success btn-sm" invisible="state != 'active'"/>
             </tree>
         </field>
     </record>

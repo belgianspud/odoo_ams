@@ -82,9 +82,6 @@
                 <field name="recognized_amount" sum="Total Recognized"/>
                 <field name="state"/>
                 <field name="processed_date"/>
-                <button name="action_recognize_revenue" type="object" 
-                        string="Recognize" class="btn-primary btn-sm"
-                        invisible="state != 'pending'"/>
             </tree>
         </field>
     </record>

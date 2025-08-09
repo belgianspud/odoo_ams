@@ -87,12 +87,6 @@
                                 <field name="recognized_amount" sum="Recognized"/>
                                 <field name="deferred_amount" sum="Deferred"/>
                                 <field name="state"/>
-                                <button name="action_activate" type="object" 
-                                        string="Activate" class="btn-primary btn-sm"
-                                        invisible="state != 'draft'"/>
-                                <button name="process_due_recognitions" type="object" 
-                                        string="Process" class="btn-success btn-sm"
-                                        invisible="state != 'active'"/>
                             </tree>
                         </field>
                     </group>
