@@ -71,7 +71,7 @@ to provide professional revenue recognition for membership organizations.
         'demo/ams_revenue_recognition_demo.xml',
     ],
     'installable': True,
-    'application': False,
+    'application': True,
     'auto_install': False,
     'post_init_hook': 'post_init_hook',
 }
