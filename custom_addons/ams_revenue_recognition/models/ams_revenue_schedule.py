@@ -80,11 +80,6 @@ class AMSRevenueSchedule(models.Model):
         ('milestone', 'Milestone Based'),
     ], string='Recognition Method', default='straight_line', required=True)
     
-    recognition_date = fields.Date(
-        string='Recognition Date',
-        help='Temporary field for view compatibility'
-    )
-    
     # Date Configuration
     start_date = fields.Date(
         string='Recognition Start Date',
