@@ -44,27 +44,29 @@ to provide professional revenue recognition for membership organizations.
         'base',
         'account',
         'ams_base_accounting',
-        'ams_subscriptions',  # Now we can properly depend on this
+        'ams_subscriptions',
     ],
     'data': [
-        # Security
+        # Security - Load first
         'security/ams_revenue_recognition_security.xml',
         'security/ir.model.access.csv',
         
-        # Data files
+        # Data files - Load after security
         'data/ams_revenue_recognition_cron.xml',
         
-        # Views - Load in proper order
-        'views/ams_revenue_schedule_views.xml',
-        'views/ams_revenue_recognition_views.xml',
-        'views/product_template_views.xml',  # Extend product forms
-        'views/ams_subscription_views.xml',   # Extend subscription forms  
-        'views/account_move_views.xml',       # Extend invoice forms
+        # Core model views - Load in dependency order
+        'views/ams_revenue_recognition_views.xml',  # Load recognition views first
+        'views/ams_revenue_schedule_views.xml',     # Then schedule views
         
-        # Menu and actions
+        # Extension views - Load after core views
+        'views/product_template_views.xml',         # Extend product forms
+        'views/ams_subscription_views.xml',         # Extend subscription forms  
+        'views/account_move_views.xml',             # Extend invoice forms
+        
+        # Menu and actions - Load last
         'views/ams_revenue_recognition_menu.xml',
         
-        # Reports
+        # Reports - Load after all views
         'reports/ams_revenue_reports.xml',
     ],
     'demo': [

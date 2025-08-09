@@ -1,6 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     
+    <!-- Revenue Recognition Lines Tree View (separate view) -->
+    <record id="view_ams_revenue_recognition_tree_schedule" model="ir.ui.view">
+        <field name="name">ams.revenue.recognition.tree.schedule</field>
+        <field name="model">ams.revenue.recognition</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'recognized'" 
+                  decoration-warning="state == 'pending'"
+                  decoration-muted="state == 'cancelled'"
+                  decoration-danger="state == 'reversed'">
+                <field name="recognition_date"/>
+                <field name="description"/>
+                <field name="scheduled_amount" sum="Total Scheduled"/>
+                <field name="recognized_amount" sum="Total Recognized"/>
+                <field name="state"/>
+                <button name="action_recognize_revenue" type="object" 
+                        string="Recognize" class="btn-primary btn-sm"
+                        invisible="state != 'pending'"/>
+            </tree>
+        </field>
+    </record>
+    
     <!-- Revenue Schedule Form View -->
     <record id="view_ams_revenue_schedule_form" model="ir.ui.view">
         <field name="name">ams.revenue.schedule.form</field>
@@ -65,9 +86,14 @@
                     
                     <notebook>
                         <page string="Recognition Lines">
-                            <field name="recognition_line_ids">
+                            <field name="recognition_line_ids" 
+                                   context="{'default_schedule_id': active_id}"
+                                   mode="tree">
                                 <tree decoration-success="state == 'recognized'" 
-                                      decoration-warning="state == 'pending'">
+                                      decoration-warning="state == 'pending'"
+                                      decoration-muted="state == 'cancelled'"
+                                      decoration-danger="state == 'reversed'"
+                                      editable="false">
                                     <field name="recognition_date"/>
                                     <field name="description"/>
                                     <field name="scheduled_amount" sum="Total Scheduled"/>
