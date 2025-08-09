@@ -89,15 +89,11 @@
                             <field name="recognition_line_ids" 
                                    context="{'default_schedule_id': active_id}"
                                    mode="tree">
-                                <tree decoration-success="state == 'recognized'" 
-                                      decoration-warning="state == 'pending'"
-                                      decoration-muted="state == 'cancelled'"
-                                      decoration-danger="state == 'reversed'"
-                                      editable="false">
+                                <tree editable="false">
                                     <field name="recognition_date"/>
                                     <field name="description"/>
-                                    <field name="scheduled_amount" sum="Total Scheduled"/>
-                                    <field name="recognized_amount" sum="Total Recognized"/>
+                                    <field name="scheduled_amount"/>
+                                    <field name="recognized_amount"/>
                                     <field name="state"/>
                                 </tree>
                             </field>
@@ -121,18 +117,16 @@
         <field name="name">ams.revenue.schedule.tree</field>
         <field name="model">ams.revenue.schedule</field>
         <field name="arch" type="xml">
-            <tree decoration-info="state == 'draft'" 
-                  decoration-success="state == 'completed'" 
-                  decoration-warning="state == 'active'">
+            <tree>
                 <field name="display_name"/>
                 <field name="partner_id"/>
                 <field name="product_id"/>
                 <field name="recognition_method"/>
                 <field name="start_date"/>
                 <field name="end_date"/>
-                <field name="total_amount" sum="Total Amount"/>
-                <field name="recognized_amount" sum="Recognized"/>
-                <field name="deferred_amount" sum="Deferred"/>
+                <field name="total_amount"/>
+                <field name="recognized_amount"/>
+                <field name="deferred_amount"/>
                 <field name="next_recognition_date"/>
                 <field name="state"/>
             </tree>
