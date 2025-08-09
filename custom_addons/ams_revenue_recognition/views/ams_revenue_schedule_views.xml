@@ -6,10 +6,10 @@
         <field name="name">ams.revenue.recognition.tree.schedule</field>
         <field name="model">ams.revenue.recognition</field>
         <field name="arch" type="xml">
-            <tree decoration-success="state == 'recognized'" 
-                  decoration-warning="state == 'pending'"
-                  decoration-muted="state == 'cancelled'"
-                  decoration-danger="state == 'reversed'">
+            <tree decoration-success="state == &quot;recognized&quot;" 
+                  decoration-warning="state == &quot;pending&quot;"
+                  decoration-muted="state == &quot;cancelled&quot;"
+                  decoration-danger="state == &quot;reversed&quot;">
                 <field name="recognition_date"/>
                 <field name="description"/>
                 <field name="scheduled_amount" sum="Total Scheduled"/>
@@ -17,7 +17,7 @@
                 <field name="state"/>
                 <button name="action_recognize_revenue" type="object" 
                         string="Recognize" class="btn-primary btn-sm"
-                        invisible="state != 'pending'"/>
+                        attrs="{'invisible': [('state', '!=', 'pending')]}"/>
             </tree>
         </field>
     </record>
@@ -30,12 +30,12 @@
             <form>
                 <header>
                     <button name="action_activate" type="object" string="Activate" 
-                            class="oe_highlight" invisible="state != 'draft'"/>
+                            class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                     <button name="action_cancel" type="object" string="Cancel" 
                             confirm="Are you sure you want to cancel this schedule?"
-                            invisible="state in ['cancelled', 'completed']"/>
+                            attrs="{'invisible': [('state', 'in', ['cancelled', 'completed'])]}"/>
                     <button name="process_due_recognitions" type="object" string="Process Due Recognition" 
-                            class="oe_highlight" invisible="state != 'active'"/>
+                            class="oe_highlight" attrs="{'invisible': [('state', '!=', 'active')]}"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,active,completed"/>
                 </header>
                 <sheet>
@@ -117,7 +117,10 @@
         <field name="name">ams.revenue.schedule.tree</field>
         <field name="model">ams.revenue.schedule</field>
         <field name="arch" type="xml">
-            <tree>
+            <tree decoration-success="state == &quot;completed&quot;" 
+                  decoration-warning="state == &quot;active&quot;" 
+                  decoration-info="state == &quot;draft&quot;"
+                  decoration-muted="state == &quot;cancelled&quot;">
                 <field name="display_name"/>
                 <field name="partner_id"/>
                 <field name="product_id"/>

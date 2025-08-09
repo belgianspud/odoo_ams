@@ -9,19 +9,19 @@
         <field name="arch" type="xml">
             <!-- Add Revenue Recognition tab after existing tabs -->
             <xpath expr="//notebook" position="inside">
-                <page string="Revenue Recognition" invisible="recognition_status == 'none'">
-                    <div class="alert alert-success" role="alert" invisible="recognition_status != 'completed'">
+                <page string="Revenue Recognition" attrs="{'invisible': [('recognition_status', '=', 'none')]}">
+                    <div class="alert alert-success" role="alert" attrs="{'invisible': [('recognition_status', '!=', 'completed')]}">
                         <h6><i class="fa fa-check-circle"/> Revenue Recognition Completed</h6>
                         <p>All revenue for this subscription has been recognized.</p>
                     </div>
                     
-                    <div class="alert alert-info" role="alert" invisible="recognition_status != 'active'">
+                    <div class="alert alert-info" role="alert" attrs="{'invisible': [('recognition_status', '!=', 'active')]}">
                         <h6><i class="fa fa-play-circle"/> Revenue Recognition Active</h6>
                         <p>Revenue recognition is active with <field name="active_schedules_count" readonly="1"/> schedule(s).</p>
                         <p>Next recognition date: <field name="next_recognition_date" readonly="1"/></p>
                     </div>
                     
-                    <div class="alert alert-warning" role="alert" invisible="recognition_status != 'pending'">
+                    <div class="alert alert-warning" role="alert" attrs="{'invisible': [('recognition_status', '!=', 'pending')]}">
                         <h6><i class="fa fa-clock-o"/> Revenue Recognition Pending</h6>
                         <p>Revenue recognition schedules need to be created or activated.</p>
                         <button name="action_create_recognition_schedules" type="object" 
@@ -46,12 +46,12 @@
                     <div class="oe_button_box" name="revenue_recognition_buttons">
                         <button name="action_view_revenue_schedules" type="object" 
                                 class="oe_stat_button" icon="fa-calendar-o"
-                                invisible="active_schedules_count == 0">
+                                attrs="{'invisible': [('active_schedules_count', '=', 0)]}">
                             <field name="active_schedules_count" widget="statinfo" string="Schedules"/>
                         </button>
                         <button name="action_process_recognition" type="object" 
                                 class="oe_stat_button" icon="fa-play"
-                                invisible="recognition_status != 'active'">
+                                attrs="{'invisible': [('recognition_status', '!=', 'active')]}">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Process</span>
                                 <span class="o_stat_text">Recognition</span>
@@ -61,9 +61,9 @@
                     
                     <group string="Revenue Recognition Schedules">
                         <field name="revenue_schedule_ids" nolabel="1">
-                            <tree decoration-success="state == 'completed'" 
-                                  decoration-warning="state == 'active'" 
-                                  decoration-info="state == 'draft'">
+                            <tree decoration-success="state == &quot;completed&quot;" 
+                                  decoration-warning="state == &quot;active&quot;" 
+                                  decoration-info="state == &quot;draft&quot;">
                                 <field name="display_name"/>
                                 <field name="recognition_method"/>
                                 <field name="start_date"/>
