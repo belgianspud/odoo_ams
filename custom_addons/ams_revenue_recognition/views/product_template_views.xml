@@ -7,8 +7,8 @@
         <field name="model">product.template</field>
         <field name="inherit_id" ref="ams_base_accounting.view_product_template_form_ams_accounting"/>
         <field name="arch" type="xml">
-            <!-- Add Revenue Recognition tab after AMS Accounting tab -->
-            <xpath expr="//page[@string='AMS Accounting']" position="after">
+            <!-- Add Revenue Recognition tab after existing tabs -->
+            <xpath expr="//notebook" position="inside">
                 <page string="Revenue Recognition" invisible="not is_subscription_product">
                     <div class="alert alert-info" role="alert" invisible="revenue_recognition_method == 'immediate'">
                         <h6><i class="fa fa-info-circle"/> Revenue Recognition Active</h6>
@@ -55,9 +55,9 @@
         </field>
     </record>
 
-    <!-- Extend Product Template Tree View -->
-    <record id="view_product_template_tree_revenue_recognition" model="ir.ui.view">
-        <field name="name">product.template.tree.revenue.recognition</field>
+    <!-- Extend Product Template List View -->
+    <record id="view_product_template_list_revenue_recognition" model="ir.ui.view">
+        <field name="name">product.template.list.revenue.recognition</field>
         <field name="model">product.template</field>
         <field name="inherit_id" ref="ams_base_accounting.view_product_template_tree_ams_accounting"/>
         <field name="arch" type="xml">
@@ -98,7 +98,7 @@
     <record id="action_product_revenue_recognition" model="ir.actions.act_window">
         <field name="name">Products - Revenue Recognition</field>
         <field name="res_model">product.template</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="domain">[('is_subscription_product', '=', True), ('use_ams_accounting', '=', True)]</field>
         <field name="context">{
             'search_default_filter_deferred_recognition': 1,
