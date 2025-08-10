@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     
-    <!-- Revenue Recognition Lines Tree View (separate view) -->
-    <record id="view_ams_revenue_recognition_tree_schedule" model="ir.ui.view">
-        <field name="name">ams.revenue.recognition.tree.schedule</field>
+    <!-- Revenue Recognition Lines List View (separate view) -->
+    <record id="view_ams_revenue_recognition_list_schedule" model="ir.ui.view">
+        <field name="name">ams.revenue.recognition.list.schedule</field>
         <field name="model">ams.revenue.recognition</field>
         <field name="arch" type="xml">
-            <tree decoration-success="state == &quot;recognized&quot;" 
-                  decoration-warning="state == &quot;pending&quot;"
-                  decoration-muted="state == &quot;cancelled&quot;"
-                  decoration-danger="state == &quot;reversed&quot;">
+            <list>
                 <field name="recognition_date"/>
                 <field name="description"/>
                 <field name="scheduled_amount" sum="Total Scheduled"/>
@@ -17,8 +14,8 @@
                 <field name="state"/>
                 <button name="action_recognize_revenue" type="object" 
                         string="Recognize" class="btn-primary btn-sm"
-                        attrs="{'invisible': [('state', '!=', 'pending')]}"/>
-            </tree>
+                        invisible="state != 'pending'"/>
+            </list>
         </field>
     </record>
     
@@ -30,12 +27,12 @@
             <form>
                 <header>
                     <button name="action_activate" type="object" string="Activate" 
-                            class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                            class="oe_highlight" invisible="state != 'draft'"/>
                     <button name="action_cancel" type="object" string="Cancel" 
                             confirm="Are you sure you want to cancel this schedule?"
-                            attrs="{'invisible': [('state', 'in', ['cancelled', 'completed'])]}"/>
+                            invisible="state in ['cancelled', 'completed']"/>
                     <button name="process_due_recognitions" type="object" string="Process Due Recognition" 
-                            class="oe_highlight" attrs="{'invisible': [('state', '!=', 'active')]}"/>
+                            class="oe_highlight" invisible="state != 'active'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,active,completed"/>
                 </header>
                 <sheet>
@@ -86,16 +83,14 @@
                     
                     <notebook>
                         <page string="Recognition Lines">
-                            <field name="recognition_line_ids" 
-                                   context="{'default_schedule_id': active_id}"
-                                   mode="tree">
-                                <tree editable="false">
+                            <field name="recognition_line_ids">
+                                <list>
                                     <field name="recognition_date"/>
                                     <field name="description"/>
                                     <field name="scheduled_amount"/>
                                     <field name="recognized_amount"/>
                                     <field name="state"/>
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         <page string="Details" groups="ams_revenue_recognition.group_ams_revenue_recognition_manager">
@@ -112,15 +107,12 @@
         </field>
     </record>
     
-    <!-- Revenue Schedule Tree View -->
-    <record id="view_ams_revenue_schedule_tree" model="ir.ui.view">
-        <field name="name">ams.revenue.schedule.tree</field>
+    <!-- Revenue Schedule List View -->
+    <record id="view_ams_revenue_schedule_list" model="ir.ui.view">
+        <field name="name">ams.revenue.schedule.list</field>
         <field name="model">ams.revenue.schedule</field>
         <field name="arch" type="xml">
-            <tree decoration-success="state == &quot;completed&quot;" 
-                  decoration-warning="state == &quot;active&quot;" 
-                  decoration-info="state == &quot;draft&quot;"
-                  decoration-muted="state == &quot;cancelled&quot;">
+            <list>
                 <field name="display_name"/>
                 <field name="partner_id"/>
                 <field name="product_id"/>
@@ -132,7 +124,7 @@
                 <field name="deferred_amount"/>
                 <field name="next_recognition_date"/>
                 <field name="state"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -255,7 +247,7 @@
     <record id="action_ams_revenue_schedule" model="ir.actions.act_window">
         <field name="name">Revenue Recognition Schedules</field>
         <field name="res_model">ams.revenue.schedule</field>
-        <field name="view_mode">kanban,tree,form,calendar</field>
+        <field name="view_mode">kanban,list,form,calendar</field>
         <field name="context">{'search_default_filter_active': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">

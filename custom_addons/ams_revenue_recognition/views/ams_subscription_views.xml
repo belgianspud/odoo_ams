@@ -61,9 +61,7 @@
                     
                     <group string="Revenue Recognition Schedules">
                         <field name="revenue_schedule_ids" nolabel="1">
-                            <tree decoration-success="state == &quot;completed&quot;" 
-                                  decoration-warning="state == &quot;active&quot;" 
-                                  decoration-info="state == &quot;draft&quot;">
+                            <list>
                                 <field name="display_name"/>
                                 <field name="recognition_method"/>
                                 <field name="start_date"/>
@@ -72,7 +70,7 @@
                                 <field name="recognized_amount" sum="Recognized"/>
                                 <field name="deferred_amount" sum="Deferred"/>
                                 <field name="state"/>
-                            </tree>
+                            </list>
                         </field>
                     </group>
                 </page>
@@ -125,7 +123,7 @@
     <record id="action_subscription_revenue_recognition_dashboard" model="ir.actions.act_window">
         <field name="name">Subscriptions - Revenue Recognition</field>
         <field name="res_model">ams.subscription</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="domain">[('recognition_status', '!=', 'none')]</field>
         <field name="context">{
             'search_default_filter_recognition_active': 1,

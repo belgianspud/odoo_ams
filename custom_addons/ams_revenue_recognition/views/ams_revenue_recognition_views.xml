@@ -1,7 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    
-    <!-- Revenue Recognition Form View -->
+    <!-- Monthly Revenue Recognition Report Action -->
+    <record id="action_monthly_revenue_recognition_report" model="ir.actions.act_window">
+        <field name="name">Monthly Revenue Recognition Report</field>
+        <field name="res_model">ams.revenue.recognition</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="domain">[('state', '=', 'recognized')]</field>
+        <field name="context">{
+            'search_default_group_by_recognition_month': 1,
+            'search_default_filter_recognized': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Monthly Revenue Recognition Report
+            </p>
+            <p>
+                Analyze recognized revenue by month to understand revenue patterns.
+            </p>
+        </field>
+    </record>
+
+    <!-- Deferred Revenue Report Action -->
+    <record id="action_deferred_revenue_report" model="ir.actions.act_window">
+        <field name="name">Deferred Revenue Report</field>
+        <field name="res_model">ams.revenue.schedule</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="domain">[('state', '=', 'active'), ('deferred_amount', '>', 0)]</field>
+        <field name="context">{
+            'search_default_group_by_product': 1,
+            'search_default_filter_active': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Deferred Revenue Report
+            </p>
+            <p>
+                Monitor deferred revenue balances by product and customer.
+            </p>
+        </field>
+    </record>    <!-- Revenue Recognition Form View -->
     <record id="view_ams_revenue_recognition_form" model="ir.ui.view">
         <field name="name">ams.revenue.recognition.form</field>
         <field name="model">ams.revenue.recognition</field>
@@ -9,17 +46,17 @@
             <form>
                 <header>
                     <button name="action_recognize_revenue" type="object" string="Recognize Revenue" 
-                            class="oe_highlight" attrs="{'invisible': [('state', '!=', 'pending')]}"/>
+                            class="oe_highlight" invisible="state != 'pending'"/>
                     <button name="action_reverse_recognition" type="object" string="Reverse Recognition" 
                             confirm="Are you sure you want to reverse this recognition?"
-                            attrs="{'invisible': [('state', '!=', 'recognized')]}"/>
+                            invisible="state != 'recognized'"/>
                     <field name="state" widget="statusbar" statusbar_visible="pending,recognized"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_journal_entry" type="object" 
                                 class="oe_stat_button" icon="fa-book"
-                                attrs="{'invisible': [('journal_entry_id', '=', False)]}">
+                                invisible="not journal_entry_id">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Journal</span>
                                 <span class="o_stat_text">Entry</span>
@@ -65,15 +102,12 @@
         </field>
     </record>
     
-    <!-- Revenue Recognition Tree View -->
-    <record id="view_ams_revenue_recognition_tree" model="ir.ui.view">
-        <field name="name">ams.revenue.recognition.tree</field>
+    <!-- Revenue Recognition List View (formerly tree) -->
+    <record id="view_ams_revenue_recognition_list" model="ir.ui.view">
+        <field name="name">ams.revenue.recognition.list</field>
         <field name="model">ams.revenue.recognition</field>
         <field name="arch" type="xml">
-            <tree decoration-success="state == &quot;recognized&quot;" 
-                  decoration-warning="state == &quot;pending&quot;" 
-                  decoration-muted="state == &quot;cancelled&quot;"
-                  decoration-danger="state == &quot;reversed&quot;">
+            <list>
                 <field name="recognition_date"/>
                 <field name="description"/>
                 <field name="partner_id"/>
@@ -82,7 +116,7 @@
                 <field name="recognized_amount" sum="Total Recognized"/>
                 <field name="state"/>
                 <field name="processed_date"/>
-            </tree>
+            </list>
         </field>
     </record>
     
@@ -179,7 +213,7 @@
     <record id="action_ams_revenue_recognition" model="ir.actions.act_window">
         <field name="name">Revenue Recognition Entries</field>
         <field name="res_model">ams.revenue.recognition</field>
-        <field name="view_mode">tree,form,calendar,pivot,graph</field>
+        <field name="view_mode">list,form,calendar,pivot,graph</field>
         <field name="context">{'search_default_filter_pending': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -196,7 +230,7 @@
     <record id="action_ams_revenue_recognition_due" model="ir.actions.act_window">
         <field name="name">Revenue Recognition Due</field>
         <field name="res_model">ams.revenue.recognition</field>
-        <field name="view_mode">tree,form,calendar</field>
+        <field name="view_mode">list,form,calendar</field>
         <field name="domain">[('state', '=', 'pending'), ('recognition_date', '&lt;=', context_today().strftime('%Y-%m-%d'))]</field>
         <field name="context">{'search_default_filter_pending': 1}</field>
         <field name="help" type="html">
@@ -213,7 +247,7 @@
     <record id="action_ams_revenue_recognition_dashboard" model="ir.actions.act_window">
         <field name="name">Revenue Recognition Dashboard</field>
         <field name="res_model">ams.revenue.recognition</field>
-        <field name="view_mode">graph,pivot,tree</field>
+        <field name="view_mode">graph,pivot,list</field>
         <field name="context">{
             'search_default_filter_recognized': 1,
             'search_default_group_by_recognition_month': 1

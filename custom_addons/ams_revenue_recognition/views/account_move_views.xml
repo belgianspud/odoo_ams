@@ -10,7 +10,7 @@
             <!-- Add Revenue Recognition fields after AMS fields -->
             <xpath expr="//field[@name='has_ams_products']" position="after">
                 <field name="has_revenue_recognition" invisible="1"/>
-                <field name="revenue_recognition_status" attrs="{'invisible': [('has_revenue_recognition', '=', False)]}"/>
+                <field name="revenue_recognition_status" invisible="not has_revenue_recognition"/>
             </xpath>
         </field>
     </record>
@@ -75,9 +75,7 @@
                     
                     <group string="Revenue Recognition Schedules">
                         <field name="revenue_schedule_ids" nolabel="1">
-                            <tree decoration-success="state == &quot;completed&quot;" 
-                                  decoration-warning="state == &quot;active&quot;" 
-                                  decoration-info="state == &quot;draft&quot;">
+                            <list>
                                 <field name="display_name"/>
                                 <field name="product_id"/>
                                 <field name="recognition_method"/>
@@ -87,7 +85,7 @@
                                 <field name="recognized_amount" sum="Recognized"/>
                                 <field name="deferred_amount" sum="Deferred"/>
                                 <field name="state"/>
-                            </tree>
+                            </list>
                         </field>
                     </group>
                 </page>
@@ -145,7 +143,7 @@
             <xpath expr="//field[@name='is_ams_line']" position="after">
                 <field name="has_revenue_recognition" invisible="1"/>
                 <field name="needs_revenue_recognition" invisible="1"/>
-                <field name="revenue_schedule_id" attrs="{'invisible': [('has_revenue_recognition', '=', False)]}"/>
+                <field name="revenue_schedule_id" invisible="not has_revenue_recognition"/>
             </xpath>
         </field>
     </record>
@@ -167,7 +165,7 @@
     <record id="action_invoice_revenue_recognition" model="ir.actions.act_window">
         <field name="name">Invoices - Revenue Recognition</field>
         <field name="res_model">account.move</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="domain">[('move_type', '=', 'out_invoice'), ('has_revenue_recognition', '=', True)]</field>
         <field name="context">{
             'default_move_type': 'out_invoice',
@@ -189,7 +187,7 @@
     <record id="action_invoice_lines_need_revenue_recognition" model="ir.actions.act_window">
         <field name="name">Invoice Lines - Need Revenue Recognition</field>
         <field name="res_model">account.move.line</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="domain">[('needs_revenue_recognition', '=', True)]</field>
         <field name="context">{'search_default_needs_revenue_recognition': 1}</field>
         <field name="help" type="html">
