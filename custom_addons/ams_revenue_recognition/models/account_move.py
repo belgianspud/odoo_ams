@@ -24,14 +24,18 @@ class AccountMove(models.Model):
     total_deferred_revenue = fields.Monetary(
         string='Total Deferred Revenue',
         compute='_compute_revenue_recognition_amounts',
+        search='_search_total_deferred_revenue',  # ADDED: Search method
         currency_field='currency_id',
+        store=True,
         help='Total deferred revenue from this invoice'
     )
     
     total_recognized_revenue = fields.Monetary(
         string='Total Recognized Revenue',
         compute='_compute_revenue_recognition_amounts',
-        currency_field='currency_id',
+        search='_search_total_recognized_revenue',  # ADDED: Search method
+        currency_field='currency_id', 
+        store=True,
         help='Total recognized revenue from this invoice'
     )
     
@@ -44,6 +48,23 @@ class AccountMove(models.Model):
     compute='_compute_revenue_recognition_status',
     store=True,
     help='Overall revenue recognition status for this invoice')
+
+    # ADDED: Search methods for computed fields
+    def _search_total_deferred_revenue(self, operator, value):
+        """Search method for total_deferred_revenue computed field"""
+        # Find schedules with deferred revenue matching the criteria
+        schedules = self.env['ams.revenue.schedule'].search([
+            ('deferred_amount', operator, value)
+        ])
+        return [('id', 'in', schedules.mapped('invoice_id').ids)]
+    
+    def _search_total_recognized_revenue(self, operator, value):
+        """Search method for total_recognized_revenue computed field"""
+        # Find schedules with recognized revenue matching the criteria
+        schedules = self.env['ams.revenue.schedule'].search([
+            ('recognized_amount', operator, value)
+        ])
+        return [('id', 'in', schedules.mapped('invoice_id').ids)]
 
     @api.depends('revenue_schedule_ids')
     def _compute_revenue_recognition_status(self):
@@ -123,9 +144,16 @@ class AccountMove(models.Model):
                 continue  # Schedule already exists
             
             # Create revenue recognition schedule
-            schedule = product_template.create_recognition_schedule(line)
-            if schedule:
-                created_schedules |= schedule
+            try:
+                schedule = product_template.create_recognition_schedule(line)
+                if schedule:
+                    created_schedules |= schedule
+            except Exception as e:
+                # Log error but continue with other lines
+                self.message_post(
+                    body=_('Error creating revenue recognition schedule for line %s: %s') % (line.id, str(e)),
+                    message_type='comment'
+                )
         
         # Log creation of schedules
         if created_schedules:
@@ -193,7 +221,7 @@ class AccountMove(models.Model):
         self.ensure_one()
         
         return {
-            'name': f'Revenue Recognition - {self.name}',
+            'name': _('Revenue Recognition - %s') % self.name,
             'type': 'ir.actions.act_window',
             'res_model': 'ams.revenue.schedule',
             'view_mode': 'list,form',
@@ -209,19 +237,37 @@ class AccountMove(models.Model):
         self.ensure_one()
         
         processed_count = 0
+        errors = []
+        
         for schedule in self.revenue_schedule_ids.filtered(lambda s: s.state == 'active'):
-            initial_recognized = schedule.recognized_amount
-            schedule.process_due_recognitions()
-            
-            if schedule.recognized_amount > initial_recognized:
-                processed_count += 1
+            try:
+                initial_recognized = schedule.recognized_amount
+                schedule.process_due_recognitions()
+                
+                if schedule.recognized_amount > initial_recognized:
+                    processed_count += 1
+            except Exception as e:
+                errors.append(_('Schedule %s: %s') % (schedule.id, str(e)))
+        
+        # Prepare message
+        if processed_count > 0:
+            message = _('Processed revenue recognition for %d schedule(s)') % processed_count
+            if errors:
+                message += _('\nErrors: %s') % ', '.join(errors)
+            message_type = 'success'
+        elif errors:
+            message = _('Errors processing recognition: %s') % ', '.join(errors)
+            message_type = 'warning'
+        else:
+            message = 'No revenue recognition entries were due for processing'
+            message_type = 'info'
         
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'message': f'Processed revenue recognition for {processed_count} schedule(s)',
-                'type': 'success',
+                'message': message,
+                'type': message_type,
             }
         }
     
@@ -251,6 +297,86 @@ class AccountMove(models.Model):
                 }
                 for schedule in self.revenue_schedule_ids
             ]
+        }
+
+    # ADDED: Bulk processing methods for better performance
+    @api.model
+    def process_invoices_revenue_recognition(self, invoice_ids=None, cutoff_date=None):
+        """Bulk process revenue recognition for multiple invoices"""
+        if not cutoff_date:
+            cutoff_date = fields.Date.today()
+        
+        if invoice_ids:
+            invoices = self.browse(invoice_ids)
+        else:
+            # Find invoices with active revenue recognition
+            invoices = self.search([
+                ('revenue_recognition_status', '=', 'active'),
+                ('state', '=', 'posted')
+            ])
+        
+        processed_invoices = 0
+        total_recognitions = 0
+        errors = []
+        
+        for invoice in invoices:
+            try:
+                initial_total = invoice.total_recognized_revenue
+                invoice.action_process_revenue_recognition()
+                
+                # Check if anything was processed
+                if invoice.total_recognized_revenue > initial_total:
+                    processed_invoices += 1
+                    total_recognitions += 1
+                    
+            except Exception as e:
+                errors.append(_('Invoice %s: %s') % (invoice.name, str(e)))
+        
+        return {
+            'processed_invoices': processed_invoices,
+            'total_recognitions': total_recognitions,
+            'total_invoices_checked': len(invoices),
+            'errors': errors
+        }
+    
+    @api.model
+    def get_revenue_recognition_dashboard_data(self, date_from=None, date_to=None):
+        """Get dashboard data for revenue recognition analysis"""
+        if not date_from:
+            date_from = fields.Date.today().replace(day=1)  # First day of current month
+        if not date_to:
+            date_to = fields.Date.today()
+        
+        domain = [
+            ('move_type', '=', 'out_invoice'),
+            ('has_revenue_recognition', '=', True),
+            ('date', '>=', date_from),
+            ('date', '<=', date_to)
+        ]
+        
+        invoices = self.search(domain)
+        
+        # Aggregate data
+        total_invoices = len(invoices)
+        total_invoice_amount = sum(invoices.mapped('amount_total'))
+        total_deferred = sum(invoices.mapped('total_deferred_revenue'))
+        total_recognized = sum(invoices.mapped('total_recognized_revenue'))
+        
+        # Status breakdown
+        status_breakdown = {}
+        for status in ['none', 'pending', 'active', 'completed']:
+            count = len(invoices.filtered(lambda i: i.revenue_recognition_status == status))
+            status_breakdown[status] = count
+        
+        return {
+            'date_from': date_from,
+            'date_to': date_to,
+            'total_invoices': total_invoices,
+            'total_invoice_amount': total_invoice_amount,
+            'total_deferred_revenue': total_deferred,
+            'total_recognized_revenue': total_recognized,
+            'status_breakdown': status_breakdown,
+            'recognition_percentage': (total_recognized / total_invoice_amount * 100) if total_invoice_amount > 0 else 0,
         }
 
 

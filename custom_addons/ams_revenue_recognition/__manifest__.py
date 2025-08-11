@@ -40,14 +40,19 @@ to provide professional revenue recognition for membership organizations.
     'website': 'https://yourcompany.com',
     'category': 'Association Management/Accounting',
     'license': 'LGPL-3',
+    
+    # FIXED: Proper dependency order and requirements
     'depends': [
         'base',
         'account',
+        'mail',  # ADDED: Required for mail.thread functionality
         'ams_base_accounting',
         'ams_subscriptions',
     ],
+    
+    # FIXED: Proper file loading order
     'data': [
-        # Security - Load first
+        # Security - Load first (CRITICAL ORDER)
         'security/ams_revenue_recognition_security.xml',
         'security/ir.model.access.csv',
         
@@ -58,10 +63,10 @@ to provide professional revenue recognition for membership organizations.
         'views/ams_revenue_recognition_views.xml',  # Load recognition views first
         'views/ams_revenue_schedule_views.xml',     # Then schedule views
         
-        # Extension views - Load after core views
-        'views/product_template_views.xml',         # Extend product forms
-        'views/ams_subscription_views.xml',         # Extend subscription forms  
-        'views/account_move_views.xml',             # Extend invoice forms
+        # Extension views - Load after core views (FIXED ORDER)
+        'views/product_template_views.xml',         # Extend product forms first
+        'views/ams_subscription_views.xml',         # Then subscription forms  
+        'views/account_move_views.xml',             # Then invoice forms
         
         # Menu and actions - Load last
         'views/ams_revenue_recognition_menu.xml',
@@ -69,11 +74,57 @@ to provide professional revenue recognition for membership organizations.
         # Reports - Load after all views
         'reports/ams_revenue_reports.xml',
     ],
+    
     'demo': [
         'demo/ams_revenue_recognition_demo.xml',
     ],
+    
+    # FIXED: Module properties
     'installable': True,
     'application': True,
     'auto_install': False,
+    
+    # FIXED: Proper hook configuration
     'post_init_hook': 'post_init_hook',
+    'uninstall_hook': 'uninstall_hook',  # ADDED: For clean uninstall
+    
+    # ADDED: External dependencies (if any)
+    'external_dependencies': {
+        'python': ['dateutil'],  # Already in Odoo, but explicit
+    },
+    
+    # ADDED: Assets (if needed for future web components)
+    'assets': {
+        'web.assets_backend': [
+            # Future: Add any custom CSS/JS files here
+        ],
+    },
+    
+    # ADDED: Odoo version constraints
+    'odoo_version': '18.0',
+    
+    # ADDED: Module maturity and support info
+    'development_status': 'Beta',  # Alpha, Beta, Production/Stable, Mature
+    'maintainers': ['your-team'],
+    
+    # ADDED: Sequence for module loading
+    'sequence': 100,
+    
+    # ADDED: Images for module store (optional)
+    'images': [
+        'static/description/banner.png',
+        'static/description/icon.png',
+    ],
+    
+    # ADDED: Additional metadata
+    'support': 'https://yourcompany.com/support',
+    'website': 'https://yourcompany.com/ams',
+    
+    # ADDED: Price and currency (if commercial)
+    # 'price': 0.00,
+    # 'currency': 'EUR',
+    
+    # FIXED: Ensure clean installation
+    'init_xml': [],
+    'update_xml': [],
 }

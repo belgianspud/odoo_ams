@@ -9,6 +9,8 @@ class AMSRevenueRecognition(models.Model):
     _description = 'AMS Revenue Recognition Entry'
     _order = 'recognition_date desc, id desc'
     _rec_name = 'description'
+    # FIXED: Add mail.thread for tracking functionality
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     # Basic Information
     description = fields.Char(
@@ -94,7 +96,7 @@ class AMSRevenueRecognition(models.Model):
         help='Journal entry created for this recognition'
     )
     
-    # State and Processing
+    # FIXED: State field with proper tracking (now that we inherit mail.thread)
     state = fields.Selection([
         ('pending', 'Pending'),
         ('recognized', 'Recognized'),
@@ -140,6 +142,13 @@ class AMSRevenueRecognition(models.Model):
             if recognition.scheduled_amount <= 0:
                 raise ValidationError(_('Scheduled amount must be greater than zero'))
     
+    @api.constrains('recognized_amount', 'scheduled_amount')
+    def _check_recognized_amount(self):
+        """Validate recognized amount"""
+        for recognition in self:
+            if recognition.recognized_amount and recognition.recognized_amount > recognition.scheduled_amount:
+                raise ValidationError(_('Recognized amount cannot exceed scheduled amount'))
+    
     @api.constrains('recognition_date')
     def _check_recognition_date(self):
         """Validate recognition date"""
@@ -178,6 +187,12 @@ class AMSRevenueRecognition(models.Model):
                 'processed_date': fields.Datetime.now(),
                 'processed_by': self.env.user.id,
             })
+            
+            # Log message using mail.thread functionality
+            recognition.message_post(
+                body=_('Revenue recognition processed: %s') % recognition.recognized_amount,
+                message_type='notification'
+            )
     
     def action_reverse_recognition(self):
         """Reverse this revenue recognition"""
@@ -187,7 +202,7 @@ class AMSRevenueRecognition(models.Model):
             
             # Create reversal entry
             reversal = recognition.copy({
-                'description': f'Reversal of: {recognition.description}',
+                'description': _('Reversal of: %s') % recognition.description,
                 'scheduled_amount': -recognition.recognized_amount,
                 'recognized_amount': -recognition.recognized_amount,
                 'state': 'pending',
@@ -201,6 +216,12 @@ class AMSRevenueRecognition(models.Model):
             
             # Update original entry state
             recognition.state = 'reversed'
+            
+            # Log message
+            recognition.message_post(
+                body=_('Revenue recognition reversed via entry: %s') % reversal.id,
+                message_type='notification'
+            )
             
             return reversal
     
@@ -220,7 +241,7 @@ class AMSRevenueRecognition(models.Model):
         move_vals = {
             'journal_id': journal.id,
             'date': self.recognition_date,
-            'ref': f'Revenue Recognition - {self.description}',
+            'ref': _('Revenue Recognition - %s') % self.description,
             'move_type': 'entry',
             'line_ids': self._prepare_journal_entry_lines(),
         }
@@ -248,7 +269,7 @@ class AMSRevenueRecognition(models.Model):
             # DR: Deferred Revenue (liability decrease)
             lines.append((0, 0, {
                 'account_id': self.deferred_account_id.id,
-                'name': f'Deferred Revenue Recognition - {self.description}',
+                'name': _('Deferred Revenue Recognition - %s') % self.description,
                 'debit': amount if self.recognized_amount > 0 else 0,
                 'credit': amount if self.recognized_amount < 0 else 0,
                 'partner_id': self.partner_id.id,
@@ -257,7 +278,7 @@ class AMSRevenueRecognition(models.Model):
             # CR: Revenue (income increase)
             lines.append((0, 0, {
                 'account_id': self.revenue_account_id.id,
-                'name': f'Revenue Recognition - {self.description}',
+                'name': _('Revenue Recognition - %s') % self.description,
                 'credit': amount if self.recognized_amount > 0 else 0,
                 'debit': amount if self.recognized_amount < 0 else 0,
                 'partner_id': self.partner_id.id,
@@ -322,7 +343,7 @@ class AMSRevenueRecognition(models.Model):
                 recognition.action_recognize_revenue()
                 processed_count += 1
             except Exception as e:
-                errors.append(f'Recognition {recognition.id}: {str(e)}')
+                errors.append(_('Recognition %s: %s') % (recognition.id, str(e)))
         
         return {
             'processed_count': processed_count,
@@ -359,7 +380,7 @@ class AMSRevenueRecognition(models.Model):
                     total_processed += len(batch)
             except Exception as e:
                 # Log batch error and continue
-                errors.append(f'Batch {offset}-{offset+batch_size}: {str(e)}')
+                errors.append(_('Batch %s-%s: %s') % (offset, offset+batch_size, str(e)))
                 
             offset += batch_size
             
@@ -395,7 +416,9 @@ class AMSRevenueRecognition(models.Model):
                 'name': 'ams_revenue_recognition.weekly_summary',
                 'type': 'server',
                 'level': 'INFO',
-                'message': f'Weekly Revenue Recognition Summary: {len(recent_recognitions)} entries processed, ${total_recognized:.2f} total recognized',
+                'message': _('Weekly Revenue Recognition Summary: %s entries processed, $%s total recognized') % (
+                    len(recent_recognitions), total_recognized
+                ),
                 'path': 'ams_revenue_recognition.cron',
                 'func': 'weekly_summary',
                 'line': '0',
@@ -414,7 +437,9 @@ class AMSRevenueRecognition(models.Model):
                 'name': 'ams_revenue_recognition.batch_processing',
                 'type': 'server',
                 'level': 'INFO' if not result['errors'] else 'WARNING',
-                'message': f'Batch Processing: {result["processed_count"]} recognitions processed. Errors: {len(result["errors"])}',
+                'message': _('Batch Processing: %s recognitions processed. Errors: %s') % (
+                    result["processed_count"], len(result["errors"])
+                ),
                 'path': 'ams_revenue_recognition.cron',
                 'func': 'batch_processing',
                 'line': '0',

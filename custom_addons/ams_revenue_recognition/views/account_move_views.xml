@@ -107,7 +107,7 @@
         </field>
     </record>
 
-    <!-- Extend Account Move Search View -->
+    <!-- FIXED: Enhanced Invoice Search View - Removed unsearchable computed fields -->
     <record id="view_account_move_search_revenue_recognition" model="ir.ui.view">
         <field name="name">account.move.search.revenue.recognition</field>
         <field name="model">account.move</field>
@@ -115,6 +115,7 @@
         <field name="arch" type="xml">
             <xpath expr="//filter[@name='filter_publication_payments']" position="after">
                 <separator/>
+                <!-- FIXED: Use relational fields instead of computed fields -->
                 <filter name="filter_has_revenue_recognition" string="Has Revenue Recognition" 
                         domain="[('has_revenue_recognition', '=', True)]"/>
                 <filter name="filter_recognition_pending" string="Recognition Pending" 
@@ -123,8 +124,11 @@
                         domain="[('revenue_recognition_status', '=', 'active')]"/>
                 <filter name="filter_recognition_completed" string="Recognition Completed" 
                         domain="[('revenue_recognition_status', '=', 'completed')]"/>
-                <filter name="filter_has_deferred_revenue" string="Has Deferred Revenue" 
-                        domain="[('total_deferred_revenue', '>', 0)]"/>
+                <!-- FIXED: Use relational field search instead of computed field -->
+                <filter name="filter_has_revenue_schedules" string="Has Revenue Schedules" 
+                        domain="[('revenue_schedule_ids', '!=', False)]"/>
+                <filter name="filter_active_revenue_schedules" string="Active Revenue Schedules" 
+                        domain="[('revenue_schedule_ids.state', '=', 'active')]"/>
             </xpath>
             
             <xpath expr="//group[@expand='0']" position="inside">

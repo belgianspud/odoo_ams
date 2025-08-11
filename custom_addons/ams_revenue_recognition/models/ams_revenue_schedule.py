@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from dateutil.relativedelta import relativedelta
 from datetime import date, datetime
 
@@ -10,6 +10,8 @@ class AMSRevenueSchedule(models.Model):
     _description = 'AMS Revenue Recognition Schedule'
     _order = 'start_date desc, id desc'
     _rec_name = 'display_name'
+    # FIXED: Add mail.thread for tracking functionality
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     # Basic Information
     display_name = fields.Char(
@@ -84,12 +86,14 @@ class AMSRevenueSchedule(models.Model):
     start_date = fields.Date(
         string='Recognition Start Date',
         required=True,
-        default=fields.Date.today
+        default=fields.Date.today,
+        index=True
     )
     
     end_date = fields.Date(
         string='Recognition End Date',
-        required=True
+        required=True,
+        index=True
     )
     
     period_length = fields.Selection([
@@ -98,7 +102,7 @@ class AMSRevenueSchedule(models.Model):
         ('annual', 'Annual'),
     ], string='Recognition Period', default='monthly', required=True)
     
-    # Status and Processing
+    # FIXED: Status field with proper tracking (now that we inherit mail.thread)
     state = fields.Selection([
         ('draft', 'Draft'),
         ('active', 'Active'),
@@ -178,11 +182,11 @@ class AMSRevenueSchedule(models.Model):
         """Compute display name for the schedule"""
         for schedule in self:
             if schedule.product_id and schedule.partner_id:
-                schedule.display_name = f"{schedule.partner_id.name} - {schedule.product_id.name}"
+                schedule.display_name = _("%s - %s") % (schedule.partner_id.name, schedule.product_id.name)
             elif schedule.invoice_line_id:
-                schedule.display_name = f"Schedule for {schedule.invoice_line_id.move_id.name}"
+                schedule.display_name = _("Schedule for %s") % schedule.invoice_line_id.move_id.name
             else:
-                schedule.display_name = f"Revenue Schedule #{schedule.id or 'New'}"
+                schedule.display_name = _("Revenue Schedule #%s") % (schedule.id or 'New')
     
     @api.depends('start_date', 'end_date', 'period_length')
     def _compute_period_stats(self):
@@ -271,14 +275,25 @@ class AMSRevenueSchedule(models.Model):
         for schedule in self:
             if schedule.start_date and schedule.end_date:
                 if schedule.end_date <= schedule.start_date:
-                    raise UserError(_('End date must be after start date'))
+                    raise ValidationError(_('End date must be after start date'))
     
     @api.constrains('total_amount')
     def _check_amount(self):
         """Validate amounts"""
         for schedule in self:
             if schedule.total_amount <= 0:
-                raise UserError(_('Total amount must be greater than zero'))
+                raise ValidationError(_('Total amount must be greater than zero'))
+    
+    @api.constrains('invoice_line_id')
+    def _check_unique_schedule(self):
+        """Ensure only one schedule per invoice line"""
+        for schedule in self:
+            existing = self.search([
+                ('invoice_line_id', '=', schedule.invoice_line_id.id),
+                ('id', '!=', schedule.id)
+            ])
+            if existing:
+                raise ValidationError(_('A revenue recognition schedule already exists for this invoice line'))
     
     # Actions and Processing
     def action_activate(self):
@@ -327,7 +342,7 @@ class AMSRevenueSchedule(models.Model):
             self._create_recognition_line(
                 recognition_date=self.start_date,
                 amount=self.total_amount,
-                description=f"Immediate recognition - {self.product_id.name}"
+                description=_("Immediate recognition - %s") % self.product_id.name
             )
         elif self.recognition_method == 'straight_line':
             # Create lines for each period
@@ -353,7 +368,11 @@ class AMSRevenueSchedule(models.Model):
             self._create_recognition_line(
                 recognition_date=current_date,
                 amount=amount,
-                description=f"Period {period_num} of {self.total_periods} - {self.product_id.name}"
+                description=_("Period %(period)s of %(total)s - %(product)s") % {
+                    'period': period_num,
+                    'total': self.total_periods,
+                    'product': self.product_id.name
+                }
             )
             
             # Move to next period
@@ -390,20 +409,33 @@ class AMSRevenueSchedule(models.Model):
                 lambda l: l.state == 'pending' and l.recognition_date <= cutoff_date
             )
             
+            processed_count = 0
             for line in due_lines:
-                line.action_recognize_revenue()
+                try:
+                    line.action_recognize_revenue()
+                    processed_count += 1
+                except Exception as e:
+                    # Log error but continue with other lines
+                    schedule.message_post(
+                        body=_("Error processing recognition line %s: %s") % (line.id, str(e)),
+                        message_type='comment'
+                    )
             
             # Check if schedule is completed
             if schedule.deferred_amount <= 0.01:  # Allow small rounding differences
                 schedule.state = 'completed'
                 schedule.message_post(body=_('Revenue recognition schedule completed'))
+            
+            # Update last processed date if we processed anything
+            if processed_count > 0:
+                schedule.last_processed_date = cutoff_date
     
     def action_view_recognition_entries(self):
         """View recognition entries for this schedule"""
         self.ensure_one()
         
         return {
-            'name': f'Recognition Entries - {self.display_name}',
+            'name': _('Recognition Entries - %s') % self.display_name,
             'type': 'ir.actions.act_window',
             'res_model': 'ams.revenue.recognition',
             'view_mode': 'list,form',
@@ -510,7 +542,7 @@ class AMSRevenueSchedule(models.Model):
             except Exception as e:
                 # Log error but continue processing other schedules
                 schedule.message_post(
-                    body=f"Error processing revenue recognition: {str(e)}",
+                    body=_("Error processing revenue recognition: %s") % str(e),
                     message_type='comment'
                 )
         
@@ -533,7 +565,10 @@ class AMSRevenueSchedule(models.Model):
                 'name': 'ams_revenue_recognition.monthly_balance',
                 'type': 'server',
                 'level': 'INFO', 
-                'message': f'Monthly Deferred Revenue Balance: ${balance_data["total_deferred_revenue"]:.2f} across {balance_data["active_schedules_count"]} active schedules',
+                'message': _('Monthly Deferred Revenue Balance: $%(amount).2f across %(count)s active schedules') % {
+                    'amount': balance_data["total_deferred_revenue"],
+                    'count': balance_data["active_schedules_count"]
+                },
                 'path': 'ams_revenue_recognition.cron',
                 'func': 'monthly_balance_check',
                 'line': '0',
@@ -566,7 +601,7 @@ class AMSRevenueSchedule(models.Model):
         # Auto-complete eligible schedules
         for schedule in should_be_completed:
             schedule.state = 'completed'
-            schedule.message_post(body='Automatically completed by month-end process')
+            schedule.message_post(body=_('Automatically completed by month-end process'))
         
         # Log month-end summary
         if overdue or should_be_completed:
@@ -574,7 +609,10 @@ class AMSRevenueSchedule(models.Model):
                 'name': 'ams_revenue_recognition.month_end',
                 'type': 'server',
                 'level': 'WARNING' if overdue else 'INFO',
-                'message': f'Month-End Check: {len(overdue)} overdue recognitions, {len(should_be_completed)} schedules auto-completed',
+                'message': _('Month-End Check: %(overdue)s overdue recognitions, %(completed)s schedules auto-completed') % {
+                    'overdue': len(overdue),
+                    'completed': len(should_be_completed)
+                },
                 'path': 'ams_revenue_recognition.cron',
                 'func': 'month_end_check',
                 'line': '0',

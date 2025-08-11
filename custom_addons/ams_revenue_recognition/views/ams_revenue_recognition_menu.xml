@@ -1,6 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- FIXED: Define all actions FIRST, then menu items that reference them -->
+    
+    <!-- Enhanced Invoice Action for AMS -->
+    <record id="action_move_ams_invoices" model="ir.actions.act_window">
+        <field name="name">AMS Invoices</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('move_type', '=', 'out_invoice'), ('has_ams_products', '=', True)]</field>
+        <field name="context">{
+            'default_move_type': 'out_invoice',
+            'search_default_has_ams_products': 1
+        }</field>
+    </record>
+
+    <!-- FIXED: Action for products with deferred revenue (define before menu) -->
+    <record id="action_products_with_deferred_revenue" model="ir.actions.act_window">
+        <field name="name">Products with Deferred Revenue</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_subscription_product', '=', True), ('revenue_recognition_method', '=', 'deferred')]</field>
+        <field name="context">{
+            'search_default_filter_deferred_recognition': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No products with deferred revenue found!
+            </p>
+            <p>
+                This view shows subscription products that use deferred revenue recognition.
+                Monitor deferred revenue balances and processing status.
+            </p>
+        </field>
+    </record>
+
+    <!-- FIXED: Action for products needing review (define before menu) -->
+    <record id="action_products_needing_review" model="ir.actions.act_window">
+        <field name="name">Products Needing Recognition Review</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_subscription_product', '=', True), ('use_ams_accounting', '=', True)]</field>
+        <field name="context">{
+            'search_default_filter_auto_recognition': 1,
+            'search_default_group_by_recognition_method': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Review product revenue recognition settings!
+            </p>
+            <p>
+                Use this view to review and configure revenue recognition for subscription products.
+            </p>
+        </field>
+    </record>
+
+    <!-- NOW define menu items that reference the actions above -->
+    
     <!-- Revenue Recognition Menu Items -->
     <!-- Add to existing AMS Accounting menu structure -->
     
@@ -66,7 +122,7 @@
               action="action_invoice_lines_need_revenue_recognition"
               sequence="40"/>
 
-    <!-- ADDED: Custom search actions for products with deferred revenue -->
+    <!-- FIXED: Now we can safely reference the action defined above -->
     <menuitem id="menu_ams_products_with_deferred_revenue"
               name="Products with Deferred Revenue"
               parent="menu_ams_revenue_reporting"
@@ -79,45 +135,5 @@
               parent="ams_subscriptions.menu_ams_members"
               action="action_subscription_revenue_recognition_dashboard"
               sequence="40"/>
-
-    <!-- ADDED: New action for products with deferred revenue -->
-    <record id="action_products_with_deferred_revenue" model="ir.actions.act_window">
-        <field name="name">Products with Deferred Revenue</field>
-        <field name="res_model">product.template</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('is_subscription_product', '=', True), ('revenue_recognition_method', '=', 'deferred')]</field>
-        <field name="context">{
-            'search_default_filter_deferred_recognition': 1
-        }</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No products with deferred revenue found!
-            </p>
-            <p>
-                This view shows subscription products that use deferred revenue recognition.
-                Monitor deferred revenue balances and processing status.
-            </p>
-        </field>
-    </record>
-
-    <!-- ADDED: Action for products needing review -->
-    <record id="action_products_needing_review" model="ir.actions.act_window">
-        <field name="name">Products Needing Recognition Review</field>
-        <field name="res_model">product.template</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[]</field>
-        <field name="context">{
-            'search_default_filter_auto_recognition': 1,
-            'search_default_group_by_recognition_method': 1
-        }</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Review product revenue recognition settings!
-            </p>
-            <p>
-                Use this view to review and configure revenue recognition for subscription products.
-            </p>
-        </field>
-    </record>
 
 </odoo>

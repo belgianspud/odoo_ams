@@ -69,7 +69,7 @@
         </field>
     </record>
 
-    <!-- FIXED: Product Template Search View - Removed unsearchable computed fields -->
+    <!-- FIXED: Product Template Search View - Removed problematic field path -->
     <record id="view_product_template_search_revenue_recognition" model="ir.ui.view">
         <field name="name">product.template.search.revenue.recognition</field>
         <field name="model">product.template</field>
@@ -77,19 +77,28 @@
         <field name="arch" type="xml">
             <xpath expr="//filter[@name='filter_subscription_products']" position="after">
                 <separator/>
+                <!-- FIXED: Use stored fields instead of computed fields -->
                 <filter name="filter_immediate_recognition" string="Immediate Recognition" 
                         domain="[('revenue_recognition_method', '=', 'immediate')]"/>
                 <filter name="filter_deferred_recognition" string="Deferred Recognition" 
                         domain="[('revenue_recognition_method', '=', 'deferred')]"/>
                 <filter name="filter_auto_recognition" string="Auto Recognition" 
                         domain="[('auto_create_recognition', '=', True)]"/>
-                <!-- REMOVED: filter_has_deferred_revenue - computed fields can't be searched -->
                 
-                <!-- Alternative: Search for products that SHOULD have deferred revenue -->
+                <!-- FIXED: Alternative search for products that should have deferred revenue -->
                 <filter name="filter_should_defer_revenue" string="Should Have Deferred Revenue" 
                         domain="[('is_subscription_product', '=', True), 
                                 ('revenue_recognition_method', '=', 'deferred'),
                                 ('subscription_period', 'in', ['quarterly', 'semi_annual', 'annual'])]"/>
+                
+                <!-- FIXED: Removed problematic relational field search -->
+                <!-- This was causing the error: ('product_variant_ids.ams_revenue_schedule_ids', '!=', False) -->
+                <!-- Instead, use logic-based filters that work with existing fields -->
+                <filter name="filter_likely_has_schedules" string="Likely Has Recognition Schedules" 
+                        domain="[('is_subscription_product', '=', True), 
+                                ('use_ams_accounting', '=', True),
+                                ('auto_create_recognition', '=', True),
+                                ('revenue_recognition_method', '=', 'deferred')]"/>
             </xpath>
             
             <xpath expr="//group[@expand='0']" position="inside">

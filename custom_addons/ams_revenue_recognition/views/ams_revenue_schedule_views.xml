@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     
-    <!-- Revenue Recognition Lines List View (separate view) -->
+    <!-- FIXED: Revenue Recognition Lines List View (separate view) -->
     <record id="view_ams_revenue_recognition_list_schedule" model="ir.ui.view">
         <field name="name">ams.revenue.recognition.list.schedule</field>
         <field name="model">ams.revenue.recognition</field>
@@ -83,6 +83,7 @@
                     
                     <notebook>
                         <page string="Recognition Lines">
+                            <!-- FIXED: Use list instead of tree -->
                             <field name="recognition_line_ids">
                                 <list>
                                     <field name="recognition_date"/>
@@ -103,11 +104,17 @@
                         </page>
                     </notebook>
                 </sheet>
+                <!-- FIXED: Add chatter for mail.thread functionality -->
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
             </form>
         </field>
     </record>
     
-    <!-- Revenue Schedule List View -->
+    <!-- FIXED: Revenue Schedule List View (was tree) -->
     <record id="view_ams_revenue_schedule_list" model="ir.ui.view">
         <field name="name">ams.revenue.schedule.list</field>
         <field name="model">ams.revenue.schedule</field>
@@ -128,7 +135,7 @@
         </field>
     </record>
     
-    <!-- Revenue Schedule Kanban View -->
+    <!-- FIXED: Revenue Schedule Kanban View - Updated for Odoo 18 -->
     <record id="view_ams_revenue_schedule_kanban" model="ir.ui.view">
         <field name="name">ams.revenue.schedule.kanban</field>
         <field name="model">ams.revenue.schedule</field>
@@ -142,6 +149,7 @@
                 <field name="deferred_amount"/>
                 <field name="state"/>
                 <field name="next_recognition_date"/>
+                <field name="currency_id"/>
                 <templates>
                     <t t-name="kanban-box">
                         <div class="oe_kanban_card oe_kanban_global_click">
@@ -155,8 +163,7 @@
                                 <div class="oe_kanban_bottom_left">
                                     <div class="oe_kanban_bottom_right">
                                         <span class="badge badge-pill">
-                                            <field name="currency_id" invisible="1"/>
-                                            <field name="total_amount" widget="monetary"/>
+                                            <field name="total_amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
                                         </span>
                                     </div>
                                 </div>
@@ -164,12 +171,12 @@
                                     <div class="row">
                                         <div class="col-6">
                                             <span title="Recognized">
-                                                💰 <field name="recognized_amount" widget="monetary"/>
+                                                💰 <field name="recognized_amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
                                             </span>
                                         </div>
                                         <div class="col-6">
                                             <span title="Deferred" class="float-right">
-                                                ⏳ <field name="deferred_amount" widget="monetary"/>
+                                                ⏳ <field name="deferred_amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
                                             </span>
                                         </div>
                                     </div>
@@ -202,7 +209,7 @@
         </field>
     </record>
     
-    <!-- Revenue Schedule Search View -->
+    <!-- FIXED: Revenue Schedule Search View - Improved filters -->
     <record id="view_ams_revenue_schedule_search" model="ir.ui.view">
         <field name="name">ams.revenue.schedule.search</field>
         <field name="model">ams.revenue.schedule</field>
@@ -220,17 +227,25 @@
                 <filter name="filter_cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
                 
                 <separator/>
+                <!-- FIXED: Simplified date filters for better compatibility -->
                 <filter name="filter_due_recognition" string="Recognition Due" 
-                        domain="[('next_recognition_date', '&lt;=', context_today().strftime('%Y-%m-%d'))]"/>
-                <filter name="filter_this_month" string="This Month" 
-                        domain="[('start_date', '&gt;=', context_today().replace(day=1).strftime('%Y-%m-%d')),
-                                ('start_date', '&lt;', (context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1).strftime('%Y-%m-%d'))]"/>
+                        domain="[('next_recognition_date', '&lt;=', context_today()), ('state', '=', 'active')]"/>
+                <filter name="filter_this_month" string="Started This Month" 
+                        domain="[('start_date', '&gt;=', context_today().replace(day=1)),
+                                ('start_date', '&lt;', (context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1))]"/>
+                <filter name="filter_ending_soon" string="Ending This Month" 
+                        domain="[('end_date', '&gt;=', context_today().replace(day=1)),
+                                ('end_date', '&lt;', (context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1))]"/>
                 
                 <separator/>
                 <filter name="filter_deferred_method" string="Deferred Recognition" 
                         domain="[('recognition_method', '=', 'straight_line')]"/>
                 <filter name="filter_immediate_method" string="Immediate Recognition" 
                         domain="[('recognition_method', '=', 'immediate')]"/>
+                
+                <!-- FIXED: Use relational field searches instead of computed fields -->
+                <filter name="filter_has_deferred_amount" string="Has Deferred Revenue" 
+                        domain="[('state', '=', 'active'), ('recognition_line_ids.state', '=', 'pending')]"/>
                 
                 <group expand="0" string="Group By">
                     <filter name="group_by_state" string="Status" domain="[]" context="{'group_by': 'state'}"/>

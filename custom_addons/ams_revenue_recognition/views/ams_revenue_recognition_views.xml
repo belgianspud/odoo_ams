@@ -61,11 +61,17 @@
                         </group>
                     </group>
                 </sheet>
+                <!-- FIXED: Add chatter for mail.thread functionality -->
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
             </form>
         </field>
     </record>
     
-    <!-- Revenue Recognition List View (formerly tree) -->
+    <!-- FIXED: Revenue Recognition List View (was tree) -->
     <record id="view_ams_revenue_recognition_list" model="ir.ui.view">
         <field name="name">ams.revenue.recognition.list</field>
         <field name="model">ams.revenue.recognition</field>
@@ -126,7 +132,7 @@
         </field>
     </record>
     
-    <!-- Revenue Recognition Search View -->
+    <!-- FIXED: Revenue Recognition Search View - Improved date filters -->
     <record id="view_ams_revenue_recognition_search" model="ir.ui.view">
         <field name="name">ams.revenue.recognition.search</field>
         <field name="model">ams.revenue.recognition</field>
@@ -145,14 +151,17 @@
                 <filter name="filter_cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
                 
                 <separator/>
+                <!-- FIXED: Simplified date filters for better compatibility -->
                 <filter name="filter_due_today" string="Due Today" 
-                        domain="[('recognition_date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                        domain="[('recognition_date', '=', context_today())]"/>
                 <filter name="filter_due_this_week" string="Due This Week" 
                         domain="[('recognition_date', '&gt;=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%Y-%m-%d')),
                                 ('recognition_date', '&lt;=', (context_today() + datetime.timedelta(days=6-context_today().weekday())).strftime('%Y-%m-%d'))]"/>
                 <filter name="filter_due_this_month" string="Due This Month" 
-                        domain="[('recognition_date', '&gt;=', context_today().replace(day=1).strftime('%Y-%m-%d')),
-                                ('recognition_date', '&lt;', (context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1).strftime('%Y-%m-%d'))]"/>
+                        domain="[('recognition_date', '&gt;=', context_today().replace(day=1)),
+                                ('recognition_date', '&lt;', (context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1))]"/>
+                <filter name="filter_overdue" string="Overdue" 
+                        domain="[('recognition_date', '&lt;', context_today()), ('state', '=', 'pending')]"/>
                 
                 <separator/>
                 <filter name="filter_with_journal_entry" string="With Journal Entry" 
@@ -194,7 +203,7 @@
         <field name="name">Revenue Recognition Due</field>
         <field name="res_model">ams.revenue.recognition</field>
         <field name="view_mode">list,form,calendar</field>
-        <field name="domain">[('state', '=', 'pending'), ('recognition_date', '&lt;=', context_today().strftime('%Y-%m-%d'))]</field>
+        <field name="domain">[('state', '=', 'pending'), ('recognition_date', '&lt;=', context_today())]</field>
         <field name="context">{'search_default_filter_pending': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">

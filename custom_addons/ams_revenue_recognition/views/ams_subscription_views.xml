@@ -92,7 +92,7 @@
         </field>
     </record>
 
-    <!-- Extend AMS Subscription Search View -->
+    <!-- FIXED: Extend AMS Subscription Search View - Removed unsearchable computed fields -->
     <record id="view_ams_subscription_search_revenue_recognition" model="ir.ui.view">
         <field name="name">ams.subscription.search.revenue.recognition</field>
         <field name="model">ams.subscription</field>
@@ -107,7 +107,12 @@
                         domain="[('recognition_status', '=', 'active')]"/>
                 <filter name="filter_recognition_completed" string="Recognition Completed" 
                         domain="[('recognition_status', '=', 'completed')]"/>
-                <!-- REMOVED: filter_has_deferred_revenue and filter_recognition_due - computed fields can't be searched -->
+                
+                <!-- FIXED: Use relational fields instead of computed fields -->
+                <filter name="filter_has_revenue_schedules" string="Has Revenue Schedules" 
+                        domain="[('revenue_schedule_ids', '!=', False)]"/>
+                <filter name="filter_active_revenue_schedules" string="Active Revenue Schedules" 
+                        domain="[('revenue_schedule_ids.state', '=', 'active')]"/>
                 
                 <!-- Add group by options -->
                 <group expand="0" string="Group By">
