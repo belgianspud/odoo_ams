@@ -22,18 +22,18 @@
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
-                <page string="Revenue Recognition" attrs="{'invisible': [('has_revenue_recognition', '=', False)]}">
-                    <div class="alert alert-success" role="alert" attrs="{'invisible': [('revenue_recognition_status', '!=', 'completed')]}">
+                <page string="Revenue Recognition" invisible="not has_revenue_recognition">
+                    <div class="alert alert-success" role="alert" invisible="revenue_recognition_status != 'completed'">
                         <h6><i class="fa fa-check-circle"/> Revenue Recognition Completed</h6>
                         <p>All revenue for this invoice has been recognized.</p>
                     </div>
                     
-                    <div class="alert alert-info" role="alert" attrs="{'invisible': [('revenue_recognition_status', '!=', 'active')]}">
+                    <div class="alert alert-info" role="alert" invisible="revenue_recognition_status != 'active'">
                         <h6><i class="fa fa-play-circle"/> Revenue Recognition Active</h6>
                         <p>Revenue recognition schedules are active and processing.</p>
                     </div>
                     
-                    <div class="alert alert-warning" role="alert" attrs="{'invisible': [('revenue_recognition_status', '!=', 'pending')]}">
+                    <div class="alert alert-warning" role="alert" invisible="revenue_recognition_status != 'pending'">
                         <h6><i class="fa fa-clock-o"/> Revenue Recognition Pending</h6>
                         <p>This invoice contains subscription products that need revenue recognition schedules.</p>
                         <button name="action_create_revenue_recognition_schedules" type="object" 
@@ -56,7 +56,7 @@
                     <div class="oe_button_box" name="revenue_recognition_buttons">
                         <button name="action_view_revenue_schedules" type="object" 
                                 class="oe_stat_button" icon="fa-calendar-o"
-                                attrs="{'invisible': [('revenue_schedule_ids', '=', [])]}">
+                                invisible="not revenue_schedule_ids">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_value"><field name="revenue_schedule_ids" widget="statinfo" string="Schedules"/></span>
                                 <span class="o_stat_text">Recognition</span>
@@ -65,7 +65,7 @@
                         </button>
                         <button name="action_process_revenue_recognition" type="object" 
                                 class="oe_stat_button" icon="fa-play"
-                                attrs="{'invisible': [('revenue_recognition_status', '!=', 'active')]}">
+                                invisible="revenue_recognition_status != 'active'">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Process</span>
                                 <span class="o_stat_text">Recognition</span>

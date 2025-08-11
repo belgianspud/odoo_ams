@@ -411,6 +411,89 @@ class AMSRevenueSchedule(models.Model):
             'context': {'default_schedule_id': self.id},
         }
     
+    def get_mrr_arr_data(self):
+        """Calculate MRR/ARR metrics for financial reporting module"""
+        self.ensure_one()
+        
+        # Monthly Recurring Revenue calculation
+        if self.period_length == 'monthly':
+            mrr = self.total_amount
+        elif self.period_length == 'quarterly':
+            mrr = self.total_amount / 3
+        elif self.period_length == 'annual':
+            mrr = self.total_amount / 12
+        else:
+            mrr = 0
+            
+        arr = mrr * 12
+        
+        return {
+            'schedule_id': self.id,
+            'partner_id': self.partner_id.id,
+            'product_id': self.product_id.id,
+            'mrr': mrr,
+            'arr': arr,
+            'start_date': self.start_date,
+            'end_date': self.end_date,
+            'status': self.state,
+            'recognition_method': self.recognition_method,
+        }
+    
+    @api.model
+    def get_deferred_revenue_balance(self, as_of_date=None):
+        """Get deferred revenue balance for financial reporting"""
+        if not as_of_date:
+            as_of_date = fields.Date.today()
+            
+        domain = [
+            ('state', '=', 'active'),
+            ('start_date', '<=', as_of_date),
+            ('end_date', '>=', as_of_date),
+        ]
+        
+        active_schedules = self.search(domain)
+        
+        total_deferred = 0
+        breakdown = {}
+        
+        for schedule in active_schedules:
+            # Calculate remaining deferred amount as of the date
+            remaining_deferred = schedule._calculate_deferred_as_of_date(as_of_date)
+            total_deferred += remaining_deferred
+            
+            # Group by product for breakdown
+            product_key = schedule.product_id.id
+            if product_key not in breakdown:
+                breakdown[product_key] = {
+                    'product_name': schedule.product_id.name,
+                    'total_deferred': 0,
+                    'schedule_count': 0,
+                }
+            breakdown[product_key]['total_deferred'] += remaining_deferred
+            breakdown[product_key]['schedule_count'] += 1
+        
+        return {
+            'as_of_date': as_of_date,
+            'total_deferred_revenue': total_deferred,
+            'breakdown_by_product': breakdown,
+            'active_schedules_count': len(active_schedules),
+        }
+    
+    def _calculate_deferred_as_of_date(self, as_of_date):
+        """Calculate how much revenue is still deferred as of a specific date"""
+        self.ensure_one()
+        
+        if self.recognition_method == 'immediate':
+            return 0.0
+            
+        # Find recognitions processed before the date
+        processed_before_date = self.recognition_line_ids.filtered(
+            lambda r: r.state == 'recognized' and r.recognition_date <= as_of_date
+        )
+        
+        recognized_amount = sum(processed_before_date.mapped('recognized_amount'))
+        return max(0, self.total_amount - recognized_amount)
+    
     @api.model
     def cron_process_revenue_recognition(self):
         """Cron job to process due revenue recognitions"""

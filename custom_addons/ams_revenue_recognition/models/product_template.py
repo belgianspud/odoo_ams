@@ -24,7 +24,7 @@ class ProductTemplate(models.Model):
     ], string='Recognition Period', default='monthly',
     help='How often revenue should be recognized for deferred products')
     
-    # Revenue Recognition Statistics
+    # Revenue Recognition Statistics (kept as computed, non-stored)
     total_deferred_revenue = fields.Monetary(
         string='Total Deferred Revenue',
         compute='_compute_revenue_stats',
@@ -238,6 +238,56 @@ class ProductTemplate(models.Model):
         
         return subscription
     
+    # Custom search methods for advanced filtering
+    @api.model 
+    def search_products_with_deferred_revenue(self, min_amount=0):
+        """Custom search method to find products with deferred revenue above threshold"""
+        
+        # First get all products that could have deferred revenue
+        candidate_products = self.search([
+            ('is_subscription_product', '=', True),
+            ('use_ams_accounting', '=', True),
+            ('revenue_recognition_method', '=', 'deferred')
+        ])
+        
+        products_with_deferred = self.env['product.template']
+        
+        for product in candidate_products:
+            # Calculate current deferred revenue for this product
+            schedules = self.env['ams.revenue.schedule'].search([
+                ('product_id.product_tmpl_id', '=', product.id),
+                ('state', '=', 'active')
+            ])
+            
+            total_deferred = sum(schedules.mapped('deferred_amount'))
+            
+            if total_deferred > min_amount:
+                products_with_deferred |= product
+        
+        return products_with_deferred
+    
+    @api.model
+    def search_products_needing_recognition_review(self):
+        """Find products that may need revenue recognition review"""
+        
+        # Products with active schedules but no recent recognition processing
+        from datetime import date, timedelta
+        cutoff_date = date.today() - timedelta(days=30)  # 30 days ago
+        
+        products_to_review = self.env['product.template']
+        
+        # Find products with overdue recognition entries
+        overdue_recognitions = self.env['ams.revenue.recognition'].search([
+            ('state', '=', 'pending'),
+            ('recognition_date', '<', cutoff_date)
+        ])
+        
+        for recognition in overdue_recognitions:
+            if recognition.product_id.product_tmpl_id not in products_to_review:
+                products_to_review |= recognition.product_id.product_tmpl_id
+        
+        return products_to_review
+    
     def action_view_recognition_schedules(self):
         """View revenue recognition schedules for this product"""
         self.ensure_one()
@@ -274,6 +324,32 @@ class ProductTemplate(models.Model):
                 'message': f'Processed revenue recognition for {total_processed} schedules',
                 'type': 'success',
             }
+        }
+    
+    def action_view_deferred_revenue_products(self):
+        """Action to view products with deferred revenue"""
+        products = self.search_products_with_deferred_revenue(min_amount=1)
+        
+        return {
+            'name': 'Products with Deferred Revenue',
+            'type': 'ir.actions.act_window',
+            'res_model': 'product.template',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', products.ids)],
+            'context': {'search_default_filter_deferred_recognition': 1},
+        }
+    
+    def action_view_products_needing_review(self):
+        """Action to view products needing revenue recognition review"""
+        products = self.search_products_needing_recognition_review()
+        
+        return {
+            'name': 'Products Needing Revenue Recognition Review',
+            'type': 'ir.actions.act_window',
+            'res_model': 'product.template',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', products.ids)],
+            'context': {'search_default_group_by_recognition_method': 1},
         }
     
     @api.constrains('revenue_recognition_method', 'ams_deferred_account_id')

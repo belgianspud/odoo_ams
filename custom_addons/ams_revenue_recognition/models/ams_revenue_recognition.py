@@ -329,3 +329,46 @@ class AMSRevenueRecognition(models.Model):
             'total_due': len(due_recognitions),
             'errors': errors
         }
+
+    @api.model
+    def process_due_recognitions_batch(self, batch_size=100, cutoff_date=None):
+        """Optimized batch processing for large recognition volumes"""
+        if not cutoff_date:
+            cutoff_date = fields.Date.today()
+        
+        # Process in batches to avoid memory issues
+        offset = 0
+        total_processed = 0
+        errors = []
+        
+        while True:
+            # Fetch batch with proper indexing
+            batch = self.search([
+                ('state', '=', 'pending'),
+                ('recognition_date', '<=', cutoff_date)
+            ], limit=batch_size, offset=offset)
+            
+            if not batch:
+                break
+                
+            # Process batch in single transaction
+            try:
+                with self.env.cr.savepoint():
+                    for recognition in batch:
+                        recognition.action_recognize_revenue()
+                    total_processed += len(batch)
+            except Exception as e:
+                # Log batch error and continue
+                errors.append(f'Batch {offset}-{offset+batch_size}: {str(e)}')
+                
+            offset += batch_size
+            
+            # Commit periodically to avoid long-running transactions
+            if offset % (batch_size * 5) == 0:
+                self.env.cr.commit()
+        
+        return {
+            'processed_count': total_processed,
+            'batch_size': batch_size,
+            'errors': errors
+        }

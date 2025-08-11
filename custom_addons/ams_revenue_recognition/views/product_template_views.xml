@@ -69,7 +69,7 @@
         </field>
     </record>
 
-    <!-- Extend Product Template Search View -->
+    <!-- FIXED: Product Template Search View - Removed unsearchable computed fields -->
     <record id="view_product_template_search_revenue_recognition" model="ir.ui.view">
         <field name="name">product.template.search.revenue.recognition</field>
         <field name="model">product.template</field>
@@ -83,8 +83,13 @@
                         domain="[('revenue_recognition_method', '=', 'deferred')]"/>
                 <filter name="filter_auto_recognition" string="Auto Recognition" 
                         domain="[('auto_create_recognition', '=', True)]"/>
-                <filter name="filter_has_deferred_revenue" string="Has Deferred Revenue" 
-                        domain="[('total_deferred_revenue', '>', 0)]"/>
+                <!-- REMOVED: filter_has_deferred_revenue - computed fields can't be searched -->
+                
+                <!-- Alternative: Search for products that SHOULD have deferred revenue -->
+                <filter name="filter_should_defer_revenue" string="Should Have Deferred Revenue" 
+                        domain="[('is_subscription_product', '=', True), 
+                                ('revenue_recognition_method', '=', 'deferred'),
+                                ('subscription_period', 'in', ['quarterly', 'semi_annual', 'annual'])]"/>
             </xpath>
             
             <xpath expr="//group[@expand='0']" position="inside">
