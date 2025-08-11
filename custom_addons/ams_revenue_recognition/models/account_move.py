@@ -24,7 +24,7 @@ class AccountMove(models.Model):
     total_deferred_revenue = fields.Monetary(
         string='Total Deferred Revenue',
         compute='_compute_revenue_recognition_amounts',
-        search='_search_total_deferred_revenue',  # ADDED: Search method
+        search='_search_total_deferred_revenue',
         currency_field='currency_id',
         store=True,
         help='Total deferred revenue from this invoice'
@@ -33,7 +33,7 @@ class AccountMove(models.Model):
     total_recognized_revenue = fields.Monetary(
         string='Total Recognized Revenue',
         compute='_compute_revenue_recognition_amounts',
-        search='_search_total_recognized_revenue',  # ADDED: Search method
+        search='_search_total_recognized_revenue',
         currency_field='currency_id', 
         store=True,
         help='Total recognized revenue from this invoice'
@@ -49,10 +49,9 @@ class AccountMove(models.Model):
     store=True,
     help='Overall revenue recognition status for this invoice')
 
-    # ADDED: Search methods for computed fields
+    # Search methods for computed fields
     def _search_total_deferred_revenue(self, operator, value):
         """Search method for total_deferred_revenue computed field"""
-        # Find schedules with deferred revenue matching the criteria
         schedules = self.env['ams.revenue.schedule'].search([
             ('deferred_amount', operator, value)
         ])
@@ -60,7 +59,6 @@ class AccountMove(models.Model):
     
     def _search_total_recognized_revenue(self, operator, value):
         """Search method for total_recognized_revenue computed field"""
-        # Find schedules with recognized revenue matching the criteria
         schedules = self.env['ams.revenue.schedule'].search([
             ('recognized_amount', operator, value)
         ])
@@ -107,11 +105,22 @@ class AccountMove(models.Model):
     
     def _post(self, soft=True):
         """Override posting to handle revenue recognition schedule creation"""
+        # FIXED: Add safety checks and better error handling
         result = super()._post(soft=soft)
         
         # Process AMS revenue recognition for posted invoices
+        # FIXED: Add try/catch to prevent interference with other operations
         for move in self.filtered(lambda m: m.move_type == 'out_invoice' and m.state == 'posted'):
-            move._process_ams_revenue_recognition()
+            try:
+                # FIXED: Only process if we're in a safe context (not during payment operations)
+                if not self.env.context.get('skip_revenue_recognition', False):
+                    move._process_ams_revenue_recognition()
+            except Exception as e:
+                # FIXED: Log error but don't fail the posting operation
+                move.message_post(
+                    body=_('Warning: Revenue recognition processing failed: %s') % str(e),
+                    message_type='comment'
+                )
         
         return result
     
@@ -119,37 +128,44 @@ class AccountMove(models.Model):
         """Process revenue recognition for AMS subscription products"""
         self.ensure_one()
         
-        if self.move_type != 'out_invoice':
+        # FIXED: Add safety checks
+        if self.move_type != 'out_invoice' or self.state != 'posted':
+            return
+        
+        # FIXED: Skip if already processed or in unsafe context
+        if (self.env.context.get('skip_revenue_recognition', False) or 
+            self.env.context.get('payment_processing', False)):
             return
         
         created_schedules = self.env['ams.revenue.schedule']
         
-        # Process each invoice line
+        # Process each invoice line with error handling
         for line in self.invoice_line_ids:
-            if not line.product_id:
-                continue
-            
-            product_template = line.product_id.product_tmpl_id
-            
-            # Check if this product needs revenue recognition
-            if not self._line_needs_revenue_recognition(line):
-                continue
-            
-            # Check if schedule already exists
-            existing_schedule = self.env['ams.revenue.schedule'].search([
-                ('invoice_line_id', '=', line.id)
-            ], limit=1)
-            
-            if existing_schedule:
-                continue  # Schedule already exists
-            
-            # Create revenue recognition schedule
             try:
+                if not line.product_id:
+                    continue
+                
+                product_template = line.product_id.product_tmpl_id
+                
+                # Check if this product needs revenue recognition
+                if not self._line_needs_revenue_recognition(line):
+                    continue
+                
+                # Check if schedule already exists
+                existing_schedule = self.env['ams.revenue.schedule'].search([
+                    ('invoice_line_id', '=', line.id)
+                ], limit=1)
+                
+                if existing_schedule:
+                    continue  # Schedule already exists
+                
+                # Create revenue recognition schedule
                 schedule = product_template.create_recognition_schedule(line)
                 if schedule:
                     created_schedules |= schedule
+                    
             except Exception as e:
-                # Log error but continue with other lines
+                # FIXED: Log error but continue with other lines
                 self.message_post(
                     body=_('Error creating revenue recognition schedule for line %s: %s') % (line.id, str(e)),
                     message_type='comment'
@@ -179,11 +195,11 @@ class AccountMove(models.Model):
             return False
         
         # Must have auto-create recognition enabled
-        if not product_template.auto_create_recognition:
+        if not getattr(product_template, 'auto_create_recognition', False):
             return False
         
         # Must not be immediate recognition (immediate doesn't need schedules)
-        if product_template.revenue_recognition_method == 'immediate':
+        if getattr(product_template, 'revenue_recognition_method', 'immediate') == 'immediate':
             return False
         
         return True
@@ -195,7 +211,8 @@ class AccountMove(models.Model):
         if self.state != 'posted':
             raise UserError(_('Invoice must be posted before creating revenue recognition schedules'))
         
-        schedules = self._process_ams_revenue_recognition()
+        # FIXED: Set context to prevent interference
+        schedules = self.with_context(skip_revenue_recognition=False)._process_ams_revenue_recognition()
         
         if schedules:
             return {
@@ -299,7 +316,7 @@ class AccountMove(models.Model):
             ]
         }
 
-    # ADDED: Bulk processing methods for better performance
+    # Bulk processing methods for better performance
     @api.model
     def process_invoices_revenue_recognition(self, invoice_ids=None, cutoff_date=None):
         """Bulk process revenue recognition for multiple invoices"""
@@ -309,7 +326,6 @@ class AccountMove(models.Model):
         if invoice_ids:
             invoices = self.browse(invoice_ids)
         else:
-            # Find invoices with active revenue recognition
             invoices = self.search([
                 ('revenue_recognition_status', '=', 'active'),
                 ('state', '=', 'posted')
@@ -324,7 +340,6 @@ class AccountMove(models.Model):
                 initial_total = invoice.total_recognized_revenue
                 invoice.action_process_revenue_recognition()
                 
-                # Check if anything was processed
                 if invoice.total_recognized_revenue > initial_total:
                     processed_invoices += 1
                     total_recognitions += 1
@@ -343,7 +358,7 @@ class AccountMove(models.Model):
     def get_revenue_recognition_dashboard_data(self, date_from=None, date_to=None):
         """Get dashboard data for revenue recognition analysis"""
         if not date_from:
-            date_from = fields.Date.today().replace(day=1)  # First day of current month
+            date_from = fields.Date.today().replace(day=1)
         if not date_to:
             date_to = fields.Date.today()
         
@@ -425,8 +440,8 @@ class AccountMoveLine(models.Model):
             needs_recognition = (
                 product_template.is_subscription_product and
                 product_template.use_ams_accounting and
-                product_template.auto_create_recognition and
-                product_template.revenue_recognition_method != 'immediate' and
+                getattr(product_template, 'auto_create_recognition', False) and
+                getattr(product_template, 'revenue_recognition_method', 'immediate') != 'immediate' and
                 not line.revenue_schedule_id and
                 line.move_id.move_type == 'out_invoice'
             )
