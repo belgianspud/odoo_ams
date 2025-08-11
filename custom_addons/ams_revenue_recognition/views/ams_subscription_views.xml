@@ -98,7 +98,8 @@
         <field name="model">ams.subscription</field>
         <field name="inherit_id" ref="ams_subscriptions.view_ams_subscription_search"/>
         <field name="arch" type="xml">
-            <xpath expr="//filter[@name='filter_suspended']" position="after">
+            <!-- Add filters after existing filters -->
+            <xpath expr="//search" position="inside">
                 <separator/>
                 <filter name="filter_recognition_pending" string="Recognition Pending" 
                         domain="[('recognition_status', '=', 'pending')]"/>
@@ -106,15 +107,13 @@
                         domain="[('recognition_status', '=', 'active')]"/>
                 <filter name="filter_recognition_completed" string="Recognition Completed" 
                         domain="[('recognition_status', '=', 'completed')]"/>
-                <filter name="filter_has_deferred_revenue" string="Has Deferred Revenue" 
-                        domain="[('total_deferred_revenue', '>', 0)]"/>
-                <filter name="filter_recognition_due" string="Recognition Due Today" 
-                        domain="[('next_recognition_date', '&lt;=', context_today().strftime('%Y-%m-%d'))]"/>
-            </xpath>
-            
-            <xpath expr="//group[@expand='0']" position="inside">
-                <filter name="group_by_recognition_status" string="Recognition Status" 
-                        domain="[]" context="{'group_by': 'recognition_status'}"/>
+                <!-- REMOVED: filter_has_deferred_revenue and filter_recognition_due - computed fields can't be searched -->
+                
+                <!-- Add group by options -->
+                <group expand="0" string="Group By">
+                    <filter name="group_by_recognition_status" string="Recognition Status" 
+                            domain="[]" context="{'group_by': 'recognition_status'}"/>
+                </group>
             </xpath>
         </field>
     </record>

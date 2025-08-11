@@ -372,3 +372,52 @@ class AMSRevenueRecognition(models.Model):
             'batch_size': batch_size,
             'errors': errors
         }
+    
+    @api.model
+    def cron_weekly_summary(self):
+        """Weekly summary of revenue recognition activity"""
+        from datetime import date, timedelta
+        
+        today = date.today()
+        week_ago = today - timedelta(days=7)
+        
+        # Get recognition activity for the past week
+        recent_recognitions = self.search([
+            ('processed_date', '>=', week_ago),
+            ('state', '=', 'recognized')
+        ])
+        
+        if recent_recognitions:
+            total_recognized = sum(recent_recognitions.mapped('recognized_amount'))
+            
+            # Log summary to system
+            self.env['ir.logging'].create({
+                'name': 'ams_revenue_recognition.weekly_summary',
+                'type': 'server',
+                'level': 'INFO',
+                'message': f'Weekly Revenue Recognition Summary: {len(recent_recognitions)} entries processed, ${total_recognized:.2f} total recognized',
+                'path': 'ams_revenue_recognition.cron',
+                'func': 'weekly_summary',
+                'line': '0',
+            })
+        
+        return True
+    
+    @api.model
+    def cron_batch_processing(self):
+        """Batch processing for high-volume recognition processing"""
+        result = self.process_due_recognitions_batch(batch_size=200)
+        
+        if result['processed_count'] > 0 or result['errors']:
+            # Log batch processing results
+            self.env['ir.logging'].create({
+                'name': 'ams_revenue_recognition.batch_processing',
+                'type': 'server',
+                'level': 'INFO' if not result['errors'] else 'WARNING',
+                'message': f'Batch Processing: {result["processed_count"]} recognitions processed. Errors: {len(result["errors"])}',
+                'path': 'ams_revenue_recognition.cron',
+                'func': 'batch_processing',
+                'line': '0',
+            })
+        
+        return result

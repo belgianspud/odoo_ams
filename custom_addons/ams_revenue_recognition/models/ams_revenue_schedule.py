@@ -518,3 +518,69 @@ class AMSRevenueSchedule(models.Model):
             'processed_schedules': processed_count,
             'total_active': len(active_schedules),
         }
+
+    @api.model
+    def cron_monthly_balance_check(self):
+        """Monthly check of deferred revenue balances"""
+        from datetime import date
+        
+        today = date.today()
+        balance_data = self.get_deferred_revenue_balance(today)
+        
+        if balance_data['total_deferred_revenue'] > 0:
+            # Log monthly balance summary
+            self.env['ir.logging'].create({
+                'name': 'ams_revenue_recognition.monthly_balance',
+                'type': 'server',
+                'level': 'INFO', 
+                'message': f'Monthly Deferred Revenue Balance: ${balance_data["total_deferred_revenue"]:.2f} across {balance_data["active_schedules_count"]} active schedules',
+                'path': 'ams_revenue_recognition.cron',
+                'func': 'monthly_balance_check',
+                'line': '0',
+            })
+        
+        return balance_data
+    
+    @api.model
+    def cron_month_end_check(self):
+        """Month-end check for completed schedules and overdue recognitions"""
+        from datetime import date, timedelta
+        
+        today = date.today()
+        month_start = today.replace(day=1)
+        last_month_end = month_start - timedelta(days=1)
+        
+        # Check for overdue recognitions from previous month
+        overdue = self.env['ams.revenue.recognition'].search([
+            ('state', '=', 'pending'),
+            ('recognition_date', '<=', last_month_end)
+        ])
+        
+        # Check for schedules that should be completed
+        should_be_completed = self.search([
+            ('state', '=', 'active'),
+            ('end_date', '<=', last_month_end),
+            ('deferred_amount', '<=', 0.01)  # Allow for rounding differences
+        ])
+        
+        # Auto-complete eligible schedules
+        for schedule in should_be_completed:
+            schedule.state = 'completed'
+            schedule.message_post(body='Automatically completed by month-end process')
+        
+        # Log month-end summary
+        if overdue or should_be_completed:
+            self.env['ir.logging'].create({
+                'name': 'ams_revenue_recognition.month_end',
+                'type': 'server',
+                'level': 'WARNING' if overdue else 'INFO',
+                'message': f'Month-End Check: {len(overdue)} overdue recognitions, {len(should_be_completed)} schedules auto-completed',
+                'path': 'ams_revenue_recognition.cron',
+                'func': 'month_end_check',
+                'line': '0',
+            })
+        
+        return {
+            'overdue_count': len(overdue),
+            'completed_count': len(should_be_completed),
+        }
