@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Dunning Reminder Email Template -->
+        <record id="email_template_dunning_reminder" model="mail.template">
+            <field name="name">AMS Dunning: Friendly Reminder</field>
+            <field name="model_id" ref="model_ams_dunning_process"/>
+            <field name="subject">Payment Reminder - ${object.subscription_id.name}</field>
+            <field name="email_from">${(object.subscription_id.company_id.email or user.email) | safe}</field>
+            <field name="email_to">${object.partner_id.email | safe}</field>
+            <field name="lang">${object.partner_id.lang}</field>
+            <field name="auto_delete" eval="True"/>
+            <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <div style="margin: 0px; padding: 0px; font-family: 'Lucida Grande', Ubuntu, Arial, Verdana, sans-serif; font-size: 12px; color: rgb(34, 34, 34); background-color: #FFFFFF;">
+        
+        <div style="margin: 20px 0px 20px 0px;">
+            <img src="/logo.png" style="padding: 0px; margin: 0px; height: auto; width: 120px;" alt="${object.subscription_id.company_id.name}"/>
+        </div>
+        
+        <div style="margin: 0px; padding: 0px; width: 100%;">
+            <h2 style="color: #875A7B; margin: 0 0 10px 0;">Payment Reminder</h2>
+            
+            <p>Dear ${object.partner_id.name},</p>
+            
+            <p>We hope this message finds you well. This is a friendly reminder that we were unable to process your recent payment for:</p>
+            
+            <div style="border: 1px solid #e0e0e0; border-radius: 5px; padding: 15px; margin: 15px 0; background-color: #f9f9f9;">
+                <strong>Subscription:</strong> ${object.subscription_id.name}<br/>
+                <strong>Amount:</strong> $${object.failed_amount}<br/>
+                <strong>Payment Date:</strong> ${object.failure_date}<br/>
+                % if object.payment_failure_id.failure_reason:
+                <strong>Reason:</strong> ${object.payment_failure_id.failure_reason}<br/>
+                % endif
+            </div>
+            
+            <p>No action is required from you if you have already updated your payment method or made this payment. However, if this payment is still outstanding, please take a moment to update your payment information or make a manual payment.</p>
+            
+            <div style="margin: 20px 0; text-align: center;">
+                <a href="${object.get_payment_url()}" style="background-color: #875A7B; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Update Payment Method</a>
+            </div>
+            
+            <p>If you have any questions or need assistance, please don't hesitate to contact our support team. We're here to help!</p>
+            
+            <p>Thank you for your continued membership.</p>
+            
+            <br/>
+            <p>Best regards,<br/>
+            The ${object.subscription_id.company_id.name} Team</p>
+            
+            <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;"/>
+            <p style="font-size: 11px; color: #666;">
+                This is an automated message. If you believe you received this email in error, please contact us immediately.
+            </p>
+        </div>
+    </div>
+</div>
+            </field>
+        </record>
+
+        <!-- Dunning Warning Email Template -->
+        <record id="email_template_dunning_warning" model="mail.template">
+            <field name="name">AMS Dunning: Warning Notice</field>
+            <field name="model_id" ref="model_ams_dunning_process"/>
+            <field name="subject">Important: Payment Required - ${object.subscription_id.name}</field>
+            <field name="email_from">${(object.subscription_id.company_id.email or user.email) | safe}</field>
+            <field name="email_to">${object.partner_id.email | safe}</field>
+            <field name="lang">${object.partner_id.lang}</field>
+            <field name="auto_delete" eval="True"/>
+            <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <div style="margin: 0px; padding: 0px; font-family: 'Lucida Grande', Ubuntu, Arial, Verdana, sans-serif; font-size: 12px; color: rgb(34, 34, 34); background-color: #FFFFFF;">
+        
+        <div style="margin: 20px 0px 20px 0px;">
+            <img src="/logo.png" style="padding: 0px; margin: 0px; height: auto; width: 120px;" alt="${object.subscription_id.company_id.name}"/>
+        </div>
+        
+        <div style="margin: 0px; padding: 0px; width: 100%;">
+            <h2 style="color: #d9534f; margin: 0 0 10px 0;">⚠️ Payment Required</h2>
+            
+            <p>Dear ${object.partner_id.name},</p>
+            
+            <p>We previously contacted you regarding an overdue payment. Despite our earlier reminder, this payment remains outstanding:</p>
+            
+            <div style="border: 2px solid #d9534f; border-radius: 5px; padding: 15px; margin: 15px 0; background-color: #f2dede;">
+                <strong>Subscription:</strong> ${object.subscription_id.name}<br/>
+                <strong>Amount Due:</strong> $${object.failed_amount}<br/>
+                <strong>Original Due Date:</strong> ${object.failure_date}<br/>
+                <strong>Days Overdue:</strong> ${object.days_overdue}<br/>
+                % if object.grace_end_date:
+                <strong>Grace Period Ends:</strong> ${object.grace_end_date}<br/>
+                % endif
+            </div>
+            
+            <p><strong>Action Required:</strong> Please update your payment method or make a manual payment within the next <strong>${(object.grace_end_date - object.failure_date).days if object.grace_end_date else 7} days</strong> to avoid service interruption.</p>
+            
+            <div style="margin: 20px 0; text-align: center;">
+                <a href="${object.get_payment_url()}" style="background-color: #d9534f; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Pay Now</a>
+            </div>
+            
+            <p><strong>What happens next?</strong></p>
+            <ul>
+                <li>Your access will continue during the grace period</li>
+                % if object.suspension_date:
+                <li>Service may be suspended after ${object.suspension_date}</li>
+                % endif
+                <li>We're here to help resolve any payment issues</li>
+            </ul>
+            
+            <p>If you're experiencing financial difficulties, please contact us to discuss payment options. We want to work with you to maintain your membership.</p>
+            
+            <br/>
+            <p>Sincerely,<br/>
+            The ${object.subscription_id.company_id.name} Team</p>
+            
+            <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;"/>
+            <p style="font-size: 11px; color: #666;">
+                This is an automated message regarding your account status. Please contact us if you have questions.
+            </p>
+        </div>
+    </div>
+</div>
+            </field>
+        </record>
+
+        <!-- Dunning Final Notice Email Template -->
+        <record id="email_template_dunning_final" model="mail.template">
+            <field name="name">AMS Dunning: Final Notice</field>
+            <field name="model_id" ref="model_ams_dunning_process"/>
+            <field name="subject">FINAL NOTICE: Immediate Payment Required - ${object.subscription_id.name}</field>
+            <field name="email_from">${(object.subscription_id.company_id.email or user.email) | safe}</field>
+            <field name="email_to">${object.partner_id.email | safe}</field>
+            <field name="lang">${object.partner_id.lang}</field>
+            <field name="auto_delete" eval="True"/>
+            <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <div style="margin: 0px; padding: 0px; font-family: 'Lucida Grande', Ubuntu, Arial, Verdana, sans-serif; font-size: 12px; color: rgb(34, 34, 34); background-color: #FFFFFF;">
+        
+        <div style="margin: 20px 0px 20px 0px;">
+            <img src="/logo.png" style="padding: 0px; margin: 0px; height: auto; width: 120px;" alt="${object.subscription_id.company_id.name}"/>
+        </div>
+        
+        <div style="margin: 0px; padding: 0px; width: 100%;">
+            <h2 style="color: #721c24; margin: 0 0 10px 0;">🚨 FINAL NOTICE</h2>
+            
+            <p>Dear ${object.partner_id.name},</p>
+            
+            <p>This is our final attempt to collect the overdue payment for your subscription. Despite multiple reminders, this payment remains outstanding:</p>
+            
+            <div style="border: 3px solid #721c24; border-radius: 5px; padding: 15px; margin: 15px 0; background-color: #f8d7da;">
+                <strong>Subscription:</strong> ${object.subscription_id.name}<br/>
+                <strong>Amount Due:</strong> $${object.failed_amount}<br/>
+                <strong>Original Due Date:</strong> ${object.failure_date}<br/>
+                <strong>Days Overdue:</strong> ${object.days_overdue}<br/>
+                % if object.suspension_date:
+                <strong>Service Suspension Date:</strong> ${object.suspension_date}<br/>
+                % endif
+            </div>
+            
+            <p><strong style="color: #721c24;">IMMEDIATE ACTION REQUIRED:</strong> Payment must be received within <strong>48 hours</strong> to avoid service suspension and potential termination of your membership.</p>
+            
+            <div style="margin: 20px 0; text-align: center;">
+                <a href="${object.get_payment_url()}" style="background-color: #721c24; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 14px;">MAKE PAYMENT NOW</a>
+            </div>
+            
+            <p><strong>Consequences of Non-Payment:</strong></p>
+            <ul style="color: #721c24;">
+                <li>Immediate suspension of all services and access</li>
+                <li>Potential termination of membership</li>
+                <li>Additional collection efforts may be pursued</li>
+                <li>Reinstatement fees may apply</li>
+            </ul>
+            
+            <div style="border: 1px solid #ffc107; border-radius: 5px; padding: 10px; margin: 15px 0; background-color: #fff3cd;">
+                <strong>Need Help?</strong> If you're experiencing difficulties, please contact us immediately at ${object.subscription_id.company_id.phone or object.subscription_id.company_id.email} to discuss payment arrangements.
+            </div>
+            
+            <p>We value your membership and hope to resolve this matter promptly.</p>
+            
+            <br/>
+            <p>Urgently,<br/>
+            The ${object.subscription_id.company_id.name} Billing Team</p>
+            
+            <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;"/>
+            <p style="font-size: 11px; color: #666;">
+                This is a final collection notice. Please contact us immediately if you have questions or need assistance.
+            </p>
+        </div>
+    </div>
+</div>
+            </field>
+        </record>
+
+        <!-- Payment Confirmation Email Template -->
+        <record id="email_template_payment_confirmation" model="mail.template">
+            <field name="name">AMS: Payment Confirmation</field>
+            <field name="model_id" ref="ams_subscriptions.model_ams_payment_history"/>
+            <field name="subject">Payment Confirmation - ${object.subscription_id.name}</field>
+            <field name="email_from">${(object.subscription_id.company_id.email or user.email) | safe}</field>
+            <field name="email_to">${object.partner_id.email | safe}</field>
+            <field name="lang">${object.partner_id.lang}</field>
+            <field name="auto_delete" eval="True"/>
+            <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <div style="margin: 0px; padding: 0px; font-family: 'Lucida Grande', Ubuntu, Arial, Verdana, sans-serif; font-size: 12px; color: rgb(34, 34, 34); background-color: #FFFFFF;">
+        
+        <div style="margin: 20px 0px 20px 0px;">
+            <img src="/logo.png" style="padding: 0px; margin: 0px; height: auto; width: 120px;" alt="${object.subscription_id.company_id.name}"/>
+        </div>
+        
+        <div style="margin: 0px; padding: 0px; width: 100%;">
+            <h2 style="color: #5cb85c; margin: 0 0 10px 0;">✅ Payment Confirmed</h2>
+            
+            <p>Dear ${object.partner_id.name},</p>
+            
+            <p>Thank you! We have successfully processed your payment:</p>
+            
+            <div style="border: 1px solid #5cb85c; border-radius: 5px; padding: 15px; margin: 15px 0; background-color: #d4edda;">
+                <strong>Subscription:</strong> ${object.subscription_id.name}<br/>
+                <strong>Amount Paid:</strong> $${object.payment_amount}<br/>
+                <strong>Payment Date:</strong> ${object.payment_date}<br/>
+                <strong>Transaction ID:</strong> ${object.transaction_id or 'N/A'}<br/>
+                % if object.billing_cycle:
+                <strong>Billing Cycle:</strong> ${object.billing_cycle.title()}<br/>
+                % endif
+            </div>
+            
+            <p>Your membership is now current and all services remain active. Your next billing date will be communicated separately.</p>
+            
+            <p>If you have any questions about this payment or your membership, please don't hesitate to contact us.</p>
+            
+            <br/>
+            <p>Thank you for your continued membership!</p>
+            
+            <p>Best regards,<br/>
+            The ${object.subscription_id.company_id.name} Team</p>
+            
+            <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;"/>
+            <p style="font-size: 11px; color: #666;">
+                Keep this email for your records. Contact us if you have any questions about this payment.
+            </p>
+        </div>
+    </div>
+</div>
+            </field>
+        </record>
+
+    </data>
+</odoo>

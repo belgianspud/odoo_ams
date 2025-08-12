@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- =================================================================== -->
+        <!-- AMS JOURNALS - Specialized journals for Association Management     -->
+        <!-- =================================================================== -->
+        
+        <!-- AMS Sales Journal - Main journal for membership and subscription sales -->
+        <record id="journal_ams_sales" model="account.journal">
+            <field name="name">AMS Sales</field>
+            <field name="code">AMS</field>
+            <field name="type">sale</field>
+            <field name="sequence">10</field>
+            <field name="show_on_dashboard" eval="True"/>
+            <field name="default_account_id" ref="ams_base_accounting.account_membership_revenue_individual"/>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+        
+        <!-- Membership Revenue Journal - Specific to membership transactions -->
+        <record id="journal_membership_revenue" model="account.journal">
+            <field name="name">Membership Revenue</field>
+            <field name="code">MBR</field>
+            <field name="type">sale</field>
+            <field name="sequence">11</field>
+            <field name="show_on_dashboard" eval="True"/>
+            <field name="default_account_id" ref="ams_base_accounting.account_membership_revenue_individual"/>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+        
+        <!-- Publication Sales Journal -->
+        <record id="journal_publication_sales" model="account.journal">
+            <field name="name">Publication Sales</field>
+            <field name="code">PUB</field>
+            <field name="type">sale</field>
+            <field name="sequence">12</field>
+            <field name="show_on_dashboard" eval="True"/>
+            <field name="default_account_id" ref="ams_base_accounting.account_publication_revenue"/>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+        
+        <!-- Chapter Revenue Journal -->
+        <record id="journal_chapter_revenue" model="account.journal">
+            <field name="name">Chapter Revenue</field>
+            <field name="code">CHT</field>
+            <field name="type">sale</field>
+            <field name="sequence">13</field>
+            <field name="show_on_dashboard" eval="True"/>
+            <field name="default_account_id" ref="ams_base_accounting.account_chapter_revenue"/>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+        
+        <!-- Event and Conference Revenue Journal -->
+        <record id="journal_event_revenue" model="account.journal">
+            <field name="name">Event Revenue</field>
+            <field name="code">EVT</field>
+            <field name="type">sale</field>
+            <field name="sequence">14</field>
+            <field name="show_on_dashboard" eval="True"/>
+            <field name="default_account_id" ref="account_conference_revenue"/>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+        
+        <!-- =================================================================== -->
+        <!-- CASH JOURNALS - For different types of cash receipts               -->
+        <!-- =================================================================== -->
+        
+        <!-- Cash - Membership Payments -->
+        <record id="journal_cash_membership" model="account.journal">
+            <field name="name">Cash - Membership</field>
+            <field name="code">CASH1</field>
+            <field name="type">cash</field>
+            <field name="sequence">20</field>
+            <field name="show_on_dashboard" eval="True"/>
+            <field name="default_account_id" ref="ams_base_accounting.account_cash_membership"/>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+        
+        <!-- Cash - Events and Conferences -->
+        <record id="journal_cash_events" model="account.journal">
+            <field name="name">Cash - Events</field>
+            <field name="code">CASH2</field>
+            <field name="type">cash</field>
+            <field name="sequence">21</field>
+            <field name="show_on_dashboard" eval="True"/>
+            <field name="default_account_id" ref="ams_base_accounting.account_cash_events"/>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+        
+        <!-- =================================================================== -->
+        <!-- BANK JOURNALS - For bank account management                        -->
+        <!-- =================================================================== -->
+        
+        <!-- Primary Operating Account -->
+        <record id="journal_bank_operating" model="account.journal">
+            <field name="name">Operating Account</field>
+            <field name="code">BANK1</field>
+            <field name="type">bank</field>
+            <field name="sequence">30</field>
+            <field name="show_on_dashboard" eval="True"/>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+        
+        <!-- Membership Receipts Account -->
+        <record id="journal_bank_membership" model="account.journal">
+            <field name="name">Membership Receipts</field>
+            <field name="code">BANK2</field>
+            <field name="type">bank</field>
+            <field name="sequence">31</field>
+            <field name="show_on_dashboard" eval="True"/>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+        
+        <!-- =================================================================== -->
+        <!-- PURCHASE JOURNALS - For expense management                         -->
+        <!-- =================================================================== -->
+        
+        <!-- General Purchases -->
+        <record id="journal_purchases" model="account.journal">
+            <field name="name">Purchases</field>
+            <field name="code">BILL</field>
+            <field name="type">purchase</field>
+            <field name="sequence">40</field>
+            <field name="show_on_dashboard" eval="True"/>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+        
+        <!-- Membership Expenses -->
+        <record id="journal_membership_expenses" model="account.journal">
+            <field name="name">Membership Expenses</field>
+            <field name="code">MEXP</field>
+            <field name="type">purchase</field>
+            <field name="sequence">41</field>
+            <field name="show_on_dashboard" eval="True"/>
+            <field name="default_account_id" ref="ams_base_accounting.account_membership_expense"/>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+        
+        <!-- Publication Expenses -->
+        <record id="journal_publication_expenses" model="account.journal">
+            <field name="name">Publication Expenses</field>
+            <field name="code">PEXP</field>
+            <field name="type">purchase</field>
+            <field name="sequence">42</field>
+            <field name="show_on_dashboard" eval="True"/>
+            <field name="default_account_id" ref="ams_base_accounting.account_publication_expense"/>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+        
+        <!-- =================================================================== -->
+        <!-- MISCELLANEOUS JOURNALS                                             -->
+        <!-- =================================================================== -->
+        
+        <!-- General Journal for adjustments and corrections -->
+        <record id="journal_general" model="account.journal">
+            <field name="name">General Journal</field>
+            <field name="code">MISC</field>
+            <field name="type">general</field>
+            <field name="sequence">50</field>
+            <field name="show_on_dashboard" eval="True"/>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+        
+        <!-- Revenue Recognition Journal - For deferred revenue entries -->
+        <record id="journal_revenue_recognition" model="account.journal">
+            <field name="name">Revenue Recognition</field>
+            <field name="code">REVREC</field>
+            <field name="type">general</field>
+            <field name="sequence">51</field>
+            <field name="show_on_dashboard" eval="True"/>
+            <field name="default_account_id" ref="ams_base_accounting.account_deferred_membership_revenue"/>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+        
+        <!-- Year-End Adjustments Journal -->
+        <record id="journal_year_end" model="account.journal">
+            <field name="name">Year-End Adjustments</field>
+            <field name="code">YEAR</field>
+            <field name="type">general</field>
+            <field name="sequence">52</field>
+            <field name="show_on_dashboard" eval="False"/>
+            <field name="currency_id" ref="base.USD"/>
+        </record>
+        
+        <!-- =================================================================== -->
+        <!-- JOURNAL SEQUENCES - Ensure proper numbering                        -->
+        <!-- =================================================================== -->
+        
+        <!-- AMS Sales Journal Sequence -->
+        <record id="sequence_ams_sales_journal" model="ir.sequence">
+            <field name="name">AMS Sales Journal</field>
+            <field name="code">account.move.ams.sales</field>
+            <field name="prefix">AMS/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="number_next">1</field>
+            <field name="use_date_range" eval="True"/>
+        </record>
+        
+        <!-- Membership Revenue Journal Sequence -->
+        <record id="sequence_membership_journal" model="ir.sequence">
+            <field name="name">Membership Revenue Journal</field>
+            <field name="code">account.move.membership</field>
+            <field name="prefix">MBR/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="number_next">1</field>
+            <field name="use_date_range" eval="True"/>
+        </record>
+        
+        <!-- Publication Sales Journal Sequence -->
+        <record id="sequence_publication_journal" model="ir.sequence">
+            <field name="name">Publication Sales Journal</field>
+            <field name="code">account.move.publication</field>
+            <field name="prefix">PUB/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="number_next">1</field>
+            <field name="use_date_range" eval="True"/>
+        </record>
+        
+        <!-- Revenue Recognition Journal Sequence -->
+        <record id="sequence_revenue_recognition_journal" model="ir.sequence">
+            <field name="name">Revenue Recognition Journal</field>
+            <field name="code">account.move.revenue.recognition</field>
+            <field name="prefix">RR/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="number_next">1</field>
+            <field name="use_date_range" eval="True"/>
+        </record>
+        
+        <!-- =================================================================== -->
+        <!-- ASSIGN SEQUENCES TO JOURNALS                                       -->
+        <!-- =================================================================== -->
+        
+        <!-- Link sequences to journals -->
+        
+    </data>
+</odoo>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Hide unwanted modules from Apps menu -->
+        <!-- Only include modules that exist in Odoo Community Edition -->
+        
+        <!-- Hide modules completely from Apps menu -->
+        
+        <!-- Manufacturing modules (Community) -->
+        <record id="base.module_mrp" model="ir.module.module">
+            <field name="to_buy" eval="False"/>
+            <field name="application" eval="False"/>
+            <field name="category_id" eval="False"/>
+        </record>
+        
+        <!-- HR modules (Community) -->
+        <record id="base.module_hr_holidays" model="ir.module.module">
+            <field name="application" eval="False"/>
+            <field name="category_id" eval="False"/>
+        </record>
+        
+        <!-- Survey module (Community) -->
+        <record id="base.module_survey" model="ir.module.module">
+            <field name="application" eval="False"/>
+            <field name="category_id" eval="False"/>
+        </record>
+        
+        <!-- Maintenance module (Community) -->
+        <record id="base.module_maintenance" model="ir.module.module">
+            <field name="application" eval="False"/>
+            <field name="category_id" eval="False"/>
+        </record>
+        
+        <!-- Fleet module (Community) -->
+        <record id="base.module_fleet" model="ir.module.module">
+            <field name="application" eval="False"/>
+            <field name="category_id" eval="False"/>
+        </record>
+        
+        <!-- Additional modules to hide -->
+        <record id="base.module_purchase" model="ir.module.module">
+            <field name="application" eval="False"/>
+            <field name="category_id" eval="False"/>
+        </record>
+        
+        <record id="base.module_sale" model="ir.module.module">
+            <field name="application" eval="False"/>
+            <field name="category_id" eval="False"/>
+        </record>
+        
+        <record id="base.module_stock" model="ir.module.module">
+            <field name="application" eval="False"/>
+            <field name="category_id" eval="False"/>
+        </record>
+        
+        <record id="base.module_account" model="ir.module.module">
+            <field name="application" eval="False"/>
+            <field name="category_id" eval="False"/>
+        </record>
+        
+        <record id="base.module_project" model="ir.module.module">
+            <field name="application" eval="False"/>
+            <field name="category_id" eval="False"/>
+        </record>
+        
+        <record id="base.module_website" model="ir.module.module">
+            <field name="application" eval="False"/>
+            <field name="category_id" eval="False"/>
+        </record>
+        
+        <!-- 
+        The following modules are ENTERPRISE ONLY and don't exist in Community:
+        - lunch (Enterprise)
+        - hr_attendance (Enterprise) 
+        - hr_timesheet (Enterprise)
+        - hr_expense (Enterprise)
+        - repair (Enterprise)
+        - stock_barcode (Enterprise)
+        - appointment (Enterprise)
+        - planning (Enterprise)
+        - helpdesk (Enterprise)
+        - sign (Enterprise)
+        - hr_recruitment (Enterprise)
+        - hr_skills (Enterprise)
+        - social (Enterprise)
+        - website_studio (Enterprise)
+        - quality (Enterprise)
+        -->
+        
+    </data>
+</odoo>

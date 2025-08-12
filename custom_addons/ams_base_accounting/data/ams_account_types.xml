@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- =================================================================== -->
+        <!-- AMS ACCOUNT TYPES - Core GL Accounts for Association Management    -->
+        <!-- =================================================================== -->
+        
+        <!-- Revenue Accounts -->
+        <record id="account_membership_revenue_individual" model="account.account">
+            <field name="code">4100</field>
+            <field name="name">Membership Revenue - Individual</field>
+            <field name="account_type">income_other</field>
+            <field name="ams_account_category">membership_revenue</field>
+            <field name="ams_description">Revenue from individual membership subscriptions and renewals</field>
+            <field name="reconcile" eval="False"/>
+        </record>
+        
+        <record id="account_membership_revenue_enterprise" model="account.account">
+            <field name="code">4110</field>
+            <field name="name">Membership Revenue - Enterprise</field>
+            <field name="account_type">income_other</field>
+            <field name="ams_account_category">membership_revenue</field>
+            <field name="ams_description">Revenue from enterprise membership subscriptions and seat fees</field>
+            <field name="reconcile" eval="False"/>
+        </record>
+        
+        <record id="account_publication_revenue" model="account.account">
+            <field name="code">4200</field>
+            <field name="name">Publication Revenue</field>
+            <field name="account_type">income_other</field>
+            <field name="ams_account_category">publication_revenue</field>
+            <field name="ams_description">Revenue from publication subscriptions and one-time sales</field>
+            <field name="reconcile" eval="False"/>
+        </record>
+        
+        <record id="account_chapter_revenue" model="account.account">
+            <field name="code">4300</field>
+            <field name="name">Chapter Revenue</field>
+            <field name="account_type">income_other</field>
+            <field name="ams_account_category">chapter_revenue</field>
+            <field name="ams_description">Revenue from local chapter memberships and activities</field>
+            <field name="reconcile" eval="False"/>
+        </record>
+        
+        <!-- Asset Accounts -->
+        <record id="account_subscription_receivables" model="account.account">
+            <field name="code">1200</field>
+            <field name="name">Accounts Receivable - Memberships</field>
+            <field name="account_type">asset_receivable</field>
+            <field name="ams_account_category">subscription_ar</field>
+            <field name="ams_description">Outstanding membership and subscription invoices</field>
+            <field name="reconcile" eval="True"/>
+        </record>
+        
+        <record id="account_cash_membership" model="account.account">
+            <field name="code">1010</field>
+            <field name="name">Cash - Membership Payments</field>
+            <field name="account_type">asset_cash</field>
+            <field name="ams_account_category">cash_membership</field>
+            <field name="ams_description">Cash account for membership-related payments</field>
+            <field name="reconcile" eval="True"/>
+        </record>
+        
+        <record id="account_cash_events" model="account.account">
+            <field name="code">1020</field>
+            <field name="name">Cash - Event Payments</field>
+            <field name="account_type">asset_cash</field>
+            <field name="ams_account_category">cash_events</field>
+            <field name="ams_description">Cash account for event registration and chapter activity payments</field>
+            <field name="reconcile" eval="True"/>
+        </record>
+        
+        <!-- Liability Accounts -->
+        <record id="account_deferred_membership_revenue" model="account.account">
+            <field name="code">2300</field>
+            <field name="name">Deferred Membership Revenue</field>
+            <field name="account_type">liability_current</field>
+            <field name="ams_account_category">deferred_revenue</field>
+            <field name="ams_description">Unearned revenue from prepaid memberships and subscriptions</field>
+            <field name="reconcile" eval="False"/>
+        </record>
+        
+        <!-- Expense Accounts -->
+        <record id="account_membership_expense" model="account.account">
+            <field name="code">5100</field>
+            <field name="name">Membership Expense</field>
+            <field name="account_type">expense</field>
+            <field name="ams_account_category">membership_expense</field>
+            <field name="ams_description">Costs related to membership services and benefits</field>
+            <field name="reconcile" eval="False"/>
+        </record>
+        
+        <record id="account_publication_expense" model="account.account">
+            <field name="code">5200</field>
+            <field name="name">Publication Expense</field>
+            <field name="account_type">expense</field>
+            <field name="ams_account_category">publication_expense</field>
+            <field name="ams_description">Costs related to publication creation and distribution</field>
+            <field name="reconcile" eval="False"/>
+        </record>
+        
+        <record id="account_chapter_expense" model="account.account">
+            <field name="code">5300</field>
+            <field name="name">Chapter Expense</field>
+            <field name="account_type">expense</field>
+            <field name="ams_account_category">chapter_expense</field>
+            <field name="ams_description">Costs related to chapter operations and activities</field>
+            <field name="reconcile" eval="False"/>
+        </record>
+        
+        <record id="account_event_expense" model="account.account">
+            <field name="code">5400</field>
+            <field name="name">Event Expense</field>
+            <field name="account_type">expense</field>
+            <field name="ams_account_category">event_expense</field>
+            <field name="ams_description">Costs related to events, conferences, and training</field>
+            <field name="reconcile" eval="False"/>
+        </record>
+        
+        <!-- =================================================================== -->
+        <!-- ACCOUNT GROUPS - Standalone groups for better organization         -->
+        <!-- =================================================================== -->
+        
+        <record id="account_group_ams_revenue" model="account.group">
+            <field name="code_prefix_start">4100</field>
+            <field name="code_prefix_end">4399</field>
+            <field name="name">AMS Revenue</field>
+        </record>
+        
+        <record id="account_group_ams_assets" model="account.group">
+            <field name="code_prefix_start">1200</field>
+            <field name="code_prefix_end">1299</field>
+            <field name="name">AMS Assets</field>
+        </record>
+        
+        <record id="account_group_ams_expenses" model="account.group">
+            <field name="code_prefix_start">5100</field>
+            <field name="code_prefix_end">5499</field>
+            <field name="name">AMS Expenses</field>
+        </record>
+        
+        <!-- =================================================================== -->
+        <!-- PAYMENT TERMS - Common terms for membership billing                -->
+        <!-- =================================================================== -->
+        
+        <record id="payment_term_membership_net30" model="account.payment.term">
+            <field name="name">Membership Net 30</field>
+            <field name="note">Payment due 30 days from invoice date - Standard membership terms</field>
+            <field name="line_ids" eval="[(0, 0, {
+                'value': 'balance',
+                'value_amount': 0.0,
+                'days': 30,
+            })]"/>
+        </record>
+        
+        <record id="payment_term_membership_immediate" model="account.payment.term">
+            <field name="name">Membership Due on Receipt</field>
+            <field name="note">Payment due immediately upon receipt - Used for online membership purchases</field>
+            <field name="line_ids" eval="[(0, 0, {
+                'value': 'balance',
+                'value_amount': 0.0,
+                'days': 0,
+            })]"/>
+        </record>
+        
+        <!-- =================================================================== -->
+        <!-- FISCAL POSITIONS - Tax handling for different member types         -->
+        <!-- =================================================================== -->
+        
+        <record id="fiscal_position_membership_exempt" model="account.fiscal.position">
+            <field name="name">Membership - Tax Exempt</field>
+            <field name="note">For tax-exempt membership organizations</field>
+            <field name="auto_apply" eval="False"/>
+        </record>
+        
+        <!-- =================================================================== -->
+        <!-- ANALYTIC ACCOUNTS - Optional: Track revenue by program/department  -->
+        <!-- =================================================================== -->
+        
+        <record id="analytic_plan_ams_programs" model="account.analytic.plan">
+            <field name="name">AMS Programs</field>
+            <field name="description">Track costs and revenue by AMS program or department</field>
+        </record>
+        
+        <record id="analytic_account_membership_program" model="account.analytic.account">
+            <field name="name">Membership Program</field>
+            <field name="plan_id" ref="analytic_plan_ams_programs"/>
+            <field name="code">MBR</field>
+        </record>
+        
+        <record id="analytic_account_publication_program" model="account.analytic.account">
+            <field name="name">Publication Program</field>
+            <field name="plan_id" ref="analytic_plan_ams_programs"/>
+            <field name="code">PUB</field>
+        </record>
+        
+        <record id="analytic_account_chapter_program" model="account.analytic.account">
+            <field name="name">Chapter Program</field>
+            <field name="plan_id" ref="analytic_plan_ams_programs"/>
+            <field name="code">CHT</field>
+        </record>
+        
+        <record id="analytic_account_events_program" model="account.analytic.account">
+            <field name="name">Events Program</field>
+            <field name="plan_id" ref="analytic_plan_ams_programs"/>
+            <field name="code">EVT</field>
+        </record>
+        
+    </data>
+</odoo>
