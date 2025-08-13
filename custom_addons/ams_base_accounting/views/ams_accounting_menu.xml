@@ -2,7 +2,7 @@
 <odoo>
     <!-- Enhanced Invoice Action for AMS -->
     <record id="action_move_ams_invoices" model="ir.actions.act_window">
-        <field name="name">AMS Invoices</field>
+        <field name="name">Customer Invoices</field>
         <field name="res_model">account.move</field>
         <field name="view_mode">list,form</field>
         <field name="domain">[('move_type', '=', 'out_invoice'), ('has_ams_products', '=', True)]</field>
@@ -10,32 +10,235 @@
             'default_move_type': 'out_invoice',
             'search_default_has_ams_products': 1
         }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                📄 No customer invoices yet!
+            </p>
+            <p>
+                Customer invoices will appear here when you create subscriptions.
+                Track payments, send reminders, and monitor revenue.
+            </p>
+        </field>
     </record>
 
-    <!-- Add Accounting section to existing AMS menu -->
-    <menuitem id="menu_ams_accounting"
-              name="Accounting"
+    <!-- User-Friendly Chart of Accounts Action -->
+    <record id="action_account_account_ams" model="ir.actions.act_window">
+        <field name="name">Payment Accounts</field>
+        <field name="res_model">account.account</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_ams_account', '=', True)]</field>
+        <field name="context">{'search_default_filter_ams_accounts': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                💰 Setting up your payment accounts...
+            </p>
+            <p>
+                These accounts track where money flows in your association:
+                <br/>• Revenue accounts (where earnings are recorded)
+                <br/>• Payment accounts (where customer money is deposited)  
+                <br/>• Outstanding invoice tracking
+            </p>
+        </field>
+    </record>
+
+    <!-- Revenue Health Dashboard Action -->
+    <record id="action_ams_revenue_dashboard" model="ir.actions.act_window">
+        <field name="name">Revenue Health</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="domain">[('move_type', '=', 'out_invoice'), ('has_ams_products', '=', True)]</field>
+        <field name="context">{
+            'search_default_has_ams_products': 1,
+            'group_by': ['date:month'],
+            'search_default_posted': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                📊 Your revenue dashboard will appear here!
+            </p>
+            <p>
+                Track your association's financial health:
+                <br/>• Monthly revenue trends
+                <br/>• Customer payment patterns
+                <br/>• Subscription performance
+            </p>
+        </field>
+    </record>
+
+    <!-- Quick Actions Dashboard -->
+    <record id="action_ams_accounting_quick_actions" model="ir.actions.act_window">
+        <field name="name">Quick Actions</field>
+        <field name="res_model">ams.accounting.config</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                🚀 Quick accounting actions
+            </p>
+            <p>
+                Common tasks and configuration options for your AMS accounting.
+            </p>
+        </field>
+    </record>
+
+    <!-- Payment Tracking Action (Simplified A/R) -->
+    <record id="action_ams_payment_tracking" model="ir.actions.act_window">
+        <field name="name">Payment Tracking</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[
+            ('move_type', '=', 'out_invoice'), 
+            ('has_ams_products', '=', True),
+            ('payment_state', 'in', ['not_paid', 'partial'])
+        ]</field>
+        <field name="context">{
+            'search_default_has_ams_products': 1,
+            'search_default_group_by_payment_state': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                💳 All payments are up to date!
+            </p>
+            <p>
+                This shows invoices that need payment:
+                <br/>• Outstanding customer invoices
+                <br/>• Partial payments received  
+                <br/>• Payment reminders needed
+            </p>
+        </field>
+    </record>
+
+    <!-- =================================================================== -->
+    <!-- MAIN MENU STRUCTURE - User Friendly Labels                        -->
+    <!-- =================================================================== -->
+
+    <!-- Main Accounting Section (Updated Name) -->
+    <menuitem id="menu_ams_revenue_payments"
+              name="💰 Revenue &amp; Payments"
               parent="ams_subscriptions.menu_ams_root"
               sequence="70"/>
 
-    <!-- Chart of Accounts -->
-    <menuitem id="menu_ams_chart_of_accounts"
-              name="Chart of Accounts"
-              parent="menu_ams_accounting"
-              action="action_account_account_ams"
+    <!-- =================================================================== -->
+    <!-- EVERYDAY TASKS - Most Used by Non-Accountants                     -->
+    <!-- =================================================================== -->
+
+    <!-- Customer Invoices (Most Important) -->
+    <menuitem id="menu_ams_customer_invoices"
+              name="📄 Customer Invoices"
+              parent="menu_ams_revenue_payments"
+              action="action_move_ams_invoices"
               sequence="10"/>
 
-    <!-- AMS Invoices/Transactions -->
-    <menuitem id="menu_ams_invoices"
-              name="AMS Invoices"
-              parent="menu_ams_accounting"
-              action="action_move_ams_invoices"
+    <!-- Payment Tracking (Second Most Important) -->
+    <menuitem id="menu_ams_payment_tracking"
+              name="💳 Payment Tracking"
+              parent="menu_ams_revenue_payments"
+              action="action_ams_payment_tracking"
               sequence="20"/>
 
-    <!-- Configuration submenu -->
-    <menuitem id="menu_ams_accounting_config"
-              name="Accounting Setup"
+    <!-- Revenue Health Dashboard -->
+    <menuitem id="menu_ams_revenue_health"
+              name="📊 Revenue Health"
+              parent="menu_ams_revenue_payments"
+              action="action_ams_revenue_dashboard"
+              sequence="30"/>
+
+    <!-- =================================================================== -->
+    <!-- ACCOUNT SETUP - For Configuration                                  -->
+    <!-- =================================================================== -->
+
+    <!-- Payment Accounts (Chart of Accounts) -->
+    <menuitem id="menu_ams_payment_accounts"
+              name="🏦 Payment Accounts"
+              parent="menu_ams_revenue_payments"
+              action="action_account_account_ams"
+              sequence="40"/>
+
+    <!-- =================================================================== -->
+    <!-- CONFIGURATION - Administrative Tasks                               -->
+    <!-- =================================================================== -->
+
+    <!-- Quick Actions -->
+    <menuitem id="menu_ams_quick_actions"
+              name="⚡ Quick Actions"
+              parent="menu_ams_revenue_payments"
+              action="action_ams_accounting_quick_actions"
+              sequence="50"/>
+
+    <!-- Setup & Configuration -->
+    <menuitem id="menu_ams_accounting_setup"
+              name="🔧 Setup &amp; Configuration"
               parent="ams_subscriptions.menu_ams_configurations"
               action="action_ams_accounting_setup_wizard"
               sequence="40"/>
+
+    <!-- =================================================================== -->
+    <!-- CONTEXTUAL MENU ITEMS - Show where relevant                        -->
+    <!-- =================================================================== -->
+
+    <!-- Create proper action for products with revenue setup -->
+    <record id="action_ams_products_revenue_setup" model="ir.actions.act_window">
+        <field name="name">Product Revenue Setup</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_subscription_product', '=', True)]</field>
+        <field name="context">{
+            'search_default_filter_needs_setup': 1,
+            'search_default_filter_subscription_products': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                💰 Configure revenue tracking for subscription products
+            </p>
+            <p>
+                Set up how revenue is tracked for each subscription product.
+                This ensures proper financial reporting and payment processing.
+            </p>
+        </field>
+    </record>
+
+    <!-- Add Revenue Tracking to Products Menu -->
+    <menuitem id="menu_ams_product_revenue_setup"
+              name="💰 Revenue Setup"
+              parent="ams_subscriptions.menu_ams_products"
+              action="action_ams_products_revenue_setup"
+              sequence="30"/>
+
+    <!-- Add Payment Overview to Members Menu -->
+    <menuitem id="menu_ams_member_payments"
+              name="💳 Member Payments"
+              parent="ams_subscriptions.menu_ams_members"
+              action="action_ams_payment_tracking"
+              sequence="50"/>
+
+    <!-- =================================================================== -->
+    <!-- REPORTING SECTION (Simplified)                                     -->
+    <!-- =================================================================== -->
+
+    <menuitem id="menu_ams_financial_reports"
+              name="📊 Reports"
+              parent="menu_ams_revenue_payments"
+              sequence="60"/>
+
+    <!-- Revenue Report -->
+    <menuitem id="menu_ams_revenue_report"
+              name="📈 Revenue Report"
+              parent="menu_ams_financial_reports"
+              action="action_ams_revenue_dashboard"
+              sequence="10"/>
+
+    <!-- Payment Status Report -->
+    <menuitem id="menu_ams_payment_status_report"
+              name="💰 Payment Status"
+              parent="menu_ams_financial_reports"
+              action="action_ams_payment_tracking"
+              sequence="20"/>
+
+    <!-- Account Summary -->
+    <menuitem id="menu_ams_account_summary"
+              name="🏦 Account Summary"
+              parent="menu_ams_financial_reports"
+              action="action_account_account_ams"
+              sequence="30"/>
+
 </odoo>
