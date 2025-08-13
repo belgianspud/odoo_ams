@@ -164,9 +164,9 @@
             </xpath>
         </field>
     </record>
-
+    <!-- these items are now in the rev rec menu xml file of this module-->
     <!-- Invoice Revenue Recognition Action -->
-    <record id="action_invoice_revenue_recognition" model="ir.actions.act_window">
+    <!--<record id="action_invoice_revenue_recognition" model="ir.actions.act_window">
         <field name="name">Invoices - Revenue Recognition</field>
         <field name="res_model">account.move</field>
         <field name="view_mode">list,form</field>
@@ -185,10 +185,10 @@
                 Monitor recognition status and manage revenue schedules.
             </p>
         </field>
-    </record>
+    </record> -->
 
     <!-- Invoice Lines Needing Revenue Recognition Action -->
-    <record id="action_invoice_lines_need_revenue_recognition" model="ir.actions.act_window">
+    <!--<record id="action_invoice_lines_need_revenue_recognition" model="ir.actions.act_window">
         <field name="name">Invoice Lines - Need Revenue Recognition</field>
         <field name="res_model">account.move.line</field>
         <field name="view_mode">list,form</field>
@@ -203,6 +203,6 @@
                 Use this to identify and create missing recognition schedules.
             </p>
         </field>
-    </record>
+    </record> -->
 
 </odoo>

@@ -1,21 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- FIXED: Define all actions FIRST, then menu items that reference them -->
-    
-    <!-- Enhanced Invoice Action for AMS -->
-    <record id="action_move_ams_invoices" model="ir.actions.act_window">
-        <field name="name">AMS Invoices</field>
+    <!-- =================================================================== -->
+    <!-- ACTIONS - Define ALL actions FIRST, then menu items                -->
+    <!-- =================================================================== -->
+
+    <!-- Invoice Revenue Recognition Action (moved from account_move_views.xml) -->
+    <record id="action_invoice_revenue_recognition" model="ir.actions.act_window">
+        <field name="name">Invoices - Revenue Recognition</field>
         <field name="res_model">account.move</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[('move_type', '=', 'out_invoice'), ('has_ams_products', '=', True)]</field>
+        <field name="domain">[('move_type', '=', 'out_invoice'), ('has_revenue_recognition', '=', True)]</field>
         <field name="context">{
             'default_move_type': 'out_invoice',
-            'search_default_has_ams_products': 1
+            'search_default_filter_has_revenue_recognition': 1,
+            'search_default_group_by_revenue_recognition_status': 1
         }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No invoices with revenue recognition found!
+            </p>
+            <p>
+                This view shows invoices that contain subscription products with revenue recognition.
+                Monitor recognition status and manage revenue schedules.
+            </p>
+        </field>
     </record>
 
-    <!-- FIXED: Action for products with deferred revenue (define before menu) -->
+    <!-- Invoice Lines Needing Revenue Recognition Action (moved from account_move_views.xml) -->
+    <record id="action_invoice_lines_need_revenue_recognition" model="ir.actions.act_window">
+        <field name="name">Invoice Lines - Need Revenue Recognition</field>
+        <field name="res_model">account.move.line</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('needs_revenue_recognition', '=', True)]</field>
+        <field name="context">{'search_default_needs_revenue_recognition': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No invoice lines need revenue recognition!
+            </p>
+            <p>
+                This view shows invoice lines from subscription products that need revenue recognition schedules.
+                Use this to identify and create missing recognition schedules.
+            </p>
+        </field>
+    </record>
+
+    <!-- Products with Deferred Revenue Action -->
     <record id="action_products_with_deferred_revenue" model="ir.actions.act_window">
         <field name="name">Products with Deferred Revenue</field>
         <field name="res_model">product.template</field>
@@ -35,7 +65,7 @@
         </field>
     </record>
 
-    <!-- FIXED: Action for products needing review (define before menu) -->
+    <!-- Products Needing Review Action -->
     <record id="action_products_needing_review" model="ir.actions.act_window">
         <field name="name">Products Needing Recognition Review</field>
         <field name="res_model">product.template</field>
@@ -55,10 +85,9 @@
         </field>
     </record>
 
-    <!-- NOW define menu items that reference the actions above -->
-    
-    <!-- Revenue Recognition Menu Items -->
-    <!-- Add to existing AMS Accounting menu structure -->
+    <!-- =================================================================== -->
+    <!-- MENU ITEMS - Now reference the actions defined above                -->
+    <!-- =================================================================== -->
     
     <!-- Revenue Recognition Schedules -->
     <menuitem id="menu_ams_revenue_schedules"
@@ -108,21 +137,21 @@
               action="action_subscription_revenue_recognition_dashboard"
               sequence="20"/>
 
-    <!-- Invoices with Revenue Recognition -->
+    <!-- Invoices with Revenue Recognition (NOW WORKS - action defined above) -->
     <menuitem id="menu_ams_invoices_revenue_recognition"
               name="Invoices - Revenue Recognition"
               parent="menu_ams_revenue_reporting"
               action="action_invoice_revenue_recognition"
               sequence="30"/>
 
-    <!-- Invoice Lines Needing Recognition -->
+    <!-- Invoice Lines Needing Recognition (NOW WORKS - action defined above) -->
     <menuitem id="menu_ams_invoice_lines_need_recognition"
               name="Lines Needing Recognition"
               parent="menu_ams_revenue_reporting"
               action="action_invoice_lines_need_revenue_recognition"
               sequence="40"/>
 
-    <!-- FIXED: Now we can safely reference the action defined above -->
+    <!-- Products with Deferred Revenue (NOW WORKS - action defined above) -->
     <menuitem id="menu_ams_products_with_deferred_revenue"
               name="Products with Deferred Revenue"
               parent="menu_ams_revenue_reporting"
