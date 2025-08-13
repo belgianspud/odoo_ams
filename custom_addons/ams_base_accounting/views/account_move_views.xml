@@ -9,11 +9,9 @@
             <!-- Add user-friendly AMS fields after partner_id -->
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="ams_subscription_id" string="📋 Related Subscription" 
-                       invisible="not has_ams_products"
-                       help="The subscription this invoice was created for"/>
+                       invisible="not has_ams_products"/>
                 <field name="ams_transaction_type" string="💳 Payment Type" 
-                       invisible="not has_ams_products"
-                       help="What type of payment this invoice represents"/>
+                       invisible="not has_ams_products"/>
                 <field name="has_ams_products" invisible="1"/>
             </xpath>
         </field>
@@ -27,10 +25,8 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position="after">
                 <field name="has_ams_products" string="🎯 Association" optional="hide"
-                       widget="boolean_toggle"
-                       help="This invoice contains association products"/>
-                <field name="ams_transaction_type" string="💳 Payment Type" optional="hide"
-                       help="Type of association payment"/>
+                       widget="boolean_toggle"/>
+                <field name="ams_transaction_type" string="💳 Payment Type" optional="hide"/>
             </xpath>
         </field>
     </record>
@@ -46,76 +42,60 @@
                 
                 <!-- User-Friendly Association Filters -->
                 <filter name="filter_association_invoices" string="🎯 Association Invoices" 
-                        domain="[('has_ams_products', '=', True)]"
-                        help="Show only invoices for association memberships and services"/>
+                        domain="[('has_ams_products', '=', True)]"/>
                         
                 <!-- Payment Type Filters with Icons -->
                 <filter name="filter_membership_payments" string="👥 Membership Payments" 
-                        domain="[('ams_transaction_type', '=', 'membership_payment')]"
-                        help="Individual and enterprise membership payments"/>
+                        domain="[('ams_transaction_type', '=', 'membership_payment')]"/>
                         
                 <filter name="filter_publication_payments" string="📚 Publication Payments" 
-                        domain="[('ams_transaction_type', '=', 'publication_payment')]"
-                        help="Newsletter and magazine subscription payments"/>
+                        domain="[('ams_transaction_type', '=', 'publication_payment')]"/>
                         
                 <filter name="filter_chapter_payments" string="🏢 Chapter Payments" 
-                        domain="[('ams_transaction_type', '=', 'chapter_payment')]"
-                        help="Local chapter membership payments"/>
+                        domain="[('ams_transaction_type', '=', 'chapter_payment')]"/>
                         
                 <filter name="filter_seat_addons" string="💺 Enterprise Seat Add-ons" 
-                        domain="[('ams_transaction_type', '=', 'seat_addon')]"
-                        help="Additional seats for enterprise memberships"/>
+                        domain="[('ams_transaction_type', '=', 'seat_addon')]"/>
                         
                 <filter name="filter_modifications" string="🔄 Subscription Changes" 
-                        domain="[('ams_transaction_type', '=', 'modification')]"
-                        help="Upgrades, downgrades, and subscription modifications"/>
+                        domain="[('ams_transaction_type', '=', 'modification')]"/>
                         
                 <filter name="filter_refunds" string="💰 Refunds" 
-                        domain="[('ams_transaction_type', '=', 'refund')]"
-                        help="Refunds and credits issued to customers"/>
+                        domain="[('ams_transaction_type', '=', 'refund')]"/>
                 
                 <separator/>
                 
                 <!-- Payment Status Filters -->
                 <filter name="filter_paid_invoices" string="✅ Paid in Full" 
-                        domain="[('payment_state', '=', 'paid')]"
-                        help="Invoices that have been fully paid"/>
+                        domain="[('payment_state', '=', 'paid')]"/>
                         
                 <filter name="filter_unpaid_invoices" string="⏳ Awaiting Payment" 
-                        domain="[('payment_state', 'in', ['not_paid', 'partial'])]"
-                        help="Invoices with outstanding balances"/>
+                        domain="[('payment_state', 'in', ['not_paid', 'partial'])]"/>
                         
                 <filter name="filter_overdue_invoices" string="⚠️ Overdue" 
-                        domain="[('payment_state', 'in', ['not_paid', 'partial']), ('invoice_date_due', '&lt;', context_today())]"
-                        help="Unpaid invoices past their due date"/>
+                        domain="[('payment_state', 'in', ['not_paid', 'partial']), ('invoice_date_due', '&lt;', context_today())]"/>
                 
                 <separator/>
                 
                 <!-- Time-based Filters -->
                 <filter name="filter_this_month" string="📅 This Month" 
-                        domain="[('date', '&gt;=', (context_today().replace(day=1)).strftime('%Y-%m-%d')), ('date', '&lt;', ((context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1)).strftime('%Y-%m-%d'))]"
-                        help="Invoices created this month"/>
+                        domain="[('date', '&gt;=', (context_today().replace(day=1)).strftime('%Y-%m-%d')), ('date', '&lt;', ((context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1)).strftime('%Y-%m-%d'))]"/>
                         
                 <filter name="filter_this_quarter" string="📅 This Quarter" 
-                        domain="[('date', '&gt;=', (context_today() - datetime.timedelta(days=90)).strftime('%Y-%m-%d'))]"
-                        help="Invoices from the last 3 months"/>
+                        domain="[('date', '&gt;=', (context_today() - datetime.timedelta(days=90)).strftime('%Y-%m-%d'))]"/>
                 
                 <separator/>
                 
                 <!-- Grouping Options with User-Friendly Labels -->
                 <group expand="0" string="📊 Group By">
                     <filter name="group_by_payment_type" string="💳 Payment Type" 
-                            domain="[]" context="{'group_by': 'ams_transaction_type'}"
-                            help="Group by type of association payment"/>
+                            domain="[]" context="{'group_by': 'ams_transaction_type'}"/>
                     <filter name="group_by_payment_status" string="💰 Payment Status" 
-                            domain="[]" context="{'group_by': 'payment_state'}"
-                            help="Group by whether invoices are paid, unpaid, or overdue"/>
+                            domain="[]" context="{'group_by': 'payment_state'}"/>
                     <filter name="group_by_customer" string="👥 Customer" 
-                            domain="[]" context="{'group_by': 'partner_id'}"
-                            help="Group by customer name"/>
+                            domain="[]" context="{'group_by': 'partner_id'}"/>
                     <filter name="group_by_month" string="📅 Month" 
-                            domain="[]" context="{'group_by': 'date:month'}"
-                            help="Group by invoice month"/>
+                            domain="[]" context="{'group_by': 'date:month'}"/>
                 </group>
             </xpath>
         </field>

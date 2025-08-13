@@ -67,19 +67,15 @@
         <field name="arch" type="xml">
             <!-- Update column headers and add user-friendly fields -->
             <xpath expr="//field[@name='code']" position="after">
-                <field name="ams_account_category" string="💡 Purpose" optional="show"
-                       help="What this account is used for"/>
+                <field name="ams_account_category" string="💡 Purpose" optional="show"/>
                 <field name="is_ams_account" string="🎯 AMS" optional="show" 
-                       widget="boolean_toggle"
-                       help="Association account"/>
-                <field name="subscription_count" string="📦 Products" optional="hide"
-                       help="Number of products using this account"/>
+                       widget="boolean_toggle"/>
+                <field name="subscription_count" string="📦 Products" optional="hide"/>
             </xpath>
             
             <!-- Make account type more user-friendly -->
             <xpath expr="//field[@name='account_type']" position="attributes">
                 <attribute name="string">📊 Account Type</attribute>
-                <attribute name="help">Whether this tracks money coming in, going out, or assets/liabilities</attribute>
             </xpath>
         </field>
     </record>
@@ -95,38 +91,27 @@
                 
                 <!-- User-friendly filters with icons and descriptions -->
                 <filter name="filter_ams_accounts" string="🎯 Association Accounts" 
-                        domain="[('is_ams_account', '=', True)]"
-                        help="Show only accounts used for association revenue and payments"/>
+                        domain="[('is_ams_account', '=', True)]"/>
                         
                 <filter name="filter_revenue_accounts" string="💰 Revenue Accounts" 
-                        domain="[('ams_account_category', 'in', ['membership_revenue', 'publication_revenue', 'chapter_revenue', 'event_revenue'])]"
-                        help="Accounts where money earned is recorded"/>
+                        domain="[('ams_account_category', 'in', ['membership_revenue', 'publication_revenue', 'chapter_revenue', 'event_revenue'])]"/>
                         
                 <filter name="filter_payment_accounts" string="💳 Payment Accounts" 
-                        domain="[('ams_account_category', 'in', ['subscription_ar', 'cash_membership', 'cash_events'])]"
-                        help="Accounts tracking customer payments and outstanding invoices"/>
+                        domain="[('ams_account_category', 'in', ['subscription_ar', 'cash_membership', 'cash_events'])]"/>
                         
                 <filter name="filter_prepaid_accounts" string="📊 Prepaid Revenue" 
-                        domain="[('ams_account_category', '=', 'deferred_revenue')]"
-                        help="Money received for future services (like annual memberships)"/>
-                        
-                <filter name="filter_accounts_with_products" string="📦 Used by Products" 
-                        domain="[('subscription_count', '>', 0)]"
-                        help="Accounts currently assigned to subscription products"/>
+                        domain="[('ams_account_category', '=', 'deferred_revenue')]"/>
                 
                 <separator/>
                 
                 <!-- Grouping options with user-friendly labels -->
                 <group expand="0" string="📊 Group By">
                     <filter name="group_by_ams_category" string="💡 Account Purpose" 
-                            domain="[]" context="{'group_by': 'ams_account_category'}"
-                            help="Group by what each account is used for"/>
+                            domain="[]" context="{'group_by': 'ams_account_category'}"/>
                     <filter name="group_by_account_type" string="📈 Account Type" 
-                            domain="[]" context="{'group_by': 'account_type'}"
-                            help="Group by whether account tracks income, expenses, assets, or liabilities"/>
+                            domain="[]" context="{'group_by': 'account_type'}"/>
                     <filter name="group_by_is_ams" string="🎯 AMS vs Standard" 
-                            domain="[]" context="{'group_by': 'is_ams_account'}"
-                            help="Separate association accounts from standard Odoo accounts"/>
+                            domain="[]" context="{'group_by': 'is_ams_account'}"/>
                 </group>
             </xpath>
         </field>
