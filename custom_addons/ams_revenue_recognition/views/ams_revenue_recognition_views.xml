@@ -1,67 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     
-    <!-- Revenue Recognition Form View -->
+    <!-- Enhanced Revenue Recognition Form View with Association-Friendly Language -->
     <record id="view_ams_revenue_recognition_form" model="ir.ui.view">
         <field name="name">ams.revenue.recognition.form</field>
         <field name="model">ams.revenue.recognition</field>
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_recognize_revenue" type="object" string="Recognize Revenue" 
-                            class="oe_highlight" invisible="state != 'pending'"/>
-                    <button name="action_reverse_recognition" type="object" string="Reverse Recognition" 
-                            confirm="Are you sure you want to reverse this recognition?"
-                            invisible="state != 'recognized'"/>
-                    <field name="state" widget="statusbar" statusbar_visible="pending,recognized"/>
+                    <button name="action_recognize_revenue" type="object" 
+                            string="Record Revenue" 
+                            class="oe_highlight" 
+                            invisible="state != 'pending'"
+                            help="Process this revenue recognition entry - this will move money from 'prepaid' to 'earned' revenue on your financial statements"/>
+                    <button name="action_reverse_recognition" type="object" 
+                            string="Reverse Revenue Entry" 
+                            confirm="Are you sure you want to reverse this revenue recognition? This will undo the financial impact."
+                            invisible="state != 'recognized'"
+                            help="Undo this revenue recognition entry if it was processed in error"/>
+                    <field name="state" widget="statusbar" 
+                           statusbar_visible="pending,recognized"
+                           help="Pending = waiting to be processed, Recognized = revenue has been recorded"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_journal_entry" type="object" 
                                 class="oe_stat_button" icon="fa-book"
-                                invisible="not journal_entry_id">
+                                invisible="not journal_entry_id"
+                                help="View the financial transaction created when this revenue was recognized">
                             <div class="o_field_widget o_stat_info">
-                                <span class="o_stat_text">Journal</span>
-                                <span class="o_stat_text">Entry</span>
+                                <span class="o_stat_text">Financial</span>
+                                <span class="o_stat_text">Transaction</span>
                             </div>
                         </button>
                     </div>
                     
                     <div class="oe_title">
                         <h1>
-                            <field name="description"/>
+                            <field name="description" 
+                                   help="Description of what revenue is being recognized (e.g., 'Month 3 of Annual Membership')"/>
                         </h1>
+                    </div>
+
+                    <!-- Status explanation alerts -->
+                    <div class="alert alert-info" role="alert" invisible="state != 'pending'">
+                        <h6><i class="fa fa-clock-o"/> Revenue Recognition Scheduled</h6>
+                        <p>This revenue is scheduled to be recognized on <field name="recognition_date" readonly="1"/>. 
+                           When processed, $<field name="scheduled_amount" readonly="1"/> will be moved from "prepaid revenue" 
+                           to "earned revenue" on your financial statements.</p>
+                    </div>
+
+                    <div class="alert alert-success" role="alert" invisible="state != 'recognized'">
+                        <h6><i class="fa fa-check-circle"/> Revenue Has Been Recognized</h6>
+                        <p>This revenue was successfully recognized on <field name="processed_date" readonly="1"/>. 
+                           The financial impact is now reflected in your income statements.</p>
                     </div>
                     
                     <group>
-                        <group string="Recognition Details">
-                            <field name="recognition_date"/>
-                            <field name="scheduled_amount"/>
-                            <field name="recognized_amount"/>
+                        <group string="Revenue Recognition Details">
+                            <field name="recognition_date" 
+                                   string="Revenue Recognition Date"
+                                   help="The date when this revenue should be recognized on your financial statements"/>
+                            <field name="scheduled_amount" 
+                                   string="Amount to Recognize"
+                                   help="The dollar amount that will be moved from prepaid revenue to earned revenue"/>
+                            <field name="recognized_amount" 
+                                   string="Amount Actually Recognized"
+                                   help="The actual amount that was recognized (may differ from scheduled if adjustments were made)"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
-                        <group string="Related Records">
-                            <field name="schedule_id"/>
-                            <field name="subscription_id" readonly="1"/>
-                            <field name="product_id" readonly="1"/>
-                            <field name="partner_id" readonly="1"/>
-                            <field name="invoice_id" readonly="1"/>
+                        <group string="Related Member Information">
+                            <field name="schedule_id" 
+                                   string="Revenue Recognition Schedule"
+                                   help="The overall schedule this entry belongs to"/>
+                            <field name="subscription_id" 
+                                   string="Member Subscription"
+                                   readonly="1"
+                                   help="The membership subscription this revenue relates to"/>
+                            <field name="product_id" 
+                                   string="Membership/Service Type"
+                                   readonly="1"
+                                   help="The type of membership or service generating this revenue"/>
+                            <field name="partner_id" 
+                                   string="Member"
+                                   readonly="1"
+                                   help="The member who paid for this service"/>
+                            <field name="invoice_id" 
+                                   string="Original Invoice"
+                                   readonly="1"
+                                   help="The invoice that generated this revenue recognition"/>
                         </group>
                     </group>
                     
                     <group>
-                        <group string="Accounting">
-                            <field name="revenue_account_id" readonly="1"/>
-                            <field name="deferred_account_id" readonly="1"/>
-                            <field name="journal_entry_id" readonly="1"/>
+                        <group string="Financial Account Information">
+                            <field name="revenue_account_id" 
+                                   string="Revenue Account"
+                                   readonly="1"
+                                   help="Where the recognized revenue will be recorded (shows as income on profit &amp; loss)"/>
+                            <field name="deferred_account_id" 
+                                   string="Prepaid Revenue Account"
+                                   readonly="1"
+                                   help="Where the prepaid revenue is currently held (liability on balance sheet)"/>
+                            <field name="journal_entry_id" 
+                                   string="Financial Transaction"
+                                   readonly="1"
+                                   help="The accounting entry created when revenue was recognized"/>
                         </group>
-                        <group string="Processing">
-                            <field name="processed_date" readonly="1"/>
-                            <field name="processed_by" readonly="1"/>
+                        <group string="Processing Information">
+                            <field name="processed_date" 
+                                   string="Date Processed"
+                                   readonly="1"
+                                   help="When this revenue recognition was actually processed"/>
+                            <field name="processed_by" 
+                                   string="Processed By"
+                                   readonly="1"
+                                   help="Staff member who processed this revenue recognition"/>
                         </group>
                     </group>
                 </sheet>
-                <!-- FIXED: Add chatter for mail.thread functionality -->
+                <!-- Add chatter for tracking and communication -->
                 <div class="oe_chatter">
                     <field name="message_follower_ids"/>
                     <field name="activity_ids"/>
@@ -71,32 +129,65 @@
         </field>
     </record>
     
-    <!-- FIXED: Revenue Recognition List View (was tree) -->
+    <!-- Enhanced Revenue Recognition List View with Searchable Columns -->
     <record id="view_ams_revenue_recognition_list" model="ir.ui.view">
         <field name="name">ams.revenue.recognition.list</field>
         <field name="model">ams.revenue.recognition</field>
         <field name="arch" type="xml">
-            <list>
-                <field name="recognition_date"/>
-                <field name="description"/>
-                <field name="partner_id"/>
-                <field name="product_id"/>
-                <field name="scheduled_amount" sum="Total Scheduled"/>
-                <field name="recognized_amount" sum="Total Recognized"/>
-                <field name="state"/>
-                <field name="processed_date"/>
+            <list string="Revenue Recognition Entries" 
+                  column_invisible="False" 
+                  search_view_ref="view_ams_revenue_recognition_search">
+                <field name="recognition_date" 
+                       string="Recognition Date"
+                       help="When this revenue should be or was recognized"/>
+                <field name="description" 
+                       string="Revenue Description"
+                       help="What revenue is being recognized"/>
+                <field name="partner_id" 
+                       string="Member"
+                       help="The member this revenue comes from"/>
+                <field name="product_id" 
+                       string="Service Type"
+                       help="Type of membership or service"/>
+                <field name="scheduled_amount" 
+                       string="Scheduled Amount" 
+                       sum="Total Scheduled"
+                       help="Amount scheduled to be recognized"/>
+                <field name="recognized_amount" 
+                       string="Recognized Amount" 
+                       sum="Total Recognized"
+                       help="Amount actually recognized"/>
+                <field name="state" 
+                       string="Status"
+                       widget="badge"
+                       decoration-info="state == 'pending'"
+                       decoration-success="state == 'recognized'"
+                       decoration-muted="state == 'cancelled'"
+                       help="Current status of this revenue recognition"/>
+                <field name="processed_date" 
+                       string="Date Processed"
+                       optional="hide"
+                       help="When this was actually processed"/>
+                <!-- Action buttons for quick processing -->
+                <button name="action_recognize_revenue" 
+                        type="object" 
+                        string="Process" 
+                        class="btn-primary btn-sm"
+                        invisible="state != 'pending'"
+                        help="Click to process this revenue recognition"/>
             </list>
         </field>
     </record>
     
-    <!-- Revenue Recognition Calendar View -->
+    <!-- Revenue Recognition Calendar View for Scheduling -->
     <record id="view_ams_revenue_recognition_calendar" model="ir.ui.view">
         <field name="name">ams.revenue.recognition.calendar</field>
         <field name="model">ams.revenue.recognition</field>
         <field name="arch" type="xml">
-            <calendar string="Revenue Recognition Entries" 
+            <calendar string="Revenue Recognition Schedule" 
                       date_start="recognition_date"
-                      color="state">
+                      color="state"
+                      mode="month">
                 <field name="description"/>
                 <field name="partner_id"/>
                 <field name="scheduled_amount"/>
@@ -105,7 +196,7 @@
         </field>
     </record>
     
-    <!-- Revenue Recognition Pivot View -->
+    <!-- Revenue Recognition Pivot Analysis -->
     <record id="view_ams_revenue_recognition_pivot" model="ir.ui.view">
         <field name="name">ams.revenue.recognition.pivot</field>
         <field name="model">ams.revenue.recognition</field>
@@ -120,68 +211,177 @@
         </field>
     </record>
     
-    <!-- Revenue Recognition Graph View -->
+    <!-- Revenue Recognition Trend Graph -->
     <record id="view_ams_revenue_recognition_graph" model="ir.ui.view">
         <field name="name">ams.revenue.recognition.graph</field>
         <field name="model">ams.revenue.recognition</field>
         <field name="arch" type="xml">
-            <graph string="Revenue Recognition Analysis" type="line">
+            <graph string="Revenue Recognition Trends" type="line">
                 <field name="recognition_date" interval="month"/>
                 <field name="recognized_amount" type="measure"/>
             </graph>
         </field>
     </record>
     
-    <!-- FIXED: Revenue Recognition Search View - Improved date filters -->
+    <!-- Enhanced Search View with Association-Friendly Filters -->
     <record id="view_ams_revenue_recognition_search" model="ir.ui.view">
         <field name="name">ams.revenue.recognition.search</field>
         <field name="model">ams.revenue.recognition</field>
         <field name="arch" type="xml">
             <search>
-                <field name="description" string="Description"/>
-                <field name="partner_id" string="Customer"/>
-                <field name="product_id" string="Product"/>
-                <field name="schedule_id" string="Schedule"/>
-                <field name="subscription_id" string="Subscription"/>
-                <field name="invoice_id" string="Invoice"/>
+                <!-- Searchable fields with business context -->
+                <field name="description" 
+                       string="Revenue Description"
+                       filter_domain="[('description', 'ilike', self)]"
+                       help="Search by description of the revenue being recognized"/>
+                <field name="partner_id" 
+                       string="Member Name"
+                       filter_domain="[('partner_id.name', 'ilike', self)]"
+                       help="Search by member or customer name"/>
+                <field name="product_id" 
+                       string="Service Type"
+                       filter_domain="[('product_id.name', 'ilike', self)]"
+                       help="Search by membership type or service"/>
+                <field name="schedule_id" 
+                       string="Recognition Schedule"
+                       filter_domain="[('schedule_id.display_name', 'ilike', self)]"
+                       help="Search by revenue recognition schedule"/>
+                <field name="subscription_id" 
+                       string="Membership"
+                       filter_domain="[('subscription_id.name', 'ilike', self)]"
+                       help="Search by membership subscription"/>
+                <field name="invoice_id" 
+                       string="Invoice Number"
+                       filter_domain="[('invoice_id.name', 'ilike', self)]"
+                       help="Search by original invoice number"/>
                 
-                <filter name="filter_pending" string="Pending" domain="[('state', '=', 'pending')]"/>
-                <filter name="filter_recognized" string="Recognized" domain="[('state', '=', 'recognized')]"/>
-                <filter name="filter_reversed" string="Reversed" domain="[('state', '=', 'reversed')]"/>
-                <filter name="filter_cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <!-- Status filters with clear explanations -->
+                <filter name="filter_pending" 
+                        string="Pending Recognition" 
+                        domain="[('state', '=', 'pending')]"
+                        help="Revenue that is scheduled but not yet recognized"/>
+                <filter name="filter_recognized" 
+                        string="Revenue Recognized" 
+                        domain="[('state', '=', 'recognized')]"
+                        help="Revenue that has been successfully recognized"/>
+                <filter name="filter_reversed" 
+                        string="Reversed Entries" 
+                        domain="[('state', '=', 'reversed')]"
+                        help="Revenue recognition entries that were reversed/undone"/>
+                <filter name="filter_cancelled" 
+                        string="Cancelled Entries" 
+                        domain="[('state', '=', 'cancelled')]"
+                        help="Revenue recognition entries that were cancelled"/>
                 
                 <separator/>
-                <!-- FIXED: Simplified date filters for better compatibility -->
-                <filter name="filter_due_today" string="Due Today" 
-                        domain="[('recognition_date', '=', context_today())]"/>
-                <filter name="filter_due_this_week" string="Due This Week" 
-                        domain="[('recognition_date', '&gt;=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%Y-%m-%d')),
-                                ('recognition_date', '&lt;=', (context_today() + datetime.timedelta(days=6-context_today().weekday())).strftime('%Y-%m-%d'))]"/>
-                <filter name="filter_due_this_month" string="Due This Month" 
+                <!-- Date-based filters for operational management -->
+                <filter name="filter_due_today" 
+                        string="Due Today" 
+                        domain="[('recognition_date', '=', context_today())]"
+                        help="Revenue scheduled to be recognized today"/>
+                <filter name="filter_due_this_week" 
+                        string="Due This Week" 
+                        domain="[('recognition_date', '&gt;=', (context_today() - datetime.timedelta(days=context_today().weekday()))), 
+                                ('recognition_date', '&lt;=', (context_today() + datetime.timedelta(days=6-context_today().weekday())))]"
+                        help="Revenue scheduled for recognition this week"/>
+                <filter name="filter_due_this_month" 
+                        string="Due This Month" 
                         domain="[('recognition_date', '&gt;=', context_today().replace(day=1)),
-                                ('recognition_date', '&lt;', (context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1))]"/>
-                <filter name="filter_overdue" string="Overdue" 
-                        domain="[('recognition_date', '&lt;', context_today()), ('state', '=', 'pending')]"/>
+                                ('recognition_date', '&lt;', (context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1))]"
+                        help="Revenue scheduled for recognition this month"/>
+                <filter name="filter_overdue" 
+                        string="Overdue Recognition" 
+                        domain="[('recognition_date', '&lt;', context_today()), ('state', '=', 'pending')]"
+                        help="Revenue that should have been recognized but hasn't been processed yet"/>
                 
                 <separator/>
-                <filter name="filter_with_journal_entry" string="With Journal Entry" 
-                        domain="[('journal_entry_id', '!=', False)]"/>
-                <filter name="filter_without_journal_entry" string="Without Journal Entry" 
-                        domain="[('journal_entry_id', '=', False)]"/>
+                <!-- Service type filters -->
+                <filter name="filter_membership_revenue" 
+                        string="Membership Revenue" 
+                        domain="[('product_id.ams_product_type', 'in', ['individual', 'enterprise'])]"
+                        help="Revenue from individual and corporate memberships"/>
+                <filter name="filter_publication_revenue" 
+                        string="Publication Revenue" 
+                        domain="[('product_id.ams_product_type', '=', 'publication')]"
+                        help="Revenue from journal and magazine subscriptions"/>
+                <filter name="filter_chapter_revenue" 
+                        string="Chapter Revenue" 
+                        domain="[('product_id.ams_product_type', '=', 'chapter')]"
+                        help="Revenue from local chapter memberships"/>
+                <filter name="filter_event_revenue" 
+                        string="Event Revenue" 
+                        domain="[('product_id.ams_product_type', '=', 'event')]"
+                        help="Revenue from conferences and events"/>
                 
+                <separator/>
+                <!-- Amount-based filters -->
+                <filter name="filter_high_value" 
+                        string="High Value (&gt;$500)" 
+                        domain="[('scheduled_amount', '&gt;', 500)]"
+                        help="High-value revenue recognition entries"/>
+                <filter name="filter_medium_value" 
+                        string="Medium Value ($100-$500)" 
+                        domain="[('scheduled_amount', '&gt;=', 100), ('scheduled_amount', '&lt;=', 500)]"
+                        help="Medium-value revenue recognition entries"/>
+                <filter name="filter_small_value" 
+                        string="Small Value (&lt;$100)" 
+                        domain="[('scheduled_amount', '&lt;', 100)]"
+                        help="Small-value revenue recognition entries"/>
+                
+                <separator/>
+                <!-- Processing status filters -->
+                <filter name="filter_with_journal_entry" 
+                        string="With Financial Transaction" 
+                        domain="[('journal_entry_id', '!=', False)]"
+                        help="Entries that have created financial transactions"/>
+                <filter name="filter_without_journal_entry" 
+                        string="No Financial Transaction Yet" 
+                        domain="[('journal_entry_id', '=', False)]"
+                        help="Entries that haven't created financial transactions yet"/>
+                
+                <!-- Grouping options with business context -->
                 <group expand="0" string="Group By">
-                    <filter name="group_by_state" string="Status" domain="[]" context="{'group_by': 'state'}"/>
-                    <filter name="group_by_partner" string="Customer" domain="[]" context="{'group_by': 'partner_id'}"/>
-                    <filter name="group_by_product" string="Product" domain="[]" context="{'group_by': 'product_id'}"/>
-                    <filter name="group_by_schedule" string="Schedule" domain="[]" context="{'group_by': 'schedule_id'}"/>
-                    <filter name="group_by_recognition_date" string="Recognition Date" domain="[]" context="{'group_by': 'recognition_date'}"/>
-                    <filter name="group_by_recognition_month" string="Recognition Month" domain="[]" context="{'group_by': 'recognition_date:month'}"/>
+                    <filter name="group_by_state" 
+                            string="Processing Status" 
+                            domain="[]" 
+                            context="{'group_by': 'state'}"
+                            help="Group by whether revenue is pending, recognized, etc."/>
+                    <filter name="group_by_partner" 
+                            string="Member" 
+                            domain="[]" 
+                            context="{'group_by': 'partner_id'}"
+                            help="Group revenue recognition by member"/>
+                    <filter name="group_by_product" 
+                            string="Service Type" 
+                            domain="[]" 
+                            context="{'group_by': 'product_id'}"
+                            help="Group by membership type or service"/>
+                    <filter name="group_by_schedule" 
+                            string="Recognition Schedule" 
+                            domain="[]" 
+                            context="{'group_by': 'schedule_id'}"
+                            help="Group by revenue recognition schedule"/>
+                    <filter name="group_by_recognition_date" 
+                            string="Recognition Date" 
+                            domain="[]" 
+                            context="{'group_by': 'recognition_date'}"
+                            help="Group by the date revenue is/was recognized"/>
+                    <filter name="group_by_recognition_month" 
+                            string="Recognition Month" 
+                            domain="[]" 
+                            context="{'group_by': 'recognition_date:month'}"
+                            help="Group by the month revenue is/was recognized"/>
+                    <filter name="group_by_service_type" 
+                            string="Service Category" 
+                            domain="[]" 
+                            context="{'group_by': 'product_id.ams_product_type'}"
+                            help="Group by type of association service"/>
                 </group>
             </search>
         </field>
     </record>
     
-    <!-- Revenue Recognition Action -->
+    <!-- Main Revenue Recognition Action with Business Context -->
     <record id="action_ams_revenue_recognition" model="ir.actions.act_window">
         <field name="name">Revenue Recognition Entries</field>
         <field name="res_model">ams.revenue.recognition</field>
@@ -189,52 +389,79 @@
         <field name="context">{'search_default_filter_pending': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                No revenue recognition entries yet!
+                Revenue Recognition Management
             </p>
             <p>
-                Revenue recognition entries are automatically created from revenue recognition schedules.
-                They represent individual periods of revenue that should be recognized.
+                <strong>What is Revenue Recognition?</strong>
+                <br/>For annual memberships, when a member pays $1,200 for a full year, you can't count all $1,200 as income immediately. 
+                Instead, you recognize $100 each month as you "earn" it by providing membership services.
+            </p>
+            <p>
+                <strong>How This Helps Your Association:</strong>
+                <br/>• <strong>Accurate Financial Statements:</strong> Shows true monthly income, not just when cash was received
+                <br/>• <strong>Better Budgeting:</strong> Understand your monthly recurring revenue
+                <br/>• <strong>Compliance:</strong> Follows accounting standards for subscription-based organizations
+                <br/>• <strong>Cash Flow Management:</strong> Track both cash received and revenue earned
+            </p>
+            <p>
+                Revenue recognition entries are automatically created when members pay for annual memberships.
+                The system processes them monthly to show accurate income on your financial statements.
             </p>
         </field>
     </record>
     
-    <!-- Due Revenue Recognition Action -->
+    <!-- Revenue Recognition Due for Processing -->
     <record id="action_ams_revenue_recognition_due" model="ir.actions.act_window">
-        <field name="name">Revenue Recognition Due</field>
+        <field name="name">Revenue Due for Recognition</field>
         <field name="res_model">ams.revenue.recognition</field>
         <field name="view_mode">list,form,calendar</field>
         <field name="domain">[('state', '=', 'pending'), ('recognition_date', '&lt;=', context_today())]</field>
         <field name="context">{'search_default_filter_pending': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                No revenue recognition entries are due!
+                No Revenue Recognition Needed Today!
             </p>
             <p>
-                This view shows revenue recognition entries that are due for processing today or earlier.
+                This view shows revenue that is scheduled to be recognized today or earlier.
+                <br/><br/>
+                <strong>What You Need to Do:</strong>
+                <br/>• Review the entries listed here
+                <br/>• Click "Process" on each entry to recognize the revenue
+                <br/>• Or use the bulk action to process multiple entries at once
+                <br/><br/>
+                <strong>Why This Matters:</strong>
+                <br/>Processing these entries ensures your monthly income statements accurately reflect 
+                the revenue your association has earned from prepaid memberships.
             </p>
         </field>
     </record>
     
-    <!-- Revenue Recognition Dashboard Action -->
+    <!-- Revenue Recognition Dashboard -->
     <record id="action_ams_revenue_recognition_dashboard" model="ir.actions.act_window">
         <field name="name">Revenue Recognition Dashboard</field>
         <field name="res_model">ams.revenue.recognition</field>
         <field name="view_mode">graph,pivot,list</field>
         <field name="context">{
             'search_default_filter_recognized': 1,
-            'search_default_group_by_recognition_month': 1
+            'search_default_group_by_recognition_month': 1,
+            'graph_measure': 'recognized_amount',
+            'graph_type': 'line'
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Revenue Recognition Dashboard
+                Revenue Recognition Analytics
             </p>
             <p>
-                Analyze revenue recognition patterns and trends over time.
+                Analyze your association's revenue recognition patterns and trends:
+                <br/>• <strong>Monthly Revenue Trends:</strong> See how much revenue is recognized each month
+                <br/>• <strong>Service Type Analysis:</strong> Compare revenue from different membership types
+                <br/>• <strong>Member Revenue Patterns:</strong> Understand which members generate the most revenue
+                <br/>• <strong>Seasonal Variations:</strong> Identify peak revenue recognition periods
             </p>
         </field>
     </record>
 
-    <!-- Monthly Revenue Recognition Report Action -->
+    <!-- Monthly Revenue Recognition Report -->
     <record id="action_monthly_revenue_recognition_report" model="ir.actions.act_window">
         <field name="name">Monthly Revenue Recognition Report</field>
         <field name="res_model">ams.revenue.recognition</field>
@@ -242,34 +469,49 @@
         <field name="domain">[('state', '=', 'recognized')]</field>
         <field name="context">{
             'search_default_group_by_recognition_month': 1,
-            'search_default_filter_recognized': 1
+            'search_default_filter_recognized': 1,
+            'pivot_row_groupby': ['recognition_date:month'],
+            'pivot_col_groupby': ['product_id'],
+            'pivot_measures': ['recognized_amount']
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Monthly Revenue Recognition Report
             </p>
             <p>
-                Analyze recognized revenue by month to understand revenue patterns.
+                This report shows how much revenue your association has recognized each month:
+                <br/>• <strong>Income Statement Accuracy:</strong> Ensure monthly financial statements reflect true earned revenue
+                <br/>• <strong>Budget vs Actual:</strong> Compare actual revenue recognition to budgeted amounts
+                <br/>• <strong>Trend Analysis:</strong> Identify patterns in your membership revenue streams
+                <br/>• <strong>Audit Trail:</strong> Detailed record of all revenue recognition transactions
             </p>
         </field>
     </record>
 
-    <!-- Deferred Revenue Report Action -->
-    <record id="action_deferred_revenue_report" model="ir.actions.act_window">
-        <field name="name">Deferred Revenue Report</field>
-        <field name="res_model">ams.revenue.schedule</field>
+    <!-- Revenue Recognition by Service Type -->
+    <record id="action_revenue_recognition_by_service" model="ir.actions.act_window">
+        <field name="name">Revenue Recognition by Service Type</field>
+        <field name="res_model">ams.revenue.recognition</field>
         <field name="view_mode">pivot,graph,list</field>
-        <field name="domain">[('state', '=', 'active'), ('deferred_amount', '>', 0)]</field>
+        <field name="domain">[('state', '=', 'recognized')]</field>
         <field name="context">{
-            'search_default_group_by_product': 1,
-            'search_default_filter_active': 1
+            'search_default_group_by_service_type': 1,
+            'search_default_group_by_recognition_month': 1,
+            'pivot_row_groupby': ['product_id.ams_product_type'],
+            'pivot_col_groupby': ['recognition_date:month'],
+            'pivot_measures': ['recognized_amount']
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Deferred Revenue Report
+                Revenue Recognition by Association Service Type
             </p>
             <p>
-                Monitor deferred revenue balances by product and customer.
+                Understand which association services generate the most recognized revenue:
+                <br/>• <strong>Membership Revenue:</strong> Individual vs corporate membership income
+                <br/>• <strong>Publication Revenue:</strong> Journal and magazine subscription income
+                <br/>• <strong>Chapter Revenue:</strong> Local chapter membership contributions
+                <br/>• <strong>Event Revenue:</strong> Conference and training program income
+                <br/>• <strong>Strategic Planning:</strong> Identify your most valuable revenue streams
             </p>
         </field>
     </record>

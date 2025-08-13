@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Extend Product Template Form with Revenue Recognition -->
+    <!-- Enhanced Product Template Form with Revenue Recognition Configuration -->
     <record id="view_product_template_form_revenue_recognition" model="ir.ui.view">
         <field name="name">product.template.form.revenue.recognition</field>
         <field name="model">product.template</field>
@@ -10,121 +10,525 @@
             <!-- Add Revenue Recognition tab after existing tabs -->
             <xpath expr="//notebook" position="inside">
                 <page string="Revenue Recognition" invisible="not is_subscription_product">
+                    
+                    <!-- Revenue Recognition Method Explanation -->
                     <div class="alert alert-info" role="alert" invisible="revenue_recognition_method == 'immediate'">
-                        <h6><i class="fa fa-info-circle"/> Revenue Recognition Active</h6>
-                        <p>This product uses <strong><field name="revenue_recognition_method" readonly="1"/></strong> revenue recognition.</p>
-                        <p>Revenue will be recognized over <strong><field name="recognition_period" readonly="1"/></strong> periods.</p>
+                        <h6><i class="fa fa-info-circle"/> Deferred Revenue Recognition Active</h6>
+                        <p><strong>How this works:</strong> When members pay for this <field name="subscription_period" readonly="1"/> subscription, 
+                           the revenue is recognized over <field name="recognition_period" readonly="1"/> periods.</p>
+                        <p><strong>Example:</strong> If a member pays $<field name="list_price" readonly="1"/> for an annual membership, 
+                           the system will recognize approximately $<span class="text-primary" t-esc="record.list_price.raw_value / 12 if record.list_price.raw_value and record.subscription_period.raw_value == 'annual' else record.list_price.raw_value"/> 
+                           each month instead of recording all $<field name="list_price" readonly="1"/> as income immediately.</p>
                     </div>
                     
-                    <div class="alert alert-warning" role="alert" invisible="revenue_recognition_method != 'immediate'">
-                        <h6><i class="fa fa-bolt"/> Immediate Recognition</h6>
-                        <p>Revenue for this product is recognized immediately when invoiced.</p>
+                    <div class="alert alert-success" role="alert" invisible="revenue_recognition_method != 'immediate'">
+                        <h6><i class="fa fa-bolt"/> Immediate Revenue Recognition</h6>
+                        <p><strong>How this works:</strong> Revenue for this <field name="subscription_period" readonly="1"/> subscription 
+                           is recognized immediately when the member is invoiced.</p>
+                        <p><strong>Why:</strong> For monthly subscriptions, there's no need to defer revenue since the service period 
+                           matches the billing period.</p>
                     </div>
                     
+                    <!-- Revenue Recognition Configuration -->
                     <group>
-                        <group string="Recognition Configuration">
-                            <field name="revenue_recognition_method" readonly="1"/>
-                            <field name="recognition_period" invisible="revenue_recognition_method == 'immediate'"/>
-                            <field name="auto_create_recognition"/>
-                            <field name="auto_process_recognition"/>
+                        <group string="Revenue Recognition Setup">
+                            <field name="revenue_recognition_method" 
+                                   string="Recognition Method"
+                                   readonly="1"
+                                   help="Automatically determined based on subscription period: Annual = Deferred, Monthly = Immediate"/>
+                            <field name="recognition_period" 
+                                   string="Recognition Frequency"
+                                   invisible="revenue_recognition_method == 'immediate'"
+                                   help="How often revenue is recognized: Monthly for most subscriptions"/>
+                            <field name="auto_create_recognition" 
+                                   string="Auto-Create Recognition Schedules"
+                                   help="Automatically create revenue recognition schedules when members pay for this product"/>
+                            <field name="auto_process_recognition" 
+                                   string="Auto-Process Recognition"
+                                   help="Allow the system to automatically process monthly revenue recognition"/>
                         </group>
                         <group string="Revenue Statistics">
-                            <field name="total_deferred_revenue" readonly="1"/>
-                            <field name="total_recognized_revenue" readonly="1"/>
-                            <field name="active_recognition_schedules" readonly="1"/>
+                            <field name="total_deferred_revenue" 
+                                   string="Total Prepaid Revenue"
+                                   readonly="1"
+                                   help="Total amount of unrecognized revenue across all active subscriptions for this product"/>
+                            <field name="total_recognized_revenue" 
+                                   string="Total Recognized Revenue"
+                                   readonly="1"
+                                   help="Total amount of revenue already recognized for this product"/>
+                            <field name="active_recognition_schedules" 
+                                   string="Active Schedules"
+                                   readonly="1"
+                                   help="Number of members with active revenue recognition schedules for this product"/>
                         </group>
                     </group>
+
+                    <!-- Revenue Recognition Method Details -->
+                    <group string="How Revenue Recognition Works for This Product" invisible="revenue_recognition_method == 'immediate'">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0">When Member Pays</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Initial Recording:</strong></p>
+                                        <p>• Cash: +$<field name="list_price" readonly="1"/></p>
+                                        <p>• Prepaid Revenue: +$<field name="list_price" readonly="1"/></p>
+                                        <small class="text-muted">Money received but not yet earned</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0">Each Month</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Monthly Recognition:</strong></p>
+                                        <div t-if="record.subscription_period.raw_value == 'annual'">
+                                            <p>• Revenue: +$<span t-esc="record.list_price.raw_value / 12 if record.list_price.raw_value else 0" class="text-success"/></p>
+                                            <p>• Prepaid Revenue: -$<span t-esc="record.list_price.raw_value / 12 if record.list_price.raw_value else 0" class="text-warning"/></p>
+                                        </div>
+                                        <div t-if="record.subscription_period.raw_value == 'quarterly'">
+                                            <p>• Revenue: +$<span t-esc="record.list_price.raw_value / 3 if record.list_price.raw_value else 0" class="text-success"/></p>
+                                            <p>• Prepaid Revenue: -$<span t-esc="record.list_price.raw_value / 3 if record.list_price.raw_value else 0" class="text-warning"/></p>
+                                        </div>
+                                        <small class="text-muted">Revenue earned through service delivery</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </group>
+
+                    <!-- Immediate Recognition Explanation -->
+                    <group string="Revenue Recognition for This Product" invisible="revenue_recognition_method != 'immediate'">
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0">When Member Pays (Monthly Subscription)</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Immediate Recognition:</strong></p>
+                                <p>• Cash: +$<field name="list_price" readonly="1"/></p>
+                                <p>• Revenue: +$<field name="list_price" readonly="1"/></p>
+                                <small class="text-muted">
+                                    Since this is a monthly subscription, revenue is recognized immediately 
+                                    because the service period matches the billing period.
+                                </small>
+                            </div>
+                        </div>
+                    </group>
+
+                    <!-- Revenue Recognition Impact on Financial Statements -->
+                    <group string="Financial Statement Impact" invisible="revenue_recognition_method == 'immediate'">
+                        <div class="alert alert-light" role="alert">
+                            <h6><i class="fa fa-chart-line"/> Impact on Your Financial Statements</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Balance Sheet</h6>
+                                    <p>• <strong>Assets:</strong> Cash increases when payment received</p>
+                                    <p>• <strong>Liabilities:</strong> "Prepaid Revenue" decreases each month as revenue is recognized</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Income Statement</h6>
+                                    <p>• <strong>Revenue:</strong> Shows earned revenue each month, not when cash was received</p>
+                                    <p>• <strong>Result:</strong> More accurate monthly income reporting</p>
+                                </div>
+                            </div>
+                        </div>
+                    </group>
                     
+                    <!-- Action Buttons for Revenue Recognition Management -->
                     <div class="oe_button_box" name="revenue_recognition_buttons">
                         <button name="action_view_recognition_schedules" type="object" 
                                 class="oe_stat_button" icon="fa-calendar-o"
-                                invisible="active_recognition_schedules == 0">
+                                invisible="active_recognition_schedules == 0"
+                                help="View all revenue recognition schedules for this product">
                             <field name="active_recognition_schedules" widget="statinfo" string="Active Schedules"/>
                         </button>
                         <button name="action_process_due_recognitions" type="object" 
                                 class="oe_stat_button" icon="fa-play-circle"
-                                invisible="active_recognition_schedules == 0">
+                                invisible="active_recognition_schedules == 0"
+                                help="Process any overdue revenue recognition for this product">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Process Due</span>
                                 <span class="o_stat_text">Recognition</span>
                             </div>
                         </button>
                     </div>
+
+                    <!-- Example Scenarios for Different Membership Types -->
+                    <group string="Real-World Examples" invisible="not is_subscription_product">
+                        <div class="alert alert-light" role="alert">
+                            <h6><i class="fa fa-lightbulb-o"/> Common Association Scenarios</h6>
+                            
+                            <div t-if="record.ams_product_type.raw_value == 'individual'" class="mb-3">
+                                <h6>Individual Membership Example:</h6>
+                                <p><strong>Scenario:</strong> Dr. Smith pays $<field name="list_price" readonly="1"/> for annual individual membership</p>
+                                <div t-if="record.subscription_period.raw_value == 'annual'">
+                                    <p><strong>Revenue Recognition:</strong> $<span t-esc="record.list_price.raw_value / 12 if record.list_price.raw_value else 0"/> recognized each month for 12 months</p>
+                                    <p><strong>Benefits:</strong> Accurate monthly income reporting, better budget planning</p>
+                                </div>
+                                <div t-if="record.subscription_period.raw_value == 'monthly'">
+                                    <p><strong>Revenue Recognition:</strong> Full $<field name="list_price" readonly="1"/> recognized immediately each month</p>
+                                    <p><strong>Benefits:</strong> Simple immediate recognition matches service period</p>
+                                </div>
+                            </div>
+
+                            <div t-if="record.ams_product_type.raw_value == 'enterprise'" class="mb-3">
+                                <h6>Corporate Membership Example:</h6>
+                                <p><strong>Scenario:</strong> ABC Corporation pays $<field name="list_price" readonly="1"/> for annual corporate membership</p>
+                                <div t-if="record.subscription_period.raw_value == 'annual'">
+                                    <p><strong>Revenue Recognition:</strong> $<span t-esc="record.list_price.raw_value / 12 if record.list_price.raw_value else 0"/> recognized each month for 12 months</p>
+                                    <p><strong>Benefits:</strong> Spreads large corporate payments across membership period</p>
+                                </div>
+                            </div>
+
+                            <div t-if="record.ams_product_type.raw_value == 'publication'" class="mb-3">
+                                <h6>Publication Subscription Example:</h6>
+                                <p><strong>Scenario:</strong> Member subscribes to journal for $<field name="list_price" readonly="1"/></p>
+                                <div t-if="record.subscription_period.raw_value == 'annual'">
+                                    <p><strong>Revenue Recognition:</strong> $<span t-esc="record.list_price.raw_value / 12 if record.list_price.raw_value else 0"/> recognized each month</p>
+                                    <p><strong>Benefits:</strong> Matches revenue to publication delivery schedule</p>
+                                </div>
+                                <div t-if="record.subscription_period.raw_value == 'monthly'">
+                                    <p><strong>Revenue Recognition:</strong> Full $<field name="list_price" readonly="1"/> recognized each month</p>
+                                    <p><strong>Benefits:</strong> Revenue matches monthly publication cycle</p>
+                                </div>
+                            </div>
+                        </div>
+                    </group>
+
+                    <!-- Configuration Recommendations -->
+                    <group string="Configuration Recommendations">
+                        <div class="alert alert-info" role="alert">
+                            <h6><i class="fa fa-cog"/> Recommended Settings for This Product Type</h6>
+                            
+                            <div t-if="record.subscription_period.raw_value == 'annual'">
+                                <p><strong>Annual Subscriptions:</strong></p>
+                                <p>✓ Auto-Create Recognition: <strong>Enabled</strong> - Automatically creates schedules</p>
+                                <p>✓ Auto-Process Recognition: <strong>Enabled</strong> - Handles monthly processing</p>
+                                <p>✓ Recognition Frequency: <strong>Monthly</strong> - Recognizes revenue each month</p>
+                            </div>
+
+                            <div t-if="record.subscription_period.raw_value == 'monthly'">
+                                <p><strong>Monthly Subscriptions:</strong></p>
+                                <p>✓ Recognition Method: <strong>Immediate</strong> - No deferral needed</p>
+                                <p>✓ Auto-Create Recognition: <strong>Not Applicable</strong> - Revenue recognized immediately</p>
+                            </div>
+
+                            <div t-if="record.subscription_period.raw_value == 'quarterly'">
+                                <p><strong>Quarterly Subscriptions:</strong></p>
+                                <p>✓ Auto-Create Recognition: <strong>Enabled</strong> - Creates 3-month schedules</p>
+                                <p>✓ Recognition Frequency: <strong>Monthly</strong> - Recognizes 1/3 each month</p>
+                            </div>
+                        </div>
+                    </group>
                 </page>
             </xpath>
         </field>
     </record>
 
-    <!-- Extend Product Template List View -->
+    <!-- Enhanced Product List View with Revenue Recognition Information -->
     <record id="view_product_template_list_revenue_recognition" model="ir.ui.view">
         <field name="name">product.template.list.revenue.recognition</field>
         <field name="model">product.template</field>
         <field name="inherit_id" ref="ams_base_accounting.view_product_template_tree_ams_accounting"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='ams_accounts_configured']" position="after">
-                <field name="revenue_recognition_method" string="Recognition" optional="hide"/>
-                <field name="total_deferred_revenue" string="Deferred Revenue" optional="hide" sum="Total Deferred"/>
-                <field name="active_recognition_schedules" string="Active Schedules" optional="hide"/>
+                <field name="revenue_recognition_method" 
+                       string="Revenue Method" 
+                       optional="hide"
+                       widget="badge"
+                       decoration-info="revenue_recognition_method == 'immediate'"
+                       decoration-success="revenue_recognition_method == 'deferred'"
+                       help="How revenue is recognized: Immediate (monthly) or Deferred (annual)"/>
+                <field name="total_deferred_revenue" 
+                       string="Prepaid Revenue" 
+                       optional="hide" 
+                       sum="Total Prepaid"
+                       help="Total prepaid revenue across all active subscriptions for this product"/>
+                <field name="active_recognition_schedules" 
+                       string="Active Schedules" 
+                       optional="hide"
+                       help="Number of active revenue recognition schedules"/>
+            </xpath>
+
+            <!-- Enhance existing column headers with revenue context -->
+            <xpath expr="//field[@name='list_price']" position="attributes">
+                <attribute name="string">Member Price</attribute>
+                <attribute name="help">Price members pay for this product (affects revenue recognition amount)</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='subscription_period']" position="attributes">
+                <attribute name="string">Billing Period</attribute>
+                <attribute name="help">Billing frequency - determines revenue recognition method</attribute>
             </xpath>
         </field>
     </record>
 
-    <!-- FIXED: Product Template Search View - Removed problematic field path -->
+    <!-- Enhanced Product Search View with Revenue Recognition Filters -->
     <record id="view_product_template_search_revenue_recognition" model="ir.ui.view">
         <field name="name">product.template.search.revenue.recognition</field>
         <field name="model">product.template</field>
         <field name="inherit_id" ref="ams_base_accounting.view_product_template_search_ams_accounting"/>
         <field name="arch" type="xml">
-            <xpath expr="//filter[@name='filter_subscription_products']" position="after">
+            <!-- Add revenue recognition search fields -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="revenue_recognition_method" 
+                       string="Revenue Recognition Method"
+                       filter_domain="[('revenue_recognition_method', 'ilike', self)]"
+                       help="Search by how revenue is recognized"/>
+                <field name="recognition_period" 
+                       string="Recognition Frequency"
+                       filter_domain="[('recognition_period', 'ilike', self)]"
+                       help="Search by recognition frequency"/>
+            </xpath>
+
+            <xpath expr="//filter[@name='filter_should_defer_revenue']" position="after">
                 <separator/>
-                <!-- FIXED: Use stored fields instead of computed fields -->
-                <filter name="filter_immediate_recognition" string="Immediate Recognition" 
-                        domain="[('revenue_recognition_method', '=', 'immediate')]"/>
-                <filter name="filter_deferred_recognition" string="Deferred Recognition" 
-                        domain="[('revenue_recognition_method', '=', 'deferred')]"/>
-                <filter name="filter_auto_recognition" string="Auto Recognition" 
-                        domain="[('auto_create_recognition', '=', True)]"/>
+                <!-- Revenue Recognition Method Filters -->
+                <filter name="filter_immediate_recognition" 
+                        string="Immediate Recognition (Monthly)" 
+                        domain="[('revenue_recognition_method', '=', 'immediate')]"
+                        help="Products with immediate revenue recognition (typically monthly subscriptions)"/>
+                <filter name="filter_deferred_recognition" 
+                        string="Deferred Recognition (Annual)" 
+                        domain="[('revenue_recognition_method', '=', 'deferred')]"
+                        help="Products with deferred revenue recognition (typically annual subscriptions)"/>
+                <filter name="filter_manual_recognition" 
+                        string="Manual Recognition" 
+                        domain="[('revenue_recognition_method', '=', 'manual')]"
+                        help="Products requiring manual revenue recognition"/>
                 
-                <!-- FIXED: Alternative search for products that should have deferred revenue -->
-                <filter name="filter_should_defer_revenue" string="Should Have Deferred Revenue" 
-                        domain="[('is_subscription_product', '=', True), 
-                                ('revenue_recognition_method', '=', 'deferred'),
-                                ('subscription_period', 'in', ['quarterly', 'semi_annual', 'annual'])]"/>
+                <!-- Revenue Recognition Configuration Filters -->
+                <separator/>
+                <filter name="filter_auto_create_recognition" 
+                        string="Auto-Create Recognition" 
+                        domain="[('auto_create_recognition', '=', True)]"
+                        help="Products that automatically create revenue recognition schedules"/>
+                <filter name="filter_auto_process_recognition" 
+                        string="Auto-Process Recognition" 
+                        domain="[('auto_process_recognition', '=', True)]"
+                        help="Products that automatically process revenue recognition"/>
+                <filter name="filter_monthly_recognition" 
+                        string="Monthly Recognition Frequency" 
+                        domain="[('recognition_period', '=', 'monthly')]"
+                        help="Products that recognize revenue monthly"/>
                 
-                <!-- FIXED: Removed problematic relational field search -->
-                <!-- This was causing the error: ('product_variant_ids.ams_revenue_schedule_ids', '!=', False) -->
-                <!-- Instead, use logic-based filters that work with existing fields -->
-                <filter name="filter_likely_has_schedules" string="Likely Has Recognition Schedules" 
-                        domain="[('is_subscription_product', '=', True), 
-                                ('use_ams_accounting', '=', True),
-                                ('auto_create_recognition', '=', True),
-                                ('revenue_recognition_method', '=', 'deferred')]"/>
+                <!-- Revenue Value Filters -->
+                <separator/>
+                <filter name="filter_has_deferred_revenue" 
+                        string="Has Prepaid Revenue" 
+                        domain="[('total_deferred_revenue', '>', 0)]"
+                        help="Products with active prepaid revenue from members"/>
+                <filter name="filter_high_deferred_revenue" 
+                        string="High Prepaid Revenue (&gt;$1,000)" 
+                        domain="[('total_deferred_revenue', '>', 1000)]"
+                        help="Products with significant prepaid revenue amounts"/>
+                <filter name="filter_active_recognition_schedules" 
+                        string="Has Active Recognition Schedules" 
+                        domain="[('active_recognition_schedules', '>', 0)]"
+                        help="Products with members actively recognizing revenue"/>
+                
+                <!-- Billing Period and Recognition Alignment -->
+                <separator/>
+                <filter name="filter_annual_with_deferred" 
+                        string="Annual Products with Deferred Recognition" 
+                        domain="[('subscription_period', '=', 'annual'), ('revenue_recognition_method', '=', 'deferred')]"
+                        help="Annual subscriptions properly set up for deferred recognition"/>
+                <filter name="filter_monthly_with_immediate" 
+                        string="Monthly Products with Immediate Recognition" 
+                        domain="[('subscription_period', '=', 'monthly'), ('revenue_recognition_method', '=', 'immediate')]"
+                        help="Monthly subscriptions properly set up for immediate recognition"/>
+                <filter name="filter_quarterly_with_deferred" 
+                        string="Quarterly Products with Deferred Recognition" 
+                        domain="[('subscription_period', '=', 'quarterly'), ('revenue_recognition_method', '=', 'deferred')]"
+                        help="Quarterly subscriptions set up for monthly recognition"/>
+                
+                <!-- Configuration Issues -->
+                <separator/>
+                <filter name="filter_recognition_config_mismatch" 
+                        string="Recognition Configuration Issues" 
+                        domain="['|', 
+                                '&amp;', ('subscription_period', '=', 'annual'), ('revenue_recognition_method', '!=', 'deferred'),
+                                '&amp;', ('subscription_period', '=', 'monthly'), ('revenue_recognition_method', '!=', 'immediate')]"
+                        help="Products with mismatched billing period and recognition method"/>
+                <filter name="filter_missing_recognition_setup" 
+                        string="Missing Recognition Setup" 
+                        domain="[('is_subscription_product', '=', True), ('use_ams_accounting', '=', True), ('auto_create_recognition', '=', False)]"
+                        help="Subscription products without revenue recognition auto-creation enabled"/>
             </xpath>
             
+            <!-- Enhanced grouping options -->
             <xpath expr="//group[@expand='0']" position="inside">
-                <filter name="group_by_recognition_method" string="Recognition Method" 
-                        domain="[]" context="{'group_by': 'revenue_recognition_method'}"/>
+                <filter name="group_by_recognition_method" 
+                        string="Revenue Recognition Method" 
+                        domain="[]" 
+                        context="{'group_by': 'revenue_recognition_method'}"
+                        help="Group by how revenue is recognized"/>
+                <filter name="group_by_recognition_period" 
+                        string="Recognition Frequency" 
+                        domain="[]" 
+                        context="{'group_by': 'recognition_period'}"
+                        help="Group by recognition frequency"/>
+                <filter name="group_by_billing_vs_recognition" 
+                        string="Billing vs Recognition Method" 
+                        domain="[]" 
+                        context="{'group_by': ['subscription_period', 'revenue_recognition_method']}"
+                        help="Group by billing period and recognition method combination"/>
             </xpath>
         </field>
     </record>
 
-    <!-- Product Revenue Recognition Action -->
+    <!-- Products Revenue Recognition Dashboard -->
     <record id="action_product_revenue_recognition" model="ir.actions.act_window">
-        <field name="name">Products - Revenue Recognition</field>
+        <field name="name">Product Revenue Recognition Management</field>
         <field name="res_model">product.template</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">kanban,list,form,pivot,graph</field>
         <field name="domain">[('is_subscription_product', '=', True), ('use_ams_accounting', '=', True)]</field>
         <field name="context">{
             'search_default_filter_deferred_recognition': 1,
-            'search_default_group_by_recognition_method': 1
+            'search_default_group_by_recognition_method': 1,
+            'graph_measure': 'total_deferred_revenue',
+            'graph_type': 'pie'
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Configure revenue recognition for subscription products!
+                Product Revenue Recognition Configuration
             </p>
             <p>
-                This view shows subscription products with AMS accounting enabled.
-                Configure how revenue should be recognized for each product.
+                <strong>Configure Revenue Recognition for Membership Products</strong>
+                <br/>Set up how revenue should be recognized for each type of membership and service.
+            </p>
+            <p>
+                <strong>Key Configuration Areas:</strong>
+                <br/>• <strong>Recognition Method:</strong> Immediate (monthly) vs Deferred (annual)
+                <br/>• <strong>Auto-Processing:</strong> Enable automatic monthly recognition
+                <br/>• <strong>Recognition Frequency:</strong> How often revenue is recognized
+                <br/>• <strong>Financial Accounts:</strong> Which accounts to use for recognition
+            </p>
+            <p>
+                <strong>Best Practices:</strong>
+                <br/>• <strong>Annual Memberships:</strong> Use deferred recognition with monthly frequency
+                <br/>• <strong>Monthly Memberships:</strong> Use immediate recognition
+                <br/>• <strong>Corporate Memberships:</strong> Enable auto-processing for efficiency
+                <br/>• <strong>Publication Subscriptions:</strong> Match recognition to delivery schedule
+            </p>
+        </field>
+    </record>
+
+    <!-- Products with Revenue Recognition Issues -->
+    <record id="action_products_revenue_recognition_issues" model="ir.actions.act_window">
+        <field name="name">Products with Revenue Recognition Issues</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[
+            ('is_subscription_product', '=', True),
+            '|', 
+            '&amp;', ('subscription_period', '=', 'annual'), ('revenue_recognition_method', '!=', 'deferred'),
+            '&amp;', ('subscription_period', '=', 'monthly'), ('revenue_recognition_method', '!=', 'immediate')
+        ]</field>
+        <field name="context">{
+            'search_default_filter_recognition_config_mismatch': 1,
+            'search_default_group_by_subscription_period': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                All Products Have Proper Revenue Recognition Setup!
+            </p>
+            <p>
+                <strong>Products with Revenue Recognition Configuration Issues</strong>
+                <br/>This view identifies products where the billing period doesn't match the revenue recognition method.
+            </p>
+            <p>
+                <strong>Common Issues to Fix:</strong>
+                <br/>• <strong>Annual Subscriptions:</strong> Should use "Deferred" recognition, not "Immediate"
+                <br/>• <strong>Monthly Subscriptions:</strong> Should use "Immediate" recognition, not "Deferred"
+                <br/>• <strong>Missing Auto-Creation:</strong> Subscription products should auto-create recognition schedules
+            </p>
+            <p>
+                <strong>How to Fix:</strong>
+                <br/>1. Review each product's Revenue Recognition tab
+                <br/>2. Ensure billing period matches recognition method
+                <br/>3. Enable auto-creation for subscription products
+                <br/>4. Test with a sample invoice to verify proper operation
+            </p>
+        </field>
+    </record>
+
+    <!-- Revenue Recognition Setup Status Dashboard -->
+    <record id="action_revenue_recognition_setup_status" model="ir.actions.act_window">
+        <field name="name">Revenue Recognition Setup Status</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="domain">[('is_subscription_product', '=', True)]</field>
+        <field name="context">{
+            'search_default_group_by_subscription_period': 1,
+            'search_default_group_by_recognition_method': 1,
+            'pivot_row_groupby': ['subscription_period'],
+            'pivot_col_groupby': ['revenue_recognition_method'],
+            'pivot_measures': ['active_recognition_schedules', 'total_deferred_revenue']
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Revenue Recognition Setup Analysis
+            </p>
+            <p>
+                <strong>Analyze Revenue Recognition Configuration Across All Products</strong>
+                <br/>Understand how your membership products are configured for revenue recognition.
+            </p>
+            <p>
+                <strong>Key Metrics Available:</strong>
+                <br/>• <strong>Setup Coverage:</strong> How many products have proper revenue recognition
+                <br/>• <strong>Method Distribution:</strong> Immediate vs deferred recognition usage
+                <br/>• <strong>Active Schedules:</strong> Products with members actively recognizing revenue
+                <br/>• <strong>Deferred Revenue:</strong> Total prepaid revenue by product type
+            </p>
+            <p>
+                <strong>Use This Analysis For:</strong>
+                <br/>• Ensuring all subscription products are properly configured
+                <br/>• Understanding revenue recognition patterns across your offerings
+                <br/>• Identifying products that need setup attention
+                <br/>• Planning for revenue recognition process improvements
+            </p>
+        </field>
+    </record>
+
+    <!-- Products by Revenue Recognition Performance -->
+    <record id="action_products_by_revenue_performance" model="ir.actions.act_window">
+        <field name="name">Products by Revenue Recognition Performance</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="domain">[('active_recognition_schedules', '>', 0)]</field>
+        <field name="context">{
+            'search_default_group_by_ams_product_type': 1,
+            'pivot_row_groupby': ['ams_product_type'],
+            'pivot_measures': ['total_deferred_revenue', 'total_recognized_revenue', 'active_recognition_schedules'],
+            'graph_measure': 'total_deferred_revenue',
+            'graph_type': 'bar'
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Product Revenue Recognition Performance Analysis
+            </p>
+            <p>
+                <strong>Analyze Revenue Recognition Performance by Product</strong>
+                <br/>Understand which products generate the most revenue recognition activity.
+            </p>
+            <p>
+                <strong>Performance Indicators:</strong>
+                <br/>• <strong>Total Deferred Revenue:</strong> Prepaid revenue waiting to be recognized
+                <br/>• <strong>Total Recognized Revenue:</strong> Revenue already processed through recognition
+                <br/>• <strong>Active Schedules:</strong> Number of members with ongoing recognition
+                <br/>• <strong>Member Engagement:</strong> Products with highest member commitment
+            </p>
+            <p>
+                <strong>Strategic Insights:</strong>
+                <br/>• Products generating the most prepaid revenue (member commitment)
+                <br/>• Revenue recognition efficiency by product type
+                <br/>• Member value and retention indicators
+                <br/>• Cash flow impact of different membership offerings
             </p>
         </field>
     </record>

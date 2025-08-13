@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- 
+        Note: We don't create specific accounts here to avoid conflicts
+        The setup wizard will configure existing accounts or create new ones as needed
+        This file is kept for future use if needed
+        -->
+    </data>
+</odoo>

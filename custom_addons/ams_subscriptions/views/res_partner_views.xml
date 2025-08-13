@@ -1,35 +1,603 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Enhanced Contact Form with Membership Tab -->
-    <record id="view_partner_form_ams_memberships" model="ir.ui.view">
-        <field name="name">res.partner.form.ams.memberships</field>
+
+    <!-- Enhanced Member Form View with Financial Summary -->
+    <record id="view_res_partner_form_ams_financial" model="ir.ui.view">
+        <field name="name">res.partner.form.ams.financial</field>
         <field name="model">res.partner</field>
-        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="inherit_id" ref="ams_subscriptions.view_res_partner_form_ams"/>
         <field name="arch" type="xml">
-            <!-- Add Enterprise Seat Fields for Company Accounts -->
-            <xpath expr="//field[@name='website']" position="after">
-                <field name="total_seats_available" invisible="not is_company"/>
-                <field name="seats_used" invisible="not is_company"/>
-            </xpath>
-            
-            <!-- Add Membership Tab -->
-            <xpath expr="//page[last()]" position="after">
-                <page string="Memberships" invisible="is_company">
-                    <group string="Individual Subscriptions">
-                        <field name="individual_subscription_ids" nolabel="1"/>
-                    </group>
+            <!-- Add Financial Summary tab after existing tabs -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Financial Summary" invisible="not is_ams_member">
                     
-                    <group string="Enterprise Seat Assignments" invisible="not parent_id">
-                        <field name="enterprise_seat_ids" nolabel="1"/>
+                    <!-- Member Financial Status Overview -->
+                    <div class="alert alert-success" role="alert" invisible="total_outstanding_amount > 0">
+                        <h6><i class="fa fa-check-circle"/> Member Account in Good Standing</h6>
+                        <p>This member has no outstanding balances and all payments are current.</p>
+                    </div>
+                    
+                    <div class="alert alert-warning" role="alert" invisible="total_outstanding_amount == 0">
+                        <h6><i class="fa fa-exclamation-triangle"/> Outstanding Balance</h6>
+                        <p>This member has an outstanding balance of <field name="total_outstanding_amount" readonly="1" widget="monetary"/>. 
+                           Consider sending a payment reminder or contacting the member about their account status.</p>
+                    </div>
+                    
+                    <!-- Financial Summary Statistics -->
+                    <group>
+                        <group string="Current Financial Status">
+                            <field name="total_outstanding_amount" 
+                                   string="Outstanding Balance"
+                                   readonly="1"
+                                   help="Total amount this member currently owes"/>
+                            <field name="total_paid_amount" 
+                                   string="Total Paid This Year"
+                                   readonly="1"
+                                   help="Total amount paid by this member in the current year"/>
+                            <field name="last_payment_date" 
+                                   string="Last Payment Date"
+                                   readonly="1"
+                                   help="Date of most recent payment received"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Member Value Summary">
+                            <field name="lifetime_member_value" 
+                                   string="Lifetime Member Value"
+                                   readonly="1"
+                                   help="Total amount this member has paid since joining"/>
+                            <field name="average_annual_value" 
+                                   string="Average Annual Value"
+                                   readonly="1"
+                                   help="Average amount this member pays per year"/>
+                            <field name="membership_start_date" 
+                                   string="Member Since"
+                                   readonly="1"
+                                   help="Date this member first joined the association"/>
+                        </group>
                     </group>
-                </page>
-                
-                <page string="Enterprise Subscriptions" invisible="not is_company">
-                    <group string="Enterprise Memberships">
-                        <field name="enterprise_subscription_ids" nolabel="1"/>
+
+                    <!-- Active Subscriptions Financial Impact -->
+                    <group string="Active Subscription Financial Summary" invisible="not active_subscription_ids">
+                        <div class="alert alert-info" role="alert">
+                            <h6><i class="fa fa-calendar-check-o"/> Active Subscription Financial Impact</h6>
+                            <p>This member has <field name="active_subscription_count" readonly="1"/> active subscriptions 
+                               contributing to your association's recurring revenue.</p>
+                        </div>
+                        
+                        <field name="active_subscription_ids" nolabel="1">
+                            <list string="Active Subscriptions Financial Summary">
+                                <field name="display_name" 
+                                       string="Subscription"
+                                       help="Subscription name and details"/>
+                                <field name="product_id" 
+                                       string="Membership Type"
+                                       help="Type of membership or service"/>
+                                <field name="subscription_period" 
+                                       string="Billing Period"
+                                       help="How often this member is billed"/>
+                                <field name="price" 
+                                       string="Subscription Value" 
+                                       sum="Total Subscription Value"
+                                       help="Annual value of this subscription"/>
+                                <field name="next_invoice_date" 
+                                       string="Next Billing Date"
+                                       help="When this member will next be invoiced"/>
+                                <field name="total_deferred_revenue" 
+                                       string="Prepaid Revenue" 
+                                       sum="Total Prepaid"
+                                       help="Amount of prepaid revenue from this subscription"/>
+                                <field name="state" 
+                                       string="Status"
+                                       widget="badge"
+                                       decoration-success="state == 'active'"
+                                       decoration-warning="state == 'pending'"
+                                       decoration-muted="state == 'expired'"
+                                       help="Current subscription status"/>
+                            </list>
+                        </field>
+                    </group>
+
+                    <!-- Revenue Recognition Impact -->
+                    <group string="Revenue Recognition Summary" invisible="not has_active_revenue_recognition">
+                        <div class="alert alert-info" role="alert">
+                            <h6><i class="fa fa-line-chart"/> Revenue Recognition Impact</h6>
+                            <p>This member's prepaid subscriptions are contributing to your association's deferred revenue and 
+                               monthly revenue recognition process.</p>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-warning">Prepaid Revenue</h5>
+                                        <h3 class="text-warning">
+                                            <field name="total_deferred_revenue" readonly="1" widget="monetary"/>
+                                        </h3>
+                                        <small class="text-muted">Still to be recognized</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-success">Revenue Recognized</h5>
+                                        <h3 class="text-success">
+                                            <field name="total_recognized_revenue" readonly="1" widget="monetary"/>
+                                        </h3>
+                                        <small class="text-muted">Already recorded as income</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <field name="next_recognition_date" 
+                               string="Next Revenue Recognition Date"
+                               readonly="1"
+                               help="Next date when revenue from this member will be recognized"/>
+                    </group>
+
+                    <!-- Member Invoice History -->
+                    <group string="Recent Invoice History">
+                        <div class="alert alert-light" role="alert">
+                            <h6><i class="fa fa-file-text-o"/> Invoice History</h6>
+                            <p>Recent invoices for this member. Use this to track payment patterns and follow up on overdue accounts.</p>
+                        </div>
+                        
+                        <field name="recent_invoice_ids" nolabel="1">
+                            <list string="Recent Member Invoices" limit="10">
+                                <field name="name" 
+                                       string="Invoice Number"
+                                       help="Invoice reference number"/>
+                                <field name="invoice_date" 
+                                       string="Invoice Date"
+                                       help="Date invoice was created"/>
+                                <field name="invoice_date_due" 
+                                       string="Due Date"
+                                       help="Date payment is due"/>
+                                <field name="ams_transaction_type" 
+                                       string="Service Type"
+                                       help="Type of service billed"/>
+                                <field name="amount_total" 
+                                       string="Invoice Amount"
+                                       help="Total amount of invoice"/>
+                                <field name="amount_residual" 
+                                       string="Amount Due"
+                                       help="Remaining unpaid amount"/>
+                                <field name="payment_state" 
+                                       string="Payment Status"
+                                       widget="badge"
+                                       decoration-success="payment_state == 'paid'"
+                                       decoration-warning="payment_state == 'partial'"
+                                       decoration-danger="payment_state == 'not_paid'"
+                                       help="Current payment status"/>
+                            </list>
+                        </field>
+                    </group>
+
+                    <!-- Payment Methods and Preferences -->
+                    <group string="Payment Information">
+                        <group string="Payment Preferences">
+                            <field name="preferred_payment_method" 
+                                   string="Preferred Payment Method"
+                                   help="Member's preferred way to pay (credit card, check, etc.)"/>
+                            <field name="payment_terms_id" 
+                                   string="Payment Terms"
+                                   help="Standard payment terms for this member"/>
+                            <field name="auto_payment_enabled" 
+                                   string="Auto-Payment Enabled"
+                                   help="Whether member has automatic payment set up"/>
+                        </group>
+                        <group string="Contact for Billing Issues">
+                            <field name="billing_contact_name" 
+                                   string="Billing Contact"
+                                   help="Primary contact for billing and payment questions"/>
+                            <field name="billing_email" 
+                                   string="Billing Email"
+                                   help="Email for sending invoices and payment reminders"/>
+                            <field name="billing_phone" 
+                                   string="Billing Phone"
+                                   help="Phone number for urgent billing matters"/>
+                        </group>
+                    </group>
+
+                    <!-- Member Financial Actions -->
+                    <div class="oe_button_box" name="financial_buttons">
+                        <button name="action_view_member_invoices" type="object" 
+                                class="oe_stat_button" icon="fa-file-text-o"
+                                help="View all invoices for this member">
+                            <field name="invoice_count" widget="statinfo" string="Invoices"/>
+                        </button>
+                        <button name="action_view_member_payments" type="object" 
+                                class="oe_stat_button" icon="fa-money"
+                                help="View all payments received from this member">
+                            <field name="payment_count" widget="statinfo" string="Payments"/>
+                        </button>
+                        <button name="action_create_payment_reminder" type="object" 
+                                class="oe_stat_button" icon="fa-bell"
+                                invisible="total_outstanding_amount == 0"
+                                help="Send payment reminder to this member">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Send Payment</span>
+                                <span class="o_stat_text">Reminder</span>
+                            </div>
+                        </button>
+                        <button name="action_view_revenue_recognition" type="object" 
+                                class="oe_stat_button" icon="fa-line-chart"
+                                invisible="not has_active_revenue_recognition"
+                                help="View revenue recognition schedules for this member">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Revenue</span>
+                                <span class="o_stat_text">Recognition</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Financial Health Score -->
+                    <group string="Member Financial Health Assessment">
+                        <div class="alert alert-light" role="alert">
+                            <h6><i class="fa fa-heartbeat"/> Financial Health Indicators</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <h6>Payment Timeliness</h6>
+                                    <div t-if="payment_timeliness_score >= 80" class="text-success">
+                                        <i class="fa fa-check-circle"></i> Excellent (pays on time)
+                                    </div>
+                                    <div t-if="payment_timeliness_score >= 60 and payment_timeliness_score &lt; 80" class="text-warning">
+                                        <i class="fa fa-exclamation-triangle"></i> Good (occasional delays)
+                                    </div>
+                                    <div t-if="payment_timeliness_score &lt; 60" class="text-danger">
+                                        <i class="fa fa-times-circle"></i> Needs attention (frequent delays)
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6>Member Engagement</h6>
+                                    <div t-if="active_subscription_count > 1" class="text-success">
+                                        <i class="fa fa-star"></i> High (multiple subscriptions)
+                                    </div>
+                                    <div t-if="active_subscription_count == 1" class="text-info">
+                                        <i class="fa fa-star-half-o"></i> Standard (one subscription)
+                                    </div>
+                                    <div t-if="active_subscription_count == 0" class="text-muted">
+                                        <i class="fa fa-star-o"></i> Inactive (no subscriptions)
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6>Member Value</h6>
+                                    <div t-if="lifetime_member_value > 5000" class="text-success">
+                                        <i class="fa fa-diamond"></i> High Value Member
+                                    </div>
+                                    <div t-if="lifetime_member_value > 1000 and lifetime_member_value &lt;= 5000" class="text-info">
+                                        <i class="fa fa-circle"></i> Standard Member
+                                    </div>
+                                    <div t-if="lifetime_member_value &lt;= 1000" class="text-muted">
+                                        <i class="fa fa-circle-o"></i> New/Low Value Member
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </group>
                 </page>
             </xpath>
         </field>
     </record>
+
+    <!-- Enhanced Member List View with Financial Columns -->
+    <record id="view_res_partner_tree_ams_financial" model="ir.ui.view">
+        <field name="name">res.partner.tree.ams.financial</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="ams_subscriptions.view_res_partner_tree_ams"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='ams_member_type']" position="after">
+                <field name="total_outstanding_amount" 
+                       string="Outstanding Balance" 
+                       optional="hide" 
+                       sum="Total Outstanding"
+                       decoration-danger="total_outstanding_amount > 0"
+                       help="Amount this member currently owes"/>
+                <field name="total_paid_amount" 
+                       string="Paid This Year" 
+                       optional="hide" 
+                       sum="Total Paid"
+                       help="Amount paid by this member this year"/>
+                <field name="lifetime_member_value" 
+                       string="Lifetime Value" 
+                       optional="hide" 
+                       sum="Total Lifetime Value"
+                       help="Total amount this member has paid since joining"/>
+                <field name="last_payment_date" 
+                       string="Last Payment" 
+                       optional="hide"
+                       help="Date of most recent payment"/>
+                <field name="next_invoice_date" 
+                       string="Next Invoice" 
+                       optional="hide"
+                       help="Next scheduled invoice date"/>
+            </xpath>
+
+            <!-- Add financial status indicators -->
+            <xpath expr="//field[@name='name']" position="attributes">
+                <attribute name="decoration-danger">total_outstanding_amount > 500</attribute>
+                <attribute name="decoration-warning">total_outstanding_amount > 0 and total_outstanding_amount &lt;= 500</attribute>
+                <attribute name="decoration-success">total_outstanding_amount == 0 and active_subscription_count > 0</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Enhanced Member Search View with Financial Filters -->
+    <record id="view_res_partner_search_ams_financial" model="ir.ui.view">
+        <field name="name">res.partner.search.ams.financial</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="ams_subscriptions.view_res_partner_search_ams"/>
+        <field name="arch" type="xml">
+            <!-- Add financial search fields -->
+            <xpath expr="//field[@name='ams_member_id']" position="after">
+                <field name="total_outstanding_amount" 
+                       string="Outstanding Balance"
+                       filter_domain="[('total_outstanding_amount', '&gt;=', self)]"
+                       help="Search by outstanding balance amount"/>
+                <field name="lifetime_member_value" 
+                       string="Lifetime Value"
+                       filter_domain="[('lifetime_member_value', '&gt;=', self)]"
+                       help="Search by total lifetime member value"/>
+            </xpath>
+
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <!-- Financial Status Filters -->
+                <filter name="filter_outstanding_balance" 
+                        string="Has Outstanding Balance" 
+                        domain="[('total_outstanding_amount', '>', 0)]"
+                        help="Members who owe money"/>
+                <filter name="filter_no_outstanding_balance" 
+                        string="No Outstanding Balance" 
+                        domain="[('total_outstanding_amount', '=', 0)]"
+                        help="Members with no outstanding balances"/>
+                <filter name="filter_high_outstanding_balance" 
+                        string="High Outstanding Balance (&gt;$500)" 
+                        domain="[('total_outstanding_amount', '>', 500)]"
+                        help="Members with significant outstanding balances"/>
+                
+                <!-- Payment Pattern Filters -->
+                <separator/>
+                <filter name="filter_recent_payment" 
+                        string="Paid Recently (Last 30 Days)" 
+                        domain="[('last_payment_date', '&gt;=', (context_today() - datetime.timedelta(days=30)))]"
+                        help="Members who made payments in the last 30 days"/>
+                <filter name="filter_no_recent_payment" 
+                        string="No Recent Payment (90+ Days)" 
+                        domain="['|', ('last_payment_date', '&lt;', (context_today() - datetime.timedelta(days=90))), ('last_payment_date', '=', False)]"
+                        help="Members who haven't paid in 90+ days"/>
+                <filter name="filter_late_payers" 
+                        string="Late Payers" 
+                        domain="[('total_outstanding_amount', '>', 0), ('last_payment_date', '&lt;', (context_today() - datetime.timedelta(days=30)))]"
+                        help="Members with overdue balances"/>
+                
+                <!-- Member Value Filters -->
+                <separator/>
+                <filter name="filter_high_value_members" 
+                        string="High Value Members (&gt;$5,000 Lifetime)" 
+                        domain="[('lifetime_member_value', '>', 5000)]"
+                        help="Members with high lifetime value"/>
+                <filter name="filter_medium_value_members" 
+                        string="Medium Value Members ($1,000-$5,000)" 
+                        domain="[('lifetime_member_value', '&gt;=', 1000), ('lifetime_member_value', '&lt;=', 5000)]"
+                        help="Members with medium lifetime value"/>
+                <filter name="filter_new_low_value_members" 
+                        string="New/Low Value Members (&lt;$1,000)" 
+                        domain="[('lifetime_member_value', '&lt;', 1000)]"
+                        help="New members or those with low lifetime value"/>
+                
+                <!-- Auto-Payment and Billing Filters -->
+                <separator/>
+                <filter name="filter_auto_payment_enabled" 
+                        string="Auto-Payment Enabled" 
+                        domain="[('auto_payment_enabled', '=', True)]"
+                        help="Members with automatic payment set up"/>
+                <filter name="filter_no_auto_payment" 
+                        string="No Auto-Payment" 
+                        domain="[('auto_payment_enabled', '=', False)]"
+                        help="Members without automatic payment"/>
+                <filter name="filter_has_billing_contact" 
+                        string="Has Billing Contact" 
+                        domain="[('billing_contact_name', '!=', False)]"
+                        help="Members with designated billing contact"/>
+                
+                <!-- Revenue Recognition Filters -->
+                <separator/>
+                <filter name="filter_has_deferred_revenue" 
+                        string="Has Prepaid Revenue" 
+                        domain="[('total_deferred_revenue', '>', 0)]"
+                        help="Members with prepaid revenue awaiting recognition"/>
+                <filter name="filter_active_revenue_recognition" 
+                        string="Active Revenue Recognition" 
+                        domain="[('has_active_revenue_recognition', '=', True)]"
+                        help="Members with active revenue recognition schedules"/>
+                
+                <!-- Invoice and Payment Activity -->
+                <separator/>
+                <filter name="filter_invoiced_this_month" 
+                        string="Invoiced This Month" 
+                        domain="[('recent_invoice_ids.invoice_date', '&gt;=', context_today().replace(day=1))]"
+                        help="Members who were invoiced this month"/>
+                <filter name="filter_due_for_invoice" 
+                        string="Due for Next Invoice" 
+                        domain="[('next_invoice_date', '&lt;=', (context_today() + datetime.timedelta(days=7)))]"
+                        help="Members due to be invoiced in the next 7 days"/>
+                
+                <!-- Enhanced grouping options -->
+                <group expand="0" string="Group By">
+                    <filter name="group_by_outstanding_status" 
+                            string="Outstanding Balance Status" 
+                            domain="[]" 
+                            context="{'group_by': 'outstanding_balance_category'}"
+                            help="Group by whether members have outstanding balances"/>
+                    <filter name="group_by_payment_method" 
+                            string="Payment Method" 
+                            domain="[]" 
+                            context="{'group_by': 'preferred_payment_method'}"
+                            help="Group by preferred payment method"/>
+                    <filter name="group_by_member_value" 
+                            string="Member Value Category" 
+                            domain="[]" 
+                            context="{'group_by': 'member_value_category'}"
+                            help="Group by member value level"/>
+                    <filter name="group_by_last_payment_month" 
+                            string="Last Payment Month" 
+                            domain="[]" 
+                            context="{'group_by': 'last_payment_date:month'}"
+                            help="Group by month of last payment"/>
+                    <filter name="group_by_billing_contact" 
+                            string="Has Billing Contact" 
+                            domain="[]" 
+                            context="{'group_by': 'has_billing_contact'}"
+                            help="Group by whether member has billing contact"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Member Financial Dashboard Action -->
+    <record id="action_member_financial_dashboard" model="ir.actions.act_window">
+        <field name="name">Member Financial Dashboard</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">graph,pivot,list,form</field>
+        <field name="domain">[('is_ams_member', '=', True)]</field>
+        <field name="context">{
+            'search_default_group_by_member_value': 1,
+            'search_default_group_by_outstanding_status': 1,
+            'graph_measure': 'lifetime_member_value',
+            'graph_type': 'pie'
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Member Financial Analysis Dashboard
+            </p>
+            <p>
+                <strong>Analyze Your Members' Financial Patterns</strong>
+                <br/>Understand member payment behavior, value, and financial health.
+            </p>
+            <p>
+                <strong>Key Insights Available:</strong>
+                <br/>• <strong>Member Value Analysis:</strong> Identify high-value vs new members
+                <br/>• <strong>Payment Patterns:</strong> Track who pays on time vs late
+                <br/>• <strong>Outstanding Balances:</strong> Monitor members who owe money
+                <br/>• <strong>Revenue Impact:</strong> Understand member contribution to association revenue
+            </p>
+            <p>
+                <strong>Use This Data For:</strong>
+                <br/>• Member retention strategies and outreach
+                <br/>• Payment reminder and collection efforts
+                <br/>• Membership pricing and value analysis
+                <br/>• Financial forecasting and cash flow planning
+            </p>
+        </field>
+    </record>
+
+    <!-- Members with Outstanding Balances -->
+    <record id="action_members_outstanding_balances" model="ir.actions.act_window">
+        <field name="name">Members with Outstanding Balances</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_ams_member', '=', True), ('total_outstanding_amount', '>', 0)]</field>
+        <field name="context">{
+            'search_default_filter_outstanding_balance': 1,
+            'search_default_group_by_outstanding_status': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                All Member Accounts Are Current!
+            </p>
+            <p>
+                <strong>Members Requiring Payment Follow-Up</strong>
+                <br/>This view helps you identify and contact members who owe money.
+            </p>
+            <p>
+                <strong>Follow-Up Actions:</strong>
+                <br/>• <strong>Review Outstanding Amounts:</strong> Check how much each member owes
+                <br/>• <strong>Send Payment Reminders:</strong> Contact members about overdue balances
+                <br/>• <strong>Offer Payment Plans:</strong> Work with members on payment arrangements
+                <br/>• <strong>Update Payment Methods:</strong> Help members set up auto-payment
+            </p>
+            <p>
+                <strong>Quick Actions Available:</strong>
+                <br/>• Click on any member to see their full financial summary
+                <br/>• Use "Send Payment Reminder" buttons for easy follow-up
+                <br/>• Filter by balance amount to prioritize collection efforts
+            </p>
+        </field>
+    </record>
+
+    <!-- High-Value Members -->
+    <record id="action_high_value_members" model="ir.actions.act_window">
+        <field name="name">High-Value Members</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_ams_member', '=', True), ('lifetime_member_value', '>', 5000)]</field>
+        <field name="context">{
+            'search_default_filter_high_value_members': 1,
+            'search_default_group_by_ams_member_type': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Recognize Your Most Valuable Members
+            </p>
+            <p>
+                <strong>Your Association's High-Value Members</strong>
+                <br/>These members have contributed significantly to your association over time.
+            </p>
+            <p>
+                <strong>Why This Matters:</strong>
+                <br/>• <strong>Member Retention:</strong> Focus on keeping your most valuable members happy
+                <br/>• <strong>Recognition Opportunities:</strong> Consider special recognition or benefits
+                <br/>• <strong>Referral Potential:</strong> High-value members often refer other quality members
+                <br/>• <strong>Feedback Partners:</strong> Great candidates for member surveys and input
+            </p>
+            <p>
+                <strong>Engagement Ideas:</strong>
+                <br/>• Personal thank you notes from association leadership
+                <br/>• Exclusive events or early access to new services
+                <br/>• Board nomination or committee leadership opportunities
+                <br/>• Case studies or member spotlight features
+            </p>
+        </field>
+    </record>
+
+    <!-- Members Payment Analysis -->
+    <record id="action_member_payment_analysis" model="ir.actions.act_window">
+        <field name="name">Member Payment Analysis</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="domain">[('is_ams_member', '=', True)]</field>
+        <field name="context">{
+            'search_default_group_by_ams_member_type': 1,
+            'search_default_group_by_outstanding_status': 1,
+            'pivot_row_groupby': ['ams_member_type'],
+            'pivot_col_groupby': ['outstanding_balance_category'],
+            'pivot_measures': ['total_outstanding_amount', 'total_paid_amount', 'lifetime_member_value']
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Member Payment Pattern Analysis
+            </p>
+            <p>
+                <strong>Understand Member Payment Behavior</strong>
+                <br/>Analyze payment patterns across different member types and categories.
+            </p>
+            <p>
+                <strong>Key Analysis Areas:</strong>
+                <br/>• <strong>Payment Timeliness:</strong> Which member types pay on time vs late
+                <br/>• <strong>Value by Category:</strong> Revenue contribution by membership type
+                <br/>• <strong>Outstanding Balance Patterns:</strong> Where collection efforts are needed
+                <br/>• <strong>Retention Indicators:</strong> Financial health as predictor of membership continuation
+            </p>
+            <p>
+                <strong>Strategic Applications:</strong>
+                <br/>• Adjust membership pricing based on payment patterns
+                <br/>• Target collection efforts where they'll be most effective
+                <br/>• Identify member segments for different payment terms
+                <br/>• Plan cash flow based on historical payment behavior
+            </p>
+        </field>
+    </record>
+
 </odoo>

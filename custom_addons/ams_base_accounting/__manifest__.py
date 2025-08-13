@@ -2,98 +2,103 @@
 {
     'name': 'AMS Base Accounting',
     'version': '18.0.1.0.0',
-    'summary': 'Base accounting functionality for AMS (Association Management System)',
+    'category': 'Association Management',
+    'summary': 'Base accounting functionality for Association Management System',
     'description': """
-AMS Base Accounting
-===================
+Association Management System - Base Accounting
+===============================================
 
-This module provides basic accounting functionality for the AMS (Association Management System):
+This module provides the foundational accounting functionality for association management, 
+including specialized financial accounts, member billing, and revenue tracking.
 
-* GL account configuration for subscription products
-* Chart of accounts for associations  
-* Integration with standard Odoo accounting
-* Setup wizard for account configuration
+Key Features:
+------------
+* Association-specific chart of accounts
+* Member invoice and payment processing
+* Subscription product financial configuration
+* Revenue tracking by membership type
+* Automated financial account assignment
+* Financial reporting for associations
+* Setup wizard for easy configuration
 
-Features:
----------
-* Product-specific GL account mapping
-* AMS-specific chart of accounts
-* Revenue recognition for subscriptions  
-* Accounts receivable management
-* Deferred revenue handling
-* Setup and configuration wizards
+Business Benefits:
+-----------------
+* Proper financial tracking for membership organizations
+* Automated revenue categorization by service type
+* Simplified billing and payment processing
+* Association-specific financial reports
+* Streamlined financial operations for staff
 
-Installation:
--------------
-This module automatically creates and configures AMS-specific accounts during installation.
-If you encounter account conflicts, run the Setup Wizard from AMS → Configuration → Accounting Setup.
-
+Target Users:
+------------
+* Association financial staff
+* Membership coordinators  
+* Finance managers
+* Association administrators
     """,
-    'author': 'Your Company',
-    'website': 'https://yourcompany.com',
-    'category': 'Association Management/Accounting',
+    'author': 'Your Organization',
+    'website': 'https://www.yourorganization.com',
+    'license': 'LGPL-3',
+    
+    # Dependencies
     'depends': [
         'base',
-        'account', 
+        'account',
         'product',
-        'ams_subscriptions',
+        'sale',
+        'mail',
     ],
-    'data': [
-        # Security - Load first
-        'security/ir.model.access.csv',
-        
-        # Data files - Configuration only (no account creation)
-        'data/ams_account_types.xml',          # Configuration parameters only
-        'data/ams_account_templates.xml',      # Additional templates and categories
-        'data/ams_journals.xml',               # Journal configuration parameters
-        
-        # Views - Load after data
-        'views/account_account_views.xml',
-        'views/product_template_views.xml',
-        'views/ams_accounting_config_views.xml',
-        'views/account_move_views.xml',
-        'views/ams_accounting_dashboard_views.xml',    # ADDED: Dashboard views
-        'wizard/ams_accounting_setup_wizard_views.xml',
-        'views/ams_accounting_menu.xml',               # Load menu last
-    ],
-    'demo': [
-        # Demo data for testing (optional)
-    ],
-    'installable': True,
-    'application': True,
-    'auto_install': False,
     
-    # Hooks for setup and cleanup
+    # Module Data Files
+    'data': [
+        # Security
+        'security/security.xml',
+        'security/ir.model.access.csv',  # Removed group_descriptions.xml
+        
+        # Data
+        'data/account_account_data.xml',
+        'data/product_category_data.xml',
+        'data/account_journal_data.xml',
+        
+        # Views
+        'views/account_account_views.xml',
+        'views/account_move_views.xml',
+        'views/product_template_views.xml',
+        'views/res_config_settings_views.xml',
+        'views/res_partner_views.xml',
+        
+        # Wizards
+        'wizard/ams_accounting_setup_wizard_views.xml',
+        
+        # Menus
+        'views/ams_accounting_menu.xml',
+    ],
+    
+    # Demo Data
+    'demo': [
+        'demo/account_account_demo.xml',
+        'demo/product_template_demo.xml',
+        'demo/res_partner_demo.xml',
+    ],
+    
+    # Module Configuration
+    'installable': True,
+    'auto_install': False,
+    'application': True,
+    'sequence': 100,
+    
+    # Post Installation Hook
     'post_init_hook': 'post_init_hook',
     'uninstall_hook': 'uninstall_hook',
     
-    # License and metadata
-    'license': 'LGPL-3',
-    'sequence': 100,
-    'development_status': 'Beta',
+    # Support Information
+    'support': 'support@yourorganization.com',
+    'maintainer': 'Your Organization Development Team',
     
-    # Version constraints
-    'odoo_version': '18.0',
+    # Development Information
+    'development_status': 'Production/Stable',
+    'complexity': 'normal',
     
-    # External dependencies
-    'external_dependencies': {
-        'python': [],  # No special Python dependencies
-    },
-    
-    # Assets (if needed for web components)
-    'assets': {
-        'web.assets_backend': [
-            # Add any custom CSS/JS files here if needed
-        ],
-    },
-    
-    # Images for module store
-    'images': [
-        'static/description/banner.png',
-        'static/description/icon.png',
-    ],
-    
-    # Support information
-    'support': 'https://yourcompany.com/support',
-    'maintainers': ['your-team'],
+    # Compatibility
+    'python_requires': '>=3.8',
 }

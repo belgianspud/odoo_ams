@@ -1,247 +1,416 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Enhanced Invoice Form for AMS with User-Friendly Labels -->
+    <!-- Enhanced Invoice Form for Association Management -->
     <record id="view_account_move_form_ams" model="ir.ui.view">
         <field name="name">account.move.form.ams</field>
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
-            <!-- Add user-friendly AMS fields after partner_id -->
+            <!-- Add Association-specific fields with clear labels -->
             <xpath expr="//field[@name='partner_id']" position="after">
-                <field name="ams_subscription_id" string="📋 Related Subscription" 
-                       invisible="not has_ams_products"/>
-                <field name="ams_transaction_type" string="💳 Payment Type" 
-                       invisible="not has_ams_products"/>
+                <field name="ams_subscription_id" 
+                       string="Related Membership"
+                       invisible="not has_ams_products"
+                       help="The membership subscription this invoice is for. This helps track which member services are being billed."/>
+                <field name="ams_transaction_type" 
+                       string="Service Type"
+                       invisible="not has_ams_products"
+                       help="What type of association service this invoice covers (membership fees, publications, events, etc.)"/>
                 <field name="has_ams_products" invisible="1"/>
             </xpath>
         </field>
     </record>
 
-    <!-- Enhanced Invoice Tree View with User-Friendly Labels -->
+    <!-- Enhanced Invoice List View with Association-Friendly Headers -->
     <record id="view_account_move_tree_ams" model="ir.ui.view">
         <field name="name">account.move.tree.ams</field>
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position="after">
-                <field name="has_ams_products" string="🎯 Association" optional="hide"
-                       widget="boolean_toggle"/>
-                <field name="ams_transaction_type" string="💳 Payment Type" optional="hide"/>
+                <field name="has_ams_products" 
+                       string="Member Service" 
+                       optional="hide"
+                       widget="boolean_toggle"
+                       help="Green check indicates this invoice is for membership services, publications, or events"/>
+                <field name="ams_transaction_type" 
+                       string="Service Category" 
+                       optional="hide"
+                       help="Type of association service being billed"/>
+            </xpath>
+
+            <!-- Enhanced column headers with association context -->
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="string">Member/Customer</attribute>
+                <attribute name="help">The member or organization being invoiced</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='amount_total']" position="attributes">
+                <attribute name="string">Invoice Amount</attribute>
+                <attribute name="help">Total amount due from the member</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='payment_state']" position="attributes">
+                <attribute name="string">Payment Status</attribute>
+                <attribute name="help">Whether the member has paid this invoice</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='state']" position="attributes">
+                <attribute name="string">Invoice Status</attribute>
+                <attribute name="help">Current status of this invoice (draft, posted, paid, etc.)</attribute>
             </xpath>
         </field>
     </record>
 
-    <!-- Enhanced Invoice Search View with User-Friendly Filters -->
+    <!-- Enhanced Invoice Search with Association-Specific Filters -->
     <record id="view_account_move_search_ams" model="ir.ui.view">
         <field name="name">account.move.search.ams</field>
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_account_invoice_filter"/>
         <field name="arch" type="xml">
+            <!-- Add searchable fields -->
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="ams_subscription_id" 
+                       string="Membership"
+                       filter_domain="[('ams_subscription_id.name', 'ilike', self)]"
+                       help="Search by membership subscription name or number"/>
+                <field name="ams_transaction_type" 
+                       string="Service Type"
+                       filter_domain="[('ams_transaction_type', 'ilike', self)]"
+                       help="Search by type of service (membership, publication, etc.)"/>
+            </xpath>
+
             <xpath expr="//search" position="inside">
                 <separator/>
-                
-                <!-- User-Friendly Association Filters -->
-                <filter name="filter_association_invoices" string="🎯 Association Invoices" 
-                        domain="[('has_ams_products', '=', True)]"/>
+                <!-- Association service filters -->
+                <filter name="filter_ams_invoices" 
+                        string="Member Service Invoices" 
+                        domain="[('has_ams_products', '=', True)]"
+                        help="Show only invoices for membership services, publications, and events"/>
                         
-                <!-- Payment Type Filters with Icons -->
-                <filter name="filter_membership_payments" string="👥 Membership Payments" 
-                        domain="[('ams_transaction_type', '=', 'membership_payment')]"/>
+                <!-- Service type filters with clear descriptions -->
+                <filter name="filter_membership_payments" 
+                        string="Membership Fees" 
+                        domain="[('ams_transaction_type', '=', 'membership_payment')]"
+                        help="Invoices for individual and corporate membership fees"/>
+                <filter name="filter_publication_payments" 
+                        string="Publication Subscriptions" 
+                        domain="[('ams_transaction_type', '=', 'publication_payment')]"
+                        help="Invoices for journal and magazine subscriptions"/>
+                <filter name="filter_chapter_payments" 
+                        string="Chapter Memberships" 
+                        domain="[('ams_transaction_type', '=', 'chapter_payment')]"
+                        help="Invoices for local chapter membership fees"/>
+                <filter name="filter_event_payments" 
+                        string="Event Registrations" 
+                        domain="[('ams_transaction_type', '=', 'event_payment')]"
+                        help="Invoices for conference and webinar registrations"/>
+                <filter name="filter_seat_addons" 
+                        string="Enterprise User Add-ons" 
+                        domain="[('ams_transaction_type', '=', 'seat_addon')]"
+                        help="Invoices for additional corporate member users"/>
                         
-                <filter name="filter_publication_payments" string="📚 Publication Payments" 
-                        domain="[('ams_transaction_type', '=', 'publication_payment')]"/>
+                <!-- Payment and billing status filters -->
+                <separator/>
+                <filter name="filter_unpaid_member_invoices" 
+                        string="Unpaid Member Invoices" 
+                        domain="[('has_ams_products', '=', True), ('payment_state', 'in', ['not_paid', 'partial'])]"
+                        help="Member invoices that haven't been paid yet"/>
+                <filter name="filter_overdue_member_invoices" 
+                        string="Overdue Member Invoices" 
+                        domain="[('has_ams_products', '=', True), ('payment_state', '!=', 'paid'), ('invoice_date_due', '&lt;', context_today())]"
+                        help="Member invoices that are past their due date"/>
+                <filter name="filter_paid_member_invoices" 
+                        string="Paid Member Invoices" 
+                        domain="[('has_ams_products', '=', True), ('payment_state', '=', 'paid')]"
+                        help="Member invoices that have been fully paid"/>
                         
-                <filter name="filter_chapter_payments" string="🏢 Chapter Payments" 
-                        domain="[('ams_transaction_type', '=', 'chapter_payment')]"/>
+                <!-- Date-based filters for member billing -->
+                <separator/>
+                <filter name="filter_this_month_member_billing" 
+                        string="This Month's Member Billing" 
+                        domain="[('has_ams_products', '=', True), ('invoice_date', '&gt;=', context_today().replace(day=1)), ('invoice_date', '&lt;', (context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1))]"
+                        help="Member invoices created this month"/>
+                <filter name="filter_renewal_invoices" 
+                        string="Membership Renewals" 
+                        domain="[('ams_transaction_type', 'in', ['membership_payment', 'chapter_payment'])]"
+                        help="Invoices for membership renewals"/>
                         
-                <filter name="filter_seat_addons" string="💺 Enterprise Seat Add-ons" 
-                        domain="[('ams_transaction_type', '=', 'seat_addon')]"/>
-                        
-                <filter name="filter_modifications" string="🔄 Subscription Changes" 
-                        domain="[('ams_transaction_type', '=', 'modification')]"/>
-                        
-                <filter name="filter_refunds" string="💰 Refunds" 
-                        domain="[('ams_transaction_type', '=', 'refund')]"/>
+                <!-- Invoice amount filters -->
+                <separator/>
+                <filter name="filter_high_value_invoices" 
+                        string="High Value Invoices (&gt;$500)" 
+                        domain="[('has_ams_products', '=', True), ('amount_total', '&gt;', 500)]"
+                        help="Member invoices over $500 (typically corporate memberships)"/>
+                <filter name="filter_small_invoices" 
+                        string="Small Invoices (&lt;$100)" 
+                        domain="[('has_ams_products', '=', True), ('amount_total', '&lt;', 100)]"
+                        help="Member invoices under $100 (typically individual memberships or publications)"/>
                 
                 <separator/>
-                
-                <!-- Payment Status Filters -->
-                <filter name="filter_paid_invoices" string="✅ Paid in Full" 
-                        domain="[('payment_state', '=', 'paid')]"/>
-                        
-                <filter name="filter_unpaid_invoices" string="⏳ Awaiting Payment" 
-                        domain="[('payment_state', 'in', ['not_paid', 'partial'])]"/>
-                        
-                <filter name="filter_overdue_invoices" string="⚠️ Overdue" 
-                        domain="[('payment_state', 'in', ['not_paid', 'partial']), ('invoice_date_due', '&lt;', context_today())]"/>
-                
-                <separator/>
-                
-                <!-- Time-based Filters -->
-                <filter name="filter_this_month" string="📅 This Month" 
-                        domain="[('date', '&gt;=', (context_today().replace(day=1)).strftime('%Y-%m-%d')), ('date', '&lt;', ((context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1)).strftime('%Y-%m-%d'))]"/>
-                        
-                <filter name="filter_this_quarter" string="📅 This Quarter" 
-                        domain="[('date', '&gt;=', (context_today() - datetime.timedelta(days=90)).strftime('%Y-%m-%d'))]"/>
-                
-                <separator/>
-                
-                <!-- Grouping Options with User-Friendly Labels -->
-                <group expand="0" string="📊 Group By">
-                    <filter name="group_by_payment_type" string="💳 Payment Type" 
-                            domain="[]" context="{'group_by': 'ams_transaction_type'}"/>
-                    <filter name="group_by_payment_status" string="💰 Payment Status" 
-                            domain="[]" context="{'group_by': 'payment_state'}"/>
-                    <filter name="group_by_customer" string="👥 Customer" 
-                            domain="[]" context="{'group_by': 'partner_id'}"/>
-                    <filter name="group_by_month" string="📅 Month" 
-                            domain="[]" context="{'group_by': 'date:month'}"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_by_ams_transaction_type" 
+                            string="Service Type" 
+                            domain="[]" 
+                            context="{'group_by': 'ams_transaction_type'}"
+                            help="Group invoices by type of association service"/>
+                    <filter name="group_by_member" 
+                            string="Member/Customer" 
+                            domain="[]" 
+                            context="{'group_by': 'partner_id'}"
+                            help="Group invoices by member or organization"/>
+                    <filter name="group_by_payment_status" 
+                            string="Payment Status" 
+                            domain="[]" 
+                            context="{'group_by': 'payment_state'}"
+                            help="Group by whether invoices are paid, unpaid, or partial"/>
+                    <filter name="group_by_billing_month" 
+                            string="Billing Month" 
+                            domain="[]" 
+                            context="{'group_by': 'invoice_date:month'}"
+                            help="Group invoices by the month they were created"/>
+                    <filter name="group_by_due_month" 
+                            string="Due Month" 
+                            domain="[]" 
+                            context="{'group_by': 'invoice_date_due:month'}"
+                            help="Group invoices by when payment is due"/>
                 </group>
             </xpath>
         </field>
     </record>
 
-    <!-- Enhanced Invoice Line Form with User-Friendly Labels -->
+    <!-- Enhanced Invoice Line Form -->
     <record id="view_account_move_line_form_ams" model="ir.ui.view">
         <field name="name">account.move.line.form.ams</field>
         <field name="model">account.move.line</field>
         <field name="inherit_id" ref="account.view_move_line_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='product_id']" position="after">
-                <field name="ams_subscription_id" string="📋 Related Subscription" 
+                <field name="ams_subscription_id" 
+                       string="Related Membership"
                        invisible="not is_ams_line"
-                       help="The subscription this invoice line relates to"/>
-                <field name="ams_product_type" string="🎯 Product Type" 
+                       help="The membership subscription this line item relates to"/>
+                <field name="ams_product_type" 
+                       string="Service Category"
                        invisible="not is_ams_line"
-                       help="Type of association product or service"/>
+                       help="Type of association service (individual membership, corporate membership, publication, etc.)"/>
                 <field name="is_ams_line" invisible="1"/>
             </xpath>
         </field>
     </record>
 
-    <!-- Enhanced Invoice Line Tree with User-Friendly Labels -->
+    <!-- Enhanced Invoice Line List View -->
     <record id="view_account_move_line_tree_ams" model="ir.ui.view">
         <field name="name">account.move.line.tree.ams</field>
         <field name="model">account.move.line</field>
         <field name="inherit_id" ref="account.view_move_line_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='product_id']" position="after">
-                <field name="is_ams_line" string="🎯 Association" optional="hide"/>
-                <field name="ams_product_type" string="💎 Product Type" optional="hide"/>
+                <field name="is_ams_line" 
+                       string="Member Service" 
+                       optional="hide"
+                       widget="boolean_toggle"
+                       help="Green check indicates this is for association services"/>
+                <field name="ams_product_type" 
+                       string="Service Type" 
+                       optional="hide"
+                       help="Category of association service"/>
+            </xpath>
+
+            <!-- Enhanced column headers -->
+            <xpath expr="//field[@name='product_id']" position="attributes">
+                <attribute name="string">Product/Service</attribute>
+                <attribute name="help">The membership, publication, or service being billed</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='price_unit']" position="attributes">
+                <attribute name="string">Unit Price</attribute>
+                <attribute name="help">Price per unit of this service</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='price_subtotal']" position="attributes">
+                <attribute name="string">Line Total</attribute>
+                <attribute name="help">Total amount for this line item</attribute>
             </xpath>
         </field>
     </record>
 
-    <!-- User-Friendly Invoice Actions -->
-    
-    <!-- Main Association Invoices Action with Better Description -->
-    <record id="action_move_ams_invoices" model="ir.actions.act_window">
-        <field name="name">📄 Customer Invoices</field>
+    <!-- Searchable Invoice Line List View -->
+    <record id="view_account_move_line_list_searchable" model="ir.ui.view">
+        <field name="name">account.move.line.list.searchable</field>
+        <field name="model">account.move.line</field>
+        <field name="inherit_id" ref="view_account_move_line_tree_ams"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="attributes">
+                <!-- Enable column search and filtering -->
+                <attribute name="column_invisible">False</attribute>
+                <attribute name="search_view_ref">view_account_move_line_search_ams</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Enhanced Invoice Line Search -->
+    <record id="view_account_move_line_search_ams" model="ir.ui.view">
+        <field name="name">account.move.line.search.ams</field>
+        <field name="model">account.move.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <!-- Searchable fields with association context -->
+                <field name="move_id" 
+                       string="Invoice Number"
+                       filter_domain="[('move_id.name', 'ilike', self)]"
+                       help="Search by invoice number"/>
+                <field name="partner_id" 
+                       string="Member"
+                       filter_domain="[('partner_id.name', 'ilike', self)]"
+                       help="Search by member or customer name"/>
+                <field name="product_id" 
+                       string="Product/Service"
+                       filter_domain="[('product_id.name', 'ilike', self)]"
+                       help="Search by membership type, publication, or service name"/>
+                <field name="ams_subscription_id" 
+                       string="Membership"
+                       filter_domain="[('ams_subscription_id.name', 'ilike', self)]"
+                       help="Search by membership subscription"/>
+                <field name="account_id" 
+                       string="Financial Account"
+                       filter_domain="[('account_id.name', 'ilike', self)]"
+                       help="Search by the financial account used"/>
+
+                <!-- Association service filters -->
+                <filter name="filter_ams_lines" 
+                        string="Association Service Lines" 
+                        domain="[('is_ams_line', '=', True)]"
+                        help="Show only lines for association services"/>
+                        
+                <!-- Service type filters -->
+                <filter name="filter_individual_memberships" 
+                        string="Individual Memberships" 
+                        domain="[('ams_product_type', '=', 'individual')]"
+                        help="Lines for individual membership fees"/>
+                <filter name="filter_enterprise_memberships" 
+                        string="Corporate Memberships" 
+                        domain="[('ams_product_type', '=', 'enterprise')]"
+                        help="Lines for corporate membership fees"/>
+                <filter name="filter_publications" 
+                        string="Publications" 
+                        domain="[('ams_product_type', '=', 'publication')]"
+                        help="Lines for publication subscriptions"/>
+                <filter name="filter_chapters" 
+                        string="Chapter Memberships" 
+                        domain="[('ams_product_type', '=', 'chapter')]"
+                        help="Lines for chapter membership fees"/>
+                        
+                <!-- Amount-based filters -->
+                <separator/>
+                <filter name="filter_high_value_lines" 
+                        string="High Value Lines (&gt;$200)" 
+                        domain="[('price_subtotal', '&gt;', 200)]"
+                        help="Invoice lines over $200"/>
+                <filter name="filter_subscription_fees" 
+                        string="Recurring Fees" 
+                        domain="[('is_ams_line', '=', True), ('price_subtotal', '&gt;', 50)]"
+                        help="Recurring membership or subscription fees"/>
+
+                <group expand="0" string="Group By">
+                    <filter name="group_by_product" 
+                            string="Product/Service" 
+                            domain="[]" 
+                            context="{'group_by': 'product_id'}"
+                            help="Group by membership type or service"/>
+                    <filter name="group_by_ams_product_type" 
+                            string="Service Category" 
+                            domain="[]" 
+                            context="{'group_by': 'ams_product_type'}"
+                            help="Group by type of association service"/>
+                    <filter name="group_by_account" 
+                            string="Financial Account" 
+                            domain="[]" 
+                            context="{'group_by': 'account_id'}"
+                            help="Group by the financial account used"/>
+                    <filter name="group_by_partner" 
+                            string="Member" 
+                            domain="[]" 
+                            context="{'group_by': 'partner_id'}"
+                            help="Group by member or customer"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Member Invoice Dashboard Action -->
+    <record id="action_member_invoice_dashboard" model="ir.actions.act_window">
+        <field name="name">Member Invoice Dashboard</field>
         <field name="res_model">account.move</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">graph,pivot,list,form</field>
         <field name="domain">[('move_type', '=', 'out_invoice'), ('has_ams_products', '=', True)]</field>
         <field name="context">{
-            'default_move_type': 'out_invoice',
-            'search_default_filter_association_invoices': 1
+            'search_default_group_by_ams_transaction_type': 1,
+            'search_default_group_by_billing_month': 1,
+            'graph_measure': 'amount_total',
+            'graph_type': 'bar'
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                📄 No customer invoices yet!
+                Member Invoice Analytics Dashboard
             </p>
             <p>
-                <strong>Customer invoices will appear here when you:</strong>
-            </p>
-            <ul>
-                <li>💎 Create subscription products for members</li>
-                <li>👥 Set up customer memberships</li>
-                <li>💳 Generate invoices for payments</li>
-            </ul>
-            <p>
-                <strong>You can track:</strong> Payment status, overdue invoices, membership types, and revenue trends.
+                Analyze your association's billing patterns and member payment trends:
+                <br/>• <strong>Revenue by Service Type:</strong> Compare income from memberships vs publications vs events
+                <br/>• <strong>Billing Trends:</strong> Track monthly billing volumes and seasonal patterns
+                <br/>• <strong>Payment Performance:</strong> Monitor how quickly members pay their invoices
+                <br/>• <strong>Member Value Analysis:</strong> Identify high-value members and revenue opportunities
             </p>
         </field>
     </record>
 
-    <!-- Payment Tracking Action (Outstanding Invoices) -->
-    <record id="action_ams_payment_tracking" model="ir.actions.act_window">
-        <field name="name">💳 Payment Tracking</field>
+    <!-- Outstanding Member Invoices Action -->
+    <record id="action_outstanding_member_invoices" model="ir.actions.act_window">
+        <field name="name">Outstanding Member Invoices</field>
         <field name="res_model">account.move</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[
-            ('move_type', '=', 'out_invoice'), 
-            ('has_ams_products', '=', True),
-            ('payment_state', 'in', ['not_paid', 'partial'])
-        ]</field>
+        <field name="domain">[('move_type', '=', 'out_invoice'), ('has_ams_products', '=', True), ('payment_state', 'in', ['not_paid', 'partial'])]</field>
         <field name="context">{
-            'search_default_filter_unpaid_invoices': 1,
-            'search_default_group_by_payment_status': 1
+            'search_default_filter_unpaid_member_invoices': 1,
+            'search_default_group_by_ams_transaction_type': 1
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                🎉 All payments are up to date!
+                All Member Invoices Are Paid!
             </p>
             <p>
-                <strong>This shows invoices that need attention:</strong>
-            </p>
-            <ul>
-                <li>⏳ <strong>Awaiting Payment:</strong> Recently sent invoices</li>
-                <li>⚠️ <strong>Overdue:</strong> Past due date, may need follow-up</li>
-                <li>💰 <strong>Partial:</strong> Some payment received, balance remaining</li>
-            </ul>
-            <p>
-                <em>💡 Use filters to find specific customers or payment types</em>
+                This view shows member invoices that haven't been paid yet:
+                <br/>• <strong>Membership Renewals:</strong> Members who haven't renewed yet
+                <br/>• <strong>Publication Subscriptions:</strong> Outstanding journal subscription fees
+                <br/>• <strong>Event Registrations:</strong> Unpaid conference or webinar fees
+                <br/>• <strong>Follow-up Actions:</strong> Send payment reminders or contact members
             </p>
         </field>
     </record>
 
-    <!-- Membership Payments Action -->
-    <record id="action_membership_payments" model="ir.actions.act_window">
-        <field name="name">👥 Membership Payments</field>
+    <!-- Member Payment Performance Action -->
+    <record id="action_member_payment_performance" model="ir.actions.act_window">
+        <field name="name">Member Payment Performance</field>
         <field name="res_model">account.move</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[
-            ('move_type', '=', 'out_invoice'), 
-            ('ams_transaction_type', '=', 'membership_payment')
-        ]</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="domain">[('move_type', '=', 'out_invoice'), ('has_ams_products', '=', True)]</field>
         <field name="context">{
-            'search_default_filter_membership_payments': 1,
-            'search_default_group_by_month': 1
+            'search_default_group_by_payment_status': 1,
+            'search_default_group_by_ams_transaction_type': 1,
+            'pivot_row_groupby': ['payment_state'],
+            'pivot_col_groupby': ['ams_transaction_type'],
+            'pivot_measures': ['amount_total']
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                👥 Membership payment tracking
+                Member Payment Performance Analysis
             </p>
             <p>
-                Track all membership-related invoices and payments:
-                <br/>• Individual membership fees
-                <br/>• Enterprise membership fees  
-                <br/>• Renewals and upgrades
-            </p>
-        </field>
-    </record>
-
-    <!-- Publication Payments Action -->
-    <record id="action_publication_payments" model="ir.actions.act_window">
-        <field name="name">📚 Publication Payments</field>
-        <field name="res_model">account.move</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[
-            ('move_type', '=', 'out_invoice'), 
-            ('ams_transaction_type', '=', 'publication_payment')
-        ]</field>
-        <field name="context">{
-            'search_default_filter_publication_payments': 1,
-            'search_default_group_by_month': 1
-        }</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                📚 Publication subscription tracking
-            </p>
-            <p>
-                Monitor all publication-related revenue:
-                <br/>• Newsletter subscriptions
-                <br/>• Magazine subscriptions
-                <br/>• Digital publication access
+                Understand how well your members pay their bills:
+                <br/>• <strong>Payment Rates by Service:</strong> Which services get paid fastest
+                <br/>• <strong>Outstanding Balance Trends:</strong> Track unpaid amounts over time
+                <br/>• <strong>Collection Effectiveness:</strong> Monitor success of payment follow-up
+                <br/>• <strong>Cash Flow Planning:</strong> Predict when payments will be received
             </p>
         </field>
     </record>

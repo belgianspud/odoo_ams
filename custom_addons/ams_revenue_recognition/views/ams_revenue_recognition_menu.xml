@@ -1,168 +1,500 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- =================================================================== -->
-    <!-- ACTIONS - Define ALL actions FIRST, then menu items                -->
-    <!-- =================================================================== -->
-
-    <!-- Invoice Revenue Recognition Action (moved from account_move_views.xml) -->
-    <record id="action_invoice_revenue_recognition" model="ir.actions.act_window">
-        <field name="name">Invoices - Revenue Recognition</field>
-        <field name="res_model">account.move</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('move_type', '=', 'out_invoice'), ('has_revenue_recognition', '=', True)]</field>
+    <!-- Enhanced Actions with Association-Friendly Names and Context -->
+    
+    <!-- Revenue Recognition Dashboard - Main Entry Point -->
+    <record id="action_revenue_recognition_dashboard_main" model="ir.actions.act_window">
+        <field name="name">Revenue Recognition Dashboard</field>
+        <field name="res_model">ams.revenue.recognition</field>
+        <field name="view_mode">graph,pivot,kanban,list</field>
         <field name="context">{
-            'default_move_type': 'out_invoice',
-            'search_default_filter_has_revenue_recognition': 1,
-            'search_default_group_by_revenue_recognition_status': 1
+            'search_default_filter_recognized': 1,
+            'search_default_group_by_recognition_month': 1,
+            'graph_measure': 'recognized_amount',
+            'graph_type': 'line'
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                No invoices with revenue recognition found!
+                Revenue Recognition Management Center
             </p>
             <p>
-                This view shows invoices that contain subscription products with revenue recognition.
-                Monitor recognition status and manage revenue schedules.
+                <strong>Welcome to Revenue Recognition!</strong>
+                <br/>This dashboard helps you manage how your association recognizes revenue from prepaid memberships.
+            </p>
+            <p>
+                <strong>Quick Overview:</strong>
+                <br/>• <strong>What It Does:</strong> Spreads annual membership payments across 12 months of income
+                <br/>• <strong>Why It Matters:</strong> Shows accurate monthly revenue, not just when cash was received
+                <br/>• <strong>How It Helps:</strong> Provides proper accounting for subscription-based associations
+            </p>
+            <p>
+                <strong>Key Areas:</strong>
+                <br/>• <strong>Monthly Processing:</strong> Process revenue due for recognition
+                <br/>• <strong>Schedule Management:</strong> Manage revenue recognition schedules
+                <br/>• <strong>Financial Reports:</strong> Analyze revenue patterns and deferred income
             </p>
         </field>
     </record>
 
-    <!-- Invoice Lines Needing Revenue Recognition Action (moved from account_move_views.xml) -->
-    <record id="action_invoice_lines_need_revenue_recognition" model="ir.actions.act_window">
-        <field name="name">Invoice Lines - Need Revenue Recognition</field>
-        <field name="res_model">account.move.line</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('needs_revenue_recognition', '=', True)]</field>
-        <field name="context">{'search_default_needs_revenue_recognition': 1}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No invoice lines need revenue recognition!
-            </p>
-            <p>
-                This view shows invoice lines from subscription products that need revenue recognition schedules.
-                Use this to identify and create missing recognition schedules.
-            </p>
-        </field>
-    </record>
-
-    <!-- Products with Deferred Revenue Action -->
-    <record id="action_products_with_deferred_revenue" model="ir.actions.act_window">
-        <field name="name">Products with Deferred Revenue</field>
-        <field name="res_model">product.template</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('is_subscription_product', '=', True), ('revenue_recognition_method', '=', 'deferred')]</field>
+    <!-- Daily Operations - Revenue Due for Recognition -->
+    <record id="action_daily_revenue_recognition" model="ir.actions.act_window">
+        <field name="name">Daily Revenue Recognition</field>
+        <field name="res_model">ams.revenue.recognition</field>
+        <field name="view_mode">list,form,calendar</field>
+        <field name="domain">[('state', '=', 'pending'), ('recognition_date', '&lt;=', context_today())]</field>
         <field name="context">{
-            'search_default_filter_deferred_recognition': 1
+            'search_default_filter_pending': 1,
+            'search_default_filter_due_today': 1
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                No products with deferred revenue found!
+                No Revenue Recognition Due Today!
             </p>
             <p>
-                This view shows subscription products that use deferred revenue recognition.
-                Monitor deferred revenue balances and processing status.
+                <strong>Daily Revenue Recognition Tasks</strong>
+                <br/>This is your daily workspace for processing revenue recognition.
+            </p>
+            <p>
+                <strong>What You'll Find Here:</strong>
+                <br/>• <strong>Today's Revenue:</strong> Revenue scheduled to be recognized today
+                <br/>• <strong>Overdue Items:</strong> Revenue that should have been processed earlier
+                <br/>• <strong>Quick Processing:</strong> One-click processing for individual entries
+            </p>
+            <p>
+                <strong>How to Use:</strong>
+                <br/>1. Review the entries listed (if any)
+                <br/>2. Click "Process" on each entry to recognize the revenue
+                <br/>3. Or select multiple entries and use bulk actions
+                <br/>4. Check back tomorrow for new entries
             </p>
         </field>
     </record>
 
-    <!-- Products Needing Review Action -->
-    <record id="action_products_needing_review" model="ir.actions.act_window">
-        <field name="name">Products Needing Recognition Review</field>
+    <!-- Member Revenue Schedules Management -->
+    <record id="action_member_revenue_schedules" model="ir.actions.act_window">
+        <field name="name">Member Revenue Schedules</field>
+        <field name="res_model">ams.revenue.schedule</field>
+        <field name="view_mode">kanban,list,form,calendar</field>
+        <field name="context">{'search_default_filter_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Manage Member Revenue Recognition Schedules
+            </p>
+            <p>
+                <strong>Revenue Schedule Management</strong>
+                <br/>Oversee the automatic revenue recognition for all member subscriptions.
+            </p>
+            <p>
+                <strong>What Schedules Do:</strong>
+                <br/>• <strong>Annual Memberships:</strong> Break $1,200 payment into 12 months of $100 revenue
+                <br/>• <strong>Quarterly Memberships:</strong> Break quarterly payments into monthly revenue
+                <br/>• <strong>Automatic Processing:</strong> Handle recognition without manual work
+            </p>
+            <p>
+                <strong>Schedule Status Guide:</strong>
+                <br/>• <strong>Ready to Start (Draft):</strong> New schedules awaiting activation
+                <br/>• <strong>Currently Processing (Active):</strong> Monthly revenue recognition happening
+                <br/>• <strong>Recognition Complete (Completed):</strong> All revenue has been recognized
+            </p>
+        </field>
+    </record>
+
+    <!-- Schedules Needing Attention -->
+    <record id="action_schedules_need_attention" model="ir.actions.act_window">
+        <field name="name">Schedules Needing Attention</field>
+        <field name="res_model">ams.revenue.schedule</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[
+            '|', 
+            '&amp;', ('state', '=', 'active'), ('next_recognition_date', '&lt;=', context_today()),
+            ('state', '=', 'draft')
+        ]</field>
+        <field name="context">{
+            'search_default_filter_due_recognition': 1,
+            'search_default_filter_draft': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                All Revenue Schedules Are Current!
+            </p>
+            <p>
+                <strong>Revenue Schedules Requiring Action</strong>
+                <br/>This view highlights schedules that need your immediate attention.
+            </p>
+            <p>
+                <strong>What You'll See Here:</strong>
+                <br/>• <strong>New Schedules:</strong> Recently created schedules ready to start
+                <br/>• <strong>Overdue Recognition:</strong> Schedules with revenue past due for processing
+                <br/>• <strong>Action Required:</strong> Schedules waiting for activation or processing
+            </p>
+            <p>
+                <strong>Recommended Actions:</strong>
+                <br/>• Review new schedules and click "Start Revenue Recognition"
+                <br/>• Process any overdue revenue recognition entries
+                <br/>• Investigate any cancelled or problematic schedules
+            </p>
+        </field>
+    </record>
+
+    <!-- Member Revenue Analysis -->
+    <record id="action_member_revenue_analysis" model="ir.actions.act_window">
+        <field name="name">Member Revenue Analysis</field>
+        <field name="res_model">ams.revenue.recognition</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="domain">[('state', '=', 'recognized')]</field>
+        <field name="context">{
+            'search_default_group_by_service_type': 1,
+            'search_default_group_by_recognition_month': 1,
+            'pivot_row_groupby': ['product_id.ams_product_type'],
+            'pivot_col_groupby': ['recognition_date:month'],
+            'pivot_measures': ['recognized_amount']
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Member Revenue Recognition Analysis
+            </p>
+            <p>
+                <strong>Analyze Member Revenue Patterns</strong>
+                <br/>Understand how revenue recognition affects your financial reporting.
+            </p>
+            <p>
+                <strong>Key Insights Available:</strong>
+                <br/>• <strong>Monthly Revenue Trends:</strong> Track recognized revenue over time
+                <br/>• <strong>Service Type Breakdown:</strong> Compare revenue from different membership types
+                <br/>• <strong>Member Value Analysis:</strong> Identify highest-value revenue streams
+                <br/>• <strong>Seasonal Patterns:</strong> Understand revenue recognition cycles
+            </p>
+            <p>
+                <strong>Use This Data For:</strong>
+                <br/>• Financial statement preparation and review
+                <br/>• Budget planning and forecasting
+                <br/>• Board reporting on revenue performance
+                <br/>• Understanding member value and retention
+            </p>
+        </field>
+    </record>
+
+    <!-- Prepaid Revenue Management -->
+    <record id="action_prepaid_revenue_management" model="ir.actions.act_window">
+        <field name="name">Prepaid Revenue Management</field>
+        <field name="res_model">ams.revenue.schedule</field>
+        <field name="view_mode">pivot,graph,list,form</field>
+        <field name="domain">[('state', '=', 'active'), ('deferred_amount', '>', 0)]</field>
+        <field name="context">{
+            'search_default_group_by_product': 1,
+            'search_default_filter_active': 1,
+            'pivot_row_groupby': ['product_id'],
+            'pivot_measures': ['deferred_amount'],
+            'graph_measure': 'deferred_amount',
+            'graph_type': 'bar'
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Prepaid Revenue Management
+            </p>
+            <p>
+                <strong>Monitor Prepaid Member Revenue</strong>
+                <br/>Track money received from members for future services.
+            </p>
+            <p>
+                <strong>What is Prepaid Revenue?</strong>
+                <br/>• <strong>Definition:</strong> Money received for services not yet provided
+                <br/>• <strong>Example:</strong> $1,200 annual membership paid in January
+                <br/>• <strong>Accounting:</strong> Liability until services are provided monthly
+                <br/>• <strong>Recognition:</strong> Becomes income as membership benefits are delivered
+            </p>
+            <p>
+                <strong>Why This Matters:</strong>
+                <br/>• Shows future revenue that will boost monthly income
+                <br/>• Represents committed member relationships
+                <br/>• Important for cash flow planning and budgeting
+                <br/>• Required for accurate balance sheet reporting
+            </p>
+        </field>
+    </record>
+
+    <!-- Revenue Recognition Reports -->
+    <record id="action_revenue_recognition_reports" model="ir.actions.act_window">
+        <field name="name">Revenue Recognition Reports</field>
+        <field name="res_model">ams.revenue.recognition</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="domain">[('state', '=', 'recognized')]</field>
+        <field name="context">{
+            'search_default_group_by_recognition_month': 1,
+            'search_default_filter_recognized': 1,
+            'pivot_row_groupby': ['recognition_date:month'],
+            'pivot_col_groupby': ['product_id.ams_product_type'],
+            'pivot_measures': ['recognized_amount']
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Revenue Recognition Financial Reports
+            </p>
+            <p>
+                <strong>Generate Revenue Recognition Reports</strong>
+                <br/>Create reports for financial statements, audits, and board presentations.
+            </p>
+            <p>
+                <strong>Available Reports:</strong>
+                <br/>• <strong>Monthly Revenue Recognition:</strong> Income recognized each month
+                <br/>• <strong>Service Type Analysis:</strong> Revenue by membership category
+                <br/>• <strong>Year-over-Year Comparison:</strong> Track recognition trends over time
+                <br/>• <strong>Audit Trail:</strong> Detailed record of all recognition transactions
+            </p>
+            <p>
+                <strong>Perfect For:</strong>
+                <br/>• Monthly financial statement preparation
+                <br/>• Annual audit documentation
+                <br/>• Board of directors financial reporting
+                <br/>• Budget vs actual revenue analysis
+            </p>
+        </field>
+    </record>
+
+    <!-- Products with Revenue Recognition -->
+    <record id="action_products_revenue_recognition" model="ir.actions.act_window">
+        <field name="name">Products - Revenue Recognition Setup</field>
         <field name="res_model">product.template</field>
         <field name="view_mode">list,form</field>
         <field name="domain">[('is_subscription_product', '=', True), ('use_ams_accounting', '=', True)]</field>
         <field name="context">{
-            'search_default_filter_auto_recognition': 1,
+            'search_default_filter_deferred_recognition': 1,
             'search_default_group_by_recognition_method': 1
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Review product revenue recognition settings!
+                Configure Product Revenue Recognition
             </p>
             <p>
-                Use this view to review and configure revenue recognition for subscription products.
+                <strong>Revenue Recognition Product Setup</strong>
+                <br/>Configure how revenue is recognized for each membership and service type.
+            </p>
+            <p>
+                <strong>Recognition Methods:</strong>
+                <br/>• <strong>Immediate Recognition:</strong> For monthly memberships - revenue recorded when invoiced
+                <br/>• <strong>Deferred Recognition:</strong> For annual memberships - revenue spread over membership period
+                <br/>• <strong>Automatic Setup:</strong> System recommends best method based on billing period
+            </p>
+            <p>
+                <strong>Configuration Options:</strong>
+                <br/>• Enable/disable automatic revenue recognition
+                <br/>• Set recognition frequency (monthly, quarterly)
+                <br/>• Configure financial accounts for recognition
+                <br/>• Review active recognition schedules per product
             </p>
         </field>
     </record>
 
-    <!-- =================================================================== -->
-    <!-- MENU ITEMS - Now reference the actions defined above                -->
-    <!-- =================================================================== -->
+    <!-- Member Subscription Revenue Tracking -->
+    <record id="action_subscription_revenue_tracking" model="ir.actions.act_window">
+        <field name="name">Member Subscription Revenue Tracking</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('recognition_status', '!=', 'none')]</field>
+        <field name="context">{
+            'search_default_filter_recognition_active': 1,
+            'search_default_group_by_recognition_status': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Member Subscription Revenue Status
+            </p>
+            <p>
+                <strong>Track Revenue Recognition by Member Subscription</strong>
+                <br/>Monitor revenue recognition status for each member's subscription.
+            </p>
+            <p>
+                <strong>Recognition Status Guide:</strong>
+                <br/>• <strong>Recognition Pending:</strong> Subscription needs revenue recognition setup
+                <br/>• <strong>Recognition Active:</strong> Monthly revenue recognition is processing
+                <br/>• <strong>Recognition Completed:</strong> All subscription revenue has been recognized
+            </p>
+            <p>
+                <strong>Key Information Tracked:</strong>
+                <br/>• Total deferred revenue per member subscription
+                <br/>• Revenue recognized to date
+                <br/>• Next revenue recognition due date
+                <br/>• Member subscription status and renewal dates
+            </p>
+        </field>
+    </record>
+
+    <!-- Invoice Revenue Recognition Status -->
+    <record id="action_invoice_revenue_recognition_status" model="ir.actions.act_window">
+        <field name="name">Invoice Revenue Recognition Status</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('move_type', '=', 'out_invoice'), ('has_revenue_recognition', '=', True)]</field>
+        <field name="context">{
+            'search_default_filter_recognition_active': 1,
+            'search_default_group_by_revenue_recognition_status': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Invoice Revenue Recognition Tracking
+            </p>
+            <p>
+                <strong>Monitor Revenue Recognition by Invoice</strong>
+                <br/>Track which invoices have revenue recognition and their processing status.
+            </p>
+            <p>
+                <strong>Invoice Recognition Status:</strong>
+                <br/>• <strong>Recognition Pending:</strong> Invoice needs revenue recognition schedules created
+                <br/>• <strong>Recognition Active:</strong> Revenue recognition is processing monthly
+                <br/>• <strong>Recognition Completed:</strong> All invoice revenue has been recognized
+            </p>
+            <p>
+                <strong>Use This View To:</strong>
+                <br/>• Ensure all annual membership invoices have proper revenue recognition
+                <br/>• Track deferred revenue amounts by invoice
+                <br/>• Monitor recognition progress for large invoices
+                <br/>• Identify invoices with recognition issues
+            </p>
+        </field>
+    </record>
+
+    <!-- MENU STRUCTURE - Enhanced with Business-Friendly Organization -->
     
-    <!-- Revenue Recognition Schedules -->
-    <menuitem id="menu_ams_revenue_schedules"
-              name="Revenue Schedules"
-              parent="ams_base_accounting.menu_ams_accounting"
-              action="action_ams_revenue_schedule"
-              sequence="30"/>
+    <!-- Main Revenue Recognition Section -->
+    <menuitem id="menu_ams_revenue_recognition_main"
+              name="Revenue Recognition"
+              parent="ams_base_accounting.menu_ams_financial_management"
+              sequence="50"/>
+
+    <!-- Daily Operations Submenu -->
+    <menuitem id="menu_ams_revenue_daily_ops"
+              name="Daily Operations"
+              parent="menu_ams_revenue_recognition_main"
+              sequence="10"/>
+
+    <!-- Daily Revenue Recognition Processing -->
+    <menuitem id="menu_ams_daily_revenue_recognition"
+              name="Daily Revenue Recognition"
+              parent="menu_ams_revenue_daily_ops"
+              action="action_daily_revenue_recognition"
+              sequence="10"/>
+
+    <!-- Schedules Needing Attention -->
+    <menuitem id="menu_ams_schedules_need_attention"
+              name="Schedules Needing Attention"
+              parent="menu_ams_revenue_daily_ops"
+              action="action_schedules_need_attention"
+              sequence="20"/>
+
+    <!-- Management Submenu -->
+    <menuitem id="menu_ams_revenue_management"
+              name="Schedule Management"
+              parent="menu_ams_revenue_recognition_main"
+              sequence="20"/>
+
+    <!-- Member Revenue Schedules -->
+    <menuitem id="menu_ams_member_revenue_schedules"
+              name="Member Revenue Schedules"
+              parent="menu_ams_revenue_management"
+              action="action_member_revenue_schedules"
+              sequence="10"/>
 
     <!-- Revenue Recognition Entries -->
     <menuitem id="menu_ams_revenue_recognition_entries"
-              name="Recognition Entries"
-              parent="ams_base_accounting.menu_ams_accounting"
+              name="Revenue Recognition Entries"
+              parent="menu_ams_revenue_management"
               action="action_ams_revenue_recognition"
-              sequence="31"/>
+              sequence="20"/>
 
-    <!-- Due Revenue Recognition -->
-    <menuitem id="menu_ams_revenue_recognition_due"
-              name="Recognition Due"
-              parent="ams_base_accounting.menu_ams_accounting"
-              action="action_ams_revenue_recognition_due"
-              sequence="32"/>
+    <!-- Prepaid Revenue Management -->
+    <menuitem id="menu_ams_prepaid_revenue_management"
+              name="Prepaid Revenue Management"
+              parent="menu_ams_revenue_management"
+              action="action_prepaid_revenue_management"
+              sequence="30"/>
+
+    <!-- Revenue Analysis Submenu -->
+    <menuitem id="menu_ams_revenue_analysis"
+              name="Revenue Analysis"
+              parent="menu_ams_revenue_recognition_main"
+              sequence="30"/>
 
     <!-- Revenue Recognition Dashboard -->
     <menuitem id="menu_ams_revenue_recognition_dashboard"
-              name="Recognition Dashboard"
-              parent="ams_base_accounting.menu_ams_accounting"
-              action="action_ams_revenue_recognition_dashboard"
-              sequence="33"/>
-
-    <!-- Reporting Menu Items -->
-    <menuitem id="menu_ams_revenue_reporting"
-              name="Revenue Reporting"
-              parent="ams_base_accounting.menu_ams_accounting"
-              sequence="40"/>
-
-    <!-- Products with Revenue Recognition -->
-    <menuitem id="menu_ams_products_revenue_recognition"
-              name="Products - Revenue Recognition"
-              parent="menu_ams_revenue_reporting"
-              action="action_product_revenue_recognition"
+              name="Revenue Recognition Dashboard"
+              parent="menu_ams_revenue_analysis"
+              action="action_revenue_recognition_dashboard_main"
               sequence="10"/>
 
-    <!-- Subscriptions with Revenue Recognition -->
-    <menuitem id="menu_ams_subscriptions_revenue_recognition"
-              name="Subscriptions - Revenue Recognition"
-              parent="menu_ams_revenue_reporting"
-              action="action_subscription_revenue_recognition_dashboard"
+    <!-- Member Revenue Analysis -->
+    <menuitem id="menu_ams_member_revenue_analysis"
+              name="Member Revenue Analysis"
+              parent="menu_ams_revenue_analysis"
+              action="action_member_revenue_analysis"
               sequence="20"/>
 
-    <!-- Invoices with Revenue Recognition (NOW WORKS - action defined above) -->
-    <menuitem id="menu_ams_invoices_revenue_recognition"
-              name="Invoices - Revenue Recognition"
-              parent="menu_ams_revenue_reporting"
-              action="action_invoice_revenue_recognition"
+    <!-- Revenue Recognition Reports -->
+    <menuitem id="menu_ams_revenue_recognition_reports"
+              name="Revenue Recognition Reports"
+              parent="menu_ams_revenue_analysis"
+              action="action_revenue_recognition_reports"
               sequence="30"/>
 
-    <!-- Invoice Lines Needing Recognition (NOW WORKS - action defined above) -->
-    <menuitem id="menu_ams_invoice_lines_need_recognition"
-              name="Lines Needing Recognition"
-              parent="menu_ams_revenue_reporting"
-              action="action_invoice_lines_need_revenue_recognition"
+    <!-- Setup and Configuration Submenu -->
+    <menuitem id="menu_ams_revenue_setup"
+              name="Setup &amp; Configuration"
+              parent="menu_ams_revenue_recognition_main"
               sequence="40"/>
 
-    <!-- Products with Deferred Revenue (NOW WORKS - action defined above) -->
-    <menuitem id="menu_ams_products_with_deferred_revenue"
-              name="Products with Deferred Revenue"
-              parent="menu_ams_revenue_reporting"
-              action="action_products_with_deferred_revenue"
+    <!-- Products Revenue Recognition Setup -->
+    <menuitem id="menu_ams_products_revenue_recognition_setup"
+              name="Product Revenue Recognition Setup"
+              parent="menu_ams_revenue_setup"
+              action="action_products_revenue_recognition"
+              sequence="10"/>
+
+    <!-- Integration Views Submenu -->
+    <menuitem id="menu_ams_revenue_integration"
+              name="Integration Views"
+              parent="menu_ams_revenue_recognition_main"
               sequence="50"/>
 
-    <!-- Add to AMS Members section for easy access to subscription revenue -->
-    <menuitem id="menu_ams_subscription_revenue_schedules"
+    <!-- Member Subscription Revenue Tracking -->
+    <menuitem id="menu_ams_subscription_revenue_tracking"
+              name="Member Subscription Revenue"
+              parent="menu_ams_revenue_integration"
+              action="action_subscription_revenue_tracking"
+              sequence="10"/>
+
+    <!-- Invoice Revenue Recognition Status -->
+    <menuitem id="menu_ams_invoice_revenue_recognition_status"
+              name="Invoice Revenue Recognition"
+              parent="menu_ams_revenue_integration"
+              action="action_invoice_revenue_recognition_status"
+              sequence="20"/>
+
+    <!-- Quick Access Links in Main Members Section -->
+    <menuitem id="menu_ams_quick_revenue_recognition"
               name="Revenue Recognition"
               parent="ams_subscriptions.menu_ams_members"
-              action="action_subscription_revenue_recognition_dashboard"
+              action="action_revenue_recognition_dashboard_main"
+              sequence="50"/>
+
+    <!-- Reports Section Integration -->
+    <menuitem id="menu_ams_revenue_reports_integration"
+              name="Revenue Recognition Reports"
+              parent="ams_base_accounting.menu_ams_financial_reports"
+              action="action_revenue_recognition_reports"
+              sequence="30"/>
+
+    <!-- Monthly Deferred Revenue Report -->
+    <menuitem id="menu_ams_monthly_deferred_revenue"
+              name="Monthly Deferred Revenue"
+              parent="ams_base_accounting.menu_ams_financial_reports"
+              action="action_deferred_revenue_report"
               sequence="40"/>
+
+    <!-- Member Revenue Recognition Summary -->
+    <menuitem id="menu_ams_member_revenue_summary"
+              name="Member Revenue Recognition Summary"
+              parent="ams_base_accounting.menu_ams_financial_reports"
+              action="action_monthly_revenue_recognition_report"
+              sequence="50"/>
 
 </odoo>

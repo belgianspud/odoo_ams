@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- AMS Product Categories -->
+        <record id="product_category_ams_memberships" model="product.category">
+            <field name="name">Association Memberships</field>
+            <field name="parent_id" ref="product.product_category_all"/>
+        </record>
+        
+        <record id="product_category_ams_individual" model="product.category">
+            <field name="name">Individual Memberships</field>
+            <field name="parent_id" ref="product_category_ams_memberships"/>
+        </record>
+        
+        <record id="product_category_ams_corporate" model="product.category">
+            <field name="name">Corporate Memberships</field>
+            <field name="parent_id" ref="product_category_ams_memberships"/>
+        </record>
+        
+        <record id="product_category_ams_publications" model="product.category">
+            <field name="name">Publications</field>
+            <field name="parent_id" ref="product.product_category_all"/>
+        </record>
+        
+        <record id="product_category_ams_events" model="product.category">
+            <field name="name">Events &amp; Training</field>
+            <field name="parent_id" ref="product.product_category_all"/>
+        </record>
+    </data>
+</odoo>

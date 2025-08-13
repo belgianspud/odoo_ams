@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Demo members -->
+        <record id="partner_demo_member_1" model="res.partner">
+            <field name="name">Dr. Jane Smith</field>
+            <field name="is_ams_member" eval="True"/>
+            <field name="ams_member_id">MEM001</field>
+            <field name="ams_member_type">individual</field>
+            <field name="email">jane.smith@example.com</field>
+            <field name="phone">555-0123</field>
+        </record>
+        
+        <record id="partner_demo_member_2" model="res.partner">
+            <field name="name">ABC Corporation</field>
+            <field name="is_ams_member" eval="True"/>
+            <field name="ams_member_id">MEM002</field>
+            <field name="ams_member_type">enterprise</field>
+            <field name="email">billing@abccorp.com</field>
+            <field name="phone">555-0456</field>
+            <field name="is_company" eval="True"/>
+        </record>
+    </data>
+</odoo>

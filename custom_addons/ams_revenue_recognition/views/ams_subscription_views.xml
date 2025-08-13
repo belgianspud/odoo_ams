@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Extend AMS Subscription Form with Revenue Recognition -->
+    <!-- Enhanced AMS Subscription Form with Revenue Recognition Tab -->
     <record id="view_ams_subscription_form_revenue_recognition" model="ir.ui.view">
         <field name="name">ams.subscription.form.revenue.recognition</field>
         <field name="model">ams.subscription</field>
@@ -10,136 +10,479 @@
             <!-- Add Revenue Recognition tab after existing tabs -->
             <xpath expr="//notebook" position="inside">
                 <page string="Revenue Recognition" invisible="recognition_status == 'none'">
+                    
+                    <!-- Status Explanation Alerts -->
                     <div class="alert alert-success" role="alert" invisible="recognition_status != 'completed'">
-                        <h6><i class="fa fa-check-circle"/> Revenue Recognition Completed</h6>
-                        <p>All revenue for this subscription has been recognized.</p>
+                        <h6><i class="fa fa-check-circle"/> All Revenue Has Been Recognized</h6>
+                        <p>This membership's revenue has been fully recognized over its subscription period. 
+                           All prepaid amounts have been properly recorded as earned income.</p>
                     </div>
                     
                     <div class="alert alert-info" role="alert" invisible="recognition_status != 'active'">
                         <h6><i class="fa fa-play-circle"/> Revenue Recognition Active</h6>
-                        <p>Revenue recognition is active with <field name="active_schedules_count" readonly="1"/> schedule(s).</p>
-                        <p>Next recognition date: <field name="next_recognition_date" readonly="1"/></p>
+                        <p>This membership is actively processing monthly revenue recognition. 
+                           <field name="active_schedules_count" readonly="1"/> schedule(s) are currently running.</p>
+                        <p><strong>Next Recognition:</strong> <field name="next_recognition_date" readonly="1"/></p>
+                        <p><strong>What this means:</strong> Each month, a portion of this member's prepaid subscription 
+                           is automatically moved from "prepaid revenue" to "earned revenue" on your financial statements.</p>
                     </div>
                     
                     <div class="alert alert-warning" role="alert" invisible="recognition_status != 'pending'">
-                        <h6><i class="fa fa-clock-o"/> Revenue Recognition Pending</h6>
-                        <p>Revenue recognition schedules need to be created or activated.</p>
+                        <h6><i class="fa fa-clock-o"/> Revenue Recognition Setup Needed</h6>
+                        <p>This subscription needs revenue recognition schedules to be created or activated.</p>
+                        <p><strong>Why this is needed:</strong> For annual or multi-month subscriptions, revenue should be 
+                           recognized gradually over the subscription period, not all at once when payment was received.</p>
                         <button name="action_create_recognition_schedules" type="object" 
                                 class="btn btn-primary btn-sm">
-                            <i class="fa fa-plus"/> Create Recognition Schedules
+                            <i class="fa fa-plus"/> Create Revenue Recognition Schedule
                         </button>
                     </div>
                     
+                    <!-- Revenue Recognition Overview -->
                     <group>
-                        <group string="Recognition Status">
-                            <field name="recognition_status" readonly="1"/>
-                            <field name="next_recognition_date" readonly="1"/>
+                        <group string="Revenue Recognition Status">
+                            <field name="recognition_status" 
+                                   string="Current Status"
+                                   readonly="1"
+                                   help="Current state of revenue recognition for this subscription"/>
+                            <field name="next_recognition_date" 
+                                   string="Next Recognition Date"
+                                   readonly="1"
+                                   help="Next date when revenue will be recognized for this subscription"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
-                        <group string="Revenue Amounts">
-                            <field name="total_deferred_revenue" readonly="1"/>
-                            <field name="total_recognized_revenue" readonly="1"/>
-                            <field name="active_schedules_count" readonly="1"/>
+                        <group string="Financial Summary">
+                            <field name="total_deferred_revenue" 
+                                   string="Prepaid Revenue Remaining"
+                                   readonly="1"
+                                   help="Amount of prepaid revenue still waiting to be recognized as income"/>
+                            <field name="total_recognized_revenue" 
+                                   string="Revenue Recognized So Far"
+                                   readonly="1"
+                                   help="Amount of revenue already recognized as earned income"/>
+                            <field name="active_schedules_count" 
+                                   string="Active Recognition Schedules"
+                                   readonly="1"
+                                   help="Number of revenue recognition schedules currently processing"/>
                         </group>
                     </group>
+
+                    <!-- Revenue Recognition Explanation Box -->
+                    <div class="alert alert-light" role="alert" invisible="recognition_status == 'none'">
+                        <h6><i class="fa fa-info-circle"/> How Revenue Recognition Works for This Subscription</h6>
+                        <div invisible="recognition_status != 'active'">
+                            <p><strong>Subscription Value:</strong> This member paid for their subscription in advance.</p>
+                            <p><strong>Monthly Recognition:</strong> Instead of counting all the money as income immediately, 
+                               the system recognizes a portion each month as the member receives services.</p>
+                            <p><strong>Financial Impact:</strong> This ensures your monthly income statements accurately reflect 
+                               revenue earned, not just cash received.</p>
+                        </div>
+                        <div invisible="recognition_status != 'completed'">
+                            <p><strong>Completed Recognition:</strong> All revenue for this subscription has been properly 
+                               recognized over its subscription period.</p>
+                            <p><strong>Financial Records:</strong> Monthly income statements now reflect the full value 
+                               of services provided to this member.</p>
+                        </div>
+                    </div>
                     
+                    <!-- Action Buttons -->
                     <div class="oe_button_box" name="revenue_recognition_buttons">
                         <button name="action_view_revenue_schedules" type="object" 
                                 class="oe_stat_button" icon="fa-calendar-o"
-                                invisible="active_schedules_count == 0">
-                            <field name="active_schedules_count" widget="statinfo" string="Schedules"/>
+                                invisible="active_schedules_count == 0"
+                                help="View detailed revenue recognition schedules for this subscription">
+                            <field name="active_schedules_count" widget="statinfo" string="Active Schedules"/>
                         </button>
                         <button name="action_process_recognition" type="object" 
                                 class="oe_stat_button" icon="fa-play"
-                                invisible="recognition_status != 'active'">
+                                invisible="recognition_status != 'active'"
+                                help="Process any revenue recognition that is due for this subscription">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Process</span>
-                                <span class="o_stat_text">Recognition</span>
+                                <span class="o_stat_text">Due Revenue</span>
                             </div>
                         </button>
                     </div>
                     
-                    <group string="Revenue Recognition Schedules">
+                    <!-- Revenue Recognition Schedules Detail -->
+                    <group string="Revenue Recognition Schedule Details" invisible="not revenue_schedule_ids">
+                        <div class="alert alert-info" role="alert">
+                            <p><strong>Schedule Details:</strong> These schedules automatically handle the month-by-month 
+                               recognition of this subscription's revenue.</p>
+                        </div>
                         <field name="revenue_schedule_ids" nolabel="1">
-                            <list>
-                                <field name="display_name"/>
-                                <field name="recognition_method"/>
-                                <field name="start_date"/>
-                                <field name="end_date"/>
-                                <field name="total_amount" sum="Total"/>
-                                <field name="recognized_amount" sum="Recognized"/>
-                                <field name="deferred_amount" sum="Deferred"/>
-                                <field name="state"/>
+                            <list string="Revenue Recognition Schedules">
+                                <field name="display_name" 
+                                       string="Schedule Description"
+                                       help="Description of this revenue recognition schedule"/>
+                                <field name="recognition_method" 
+                                       string="Recognition Type"
+                                       help="How revenue is recognized (immediate for monthly, deferred for annual)"/>
+                                <field name="start_date" 
+                                       string="Started"
+                                       help="When revenue recognition began"/>
+                                <field name="end_date" 
+                                       string="Ends"
+                                       help="When all revenue will be recognized"/>
+                                <field name="total_amount" 
+                                       string="Total Amount" 
+                                       sum="Total Revenue"
+                                       help="Total revenue to be recognized over time"/>
+                                <field name="recognized_amount" 
+                                       string="Recognized" 
+                                       sum="Total Recognized"
+                                       help="Amount already recognized as income"/>
+                                <field name="deferred_amount" 
+                                       string="Remaining" 
+                                       sum="Total Remaining"
+                                       help="Amount still to be recognized"/>
+                                <field name="state" 
+                                       string="Status"
+                                       widget="badge"
+                                       decoration-info="state == 'draft'"
+                                       decoration-success="state == 'active'"
+                                       decoration-muted="state == 'completed'"
+                                       help="Current status of this schedule"/>
                             </list>
                         </field>
+                    </group>
+
+                    <!-- Monthly Recognition Progress (for active schedules) -->
+                    <group string="Monthly Recognition Progress" invisible="recognition_status != 'active'">
+                        <div class="alert alert-info" role="alert">
+                            <p><strong>Recognition Progress:</strong> Track how much of this subscription's revenue 
+                               has been recognized each month.</p>
+                        </div>
+                        
+                        <!-- Simple progress visualization -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-success">Revenue Recognized</h5>
+                                        <h3 class="text-success">
+                                            <field name="total_recognized_revenue" readonly="1" widget="monetary"/>
+                                        </h3>
+                                        <small class="text-muted">Already recorded as income</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-warning">Revenue Remaining</h5>
+                                        <h3 class="text-warning">
+                                            <field name="total_deferred_revenue" readonly="1" widget="monetary"/>
+                                        </h3>
+                                        <small class="text-muted">Still to be recognized</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </group>
+
+                    <!-- Revenue Recognition History (for completed schedules) -->
+                    <group string="Revenue Recognition History" invisible="recognition_status != 'completed'">
+                        <div class="alert alert-success" role="alert">
+                            <p><strong>Recognition Complete:</strong> This subscription's revenue recognition has been 
+                               completed successfully over its subscription period.</p>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">Recognition Summary</h6>
+                                <p class="card-text">
+                                    Total revenue of <field name="total_recognized_revenue" readonly="1" widget="monetary"/> 
+                                    was recognized over the subscription period, ensuring accurate monthly income reporting.
+                                </p>
+                                <small class="text-muted">
+                                    All revenue has been properly moved from prepaid revenue to earned revenue accounts.
+                                </small>
+                            </div>
+                        </div>
                     </group>
                 </page>
             </xpath>
         </field>
     </record>
 
-    <!-- Extend AMS Subscription Tree View -->
+    <!-- Enhanced AMS Subscription List View with Revenue Recognition Columns -->
     <record id="view_ams_subscription_tree_revenue_recognition" model="ir.ui.view">
         <field name="name">ams.subscription.tree.revenue.recognition</field>
         <field name="model">ams.subscription</field>
         <field name="inherit_id" ref="ams_subscriptions.view_ams_subscription_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='state']" position="before">
-                <field name="recognition_status" string="Recognition" optional="hide"/>
-                <field name="total_deferred_revenue" string="Deferred" optional="hide" sum="Total Deferred"/>
-                <field name="next_recognition_date" string="Next Recognition" optional="hide"/>
+                <field name="recognition_status" 
+                       string="Revenue Recognition" 
+                       optional="hide"
+                       widget="badge"
+                       decoration-info="recognition_status == 'pending'"
+                       decoration-success="recognition_status == 'active'"
+                       decoration-muted="recognition_status == 'completed'"
+                       help="Status of revenue recognition for this subscription"/>
+                <field name="total_deferred_revenue" 
+                       string="Prepaid Revenue" 
+                       optional="hide" 
+                       sum="Total Prepaid"
+                       help="Amount of prepaid revenue still to be recognized"/>
+                <field name="next_recognition_date" 
+                       string="Next Recognition" 
+                       optional="hide"
+                       help="Next date for revenue recognition"/>
+            </xpath>
+            
+            <!-- Enhance existing column headers -->
+            <xpath expr="//field[@name='name']" position="attributes">
+                <attribute name="string">Subscription</attribute>
+                <attribute name="help">Member subscription name or number</attribute>
+            </xpath>
+            
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="string">Member</attribute>
+                <attribute name="help">Member or organization name</attribute>
+            </xpath>
+            
+            <xpath expr="//field[@name='product_id']" position="attributes">
+                <attribute name="string">Membership Type</attribute>
+                <attribute name="help">Type of membership or service</attribute>
             </xpath>
         </field>
     </record>
 
-    <!-- FIXED: Extend AMS Subscription Search View - Removed unsearchable computed fields -->
+    <!-- Enhanced AMS Subscription Search View with Revenue Recognition Filters -->
     <record id="view_ams_subscription_search_revenue_recognition" model="ir.ui.view">
         <field name="name">ams.subscription.search.revenue.recognition</field>
         <field name="model">ams.subscription</field>
         <field name="inherit_id" ref="ams_subscriptions.view_ams_subscription_search"/>
         <field name="arch" type="xml">
+            <!-- Add revenue recognition search fields -->
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="revenue_schedule_ids" 
+                       string="Revenue Schedule"
+                       filter_domain="[('revenue_schedule_ids.display_name', 'ilike', self)]"
+                       help="Search by revenue recognition schedule"/>
+            </xpath>
+
             <!-- Add filters after existing filters -->
             <xpath expr="//search" position="inside">
                 <separator/>
-                <filter name="filter_recognition_pending" string="Recognition Pending" 
-                        domain="[('recognition_status', '=', 'pending')]"/>
-                <filter name="filter_recognition_active" string="Recognition Active" 
-                        domain="[('recognition_status', '=', 'active')]"/>
-                <filter name="filter_recognition_completed" string="Recognition Completed" 
-                        domain="[('recognition_status', '=', 'completed')]"/>
+                <!-- Revenue Recognition Status Filters -->
+                <filter name="filter_recognition_pending" 
+                        string="Revenue Recognition Pending" 
+                        domain="[('recognition_status', '=', 'pending')]"
+                        help="Subscriptions that need revenue recognition setup"/>
+                <filter name="filter_recognition_active" 
+                        string="Revenue Recognition Active" 
+                        domain="[('recognition_status', '=', 'active')]"
+                        help="Subscriptions with active monthly revenue recognition"/>
+                <filter name="filter_recognition_completed" 
+                        string="Revenue Recognition Complete" 
+                        domain="[('recognition_status', '=', 'completed')]"
+                        help="Subscriptions where all revenue has been recognized"/>
                 
-                <!-- FIXED: Use relational fields instead of computed fields -->
-                <filter name="filter_has_revenue_schedules" string="Has Revenue Schedules" 
-                        domain="[('revenue_schedule_ids', '!=', False)]"/>
-                <filter name="filter_active_revenue_schedules" string="Active Revenue Schedules" 
-                        domain="[('revenue_schedule_ids.state', '=', 'active')]"/>
+                <!-- Operational Revenue Recognition Filters -->
+                <separator/>
+                <filter name="filter_has_deferred_revenue" 
+                        string="Has Prepaid Revenue" 
+                        domain="[('total_deferred_revenue', '>', 0)]"
+                        help="Subscriptions with prepaid revenue waiting to be recognized"/>
+                <filter name="filter_recognition_due_soon" 
+                        string="Recognition Due This Week" 
+                        domain="[('next_recognition_date', '&gt;=', context_today()), 
+                                ('next_recognition_date', '&lt;=', (context_today() + datetime.timedelta(days=7)))]"
+                        help="Subscriptions with revenue recognition due in the next 7 days"/>
+                <filter name="filter_high_deferred_value" 
+                        string="High Prepaid Value (&gt;$500)" 
+                        domain="[('total_deferred_revenue', '&gt;', 500)]"
+                        help="Subscriptions with significant prepaid revenue amounts"/>
                 
-                <!-- Add group by options -->
+                <!-- Annual vs Monthly Subscription Filters -->
+                <separator/>
+                <filter name="filter_annual_subscriptions" 
+                        string="Annual Subscriptions" 
+                        domain="[('product_id.subscription_period', '=', 'annual')]"
+                        help="Annual subscriptions (typically use deferred revenue recognition)"/>
+                <filter name="filter_monthly_subscriptions" 
+                        string="Monthly Subscriptions" 
+                        domain="[('product_id.subscription_period', '=', 'monthly')]"
+                        help="Monthly subscriptions (typically use immediate revenue recognition)"/>
+                
+                <!-- Service Type Revenue Filters -->
+                <separator/>
+                <filter name="filter_individual_revenue" 
+                        string="Individual Membership Revenue" 
+                        domain="[('product_id.ams_product_type', '=', 'individual'), ('recognition_status', '!=', 'none')]"
+                        help="Individual memberships with revenue recognition"/>
+                <filter name="filter_corporate_revenue" 
+                        string="Corporate Membership Revenue" 
+                        domain="[('product_id.ams_product_type', '=', 'enterprise'), ('recognition_status', '!=', 'none')]"
+                        help="Corporate memberships with revenue recognition"/>
+                <filter name="filter_publication_revenue" 
+                        string="Publication Revenue" 
+                        domain="[('product_id.ams_product_type', '=', 'publication'), ('recognition_status', '!=', 'none')]"
+                        help="Publication subscriptions with revenue recognition"/>
+                
+                <!-- Add enhanced grouping options -->
                 <group expand="0" string="Group By">
-                    <filter name="group_by_recognition_status" string="Recognition Status" 
-                            domain="[]" context="{'group_by': 'recognition_status'}"/>
+                    <filter name="group_by_recognition_status" 
+                            string="Revenue Recognition Status" 
+                            domain="[]" 
+                            context="{'group_by': 'recognition_status'}"
+                            help="Group by revenue recognition status"/>
+                    <filter name="group_by_next_recognition_month" 
+                            string="Next Recognition Month" 
+                            domain="[]" 
+                            context="{'group_by': 'next_recognition_date:month'}"
+                            help="Group by when revenue recognition is next due"/>
+                    <filter name="group_by_subscription_period" 
+                            string="Billing Period" 
+                            domain="[]" 
+                            context="{'group_by': 'product_id.subscription_period'}"
+                            help="Group by subscription billing period"/>
                 </group>
             </xpath>
         </field>
     </record>
 
-    <!-- Subscription Revenue Recognition Dashboard Action -->
+    <!-- Enhanced Subscription Dashboard with Revenue Recognition -->
     <record id="action_subscription_revenue_recognition_dashboard" model="ir.actions.act_window">
-        <field name="name">Subscriptions - Revenue Recognition</field>
+        <field name="name">Subscription Revenue Recognition Dashboard</field>
         <field name="res_model">ams.subscription</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">kanban,list,form,graph,pivot</field>
         <field name="domain">[('recognition_status', '!=', 'none')]</field>
         <field name="context">{
             'search_default_filter_recognition_active': 1,
-            'search_default_group_by_recognition_status': 1
+            'search_default_group_by_recognition_status': 1,
+            'graph_measure': 'total_deferred_revenue',
+            'graph_type': 'pie'
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                No subscriptions with revenue recognition found!
+                Member Subscription Revenue Recognition
             </p>
             <p>
-                This view shows subscriptions that have revenue recognition enabled.
-                Monitor recognition status and process due recognitions.
+                <strong>Monitor Revenue Recognition by Member Subscription</strong>
+                <br/>Track how revenue recognition is processing for each member's subscription.
+            </p>
+            <p>
+                <strong>Key Information Available:</strong>
+                <br/>• <strong>Recognition Status:</strong> Which subscriptions are actively recognizing revenue
+                <br/>• <strong>Prepaid Revenue:</strong> How much prepaid revenue each subscription has
+                <br/>• <strong>Next Recognition Dates:</strong> When revenue will next be recognized
+                <br/>• <strong>Member Value:</strong> Track high-value subscriptions and their revenue impact
+            </p>
+            <p>
+                <strong>Recognition Status Guide:</strong>
+                <br/>• <strong>Pending:</strong> Subscription needs revenue recognition setup
+                <br/>• <strong>Active:</strong> Monthly revenue recognition is processing automatically
+                <br/>• <strong>Completed:</strong> All subscription revenue has been recognized
+            </p>
+        </field>
+    </record>
+
+    <!-- Subscriptions with High Deferred Revenue -->
+    <record id="action_subscriptions_high_deferred_revenue" model="ir.actions.act_window">
+        <field name="name">High-Value Prepaid Revenue Subscriptions</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('total_deferred_revenue', '>', 500), ('recognition_status', '=', 'active')]</field>
+        <field name="context">{
+            'search_default_filter_high_deferred_value': 1,
+            'search_default_group_by_ams_product_type': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                High-Value Prepaid Revenue Subscriptions
+            </p>
+            <p>
+                <strong>Monitor Your Most Valuable Prepaid Subscriptions</strong>
+                <br/>These subscriptions represent significant future revenue for your association.
+            </p>
+            <p>
+                <strong>Why This Matters:</strong>
+                <br/>• <strong>Cash Flow Security:</strong> These represent guaranteed future revenue
+                <br/>• <strong>Member Retention:</strong> High-value members with annual commitments
+                <br/>• <strong>Financial Planning:</strong> Predictable monthly revenue recognition
+                <br/>• <strong>Risk Management:</strong> Monitor for cancellations or issues
+            </p>
+            <p>
+                <strong>Typical High-Value Subscriptions:</strong>
+                <br/>• Corporate annual memberships
+                <br/>• Premium individual memberships
+                <br/>• Multi-year subscription commitments
+                <br/>• Bundle packages with multiple services
+            </p>
+        </field>
+    </record>
+
+    <!-- Subscriptions Needing Revenue Recognition Setup -->
+    <record id="action_subscriptions_need_revenue_setup" model="ir.actions.act_window">
+        <field name="name">Subscriptions Needing Revenue Recognition Setup</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('recognition_status', '=', 'pending')]</field>
+        <field name="context">{
+            'search_default_filter_recognition_pending': 1,
+            'search_default_group_by_ams_product_type': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                All Subscriptions Have Revenue Recognition Set Up!
+            </p>
+            <p>
+                <strong>Subscriptions Requiring Revenue Recognition Setup</strong>
+                <br/>These subscriptions need revenue recognition schedules to be created.
+            </p>
+            <p>
+                <strong>Why Setup Is Needed:</strong>
+                <br/>• <strong>Proper Accounting:</strong> Annual subscriptions should recognize revenue monthly
+                <br/>• <strong>Financial Accuracy:</strong> Income statements should reflect earned revenue, not just cash received
+                <br/>• <strong>Compliance:</strong> Follows accounting standards for subscription businesses
+            </p>
+            <p>
+                <strong>Quick Actions:</strong>
+                <br/>• Open each subscription and click "Create Revenue Recognition Schedule"
+                <br/>• Review the subscription details to ensure proper setup
+                <br/>• Monitor that schedules activate and begin processing
+            </p>
+        </field>
+    </record>
+
+    <!-- Revenue Recognition by Member Type Analysis -->
+    <record id="action_revenue_recognition_by_member_type" model="ir.actions.act_window">
+        <field name="name">Revenue Recognition by Member Type</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="domain">[('recognition_status', '!=', 'none')]</field>
+        <field name="context">{
+            'search_default_group_by_ams_product_type': 1,
+            'search_default_group_by_recognition_status': 1,
+            'pivot_row_groupby': ['product_id.ams_product_type'],
+            'pivot_col_groupby': ['recognition_status'],
+            'pivot_measures': ['total_deferred_revenue', 'total_recognized_revenue']
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Revenue Recognition Analysis by Member Type
+            </p>
+            <p>
+                <strong>Understand Revenue Recognition Patterns by Membership Type</strong>
+                <br/>Analyze how different types of memberships contribute to revenue recognition.
+            </p>
+            <p>
+                <strong>Key Insights Available:</strong>
+                <br/>• <strong>Individual vs Corporate:</strong> Compare deferred revenue by membership type
+                <br/>• <strong>Service Categories:</strong> Understand which services generate the most prepaid revenue
+                <br/>• <strong>Recognition Timing:</strong> See how quickly different membership types recognize revenue
+                <br/>• <strong>Financial Impact:</strong> Track total revenue recognition by service category
+            </p>
+            <p>
+                <strong>Use This Analysis For:</strong>
+                <br/>• Strategic planning for membership offerings
+                <br/>• Understanding member value and retention patterns
+                <br/>• Financial forecasting and budgeting
+                <br/>• Board reporting on membership program performance
             </p>
         </field>
     </record>

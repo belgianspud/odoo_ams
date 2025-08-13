@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- AMS Specific Journals - Only create if they don't exist -->
+        
+        <!-- Note: We'll let the setup wizard handle journal creation to avoid conflicts -->
+        <!-- The journals will be created based on company needs during setup -->
+        
+    </data>
+</odoo>

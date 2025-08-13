@@ -1,5 +1,17 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_ams_accounting_config_admin,ams.accounting.config admin,model_ams_accounting_config,account.group_account_manager,1,1,1,1
-access_ams_accounting_config_user,ams.accounting.config user,model_ams_accounting_config,account.group_account_user,1,0,0,0
-access_ams_accounting_setup_wizard_admin,ams.accounting.setup.wizard admin,model_ams_accounting_setup_wizard,account.group_account_manager,1,1,1,1
-access_ams_accounting_setup_wizard_user,ams.accounting.setup.wizard user,model_ams_accounting_setup_wizard,account.group_account_user,1,0,0,0
+access_account_account_ams_user,account.account.ams.user,account.model_account_account,group_ams_financial_user,1,0,0,0
+access_account_account_ams_manager,account.account.ams.manager,account.model_account_account,group_ams_financial_manager,1,1,1,0
+access_account_move_ams_user,account.move.ams.user,account.model_account_move,group_ams_financial_user,1,1,1,0
+access_account_move_ams_manager,account.move.ams.manager,account.model_account_move,group_ams_financial_manager,1,1,1,1
+access_account_move_line_ams_user,account.move.line.ams.user,account.model_account_move_line,group_ams_financial_user,1,1,1,0
+access_account_move_line_ams_manager,account.move.line.ams.manager,account.model_account_move_line,group_ams_financial_manager,1,1,1,1
+access_account_payment_ams_user,account.payment.ams.user,account.model_account_payment,group_ams_financial_user,1,1,1,0
+access_account_payment_ams_manager,account.payment.ams.manager,account.model_account_payment,group_ams_financial_manager,1,1,1,1
+access_account_journal_ams_user,account.journal.ams.user,account.model_account_journal,group_ams_financial_user,1,0,0,0
+access_account_journal_ams_manager,account.journal.ams.manager,account.model_account_journal,group_ams_financial_manager,1,1,1,0
+access_product_template_ams_user,product.template.ams.user,product.model_product_template,group_ams_financial_user,1,0,0,0
+access_product_template_ams_manager,product.template.ams.manager,product.model_product_template,group_ams_financial_manager,1,1,0,0
+access_res_partner_ams_user,res.partner.ams.user,base.model_res_partner,group_ams_financial_user,1,1,0,0
+access_res_partner_ams_manager,res.partner.ams.manager,base.model_res_partner,group_ams_financial_manager,1,1,1,0
+access_ams_accounting_setup_wizard_user,ams.accounting.setup.wizard.user,model_ams_accounting_setup_wizard,group_ams_financial_user,1,0,0,0
+access_ams_accounting_setup_wizard_manager,ams.accounting.setup.wizard.manager,model_ams_accounting_setup_wizard,group_ams_financial_manager,1,1,1,1

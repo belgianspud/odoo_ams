@@ -1,268 +1,124 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Enhanced Product Form with User-Friendly Revenue Setup -->
+    <!-- Enhanced Product Form with Association-Friendly AMS Accounting Tab -->
     <record id="view_product_template_form_ams_accounting" model="ir.ui.view">
         <field name="name">product.template.form.ams.accounting</field>
         <field name="model">product.template</field>
         <field name="inherit_id" ref="ams_subscriptions.view_product_template_form_ams"/>
         <field name="arch" type="xml">
-            <!-- Replace the complex AMS Accounting tab with user-friendly Revenue Setup -->
+            <!-- Add enhanced AMS Accounting tab with association-friendly language -->
             <xpath expr="//notebook" position="inside">
-                <page string="💰 Revenue Setup" invisible="not is_subscription_product">
-                    
-                    <!-- Status Banner -->
-                    <div class="alert alert-success" role="alert" invisible="not ams_accounts_configured">
-                        <h6><i class="fa fa-check-circle"/> ✅ Revenue Setup Complete</h6>
-                        <p>This product is properly configured for automatic revenue tracking.</p>
-                        <button name="action_auto_configure_accounts" type="object" class="btn btn-sm btn-outline-success">
-                            <i class="fa fa-refresh"/> Update Configuration
-                        </button>
-                    </div>
-                    
-                    <div class="alert alert-info" role="alert" invisible="ams_accounts_configured">
-                        <h6><i class="fa fa-magic"/> 🚀 Let's Set Up Revenue Tracking</h6>
-                        <p>We'll help you configure how revenue is tracked for this subscription product.</p>
+                <page string="Financial Setup" invisible="not is_subscription_product">
+                    <!-- Status alerts with clear explanations -->
+                    <div class="alert alert-warning" role="alert" invisible="ams_accounts_configured">
+                        <h6><i class="fa fa-exclamation-triangle"/> Financial Setup Required</h6>
+                        <p>This membership product needs to be connected to your financial accounts so the system knows where to record revenue and track payments.</p>
+                        <p><strong>What this means:</strong> When members pay for this product, the system needs to know which accounts to use for recording the income and managing the money flow.</p>
                         <button name="action_auto_configure_accounts" type="object" class="btn btn-primary btn-sm">
-                            <i class="fa fa-magic"/> Auto-Configure Now
+                            <i class="fa fa-magic"/> Auto-Setup Financial Accounts
                         </button>
-                        <button name="action_configure_ams_accounts" type="object" class="btn btn-outline-primary btn-sm">
+                        <button name="action_configure_ams_accounts" type="object" class="btn btn-secondary btn-sm">
                             <i class="fa fa-cog"/> Manual Setup
                         </button>
                     </div>
-
-                    <!-- Main Configuration Toggle -->
+                    
+                    <div class="alert alert-success" role="alert" invisible="not ams_accounts_configured">
+                        <h6><i class="fa fa-check-circle"/> Financial Setup Complete</h6>
+                        <p>This membership product is properly connected to your financial accounts. Revenue will be tracked correctly when members purchase or renew.</p>
+                    </div>
+                    
+                    <!-- Main configuration section -->
                     <group>
-                        <field name="use_ams_accounting" string="🎯 Enable Revenue Tracking" 
-                               help="Turn on automatic revenue tracking and financial reporting for this product"/>
+                        <field name="use_ams_accounting" 
+                               string="Use Association Financial Tracking"
+                               help="Enable this to track revenue and payments for this membership product in your association's specialized financial accounts. This should be enabled for all membership products, publications, and events."/>
                         <field name="ams_accounts_configured" invisible="1"/>
                     </group>
-
-                    <!-- Configuration Sections (Only show when enabled) -->
-                    <div invisible="not use_ams_accounting">
+                    
+                    <!-- Revenue tracking section -->
+                    <group string="Revenue Tracking - Where Income Gets Recorded" invisible="not use_ams_accounting">
+                        <div class="alert alert-info" role="alert">
+                            <p><strong>Revenue Tracking:</strong> When members pay for this product, the income will be recorded in these accounts on your financial statements.</p>
+                        </div>
                         
-                        <!-- Step 1: Revenue Setup -->
-                        <div class="card mb-3">
-                            <div class="card-header">
-                                <h5><i class="fa fa-money"/> Step 1: Revenue Tracking Setup</h5>
-                                <small class="text-muted">Configure how revenue and payments are tracked for this product</small>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="alert alert-light">
-                                            <strong>💡 What This Does:</strong><br/>
-                                            <ul class="mb-0">
-                                                <li>✅ Tracks customer payments automatically</li>
-                                                <li>✅ Records revenue in the right accounts</li>
-                                                <li>✅ Generates financial reports</li>
-                                                <li invisible="subscription_period == 'monthly'">✅ Handles prepaid subscriptions properly</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <field name="auto_create_recognition" 
-                                               string="🎯 Enable Automatic Processing"
-                                               help="Automatically process revenue and payment transactions"/>
-                                        <field name="auto_process_recognition" 
-                                               string="⚡ Enable Auto-Recognition"
-                                               help="Allow automated revenue recognition processing"/>
-                                    </div>
-                                </div>
-                            </div>
+                        <field name="ams_revenue_account_id" 
+                               string="Main Revenue Account"
+                               options="{'no_create': True}"
+                               context="{'default_ams_account_category': 'membership_revenue'}"
+                               help="The account where income from this product will be recorded. For example, 'Individual Membership Revenue' or 'Publication Subscription Revenue'. This appears as income on your profit &amp; loss statement."/>
+                               
+                        <field name="ams_deferred_account_id" 
+                               string="Prepaid Revenue Account (for Annual Products)"
+                               options="{'no_create': True}"
+                               context="{'default_ams_account_category': 'deferred_revenue'}"
+                               help="For annual memberships: When members pay for a full year upfront, the money initially goes here (as a liability) and is gradually moved to the revenue account each month as it's 'earned'. Leave blank for monthly products."/>
+                    </group>
+                    
+                    <!-- Member money management section -->
+                    <group string="Member Money Management" invisible="not use_ams_accounting">
+                        <div class="alert alert-info" role="alert">
+                            <p><strong>Money Management:</strong> These accounts track member payments and outstanding balances.</p>
                         </div>
-
-                        <!-- Step 2: Account Configuration -->
-                        <div class="card mb-3">
-                            <div class="card-header">
-                                <h5><i class="fa fa-bank"/> Step 2: Account Setup</h5>
-                                <small class="text-muted">Where should money and revenue be tracked? (Auto-configured based on product type)</small>
-                            </div>
-                            <div class="card-body">
-                                
-                                <!-- Revenue Accounts Section -->
-                                <div class="row mb-3">
-                                    <div class="col-md-12">
-                                        <h6><i class="fa fa-money"/> Revenue Accounts</h6>
-                                        <small class="text-muted">Where revenue gets recorded for this product</small>
-                                    </div>
-                                </div>
-                                
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <field name="ams_revenue_account_id" 
-                                               string="💰 Revenue Account"
-                                               options="{'no_create': True}"
-                                               context="{'default_ams_account_category': 'membership_revenue'}"
-                                               help="Main account where revenue is recorded when earned"/>
-                                    </div>
-                                    <div class="col-md-6" invisible="subscription_period == 'monthly'">
-                                        <field name="ams_deferred_account_id" 
-                                               string="📊 Prepaid Revenue Account"
-                                               options="{'no_create': True}"
-                                               context="{'default_ams_account_category': 'deferred_revenue'}"
-                                               help="Temporary account for prepaid subscriptions (until revenue is earned)"/>
-                                        <small class="text-muted">Required for annual/quarterly subscriptions</small>
-                                    </div>
-                                </div>
-
-                                <!-- Customer Payment Accounts Section -->
-                                <div class="row mb-3 mt-4">
-                                    <div class="col-md-12">
-                                        <h6><i class="fa fa-credit-card"/> Customer Payment Accounts</h6>
-                                        <small class="text-muted">Where customer payments and outstanding invoices are tracked</small>
-                                    </div>
-                                </div>
-                                
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <field name="ams_receivable_account_id" 
-                                               string="📋 Outstanding Invoices"
-                                               options="{'no_create': True}"
-                                               context="{'default_ams_account_category': 'subscription_ar'}"
-                                               help="Tracks money owed by customers for this product"/>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <field name="ams_cash_account_id" 
-                                               string="💳 Payment Deposits"
-                                               options="{'no_create': True}"
-                                               context="{'default_ams_account_category': 'cash_membership'}"
-                                               help="Where customer payments are deposited"/>
-                                    </div>
-                                </div>
-
-                                <!-- Expense Account Section -->
-                                <div class="row mb-3 mt-4">
-                                    <div class="col-md-12">
-                                        <h6><i class="fa fa-shopping-cart"/> Cost Tracking (Optional)</h6>
-                                        <small class="text-muted">Track costs associated with delivering this product</small>
-                                    </div>
-                                </div>
-                                
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <field name="ams_expense_account_id" 
-                                               string="📦 Product Costs"
-                                               options="{'no_create': True}"
-                                               context="{'default_ams_account_category': 'membership_expense'}"
-                                               help="Optional: Track costs related to delivering this product"/>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <!-- Placeholder for balance -->
-                                    </div>
-                                </div>
-                            </div>
+                        
+                        <field name="ams_receivable_account_id" 
+                               string="Member Receivables Account"
+                               options="{'no_create': True}"
+                               context="{'default_ams_account_category': 'subscription_ar'}"
+                               help="When you send an invoice to a member, the amount they owe is tracked here until they pay. This shows as 'Accounts Receivable' on your balance sheet - money members owe you."/>
+                               
+                        <field name="ams_cash_account_id" 
+                               string="Payment Deposit Account"
+                               options="{'no_create': True}"
+                               context="{'default_ams_account_category': 'cash_membership'}"
+                               help="The bank account where member payments for this product are deposited. This helps track which payments came from which types of memberships or services."/>
+                    </group>
+                    
+                    <!-- Cost tracking section -->
+                    <group string="Cost Tracking (Optional)" invisible="not use_ams_accounting">
+                        <div class="alert alert-info" role="alert">
+                            <p><strong>Cost Tracking:</strong> If you want to track the costs associated with providing this membership or service, specify the expense account here.</p>
                         </div>
-
-                        <!-- Step 3: Configuration Summary -->
-                        <div class="card mb-3" invisible="not ams_accounts_configured">
-                            <div class="card-header bg-success text-white">
-                                <h5><i class="fa fa-check-circle"/> Step 3: Configuration Summary</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <h6>🎯 Revenue Tracking:</h6>
-                                        <p><span invisible="not auto_create_recognition">✅ Enabled</span><span invisible="auto_create_recognition">❌ Disabled</span></p>
-                                        
-                                        <h6>💰 Primary Revenue Account:</h6>
-                                        <p><field name="ams_revenue_account_id" readonly="1"/></p>
-                                        
-                                        <h6>📋 Customer Invoices:</h6>
-                                        <p><field name="ams_receivable_account_id" readonly="1"/></p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="alert alert-success">
-                                            <h6><i class="fa fa-thumbs-up"/> You're All Set! 🎉</h6>
-                                            <ul class="mb-0">
-                                                <li>✅ Revenue will be tracked automatically</li>
-                                                <li>✅ Customer payments will be recorded</li>
-                                                <li>✅ Financial reports will include this product</li>
-                                                <li invisible="subscription_period == 'monthly'">✅ Prepaid subscriptions handled properly</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Advanced Options (Collapsed by default) -->
-                        <div class="card">
-                            <div class="card-header" data-toggle="collapse" data-target="#advancedOptions" style="cursor: pointer;">
-                                <h6><i class="fa fa-gear"/> Advanced Options <small class="text-muted">(Click to expand)</small></h6>
-                            </div>
-                            <div class="collapse" id="advancedOptions">
-                                <div class="card-body">
-                                    <group string="📝 Internal Notes">
-                                        <field name="ams_accounting_notes" 
-                                               placeholder="Add any special notes about revenue tracking for this product..."
-                                               help="Internal notes about special accounting treatment"/>
-                                    </group>
-                                    
-                                    <group string="🔧 Technical Details" groups="account.group_account_manager">
-                                        <field name="auto_create_recognition" 
-                                               string="Auto-Create Revenue Schedules"
-                                               help="Automatically create revenue recognition schedules when invoices are posted"/>
-                                        <field name="auto_process_recognition" 
-                                               string="Auto-Process Revenue Recognition"
-                                               help="Allow automated processing of revenue recognition"/>
-                                    </group>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <!-- Help Section -->
-                    <div class="mt-4">
-                        <div class="card border-info">
-                            <div class="card-body">
-                                <h6><i class="fa fa-question-circle text-info"/> Need Help?</h6>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <button name="action_auto_configure_accounts" type="object" class="btn btn-info btn-sm btn-block">
-                                            <i class="fa fa-magic"/> Auto-Setup
-                                        </button>
-                                        <small>Let us configure everything automatically</small>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <button name="action_view_help_documentation" type="object" class="btn btn-outline-info btn-sm btn-block">
-                                            <i class="fa fa-book"/> View Guide
-                                        </button>
-                                        <small>Step-by-step setup instructions</small>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <button name="reset_ams_accounts" type="object" class="btn btn-outline-secondary btn-sm btn-block"
-                                                confirm="This will reset all revenue setup. Continue?">
-                                            <i class="fa fa-refresh"/> Reset Setup
-                                        </button>
-                                        <small>Start over from scratch</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
+                        
+                        <field name="ams_expense_account_id" 
+                               string="Service Cost Account"
+                               options="{'no_create': True}"
+                               context="{'default_ams_account_category': 'membership_expense'}"
+                               help="Optional: Track costs related to this product here, such as member services, publication printing, or technology costs. This appears as an expense on your profit &amp; loss statement."/>
+                    </group>
+                    
+                    <!-- Internal notes section -->
+                    <group string="Internal Notes" invisible="not use_ams_accounting">
+                        <field name="ams_accounting_notes" 
+                               string="Financial Setup Notes"
+                               placeholder="Add any special notes about how this product's finances should be handled..."
+                               help="Internal notes for your accounting team about any special handling needed for this product's financial tracking."/>
+                    </group>
                 </page>
             </xpath>
         </field>
     </record>
 
-    <!-- Enhanced Product List View with User-Friendly Labels -->
+    <!-- Enhanced Product List View with Better Column Headers -->
     <record id="view_product_template_tree_ams_accounting" model="ir.ui.view">
         <field name="name">product.template.tree.ams.accounting</field>
         <field name="model">product.template</field>
         <field name="inherit_id" ref="ams_subscriptions.view_product_template_tree_ams"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='active_subscriptions_count']" position="after">
-                <field name="use_ams_accounting" string="💰 Revenue Tracking"/>
-                <field name="ams_accounts_configured" string="✅ Setup Complete" 
+                <field name="use_ams_accounting" 
+                       string="Financial Tracking" 
+                       widget="boolean_toggle"
+                       help="Whether this product uses association financial tracking"/>
+                <field name="ams_accounts_configured" 
+                       string="Setup Complete" 
                        widget="boolean_toggle" 
-                       optional="hide"/>
+                       optional="hide"
+                       help="Green check means financial accounts are properly configured"/>
             </xpath>
         </field>
     </record>
 
-    <!-- Enhanced Search View with User-Friendly Filters -->
+    <!-- Enhanced Search View with Association-Friendly Filters -->
     <record id="view_product_template_search_ams_accounting" model="ir.ui.view">
         <field name="name">product.template.search.ams.accounting</field>
         <field name="model">product.template</field>
@@ -270,13 +126,162 @@
         <field name="arch" type="xml">
             <xpath expr="//filter[@name='filter_publications']" position="after">
                 <separator/>
-                <filter name="filter_revenue_tracking" string="💰 Revenue Tracking Enabled" 
-                        domain="[('use_ams_accounting', '=', True)]"/>
-                <filter name="filter_setup_complete" string="✅ Setup Complete" 
-                        domain="[('ams_accounts_configured', '=', True)]"/>
-                <filter name="filter_needs_setup" string="⚠️ Needs Setup" 
-                        domain="[('is_subscription_product', '=', True), ('ams_accounts_configured', '=', False)]"/>
+                <!-- Financial setup filters -->
+                <filter name="filter_ams_accounting" 
+                        string="Financial Tracking Enabled" 
+                        domain="[('use_ams_accounting', '=', True)]"
+                        help="Products that use association financial tracking"/>
+                <filter name="filter_accounts_configured" 
+                        string="Financial Setup Complete" 
+                        domain="[('ams_accounts_configured', '=', True)]"
+                        help="Products with all required financial accounts configured"/>
+                <filter name="filter_accounts_need_setup" 
+                        string="Need Financial Setup" 
+                        domain="[('is_subscription_product', '=', True), ('ams_accounts_configured', '=', False)]"
+                        help="Subscription products that need financial account configuration"/>
+                        
+                <!-- Account-specific filters -->
+                <separator/>
+                <filter name="filter_has_revenue_account" 
+                        string="Has Revenue Account" 
+                        domain="[('ams_revenue_account_id', '!=', False)]"
+                        help="Products with revenue accounts configured"/>
+                <filter name="filter_has_deferred_account" 
+                        string="Has Prepaid Revenue Account" 
+                        domain="[('ams_deferred_account_id', '!=', False)]"
+                        help="Products set up for prepaid/annual billing"/>
+                <filter name="filter_missing_receivables" 
+                        string="Missing Receivables Account" 
+                        domain="[('use_ams_accounting', '=', True), ('ams_receivable_account_id', '=', False)]"
+                        help="Products that need receivables account setup"/>
             </xpath>
+            
+            <!-- Enhanced grouping options -->
+            <xpath expr="//group[@expand='0']" position="inside">
+                <filter name="group_by_financial_setup" 
+                        string="Financial Setup Status" 
+                        domain="[]" 
+                        context="{'group_by': 'ams_accounts_configured'}"
+                        help="Group by whether financial setup is complete"/>
+                <filter name="group_by_revenue_account" 
+                        string="Revenue Account" 
+                        domain="[]" 
+                        context="{'group_by': 'ams_revenue_account_id'}"
+                        help="Group by which revenue account products use"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Enhanced Column Search List View -->
+    <record id="view_product_template_list_searchable_columns" model="ir.ui.view">
+        <field name="name">product.template.list.searchable.columns</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="view_product_template_tree_ams_accounting"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="attributes">
+                <!-- Enable advanced search capabilities -->
+                <attribute name="column_invisible">False</attribute>
+                <attribute name="search_view_ref">view_product_template_search_ams_accounting</attribute>
+            </xpath>
+            
+            <!-- Make columns searchable with helpful tooltips -->
+            <xpath expr="//field[@name='name']" position="attributes">
+                <attribute name="string">Product/Service Name</attribute>
+                <attribute name="help">The name of this membership, publication, or service offering</attribute>
+            </xpath>
+            
+            <xpath expr="//field[@name='ams_product_type']" position="attributes">
+                <attribute name="string">Membership Type</attribute>
+                <attribute name="help">Category of membership: Individual, Corporate, Chapter, Publication, etc.</attribute>
+            </xpath>
+            
+            <xpath expr="//field[@name='subscription_period']" position="attributes">
+                <attribute name="string">Billing Period</attribute>
+                <attribute name="help">How often members are billed: Monthly, Quarterly, Annual</attribute>
+            </xpath>
+            
+            <xpath expr="//field[@name='list_price']" position="attributes">
+                <attribute name="string">Member Price</attribute>
+                <attribute name="help">The price members pay for this product or service</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Products Needing Financial Setup Action -->
+    <record id="action_products_need_financial_setup" model="ir.actions.act_window">
+        <field name="name">Products Needing Financial Setup</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_subscription_product', '=', True), ('ams_accounts_configured', '=', False)]</field>
+        <field name="context">{
+            'search_default_filter_accounts_need_setup': 1,
+            'search_default_group_by_ams_product_type': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                All Products Have Financial Setup Complete!
+            </p>
+            <p>
+                This view shows subscription products that need financial account configuration.
+                <br/><br/>
+                <strong>Why This Matters:</strong>
+                <br/>• Products without proper financial setup won't track revenue correctly
+                <br/>• Member payments may not be recorded in the right accounts
+                <br/>• Financial reports may be incomplete or inaccurate
+                <br/><br/>
+                <strong>Quick Fix:</strong> Use the "Auto-Setup Financial Accounts" button on each product's Financial Setup tab.
+            </p>
+        </field>
+    </record>
+
+    <!-- Financial Account Usage Analysis -->
+    <record id="action_product_financial_account_analysis" model="ir.actions.act_window">
+        <field name="name">Product Financial Account Usage</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="domain">[('use_ams_accounting', '=', True)]</field>
+        <field name="context">{
+            'search_default_group_by_revenue_account': 1,
+            'search_default_group_by_ams_product_type': 1,
+            'pivot_measures': ['list_price'],
+            'graph_measure': 'list_price',
+            'graph_type': 'bar'
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Analyze How Products Use Financial Accounts
+            </p>
+            <p>
+                This analysis helps you understand:
+                <br/>• Which revenue accounts are used by which products
+                <br/>• How membership pricing varies across different account categories
+                <br/>• Whether products are properly distributed across financial accounts
+                <br/>• Revenue potential by account type and membership category
+            </p>
+        </field>
+    </record>
+
+    <!-- Bulk Financial Setup Wizard Action -->
+    <record id="action_bulk_product_financial_setup" model="ir.actions.act_window">
+        <field name="name">Bulk Financial Setup for Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('is_subscription_product', '=', True)]</field>
+        <field name="context">{
+            'search_default_filter_accounts_need_setup': 1,
+            'bulk_setup_mode': True
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Bulk Setup Financial Accounts for Multiple Products
+            </p>
+            <p>
+                Use this view to quickly configure financial accounts for multiple products at once:
+                <br/>• Select multiple products using the checkboxes
+                <br/>• Use Actions → "Auto-Configure Financial Accounts" to set up multiple products
+                <br/>• Review and adjust individual products as needed
+                <br/>• Ensure all subscription products have proper financial tracking
+            </p>
         </field>
     </record>
 </odoo>

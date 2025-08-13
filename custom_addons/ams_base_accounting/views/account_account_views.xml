@@ -1,181 +1,255 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Enhanced Chart of Accounts Form with User-Friendly Labels -->
+    <!-- Enhanced Chart of Accounts Form with Association-Friendly Labels -->
     <record id="view_account_account_form_ams" model="ir.ui.view">
         <field name="name">account.account.form.ams</field>
         <field name="model">account.account</field>
         <field name="inherit_id" ref="account.view_account_form"/>
         <field name="arch" type="xml">
-            <!-- Add user-friendly AMS fields -->
+            <!-- Add AMS fields after code with enhanced labels -->
             <xpath expr="//field[@name='code']" position="after">
-                <field name="ams_account_category" string="💡 Account Purpose"
-                       help="What this account is used for in your association"/>
-                <field name="is_ams_account" string="🎯 AMS Account" 
-                       help="This account is used for association revenue and payments"/>
+                <field name="ams_account_category" 
+                       string="Association Account Type"
+                       help="Categorizes this account for association-specific reporting and management. This helps organize accounts by their purpose in your membership organization."/>
+                <field name="is_ams_account" 
+                       string="Used for Association Operations"
+                       help="Check this if this account is used for membership fees, subscriptions, or other association-specific transactions."/>
             </xpath>
             
-            <!-- Add user-friendly description -->
+            <!-- Add AMS description with better context -->
             <xpath expr="//field[@name='name']" position="after">
-                <field name="ams_description" string="📝 Purpose &amp; Notes" 
-                       invisible="not ams_account_category"
-                       placeholder="Describe how this account is used..."
-                       help="Plain English description of what this account tracks"/>
+                <field name="ams_description" 
+                       string="Association Usage Notes"
+                       help="Describe how this account is used in your association's operations. For example: 'Where individual membership fees are recorded' or 'Holds prepaid annual memberships until earned monthly.'"
+                       invisible="not ams_account_category"/>
             </xpath>
             
-            <!-- Enhanced button box with user-friendly labels -->
+            <!-- Add usage statistics with clear explanations -->
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_view_related_products" 
                         type="object" 
                         class="oe_stat_button" 
                         icon="fa-cube"
-                        invisible="subscription_count == 0">
-                    <div class="o_field_widget o_stat_info">
-                        <span class="o_stat_value">
-                            <field name="subscription_count" widget="statinfo"/>
-                        </span>
-                        <span class="o_stat_text">Products Using</span>
-                        <span class="o_stat_text">This Account</span>
-                    </div>
+                        invisible="subscription_count == 0"
+                        help="View membership products and services that use this account for their financial transactions">
+                    <field name="subscription_count" widget="statinfo" string="Products"/>
                 </button>
-            </xpath>
-            
-            <!-- Add helpful information panel -->
-            <xpath expr="//sheet" position="before">
-                <div class="alert alert-info" role="alert" invisible="not is_ams_account">
-                    <h6><i class="fa fa-info-circle"/> 🏦 Association Account</h6>
-                    <p>This account is part of your association's financial tracking system.</p>
-                    <div class="row" invisible="subscription_count == 0">
-                        <div class="col-md-6">
-                            <strong>📦 Products Using This Account:</strong> <field name="subscription_count" readonly="1"/>
-                        </div>
-                        <div class="col-md-6">
-                            <button name="action_view_related_products" type="object" class="btn btn-sm btn-outline-primary">
-                                <i class="fa fa-eye"/> View Products
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </xpath>
         </field>
     </record>
 
-    <!-- Enhanced Chart of Accounts Tree with User-Friendly Labels -->
+    <!-- Enhanced Chart of Accounts List with Better Column Headers and Filters -->
     <record id="view_account_account_tree_ams" model="ir.ui.view">
         <field name="name">account.account.tree.ams</field>
         <field name="model">account.account</field>
         <field name="inherit_id" ref="account.view_account_list"/>
         <field name="arch" type="xml">
-            <!-- Update column headers and add user-friendly fields -->
+            <!-- Replace technical labels with business-friendly ones -->
             <xpath expr="//field[@name='code']" position="after">
-                <field name="ams_account_category" string="💡 Purpose" optional="show"/>
-                <field name="is_ams_account" string="🎯 AMS" optional="show" 
-                       widget="boolean_toggle"/>
-                <field name="subscription_count" string="📦 Products" optional="hide"/>
-            </xpath>
-            
-            <!-- Make account type more user-friendly -->
-            <xpath expr="//field[@name='account_type']" position="attributes">
-                <attribute name="string">📊 Account Type</attribute>
+                <field name="ams_account_category" 
+                       string="Association Type" 
+                       optional="hide"
+                       help="Shows what type of association transaction this account handles"/>
+                <field name="is_ams_account" 
+                       string="Association Account" 
+                       optional="show"
+                       help="Indicates if this account is used for membership and association operations"/>
+                <field name="subscription_count" 
+                       string="Products Using" 
+                       optional="hide"
+                       help="Number of membership products or services that post transactions to this account"/>
             </xpath>
         </field>
     </record>
 
-    <!-- Enhanced Search View with User-Friendly Filters -->
+    <!-- Enhanced Search with Association-Friendly Filters and Column Search -->
     <record id="view_account_account_search_ams" model="ir.ui.view">
         <field name="name">account.account.search.ams</field>
         <field name="model">account.account</field>
         <field name="inherit_id" ref="account.view_account_search"/>
         <field name="arch" type="xml">
             <xpath expr="//search" position="inside">
-                <separator/>
-                
-                <!-- User-friendly filters with icons and descriptions -->
-                <filter name="filter_ams_accounts" string="🎯 Association Accounts" 
-                        domain="[('is_ams_account', '=', True)]"/>
-                        
-                <filter name="filter_revenue_accounts" string="💰 Revenue Accounts" 
-                        domain="[('ams_account_category', 'in', ['membership_revenue', 'publication_revenue', 'chapter_revenue', 'event_revenue'])]"/>
-                        
-                <filter name="filter_payment_accounts" string="💳 Payment Accounts" 
-                        domain="[('ams_account_category', 'in', ['subscription_ar', 'cash_membership', 'cash_events'])]"/>
-                        
-                <filter name="filter_prepaid_accounts" string="📊 Prepaid Revenue" 
-                        domain="[('ams_account_category', '=', 'deferred_revenue')]"/>
+                <!-- Add searchable fields with business context -->
+                <field name="ams_account_category" 
+                       string="Association Account Type"
+                       filter_domain="[('ams_account_category', 'ilike', self)]"/>
+                <field name="ams_description" 
+                       string="Usage Notes"
+                       filter_domain="[('ams_description', 'ilike', self)]"/>
                 
                 <separator/>
+                <!-- Association-specific filters with clear descriptions -->
+                <filter name="filter_ams_accounts" 
+                        string="Association Accounts" 
+                        domain="[('is_ams_account', '=', True)]"
+                        help="Show only accounts used for membership and association operations"/>
                 
-                <!-- Grouping options with user-friendly labels -->
-                <group expand="0" string="📊 Group By">
-                    <filter name="group_by_ams_category" string="💡 Account Purpose" 
-                            domain="[]" context="{'group_by': 'ams_account_category'}"/>
-                    <filter name="group_by_account_type" string="📈 Account Type" 
-                            domain="[]" context="{'group_by': 'account_type'}"/>
-                    <filter name="group_by_is_ams" string="🎯 AMS vs Standard" 
-                            domain="[]" context="{'group_by': 'is_ams_account'}"/>
+                <!-- Revenue Account Filters -->
+                <filter name="filter_membership_revenue" 
+                        string="Membership Revenue" 
+                        domain="[('ams_account_category', '=', 'membership_revenue')]"
+                        help="Accounts where membership fees are recorded as income"/>
+                <filter name="filter_publication_revenue" 
+                        string="Publication Revenue" 
+                        domain="[('ams_account_category', '=', 'publication_revenue')]"
+                        help="Accounts for journal and publication subscription income"/>
+                <filter name="filter_chapter_revenue" 
+                        string="Chapter Revenue" 
+                        domain="[('ams_account_category', '=', 'chapter_revenue')]"
+                        help="Revenue from local chapter memberships"/>
+                <filter name="filter_event_revenue" 
+                        string="Event Revenue" 
+                        domain="[('ams_account_category', '=', 'event_revenue')]"
+                        help="Income from conferences, webinars, and other events"/>
+                
+                <!-- Balance Sheet Account Filters -->
+                <separator/>
+                <filter name="filter_member_receivables" 
+                        string="Member Receivables" 
+                        domain="[('ams_account_category', '=', 'subscription_ar')]"
+                        help="Money owed by members for unpaid fees and services"/>
+                <filter name="filter_deferred_revenue" 
+                        string="Prepaid Memberships" 
+                        domain="[('ams_account_category', '=', 'deferred_revenue')]"
+                        help="Money received for future membership periods (liability until earned)"/>
+                <filter name="filter_membership_cash" 
+                        string="Membership Cash Accounts" 
+                        domain="[('ams_account_category', 'in', ['cash_membership', 'cash_events'])]"
+                        help="Bank accounts where member payments are deposited"/>
+                
+                <!-- Expense Account Filters -->
+                <separator/>
+                <filter name="filter_membership_expenses" 
+                        string="Membership Expenses" 
+                        domain="[('ams_account_category', 'in', ['membership_expense', 'publication_expense', 'chapter_expense', 'event_expense', 'technology_expense'])]"
+                        help="Costs related to providing membership services"/>
+                
+                <!-- Accounts needing attention -->
+                <separator/>
+                <filter name="filter_accounts_with_products" 
+                        string="Accounts with Products" 
+                        domain="[('subscription_count', '>', 0)]"
+                        help="Accounts that are actively used by membership products"/>
+                <filter name="filter_unused_ams_accounts" 
+                        string="Unused Association Accounts" 
+                        domain="[('is_ams_account', '=', True), ('subscription_count', '=', 0)]"
+                        help="Association accounts that aren't being used by any products"/>
+                
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter name="group_by_ams_category" 
+                            string="Association Account Type" 
+                            domain="[]" 
+                            context="{'group_by': 'ams_account_category'}"
+                            help="Group accounts by their role in association operations"/>
+                    <filter name="group_by_account_type" 
+                            string="Financial Statement Category" 
+                            domain="[]" 
+                            context="{'group_by': 'account_type'}"
+                            help="Group by where accounts appear on financial statements"/>
+                    <filter name="group_by_is_ams" 
+                            string="Association vs Standard Accounts" 
+                            domain="[]" 
+                            context="{'group_by': 'is_ams_account'}"
+                            help="Separate association-specific accounts from standard business accounts"/>
                 </group>
             </xpath>
         </field>
     </record>
 
-    <!-- User-Friendly Chart of Accounts Action (Updated) -->
-    <record id="action_account_account_ams" model="ir.actions.act_window">
-        <field name="name">🏦 Payment Accounts</field>
-        <field name="res_model">account.account</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('is_ams_account', '=', True)]</field>
-        <field name="context">{'search_default_filter_ams_accounts': 1}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                🏦 Setting up your payment accounts...
-            </p>
-            <p>
-                <strong>Payment accounts track money flow in your association:</strong>
-            </p>
-            <ul>
-                <li><strong>💰 Revenue Accounts:</strong> Where earnings are recorded</li>
-                <li><strong>💳 Payment Accounts:</strong> Where customer money is deposited</li>
-                <li><strong>📋 Outstanding Invoices:</strong> Money owed by members</li>
-                <li><strong>📊 Prepaid Revenue:</strong> Money received for future services</li>
-            </ul>
-            <p>
-                <em>💡 Tip: Use the Setup Wizard to create these automatically!</em>
-            </p>
+    <!-- Enhanced List View with Column Filters for Fuzzy Search -->
+    <record id="view_account_account_list_enhanced_search" model="ir.ui.view">
+        <field name="name">account.account.list.enhanced.search</field>
+        <field name="model">account.account</field>
+        <field name="inherit_id" ref="view_account_account_tree_ams"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="attributes">
+                <!-- Enable column filters for fuzzy searching -->
+                <attribute name="column_invisible">False</attribute>
+                <attribute name="search_view_ref">view_account_account_search_ams</attribute>
+            </xpath>
+            
+            <!-- Make fields searchable and add helpful tooltips -->
+            <xpath expr="//field[@name='code']" position="attributes">
+                <attribute name="string">Account Code</attribute>
+                <attribute name="help">Numerical code identifying this account (e.g., 4100 for Individual Membership Revenue)</attribute>
+            </xpath>
+            
+            <xpath expr="//field[@name='name']" position="attributes">
+                <attribute name="string">Account Name</attribute>
+                <attribute name="help">Descriptive name explaining what this account is used for</attribute>
+            </xpath>
+            
+            <xpath expr="//field[@name='account_type']" position="attributes">
+                <attribute name="string">Financial Statement Type</attribute>
+                <attribute name="help">Where this account appears on financial statements (Income, Expense, Asset, Liability, Equity)</attribute>
+            </xpath>
         </field>
     </record>
 
-    <!-- Account Categories Legend/Helper -->
-    <record id="action_ams_account_categories_help" model="ir.actions.act_window">
-        <field name="name">💡 Account Purpose Guide</field>
+    <!-- Association Chart of Accounts Action with Enhanced Context -->
+    <record id="action_account_account_ams" model="ir.actions.act_window">
+        <field name="name">Association Chart of Accounts</field>
         <field name="res_model">account.account</field>
-        <field name="view_mode">list</field>
+        <field name="view_mode">list,form</field>
         <field name="domain">[('is_ams_account', '=', True)]</field>
         <field name="context">{
-            'search_default_group_by_ams_category': 1,
-            'search_default_filter_ams_accounts': 1
+            'search_default_filter_ams_accounts': 1,
+            'search_default_group_by_ams_category': 1
         }</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                💡 Understanding Account Purposes
+                Your Association's Financial Account Structure
             </p>
-            <div class="row">
-                <div class="col-md-6">
-                    <h6>💰 Revenue Accounts:</h6>
-                    <ul>
-                        <li><strong>Membership Revenue:</strong> Individual &amp; Enterprise memberships</li>
-                        <li><strong>Publication Revenue:</strong> Newsletter &amp; magazine subscriptions</li>
-                        <li><strong>Chapter Revenue:</strong> Local chapter memberships</li>
-                        <li><strong>Event Revenue:</strong> Conference &amp; event fees</li>
-                    </ul>
-                </div>
-                <div class="col-md-6">
-                    <h6>💳 Payment &amp; Tracking Accounts:</h6>
-                    <ul>
-                        <li><strong>Outstanding Invoices:</strong> Money owed by customers</li>
-                        <li><strong>Cash Accounts:</strong> Where payments are deposited</li>
-                        <li><strong>Prepaid Revenue:</strong> Money received for future services</li>
-                    </ul>
-                </div>
-            </div>
+            <p>
+                These are the specialized accounts configured for your membership organization:
+            </p>
+            <h5>Revenue Accounts - Where Income is Recorded:</h5>
+            <ul>
+                <li><strong>Membership Revenue:</strong> Individual and corporate membership fees</li>
+                <li><strong>Publication Revenue:</strong> Journal and magazine subscription income</li>
+                <li><strong>Chapter Revenue:</strong> Local chapter membership fees</li>
+                <li><strong>Event Revenue:</strong> Conference and webinar registration fees</li>
+            </ul>
+            <h5>Asset Accounts - What You Own or Are Owed:</h5>
+            <ul>
+                <li><strong>Member Receivables:</strong> Outstanding amounts members owe you</li>
+                <li><strong>Cash Accounts:</strong> Bank accounts where member payments are deposited</li>
+            </ul>
+            <h5>Liability Accounts - What You Owe:</h5>
+            <ul>
+                <li><strong>Prepaid Memberships:</strong> Money received for future membership periods</li>
+            </ul>
+            <h5>Expense Accounts - Costs of Operations:</h5>
+            <ul>
+                <li><strong>Service Expenses:</strong> Costs to provide membership benefits and services</li>
+            </ul>
+        </field>
+    </record>
+
+    <!-- Account Analysis Dashboard for Association Management -->
+    <record id="action_ams_account_analysis" model="ir.actions.act_window">
+        <field name="name">Association Account Analysis</field>
+        <field name="res_model">account.account</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="domain">[('is_ams_account', '=', True)]</field>
+        <field name="context">{
+            'search_default_group_by_ams_category': 1,
+            'pivot_measures': ['current_balance', 'subscription_count'],
+            'graph_measure': 'current_balance',
+            'graph_type': 'pie'
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Analyze Your Association's Financial Account Performance
+            </p>
+            <p>
+                This analysis helps you understand:
+                <br/>• Which types of accounts have the highest balances
+                <br/>• How many membership products use each account
+                <br/>• Distribution of assets, liabilities, and revenue across account categories
+                <br/>• Account utilization patterns in your membership operations
+            </p>
         </field>
     </record>
 </odoo>

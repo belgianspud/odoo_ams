@@ -1,130 +1,121 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'AMS Revenue Recognition',
-    'version': '18.0.1.0.0',
-    'summary': 'Revenue recognition for AMS subscription products',
+    'version': '18.0.1.0.0',  # Fixed version format for Odoo 18
+    'category': 'Association Management/Accounting',
+    'summary': 'Advanced revenue recognition for Association Management System',
     'description': """
-AMS Revenue Recognition
-=======================
+Association Management System - Revenue Recognition
+=================================================
 
-This module provides revenue recognition functionality for AMS subscription products:
+Advanced revenue recognition module for associations with annual memberships and subscriptions.
+Automatically handles deferred revenue recognition for proper financial reporting.
 
 Key Features:
--------------
-* Automated revenue recognition schedules for subscriptions
-* Straight-line recognition over subscription periods
-* Deferred revenue handling for prepaid memberships
-* Integration with subscription lifecycle (Active → Grace → Suspended)
-* Manual and automated recognition processing
-* Revenue recognition dashboard and reporting
+------------
+* Automated revenue recognition schedules
+* Monthly processing for annual memberships
+* Deferred revenue tracking and management
+* Revenue recognition reporting and analytics
+* Integration with subscription management
+* Configurable recognition methods per product
+* Financial compliance for subscription businesses
 
-Workflow:
----------
-1. When subscription invoices are posted, recognition schedules are created
-2. For annual memberships: revenue is deferred and recognized monthly
-3. For monthly memberships: revenue is recognized immediately  
-4. Automated cron processes recognition entries
-5. Integration with subscription state changes
+Business Benefits:
+-----------------
+* Accurate monthly income statements
+* Proper accounting for prepaid memberships
+* Automated financial compliance
+* Detailed revenue recognition reporting
+* Better cash flow and budget planning
+* Professional financial statements for audits
 
-Supported Subscription Types:
------------------------------
-* Individual and Enterprise Memberships
-* Chapter Memberships
-* Publication Subscriptions
-* Enterprise Seat Add-ons
+Revenue Recognition Methods:
+---------------------------
+* Immediate Recognition: For monthly subscriptions
+* Straight-Line Recognition: For annual memberships
+* Manual Recognition: For custom scenarios
+* Milestone-Based Recognition: For event-based services
 
-This module integrates seamlessly with AMS Subscriptions and AMS Base Accounting
-to provide professional revenue recognition for membership organizations.
+Financial Compliance:
+--------------------
+* ASC 606 / IFRS 15 compliant revenue recognition
+* Proper deferred revenue accounting
+* Audit-ready transaction trails
+* SOX compliance support
+* Automated month-end processing
+
+Target Users:
+------------
+* Association finance teams
+* CFOs and financial managers
+* Accounting supervisors
+* External auditors
+* Board members reviewing financials
     """,
-    'author': 'Your AMS Development Team',
-    'website': 'https://yourcompany.com',
-    'category': 'Association Management/Accounting',
+    'author': 'Your Organization',
+    'website': 'https://www.yourorganization.com',
     'license': 'LGPL-3',
     
-    # FIXED: Proper dependency order and requirements
+    # Dependencies
     'depends': [
-        'base',
+        'ams_base_accounting',  # Required base module
         'account',
-        'mail',  # ADDED: Required for mail.thread functionality
-        'ams_base_accounting',
-        'ams_subscriptions',
+        'product',
+        'sale',
+        'mail',
     ],
     
-    # FIXED: Proper file loading order
+    # Module Data Files
     'data': [
-        # Security - Load first (CRITICAL ORDER)
+        # Security
         'security/ams_revenue_recognition_security.xml',
         'security/ir.model.access.csv',
         
-        # Data files - Load after security
+        # Data
+        'data/revenue_recognition_data.xml',
         'data/ams_revenue_recognition_cron.xml',
         
-        # Core model views - Load in dependency order
-        'views/ams_revenue_recognition_views.xml',  # Load recognition views first
-        'views/ams_revenue_schedule_views.xml',     # Then schedule views
-        
-        # Extension views - Load after core views (FIXED ORDER)
-        'views/product_template_views.xml',         # Extend product forms first
-        'views/ams_subscription_views.xml',         # Then subscription forms  
-        'views/account_move_views.xml',             # Then invoice forms
-        
-        # Menu and actions - Load last
+        # Views - Revenue Recognition Core
+        'views/ams_revenue_recognition_views.xml',
+        'views/ams_revenue_schedule_views.xml',
         'views/ams_revenue_recognition_menu.xml',
         
-        # Reports - Load after all views
+        # Views - Integration with Other Models
+        'views/ams_subscription_views.xml',
+        'views/product_template_views.xml',
+        'views/account_move_views.xml',
+        
+        # Reports
         'reports/ams_revenue_reports.xml',
     ],
     
+    # Demo Data
     'demo': [
         'demo/ams_revenue_recognition_demo.xml',
     ],
     
-    # FIXED: Module properties
+    # Module Configuration
     'installable': True,
-    'application': True,
     'auto_install': False,
+    'application': False,   # This is an extension module, not a standalone app
+    'sequence': 110,
     
-    # FIXED: Proper hook configuration
+    # Installation Hooks
     'post_init_hook': 'post_init_hook',
-    'uninstall_hook': 'uninstall_hook',  # ADDED: For clean uninstall
+    'uninstall_hook': 'uninstall_hook',
     
-    # ADDED: External dependencies (if any)
-    'external_dependencies': {
-        'python': ['dateutil'],  # Already in Odoo, but explicit
-    },
+    # Support Information
+    'support': 'support@yourorganization.com',
+    'maintainer': 'Your Organization Development Team',
     
-    # ADDED: Assets (if needed for future web components)
-    'assets': {
-        'web.assets_backend': [
-            # Future: Add any custom CSS/JS files here
-        ],
-    },
+    # Development Information
+    'development_status': 'Production/Stable',
+    'complexity': 'expert',  # This is advanced accounting functionality
     
-    # ADDED: Odoo version constraints
-    'odoo_version': '18.0',
+    # Compatibility
+    'python_requires': '>=3.8',
     
-    # ADDED: Module maturity and support info
-    'development_status': 'Beta',  # Alpha, Beta, Production/Stable, Mature
-    'maintainers': ['your-team'],
-    
-    # ADDED: Sequence for module loading
-    'sequence': 100,
-    
-    # ADDED: Images for module store (optional)
-    'images': [
-        'static/description/banner.png',
-        'static/description/icon.png',
-    ],
-    
-    # ADDED: Additional metadata
-    'support': 'https://yourcompany.com/support',
-    'website': 'https://yourcompany.com/ams',
-    
-    # ADDED: Price and currency (if commercial)
-    # 'price': 0.00,
-    # 'currency': 'EUR',
-    
-    # FIXED: Ensure clean installation
-    'init_xml': [],
-    'update_xml': [],
+    # Module Relationships
+    'auto_install_requirements': ['ams_base_accounting'],
 }

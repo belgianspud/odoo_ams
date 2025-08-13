@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- User-Friendly AMS Accounting Setup Wizard -->
+    <!-- Enhanced AMS Accounting Setup Wizard with Association-Friendly Language -->
     <record id="view_ams_accounting_setup_wizard_form" model="ir.ui.view">
         <field name="name">ams.accounting.setup.wizard.form</field>
         <field name="model">ams.accounting.setup.wizard</field>
@@ -8,197 +8,510 @@
             <form>
                 <sheet>
                     <div class="oe_title">
-                        <h1>🚀 Revenue Tracking Setup</h1>
-                        <p>Let's set up automatic revenue tracking for your association in just a few clicks!</p>
+                        <h1>Association Financial Setup Wizard</h1>
+                        <p>Set up your association's financial accounts and configure revenue tracking for memberships and services.</p>
+                    </div>
+
+                    <!-- Welcome and Overview Section -->
+                    <div class="alert alert-info" role="alert">
+                        <h5><i class="fa fa-info-circle"/> Welcome to Association Financial Setup!</h5>
+                        <p>This wizard will help you set up specialized financial accounts for your membership organization. 
+                           The setup ensures proper tracking of membership fees, publication revenue, and other association income.</p>
+                        <p><strong>What this wizard does:</strong></p>
+                        <ul>
+                            <li>Creates specialized accounts for membership revenue, prepaid memberships, and member receivables</li>
+                            <li>Configures your subscription products to use the correct financial accounts</li>
+                            <li>Sets up automated revenue recognition for annual memberships</li>
+                            <li>Validates that everything is working correctly</li>
+                        </ul>
                     </div>
                     
                     <!-- Current Status Overview -->
-                    <group string="📊 Current Status" col="4">
-                        <field name="existing_ams_accounts" string="💰 Revenue Accounts Ready" readonly="1"
-                               help="Number of revenue tracking accounts already configured"/>
-                        <field name="accounts_need_categories" string="🔧 Accounts Need Setup" readonly="1"
-                               help="Number of accounts that need to be configured for revenue tracking"/>
-                        <field name="unconfigured_product_count" string="📦 Products Need Setup" readonly="1"
-                               help="Number of subscription products that need revenue tracking configuration"/>
+                    <group string="Current Financial Setup Status" col="4">
+                        <field name="existing_ams_accounts" 
+                               string="Association Accounts Found"
+                               readonly="1"
+                               help="Number of association-specific accounts already configured"/>
+                        <field name="accounts_need_categories" 
+                               string="Accounts Need Setup"
+                               readonly="1"
+                               help="Number of accounts that need association categorization"/>
+                        <field name="unconfigured_product_count" 
+                               string="Products Need Setup"
+                               readonly="1"
+                               help="Number of subscription products that need financial account configuration"/>
                     </group>
                     
-                    <!-- Status Display -->
-                    <group string="🎯 Setup Progress">
+                    <!-- Status Display with Action Guidance -->
+                    <group string="Setup Status Overview">
                         <field name="setup_status" nolabel="1"/>
                     </group>
-                    
-                    <!-- Setup Options with User-Friendly Labels -->
-                    <group string="✅ What Should We Set Up?">
-                        <div class="alert alert-info">
-                            <p><strong>💡 Recommended:</strong> Check all options for complete automatic setup</p>
+
+                    <!-- Setup Options with Clear Explanations -->
+                    <group string="Setup Actions to Perform">
+                        <div class="alert alert-light" role="alert">
+                            <p><strong>Choose which setup actions to perform:</strong> You can run all actions or select specific ones based on your needs.</p>
                         </div>
                         
                         <field name="configure_ams_accounts" 
-                               string="🏦 Set Up Payment Accounts"
-                               help="Configure accounts to track revenue, customer payments, and outstanding invoices"/>
-                        
+                               string="Set Up Association Account Categories"
+                               help="Review existing accounts and assign them to association-specific categories (membership revenue, prepaid revenue, etc.). This helps organize your chart of accounts for association operations."/>
                         <field name="configure_existing_products" 
-                               string="📦 Configure Product Revenue Tracking"
-                               help="Set up automatic revenue tracking for your subscription products"/>
-                        
+                               string="Configure Subscription Product Accounts"
+                               help="Automatically configure financial accounts for existing membership products, publications, and services. This ensures proper revenue tracking when members pay."/>
                         <field name="setup_default_journals" 
-                               string="📋 Create Revenue Tracking Journals"
-                               help="Create specialized journals for processing association revenue and payments"/>
-                        
+                               string="Verify Association Journals"
+                               help="Check that specialized journals exist for association transactions (membership sales, revenue recognition, etc.). Creates missing journals if needed."/>
                         <field name="validate_account_setup" 
-                               string="🔍 Validate Configuration"
-                               help="Run checks to ensure everything is set up correctly"/>
+                               string="Validate Complete Setup"
+                               help="Run comprehensive checks to ensure all accounts are properly configured and working correctly. Identifies any issues that need attention."/>
                     </group>
                     
-                    <!-- What Each Option Does -->
-                    <div invisible="not configure_ams_accounts">
-                        <div class="card mb-3">
-                            <div class="card-header bg-primary text-white">
-                                <h6><i class="fa fa-bank"/> 🏦 Payment Accounts Setup</h6>
-                            </div>
-                            <div class="card-body">
-                                <p>This will create and configure accounts for:</p>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <ul>
-                                            <li>💰 <strong>Revenue Accounts:</strong> Where earnings are recorded</li>
-                                            <li>📋 <strong>Customer Invoices:</strong> Track money owed by members</li>
-                                            <li>💳 <strong>Payment Deposits:</strong> Where customer payments go</li>
-                                        </ul>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <ul>
-                                            <li>📊 <strong>Prepaid Revenue:</strong> For annual memberships paid in advance</li>
-                                            <li>🎯 <strong>Different Revenue Types:</strong> Individual, Enterprise, Publications</li>
-                                        </ul>
-                                    </div>
+                    <!-- Account Configuration Details -->
+                    <group string="Association Account Setup Details" invisible="not configure_ams_accounts">
+                        <div class="alert alert-info" role="alert">
+                            <h6><i class="fa fa-bank"/> Association Account Categories</h6>
+                            <p>The setup will organize your accounts into these association-specific categories:</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Revenue Accounts (Income)</h6>
+                                    <ul>
+                                        <li><strong>Membership Revenue:</strong> Individual and corporate membership fees</li>
+                                        <li><strong>Publication Revenue:</strong> Journal and magazine subscriptions</li>
+                                        <li><strong>Chapter Revenue:</strong> Local chapter membership fees</li>
+                                        <li><strong>Event Revenue:</strong> Conference and training income</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Balance Sheet Accounts</h6>
+                                    <ul>
+                                        <li><strong>Member Receivables:</strong> Money owed by members</li>
+                                        <li><strong>Prepaid Memberships:</strong> Money received for future services</li>
+                                        <li><strong>Cash Accounts:</strong> Bank accounts for member payments</li>
+                                        <li><strong>Service Expenses:</strong> Costs of providing member services</li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </group>
                     
-                    <div invisible="not configure_existing_products">
-                        <div class="card mb-3">
-                            <div class="card-header bg-success text-white">
-                                <h6><i class="fa fa-cube"/> 📦 Product Revenue Setup</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-8">
-                                        <p><strong>For each subscription product, we'll configure:</strong></p>
-                                        <ul>
-                                            <li>✅ Which revenue account to use</li>
-                                            <li>✅ How to track customer payments</li>
-                                            <li>✅ Automatic revenue recognition (for annual subscriptions)</li>
-                                            <li>✅ Financial reporting integration</li>
-                                        </ul>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="alert alert-light" invisible="unconfigured_product_count == 0">
-                                            <strong>📊 Impact:</strong><br/>
-                                            <span class="badge badge-warning"><field name="unconfigured_product_count" readonly="1"/></span> products will be configured
-                                        </div>
-                                        <div class="alert alert-success" invisible="unconfigured_product_count != 0">
-                                            <strong>✅ All Set!</strong><br/>
-                                            All products are already configured
-                                        </div>
-                                    </div>
+                    <!-- Product Configuration Details -->
+                    <group string="Subscription Product Configuration" invisible="not configure_existing_products">
+                        <div class="alert alert-warning" role="alert" invisible="unconfigured_product_count == 0">
+                            <h6><i class="fa fa-exclamation-triangle"/> Products Need Configuration</h6>
+                            <p>There are <field name="unconfigured_product_count" readonly="1"/> subscription products that need financial account setup.</p>
+                            <p><strong>What will be configured:</strong></p>
+                            <ul>
+                                <li>Revenue accounts where membership income is recorded</li>
+                                <li>Receivable accounts for tracking member payment obligations</li>
+                                <li>Deferred revenue accounts for annual memberships (prepaid revenue)</li>
+                                <li>Automatic revenue recognition settings for proper accounting</li>
+                            </ul>
+                        </div>
+                        <div class="alert alert-success" role="alert" invisible="unconfigured_product_count != 0">
+                            <h6><i class="fa fa-check-circle"/> All Products Configured</h6>
+                            <p>All subscription products already have proper financial account configuration.</p>
+                        </div>
+                    </group>
+                    
+                    <!-- Journal Setup Details -->
+                    <group string="Association Journal Setup" invisible="not setup_default_journals">
+                        <div class="alert alert-info" role="alert">
+                            <h6><i class="fa fa-book"/> Association-Specific Journals</h6>
+                            <p>The setup will verify or create these specialized journals for association transactions:</p>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <h6>Membership Sales Journal (AMS)</h6>
+                                    <p>Records membership invoices and sales transactions</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6>Revenue Recognition Journal (REVR)</h6>
+                                    <p>Handles monthly revenue recognition for annual memberships</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6>Member Payments Journal (MBPAY)</h6>
+                                    <p>Records cash receipts from member payments</p>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </group>
                     
-                    <div invisible="not setup_default_journals">
-                        <div class="card mb-3">
-                            <div class="card-header bg-info text-white">
-                                <h6><i class="fa fa-book"/> 📋 Journal Setup</h6>
-                            </div>
-                            <div class="card-body">
-                                <p>We'll create specialized journals for better organization:</p>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <strong>📄 AMS Sales Journal</strong><br/>
-                                        <small>For subscription invoices and sales</small>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <strong>🔄 Revenue Recognition Journal</strong><br/>
-                                        <small>For monthly revenue processing</small>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <strong>💳 Membership Payments Journal</strong><br/>
-                                        <small>For tracking customer payments</small>
-                                    </div>
+                    <!-- Validation Details -->
+                    <group string="Setup Validation" invisible="not validate_account_setup">
+                        <div class="alert alert-info" role="alert">
+                            <h6><i class="fa fa-check-square-o"/> Comprehensive Validation</h6>
+                            <p>The validation process will check:</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Account Validation</h6>
+                                    <ul>
+                                        <li>Required association accounts exist</li>
+                                        <li>Account types are properly configured</li>
+                                        <li>No duplicate or conflicting accounts</li>
+                                        <li>Proper account numbering and organization</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Product Validation</h6>
+                                    <ul>
+                                        <li>All subscription products have required accounts</li>
+                                        <li>Revenue recognition is properly configured</li>
+                                        <li>Account assignments are logical and consistent</li>
+                                        <li>No missing dependencies or setup issues</li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div invisible="not validate_account_setup">
-                        <div class="card mb-3">
-                            <div class="card-header bg-warning text-dark">
-                                <h6><i class="fa fa-check-circle"/> 🔍 Validation Checks</h6>
-                            </div>
-                            <div class="card-body">
-                                <p>We'll verify that everything is configured correctly:</p>
-                                <ul>
-                                    <li>✅ All required revenue accounts exist</li>
-                                    <li>✅ Account types are set up properly</li>
-                                    <li>✅ Products have the right account assignments</li>
-                                    <li>✅ No conflicts or missing dependencies</li>
-                                </ul>
+                    </group>
+
+                    <!-- Pre-Setup Safety Information -->
+                    <group string="Important Information Before Setup">
+                        <div class="alert alert-warning" role="alert">
+                            <h6><i class="fa fa-exclamation-triangle"/> Before You Begin</h6>
+                            <p><strong>Safety First:</strong> This setup wizard is designed to be safe and non-destructive.</p>
+                            <ul>
+                                <li><strong>No Data Loss:</strong> Existing accounts and transactions are preserved</li>
+                                <li><strong>Additive Only:</strong> Creates new accounts and categories, doesn't delete anything</li>
+                                <li><strong>Reversible:</strong> Changes can be undone by your system administrator if needed</li>
+                                <li><strong>Backup Recommended:</strong> Consider backing up your system before major changes</li>
+                            </ul>
+                            <p><strong>When to Run:</strong> Best to run during non-business hours when no one is entering transactions.</p>
+                        </div>
+                    </group>
+
+                    <!-- Expected Results and Timeline -->
+                    <group string="What to Expect">
+                        <div class="alert alert-light" role="alert">
+                            <h6><i class="fa fa-clock-o"/> Setup Timeline and Results</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Setup Duration</h6>
+                                    <p><strong>Estimated Time:</strong> 2-5 minutes</p>
+                                    <p><strong>What happens:</strong></p>
+                                    <ul>
+                                        <li>Account analysis and categorization</li>
+                                        <li>Product configuration updates</li>
+                                        <li>Journal verification and creation</li>
+                                        <li>Comprehensive validation checks</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>After Setup Completion</h6>
+                                    <p><strong>You'll be able to:</strong></p>
+                                    <ul>
+                                        <li>Track membership revenue by type</li>
+                                        <li>Monitor member payment status</li>
+                                        <li>Handle prepaid memberships properly</li>
+                                        <li>Generate association-specific financial reports</li>
+                                        <li>Process revenue recognition for annual memberships</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Expected Results -->
-                    <div class="alert alert-success mt-4">
-                        <h6><i class="fa fa-trophy"/> 🎉 What You'll Get After Setup:</h6>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <ul class="mb-0">
-                                    <li>🎯 <strong>Automatic Revenue Tracking:</strong> No manual entries needed</li>
-                                    <li>📊 <strong>Financial Reports:</strong> See revenue trends and payment status</li>
-                                    <li>💳 <strong>Payment Monitoring:</strong> Track what customers owe</li>
-                                </ul>
-                            </div>
-                            <div class="col-md-6">
-                                <ul class="mb-0">
-                                    <li>🏦 <strong>Professional Accounting:</strong> Proper revenue recognition</li>
-                                    <li>📈 <strong>Business Insights:</strong> Understand your revenue patterns</li>
-                                    <li>⚡ <strong>Time Savings:</strong> Automated financial processes</li>
-                                </ul>
-                            </div>
+                    </group>
+
+                    <!-- Expert Mode Options -->
+                    <group string="Advanced Options" groups="account.group_account_manager">
+                        <div class="alert alert-secondary" role="alert">
+                            <h6><i class="fa fa-cogs"/> Advanced Setup Options</h6>
+                            <p>These options are for accounting experts and system administrators:</p>
                         </div>
-                    </div>
+                        <field name="create_demo_accounts" 
+                               string="Create Demo Accounts for Testing"
+                               help="Create sample account structure for testing purposes (experts only)"/>
+                        <field name="force_account_reset" 
+                               string="Reset Existing AMS Categories"
+                               help="Remove existing AMS categories and reconfigure (use with caution)"/>
+                        <field name="enable_debug_logging" 
+                               string="Enable Detailed Logging"
+                               help="Create detailed logs of all setup actions for troubleshooting"/>
+                    </group>
+
+                    <!-- Support and Help Information -->
+                    <group string="Support and Documentation">
+                        <div class="alert alert-info" role="alert">
+                            <h6><i class="fa fa-question-circle"/> Need Help?</h6>
+                            <p><strong>Available Resources:</strong></p>
+                            <ul>
+                                <li><strong>User Guide:</strong> Comprehensive documentation on association financial management</li>
+                                <li><strong>Video Tutorials:</strong> Step-by-step video guides for common tasks</li>
+                                <li><strong>Support Forum:</strong> Community support for association management questions</li>
+                                <li><strong>Professional Support:</strong> Expert assistance for complex configurations</li>
+                            </ul>
+                            <p><strong>After Setup:</strong> Visit AMS → Financial Management → Chart of Accounts to see your new account structure.</p>
+                        </div>
+                    </group>
                 </sheet>
                 <footer>
-                    <button name="action_run_setup" string="🚀 Run Setup Now" type="object" class="btn-primary btn-lg"/>
-                    <button string="❌ Cancel" class="btn-secondary" special="cancel"/>
+                    <button name="action_run_setup" 
+                            string="Run Association Financial Setup" 
+                            type="object" 
+                            class="btn-primary"
+                            confirm="This will set up association-specific financial accounts and configure your subscription products. Continue?"/>
+                    <button name="action_preview_setup" 
+                            string="Preview Changes" 
+                            type="object" 
+                            class="btn-secondary"
+                            help="See what changes will be made without actually making them"/>
+                    <button name="action_view_current_setup" 
+                            string="View Current Setup" 
+                            type="object" 
+                            class="btn-light"
+                            help="Review your current account and product configuration"/>
+                    <button string="Cancel" class="btn-outline-secondary" special="cancel"/>
                 </footer>
             </form>
         </field>
     </record>
 
-    <!-- Updated Setup Wizard Action with User-Friendly Name -->
+    <!-- Enhanced Setup Results Display -->
+    <record id="view_ams_accounting_setup_results_form" model="ir.ui.view">
+        <field name="name">ams.accounting.setup.results.form</field>
+        <field name="model">ams.accounting.setup.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Association Financial Setup Complete!</h1>
+                        <p>Your association's financial system has been successfully configured.</p>
+                    </div>
+
+                    <!-- Success Status -->
+                    <div class="alert alert-success" role="alert">
+                        <h5><i class="fa fa-check-circle"/> Setup Completed Successfully</h5>
+                        <p>Your association now has a properly configured financial system for managing membership revenue, 
+                           tracking member payments, and handling prepaid memberships.</p>
+                    </div>
+
+                    <!-- Setup Summary -->
+                    <group string="Setup Summary">
+                        <field name="setup_results_summary" nolabel="1" readonly="1"/>
+                    </group>
+
+                    <!-- Next Steps Guide -->
+                    <group string="What to Do Next">
+                        <div class="alert alert-info" role="alert">
+                            <h6><i class="fa fa-arrow-right"/> Recommended Next Steps</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>1. Review Your New Account Structure</h6>
+                                    <p>Visit <strong>AMS → Financial Management → Chart of Accounts</strong> to see your new association-specific accounts.</p>
+                                    
+                                    <h6>2. Test with a Sample Transaction</h6>
+                                    <p>Create a test membership invoice to verify everything is working correctly.</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>3. Configure Payment Processing</h6>
+                                    <p>Set up your preferred payment methods for member payments (credit cards, bank transfers, etc.).</p>
+                                    
+                                    <h6>4. Train Your Team</h6>
+                                    <p>Show staff members how to use the new financial management features.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </group>
+
+                    <!-- Account Structure Overview -->
+                    <group string="Your New Account Structure">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0">Revenue Accounts Created</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-unstyled">
+                                            <li>✓ Individual Membership Revenue</li>
+                                            <li>✓ Corporate Membership Revenue</li>
+                                            <li>✓ Publication Revenue</li>
+                                            <li>✓ Chapter Revenue</li>
+                                            <li>✓ Event Revenue</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0">Management Accounts Created</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-unstyled">
+                                            <li>✓ Member Receivables</li>
+                                            <li>✓ Prepaid Membership Revenue</li>
+                                            <li>✓ Membership Cash Account</li>
+                                            <li>✓ Service Expense Accounts</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </group>
+
+                    <!-- Feature Overview -->
+                    <group string="New Features Available">
+                        <div class="alert alert-light" role="alert">
+                            <h6><i class="fa fa-star"/> Association Management Features Now Active</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <h6>Member Financial Tracking</h6>
+                                    <ul>
+                                        <li>Track membership payments by type</li>
+                                        <li>Monitor outstanding member balances</li>
+                                        <li>Generate member financial statements</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6>Revenue Recognition</h6>
+                                    <ul>
+                                        <li>Automatic monthly recognition for annual memberships</li>
+                                        <li>Proper accounting for prepaid memberships</li>
+                                        <li>Accurate monthly income statements</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6>Financial Reporting</h6>
+                                    <ul>
+                                        <li>Revenue by membership type reports</li>
+                                        <li>Member payment analysis</li>
+                                        <li>Deferred revenue tracking</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </group>
+
+                    <!-- Quick Access Links -->
+                    <group string="Quick Access to New Features">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <button name="action_view_chart_of_accounts" 
+                                        type="object" 
+                                        class="btn btn-primary btn-block"
+                                        string="View Chart of Accounts"/>
+                            </div>
+                            <div class="col-md-3">
+                                <button name="action_view_member_invoices" 
+                                        type="object" 
+                                        class="btn btn-secondary btn-block"
+                                        string="Member Invoices"/>
+                            </div>
+                            <div class="col-md-3">
+                                <button name="action_view_revenue_recognition" 
+                                        type="object" 
+                                        class="btn btn-info btn-block"
+                                        string="Revenue Recognition"/>
+                            </div>
+                            <div class="col-md-3">
+                                <button name="action_view_financial_reports" 
+                                        type="object" 
+                                        class="btn btn-success btn-block"
+                                        string="Financial Reports"/>
+                            </div>
+                        </div>
+                    </group>
+
+                    <!-- Support and Documentation -->
+                    <group string="Getting Started Resources">
+                        <div class="alert alert-info" role="alert">
+                            <h6><i class="fa fa-graduation-cap"/> Learning Resources</h6>
+                            <p><strong>To help you get the most out of your new financial system:</strong></p>
+                            <ul>
+                                <li><strong>Quick Start Guide:</strong> Essential tasks for the first week</li>
+                                <li><strong>Video Tutorials:</strong> Step-by-step walkthroughs of key features</li>
+                                <li><strong>Best Practices:</strong> Recommendations from other associations</li>
+                                <li><strong>Troubleshooting:</strong> Solutions to common questions</li>
+                            </ul>
+                        </div>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_open_financial_management" 
+                            string="Open Financial Management" 
+                            type="object" 
+                            class="btn-primary"/>
+                    <button name="action_run_test_transaction" 
+                            string="Create Test Transaction" 
+                            type="object" 
+                            class="btn-secondary"/>
+                    <button string="Done" class="btn-outline-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Setup Wizard Action with Enhanced Context -->
     <record id="action_ams_accounting_setup_wizard" model="ir.actions.act_window">
-        <field name="name">🚀 Revenue Tracking Setup</field>
+        <field name="name">Association Financial Setup Wizard</field>
         <field name="res_model">ams.accounting.setup.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                🚀 Let's set up revenue tracking!
+                Welcome to Association Financial Setup!
             </p>
             <p>
-                This wizard will configure automatic revenue tracking for your association:
-                <br/>• Set up payment accounts
-                <br/>• Configure product revenue tracking  
-                <br/>• Create specialized journals
-                <br/>• Validate everything works correctly
+                This wizard helps you configure your association's financial system for:
+                <br/>• Membership revenue tracking by type
+                <br/>• Proper accounting for prepaid memberships
+                <br/>• Member payment monitoring and follow-up
+                <br/>• Automated revenue recognition for annual memberships
             </p>
             <p>
-                <em>💡 Takes just 2-3 minutes and handles everything automatically!</em>
+                The setup process is safe, non-destructive, and can be completed in just a few minutes.
             </p>
         </field>
     </record>
+
+    <!-- Quick Setup Action for Experienced Users -->
+    <record id="action_ams_quick_financial_setup" model="ir.actions.act_window">
+        <field name="name">Quick Financial Setup</field>
+        <field name="res_model">ams.accounting.setup.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_configure_ams_accounts': True,
+            'default_configure_existing_products': True,
+            'default_setup_default_journals': True,
+            'default_validate_account_setup': True,
+            'quick_setup_mode': True
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Quick Association Financial Setup
+            </p>
+            <p>
+                For experienced users: Run complete financial setup with recommended settings.
+                <br/>This will configure all association accounts, products, and validation in one step.
+            </p>
+        </field>
+    </record>
+
+    <!-- Setup Verification Action -->
+    <record id="action_ams_setup_verification" model="ir.actions.act_window">
+        <field name="name">Verify Financial Setup</field>
+        <field name="res_model">ams.accounting.setup.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_configure_ams_accounts': False,
+            'default_configure_existing_products': False,
+            'default_setup_default_journals': False,
+            'default_validate_account_setup': True,
+            'verification_mode': True
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Verify Association Financial Setup
+            </p>
+            <p>
+                Run validation checks to ensure your association's financial system is properly configured:
+                <br/>• Check all required accounts exist
+                <br/>• Verify subscription products are properly set up
+                <br/>• Confirm revenue recognition is working
+                <br/>• Identify any configuration issues
+            </p>
+        </field>
+    </record>
+
 </odoo>
