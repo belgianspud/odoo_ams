@@ -3,238 +3,160 @@
     <data noupdate="1">
         
         <!-- =================================================================== -->
-        <!-- AMS JOURNALS - Specialized journals for Association Management     -->
+        <!-- AMS JOURNAL CONFIGURATION - Non-conflicting setup                  -->
+        <!-- Journals are created programmatically to avoid conflicts           -->
         <!-- =================================================================== -->
         
-        <!-- AMS Sales Journal - Main journal for membership and subscription sales -->
-        <record id="journal_ams_sales" model="account.journal">
-            <field name="name">AMS Sales</field>
-            <field name="code">AMS</field>
-            <field name="type">sale</field>
+        <!-- Journal Configuration Parameters -->
+        <record id="ams_journal_config_ams_sales" model="ir.config_parameter">
+            <field name="key">ams.journals.ams_sales.code</field>
+            <field name="value">AMS</field>
+        </record>
+        
+        <record id="ams_journal_config_ams_sales_name" model="ir.config_parameter">
+            <field name="key">ams.journals.ams_sales.name</field>
+            <field name="value">AMS Sales</field>
+        </record>
+        
+        <record id="ams_journal_config_ams_sales_type" model="ir.config_parameter">
+            <field name="key">ams.journals.ams_sales.type</field>
+            <field name="value">sale</field>
+        </record>
+        
+        <record id="ams_journal_config_revenue_recognition" model="ir.config_parameter">
+            <field name="key">ams.journals.revenue_recognition.code</field>
+            <field name="value">REVR</field>
+        </record>
+        
+        <record id="ams_journal_config_revenue_recognition_name" model="ir.config_parameter">
+            <field name="key">ams.journals.revenue_recognition.name</field>
+            <field name="value">Revenue Recognition</field>
+        </record>
+        
+        <record id="ams_journal_config_revenue_recognition_type" model="ir.config_parameter">
+            <field name="key">ams.journals.revenue_recognition.type</field>
+            <field name="value">general</field>
+        </record>
+        
+        <record id="ams_journal_config_membership_payments" model="ir.config_parameter">
+            <field name="key">ams.journals.membership_payments.code</field>
+            <field name="value">MBPAY</field>
+        </record>
+        
+        <record id="ams_journal_config_membership_payments_name" model="ir.config_parameter">
+            <field name="key">ams.journals.membership_payments.name</field>
+            <field name="value">Membership Payments</field>
+        </record>
+        
+        <record id="ams_journal_config_membership_payments_type" model="ir.config_parameter">
+            <field name="key">ams.journals.membership_payments.type</field>
+            <field name="value">cash</field>
+        </record>
+        
+        <!-- =================================================================== -->
+        <!-- PAYMENT TERMS - Safe to create as they use names, not codes       -->
+        <!-- =================================================================== -->
+        
+        <!-- Net 30 for Enterprise Memberships -->
+        <record id="payment_term_enterprise_membership" model="account.payment.term">
+            <field name="name">Enterprise Membership Net 30</field>
+            <field name="note">Payment due within 30 days for enterprise memberships</field>
             <field name="sequence">10</field>
-            <field name="show_on_dashboard" eval="True"/>
-            <field name="default_account_id" ref="ams_base_accounting.account_membership_revenue_individual"/>
-            <field name="currency_id" ref="base.USD"/>
         </record>
         
-        <!-- Membership Revenue Journal - Specific to membership transactions -->
-        <record id="journal_membership_revenue" model="account.journal">
-            <field name="name">Membership Revenue</field>
-            <field name="code">MBR</field>
-            <field name="type">sale</field>
-            <field name="sequence">11</field>
-            <field name="show_on_dashboard" eval="True"/>
-            <field name="default_account_id" ref="ams_base_accounting.account_membership_revenue_individual"/>
-            <field name="currency_id" ref="base.USD"/>
+        <record id="payment_term_enterprise_membership_line" model="account.payment.term.line">
+            <field name="payment_id" ref="payment_term_enterprise_membership"/>
+            <field name="value">balance</field>
+            <field name="value_amount">0</field>
+            <field name="days">30</field>
+            <field name="sequence">1</field>
         </record>
         
-        <!-- Publication Sales Journal -->
-        <record id="journal_publication_sales" model="account.journal">
-            <field name="name">Publication Sales</field>
-            <field name="code">PUB</field>
-            <field name="type">sale</field>
-            <field name="sequence">12</field>
-            <field name="show_on_dashboard" eval="True"/>
-            <field name="default_account_id" ref="ams_base_accounting.account_publication_revenue"/>
-            <field name="currency_id" ref="base.USD"/>
+        <!-- Immediate Payment for Individual Memberships -->
+        <record id="payment_term_individual_membership" model="account.payment.term">
+            <field name="name">Individual Membership Due Immediately</field>
+            <field name="note">Payment due immediately for individual memberships</field>
+            <field name="sequence">5</field>
         </record>
         
-        <!-- Chapter Revenue Journal -->
-        <record id="journal_chapter_revenue" model="account.journal">
-            <field name="name">Chapter Revenue</field>
-            <field name="code">CHT</field>
-            <field name="type">sale</field>
-            <field name="sequence">13</field>
-            <field name="show_on_dashboard" eval="True"/>
-            <field name="default_account_id" ref="ams_base_accounting.account_chapter_revenue"/>
-            <field name="currency_id" ref="base.USD"/>
+        <record id="payment_term_individual_membership_line" model="account.payment.term.line">
+            <field name="payment_id" ref="payment_term_individual_membership"/>
+            <field name="value">balance</field>
+            <field name="value_amount">0</field>
+            <field name="days">0</field>
+            <field name="sequence">1</field>
         </record>
         
-        <!-- Event and Conference Revenue Journal -->
-        <record id="journal_event_revenue" model="account.journal">
-            <field name="name">Event Revenue</field>
-            <field name="code">EVT</field>
-            <field name="type">sale</field>
-            <field name="sequence">14</field>
-            <field name="show_on_dashboard" eval="True"/>
-            <field name="default_account_id" ref="account_conference_revenue"/>
-            <field name="currency_id" ref="base.USD"/>
+        <!-- Net 15 for Event Registration -->
+        <record id="payment_term_event_registration" model="account.payment.term">
+            <field name="name">Event Registration Net 15</field>
+            <field name="note">Payment due within 15 days for event registration</field>
+            <field name="sequence">8</field>
+        </record>
+        
+        <record id="payment_term_event_registration_line" model="account.payment.term.line">
+            <field name="payment_id" ref="payment_term_event_registration"/>
+            <field name="value">balance</field>
+            <field name="value_amount">0</field>
+            <field name="days">15</field>
+            <field name="sequence">1</field>
         </record>
         
         <!-- =================================================================== -->
-        <!-- CASH JOURNALS - For different types of cash receipts               -->
+        <!-- DEFAULT PAYMENT TERMS CONFIGURATION                                -->
         <!-- =================================================================== -->
         
-        <!-- Cash - Membership Payments -->
-        <record id="journal_cash_membership" model="account.journal">
-            <field name="name">Cash - Membership</field>
-            <field name="code">CASH1</field>
-            <field name="type">cash</field>
-            <field name="sequence">20</field>
-            <field name="show_on_dashboard" eval="True"/>
-            <field name="default_account_id" ref="ams_base_accounting.account_cash_membership"/>
-            <field name="currency_id" ref="base.USD"/>
+        <record id="default_enterprise_payment_term" model="ir.config_parameter">
+            <field name="key">ams.default_payment_terms.enterprise</field>
+            <field name="value">Enterprise Membership Net 30</field>
         </record>
         
-        <!-- Cash - Events and Conferences -->
-        <record id="journal_cash_events" model="account.journal">
-            <field name="name">Cash - Events</field>
-            <field name="code">CASH2</field>
-            <field name="type">cash</field>
-            <field name="sequence">21</field>
-            <field name="show_on_dashboard" eval="True"/>
-            <field name="default_account_id" ref="ams_base_accounting.account_cash_events"/>
-            <field name="currency_id" ref="base.USD"/>
+        <record id="default_individual_payment_term" model="ir.config_parameter">
+            <field name="key">ams.default_payment_terms.individual</field>
+            <field name="value">Individual Membership Due Immediately</field>
+        </record>
+        
+        <record id="default_event_payment_term" model="ir.config_parameter">
+            <field name="key">ams.default_payment_terms.events</field>
+            <field name="value">Event Registration Net 15</field>
         </record>
         
         <!-- =================================================================== -->
-        <!-- BANK JOURNALS - For bank account management                        -->
+        <!-- JOURNAL SEQUENCE CONFIGURATION                                     -->
         <!-- =================================================================== -->
         
-        <!-- Primary Operating Account -->
-        <record id="journal_bank_operating" model="account.journal">
-            <field name="name">Operating Account</field>
-            <field name="code">BANK1</field>
-            <field name="type">bank</field>
-            <field name="sequence">30</field>
-            <field name="show_on_dashboard" eval="True"/>
-            <field name="currency_id" ref="base.USD"/>
+        <record id="ams_sequence_config_prefix" model="ir.config_parameter">
+            <field name="key">ams.journal_sequences.prefix</field>
+            <field name="value">AMS/%(year)s/</field>
         </record>
         
-        <!-- Membership Receipts Account -->
-        <record id="journal_bank_membership" model="account.journal">
-            <field name="name">Membership Receipts</field>
-            <field name="code">BANK2</field>
-            <field name="type">bank</field>
-            <field name="sequence">31</field>
-            <field name="show_on_dashboard" eval="True"/>
-            <field name="currency_id" ref="base.USD"/>
+        <record id="ams_sequence_config_padding" model="ir.config_parameter">
+            <field name="key">ams.journal_sequences.padding</field>
+            <field name="value">4</field>
+        </record>
+        
+        <record id="ams_sequence_config_increment" model="ir.config_parameter">
+            <field name="key">ams.journal_sequences.increment</field>
+            <field name="value">1</field>
         </record>
         
         <!-- =================================================================== -->
-        <!-- PURCHASE JOURNALS - For expense management                         -->
+        <!-- CURRENCY CONFIGURATION                                             -->
         <!-- =================================================================== -->
         
-        <!-- General Purchases -->
-        <record id="journal_purchases" model="account.journal">
-            <field name="name">Purchases</field>
-            <field name="code">BILL</field>
-            <field name="type">purchase</field>
-            <field name="sequence">40</field>
-            <field name="show_on_dashboard" eval="True"/>
-            <field name="currency_id" ref="base.USD"/>
-        </record>
-        
-        <!-- Membership Expenses -->
-        <record id="journal_membership_expenses" model="account.journal">
-            <field name="name">Membership Expenses</field>
-            <field name="code">MEXP</field>
-            <field name="type">purchase</field>
-            <field name="sequence">41</field>
-            <field name="show_on_dashboard" eval="True"/>
-            <field name="default_account_id" ref="ams_base_accounting.account_membership_expense"/>
-            <field name="currency_id" ref="base.USD"/>
-        </record>
-        
-        <!-- Publication Expenses -->
-        <record id="journal_publication_expenses" model="account.journal">
-            <field name="name">Publication Expenses</field>
-            <field name="code">PEXP</field>
-            <field name="type">purchase</field>
-            <field name="sequence">42</field>
-            <field name="show_on_dashboard" eval="True"/>
-            <field name="default_account_id" ref="ams_base_accounting.account_publication_expense"/>
-            <field name="currency_id" ref="base.USD"/>
+        <record id="ams_default_currency" model="ir.config_parameter">
+            <field name="key">ams.default_currency</field>
+            <field name="value">USD</field>
         </record>
         
         <!-- =================================================================== -->
-        <!-- MISCELLANEOUS JOURNALS                                             -->
+        <!-- JOURNAL CREATION FLAGS                                             -->
         <!-- =================================================================== -->
         
-        <!-- General Journal for adjustments and corrections -->
-        <record id="journal_general" model="account.journal">
-            <field name="name">General Journal</field>
-            <field name="code">MISC</field>
-            <field name="type">general</field>
-            <field name="sequence">50</field>
-            <field name="show_on_dashboard" eval="True"/>
-            <field name="currency_id" ref="base.USD"/>
+        <record id="ams_journals_creation_needed" model="ir.config_parameter">
+            <field name="key">ams.setup.journals_creation_needed</field>
+            <field name="value">true</field>
         </record>
-        
-        <!-- Revenue Recognition Journal - For deferred revenue entries -->
-        <record id="journal_revenue_recognition" model="account.journal">
-            <field name="name">Revenue Recognition</field>
-            <field name="code">REVREC</field>
-            <field name="type">general</field>
-            <field name="sequence">51</field>
-            <field name="show_on_dashboard" eval="True"/>
-            <field name="default_account_id" ref="ams_base_accounting.account_deferred_membership_revenue"/>
-            <field name="currency_id" ref="base.USD"/>
-        </record>
-        
-        <!-- Year-End Adjustments Journal -->
-        <record id="journal_year_end" model="account.journal">
-            <field name="name">Year-End Adjustments</field>
-            <field name="code">YEAR</field>
-            <field name="type">general</field>
-            <field name="sequence">52</field>
-            <field name="show_on_dashboard" eval="False"/>
-            <field name="currency_id" ref="base.USD"/>
-        </record>
-        
-        <!-- =================================================================== -->
-        <!-- JOURNAL SEQUENCES - Ensure proper numbering                        -->
-        <!-- =================================================================== -->
-        
-        <!-- AMS Sales Journal Sequence -->
-        <record id="sequence_ams_sales_journal" model="ir.sequence">
-            <field name="name">AMS Sales Journal</field>
-            <field name="code">account.move.ams.sales</field>
-            <field name="prefix">AMS/%(year)s/</field>
-            <field name="padding">4</field>
-            <field name="number_increment">1</field>
-            <field name="number_next">1</field>
-            <field name="use_date_range" eval="True"/>
-        </record>
-        
-        <!-- Membership Revenue Journal Sequence -->
-        <record id="sequence_membership_journal" model="ir.sequence">
-            <field name="name">Membership Revenue Journal</field>
-            <field name="code">account.move.membership</field>
-            <field name="prefix">MBR/%(year)s/</field>
-            <field name="padding">4</field>
-            <field name="number_increment">1</field>
-            <field name="number_next">1</field>
-            <field name="use_date_range" eval="True"/>
-        </record>
-        
-        <!-- Publication Sales Journal Sequence -->
-        <record id="sequence_publication_journal" model="ir.sequence">
-            <field name="name">Publication Sales Journal</field>
-            <field name="code">account.move.publication</field>
-            <field name="prefix">PUB/%(year)s/</field>
-            <field name="padding">4</field>
-            <field name="number_increment">1</field>
-            <field name="number_next">1</field>
-            <field name="use_date_range" eval="True"/>
-        </record>
-        
-        <!-- Revenue Recognition Journal Sequence -->
-        <record id="sequence_revenue_recognition_journal" model="ir.sequence">
-            <field name="name">Revenue Recognition Journal</field>
-            <field name="code">account.move.revenue.recognition</field>
-            <field name="prefix">RR/%(year)s/</field>
-            <field name="padding">4</field>
-            <field name="number_increment">1</field>
-            <field name="number_next">1</field>
-            <field name="use_date_range" eval="True"/>
-        </record>
-        
-        <!-- =================================================================== -->
-        <!-- ASSIGN SEQUENCES TO JOURNALS                                       -->
-        <!-- =================================================================== -->
-        
-        <!-- Link sequences to journals -->
         
     </data>
 </odoo>

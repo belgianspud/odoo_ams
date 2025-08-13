@@ -3,249 +3,96 @@
     <data noupdate="1">
         
         <!-- =================================================================== -->
-        <!-- AMS ACCOUNT TEMPLATES - Additional accounts for comprehensive setup -->
+        <!-- AMS ACCOUNT TEMPLATES - CONFIGURATION ONLY                        -->
+        <!-- No account creation - only configuration parameters                -->
         <!-- =================================================================== -->
         
-        <!-- Additional Asset Accounts -->
-        <record id="account_prepaid_expenses" model="account.account">
-            <field name="code">1300</field>
-            <field name="name">Prepaid Expenses</field>
-            <field name="account_type">asset_current</field>
-            <field name="ams_description">Prepaid expenses for membership services and operations</field>
-            <field name="reconcile" eval="False"/>
+        <!-- Account Name Templates -->
+        <record id="template_individual_revenue_name" model="ir.config_parameter">
+            <field name="key">ams.templates.individual_revenue.name</field>
+            <field name="value">Membership Revenue - Individual</field>
         </record>
         
-        <record id="account_deposits" model="account.account">
-            <field name="code">1400</field>
-            <field name="name">Deposits and Security</field>
-            <field name="account_type">asset_current</field>
-            <field name="ams_description">Security deposits and refundable fees</field>
-            <field name="reconcile" eval="False"/>
+        <record id="template_enterprise_revenue_name" model="ir.config_parameter">
+            <field name="key">ams.templates.enterprise_revenue.name</field>
+            <field name="value">Membership Revenue - Enterprise</field>
         </record>
         
-        <!-- Additional Liability Accounts -->
-        <record id="account_accounts_payable" model="account.account">
-            <field name="code">2100</field>
-            <field name="name">Accounts Payable</field>
-            <field name="account_type">liability_payable</field>
-            <field name="ams_description">Outstanding vendor invoices and obligations</field>
-            <field name="reconcile" eval="True"/>
+        <record id="template_publication_revenue_name" model="ir.config_parameter">
+            <field name="key">ams.templates.publication_revenue.name</field>
+            <field name="value">Publication Revenue</field>
         </record>
         
-        <record id="account_accrued_expenses" model="account.account">
-            <field name="code">2200</field>
-            <field name="name">Accrued Expenses</field>
-            <field name="account_type">liability_current</field>
-            <field name="ams_description">Expenses incurred but not yet invoiced</field>
-            <field name="reconcile" eval="False"/>
+        <record id="template_chapter_revenue_name" model="ir.config_parameter">
+            <field name="key">ams.templates.chapter_revenue.name</field>
+            <field name="value">Chapter Revenue</field>
         </record>
         
-        <record id="account_deferred_conference_revenue" model="account.account">
-            <field name="code">2310</field>
-            <field name="name">Deferred Conference Revenue</field>
-            <field name="account_type">liability_current</field>
-            <field name="ams_account_category">deferred_revenue</field>
-            <field name="ams_description">Unearned revenue from conference registrations</field>
-            <field name="reconcile" eval="False"/>
+        <record id="template_receivables_name" model="ir.config_parameter">
+            <field name="key">ams.templates.receivables.name</field>
+            <field name="value">Accounts Receivable - Memberships</field>
         </record>
         
-        <!-- Equity Accounts for Nonprofits -->
-        <record id="account_net_assets_unrestricted" model="account.account">
-            <field name="code">3000</field>
-            <field name="name">Net Assets Without Donor Restrictions</field>
-            <field name="account_type">equity</field>
-            <field name="ams_description">Unrestricted funds available for general operations</field>
-            <field name="reconcile" eval="False"/>
+        <record id="template_deferred_revenue_name" model="ir.config_parameter">
+            <field name="key">ams.templates.deferred_revenue.name</field>
+            <field name="value">Deferred Membership Revenue</field>
         </record>
         
-        <record id="account_net_assets_restricted" model="account.account">
-            <field name="code">3100</field>
-            <field name="name">Net Assets With Donor Restrictions</field>
-            <field name="account_type">equity</field>
-            <field name="ams_description">Funds restricted by donors for specific purposes</field>
-            <field name="reconcile" eval="False"/>
+        <!-- Account Type Templates -->
+        <record id="template_revenue_account_type" model="ir.config_parameter">
+            <field name="key">ams.templates.revenue.account_type</field>
+            <field name="value">income_other</field>
         </record>
         
-        <!-- Additional Revenue Accounts -->
-        <record id="account_conference_revenue" model="account.account">
-            <field name="code">4400</field>
-            <field name="name">Conference and Event Revenue</field>
-            <field name="account_type">income_other</field>
-            <field name="ams_description">Revenue from conferences, seminars, and training events</field>
-            <field name="reconcile" eval="False"/>
+        <record id="template_receivable_account_type" model="ir.config_parameter">
+            <field name="key">ams.templates.receivable.account_type</field>
+            <field name="value">asset_receivable</field>
         </record>
         
-        <record id="account_donation_revenue" model="account.account">
-            <field name="code">4500</field>
-            <field name="name">Donations and Contributions</field>
-            <field name="account_type">income_other</field>
-            <field name="ams_description">Charitable donations and voluntary contributions</field>
-            <field name="reconcile" eval="False"/>
+        <record id="template_deferred_account_type" model="ir.config_parameter">
+            <field name="key">ams.templates.deferred.account_type</field>
+            <field name="value">liability_current</field>
         </record>
         
-        <record id="account_investment_income" model="account.account">
-            <field name="code">4600</field>
-            <field name="name">Investment Income</field>
-            <field name="account_type">income_other</field>
-            <field name="ams_description">Interest, dividends, and investment gains</field>
-            <field name="reconcile" eval="False"/>
+        <record id="template_cash_account_type" model="ir.config_parameter">
+            <field name="key">ams.templates.cash.account_type</field>
+            <field name="value">asset_cash</field>
         </record>
         
-        <record id="account_sponsorship_revenue" model="account.account">
-            <field name="code">4700</field>
-            <field name="name">Sponsorship Revenue</field>
-            <field name="account_type">income_other</field>
-            <field name="ams_description">Corporate sponsorships and partnerships</field>
-            <field name="reconcile" eval="False"/>
+        <!-- Category Mapping Templates -->
+        <record id="template_individual_category" model="ir.config_parameter">
+            <field name="key">ams.templates.individual.category</field>
+            <field name="value">membership_revenue</field>
         </record>
         
-        <!-- Administrative and Operational Expense Accounts -->
-        <record id="account_administrative_expenses" model="account.account">
-            <field name="code">6100</field>
-            <field name="name">Administrative Expenses</field>
-            <field name="account_type">expense</field>
-            <field name="ams_description">General administrative and overhead costs</field>
-            <field name="reconcile" eval="False"/>
+        <record id="template_enterprise_category" model="ir.config_parameter">
+            <field name="key">ams.templates.enterprise.category</field>
+            <field name="value">membership_revenue</field>
         </record>
         
-        <record id="account_salaries_wages" model="account.account">
-            <field name="code">6200</field>
-            <field name="name">Salaries and Wages</field>
-            <field name="account_type">expense</field>
-            <field name="ams_description">Employee compensation and payroll costs</field>
-            <field name="reconcile" eval="False"/>
+        <record id="template_publication_category" model="ir.config_parameter">
+            <field name="key">ams.templates.publication.category</field>
+            <field name="value">publication_revenue</field>
         </record>
         
-        <record id="account_employee_benefits" model="account.account">
-            <field name="code">6300</field>
-            <field name="name">Employee Benefits</field>
-            <field name="account_type">expense</field>
-            <field name="ams_description">Health insurance, retirement, and other benefits</field>
-            <field name="reconcile" eval="False"/>
+        <record id="template_chapter_category" model="ir.config_parameter">
+            <field name="key">ams.templates.chapter.category</field>
+            <field name="value">chapter_revenue</field>
         </record>
         
-        <record id="account_professional_services" model="account.account">
-            <field name="code">6400</field>
-            <field name="name">Professional Services</field>
-            <field name="account_type">expense</field>
-            <field name="ams_description">Legal, accounting, consulting, and other professional fees</field>
-            <field name="reconcile" eval="False"/>
+        <record id="template_receivables_category" model="ir.config_parameter">
+            <field name="key">ams.templates.receivables.category</field>
+            <field name="value">subscription_ar</field>
         </record>
         
-        <record id="account_office_expenses" model="account.account">
-            <field name="code">6500</field>
-            <field name="name">Office Expenses</field>
-            <field name="account_type">expense</field>
-            <field name="ams_description">Office supplies, utilities, and facility costs</field>
-            <field name="reconcile" eval="False"/>
+        <record id="template_deferred_category" model="ir.config_parameter">
+            <field name="key">ams.templates.deferred.category</field>
+            <field name="value">deferred_revenue</field>
         </record>
         
-        <record id="account_technology_expenses" model="account.account">
-            <field name="code">6600</field>
-            <field name="name">Technology and Software</field>
-            <field name="account_type">expense</field>
-            <field name="ams_description">Software licenses, hardware, and IT services</field>
-            <field name="reconcile" eval="False"/>
-        </record>
-        
-        <record id="account_marketing_expenses" model="account.account">
-            <field name="code">6700</field>
-            <field name="name">Marketing and Communications</field>
-            <field name="account_type">expense</field>
-            <field name="ams_description">Marketing, advertising, and communication costs</field>
-            <field name="reconcile" eval="False"/>
-        </record>
-        
-        <record id="account_travel_expenses" model="account.account">
-            <field name="code">6800</field>
-            <field name="name">Travel and Transportation</field>
-            <field name="account_type">expense</field>
-            <field name="ams_description">Business travel, conferences, and transportation</field>
-            <field name="reconcile" eval="False"/>
-        </record>
-        
-        <record id="account_depreciation_expense" model="account.account">
-            <field name="code">6900</field>
-            <field name="name">Depreciation Expense</field>
-            <field name="account_type">expense</field>
-            <field name="ams_description">Depreciation of fixed assets and equipment</field>
-            <field name="reconcile" eval="False"/>
-        </record>
-        
-        <!-- =================================================================== -->
-        <!-- TAXES - Basic tax configuration for associations                   -->
-        <!-- =================================================================== -->
-        
-        <record id="tax_exempt_sales" model="account.tax">
-            <field name="name">Tax Exempt</field>
-            <field name="amount">0.0</field>
-            <field name="amount_type">percent</field>
-            <field name="type_tax_use">sale</field>
-            <field name="description">Tax Exempt - Membership Organizations</field>
-        </record>
-        
-        <record id="tax_sales_standard" model="account.tax">
-            <field name="name">Sales Tax</field>
-            <field name="amount">7.5</field>
-            <field name="amount_type">percent</field>
-            <field name="type_tax_use">sale</field>
-            <field name="description">Standard Sales Tax (adjust rate as needed)</field>
-        </record>
-        
-        <!-- =================================================================== -->
-        <!-- PRODUCT CATEGORIES - For organizing AMS products                   -->
-        <!-- =================================================================== -->
-        
-        <record id="product_category_memberships" model="product.category">
-            <field name="name">Memberships</field>
-            <field name="property_account_income_categ_id" ref="ams_base_accounting.account_membership_revenue_individual"/>
-            <field name="property_account_expense_categ_id" ref="ams_base_accounting.account_membership_expense"/>
-        </record>
-        
-        <record id="product_category_individual_memberships" model="product.category">
-            <field name="name">Individual Memberships</field>
-            <field name="parent_id" ref="product_category_memberships"/>
-            <field name="property_account_income_categ_id" ref="ams_base_accounting.account_membership_revenue_individual"/>
-            <field name="property_account_expense_categ_id" ref="ams_base_accounting.account_membership_expense"/>
-        </record>
-        
-        <record id="product_category_enterprise_memberships" model="product.category">
-            <field name="name">Enterprise Memberships</field>
-            <field name="parent_id" ref="product_category_memberships"/>
-            <field name="property_account_income_categ_id" ref="ams_base_accounting.account_membership_revenue_enterprise"/>
-            <field name="property_account_expense_categ_id" ref="ams_base_accounting.account_membership_expense"/>
-        </record>
-        
-        <record id="product_category_publications" model="product.category">
-            <field name="name">Publications</field>
-            <field name="property_account_income_categ_id" ref="ams_base_accounting.account_publication_revenue"/>
-            <field name="property_account_expense_categ_id" ref="ams_base_accounting.account_publication_expense"/>
-        </record>
-        
-        <record id="product_category_digital_publications" model="product.category">
-            <field name="name">Digital Publications</field>
-            <field name="parent_id" ref="product_category_publications"/>
-            <field name="property_account_income_categ_id" ref="ams_base_accounting.account_publication_revenue"/>
-            <field name="property_account_expense_categ_id" ref="ams_base_accounting.account_publication_expense"/>
-        </record>
-        
-        <record id="product_category_print_publications" model="product.category">
-            <field name="name">Print Publications</field>
-            <field name="parent_id" ref="product_category_publications"/>
-            <field name="property_account_income_categ_id" ref="ams_base_accounting.account_publication_revenue"/>
-            <field name="property_account_expense_categ_id" ref="ams_base_accounting.account_publication_expense"/>
-        </record>
-        
-        <record id="product_category_chapters" model="product.category">
-            <field name="name">Chapters</field>
-            <field name="property_account_income_categ_id" ref="ams_base_accounting.account_chapter_revenue"/>
-            <field name="property_account_expense_categ_id" ref="ams_base_accounting.account_chapter_expense"/>
-        </record>
-        
-        <record id="product_category_events" model="product.category">
-            <field name="name">Events and Conferences</field>
-            <field name="property_account_income_categ_id" ref="account_conference_revenue"/>
-            <field name="property_account_expense_categ_id" ref="ams_base_accounting.account_event_expense"/>
+        <record id="template_cash_category" model="ir.config_parameter">
+            <field name="key">ams.templates.cash.category</field>
+            <field name="value">cash_membership</field>
         </record>
         
     </data>
