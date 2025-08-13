@@ -12,31 +12,39 @@
                         <p>Set up your association's chart of accounts and configure default GL accounts for AMS products.</p>
                     </div>
                     
-                    <group string="Setup Options">
-                        <field name="create_ams_accounts"/>
-                        <field name="configure_existing_products"/>
-                        <field name="setup_default_journals"/>
-                    </group>
-                    
+                    <!-- FIXED: Current status display first -->
                     <group string="Current Status" col="4">
                         <field name="existing_ams_accounts" readonly="1"/>
+                        <field name="accounts_need_categories" readonly="1"/>
                         <field name="unconfigured_product_count" readonly="1"/>
                     </group>
                     
-                    <group string="Account Creation" invisible="not create_ams_accounts">
+                    <!-- FIXED: Status overview -->
+                    <group string="Setup Status">
+                        <field name="setup_status" nolabel="1"/>
+                    </group>
+                    
+                    <!-- FIXED: Corrected field names to match the model -->
+                    <group string="Setup Options">
+                        <field name="configure_ams_accounts"/>
+                        <field name="configure_existing_products"/>
+                        <field name="setup_default_journals"/>
+                        <field name="validate_account_setup"/>
+                    </group>
+                    
+                    <!-- FIXED: Account configuration information -->
+                    <group string="Account Configuration" invisible="not configure_ams_accounts">
                         <div class="alert alert-info">
-                            <p>The following AMS-specific accounts will be created:</p>
+                            <p>The following operations will be performed:</p>
                             <ul>
-                                <li>Membership Revenue - Individual (4100)</li>
-                                <li>Membership Revenue - Enterprise (4110)</li>
-                                <li>Publication Revenue (4200)</li>
-                                <li>Chapter Revenue (4300)</li>
-                                <li>Deferred Membership Revenue (2300)</li>
-                                <li>Accounts Receivable - Memberships (1200)</li>
+                                <li>Review existing accounts for AMS categories</li>
+                                <li>Configure accounts with proper AMS classifications</li>
+                                <li>Ensure required accounts exist for AMS operations</li>
                             </ul>
                         </div>
                     </group>
                     
+                    <!-- FIXED: Product configuration information -->
                     <group string="Product Configuration" invisible="not configure_existing_products">
                         <div class="alert alert-warning" invisible="unconfigured_product_count == 0">
                             <p>There are <field name="unconfigured_product_count" readonly="1"/> AMS products that need account configuration.</p>
@@ -46,10 +54,27 @@
                         </div>
                     </group>
                     
+                    <!-- FIXED: Journal setup information -->
                     <group string="Journal Setup" invisible="not setup_default_journals">
                         <div class="alert alert-info">
-                            <p>An AMS Sales journal will be created if it doesn't already exist.</p>
-                            <p>This journal can be used for AMS-specific sales transactions.</p>
+                            <p>AMS-specific journals will be verified and created if needed:</p>
+                            <ul>
+                                <li>AMS Sales Journal (AMS)</li>
+                                <li>Revenue Recognition Journal (REVR)</li>
+                                <li>Membership Payments Journal (MBPAY)</li>
+                            </ul>
+                        </div>
+                    </group>
+                    
+                    <!-- FIXED: Validation information -->
+                    <group string="Validation" invisible="not validate_account_setup">
+                        <div class="alert alert-info">
+                            <p>The setup will validate:</p>
+                            <ul>
+                                <li>Required AMS account categories exist</li>
+                                <li>Account types are properly configured</li>
+                                <li>No missing dependencies or conflicts</li>
+                            </ul>
                         </div>
                     </group>
                 </sheet>

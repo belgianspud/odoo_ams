@@ -54,7 +54,7 @@
         </record>
         
         <!-- =================================================================== -->
-        <!-- PAYMENT TERMS - Safe to create as they use names, not codes       -->
+        <!-- PAYMENT TERMS - FIXED for Odoo 18 compatibility                   -->
         <!-- =================================================================== -->
         
         <!-- Net 30 for Enterprise Memberships -->
@@ -64,12 +64,12 @@
             <field name="sequence">10</field>
         </record>
         
+        <!-- FIXED: Updated for Odoo 18 compatibility - corrected field names and values -->
         <record id="payment_term_enterprise_membership_line" model="account.payment.term.line">
             <field name="payment_id" ref="payment_term_enterprise_membership"/>
-            <field name="value">balance</field>
-            <field name="value_amount">0</field>
-            <field name="days">30</field>
-            <field name="sequence">1</field>
+            <field name="value">percent</field>
+            <field name="value_amount">100</field>
+            <field name="nb_days">30</field>
         </record>
         
         <!-- Immediate Payment for Individual Memberships -->
@@ -79,12 +79,12 @@
             <field name="sequence">5</field>
         </record>
         
+        <!-- FIXED: Updated for Odoo 18 compatibility - corrected field names and values -->
         <record id="payment_term_individual_membership_line" model="account.payment.term.line">
             <field name="payment_id" ref="payment_term_individual_membership"/>
-            <field name="value">balance</field>
-            <field name="value_amount">0</field>
-            <field name="days">0</field>
-            <field name="sequence">1</field>
+            <field name="value">percent</field>
+            <field name="value_amount">100</field>
+            <field name="nb_days">0</field>
         </record>
         
         <!-- Net 15 for Event Registration -->
@@ -94,12 +94,12 @@
             <field name="sequence">8</field>
         </record>
         
+        <!-- FIXED: Updated for Odoo 18 compatibility - corrected field names and values -->
         <record id="payment_term_event_registration_line" model="account.payment.term.line">
             <field name="payment_id" ref="payment_term_event_registration"/>
-            <field name="value">balance</field>
-            <field name="value_amount">0</field>
-            <field name="days">15</field>
-            <field name="sequence">1</field>
+            <field name="value">percent</field>
+            <field name="value_amount">100</field>
+            <field name="nb_days">15</field>
         </record>
         
         <!-- =================================================================== -->
