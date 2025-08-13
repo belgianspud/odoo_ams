@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- AMS Accounting Setup Wizard -->
+    <!-- User-Friendly AMS Accounting Setup Wizard -->
     <record id="view_ams_accounting_setup_wizard_form" model="ir.ui.view">
         <field name="name">ams.accounting.setup.wizard.form</field>
         <field name="model">ams.accounting.setup.wizard</field>
@@ -8,89 +8,197 @@
             <form>
                 <sheet>
                     <div class="oe_title">
-                        <h1>AMS Accounting Setup</h1>
-                        <p>Set up your association's chart of accounts and configure default GL accounts for AMS products.</p>
+                        <h1>🚀 Revenue Tracking Setup</h1>
+                        <p>Let's set up automatic revenue tracking for your association in just a few clicks!</p>
                     </div>
                     
-                    <!-- FIXED: Current status display first -->
-                    <group string="Current Status" col="4">
-                        <field name="existing_ams_accounts" readonly="1"/>
-                        <field name="accounts_need_categories" readonly="1"/>
-                        <field name="unconfigured_product_count" readonly="1"/>
+                    <!-- Current Status Overview -->
+                    <group string="📊 Current Status" col="4">
+                        <field name="existing_ams_accounts" string="💰 Revenue Accounts Ready" readonly="1"
+                               help="Number of revenue tracking accounts already configured"/>
+                        <field name="accounts_need_categories" string="🔧 Accounts Need Setup" readonly="1"
+                               help="Number of accounts that need to be configured for revenue tracking"/>
+                        <field name="unconfigured_product_count" string="📦 Products Need Setup" readonly="1"
+                               help="Number of subscription products that need revenue tracking configuration"/>
                     </group>
                     
-                    <!-- FIXED: Status overview -->
-                    <group string="Setup Status">
+                    <!-- Status Display -->
+                    <group string="🎯 Setup Progress">
                         <field name="setup_status" nolabel="1"/>
                     </group>
                     
-                    <!-- FIXED: Corrected field names to match the model -->
-                    <group string="Setup Options">
-                        <field name="configure_ams_accounts"/>
-                        <field name="configure_existing_products"/>
-                        <field name="setup_default_journals"/>
-                        <field name="validate_account_setup"/>
-                    </group>
-                    
-                    <!-- FIXED: Account configuration information -->
-                    <group string="Account Configuration" invisible="not configure_ams_accounts">
+                    <!-- Setup Options with User-Friendly Labels -->
+                    <group string="✅ What Should We Set Up?">
                         <div class="alert alert-info">
-                            <p>The following operations will be performed:</p>
-                            <ul>
-                                <li>Review existing accounts for AMS categories</li>
-                                <li>Configure accounts with proper AMS classifications</li>
-                                <li>Ensure required accounts exist for AMS operations</li>
-                            </ul>
+                            <p><strong>💡 Recommended:</strong> Check all options for complete automatic setup</p>
                         </div>
+                        
+                        <field name="configure_ams_accounts" 
+                               string="🏦 Set Up Payment Accounts"
+                               help="Configure accounts to track revenue, customer payments, and outstanding invoices"/>
+                        
+                        <field name="configure_existing_products" 
+                               string="📦 Configure Product Revenue Tracking"
+                               help="Set up automatic revenue tracking for your subscription products"/>
+                        
+                        <field name="setup_default_journals" 
+                               string="📋 Create Revenue Tracking Journals"
+                               help="Create specialized journals for processing association revenue and payments"/>
+                        
+                        <field name="validate_account_setup" 
+                               string="🔍 Validate Configuration"
+                               help="Run checks to ensure everything is set up correctly"/>
                     </group>
                     
-                    <!-- FIXED: Product configuration information -->
-                    <group string="Product Configuration" invisible="not configure_existing_products">
-                        <div class="alert alert-warning" invisible="unconfigured_product_count == 0">
-                            <p>There are <field name="unconfigured_product_count" readonly="1"/> AMS products that need account configuration.</p>
+                    <!-- What Each Option Does -->
+                    <div invisible="not configure_ams_accounts">
+                        <div class="card mb-3">
+                            <div class="card-header bg-primary text-white">
+                                <h6><i class="fa fa-bank"/> 🏦 Payment Accounts Setup</h6>
+                            </div>
+                            <div class="card-body">
+                                <p>This will create and configure accounts for:</p>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <ul>
+                                            <li>💰 <strong>Revenue Accounts:</strong> Where earnings are recorded</li>
+                                            <li>📋 <strong>Customer Invoices:</strong> Track money owed by members</li>
+                                            <li>💳 <strong>Payment Deposits:</strong> Where customer payments go</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <ul>
+                                            <li>📊 <strong>Prepaid Revenue:</strong> For annual memberships paid in advance</li>
+                                            <li>🎯 <strong>Different Revenue Types:</strong> Individual, Enterprise, Publications</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="alert alert-success" invisible="unconfigured_product_count != 0">
-                            <p>All AMS products are already configured.</p>
-                        </div>
-                    </group>
+                    </div>
                     
-                    <!-- FIXED: Journal setup information -->
-                    <group string="Journal Setup" invisible="not setup_default_journals">
-                        <div class="alert alert-info">
-                            <p>AMS-specific journals will be verified and created if needed:</p>
-                            <ul>
-                                <li>AMS Sales Journal (AMS)</li>
-                                <li>Revenue Recognition Journal (REVR)</li>
-                                <li>Membership Payments Journal (MBPAY)</li>
-                            </ul>
+                    <div invisible="not configure_existing_products">
+                        <div class="card mb-3">
+                            <div class="card-header bg-success text-white">
+                                <h6><i class="fa fa-cube"/> 📦 Product Revenue Setup</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <p><strong>For each subscription product, we'll configure:</strong></p>
+                                        <ul>
+                                            <li>✅ Which revenue account to use</li>
+                                            <li>✅ How to track customer payments</li>
+                                            <li>✅ Automatic revenue recognition (for annual subscriptions)</li>
+                                            <li>✅ Financial reporting integration</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="alert alert-light" invisible="unconfigured_product_count == 0">
+                                            <strong>📊 Impact:</strong><br/>
+                                            <span class="badge badge-warning"><field name="unconfigured_product_count" readonly="1"/></span> products will be configured
+                                        </div>
+                                        <div class="alert alert-success" invisible="unconfigured_product_count != 0">
+                                            <strong>✅ All Set!</strong><br/>
+                                            All products are already configured
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </group>
+                    </div>
                     
-                    <!-- FIXED: Validation information -->
-                    <group string="Validation" invisible="not validate_account_setup">
-                        <div class="alert alert-info">
-                            <p>The setup will validate:</p>
-                            <ul>
-                                <li>Required AMS account categories exist</li>
-                                <li>Account types are properly configured</li>
-                                <li>No missing dependencies or conflicts</li>
-                            </ul>
+                    <div invisible="not setup_default_journals">
+                        <div class="card mb-3">
+                            <div class="card-header bg-info text-white">
+                                <h6><i class="fa fa-book"/> 📋 Journal Setup</h6>
+                            </div>
+                            <div class="card-body">
+                                <p>We'll create specialized journals for better organization:</p>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <strong>📄 AMS Sales Journal</strong><br/>
+                                        <small>For subscription invoices and sales</small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>🔄 Revenue Recognition Journal</strong><br/>
+                                        <small>For monthly revenue processing</small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>💳 Membership Payments Journal</strong><br/>
+                                        <small>For tracking customer payments</small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </group>
+                    </div>
+                    
+                    <div invisible="not validate_account_setup">
+                        <div class="card mb-3">
+                            <div class="card-header bg-warning text-dark">
+                                <h6><i class="fa fa-check-circle"/> 🔍 Validation Checks</h6>
+                            </div>
+                            <div class="card-body">
+                                <p>We'll verify that everything is configured correctly:</p>
+                                <ul>
+                                    <li>✅ All required revenue accounts exist</li>
+                                    <li>✅ Account types are set up properly</li>
+                                    <li>✅ Products have the right account assignments</li>
+                                    <li>✅ No conflicts or missing dependencies</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Expected Results -->
+                    <div class="alert alert-success mt-4">
+                        <h6><i class="fa fa-trophy"/> 🎉 What You'll Get After Setup:</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="mb-0">
+                                    <li>🎯 <strong>Automatic Revenue Tracking:</strong> No manual entries needed</li>
+                                    <li>📊 <strong>Financial Reports:</strong> See revenue trends and payment status</li>
+                                    <li>💳 <strong>Payment Monitoring:</strong> Track what customers owe</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="mb-0">
+                                    <li>🏦 <strong>Professional Accounting:</strong> Proper revenue recognition</li>
+                                    <li>📈 <strong>Business Insights:</strong> Understand your revenue patterns</li>
+                                    <li>⚡ <strong>Time Savings:</strong> Automated financial processes</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </sheet>
                 <footer>
-                    <button name="action_run_setup" string="Run Setup" type="object" class="btn-primary"/>
-                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    <button name="action_run_setup" string="🚀 Run Setup Now" type="object" class="btn-primary btn-lg"/>
+                    <button string="❌ Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
         </field>
     </record>
 
-    <!-- Setup Wizard Action -->
+    <!-- Updated Setup Wizard Action with User-Friendly Name -->
     <record id="action_ams_accounting_setup_wizard" model="ir.actions.act_window">
-        <field name="name">AMS Accounting Setup</field>
+        <field name="name">🚀 Revenue Tracking Setup</field>
         <field name="res_model">ams.accounting.setup.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                🚀 Let's set up revenue tracking!
+            </p>
+            <p>
+                This wizard will configure automatic revenue tracking for your association:
+                <br/>• Set up payment accounts
+                <br/>• Configure product revenue tracking  
+                <br/>• Create specialized journals
+                <br/>• Validate everything works correctly
+            </p>
+            <p>
+                <em>💡 Takes just 2-3 minutes and handles everything automatically!</em>
+            </p>
+        </field>
     </record>
 </odoo>

@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- =================================================================== -->
+    <!-- MAIN DASHBOARD ACTION                                               -->
+    <!-- =================================================================== -->
+    
+    <record id="action_ams_accounting_dashboard" model="ir.actions.act_window">
+        <field name="name">💰 Revenue &amp; Payments Dashboard</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">dashboard,graph,pivot,list</field>
+        <field name="domain">[('move_type', '=', 'out_invoice'), ('has_ams_products', '=', True)]</field>
+        <field name="context">{
+            'search_default_posted': 1,
+            'group_by': ['date:month'],
+            'dashboard_mode': True
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                📊 Your financial dashboard will appear here!
+            </p>
+            <p>
+                <strong>Track your association's financial health:</strong>
+            </p>
+            <ul>
+                <li>💰 Monthly revenue trends</li>
+                <li>💳 Customer payment status</li>
+                <li>📈 Subscription performance</li>
+                <li>⚡ Quick actions for common tasks</li>
+            </ul>
+            <p>
+                <em>💡 Data will appear once you start creating customer invoices.</em>
+            </p>
+        </field>
+    </record>
+
+    <!-- =================================================================== -->
+    <!-- DASHBOARD VIEW (Custom Layout)                                     -->
+    <!-- =================================================================== -->
+    
+    <record id="view_ams_accounting_dashboard" model="ir.ui.view">
+        <field name="name">ams.accounting.dashboard</field>
+        <field name="model">account.move</field>
+        <field name="arch" type="xml">
+            <dashboard string="💰 Revenue &amp; Payments Dashboard">
+                <view type="graph" ref="view_ams_revenue_graph_dashboard"/>
+                <group expand="1" string="📊 Financial Overview">
+                    <group expand="0" string="💰 Revenue This Month" col="2">
+                        <aggregate name="current_month_revenue" field="amount_total" 
+                                   domain="[('date', '&gt;=', (context_today().replace(day=1)).strftime('%Y-%m-%d')), ('date', '&lt;', ((context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1)).strftime('%Y-%m-%d')), ('state', '=', 'posted')]"
+                                   help="Total revenue invoiced this month"/>
+                        <aggregate name="current_month_invoices" field="id" 
+                                   domain="[('date', '&gt;=', (context_today().replace(day=1)).strftime('%Y-%m-%d')), ('date', '&lt;', ((context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1)).strftime('%Y-%m-%d')), ('state', '=', 'posted')]"
+                                   help="Number of invoices this month"/>
+                    </group>
+                    <group expand="0" string="💳 Outstanding Payments" col="2">
+                        <aggregate name="outstanding_amount" field="amount_residual" 
+                                   domain="[('payment_state', 'in', ['not_paid', 'partial']), ('state', '=', 'posted')]"
+                                   help="Total amount owed by customers"/>
+                        <aggregate name="outstanding_count" field="id" 
+                                   domain="[('payment_state', 'in', ['not_paid', 'partial']), ('state', '=', 'posted')]"
+                                   help="Number of unpaid invoices"/>
+                    </group>
+                    <group expand="0" string="📈 Performance" col="2">
+                        <aggregate name="avg_invoice_value" field="amount_total" 
+                                   domain="[('state', '=', 'posted')]" 
+                                   avg="1"
+                                   help="Average invoice amount"/>
+                        <aggregate name="total_customers" field="partner_id" 
+                                   domain="[('state', '=', 'posted')]"
+                                   help="Total customers invoiced"/>
+                    </group>
+                </group>
+                
+                <group expand="1" string="⚡ Quick Actions">
+                    <button string="📄 View Customer Invoices" type="action" 
+                            name="%(action_move_ams_invoices)d" 
+                            class="btn-primary"/>
+                    <button string="💳 Check Payment Status" type="action" 
+                            name="%(action_ams_payment_tracking)d" 
+                            class="btn-info"/>
+                    <button string="🏦 Review Payment Accounts" type="action" 
+                            name="%(action_account_account_ams)d" 
+                            class="btn-secondary"/>
+                    <button string="🔧 Run Setup Wizard" type="action" 
+                            name="%(action_ams_accounting_setup_wizard)d" 
+                            class="btn-success"/>
+                </group>
+                
+                <group expand="1" string="📊 Visual Reports">
+                    <graph string="💰 Monthly Revenue Trend" type="line" stacked="False">
+                        <field name="date" interval="month"/>
+                        <field name="amount_total" type="measure"/>
+                    </graph>
+                    <graph string="📈 Payment Status Breakdown" type="pie">
+                        <field name="payment_state"/>
+                        <field name="amount_total" type="measure"/>
+                    </graph>
+                </group>
+            </dashboard>
+        </field>
+    </record>
+
+    <!-- =================================================================== -->
+    <!-- SPECIALIZED GRAPH VIEWS FOR DASHBOARD                              -->
+    <!-- =================================================================== -->
+    
+    <record id="view_ams_revenue_graph_dashboard" model="ir.ui.view">
+        <field name="name">ams.revenue.graph.dashboard</field>
+        <field name="model">account.move</field>
+        <field name="arch" type="xml">
+            <graph string="💰 Revenue Trends" type="line" sample="1">
+                <field name="date" interval="month"/>
+                <field name="amount_total" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_ams_payment_status_graph" model="ir.ui.view">
+        <field name="name">ams.payment.status.graph</field>
+        <field name="model">account.move</field>
+        <field name="arch" type="xml">
+            <graph string="💳 Payment Status" type="pie" sample="1">
+                <field name="payment_state"/>
+                <field name="amount_total" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_ams_customer_revenue_pivot" model="ir.ui.view">
+        <field name="name">ams.customer.revenue.pivot</field>
+        <field name="model">account.move</field>
+        <field name="arch" type="xml">
+            <pivot string="📊 Customer Revenue Analysis" sample="1">
+                <field name="partner_id" type="row"/>
+                <field name="date" interval="month" type="col"/>
+                <field name="amount_total" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- =================================================================== -->
+    <!-- SPECIALIZED DASHBOARD ACTIONS                                      -->
+    <!-- =================================================================== -->
+    
+    <!-- Revenue Health Overview -->
+    <record id="action_ams_revenue_health_overview" model="ir.actions.act_window">
+        <field name="name">📊 Revenue Health Overview</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">graph,pivot</field>
+        <field name="view_id" ref="view_ams_revenue_graph_dashboard"/>
+        <field name="domain">[('move_type', '=', 'out_invoice'), ('has_ams_products', '=', True), ('state', '=', 'posted')]</field>
+        <field name="context">{
+            'search_default_this_year': 1,
+            'group_by': ['date:month']
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                📈 Your revenue trends will appear here!
+            </p>
+            <p>
+                Visual analysis of your association's revenue patterns:
+                <br/>• Monthly revenue growth
+                <br/>• Seasonal trends  
+                <br/>• Year-over-year comparison
+            </p>
+        </field>
+    </record>
+
+    <!-- Payment Status Dashboard -->
+    <record id="action_ams_payment_status_dashboard" model="ir.actions.act_window">
+        <field name="name">💳 Payment Status Dashboard</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">graph,list</field>
+        <field name="view_id" ref="view_ams_payment_status_graph"/>
+        <field name="domain">[('move_type', '=', 'out_invoice'), ('has_ams_products', '=', True)]</field>
+        <field name="context">{
+            'search_default_unpaid': 1,
+            'group_by': ['payment_state']
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                💳 Payment tracking dashboard
+            </p>
+            <p>
+                Monitor customer payment status:
+                <br/>• Outstanding invoices
+                <br/>• Payment completion rates
+                <br/>• Follow-up needed
+            </p>
+        </field>
+    </record>
+
+    <!-- Customer Revenue Analysis -->
+    <record id="action_ams_customer_revenue_analysis" model="ir.actions.act_window">
+        <field name="name">👥 Customer Revenue Analysis</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">pivot,graph</field>
+        <field name="view_id" ref="view_ams_customer_revenue_pivot"/>
+        <field name="domain">[('move_type', '=', 'out_invoice'), ('has_ams_products', '=', True), ('state', '=', 'posted')]</field>
+        <field name="context">{
+            'group_by': ['partner_id'],
+            'search_default_this_year': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                👥 Customer analysis dashboard
+            </p>
+            <p>
+                Understand your customer revenue patterns:
+                <br/>• Top revenue-generating customers
+                <br/>• Customer payment history
+                <br/>• Membership value analysis
+            </p>
+        </field>
+    </record>
+
+    <!-- =================================================================== -->
+    <!-- QUICK SETUP DASHBOARD                                              -->
+    <!-- =================================================================== -->
+    
+    <record id="action_ams_quick_setup_dashboard" model="ir.actions.act_window">
+        <field name="name">🚀 Quick Setup Dashboard</field>
+        <field name="res_model">ams.accounting.config</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                🚀 Quick setup for common tasks
+            </p>
+            <p>
+                Common accounting setup and maintenance tasks:
+                <br/>• Configure new products
+                <br/>• Run account setup wizard
+                <br/>• Check system health
+            </p>
+        </field>
+    </record>
+
+    <!-- =================================================================== -->
+    <!-- MENU INTEGRATION                                                   -->
+    <!-- =================================================================== -->
+    
+    <!-- Update the main dashboard menu item -->
+    <record model="ir.ui.menu" id="menu_ams_revenue_health">
+        <field name="action" ref="action_ams_accounting_dashboard"/>
+    </record>
+
+    <!-- Add specialized dashboard menu items -->
+    <menuitem id="menu_ams_revenue_health_details"
+              name="📈 Revenue Trends"
+              parent="menu_ams_financial_reports"
+              action="action_ams_revenue_health_overview"
+              sequence="15"/>
+
+    <menuitem id="menu_ams_payment_status_dashboard"
+              name="💳 Payment Dashboard"
+              parent="menu_ams_financial_reports"
+              action="action_ams_payment_status_dashboard"
+              sequence="25"/>
+
+    <menuitem id="menu_ams_customer_analysis"
+              name="👥 Customer Analysis"
+              parent="menu_ams_financial_reports"
+              action="action_ams_customer_revenue_analysis"
+              sequence="35"/>
+
+    <!-- =================================================================== -->
+    <!-- DASHBOARD SEARCH FILTERS                                           -->
+    <!-- =================================================================== -->
+    
+    <record id="view_ams_dashboard_search" model="ir.ui.view">
+        <field name="name">ams.dashboard.search</field>
+        <field name="model">account.move</field>
+        <field name="arch" type="xml">
+            <search string="💰 Revenue &amp; Payments">
+                <field name="name" string="Invoice Number"/>
+                <field name="partner_id" string="Customer"/>
+                <field name="amount_total" string="Amount"/>
+                
+                <!-- User-friendly date filters -->
+                <filter name="filter_this_month" string="📅 This Month" 
+                        domain="[('date', '&gt;=', (context_today().replace(day=1)).strftime('%Y-%m-%d')), ('date', '&lt;', ((context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1)).strftime('%Y-%m-%d'))]"/>
+                <filter name="filter_this_quarter" string="📅 This Quarter" 
+                        domain="[('date', '&gt;=', (context_today() - datetime.timedelta(days=90)).strftime('%Y-%m-%d'))]"/>
+                <filter name="filter_this_year" string="📅 This Year" 
+                        domain="[('date', '&gt;=', context_today().replace(month=1, day=1).strftime('%Y-%m-%d'))]"/>
+                
+                <!-- Payment status filters -->
+                <separator/>
+                <filter name="filter_paid" string="✅ Paid" 
+                        domain="[('payment_state', '=', 'paid')]"/>
+                <filter name="filter_unpaid" string="⏳ Unpaid" 
+                        domain="[('payment_state', 'in', ['not_paid', 'partial'])]"/>
+                <filter name="filter_overdue" string="⚠️ Overdue" 
+                        domain="[('payment_state', 'in', ['not_paid', 'partial']), ('invoice_date_due', '&lt;', context_today())]"/>
+                
+                <!-- Standard filters -->
+                <separator/>
+                <filter name="filter_posted" string="📋 Posted" 
+                        domain="[('state', '=', 'posted')]"/>
+                
+                <group expand="0" string="📊 Group By">
+                    <filter name="group_by_month" string="📅 Month" 
+                            domain="[]" context="{'group_by': 'date:month'}"/>
+                    <filter name="group_by_customer" string="👥 Customer" 
+                            domain="[]" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_by_payment_state" string="💳 Payment Status" 
+                            domain="[]" context="{'group_by': 'payment_state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+</odoo>

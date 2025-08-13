@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- AMS Accounting Configuration Form -->
+    <!-- User-Friendly AMS Accounting Configuration Form -->
     <record id="view_ams_accounting_config_form" model="ir.ui.view">
         <field name="name">ams.accounting.config.form</field>
         <field name="model">ams.accounting.config</field>
@@ -8,57 +8,213 @@
             <form>
                 <sheet>
                     <div class="oe_title">
-                        <h1>AMS Accounting Configuration</h1>
-                        <p>Configure default GL accounts and settings for AMS products.</p>
+                        <h1>⚙️ Revenue Tracking Settings</h1>
+                        <p>Configure how your association tracks revenue and manages customer payments.</p>
                     </div>
                     
-                    <group string="Statistics" col="4">
-                        <field name="total_ams_products" readonly="1"/>
-                        <field name="unconfigured_products" readonly="1"/>
+                    <!-- Status Overview -->
+                    <group string="📊 Current Status" col="4">
+                        <field name="total_ams_products" string="📦 Products with Revenue Tracking" readonly="1"
+                               help="Number of subscription products set up for automatic revenue tracking"/>
+                        <field name="unconfigured_products" string="⚠️ Products Needing Setup" readonly="1"
+                               help="Number of products that still need revenue tracking configuration"/>
                     </group>
                     
+                    <!-- Alert for Products Needing Configuration -->
                     <div class="alert alert-warning" role="alert" invisible="unconfigured_products == 0">
-                        <h6><i class="fa fa-exclamation-triangle"/> Products Need Configuration</h6>
-                        <p>There are <field name="unconfigured_products" readonly="1"/> AMS products that need account configuration.</p>
+                        <h6><i class="fa fa-exclamation-triangle"/> 📦 Products Need Configuration</h6>
+                        <p>There are <field name="unconfigured_products" readonly="1"/> subscription products that need revenue tracking setup.</p>
                         <button name="action_view_unconfigured_products" type="object" class="btn btn-warning btn-sm">
-                            <i class="fa fa-list"/> View Unconfigured Products
+                            <i class="fa fa-list"/> View Products Needing Setup
                         </button>
                         <button name="action_configure_all_products" type="object" class="btn btn-primary btn-sm">
-                            <i class="fa fa-magic"/> Auto-Configure All
+                            <i class="fa fa-magic"/> Auto-Configure All Products
                         </button>
                     </div>
                     
-                    <group string="Default Revenue Accounts">
-                        <field name="default_membership_revenue_account_id"/>
-                        <field name="default_publication_revenue_account_id"/>
-                        <field name="default_chapter_revenue_account_id"/>
+                    <!-- Success Message -->
+                    <div class="alert alert-success" role="alert" invisible="unconfigured_products != 0">
+                        <h6><i class="fa fa-check-circle"/> ✅ All Products Configured</h6>
+                        <p>All your subscription products are properly set up for revenue tracking!</p>
+                    </div>
+                    
+                    <!-- Default Account Settings -->
+                    <group string="🏦 Default Payment Accounts">
+                        <div class="alert alert-info">
+                            <p><strong>💡 What are default accounts?</strong> These accounts are automatically assigned to new products, saving you setup time.</p>
+                        </div>
+                        
+                        <field name="default_membership_revenue_account_id" 
+                               string="💰 Membership Revenue Account"
+                               help="Where membership earnings are recorded (Individual &amp; Enterprise)"/>
+                        <field name="default_publication_revenue_account_id" 
+                               string="📚 Publication Revenue Account"
+                               help="Where newsletter and magazine subscription earnings are recorded"/>
+                        <field name="default_chapter_revenue_account_id" 
+                               string="🏢 Chapter Revenue Account"
+                               help="Where local chapter membership earnings are recorded"/>
                     </group>
                     
-                    <group string="Default Asset &amp; Liability Accounts">
-                        <field name="default_subscription_ar_account_id"/>
-                        <field name="default_deferred_revenue_account_id"/>
-                        <field name="default_cash_account_id"/>
+                    <group string="💳 Customer Payment Accounts">
+                        <field name="default_subscription_ar_account_id" 
+                               string="📋 Outstanding Invoices Account"
+                               help="Tracks money owed by customers for subscriptions"/>
+                        <field name="default_deferred_revenue_account_id" 
+                               string="📊 Prepaid Revenue Account"
+                               help="Holds money received for future services (like annual memberships paid in advance)"/>
+                        <field name="default_cash_account_id" 
+                               string="💰 Payment Deposits Account"
+                               help="Where customer payments are deposited"/>
                     </group>
                     
-                    <group string="AMS Integration Settings">
-                        <field name="auto_create_journal_entries"/>
-                        <field name="use_product_specific_accounts"/>
-                        <field name="ams_journal_id"/>
+                    <!-- Automation Settings -->
+                    <group string="⚡ Automation Settings">
+                        <div class="alert alert-info">
+                            <p><strong>🤖 Automation saves time!</strong> These settings control how much the system does automatically vs requiring manual approval.</p>
+                        </div>
+                        
+                        <field name="auto_create_journal_entries" 
+                               string="🔄 Automatic Transaction Recording"
+                               help="Automatically create accounting entries when invoices are posted"/>
+                        <field name="use_product_specific_accounts" 
+                               string="🎯 Use Product-Specific Accounts"
+                               help="Use accounts configured on individual products instead of company defaults"/>
+                        <field name="ams_journal_id" 
+                               string="📖 Association Journal"
+                               help="Specialized journal for association revenue transactions"/>
                     </group>
+                    
+                    <!-- Quick Actions -->
+                    <group string="🚀 Quick Actions">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <button name="action_setup_ams_accounts" type="object" class="btn btn-primary btn-block">
+                                    <i class="fa fa-magic"/> Run Setup Wizard
+                                </button>
+                                <small class="text-muted">Set up accounts automatically</small>
+                            </div>
+                            <div class="col-md-3">
+                                <button name="action_configure_all_products" type="object" class="btn btn-success btn-block">
+                                    <i class="fa fa-cube"/> Configure All Products
+                                </button>
+                                <small class="text-muted">Auto-setup revenue tracking</small>
+                            </div>
+                            <div class="col-md-3">
+                                <button name="action_view_unconfigured_products" type="object" class="btn btn-info btn-block">
+                                    <i class="fa fa-search"/> Find Issues
+                                </button>
+                                <small class="text-muted">See what needs attention</small>
+                            </div>
+                            <div class="col-md-3">
+                                <button name="%(action_account_account_ams)d" type="action" class="btn btn-secondary btn-block">
+                                    <i class="fa fa-bank"/> View Accounts
+                                </button>
+                                <small class="text-muted">Review payment accounts</small>
+                            </div>
+                        </div>
+                    </group>
+                    
+                    <!-- Advanced Settings (Collapsed) -->
+                    <div class="card mt-4">
+                        <div class="card-header" data-toggle="collapse" data-target="#advancedSettings" style="cursor: pointer;">
+                            <h6><i class="fa fa-gear"/> 🔧 Advanced Settings <small class="text-muted">(Click to expand)</small></h6>
+                        </div>
+                        <div class="collapse" id="advancedSettings">
+                            <div class="card-body">
+                                <div class="alert alert-warning">
+                                    <strong>⚠️ For Advanced Users Only</strong><br/>
+                                    These settings affect how the system processes revenue. Only change if you understand the accounting implications.
+                                </div>
+                                
+                                <group string="🔧 Technical Configuration">
+                                    <field name="auto_create_journal_entries" 
+                                           string="Auto-Create Journal Entries"
+                                           help="Technical: Automatically create GL entries"/>
+                                    <field name="use_product_specific_accounts" 
+                                           string="Use Product Account Overrides"
+                                           help="Technical: Product accounts override company defaults"/>
+                                    <field name="ams_journal_id" 
+                                           string="AMS Journal"
+                                           help="Technical: Journal for AMS transactions"/>
+                                </group>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </sheet>
                 <footer>
-                    <button name="action_setup_ams_accounts" string="Setup Chart of Accounts" type="object" class="btn-primary"/>
-                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    <button name="action_setup_ams_accounts" string="🚀 Run Setup Wizard" type="object" class="btn-primary"/>
+                    <button string="✅ Save Settings" class="btn-success" special="save"/>
+                    <button string="❌ Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
         </field>
     </record>
 
-    <!-- AMS Accounting Configuration Action -->
+    <!-- Updated Configuration Action with User-Friendly Name -->
     <record id="action_ams_accounting_config" model="ir.actions.act_window">
-        <field name="name">AMS Accounting Configuration</field>
+        <field name="name">⚙️ Revenue Tracking Settings</field>
         <field name="res_model">ams.accounting.config</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                ⚙️ Configure revenue tracking settings
+            </p>
+            <p>
+                <strong>Manage how your association handles revenue:</strong>
+            </p>
+            <ul>
+                <li>🏦 <strong>Default Accounts:</strong> Set up accounts for new products</li>
+                <li>⚡ <strong>Automation:</strong> Control what happens automatically</li>
+                <li>🚀 <strong>Quick Setup:</strong> Run wizards to configure everything</li>
+                <li>📊 <strong>Monitor Status:</strong> See what needs attention</li>
+            </ul>
+            <p>
+                <em>💡 Most settings can be configured automatically using the Setup Wizard!</em>
+            </p>
+        </field>
+    </record>
+
+    <!-- Quick Setup Dashboard Action -->
+    <record id="action_ams_revenue_quick_setup" model="ir.actions.act_window">
+        <field name="name">🚀 Quick Revenue Setup</field>
+        <field name="res_model">ams.accounting.config</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_show_quick_actions': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                🚀 Quick setup for revenue tracking
+            </p>
+            <p>
+                Fast access to common configuration tasks:
+                <br/>• Run setup wizard
+                <br/>• Configure unconfigured products  
+                <br/>• Check system status
+                <br/>• Review payment accounts
+            </p>
+        </field>
+    </record>
+
+    <!-- System Health Check Action -->
+    <record id="action_ams_system_health" model="ir.actions.act_window">
+        <field name="name">🏥 System Health Check</field>
+        <field name="res_model">ams.accounting.config</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'show_health_check': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                🏥 Check your revenue tracking health
+            </p>
+            <p>
+                <strong>System health overview:</strong>
+                <br/>• Products needing configuration
+                <br/>• Account setup status
+                <br/>• Automation settings review
+                <br/>• Recommendations for improvements
+            </p>
+        </field>
     </record>
 </odoo>

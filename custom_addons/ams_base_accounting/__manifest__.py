@@ -52,8 +52,9 @@ If you encounter account conflicts, run the Setup Wizard from AMS → Configurat
         'views/product_template_views.xml',
         'views/ams_accounting_config_views.xml',
         'views/account_move_views.xml',
+        'views/ams_accounting_dashboard_views.xml',    # ADDED: Dashboard views
         'wizard/ams_accounting_setup_wizard_views.xml',
-        'views/ams_accounting_menu.xml',
+        'views/ams_accounting_menu.xml',               # Load menu last
     ],
     'demo': [
         # Demo data for testing (optional)
