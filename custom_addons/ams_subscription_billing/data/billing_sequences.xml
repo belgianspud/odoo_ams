@@ -28,5 +28,18 @@
             <field name="company_id" eval="False"/>
         </record>
 
+        <!-- Manual Billing Event Sequence -->
+        <record id="sequence_ams_manual_billing" model="ir.sequence">
+            <field name="name">AMS Manual Billing</field>
+            <field name="code">ams.manual.billing</field>
+            <field name="prefix">MB</field>
+            <field name="suffix"></field>
+            <field name="padding">6</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+            <field name="implementation">standard</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
     </data>
 </odoo>

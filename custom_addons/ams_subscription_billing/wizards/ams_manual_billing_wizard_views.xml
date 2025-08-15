@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Manual Billing Wizard Form View -->
+        <record id="view_ams_manual_billing_wizard_form" model="ir.ui.view">
+            <field name="name">ams.manual.billing.wizard.form</field>
+            <field name="model">ams.manual.billing.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Manual Billing">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>Manual Billing</h1>
+                            <p>Generate invoices manually for selected subscriptions</p>
+                        </div>
+                        
+                        <!-- Results Section (shown after processing) -->
+                        <div invisible="not result_message">
+                            <separator string="Billing Results"/>
+                            <field name="result_message" nolabel="1"/>
+                            
+                            <div class="oe_button_box mt16">
+                                <button name="action_view_created_invoices" type="object" 
+                                        string="View Created Invoices" class="btn-primary"/>
+                                <button name="action_close" type="object" 
+                                        string="Close" class="btn-secondary"/>
+                            </div>
+                        </div>
+                        
+                        <!-- Configuration Section (shown before processing) -->
+                        <div invisible="result_message">
+                            <group>
+                                <group string="Billing Configuration">
+                                    <field name="billing_date"/>
+                                    <field name="force_billing"/>
+                                    <field name="auto_send_invoices"/>
+                                </group>
+                                <group string="Statistics">
+                                    <field name="selected_count" readonly="1"/>
+                                    <field name="eligible_count" readonly="1"/>
+                                </group>
+                            </group>
+                            
+                            <separator string="Subscriptions to Bill"/>
+                            <field name="subscription_ids" nolabel="1">
+                                <tree string="Subscriptions" decoration-success="enable_auto_billing==True" decoration-muted="state!='active'">
+                                    <field name="name"/>
+                                    <field name="partner_id"/>
+                                    <field name="product_id"/>
+                                    <field name="next_billing_date"/>
+                                    <field name="payment_status"/>
+                                    <field name="total_invoiced" widget="monetary"/>
+                                    <field name="outstanding_balance" widget="monetary"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="enable_auto_billing" widget="boolean_toggle"/>
+                                </tree>
+                            </field>
+                            
+                            <div class="alert alert-info mt16" invisible="selected_count == 0">
+                                <p><i class="fa fa-info-circle"></i> 
+                                   <strong><field name="selected_count" readonly="1"/> subscription(s) selected</strong>, 
+                                   <strong><field name="eligible_count" readonly="1"/> eligible for billing</strong> on 
+                                   <field name="billing_date" readonly="1"/>
+                                </p>
+                            </div>
+                            
+                            <div class="alert alert-warning mt16" invisible="not selected_count or eligible_count > 0 or force_billing">
+                                <p><i class="fa fa-exclamation-triangle"></i> 
+                                   <strong>No subscriptions are due for billing on this date.</strong> 
+                                   Enable "Force Billing" to bill anyway.
+                                </p>
+                            </div>
+                            
+                            <div class="alert alert-success mt16" invisible="not force_billing or selected_count == 0">
+                                <p><i class="fa fa-bolt"></i> 
+                                   <strong>Force billing is enabled.</strong> 
+                                   All <field name="selected_count" readonly="1"/> selected subscriptions will be billed regardless of schedule.
+                                </p>
+                            </div>
+                        </div>
+                    </sheet>
+                    
+                    <footer invisible="result_message">
+                        <button name="action_process_billing" type="object" 
+                                string="Process Billing" class="btn-primary"
+                                invisible="selected_count == 0"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Manual Billing Action -->
+        <record id="action_ams_manual_billing_wizard" model="ir.actions.act_window">
+            <field name="name">Manual Billing</field>
+            <field name="res_model">ams.manual.billing.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="view_id" ref="view_ams_manual_billing_wizard_form"/>
+        </record>
+        
+        <!-- Subscription Bulk Manual Billing Action -->
+        <record id="action_ams_subscription_manual_billing" model="ir.actions.act_window">
+            <field name="name">Manual Billing</field>
+            <field name="res_model">ams.manual.billing.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="view_id" ref="view_ams_manual_billing_wizard_form"/>
+            <field name="binding_model_id" ref="ams_subscriptions.model_ams_subscription"/>
+            <field name="binding_view_types">list,form</field>
+        </record>
+        
+    </data>
+</odoo>
