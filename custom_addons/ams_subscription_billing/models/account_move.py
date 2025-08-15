@@ -7,11 +7,11 @@ import logging
 _logger = logging.getLogger(__name__)
 
 class AccountMove(models.Model):
-    """Extend Account Move (Invoice) with AMS Billing Functionality"""
+    """Simplified extension of Account Move (Invoice) for basic subscription billing tracking"""
     _inherit = 'account.move'
 
     # =============================================================================
-    # BILLING-SPECIFIC FIELDS
+    # BASIC BILLING TRACKING FIELDS
     # =============================================================================
     
     # AMS Billing References
@@ -37,31 +37,11 @@ class AccountMove(models.Model):
         help='Billing event that generated this invoice'
     )
     
-    billing_run_id = fields.Many2one(
-        'ams.billing.run',
-        string='Billing Run',
-        ondelete='set null',
-        help='Billing run that generated this invoice'
-    )
-    
-    proration_calculation_id = fields.Many2one(
-        'ams.proration.calculation',
-        string='Proration Calculation',
-        ondelete='set null',
-        help='Proration calculation for this invoice'
-    )
-    
     # Billing Type Classification
     billing_type = fields.Selection([
         ('regular', 'Regular Billing'),
-        ('proration', 'Proration Adjustment'),
-        ('upgrade', 'Upgrade Charge'),
-        ('downgrade', 'Downgrade Credit'),
-        ('one_time', 'One-time Charge'),
-        ('setup_fee', 'Setup Fee'),
-        ('overage', 'Usage Overage'),
-        ('penalty', 'Late Fee/Penalty'),
         ('manual', 'Manual Invoice'),
+        ('adjustment', 'Adjustment'),
     ], string='Billing Type', default='regular',
     help='Type of billing this invoice represents')
     
@@ -91,80 +71,7 @@ class AccountMove(models.Model):
     ], string='Billing Frequency',
     help='Billing frequency for this subscription invoice')
     
-    # Payment Processing
-    auto_payment_enabled = fields.Boolean(
-        string='Auto Payment Enabled',
-        help='Automatic payment processing is enabled for this invoice'
-    )
-    
-    auto_payment_attempted = fields.Boolean(
-        string='Auto Payment Attempted',
-        default=False,
-        readonly=True
-    )
-    
-    auto_payment_success = fields.Boolean(
-        string='Auto Payment Successful',
-        default=False,
-        readonly=True
-    )
-    
-    auto_payment_attempt_date = fields.Datetime(
-        string='Auto Payment Attempt Date',
-        readonly=True
-    )
-    
-    auto_payment_error = fields.Text(
-        string='Auto Payment Error',
-        readonly=True
-    )
-    
-    # Payment Retry Information
-    payment_retry_ids = fields.One2many(
-        'ams.payment.retry',
-        'invoice_id',
-        string='Payment Retries'
-    )
-    
-    payment_retry_count = fields.Integer(
-        string='Payment Retry Count',
-        compute='_compute_payment_retry_info',
-        store=True
-    )
-    
-    has_active_retry = fields.Boolean(
-        string='Has Active Payment Retry',
-        compute='_compute_payment_retry_info',
-        store=True
-    )
-    
-    # Dunning Information
-    dunning_process_ids = fields.One2many(
-        'ams.dunning.process',
-        'invoice_id',
-        string='Dunning Processes'
-    )
-    
-    in_dunning_process = fields.Boolean(
-        string='In Dunning Process',
-        compute='_compute_dunning_status',
-        store=True
-    )
-    
-    dunning_level = fields.Integer(
-        string='Dunning Level',
-        compute='_compute_dunning_status',
-        store=True,
-        help='Current dunning level (0 = no dunning, higher = more severe)'
-    )
-    
-    last_dunning_date = fields.Date(
-        string='Last Dunning Date',
-        compute='_compute_dunning_status',
-        store=True
-    )
-    
-    # Customer Communication
+    # Basic Customer Communication
     auto_sent = fields.Boolean(
         string='Automatically Sent',
         default=False,
@@ -176,50 +83,7 @@ class AccountMove(models.Model):
         readonly=True
     )
     
-    email_sent_count = fields.Integer(
-        string='Email Sent Count',
-        default=0,
-        help='Number of times this invoice was emailed'
-    )
-    
-    last_email_date = fields.Datetime(
-        string='Last Email Date',
-        readonly=True
-    )
-    
-    # Access and Restrictions
-    affects_service_access = fields.Boolean(
-        string='Affects Service Access',
-        default=True,
-        help='Non-payment of this invoice affects service access'
-    )
-    
-    grace_period_end = fields.Date(
-        string='Grace Period End',
-        help='Date when grace period for this invoice ends'
-    )
-    
-    suspend_service_date = fields.Date(
-        string='Service Suspension Date',
-        help='Date when service will be suspended for non-payment'
-    )
-    
-    # Financial Information
-    total_paid = fields.Monetary(
-        string='Total Paid',
-        compute='_compute_payment_amounts',
-        currency_field='currency_id',
-        store=True
-    )
-    
-    amount_residual_signed = fields.Monetary(
-        string='Amount Due (Signed)',
-        compute='_compute_payment_amounts',
-        currency_field='currency_id',
-        store=True,
-        help='Amount due with proper sign (positive for customer invoices)'
-    )
-    
+    # Basic Overdue Information
     days_overdue = fields.Integer(
         string='Days Overdue',
         compute='_compute_overdue_info',
@@ -246,61 +110,9 @@ class AccountMove(models.Model):
                 invoice.billing_event_id
             )
     
-    @api.depends('payment_retry_ids')
-    def _compute_payment_retry_info(self):
-        """Compute payment retry information"""
-        for invoice in self:
-            retries = invoice.payment_retry_ids
-            invoice.payment_retry_count = len(retries)
-            invoice.has_active_retry = bool(
-                retries.filtered(lambda r: r.state in ['pending', 'retrying'])
-            )
-    
-    @api.depends('dunning_process_ids')
-    def _compute_dunning_status(self):
-        """Compute dunning status information"""
-        for invoice in self:
-            active_processes = invoice.dunning_process_ids.filtered(
-                lambda dp: dp.state == 'active'
-            )
-            
-            invoice.in_dunning_process = bool(active_processes)
-            
-            if active_processes:
-                # Get highest dunning level
-                invoice.dunning_level = max(active_processes.mapped('current_step'))
-                # Get most recent dunning date
-                invoice.last_dunning_date = max(
-                    active_processes.mapped('last_action_date'),
-                    default=False
-                )
-            else:
-                invoice.dunning_level = 0
-                invoice.last_dunning_date = False
-    
-    @api.depends('payment_ids', 'amount_total')
-    def _compute_payment_amounts(self):
-        """Compute payment-related amounts"""
-        for invoice in self:
-            # Calculate total paid (considering payment state)
-            if invoice.payment_state == 'paid':
-                invoice.total_paid = invoice.amount_total
-            elif invoice.payment_state == 'partial':
-                invoice.total_paid = invoice.amount_total - invoice.amount_residual
-            else:
-                invoice.total_paid = 0.0
-            
-            # Calculate amount residual with proper sign
-            if invoice.move_type == 'out_invoice':
-                invoice.amount_residual_signed = invoice.amount_residual
-            elif invoice.move_type == 'out_refund':
-                invoice.amount_residual_signed = -invoice.amount_residual
-            else:
-                invoice.amount_residual_signed = invoice.amount_residual
-    
     @api.depends('invoice_date_due', 'payment_state')
     def _compute_overdue_info(self):
-        """Compute overdue information"""
+        """Compute basic overdue information"""
         today = fields.Date.today()
         
         for invoice in self:
@@ -343,23 +155,16 @@ class AccountMove(models.Model):
             # Set partner
             self.partner_id = self.subscription_id.partner_id
             
-            # Set payment terms
-            if self.subscription_id.payment_term_id:
-                self.invoice_payment_term_id = self.subscription_id.payment_term_id
-            
-            # Set auto payment
-            self.auto_payment_enabled = self.subscription_id.enable_auto_payment
-            
             # Set billing type
             if not self.billing_type or self.billing_type == 'regular':
                 self.billing_type = 'regular'
     
     # =============================================================================
-    # BILLING LIFECYCLE METHODS
+    # SIMPLIFIED BILLING LIFECYCLE
     # =============================================================================
     
     def action_post(self):
-        """Override posting to handle billing workflows"""
+        """Override posting to handle basic subscription billing workflows"""
         result = super().action_post()
         
         for invoice in self:
@@ -369,7 +174,7 @@ class AccountMove(models.Model):
         return result
     
     def _handle_subscription_invoice_posted(self):
-        """Handle subscription invoice posting"""
+        """Handle basic subscription invoice posting"""
         self.ensure_one()
         
         # Auto-send invoice if configured
@@ -377,16 +182,6 @@ class AccountMove(models.Model):
             self.subscription_id.auto_send_invoices and 
             not self.auto_sent):
             self._auto_send_invoice()
-        
-        # Schedule auto-payment if configured
-        if (self.auto_payment_enabled and 
-            self.subscription_id and 
-            self.subscription_id.payment_method_id and
-            not self.auto_payment_attempted):
-            self._schedule_auto_payment()
-        
-        # Set grace period
-        self._set_grace_period()
         
         # Update subscription billing dates
         if self.subscription_id and self.billing_type == 'regular':
@@ -398,8 +193,6 @@ class AccountMove(models.Model):
             self.action_invoice_sent()
             self.auto_sent = True
             self.auto_send_date = fields.Datetime.now()
-            self.email_sent_count += 1
-            self.last_email_date = fields.Datetime.now()
             
             _logger.info(f'Auto-sent invoice {self.name} to {self.partner_id.name}')
             
@@ -413,293 +206,38 @@ class AccountMove(models.Model):
                 note=_('Automatic invoice sending failed: %s') % str(e)
             )
     
-    def _schedule_auto_payment(self):
-        """Schedule automatic payment processing"""
-        try:
-            # This would typically integrate with payment processing
-            # For now, create a delayed job or schedule processing
-            
-            self.auto_payment_attempted = True
-            self.auto_payment_attempt_date = fields.Datetime.now()
-            
-            # Attempt payment processing
-            payment_result = self._attempt_auto_payment()
-            
-            if payment_result.get('success'):
-                self.auto_payment_success = True
-                _logger.info(f'Auto-payment successful for invoice {self.name}')
-            else:
-                self.auto_payment_error = payment_result.get('error', 'Payment failed')
-                _logger.warning(f'Auto-payment failed for invoice {self.name}: {self.auto_payment_error}')
-                
-                # Create payment retry if payment failed
-                self._create_payment_retry(payment_result.get('error'))
-                
-        except Exception as e:
-            self.auto_payment_error = str(e)
-            _logger.error(f'Exception during auto-payment for invoice {self.name}: {str(e)}')
-            
-            # Create payment retry for exception
-            self._create_payment_retry(str(e))
-    
-    def _attempt_auto_payment(self):
-        """Attempt automatic payment processing"""
-        # This is a placeholder for actual payment gateway integration
-        # In real implementation, this would:
-        # 1. Get stored payment method from subscription
-        # 2. Create payment transaction with gateway
-        # 3. Handle gateway response
-        # 4. Create payment record in Odoo if successful
-        
-        if not self.subscription_id.payment_method_id:
-            return {'success': False, 'error': 'No payment method configured'}
-        
-        # Simulate payment processing
-        _logger.info(f'Attempting auto-payment for invoice {self.name}')
-        
-        # Return success for testing - replace with actual gateway call
-        return {
-            'success': False,  # Set to False to test retry logic
-            'error': 'Simulated payment failure for testing',
-            'transaction_id': None,
-        }
-    
-    def _create_payment_retry(self, failure_reason):
-        """Create payment retry record for failed payment"""
-        if not self.subscription_id:
-            return
-        
-        # Determine failure reason category
-        failure_category = self._categorize_payment_failure(failure_reason)
-        
-        retry = self.env['ams.payment.retry'].create({
-            'subscription_id': self.subscription_id.id,
-            'invoice_id': self.id,
-            'failure_reason': failure_category,
-            'failure_message': failure_reason,
-            'retry_amount': self.amount_residual,
-            'payment_method_id': self.subscription_id.payment_method_id.id,
-        })
-        
-        _logger.info(f'Created payment retry {retry.name} for invoice {self.name}')
-        return retry
-    
-    def _categorize_payment_failure(self, error_message):
-        """Categorize payment failure based on error message"""
-        error_lower = error_message.lower()
-        
-        if 'insufficient' in error_lower or 'funds' in error_lower:
-            return 'insufficient_funds'
-        elif 'declined' in error_lower or 'denied' in error_lower:
-            return 'card_declined'
-        elif 'expired' in error_lower:
-            return 'card_expired'
-        elif 'network' in error_lower or 'connection' in error_lower:
-            return 'network_error'
-        elif 'timeout' in error_lower:
-            return 'timeout'
-        elif 'gateway' in error_lower or 'processor' in error_lower:
-            return 'gateway_error'
-        else:
-            return 'other'
-    
-    def _set_grace_period(self):
-        """Set grace period for this invoice"""
-        if not self.subscription_id:
-            return
-        
-        # Get dunning sequence to determine grace period
-        sequence = (self.subscription_id.dunning_sequence_id or 
-                   self.subscription_id._get_default_dunning_sequence())
-        
-        if sequence and sequence.grace_period_days > 0:
-            grace_days = sequence.grace_period_days
-            self.grace_period_end = self.invoice_date_due + timedelta(days=grace_days)
-            
-            # Calculate suspension date
-            if sequence.suspension_after_final:
-                suspension_delay = sequence.suspension_delay_days or 0
-                self.suspend_service_date = self.grace_period_end + timedelta(days=suspension_delay)
-    
     # =============================================================================
-    # PAYMENT AND DUNNING ACTIONS
+    # BASIC PAYMENT ACTIONS
     # =============================================================================
     
-    def action_retry_payment(self):
-        """Manually retry payment for this invoice"""
+    def action_send_payment_reminder(self):
+        """Send basic payment reminder email"""
         self.ensure_one()
         
         if self.payment_state == 'paid':
             raise UserError(_('Invoice is already paid'))
         
-        if not self.subscription_id:
-            raise UserError(_('Payment retry is only available for subscription invoices'))
+        if not self.is_overdue:
+            raise UserError(_('Invoice is not overdue'))
         
-        if not self.subscription_id.payment_method_id:
-            raise UserError(_('No payment method configured for subscription'))
+        # Find payment reminder template
+        template = self.env.ref('ams_subscription_billing.email_template_payment_reminder', False)
+        if not template:
+            raise UserError(_('Payment reminder email template not found'))
         
-        # Check for existing active retry
-        active_retry = self.payment_retry_ids.filtered(
-            lambda r: r.state in ['pending', 'retrying']
-        )
+        # Send email
+        template.send_mail(self.id, force_send=True)
         
-        if active_retry:
-            active_retry.action_retry_now()
-        else:
-            # Create new retry
-            retry = self._create_payment_retry('Manual retry requested')
-            retry.action_retry_now()
+        self.message_post(body=_('Payment reminder sent to customer'))
         
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'message': _('Payment retry initiated'),
-                'type': 'info',
+                'message': _('Payment reminder sent successfully'),
+                'type': 'success',
             }
         }
-    
-    def action_start_dunning(self):
-        """Start dunning process for this invoice"""
-        self.ensure_one()
-        
-        if self.payment_state == 'paid':
-            raise UserError(_('Cannot start dunning for paid invoice'))
-        
-        if not self.is_overdue and not self.auto_payment_attempted:
-            raise UserError(_('Invoice must be overdue or have failed payment to start dunning'))
-        
-        # Check for existing active dunning
-        active_dunning = self.dunning_process_ids.filtered(
-            lambda dp: dp.state == 'active'
-        )
-        
-        if active_dunning:
-            raise UserError(_('Dunning process is already active for this invoice'))
-        
-        # Get dunning sequence
-        if self.subscription_id:
-            sequence = (self.subscription_id.dunning_sequence_id or 
-                       self.subscription_id._get_default_dunning_sequence())
-        else:
-            sequence = self.env['ams.dunning.sequence'].search([('is_default', '=', True)], limit=1)
-        
-        if not sequence:
-            raise UserError(_('No dunning sequence configured'))
-        
-        # Create dunning process
-        dunning = self.env['ams.dunning.process'].create({
-            'subscription_id': self.subscription_id.id if self.subscription_id else False,
-            'invoice_id': self.id,
-            'dunning_sequence_id': sequence.id,
-            'failure_date': self.invoice_date_due or self.invoice_date,
-            'failure_reason': 'payment_overdue',
-            'failed_amount': self.amount_residual,
-        })
-        
-        return {
-            'name': _('Dunning Process'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'ams.dunning.process',
-            'res_id': dunning.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
-    
-    def action_suspend_service(self):
-        """Suspend service for non-payment"""
-        self.ensure_one()
-        
-        if not self.subscription_id:
-            raise UserError(_('Service suspension is only available for subscription invoices'))
-        
-        if self.subscription_id.state == 'suspended':
-            raise UserError(_('Subscription is already suspended'))
-        
-        # Suspend the subscription
-        self.subscription_id.action_suspend_for_non_payment()
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'message': _('Service suspended for non-payment'),
-                'type': 'warning',
-            }
-        }
-    
-    def action_extend_grace_period(self):
-        """Extend grace period for this invoice"""
-        self.ensure_one()
-        
-        return {
-            'name': _('Extend Grace Period'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'ams.extend.grace.period.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_invoice_id': self.id,
-                'default_current_grace_end': self.grace_period_end,
-            }
-        }
-    
-    # =============================================================================
-    # OVERRIDE PAYMENT REGISTRATION
-    # =============================================================================
-    
-    def _get_reconciled_info_JSON_values(self):
-        """Override to handle subscription payment reconciliation"""
-        result = super()._get_reconciled_info_JSON_values()
-        
-        # Handle subscription reactivation if fully paid
-        for invoice in self:
-            if (invoice.subscription_id and 
-                invoice.payment_state == 'paid' and 
-                invoice.subscription_id.state == 'suspended'):
-                
-                # Check if all invoices for subscription are paid
-                unpaid_invoices = invoice.subscription_id.subscription_invoice_ids.filtered(
-                    lambda inv: inv.state == 'posted' and inv.payment_state in ['not_paid', 'partial']
-                )
-                
-                if not unpaid_invoices:
-                    # All invoices paid - can reactivate
-                    invoice.subscription_id.action_reactivate_after_payment()
-        
-        return result
-    
-    def register_payment(self, payment_vals):
-        """Override payment registration to handle subscription logic"""
-        result = super().register_payment(payment_vals)
-        
-        for invoice in self:
-            if invoice.subscription_id:
-                invoice._handle_subscription_payment_received()
-        
-        return result
-    
-    def _handle_subscription_payment_received(self):
-        """Handle payment received for subscription invoice"""
-        self.ensure_one()
-        
-        # Cancel active payment retries
-        active_retries = self.payment_retry_ids.filtered(
-            lambda r: r.state in ['pending', 'retrying']
-        )
-        active_retries.action_cancel()
-        
-        # Complete dunning processes if invoice is fully paid
-        if self.payment_state == 'paid':
-            active_dunning = self.dunning_process_ids.filtered(
-                lambda dp: dp.state == 'active'
-            )
-            active_dunning.action_complete()
-        
-        # Log payment received
-        self.message_post(
-            body=_('Payment received for subscription invoice. Amount: %s') % payment_vals.get('amount', 0)
-        )
     
     # =============================================================================
     # UTILITY METHODS
@@ -737,75 +275,19 @@ class AccountMove(models.Model):
             'target': 'current',
         }
     
-    def action_view_payment_retries(self):
-        """View payment retries for this invoice"""
-        self.ensure_one()
-        
-        return {
-            'name': _('Payment Retries'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'ams.payment.retry',
-            'view_mode': 'list,form',
-            'domain': [('invoice_id', '=', self.id)],
-            'context': {'default_invoice_id': self.id},
-        }
-    
-    def action_view_dunning_processes(self):
-        """View dunning processes for this invoice"""
-        self.ensure_one()
-        
-        return {
-            'name': _('Dunning Processes'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'ams.dunning.process',
-            'view_mode': 'list,form',
-            'domain': [('invoice_id', '=', self.id)],
-            'context': {'default_invoice_id': self.id},
-        }
-    
     def get_payment_portal_url(self):
-        """Get payment portal URL for customer"""
+        """Get basic payment portal URL for customer"""
         self.ensure_one()
         
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         return f"{base_url}/my/invoices/{self.id}"
     
-    def send_payment_reminder(self):
-        """Send payment reminder email"""
-        self.ensure_one()
-        
-        if self.payment_state == 'paid':
-            raise UserError(_('Invoice is already paid'))
-        
-        # Find payment reminder template
-        template = self.env.ref('ams_subscription_billing.email_template_payment_reminder', False)
-        if not template:
-            raise UserError(_('Payment reminder email template not found'))
-        
-        # Send email
-        template.send_mail(self.id, force_send=True)
-        
-        # Update tracking
-        self.email_sent_count += 1
-        self.last_email_date = fields.Datetime.now()
-        
-        self.message_post(body=_('Payment reminder sent to customer'))
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'message': _('Payment reminder sent successfully'),
-                'type': 'success',
-            }
-        }
-    
     # =============================================================================
-    # REPORTING AND ANALYTICS
+    # BASIC REPORTING
     # =============================================================================
     
     def get_billing_summary(self):
-        """Get billing summary for this invoice"""
+        """Get basic billing summary for this invoice"""
         self.ensure_one()
         
         return {
@@ -815,89 +297,45 @@ class AccountMove(models.Model):
             'customer_name': self.partner_id.name,
             'billing_type': self.billing_type,
             'amount_total': self.amount_total,
-            'amount_paid': self.total_paid,
-            'amount_due': self.amount_residual,
+            'amount_residual': self.amount_residual,
             'payment_state': self.payment_state,
             'is_overdue': self.is_overdue,
             'days_overdue': self.days_overdue,
-            'in_dunning': self.in_dunning_process,
-            'dunning_level': self.dunning_level,
-            'has_retry': self.has_active_retry,
-            'retry_count': self.payment_retry_count,
             'billing_period_start': self.billing_period_start,
             'billing_period_end': self.billing_period_end,
-            'auto_payment_attempted': self.auto_payment_attempted,
-            'auto_payment_success': self.auto_payment_success,
+            'auto_sent': self.auto_sent,
         }
     
     # =============================================================================
-    # BATCH OPERATIONS
+    # BASIC BATCH OPERATIONS
     # =============================================================================
     
     @api.model
-    def cron_process_overdue_invoices(self):
-        """Cron job to process overdue invoices"""
+    def cron_send_payment_reminders(self):
+        """Basic cron job to send payment reminders for overdue subscription invoices"""
         today = fields.Date.today()
         
-        # Find overdue subscription invoices
+        # Find overdue subscription invoices that haven't had reminders sent recently
         overdue_invoices = self.search([
             ('is_subscription_invoice', '=', True),
             ('payment_state', 'in', ['not_paid', 'partial']),
             ('invoice_date_due', '<', today),
-            ('in_dunning_process', '=', False),
+            ('is_overdue', '=', True),
         ])
         
         _logger.info(f'Found {len(overdue_invoices)} overdue subscription invoices')
         
-        processed_count = 0
-        error_count = 0
-        
-        for invoice in overdue_invoices:
-            try:
-                # Check if grace period has ended
-                if invoice.grace_period_end and today <= invoice.grace_period_end:
-                    continue  # Still in grace period
-                
-                # Start dunning process
-                invoice.action_start_dunning()
-                processed_count += 1
-                
-            except Exception as e:
-                error_count += 1
-                _logger.error(f'Error processing overdue invoice {invoice.name}: {str(e)}')
-        
-        _logger.info(f'Overdue invoice processing completed: {processed_count} processed, {error_count} errors')
-        
-        return {
-            'processed_count': processed_count,
-            'error_count': error_count,
-            'total_overdue': len(overdue_invoices),
-        }
-    
-    @api.model
-    def cron_send_payment_reminders(self):
-        """Cron job to send payment reminders"""
-        today = fields.Date.today()
-        
-        # Find invoices that need payment reminders
-        # (e.g., due tomorrow, or due today but not yet sent reminder)
-        reminder_invoices = self.search([
-            ('is_subscription_invoice', '=', True),
-            ('payment_state', 'in', ['not_paid', 'partial']),
-            ('invoice_date_due', '>=', today - timedelta(days=1)),
-            ('invoice_date_due', '<=', today + timedelta(days=1)),
-            ('email_sent_count', '<', 2),  # Don't spam customers
-        ])
-        
-        _logger.info(f'Found {len(reminder_invoices)} invoices for payment reminders')
-        
         sent_count = 0
         error_count = 0
         
-        for invoice in reminder_invoices:
+        # Only send reminders for invoices that are 1, 7, or 14 days overdue
+        reminder_days = [1, 7, 14]
+        
+        for invoice in overdue_invoices:
             try:
-                invoice.send_payment_reminder()
-                sent_count += 1
+                if invoice.days_overdue in reminder_days:
+                    invoice.action_send_payment_reminder()
+                    sent_count += 1
             except Exception as e:
                 error_count += 1
                 _logger.error(f'Error sending payment reminder for invoice {invoice.name}: {str(e)}')
@@ -907,5 +345,34 @@ class AccountMove(models.Model):
         return {
             'sent_count': sent_count,
             'error_count': error_count,
-            'total_candidates': len(reminder_invoices),
+            'total_overdue': len(overdue_invoices),
+        }
+    
+    @api.model
+    def cron_mark_overdue_invoices(self):
+        """Basic cron job to mark invoices as overdue"""
+        today = fields.Date.today()
+        
+        # Find invoices that should be marked as overdue
+        invoices_to_mark = self.search([
+            ('is_subscription_invoice', '=', True),
+            ('payment_state', 'in', ['not_paid', 'partial']),
+            ('invoice_date_due', '<', today),
+            ('is_overdue', '=', False),
+        ])
+        
+        _logger.info(f'Found {len(invoices_to_mark)} invoices to mark as overdue')
+        
+        # Force recomputation of overdue status
+        if invoices_to_mark:
+            invoices_to_mark._compute_overdue_info()
+        
+        # Update subscription payment status
+        subscriptions_to_update = invoices_to_mark.mapped('subscription_id')
+        if subscriptions_to_update:
+            subscriptions_to_update._compute_payment_status()
+        
+        return {
+            'marked_overdue': len(invoices_to_mark),
+            'subscriptions_updated': len(subscriptions_to_update),
         }

@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Billing Schedule List View -->
+        <record id="view_ams_billing_schedule_tree" model="ir.ui.view">
+            <field name="name">ams.billing.schedule.tree</field>
+            <field name="model">ams.billing.schedule</field>
+            <field name="arch" type="xml">
+                <tree string="Billing Schedules" decoration-success="state=='active'" decoration-muted="state=='cancelled'" decoration-warning="state=='paused'">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="subscription_id"/>
+                    <field name="billing_frequency"/>
+                    <field name="next_billing_date"/>
+                    <field name="last_billing_date"/>
+                    <field name="total_invoices"/>
+                    <field name="total_billed_amount" widget="monetary"/>
+                    <field name="state" widget="badge" decoration-success="state=='active'" decoration-warning="state=='paused'" decoration-danger="state=='cancelled'"/>
+                    <field name="currency_id" column_invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Billing Schedule Form View -->
+        <record id="view_ams_billing_schedule_form" model="ir.ui.view">
+            <field name="name">ams.billing.schedule.form</field>
+            <field name="model">ams.billing.schedule</field>
+            <field name="arch" type="xml">
+                <form string="Billing Schedule">
+                    <header>
+                        <button name="action_activate" type="object" string="Activate" class="btn-primary" 
+                                invisible="state != 'draft'"/>
+                        <button name="action_pause" type="object" string="Pause" 
+                                invisible="state != 'active'"/>
+                        <button name="action_resume" type="object" string="Resume" 
+                                invisible="state != 'paused'"/>
+                        <button name="action_cancel" type="object" string="Cancel" 
+                                invisible="state in ['cancelled']"/>
+                        <button name="action_manual_billing" type="object" string="Bill Now" class="btn-secondary"
+                                invisible="state != 'active'"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,active,paused,cancelled"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_invoices" type="object" class="oe_stat_button" icon="fa-file-text-o">
+                                <field name="total_invoices" widget="statinfo" string="Invoices"/>
+                            </button>
+                            <button name="action_view_billing_events" type="object" class="oe_stat_button" icon="fa-calendar">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_text">Events</span>
+                                </div>
+                            </button>
+                        </div>
+                        
+                        <widget name="web_ribbon" title="Cancelled" bg_color="text-bg-danger" invisible="state != 'cancelled'"/>
+                        <widget name="web_ribbon" title="Paused" bg_color="text-bg-warning" invisible="state != 'paused'"/>
+                        
+                        <div class="oe_title">
+                            <h1><field name="display_name" readonly="1"/></h1>
+                        </div>
+                        
+                        <group>
+                            <group name="subscription_info" string="Subscription Information">
+                                <field name="subscription_id" options="{'no_create': True}"/>
+                                <field name="partner_id" readonly="1"/>
+                                <field name="product_id" readonly="1"/>
+                                <field name="company_id" readonly="1" groups="base.group_multi_company"/>
+                            </group>
+                            <group name="billing_config" string="Billing Configuration">
+                                <field name="billing_frequency"/>
+                                <field name="auto_generate_invoice"/>
+                                <field name="auto_send_invoice"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <group name="billing_dates" string="Billing Dates">
+                                <field name="start_date"/>
+                                <field name="next_billing_date"/>
+                                <field name="last_billing_date" readonly="1"/>
+                            </group>
+                            <group name="statistics" string="Statistics">
+                                <field name="total_invoices" readonly="1"/>
+                                <field name="total_billed_amount" readonly="1" widget="monetary"/>
+                                <field name="currency_id" column_invisible="1"/>
+                            </group>
+                        </group>
+                        
+                        <notebook>
+                            <page string="Billing Events" name="billing_events">
+                                <field name="billing_event_ids" readonly="1">
+                                    <tree string="Billing Events">
+                                        <field name="name"/>
+                                        <field name="event_date"/>
+                                        <field name="event_type"/>
+                                        <field name="invoice_amount" widget="monetary"/>
+                                        <field name="state" widget="badge"/>
+                                        <field name="currency_id" column_invisible="1"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Generated Invoices" name="invoices">
+                                <field name="invoice_ids" readonly="1">
+                                    <tree string="Invoices">
+                                        <field name="name"/>
+                                        <field name="invoice_date"/>
+                                        <field name="invoice_date_due"/>
+                                        <field name="amount_total" widget="monetary"/>
+                                        <field name="amount_residual" widget="monetary"/>
+                                        <field name="payment_state" widget="badge"/>
+                                        <field name="currency_id" column_invisible="1"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Notes" name="notes">
+                                <field name="notes" placeholder="Internal notes about this billing schedule..."/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!-- Billing Schedule Search View -->
+        <record id="view_ams_billing_schedule_search" model="ir.ui.view">
+            <field name="name">ams.billing.schedule.search</field>
+            <field name="model">ams.billing.schedule</field>
+            <field name="arch" type="xml">
+                <search string="Search Billing Schedules">
+                    <field name="name" string="Schedule Name"/>
+                    <field name="partner_id" string="Customer"/>
+                    <field name="subscription_id" string="Subscription"/>
+                    <field name="product_id" string="Product"/>
+                    
+                    <filter name="active" string="Active" domain="[('state', '=', 'active')]"/>
+                    <filter name="paused" string="Paused" domain="[('state', '=', 'paused')]"/>
+                    <filter name="due_today" string="Due Today" domain="[('next_billing_date', '=', context_today())]"/>
+                    <filter name="overdue" string="Overdue" domain="[('next_billing_date', '&lt;', context_today()), ('state', '=', 'active')]"/>
+                    
+                    <separator/>
+                    <filter name="monthly" string="Monthly" domain="[('billing_frequency', '=', 'monthly')]"/>
+                    <filter name="quarterly" string="Quarterly" domain="[('billing_frequency', '=', 'quarterly')]"/>
+                    <filter name="annual" string="Annual" domain="[('billing_frequency', '=', 'annual')]"/>
+                    
+                    <separator/>
+                    <filter name="auto_invoice" string="Auto Invoice" domain="[('auto_generate_invoice', '=', True)]"/>
+                    <filter name="auto_send" string="Auto Send" domain="[('auto_send_invoice', '=', True)]"/>
+                    
+                    <group expand="0" string="Group By">
+                        <filter string="Customer" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                        <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+                        <filter string="Billing Frequency" name="group_frequency" context="{'group_by': 'billing_frequency'}"/>
+                        <filter string="Next Billing Date" name="group_next_billing" context="{'group_by': 'next_billing_date:month'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Billing Schedule Kanban View -->
+        <record id="view_ams_billing_schedule_kanban" model="ir.ui.view">
+            <field name="name">ams.billing.schedule.kanban</field>
+            <field name="model">ams.billing.schedule</field>
+            <field name="arch" type="xml">
+                <kanban default_group_by="state" class="o_kanban_small_column">
+                    <field name="id"/>
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="subscription_id"/>
+                    <field name="billing_frequency"/>
+                    <field name="next_billing_date"/>
+                    <field name="total_billed_amount"/>
+                    <field name="currency_id"/>
+                    <field name="state"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_card oe_kanban_global_click">
+                                <div class="o_kanban_record_top mb-2">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="display_name"/>
+                                        </strong>
+                                        <div class="o_kanban_record_subtitle text-muted">
+                                            <field name="partner_id"/>
+                                        </div>
+                                    </div>
+                                    <div class="o_kanban_manage_button_section">
+                                        <a class="o_kanban_manage_toggle_button" href="#">
+                                            <i class="fa fa-ellipsis-v" role="img" aria-label="Manage" title="Manage"/>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <span class="fa fa-calendar" title="Next Billing"/>
+                                            <t t-esc="record.next_billing_date.value"/>
+                                        </div>
+                                        <div class="col-6 text-end">
+                                            <span class="fa fa-repeat" title="Frequency"/>
+                                            <t t-esc="record.billing_frequency.value"/>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-1">
+                                        <div class="col-12">
+                                            <span class="fa fa-money" title="Total Billed"/>
+                                            <field name="total_billed_amount" widget="monetary"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_manage_button_section o_kanban_manage_view">
+                                    <a type="edit" class="btn btn-primary btn-sm">Edit</a>
+                                    <a name="action_manual_billing" type="object" class="btn btn-secondary btn-sm" t-if="record.state.raw_value == 'active'">Bill Now</a>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- Billing Schedule Action -->
+        <record id="action_ams_billing_schedule" model="ir.actions.act_window">
+            <field name="name">Billing Schedules</field>
+            <field name="res_model">ams.billing.schedule</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first billing schedule!
+                </p>
+                <p>
+                    Billing schedules automatically manage when to bill your subscription customers.
+                    They will generate invoices based on the subscription's billing frequency.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

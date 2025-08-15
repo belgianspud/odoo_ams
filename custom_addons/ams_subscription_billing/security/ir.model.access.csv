@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ams_billing_schedule_user,AMS Billing Schedule User Access,model_ams_billing_schedule,group_ams_billing_user,1,0,0,0
+access_ams_billing_schedule_manager,AMS Billing Schedule Manager Access,model_ams_billing_schedule,group_ams_billing_manager,1,1,1,1
+access_ams_billing_event_user,AMS Billing Event User Access,model_ams_billing_event,group_ams_billing_user,1,0,0,0
+access_ams_billing_event_manager,AMS Billing Event Manager Access,model_ams_billing_event,group_ams_billing_manager,1,1,1,1
+access_ams_billing_schedule_admin,AMS Billing Schedule Admin Access,model_ams_billing_schedule,base.group_system,1,1,1,1
+access_ams_billing_event_admin,AMS Billing Event Admin Access,model_ams_billing_event,base.group_system,1,1,1,1
+access_ams_billing_schedule_portal,AMS Billing Schedule Portal Access,model_ams_billing_schedule,base.group_portal,1,0,0,0
+access_ams_billing_event_portal,AMS Billing Event Portal Access,model_ams_billing_event,base.group_portal,1,0,0,0

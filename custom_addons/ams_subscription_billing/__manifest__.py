@@ -1,153 +1,97 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'AMS Subscription Billing',
+    'name': 'AMS Subscription Billing (Core)',
     'version': '18.0.1.0.0',
-    'summary': 'Automated subscription billing and payment management for AMS',
+    'summary': 'Core subscription billing functionality for AMS',
     'description': """
-AMS Subscription Billing
-========================
+AMS Subscription Billing - Core Module
+=======================================
 
-This module provides comprehensive automated billing functionality for AMS subscription products:
+This module provides essential automated billing functionality for AMS subscriptions:
 
 Core Features:
 --------------
-* Automated Invoice Generation - Bulk billing runs for subscription renewals
-* Smart Payment Processing - Multiple payment gateways and retry logic
-* Intelligent Dunning Management - 3-step escalation process with customizable templates
-* Proration Engine - Handle mid-cycle upgrades, downgrades, and adjustments
-* Payment Retry Logic - Exponential backoff with configurable retry attempts
-* Billing Calendar - Smart scheduling around weekends and holidays
-* Exception Handling - Manual review queue for billing issues and failed payments
+* Automated billing schedules for subscription renewals
+* Invoice generation for subscription periods
+* Basic payment status tracking and overdue management
+* Simple proration calculations for mid-cycle changes
+* Integration with existing AMS subscription management
 
-Billing Automation:
--------------------
-* Scheduled billing runs with batch processing
-* Automatic invoice generation for subscription renewals
-* Real-time payment processing with multiple gateway support
-* Automated retry for failed payments with intelligent scheduling
-* Comprehensive payment failure tracking and reporting
-
-Dunning Management:
--------------------
-* 3-tier dunning process: Reminder → Warning → Final Notice
-* Customizable email templates with professional designs
-* Grace period management with configurable suspension rules
-* Automated escalation with manual intervention options
-* Customer communication tracking and response management
-
-Proration & Adjustments:
-------------------------
-* Automatic proration for mid-cycle subscription changes
-* Credit/debit calculations for upgrades and downgrades
-* Seat adjustment handling for enterprise subscriptions
-* Partial billing period calculations
-* Manual adjustment capabilities with approval workflows
-
-Financial Integration:
+What this module does:
 ----------------------
-* Seamless integration with AMS Base Accounting
-* Revenue recognition support for deferred billing
-* Comprehensive financial reporting and analytics
-* Account reconciliation and payment matching
-* Audit trails for all billing transactions
+* Creates billing schedules when subscriptions are activated
+* Generates invoices automatically based on subscription periods
+* Tracks payment status and marks invoices as overdue
+* Sends basic payment reminders
+* Handles simple proration for subscription changes
+* Provides basic billing management interface
 
-This module transforms your AMS into a professional billing platform capable of
-handling complex subscription scenarios with minimal manual intervention.
+What this module does NOT include:
+----------------------------------
+* Advanced dunning sequences (see ams_advanced_dunning)
+* Payment retry logic (see ams_payment_retry) 
+* Stored payment methods (see ams_payment_methods)
+* Advanced analytics (see ams_billing_analytics)
+* Customer self-service portal (see ams_customer_portal)
+* Complex proration methods (see ams_proration_engine)
+
+This is the foundation module that other billing modules extend.
     """,
     'author': 'Your AMS Development Team',
     'website': 'https://yourcompany.com',
     'category': 'Association Management/Billing',
     'license': 'LGPL-3',
     
-    # Dependencies
+    # Minimal dependencies for core functionality
     'depends': [
         'base',
         'mail',
         'account',
-        'payment',
-        'ams_base_accounting',
-        'ams_subscriptions',
-        # 'ams_revenue_recognition',  # Optional but recommended
+        'ams_subscriptions',  # The core AMS subscription module
     ],
     
-    # Data files
+    # Data files - simplified
     'data': [
-        # Security - Load first
-        'security/ams_subscription_billing_security.xml',
+        # Security
+        'security/ams_billing_security.xml',
         'security/ir.model.access.csv',
         
-        # Data files
-        'data/billing_sequence.xml',
-        'data/ams_dunning_templates.xml',
-        'data/ams_billing_cron.xml',
-        'data/ams_billing_configuration.xml',
+        # Basic data
+        'data/billing_sequences.xml',
+        'data/email_templates.xml',
+        'data/cron_jobs.xml',
         
-        # Core model views
+        # Core views
         'views/ams_billing_schedule_views.xml',
-        'views/ams_billing_run_views.xml',
         'views/ams_billing_event_views.xml',
-        'views/ams_payment_retry_views.xml',
-        'views/ams_dunning_process_views.xml',
-        'views/ams_proration_calculation_views.xml',
+        'views/ams_subscription_billing_views.xml',
         
-        # Extension views
-        'views/ams_subscription_views.xml',
-        'views/account_move_views.xml',
-        'views/res_partner_views.xml',
-        'views/product_template_views.xml',
+        # Menu
+        'views/ams_billing_menu.xml',
         
-        # Configuration and settings
-        'views/ams_billing_configuration_views.xml',
-        
-        # Menu and actions
-        'views/ams_subscription_billing_menu.xml',
-        
-        # Reports
-        'reports/ams_billing_reports.xml',
-        
-        # Wizards
-        'wizard/ams_billing_run_wizard_views.xml',
-        'wizard/ams_payment_retry_wizard_views.xml',
-        'wizard/ams_proration_wizard_views.xml',
+        # Basic wizard
+        'wizard/ams_manual_billing_wizard_views.xml',
     ],
     
     'demo': [
-        'demo/ams_subscription_billing_demo.xml',
+        'demo/billing_demo.xml',
     ],
     
     'installable': True,
-    'application': True,
+    'application': False,  # This is an extension, not a standalone app
     'auto_install': False,
     
-    # Hooks for setup and cleanup
+    # Hooks
     'post_init_hook': 'post_init_hook',
     'uninstall_hook': 'uninstall_hook',
     
-    # Version constraints
+    # Version info
     'odoo_version': '18.0',
     
-    # External dependencies
-    'external_dependencies': {
-        'python': ['dateutil'],
-    },
-    
-    # Assets for web components
-    'assets': {
-        'web.assets_backend': [
-            'ams_subscription_billing/static/src/css/billing_dashboard.css',
-            'ams_subscription_billing/static/src/js/billing_widgets.js',
-        ],
-    },
+    # No external dependencies for core
+    'external_dependencies': {},
     
     # Module metadata
-    'sequence': 110,
+    'sequence': 100,
     'development_status': 'Beta',
-    'maintainers': ['your-team'],
-    'support': 'https://yourcompany.com/support',
-    
-    # Images for module store
-    'images': [
-        'static/description/banner.png',
-        'static/description/icon.png',
-    ],
 }
