@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Demo Partners for Billing -->
+        <record id="demo_partner_acme_corp" model="res.partner">
+            <field name="name">ACME Corporation</field>
+            <field name="is_company" eval="True"/>
+            <field name="email">billing@acme-corp.com</field>
+            <field name="phone">+1-555-0123</field>
+            <field name="street">123 Business Ave</field>
+            <field name="city">New York</field>
+            <field name="state_id" ref="base.state_us_27"/>
+            <field name="zip">10001</field>
+            <field name="country_id" ref="base.us"/>
+        </record>
+        
+        <record id="demo_partner_tech_solutions" model="res.partner">
+            <field name="name">Tech Solutions Inc</field>
+            <field name="is_company" eval="True"/>
+            <field name="email">accounts@techsolutions.com</field>
+            <field name="phone">+1-555-0456</field>
+            <field name="street">456 Innovation Dr</field>
+            <field name="city">San Francisco</field>
+            <field name="state_id" ref="base.state_us_5"/>
+            <field name="zip">94102</field>
+            <field name="country_id" ref="base.us"/>
+        </record>
+        
+        <record id="demo_partner_john_doe" model="res.partner">
+            <field name="name">John Doe</field>
+            <field name="is_company" eval="False"/>
+            <field name="email">john.doe@email.com</field>
+            <field name="phone">+1-555-0789</field>
+            <field name="street">789 Residential St</field>
+            <field name="city">Chicago</field>
+            <field name="state_id" ref="base.state_us_14"/>
+            <field name="zip">60601</field>
+            <field name="country_id" ref="base.us"/>
+        </record>
+        
+        <!-- Demo Products for Billing -->
+        <record id="demo_product_enterprise_membership" model="product.template">
+            <field name="name">Enterprise Membership (Demo)</field>
+            <field name="type">service</field>
+            <field name="list_price">5000.00</field>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="is_subscription_product" eval="True"/>
+            <field name="ams_product_type">enterprise</field>
+            <field name="description">Enterprise-level membership with full access to all services and premium support.</field>
+        </record>
+        
+        <record id="demo_product_individual_membership" model="product.template">
+            <field name="name">Individual Membership (Demo)</field>
+            <field name="type">service</field>
+            <field name="list_price">100.00</field>
+            <field name="sale_ok" eval="True"/>
+            <field name="purchase_ok" eval="False"/>
+            <field name="is_subscription_product" eval="True"/>
+            <field name="ams_product_type">individual</field>
+            <field name="description">Individual membership with access to basic services and standard support.</field>
+        </record>
+        
+        <!-- Demo Subscriptions -->
+        <record id="demo_subscription_acme_enterprise" model="ams.subscription">
+            <field name="name">ACME Corp - Enterprise Membership</field>
+            <field name="partner_id" ref="demo_partner_acme_corp"/>
+            <field name="product_id" ref="demo_product_enterprise_membership"/>
+            <field name="start_date" eval="(datetime.date.today() - datetime.timedelta(days=60))"/>
+            <field name="state">active</field>
+            <field name="enable_auto_billing" eval="True"/>
+            <field name="auto_send_invoices" eval="True"/>
+            <field name="next_billing_date" eval="(datetime.date.today() + datetime.timedelta(days=30))"/>
+            <field name="last_billing_date" eval="(datetime.date.today() - datetime.timedelta(days=30))"/>
+        </record>
+        
+        <record id="demo_subscription_tech_enterprise" model="ams.subscription">
+            <field name="name">Tech Solutions - Enterprise Membership</field>
+            <field name="partner_id" ref="demo_partner_tech_solutions"/>
+            <field name="product_id" ref="demo_product_enterprise_membership"/>
+            <field name="start_date" eval="(datetime.date.today() - datetime.timedelta(days=90))"/>
+            <field name="state">active</field>
+            <field name="enable_auto_billing" eval="True"/>
+            <field name="auto_send_invoices" eval="True"/>
+            <field name="next_billing_date" eval="datetime.date.today()"/>
+            <field name="last_billing_date" eval="(datetime.date.today() - datetime.timedelta(days=90))"/>
+        </record>
+        
+        <record id="demo_subscription_john_individual" model="ams.subscription">
+            <field name="name">John Doe - Individual Membership</field>
+            <field name="partner_id" ref="demo_partner_john_doe"/>
+            <field name="product_id" ref="demo_product_individual_membership"/>
+            <field name="start_date" eval="(datetime.date.today() - datetime.timedelta(days=30))"/>
+            <field name="state">active</field>
+            <field name="enable_auto_billing" eval="True"/>
+            <field name="auto_send_invoices" eval="True"/>
+            <field name="next_billing_date" eval="(datetime.date.today() + datetime.timedelta(days=15))"/>
+            <field name="last_billing_date" eval="(datetime.date.today() - datetime.timedelta(days=15))"/>
+        </record>
+        
+        <!-- Demo Billing Schedules -->
+        <record id="demo_billing_schedule_acme" model="ams.billing.schedule">
+            <field name="subscription_id" ref="demo_subscription_acme_enterprise"/>
+            <field name="billing_frequency">annual</field>
+            <field name="start_date" eval="(datetime.date.today() - datetime.timedelta(days=60))"/>
+            <field name="next_billing_date" eval="(datetime.date.today() + datetime.timedelta(days=305))"/>
+            <field name="last_billing_date" eval="(datetime.date.today() - datetime.timedelta(days=60))"/>
+            <field name="auto_generate_invoice" eval="True"/>
+            <field name="auto_send_invoice" eval="True"/>
+            <field name="state">active</field>
+        </record>
+        
+        <record id="demo_billing_schedule_tech" model="ams.billing.schedule">
+            <field name="subscription_id" ref="demo_subscription_tech_enterprise"/>
+            <field name="billing_frequency">annual</field>
+            <field name="start_date" eval="(datetime.date.today() - datetime.timedelta(days=90))"/>
+            <field name="next_billing_date" eval="datetime.date.today()"/>
+            <field name="last_billing_date" eval="(datetime.date.today() - datetime.timedelta(days=90))"/>
+            <field name="auto_generate_invoice" eval="True"/>
+            <field name="auto_send_invoice" eval="True"/>
+            <field name="state">active</field>
+        </record>
+        
+        <record id="demo_billing_schedule_john" model="ams.billing.schedule">
+            <field name="subscription_id" ref="demo_subscription_john_individual"/>
+            <field name="billing_frequency">monthly</field>
+            <field name="start_date" eval="(datetime.date.today() - datetime.timedelta(days=30))"/>
+            <field name="next_billing_date" eval="(datetime.date.today() + datetime.timedelta(days=15))"/>
+            <field name="last_billing_date" eval="(datetime.date.today() - datetime.timedelta(days=15))"/>
+            <field name="auto_generate_invoice" eval="True"/>
+            <field name="auto_send_invoice" eval="True"/>
+            <field name="state">active</field>
+        </record>
+        
+        <!-- Demo Billing Events -->
+        <record id="demo_billing_event_acme_past" model="ams.billing.event">
+            <field name="billing_schedule_id" ref="demo_billing_schedule_acme"/>
+            <field name="subscription_id" ref="demo_subscription_acme_enterprise"/>
+            <field name="event_date" eval="(datetime.date.today() - datetime.timedelta(days=60))"/>
+            <field name="event_type">regular_billing</field>
+            <field name="billing_period_start" eval="(datetime.date.today() - datetime.timedelta(days=60))"/>
+            <field name="billing_period_end" eval="(datetime.date.today() + datetime.timedelta(days=305))"/>
+            <field name="state">completed</field>
+            <field name="processed_date" eval="(datetime.datetime.now() - datetime.timedelta(days=60))"/>
+            <field name="processed_by" ref="base.user_root"/>
+            <field name="invoice_amount">5000.00</field>
+            <field name="invoice_sent" eval="True"/>
+            <field name="invoice_sent_date" eval="(datetime.datetime.now() - datetime.timedelta(days=60))"/>
+            <field name="description">Annual enterprise membership billing for ACME Corporation</field>
+        </record>
+        
+        <record id="demo_billing_event_tech_due" model="ams.billing.event">
+            <field name="billing_schedule_id" ref="demo_billing_schedule_tech"/>
+            <field name="subscription_id" ref="demo_subscription_tech_enterprise"/>
+            <field name="event_date" eval="datetime.date.today()"/>
+            <field name="event_type">regular_billing</field>
+            <field name="billing_period_start" eval="datetime.date.today()"/>
+            <field name="billing_period_end" eval="(datetime.date.today() + datetime.timedelta(days=365))"/>
+            <field name="state">pending</field>
+            <field name="description">Annual enterprise membership renewal for Tech Solutions Inc</field>
+        </record>
+        
+        <record id="demo_billing_event_john_past" model="ams.billing.event">
+            <field name="billing_schedule_id" ref="demo_billing_schedule_john"/>
+            <field name="subscription_id" ref="demo_subscription_john_individual"/>
+            <field name="event_date" eval="(datetime.date.today() - datetime.timedelta(days=15))"/>
+            <field name="event_type">regular_billing</field>
+            <field name="billing_period_start" eval="(datetime.date.today() - datetime.timedelta(days=15))"/>
+            <field name="billing_period_end" eval="(datetime.date.today() + datetime.timedelta(days=15))"/>
+            <field name="state">completed</field>
+            <field name="processed_date" eval="(datetime.datetime.now() - datetime.timedelta(days=15))"/>
+            <field name="processed_by" ref="base.user_root"/>
+            <field name="invoice_amount">100.00</field>
+            <field name="invoice_sent" eval="True"/>
+            <field name="invoice_sent_date" eval="(datetime.datetime.now() - datetime.timedelta(days=15))"/>
+            <field name="description">Monthly individual membership billing for John Doe</field>
+        </record>
+        
+        <!-- Simple Demo Invoices (without complex field references) -->
+        <record id="demo_invoice_acme_membership" model="account.move">
+            <field name="move_type">out_invoice</field>
+            <field name="partner_id" ref="demo_partner_acme_corp"/>
+            <field name="subscription_id" ref="demo_subscription_acme_enterprise"/>
+            <field name="billing_event_id" ref="demo_billing_event_acme_past"/>
+            <field name="invoice_date" eval="(datetime.date.today() - datetime.timedelta(days=60))"/>
+            <field name="invoice_date_due" eval="(datetime.date.today() - datetime.timedelta(days=30))"/>
+            <field name="is_subscription_invoice" eval="True"/>
+            <field name="billing_type">regular</field>
+            <field name="auto_sent" eval="True"/>
+            <field name="auto_send_date" eval="(datetime.datetime.now() - datetime.timedelta(days=60))"/>
+            <field name="ref">Enterprise Membership - ACME Corporation</field>
+        </record>
+        
+        <record id="demo_invoice_john_membership" model="account.move">
+            <field name="move_type">out_invoice</field>
+            <field name="partner_id" ref="demo_partner_john_doe"/>
+            <field name="subscription_id" ref="demo_subscription_john_individual"/>
+            <field name="billing_event_id" ref="demo_billing_event_john_past"/>
+            <field name="invoice_date" eval="(datetime.date.today() - datetime.timedelta(days=15))"/>
+            <field name="invoice_date_due" eval="(datetime.date.today() + datetime.timedelta(days=15))"/>
+            <field name="is_subscription_invoice" eval="True"/>
+            <field name="billing_type">regular</field>
+            <field name="auto_sent" eval="True"/>
+            <field name="auto_send_date" eval="(datetime.datetime.now() - datetime.timedelta(days=15))"/>
+            <field name="ref">Individual Membership - John Doe</field>
+        </record>
+        
+        <!-- Demo Overdue Invoice (for testing overdue functionality) -->
+        <record id="demo_invoice_overdue" model="account.move">
+            <field name="move_type">out_invoice</field>
+            <field name="partner_id" ref="demo_partner_tech_solutions"/>
+            <field name="subscription_id" ref="demo_subscription_tech_enterprise"/>
+            <field name="invoice_date" eval="(datetime.date.today() - datetime.timedelta(days=45))"/>
+            <field name="invoice_date_due" eval="(datetime.date.today() - datetime.timedelta(days=15))"/>
+            <field name="is_subscription_invoice" eval="True"/>
+            <field name="billing_type">regular</field>
+            <field name="ref">Enterprise Membership - Tech Solutions (Overdue Demo)</field>
+        </record>
+        
+    </data>
+</odoo>
