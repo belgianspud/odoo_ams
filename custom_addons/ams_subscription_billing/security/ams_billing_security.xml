@@ -2,26 +2,35 @@
 <odoo>
     <data noupdate="1">
         
+        <!-- Create AMS Module Category if it doesn't exist -->
+        <record id="module_category_association_management" model="ir.module.category">
+            <field name="name">Association Management</field>
+            <field name="description">Association Management System modules and features</field>
+            <field name="sequence">50</field>
+        </record>
+        
         <!-- Billing Security Groups -->
         <record id="group_ams_billing_user" model="res.groups">
             <field name="name">AMS Billing User</field>
-            <field name="category_id" ref="base.module_category_association_management"/>
+            <field name="category_id" ref="module_category_association_management"/>
             <field name="comment">Basic access to AMS billing functionality - can view billing schedules and events</field>
         </record>
 
         <record id="group_ams_billing_manager" model="res.groups">
             <field name="name">AMS Billing Manager</field>
-            <field name="category_id" ref="base.module_category_association_management"/>
+            <field name="category_id" ref="module_category_association_management"/>
             <field name="implied_ids" eval="[(4, ref('group_ams_billing_user'))]"/>
             <field name="comment">Full access to AMS billing functionality - can create, modify and delete billing records</field>
         </record>
 
         <!-- Inherit from accounting groups for invoice access -->
-        <record id="group_ams_billing_user" model="res.groups">
+        <record id="group_ams_billing_user_inherit" model="res.groups">
+            <field name="name">AMS Billing User</field>
             <field name="implied_ids" eval="[(4, ref('account.group_account_invoice'))]"/>
         </record>
 
-        <record id="group_ams_billing_manager" model="res.groups">
+        <record id="group_ams_billing_manager_inherit" model="res.groups">
+            <field name="name">AMS Billing Manager</field>
             <field name="implied_ids" eval="[(4, ref('account.group_account_user'))]"/>
         </record>
 
@@ -71,11 +80,11 @@
             <field name="perm_unlink" eval="1"/>
         </record>
 
-        <!-- Multi-company rules for subscription access -->
+        <!-- Subscription rules - without company_id since ams.subscription doesn't have it -->
         <record id="ams_subscription_billing_rule" model="ir.rule">
             <field name="name">AMS Subscription: Billing Access</field>
             <field name="model_id" ref="ams_subscriptions.model_ams_subscription"/>
-            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+            <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_ams_billing_user'))]"/>
             <field name="perm_read" eval="1"/>
             <field name="perm_write" eval="0"/>
@@ -86,7 +95,7 @@
         <record id="ams_subscription_billing_manager_rule" model="ir.rule">
             <field name="name">AMS Subscription: Billing Manager Access</field>
             <field name="model_id" ref="ams_subscriptions.model_ams_subscription"/>
-            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+            <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_ams_billing_manager'))]"/>
             <field name="perm_read" eval="1"/>
             <field name="perm_write" eval="1"/>
@@ -94,7 +103,7 @@
             <field name="perm_unlink" eval="0"/>
         </record>
 
-        <!-- Invoice access rules for billing -->
+        <!-- Invoice access rules for billing - using existing company rules -->
         <record id="account_move_billing_rule" model="ir.rule">
             <field name="name">Account Move: Billing Access</field>
             <field name="model_id" ref="account.model_account_move"/>

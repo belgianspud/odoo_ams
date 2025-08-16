@@ -69,10 +69,9 @@ class AMSBillingEvent(models.Model):
     
     company_id = fields.Many2one(
         'res.company',
-        related='subscription_id.company_id',
         string='Company',
-        store=True,
-        readonly=True
+        default=lambda self: self.env.company,
+        required=True
     )
     
     # Event Information
@@ -206,6 +205,14 @@ class AMSBillingEvent(models.Model):
                     )
                     vals.setdefault('billing_period_start', period['start'])
                     vals.setdefault('billing_period_end', period['end'])
+            
+            # Set company if not provided
+            if 'subscription_id' in vals and not vals.get('company_id'):
+                subscription = self.env['ams.subscription'].browse(vals['subscription_id'])
+                if hasattr(subscription.partner_id, 'company_id') and subscription.partner_id.company_id:
+                    vals['company_id'] = subscription.partner_id.company_id.id
+                else:
+                    vals['company_id'] = self.env.company.id
         
         return super().create(vals_list)
     
@@ -301,6 +308,7 @@ class AMSBillingEvent(models.Model):
             'invoice_date': self.event_date,
             'ref': f'Billing Event: {self.name}',
             'narration': self.description,
+            'company_id': self.company_id.id,
         }
         
         # Prepare invoice line

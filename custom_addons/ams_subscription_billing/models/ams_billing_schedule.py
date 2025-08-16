@@ -56,10 +56,9 @@ class AMSBillingSchedule(models.Model):
     
     company_id = fields.Many2one(
         'res.company',
-        related='subscription_id.company_id',
         string='Company',
-        store=True,
-        readonly=True
+        default=lambda self: self.env.company,
+        required=True
     )
     
     # Billing Configuration
@@ -195,6 +194,14 @@ class AMSBillingSchedule(models.Model):
             # Calculate next billing date if not provided
             if not vals.get('next_billing_date') and vals.get('start_date'):
                 vals['next_billing_date'] = vals['start_date']
+            
+            # Set company from subscription's partner if available
+            if 'subscription_id' in vals and not vals.get('company_id'):
+                subscription = self.env['ams.subscription'].browse(vals['subscription_id'])
+                if hasattr(subscription.partner_id, 'company_id') and subscription.partner_id.company_id:
+                    vals['company_id'] = subscription.partner_id.company_id.id
+                else:
+                    vals['company_id'] = self.env.company.id
         
         schedules = super().create(vals_list)
         
@@ -374,6 +381,7 @@ class AMSBillingSchedule(models.Model):
             'invoice_date': billing_event.event_date,
             'ref': f'Subscription: {subscription.name}',
             'narration': f'Subscription billing for period {period_start} to {period_end}',
+            'company_id': self.company_id.id,
         }
         
         # Prepare invoice line

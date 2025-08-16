@@ -107,16 +107,16 @@
                         <!-- Billing Schedules -->
                         <separator string="Billing Schedules" invisible="not billing_schedule_ids"/>
                         <field name="billing_schedule_ids" invisible="not billing_schedule_ids" readonly="1">
-                            <tree string="Billing Schedules">
+                            <list string="Billing Schedules">
                                 <field name="name"/>
                                 <field name="billing_frequency"/>
                                 <field name="next_billing_date"/>
                                 <field name="last_billing_date"/>
                                 <field name="total_invoices"/>
                                 <field name="total_billed_amount" widget="monetary"/>
-                                <field name="state" widget="badge"/>
+                                <field name="state" widget="badge" decoration-success="state == 'active'" decoration-warning="state == 'paused'" decoration-danger="state == 'cancelled'"/>
                                 <field name="currency_id" column_invisible="1"/>
-                            </tree>
+                            </list>
                         </field>
                         
                         <!-- Recent Billing Events -->
@@ -124,15 +124,15 @@
                         <field name="billing_event_ids" invisible="not billing_event_ids" readonly="1" 
                                domain="[('subscription_id', '=', active_id)]" 
                                context="{'default_subscription_id': active_id}">
-                            <tree string="Billing Events" limit="10">
+                            <list string="Billing Events" limit="10">
                                 <field name="name"/>
                                 <field name="event_date"/>
                                 <field name="event_type"/>
                                 <field name="invoice_amount" widget="monetary"/>
                                 <field name="invoice_sent" widget="boolean_toggle"/>
-                                <field name="state" widget="badge"/>
+                                <field name="state" widget="badge" decoration-success="state == 'completed'" decoration-warning="state in ['pending','processing']" decoration-danger="state == 'failed'"/>
                                 <field name="currency_id" column_invisible="1"/>
-                            </tree>
+                            </list>
                         </field>
                         
                         <!-- Recent Invoices -->
@@ -140,17 +140,17 @@
                         <field name="subscription_invoice_ids" invisible="not subscription_invoice_ids" readonly="1"
                                domain="[('subscription_id', '=', active_id)]"
                                context="{'default_subscription_id': active_id}">
-                            <tree string="Subscription Invoices" limit="10" decoration-danger="is_overdue==True">
+                            <list string="Subscription Invoices" limit="10">
                                 <field name="name"/>
                                 <field name="invoice_date"/>
                                 <field name="invoice_date_due"/>
                                 <field name="amount_total" widget="monetary"/>
                                 <field name="amount_residual" widget="monetary"/>
-                                <field name="payment_state" widget="badge"/>
+                                <field name="payment_state" widget="badge" decoration-danger="is_overdue == True"/>
                                 <field name="is_overdue" invisible="1"/>
                                 <field name="days_overdue" invisible="not is_overdue"/>
                                 <field name="currency_id" column_invisible="1"/>
-                            </tree>
+                            </list>
                         </field>
                         
                     </page>
@@ -160,8 +160,8 @@
         </record>
         
         <!-- Extend AMS Subscription Tree View -->
-        <record id="view_ams_subscription_tree_billing" model="ir.ui.view">
-            <field name="name">ams.subscription.tree.billing</field>
+        <record id="view_ams_subscription_list_billing" model="ir.ui.view">
+            <field name="name">ams.subscription.list.billing</field>
             <field name="model">ams.subscription</field>
             <field name="inherit_id" ref="ams_subscriptions.view_ams_subscription_tree"/>
             <field name="arch" type="xml">
@@ -214,7 +214,7 @@
         <record id="action_ams_subscription_billing_dashboard" model="ir.actions.act_window">
             <field name="name">Subscription Billing Dashboard</field>
             <field name="res_model">ams.subscription</field>
-            <field name="view_mode">kanban,tree,form</field>
+            <field name="view_mode">kanban,list,form</field>
             <field name="domain">[('enable_auto_billing', '=', True)]</field>
             <field name="context">{
                 'search_default_filter_auto_billing': 1,
@@ -235,7 +235,7 @@
         <record id="action_ams_subscription_overdue" model="ir.actions.act_window">
             <field name="name">Overdue Subscriptions</field>
             <field name="res_model">ams.subscription</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
             <field name="domain">[('payment_status', '=', 'overdue')]</field>
             <field name="context">{'search_default_filter_payment_overdue': 1}</field>
             <field name="help" type="html">

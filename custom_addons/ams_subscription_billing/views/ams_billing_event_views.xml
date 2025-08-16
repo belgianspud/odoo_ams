@@ -3,11 +3,11 @@
     <data>
         
         <!-- Billing Event List View -->
-        <record id="view_ams_billing_event_tree" model="ir.ui.view">
-            <field name="name">ams.billing.event.tree</field>
+        <record id="view_ams_billing_event_list" model="ir.ui.view">
+            <field name="name">ams.billing.event.list</field>
             <field name="model">ams.billing.event</field>
             <field name="arch" type="xml">
-                <tree string="Billing Events" decoration-success="state=='completed'" decoration-danger="state=='failed'" decoration-warning="state=='processing'" decoration-muted="state=='cancelled'">
+                <list string="Billing Events">
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="subscription_id"/>
@@ -17,9 +17,9 @@
                     <field name="billing_period_end"/>
                     <field name="invoice_amount" widget="monetary"/>
                     <field name="invoice_sent" widget="boolean_toggle"/>
-                    <field name="state" widget="badge" decoration-success="state=='completed'" decoration-warning="state in ['pending','processing']" decoration-danger="state=='failed'"/>
+                    <field name="state" widget="badge" decoration-success="state == 'completed'" decoration-warning="state in ['pending','processing']" decoration-danger="state == 'failed'" decoration-muted="state == 'cancelled'"/>
                     <field name="currency_id" column_invisible="1"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -152,20 +152,6 @@
             </field>
         </record>
 
-        <!-- Billing Event Calendar View -->
-        <record id="view_ams_billing_event_calendar" model="ir.ui.view">
-            <field name="name">ams.billing.event.calendar</field>
-            <field name="model">ams.billing.event</field>
-            <field name="arch" type="xml">
-                <calendar string="Billing Events" date_start="event_date" color="state" quick_add="False" event_open_popup="true">
-                    <field name="display_name"/>
-                    <field name="partner_id"/>
-                    <field name="state"/>
-                    <field name="invoice_amount"/>
-                </calendar>
-            </field>
-        </record>
-
         <!-- Billing Event Kanban View -->
         <record id="view_ams_billing_event_kanban" model="ir.ui.view">
             <field name="name">ams.billing.event.kanban</field>
@@ -250,7 +236,7 @@
         <record id="action_ams_billing_event" model="ir.actions.act_window">
             <field name="name">Billing Events</field>
             <field name="res_model">ams.billing.event</field>
-            <field name="view_mode">kanban,tree,form,calendar,pivot</field>
+            <field name="view_mode">kanban,list,form,pivot</field>
             <field name="context">{'search_default_this_month': 1}</field>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
@@ -267,7 +253,7 @@
         <record id="action_ams_billing_event_failed" model="ir.actions.act_window">
             <field name="name">Failed Billing Events</field>
             <field name="res_model">ams.billing.event</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
             <field name="domain">[('state', '=', 'failed')]</field>
             <field name="context">{'search_default_failed': 1}</field>
             <field name="help" type="html">

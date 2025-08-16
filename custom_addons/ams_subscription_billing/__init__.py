@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from . import models
-from . import wizard
+from . import wizards
 from odoo import fields
 
 def post_init_hook(env):

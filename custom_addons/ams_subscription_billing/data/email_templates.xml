@@ -154,7 +154,7 @@
             <p>Please review this billing event and take appropriate action.</p>
             
             <div style="margin: 20px 0; text-align: center;">
-                <a href="/web#id=${object.id}&view_type=form&model=ams.billing.event" style="background-color: #d9534f; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Review Billing Event</a>
+                <a href="/web#id=${object.id}&amp;view_type=form&amp;model=ams.billing.event" style="background-color: #d9534f; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Review Billing Event</a>
             </div>
             
             <p>This is an automated notification from the AMS billing system.</p>

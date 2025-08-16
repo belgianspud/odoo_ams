@@ -43,7 +43,7 @@
                             
                             <separator string="Subscriptions to Bill"/>
                             <field name="subscription_ids" nolabel="1">
-                                <tree string="Subscriptions" decoration-success="enable_auto_billing==True" decoration-muted="state!='active'">
+                                <list string="Subscriptions">
                                     <field name="name"/>
                                     <field name="partner_id"/>
                                     <field name="product_id"/>
@@ -51,9 +51,9 @@
                                     <field name="payment_status"/>
                                     <field name="total_invoiced" widget="monetary"/>
                                     <field name="outstanding_balance" widget="monetary"/>
-                                    <field name="state" widget="badge"/>
+                                    <field name="state" widget="badge" decoration-success="state == 'active'" decoration-warning="state in ['pending','suspended']"/>
                                     <field name="enable_auto_billing" widget="boolean_toggle"/>
-                                </tree>
+                                </list>
                             </field>
                             
                             <div class="alert alert-info mt16" invisible="selected_count == 0">
