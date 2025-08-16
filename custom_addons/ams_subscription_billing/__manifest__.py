@@ -2,12 +2,12 @@
 {
     'name': 'AMS Subscription Billing (Core)',
     'version': '18.0.1.0.0',
-    'summary': 'Core subscription billing functionality for AMS',
+    'summary': 'Core subscription billing functionality for Association Management System',
     'description': """
 AMS Subscription Billing - Core Module
 =======================================
 
-This module provides essential automated billing functionality for AMS subscriptions:
+This module provides essential automated billing functionality for subscription management:
 
 Core Features:
 --------------
@@ -15,7 +15,7 @@ Core Features:
 * Invoice generation for subscription periods
 * Basic payment status tracking and overdue management
 * Simple proration calculations for mid-cycle changes
-* Integration with existing AMS subscription management
+* Standalone subscription management if no existing AMS module
 
 What this module does:
 ----------------------
@@ -26,33 +26,31 @@ What this module does:
 * Handles simple proration for subscription changes
 * Provides basic billing management interface
 
-What this module does NOT include:
-----------------------------------
-* Advanced dunning sequences (see ams_advanced_dunning)
-* Payment retry logic (see ams_payment_retry) 
-* Stored payment methods (see ams_payment_methods)
-* Advanced analytics (see ams_billing_analytics)
-* Customer self-service portal (see ams_customer_portal)
-* Complex proration methods (see ams_proration_engine)
+Compatibility:
+--------------
+* Works standalone or extends existing ams_subscriptions module
+* Compatible with Odoo Community 18.0
+* Can be extended with additional billing modules
 
-This is the foundation module that other billing modules extend.
+This is the foundation module that other billing modules can extend.
     """,
-    'author': 'Your AMS Development Team',
-    'website': 'https://yourcompany.com',
-    'category': 'Association Management/Billing',
+    'author': 'AMS Development Team',
+    'website': 'https://example.com',
+    'category': 'Sales/Subscriptions',
     'license': 'LGPL-3',
     
-    # Minimal dependencies for core functionality
+    # Core dependencies only - no external AMS modules required
     'depends': [
         'base',
         'mail',
         'account',
-        'ams_subscriptions',  # The core AMS subscription module
+        'product',
+        'sale',  # For basic subscription concepts
     ],
     
-    # Data files - simplified
+    # Data files
     'data': [
-        # Security
+        # Security first
         'security/ams_billing_security.xml',
         'security/ir.model.access.csv',
         
@@ -79,7 +77,7 @@ This is the foundation module that other billing modules extend.
     ],
     
     'installable': True,
-    'application': True,  # This is an extension, not a standalone app
+    'application': True,  # This can be a standalone application
     'auto_install': False,
     
     # Hooks
@@ -95,4 +93,21 @@ This is the foundation module that other billing modules extend.
     # Module metadata
     'sequence': 100,
     'development_status': 'Beta',
+    
+    # Assets (if needed for custom JS/CSS)
+    'assets': {},
+    
+    # Price info (if commercial)
+    'price': 0.0,
+    'currency': 'USD',
+    
+    # Support info
+    'support': 'support@example.com',
+    'maintainer': 'AMS Development Team',
+    
+    # Images
+    'images': ['static/description/banner.png'],
+    
+    # Cloc settings
+    'cloc_exclude': ['./**/*'],
 }

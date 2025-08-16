@@ -80,10 +80,10 @@
             <field name="perm_unlink" eval="1"/>
         </record>
 
-        <!-- Subscription rules - without company_id since ams.subscription doesn't have it -->
+        <!-- Subscription rules for billing access -->
         <record id="ams_subscription_billing_rule" model="ir.rule">
             <field name="name">AMS Subscription: Billing Access</field>
-            <field name="model_id" ref="ams_subscriptions.model_ams_subscription"/>
+            <field name="model_id" ref="model_ams_subscription"/>
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_ams_billing_user'))]"/>
             <field name="perm_read" eval="1"/>
@@ -94,13 +94,13 @@
 
         <record id="ams_subscription_billing_manager_rule" model="ir.rule">
             <field name="name">AMS Subscription: Billing Manager Access</field>
-            <field name="model_id" ref="ams_subscriptions.model_ams_subscription"/>
+            <field name="model_id" ref="model_ams_subscription"/>
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_ams_billing_manager'))]"/>
             <field name="perm_read" eval="1"/>
             <field name="perm_write" eval="1"/>
-            <field name="perm_create" eval="0"/>
-            <field name="perm_unlink" eval="0"/>
+            <field name="perm_create" eval="1"/>
+            <field name="perm_unlink" eval="1"/>
         </record>
 
         <!-- Invoice access rules for billing - using existing company rules -->

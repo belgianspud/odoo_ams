@@ -106,7 +106,6 @@
             <field name="view_mode">form</field>
             <field name="target">new</field>
             <field name="view_id" ref="view_ams_manual_billing_wizard_form"/>
-            <field name="binding_model_id" ref="ams_subscriptions.model_ams_subscription"/>
             <field name="binding_view_types">list,form</field>
         </record>
         

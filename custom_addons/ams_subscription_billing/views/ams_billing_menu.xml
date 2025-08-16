@@ -2,10 +2,22 @@
 <odoo>
     <data>
         
+        <!-- Create Main AMS Root Menu (will use existing if available) -->
+        <menuitem id="menu_ams_root"
+                  name="AMS"
+                  sequence="85"
+                  web_icon="ams_subscription_billing,static/description/icon.png"/>
+        
+        <!-- Create Members Menu under AMS (if it doesn't exist) -->
+        <menuitem id="menu_ams_members"
+                  name="Members"
+                  parent="menu_ams_root"
+                  sequence="10"/>
+        
         <!-- Main Billing Menu (under AMS root) -->
         <menuitem id="menu_ams_billing_root"
                   name="Billing"
-                  parent="ams_subscriptions.menu_ams_root"
+                  parent="menu_ams_root"
                   sequence="80"/>
         
         <!-- Billing Operations Submenu -->
@@ -61,6 +73,28 @@
                   parent="menu_ams_subscription_billing"
                   action="action_ams_subscription_overdue"
                   sequence="20"/>
+        
+        <!-- All Subscriptions -->
+        <record id="action_ams_subscription_all" model="ir.actions.act_window">
+            <field name="name">All Subscriptions</field>
+            <field name="res_model">ams.subscription</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first subscription!
+                </p>
+                <p>
+                    Manage customer subscriptions and automatic billing from here.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem id="menu_ams_subscription_all"
+                  name="All Subscriptions"
+                  parent="menu_ams_subscription_billing"
+                  action="action_ams_subscription_all"
+                  sequence="5"/>
         
         <!-- Invoices Submenu -->
         <menuitem id="menu_ams_billing_invoices"
@@ -206,13 +240,13 @@
         <!-- Quick Access Actions in Members Menu -->
         <menuitem id="menu_ams_members_billing_quick"
                   name="Billing Status"
-                  parent="ams_subscriptions.menu_ams_members"
+                  parent="menu_ams_members"
                   action="action_ams_subscription_billing_dashboard"
                   sequence="50"/>
         
         <menuitem id="menu_ams_members_overdue_quick"
                   name="Overdue Payments"
-                  parent="ams_subscriptions.menu_ams_members"
+                  parent="menu_ams_members"
                   action="action_ams_subscription_overdue"
                   sequence="51"/>
         
