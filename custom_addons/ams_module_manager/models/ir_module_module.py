@@ -32,6 +32,7 @@ class IrModuleModule(models.Model):
         'ams_subscriptions',    # AMS Subscriptions
         'ams_base_accounting',  # AMS Accounting ← Financial app
         'ams_revenue_recognition', # AMS Accounting Supporting Module For Managing Revenue Recognition
+        'ams_subscription_billing', # AMS Accounting Supporting Module For Managing Subscription Billing
     ]
     
     @api.model
