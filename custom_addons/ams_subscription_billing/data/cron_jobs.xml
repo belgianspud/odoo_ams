@@ -11,7 +11,7 @@
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
             <field name="code">model.cron_process_due_billing()</field>
-            <field name="nextcall" eval="(DateTime.now() + timedelta(hours=2)).strftime('%Y-%m-%d 02:00:00')"/>
+            <field name="nextcall" eval="(datetime.now() + timedelta(hours=2)).strftime('%Y-%m-%d %H:%M:%S')"/>
         </record>
 
         <!-- Daily Payment Reminder Cron -->
@@ -23,7 +23,7 @@
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
             <field name="code">model.cron_send_payment_reminders()</field>
-            <field name="nextcall" eval="(DateTime.now() + timedelta(hours=10)).strftime('%Y-%m-%d 10:00:00')"/>
+            <field name="nextcall" eval="(datetime.now() + timedelta(hours=10)).strftime('%Y-%m-%d %H:%M:%S')"/>
         </record>
 
         <!-- Daily Overdue Invoice Marking Cron -->
@@ -35,7 +35,7 @@
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
             <field name="code">model.cron_mark_overdue_invoices()</field>
-            <field name="nextcall" eval="(DateTime.now() + timedelta(hours=8)).strftime('%Y-%m-%d 08:00:00')"/>
+            <field name="nextcall" eval="(datetime.now() + timedelta(hours=8)).strftime('%Y-%m-%d %H:%M:%S')"/>
         </record>
 
         <!-- Daily Billing Events Processing -->
@@ -47,7 +47,7 @@
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
             <field name="code">model.cron_process_pending_billing_events()</field>
-            <field name="nextcall" eval="(DateTime.now() + timedelta(hours=12)).strftime('%Y-%m-%d 12:00:00')"/>
+            <field name="nextcall" eval="(datetime.now() + timedelta(hours=12)).strftime('%Y-%m-%d %H:%M:%S')"/>
         </record>
 
         <!-- Weekly Subscription Billing Health Check -->
@@ -100,7 +100,7 @@ for subscription in missing_schedules:
             'line': '0',
         })
             </field>
-            <field name="nextcall" eval="(DateTime.now() + timedelta(days=7)).strftime('%Y-%m-%d 06:00:00')"/>
+            <field name="nextcall" eval="(datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')"/>
         </record>
 
     </data>

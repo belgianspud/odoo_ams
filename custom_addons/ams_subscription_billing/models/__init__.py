@@ -9,3 +9,6 @@ from . import ams_subscription
 
 # Extension of account.move for subscription invoice tracking
 from . import account_move
+
+# Settings configuration
+from . import res_config_settings

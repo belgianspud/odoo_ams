@@ -65,12 +65,13 @@ This is the foundation module that other billing modules extend.
         'views/ams_billing_schedule_views.xml',
         'views/ams_billing_event_views.xml',
         'views/ams_subscription_billing_views.xml',
+        'views/res_config_settings_views.xml',
         
         # Menu
         'views/ams_billing_menu.xml',
         
-        # Basic wizard
-        'wizard/ams_manual_billing_wizard_views.xml',
+        # Wizards
+        'wizards/ams_manual_billing_wizard_views.xml',
     ],
     
     'demo': [
@@ -78,7 +79,7 @@ This is the foundation module that other billing modules extend.
     ],
     
     'installable': True,
-    'application': False,  # This is an extension, not a standalone app
+    'application': True,  # This is an extension, not a standalone app
     'auto_install': False,
     
     # Hooks

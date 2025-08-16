@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Extend Settings with AMS Billing Configuration -->
+        <record id="res_config_settings_view_form_billing" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.billing</field>
+            <field name="model">res.config.settings</field>
+            <field name="priority" eval="15"/>
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form" position="inside">
+                    <app data-string="AMS Billing" string="AMS Billing" name="ams_billing" groups="ams_subscription_billing.group_ams_billing_manager">
+                        
+                        <!-- Billing Automation Section -->
+                        <block title="Billing Automation" name="billing_automation">
+                            <setting string="Automatic Invoice Sending" help="Automatically send invoices to customers when generated">
+                                <field name="ams_auto_send_invoices"/>
+                            </setting>
+                            
+                            <setting string="Payment Reminders" help="Automatically send payment reminders for overdue invoices">
+                                <field name="ams_payment_reminder_enabled"/>
+                                <div class="text-muted mt8" invisible="not ams_payment_reminder_enabled">
+                                    Send reminders after:
+                                    <field name="ams_reminder_days" class="o_light_label" placeholder="1,7,14"/>
+                                    days overdue
+                                </div>
+                            </setting>
+                        </block>
+                        
+                        <!-- Billing Schedule Settings -->
+                        <block title="Billing Schedule Settings" name="billing_schedule">
+                            <setting string="Weekend Billing Adjustment" help="How to handle billing dates that fall on weekends">
+                                <field name="ams_weekend_billing_adjustment" class="o_light_label"/>
+                            </setting>
+                            
+                            <setting string="Billing Lead Time" help="Generate invoices this many days before due date">
+                                <field name="ams_billing_lead_days" class="o_light_label"/>
+                                <span class="o_form_label">days in advance</span>
+                            </setting>
+                            
+                            <setting string="Batch Processing Size" help="Number of billing schedules to process in each batch">
+                                <field name="ams_batch_size" class="o_light_label"/>
+                                <span class="o_form_label">schedules per batch</span>
+                            </setting>
+                        </block>
+                        
+                        <!-- Default Settings -->
+                        <block title="Default Settings" name="billing_defaults">
+                            <setting string="Default Payment Terms" help="Default payment terms for subscription invoices">
+                                <field name="ams_default_payment_terms" class="o_light_label"/>
+                            </setting>
+                            
+                            <setting string="Default Billing Journal" help="Default journal for subscription billing">
+                                <field name="ams_default_billing_journal" class="o_light_label"/>
+                            </setting>
+                        </block>
+                        
+                        <!-- Email Templates -->
+                        <block title="Email Templates" name="email_templates">
+                            <setting string="Invoice Email Template" help="Template for sending invoices to customers">
+                                <field name="ams_invoice_template_id" class="o_light_label"/>
+                            </setting>
+                            
+                            <setting string="Payment Reminder Template" help="Template for payment reminder emails">
+                                <field name="ams_payment_reminder_template_id" class="o_light_label"/>
+                            </setting>
+                            
+                            <div class="mt8">
+                                <button name="action_setup_default_templates" type="object" 
+                                        string="Setup Default Templates" class="btn-secondary"/>
+                            </div>
+                        </block>
+                        
+                        <!-- System Status -->
+                        <block title="System Status" name="system_status">
+                            <setting string="Active Billing Schedules" help="Number of currently active billing schedules">
+                                <field name="ams_active_billing_schedules" readonly="1" class="o_light_label"/>
+                            </setting>
+                            
+                            <setting string="Overdue Invoices" help="Number of overdue subscription invoices">
+                                <field name="ams_overdue_invoices_count" readonly="1" class="o_light_label"/>
+                                <div class="mt8" invisible="ams_overdue_invoices_count == 0">
+                                    <button name="action_view_overdue_invoices" type="object" 
+                                            string="View Overdue Invoices" class="btn-link"/>
+                                </div>
+                            </setting>
+                            
+                            <setting string="Pending Billing Events" help="Number of pending billing events that need processing">
+                                <field name="ams_pending_billing_events" readonly="1" class="o_light_label"/>
+                                <div class="mt8" invisible="ams_pending_billing_events == 0">
+                                    <button name="action_view_pending_events" type="object" 
+                                            string="View Pending Events" class="btn-link"/>
+                                </div>
+                            </setting>
+                        </block>
+                        
+                        <!-- Configuration Tools -->
+                        <block title="Configuration Tools" name="config_tools">
+                            <div class="row">
+                                <div class="col-6">
+                                    <button name="action_test_billing_configuration" type="object" 
+                                            string="Test Configuration" class="btn-primary"/>
+                                </div>
+                                <div class="col-6">
+                                    <button name="action_view_billing_dashboard" type="object" 
+                                            string="View Billing Dashboard" class="btn-secondary"/>
+                                </div>
+                            </div>
+                        </block>
+                        
+                    </app>
+                </xpath>
+            </field>
+        </record>
+        
+    </data>
+</odoo>
