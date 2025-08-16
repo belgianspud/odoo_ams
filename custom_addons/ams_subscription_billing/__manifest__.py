@@ -15,7 +15,7 @@ Core Features:
 * Invoice generation for subscription periods
 * Basic payment status tracking and overdue management
 * Simple proration calculations for mid-cycle changes
-* Standalone subscription management if no existing AMS module
+* Extends ams_subscriptions with billing functionality
 
 What this module does:
 ----------------------
@@ -26,29 +26,31 @@ What this module does:
 * Handles simple proration for subscription changes
 * Provides basic billing management interface
 
-Compatibility:
---------------
-* Works standalone or extends existing ams_subscriptions module
+Dependencies:
+-------------
+* Requires ams_subscriptions module (core subscription management)
+* Requires ams_base_accounting module (accounting foundation)
 * Compatible with Odoo Community 18.0
-* Can be extended with additional billing modules
 
-This is the foundation module that other billing modules can extend.
+This module extends the core subscription functionality with billing automation.
     """,
     'author': 'AMS Development Team',
     'website': 'https://example.com',
     'category': 'Sales/Subscriptions',
     'license': 'LGPL-3',
     
-    # Core dependencies only - no external AMS modules required
+    # Proper dependency chain
     'depends': [
         'base',
         'mail',
         'account',
         'product',
-        'sale',  # For basic subscription concepts
+        'sale',
+        'ams_base_accounting',  # Accounting foundation first
+        'ams_subscriptions',    # Then core subscriptions
     ],
     
-    # Data files
+    # Data files - FIXED loading order
     'data': [
         # Security first
         'security/ams_billing_security.xml',
@@ -59,13 +61,13 @@ This is the foundation module that other billing modules can extend.
         'data/email_templates.xml',
         'data/cron_jobs.xml',
         
-        # Core views
+        # Core views - load models first, then views that depend on them
         'views/ams_billing_schedule_views.xml',
         'views/ams_billing_event_views.xml',
         'views/ams_subscription_billing_views.xml',
         'views/res_config_settings_views.xml',
         
-        # Menu
+        # Menu - load last
         'views/ams_billing_menu.xml',
         
         # Wizards
@@ -77,7 +79,7 @@ This is the foundation module that other billing modules can extend.
     ],
     
     'installable': True,
-    'application': True,  # This can be a standalone application
+    'application': False,  # This extends ams_subscriptions, not standalone
     'auto_install': False,
     
     # Hooks
@@ -91,7 +93,7 @@ This is the foundation module that other billing modules can extend.
     'external_dependencies': {},
     
     # Module metadata
-    'sequence': 100,
+    'sequence': 110,  # Higher than base modules
     'development_status': 'Beta',
     
     # Assets (if needed for custom JS/CSS)
