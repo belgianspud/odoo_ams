@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ams_relationship_type_user,ams.relationship.type user,model_ams_relationship_type,ams_core.group_ams_user,1,0,0,0
+access_ams_relationship_type_manager,ams.relationship.type manager,model_ams_relationship_type,ams_core.group_ams_manager,1,1,1,1
+access_ams_relationship_type_admin,ams.relationship.type admin,model_ams_relationship_type,ams_core.group_ams_admin,1,1,1,1
+access_ams_partner_relationship_user,ams.partner.relationship user,model_ams_partner_relationship,ams_core.group_ams_user,1,1,1,0
+access_ams_partner_relationship_manager,ams.partner.relationship manager,model_ams_partner_relationship,ams_core.group_ams_manager,1,1,1,1
+access_ams_partner_relationship_admin,ams.partner.relationship admin,model_ams_partner_relationship,ams_core.group_ams_admin,1,1,1,1
+access_ams_household_user,ams.household user,model_ams_household,ams_core.group_ams_user,1,1,1,0
+access_ams_household_manager,ams.household manager,model_ams_household,ams_core.group_ams_manager,1,1,1,1
+access_ams_household_admin,ams.household admin,model_ams_household,ams_core.group_ams_admin,1,1,1,1
