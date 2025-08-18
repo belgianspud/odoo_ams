@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Contact Role Tree View -->
+        <record id="view_ams_contact_role_tree" model="ir.ui.view">
+            <field name="name">ams.contact.role.tree</field>
+            <field name="model">ams.contact.role</field>
+            <field name="arch" type="xml">
+                <tree string="Contact Roles" default_order="sequence">
+                    <field name="sequence" widget="handle"/>
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="is_primary"/>
+                    <field name="allow_multiple"/>
+                    <field name="for_individuals"/>
+                    <field name="for_organizations"/>
+                    <field name="assignment_count"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Contact Role Form View -->
+        <record id="view_ams_contact_role_form" model="ir.ui.view">
+            <field name="name">ams.contact.role.form</field>
+            <field name="model">ams.contact.role</field>
+            <field name="arch" type="xml">
+                <form string="Contact Role">
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_assignments" 
+                                    type="object" 
+                                    class="oe_stat_button" 
+                                    icon="fa-users">
+                                <field name="assignment_count" widget="statinfo" string="Assignments"/>
+                            </button>
+                        </div>
+                        
+                        <widget name="web_ribbon" title="Archived" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
+                        
+                        <div class="oe_title">
+                            <label for="name" class="oe_edit_only"/>
+                            <h1>
+                                <field name="name" placeholder="Role Name..."/>
+                            </h1>
+                            <label for="code" class="oe_edit_only"/>
+                            <h2>
+                                <field name="code" placeholder="ROLE_CODE"/>
+                            </h2>
+                        </div>
+                        
+                        <group>
+                            <group string="Basic Information">
+                                <field name="sequence"/>
+                                <field name="active"/>
+                                <field name="description"/>
+                            </group>
+                            <group string="Role Settings">
+                                <field name="is_primary"/>
+                                <field name="allow_multiple"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Applicability">
+                            <group>
+                                <field name="for_individuals"/>
+                            </group>
+                            <group>
+                                <field name="for_organizations"/>
+                            </group>
+                        </group>
+                        
+                        <notebook>
+                            <page string="Role Assignments" name="assignments">
+                                <field name="assignment_ids" nolabel="1">
+                                    <tree>
+                                        <field name="partner_id"/>
+                                        <field name="organization_id"/>
+                                        <field name="date_assigned"/>
+                                        <field name="date_end"/>
+                                        <field name="is_current"/>
+                                        <field name="active"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Contact Role Search View -->
+        <record id="view_ams_contact_role_search" model="ir.ui.view">
+            <field name="name">ams.contact.role.search</field>
+            <field name="model">ams.contact.role</field>
+            <field name="arch" type="xml">
+                <search string="Search Contact Roles">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="description"/>
+                    
+                    <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                    <filter string="Inactive" name="inactive" domain="[('active', '=', False)]"/>
+                    <separator/>
+                    <filter string="Primary Roles" name="primary" domain="[('is_primary', '=', True)]"/>
+                    <filter string="Multiple Allowed" name="multiple" domain="[('allow_multiple', '=', True)]"/>
+                    <separator/>
+                    <filter string="For Individuals" name="individuals" domain="[('for_individuals', '=', True)]"/>
+                    <filter string="For Organizations" name="organizations" domain="[('for_organizations', '=', True)]"/>
+                    
+                    <group expand="0" string="Group By">
+                        <filter string="Primary Role" name="group_primary" context="{'group_by': 'is_primary'}"/>
+                        <filter string="Multiple Allowed" name="group_multiple" context="{'group_by': 'allow_multiple'}"/>
+                        <filter string="Active" name="group_active" context="{'group_by': 'active'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Contact Role Assignment Tree View -->
+        <record id="view_ams_contact_role_assignment_tree" model="ir.ui.view">
+            <field name="name">ams.contact.role.assignment.tree</field>
+            <field name="model">ams.contact.role.assignment</field>
+            <field name="arch" type="xml">
+                <tree string="Contact Role Assignments" default_order="organization_id, role_id">
+                    <field name="partner_id"/>
+                    <field name="organization_id"/>
+                    <field name="role_id"/>
+                    <field name="date_assigned"/>
+                    <field name="date_end"/>
+                    <field name="is_current"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Contact Role Assignment Form View -->
+        <record id="view_ams_contact_role_assignment_form" model="ir.ui.view">
+            <field name="name">ams.contact.role.assignment.form</field>
+            <field name="model">ams.contact.role.assignment</field>
+            <field name="arch" type="xml">
+                <form string="Contact Role Assignment">
+                    <header>
+                        <button name="action_deactivate" 
+                                string="Deactivate" 
+                                type="object" 
+                                class="btn-primary"
+                                attrs="{'invisible': [('active', '=', False)]}"
+                                groups="ams_core.group_ams_user"/>
+                        <button name="action_reactivate" 
+                                string="Reactivate" 
+                                type="object" 
+                                class="btn-primary"
+                                attrs="{'invisible': [('active', '=', True)]}"
+                                groups="ams_core.group_ams_manager"/>
+                        <field name="active" widget="boolean_button" options="{'terminology': 'active'}"/>
+                    </header>
+                    
+                    <sheet>
+                        <widget name="web_ribbon" title="Inactive" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
+                        <widget name="web_ribbon" title="Ended" bg_color="bg-warning" attrs="{'invisible': ['|', ('active', '=', False), ('is_current', '=', True)]}"/>
+                        
+                        <div class="oe_title">
+                            <h1>
+                                <field name="display_name"/>
+                            </h1>
+                        </div>
+                        
+                        <group>
+                            <group string="Assignment Details">
+                                <field name="partner_id" options="{'no_create': True}"/>
+                                <field name="organization_id" options="{'no_create': True}"/>
+                                <field name="role_id" options="{'no_create': True}"/>
+                            </group>
+                            <group string="Timeline">
+                                <field name="date_assigned"/>
+                                <field name="date_end"/>
+                                <field name="is_current"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Notes">
+                            <field name="notes" nolabel="1" placeholder="Additional notes about this role assignment..."/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Contact Role Assignment Search View -->
+        <record id="view_ams_contact_role_assignment_search" model="ir.ui.view">
+            <field name="name">ams.contact.role.assignment.search</field>
+            <field name="model">ams.contact.role.assignment</field>
+            <field name="arch" type="xml">
+                <search string="Search Role Assignments">
+                    <field name="partner_id"/>
+                    <field name="organization_id"/>
+                    <field name="role_id"/>
+                    <field name="display_name"/>
+                    
+                    <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                    <filter string="Inactive" name="inactive" domain="[('active', '=', False)]"/>
+                    <separator/>
+                    <filter string="Current" name="current" domain="[('is_current', '=', True)]"/>
+                    <filter string="Ended" name="ended" domain="[('is_current', '=', False)]"/>
+                    <separator/>
+                    <filter string="This Year" name="this_year" domain="[('date_assigned', '&gt;=', datetime.datetime.now().strftime('%Y-01-01'))]"/>
+                    <filter string="Last 30 Days" name="last_30_days" domain="[('date_assigned', '&gt;=', (context_today() - datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                    
+                    <group expand="0" string="Group By">
+                        <filter string="Contact" name="group_contact" context="{'group_by': 'partner_id'}"/>
+                        <filter string="Organization" name="group_organization" context="{'group_by': 'organization_id'}"/>
+                        <filter string="Role" name="group_role" context="{'group_by': 'role_id'}"/>
+                        <filter string="Assignment Date" name="group_date" context="{'group_by': 'date_assigned:month'}"/>
+                        <filter string="Status" name="group_status" context="{'group_by': 'active'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Contact Role Assignment Calendar View -->
+        <record id="view_ams_contact_role_assignment_calendar" model="ir.ui.view">
+            <field name="name">ams.contact.role.assignment.calendar</field>
+            <field name="model">ams.contact.role.assignment</field>
+            <field name="arch" type="xml">
+                <calendar string="Role Assignments" 
+                          date_start="date_assigned" 
+                          date_stop="date_end"
+                          color="role_id"
+                          mode="month">
+                    <field name="partner_id"/>
+                    <field name="organization_id"/>
+                    <field name="role_id"/>
+                </calendar>
+            </field>
+        </record>
+
+        <!-- Actions -->
+        
+        <!-- Contact Roles Action -->
+        <record id="action_ams_contact_roles" model="ir.actions.act_window">
+            <field name="name">Contact Roles</field>
+            <field name="res_model">ams.contact.role</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first contact role!
+                </p>
+                <p>
+                    Contact roles define the different types of relationships contacts can have
+                    with organizations. Examples include Primary Contact, Billing Contact,
+                    Technical Contact, etc.
+                </p>
+            </field>
+        </record>
+
+        <!-- Contact Role Assignments Action -->
+        <record id="action_ams_contact_role_assignments" model="ir.actions.act_window">
+            <field name="name">Contact Role Assignments</field>
+            <field name="res_model">ams.contact.role.assignment</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="context">{'search_default_active': 1, 'search_default_current': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No role assignments yet!
+                </p>
+                <p>
+                    Role assignments connect contacts to organizations with specific roles.
+                    This helps you understand who to contact for different purposes.
+                </p>
+            </field>
+        </record>
+
+        <!-- Current Role Assignments Action -->
+        <record id="action_ams_current_role_assignments" model="ir.actions.act_window">
+            <field name="name">Current Role Assignments</field>
+            <field name="res_model">ams.contact.role.assignment</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('is_current', '=', True), ('active', '=', True)]</field>
+            <field name="context">{}</field>
+        </record>
+
+        <!-- Primary Contacts Action -->
+        <record id="action_ams_primary_contacts" model="ir.actions.act_window">
+            <field name="name">Primary Contacts</field>
+            <field name="res_model">ams.contact.role.assignment</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('role_id.is_primary', '=', True), ('is_current', '=', True), ('active', '=', True)]</field>
+            <field name="context">{}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No primary contacts assigned!
+                </p>
+                <p>
+                    Primary contacts are the main point of contact for organizations.
+                    Assign primary contacts to ensure communications reach the right person.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

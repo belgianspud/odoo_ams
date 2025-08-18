@@ -15,11 +15,11 @@ Core Features:
 * Invoice generation for subscription periods
 * Basic payment status tracking and overdue management
 * Simple proration calculations for mid-cycle changes
-* Extends ams_subscriptions with billing functionality
+* Standalone billing functionality that can be enhanced with other AMS modules
 
 What this module does:
 ----------------------
-* Creates billing schedules when subscriptions are activated
+* Creates billing schedules for subscriptions
 * Generates invoices automatically based on subscription periods
 * Tracks payment status and marks invoices as overdue
 * Sends basic payment reminders
@@ -28,29 +28,27 @@ What this module does:
 
 Dependencies:
 -------------
-* Requires ams_subscriptions module (core subscription management)
-* Requires ams_base_accounting module (accounting foundation)
-* Compatible with Odoo Community 18.0
+* Requires Odoo Community 18.0
+* Works standalone or integrates with other AMS modules
 
-This module extends the core subscription functionality with billing automation.
+This module provides core billing automation functionality.
     """,
     'author': 'AMS Development Team',
     'website': 'https://example.com',
     'category': 'Sales/Subscriptions',
     'license': 'LGPL-3',
     
-    # Proper dependency chain
+    # Minimal dependencies for initial installation
     'depends': [
         'base',
         'mail',
         'account',
         'product',
         'sale',
-        'ams_base_accounting',  # Accounting foundation first
-        'ams_subscriptions',    # Then core subscriptions
+        'contacts',
     ],
     
-    # Data files - FIXED loading order
+    # Data files - Fixed loading order
     'data': [
         # Security first
         'security/ams_billing_security.xml',
@@ -61,13 +59,14 @@ This module extends the core subscription functionality with billing automation.
         'data/email_templates.xml',
         'data/cron_jobs.xml',
         
-        # Core views - load models first, then views that depend on them
+        # Core models views
+        'views/ams_subscription_views.xml',
         'views/ams_billing_schedule_views.xml',
         'views/ams_billing_event_views.xml',
-        'views/ams_subscription_billing_views.xml',
+        'views/account_move_views.xml',
         'views/res_config_settings_views.xml',
         
-        # Menu - load last
+        # Menu structure
         'views/ams_billing_menu.xml',
         
         # Wizards
@@ -79,7 +78,7 @@ This module extends the core subscription functionality with billing automation.
     ],
     
     'installable': True,
-    'application': False,  # This extends ams_subscriptions, not standalone
+    'application': True,  # This is a core module
     'auto_install': False,
     
     # Hooks
@@ -93,7 +92,7 @@ This module extends the core subscription functionality with billing automation.
     'external_dependencies': {},
     
     # Module metadata
-    'sequence': 110,  # Higher than base modules
+    'sequence': 100,  # Load before dependent modules
     'development_status': 'Beta',
     
     # Assets (if needed for custom JS/CSS)

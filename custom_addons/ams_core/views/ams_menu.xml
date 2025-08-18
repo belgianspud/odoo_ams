@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Main AMS Menu -->
+        <menuitem id="menu_ams_root" 
+                  name="AMS" 
+                  sequence="10" 
+                  groups="ams_core.group_ams_user"
+                  web_icon="ams_core,static/description/icon.png"/>
+
+        <!-- Members Menu -->
+        <menuitem id="menu_ams_members" 
+                  name="Members" 
+                  parent="menu_ams_root" 
+                  sequence="10" 
+                  groups="ams_core.group_ams_user"/>
+
+        <!-- Members Submenu Items -->
+        <menuitem id="menu_ams_all_members" 
+                  name="All Members" 
+                  parent="menu_ams_members" 
+                  action="action_members" 
+                  sequence="10" 
+                  groups="ams_core.group_ams_user"/>
+
+        <menuitem id="menu_ams_active_members" 
+                  name="Active Members" 
+                  parent="menu_ams_members" 
+                  action="action_active_members" 
+                  sequence="20" 
+                  groups="ams_core.group_ams_user"/>
+
+        <menuitem id="menu_ams_prospects" 
+                  name="Prospects" 
+                  parent="menu_ams_members" 
+                  action="action_prospects" 
+                  sequence="30" 
+                  groups="ams_core.group_ams_user"/>
+
+        <menuitem id="menu_ams_lapsed_members" 
+                  name="Lapsed Members" 
+                  parent="menu_ams_members" 
+                  action="action_lapsed_members" 
+                  sequence="40" 
+                  groups="ams_core.group_ams_user"/>
+
+        <menuitem id="menu_ams_member_stats" 
+                  name="Member Statistics" 
+                  parent="menu_ams_members" 
+                  action="action_member_stats" 
+                  sequence="90" 
+                  groups="ams_core.group_ams_manager"/>
+
+        <!-- Contacts & Roles Menu -->
+        <menuitem id="menu_ams_contacts" 
+                  name="Contacts &amp; Roles" 
+                  parent="menu_ams_root" 
+                  sequence="20" 
+                  groups="ams_core.group_ams_user"/>
+
+        <!-- Contact Roles Submenu Items -->
+        <menuitem id="menu_ams_contact_role_assignments" 
+                  name="Role Assignments" 
+                  parent="menu_ams_contacts" 
+                  action="action_ams_contact_role_assignments" 
+                  sequence="10" 
+                  groups="ams_core.group_ams_user"/>
+
+        <menuitem id="menu_ams_current_role_assignments" 
+                  name="Current Assignments" 
+                  parent="menu_ams_contacts" 
+                  action="action_ams_current_role_assignments" 
+                  sequence="20" 
+                  groups="ams_core.group_ams_user"/>
+
+        <menuitem id="menu_ams_primary_contacts" 
+                  name="Primary Contacts" 
+                  parent="menu_ams_contacts" 
+                  action="action_ams_primary_contacts" 
+                  sequence="30" 
+                  groups="ams_core.group_ams_user"/>
+
+        <!-- Communications Menu -->
+        <menuitem id="menu_ams_communications" 
+                  name="Communications" 
+                  parent="menu_ams_root" 
+                  sequence="30" 
+                  groups="ams_core.group_ams_user"/>
+
+        <!-- Communication Preferences Submenu Items -->
+        <menuitem id="menu_ams_member_preferences" 
+                  name="Member Preferences" 
+                  parent="menu_ams_communications" 
+                  action="action_ams_communication_preferences" 
+                  sequence="10" 
+                  groups="ams_core.group_ams_user"/>
+
+        <menuitem id="menu_ams_opted_in_preferences" 
+                  name="Opted In" 
+                  parent="menu_ams_communications" 
+                  action="action_ams_opted_in_preferences" 
+                  sequence="20" 
+                  groups="ams_core.group_ams_user"/>
+
+        <menuitem id="menu_ams_opted_out_preferences" 
+                  name="Opted Out" 
+                  parent="menu_ams_communications" 
+                  action="action_ams_opted_out_preferences" 
+                  sequence="30" 
+                  groups="ams_core.group_ams_user"/>
+
+        <menuitem id="menu_ams_email_preferences" 
+                  name="Email Opt-Ins" 
+                  parent="menu_ams_communications" 
+                  action="action_ams_email_preferences" 
+                  sequence="40" 
+                  groups="ams_core.group_ams_user"/>
+
+        <menuitem id="menu_ams_marketing_opt_ins" 
+                  name="Marketing Opt-Ins" 
+                  parent="menu_ams_communications" 
+                  action="action_ams_marketing_opt_ins" 
+                  sequence="50" 
+                  groups="ams_core.group_ams_user"/>
+
+        <!-- Administration Menu -->
+        <menuitem id="menu_ams_administration" 
+                  name="Administration" 
+                  parent="menu_ams_root" 
+                  sequence="80" 
+                  groups="ams_core.group_ams_manager"/>
+
+        <!-- Administration Submenu Items -->
+        <menuitem id="menu_ams_config" 
+                  name="Configuration" 
+                  parent="menu_ams_administration" 
+                  sequence="10" 
+                  groups="ams_core.group_ams_manager"/>
+
+        <menuitem id="menu_ams_contact_roles_config" 
+                  name="Contact Roles" 
+                  parent="menu_ams_config" 
+                  action="action_ams_contact_roles" 
+                  sequence="10" 
+                  groups="ams_core.group_ams_manager"/>
+
+        <menuitem id="menu_ams_communication_types_config" 
+                  name="Communication Preference Types" 
+                  parent="menu_ams_config" 
+                  action="action_ams_communication_preference_types" 
+                  sequence="20" 
+                  groups="ams_core.group_ams_manager"/>
+
+        <!-- Security & Audit Menu -->
+        <menuitem id="menu_ams_security" 
+                  name="Security &amp; Audit" 
+                  parent="menu_ams_administration" 
+                  sequence="20" 
+                  groups="ams_core.group_ams_manager"/>
+
+        <menuitem id="menu_ams_audit_log" 
+                  name="Audit Log" 
+                  parent="menu_ams_security" 
+                  action="action_ams_audit_log" 
+                  sequence="10" 
+                  groups="ams_core.group_ams_manager"/>
+
+        <menuitem id="menu_ams_recent_activities" 
+                  name="Recent Activities" 
+                  parent="menu_ams_security" 
+                  action="action_ams_recent_activities" 
+                  sequence="20" 
+                  groups="ams_core.group_ams_manager"/>
+
+        <menuitem id="menu_ams_security_events" 
+                  name="Security Events" 
+                  parent="menu_ams_security" 
+                  action="action_ams_security_events" 
+                  sequence="30" 
+                  groups="ams_core.group_ams_admin"/>
+
+        <menuitem id="menu_ams_high_risk_activities" 
+                  name="High Risk Activities" 
+                  parent="menu_ams_security" 
+                  action="action_ams_high_risk_activities" 
+                  sequence="40" 
+                  groups="ams_core.group_ams_admin"/>
+
+        <menuitem id="menu_ams_member_activities" 
+                  name="Member Activities" 
+                  parent="menu_ams_security" 
+                  action="action_ams_member_activities" 
+                  sequence="50" 
+                  groups="ams_core.group_ams_manager"/>
+
+        <menuitem id="menu_ams_export_activities" 
+                  name="Data Export Activities" 
+                  parent="menu_ams_security" 
+                  action="action_ams_export_activities" 
+                  sequence="60" 
+                  groups="ams_core.group_ams_admin"/>
+
+        <!-- Reports Menu -->
+        <menuitem id="menu_ams_reports" 
+                  name="Reports" 
+                  parent="menu_ams_administration" 
+                  sequence="30" 
+                  groups="ams_core.group_ams_manager"/>
+
+        <menuitem id="menu_ams_user_activity_report" 
+                  name="User Activity Report" 
+                  parent="menu_ams_reports" 
+                  action="action_ams_user_activity_report" 
+                  sequence="10" 
+                  groups="ams_core.group_ams_manager"/>
+
+        <menuitem id="menu_ams_audit_dashboard" 
+                  name="Audit Dashboard" 
+                  parent="menu_ams_reports" 
+                  action="action_ams_audit_dashboard" 
+                  sequence="20" 
+                  groups="ams_core.group_ams_manager"/>
+
+        <!-- Quick Access Menu Items -->
+        <menuitem id="menu_ams_quick_access" 
+                  name="Quick Access" 
+                  parent="menu_ams_root" 
+                  sequence="90" 
+                  groups="ams_core.group_ams_user"/>
+
+        <!-- Add new member shortcut -->
+        <record id="action_new_member" model="ir.actions.act_window">
+            <field name="name">New Member</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context">{
+                'default_is_member': True,
+                'default_member_status': 'prospect'
+            }</field>
+        </record>
+
+        <menuitem id="menu_ams_new_member" 
+                  name="New Member" 
+                  parent="menu_ams_quick_access" 
+                  action="action_new_member" 
+                  sequence="10" 
+                  groups="ams_core.group_ams_user"/>
+
+        <!-- Add new organization shortcut -->
+        <record id="action_new_organization" model="ir.actions.act_window">
+            <field name="name">New Organization</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context">{
+                'default_is_company': True,
+                'default_is_member': True,
+                'default_member_status': 'prospect'
+            }</field>
+        </record>
+
+        <menuitem id="menu_ams_new_organization" 
+                  name="New Organization" 
+                  parent="menu_ams_quick_access" 
+                  action="action_new_organization" 
+                  sequence="20" 
+                  groups="ams_core.group_ams_user"/>
+
+        <!-- Integration with existing Odoo menus -->
+        
+        <!-- Add AMS members to Contacts menu -->
+        <menuitem id="menu_contacts_ams_members" 
+                  name="AMS Members" 
+                  parent="contacts.menu_contacts" 
+                  action="action_members" 
+                  sequence="15" 
+                  groups="ams_core.group_ams_user"/>
+
+        <!-- Dashboard Menu (if needed for custom dashboard) -->
+        <menuitem id="menu_ams_dashboard" 
+                  name="Dashboard" 
+                  parent="menu_ams_root" 
+                  sequence="5" 
+                  groups="ams_core.group_ams_user"/>
+
+        <!-- Member Overview Dashboard Action -->
+        <record id="action_ams_member_overview" model="ir.actions.client">
+            <field name="name">Member Overview</field>
+            <field name="tag">ams_member_dashboard</field>
+            <field name="target">current</field>
+        </record>
+
+        <menuitem id="menu_ams_member_overview" 
+                  name="Member Overview" 
+                  parent="menu_ams_dashboard" 
+                  action="action_ams_member_overview" 
+                  sequence="10" 
+                  groups="ams_core.group_ams_user"/>
+
+        <!-- System Health Dashboard Action -->
+        <record id="action_ams_system_health" model="ir.actions.client">
+            <field name="name">System Health</field>
+            <field name="tag">ams_system_health_dashboard</field>
+            <field name="target">current</field>
+        </record>
+
+        <menuitem id="menu_ams_system_health" 
+                  name="System Health" 
+                  parent="menu_ams_dashboard" 
+                  action="action_ams_system_health" 
+                  sequence="20" 
+                  groups="ams_core.group_ams_admin"/>
+
+    </data>
+</odoo>

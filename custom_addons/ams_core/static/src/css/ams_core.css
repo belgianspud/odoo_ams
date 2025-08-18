@@ -1,0 +1,595 @@
+/* AMS Core Styles */
+
+/* Member Status Indicators */
+.ams_member_status_active {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.ams_member_status_inactive {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.ams_member_status_lapsed {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.ams_member_status_prospect {
+    color: #6c757d;
+    font-weight: bold;
+}
+
+.ams_member_status_suspended {
+    color: #fd7e14;
+    font-weight: bold;
+}
+
+.ams_member_status_deceased {
+    color: #343a40;
+    font-weight: bold;
+}
+
+/* Member ID Display */
+.ams_member_id {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #495057;
+    background-color: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid #dee2e6;
+}
+
+/* Communication Preference Indicators */
+.ams_opt_in_true {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.ams_opt_in_false {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.ams_opt_in_partial {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+/* Contact Role Status */
+.ams_role_current {
+    color: #28a745;
+}
+
+.ams_role_ended {
+    color: #6c757d;
+    font-style: italic;
+}
+
+.ams_role_primary {
+    background-color: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    padding-left: 8px;
+}
+
+/* Audit Log Risk Levels */
+.ams_risk_low {
+    color: #28a745;
+}
+
+.ams_risk_medium {
+    color: #ffc107;
+}
+
+.ams_risk_high {
+    color: #fd7e14;
+}
+
+.ams_risk_critical {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Form Enhancements */
+.ams_form_section {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: #f8f9fa;
+}
+
+.ams_form_section_title {
+    font-weight: bold;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 0.25rem;
+}
+
+/* Member Card Styling */
+.ams_member_card {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.ams_member_card_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.ams_member_card_name {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #212529;
+}
+
+.ams_member_card_id {
+    font-family: 'Courier New', monospace;
+    color: #6c757d;
+    background-color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid #dee2e6;
+    font-size: 0.875rem;
+}
+
+.ams_member_card_status {
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Status Badge Colors */
+.ams_status_active {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.ams_status_inactive {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.ams_status_lapsed {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.ams_status_prospect {
+    background-color: #e2e3e5;
+    color: #383d41;
+    border: 1px solid #d6d8db;
+}
+
+.ams_status_suspended {
+    background-color: #fde2e4;
+    color: #842029;
+    border: 1px solid #f1aeb5;
+}
+
+/* Communication Preference Grid */
+.ams_comm_pref_grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.ams_comm_pref_item {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+    background-color: white;
+}
+
+.ams_comm_pref_title {
+    font-weight: bold;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.ams_comm_pref_channels {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ams_comm_channel {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.ams_channel_opted_in {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.ams_channel_opted_out {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Contact Role Assignment Styling */
+.ams_role_assignment {
+    border-left: 4px solid #007bff;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 0 0.375rem 0.375rem 0;
+}
+
+.ams_role_assignment.primary {
+    border-left-color: #28a745;
+    background-color: #e8f5e8;
+}
+
+.ams_role_assignment.ended {
+    border-left-color: #6c757d;
+    background-color: #f1f3f4;
+    opacity: 0.7;
+}
+
+.ams_role_name {
+    font-weight: bold;
+    color: #495057;
+}
+
+.ams_role_org {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.ams_role_dates {
+    color: #6c757d;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* Audit Log Styling */
+.ams_audit_entry {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background-color: white;
+}
+
+.ams_audit_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.ams_audit_activity {
+    font-weight: bold;
+    color: #495057;
+}
+
+.ams_audit_timestamp {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.ams_audit_description {
+    color: #212529;
+    margin-bottom: 0.5rem;
+}
+
+.ams_audit_details {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* Dashboard Widgets */
+.ams_widget {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+
+.ams_widget_title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #212529;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 0.5rem;
+}
+
+.ams_widget_value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #007bff;
+    text-align: center;
+}
+
+.ams_widget_label {
+    color: #6c757d;
+    text-align: center;
+    margin-top: 0.5rem;
+}
+
+/* Statistics Grid */
+.ams_stats_grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.ams_stat_item {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.ams_stat_value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.ams_stat_label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+/* Quick Actions */
+.ams_quick_actions {
+    display: flex;
+    gap: 0.5rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+}
+
+.ams_quick_action {
+    padding: 0.5rem 1rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: background-color 0.2s;
+}
+
+.ams_quick_action:hover {
+    background-color: #0056b3;
+    color: white;
+    text-decoration: none;
+}
+
+.ams_quick_action.secondary {
+    background-color: #6c757d;
+}
+
+.ams_quick_action.secondary:hover {
+    background-color: #545b62;
+}
+
+/* Form Field Enhancements */
+.ams_field_highlight {
+    background-color: #fff3cd !important;
+    border-color: #ffc107 !important;
+}
+
+.ams_field_required {
+    border-left: 3px solid #dc3545;
+    padding-left: 0.5rem;
+}
+
+.ams_field_readonly {
+    background-color: #f8f9fa;
+    color: #6c757d;
+}
+
+/* Progress Indicators */
+.ams_progress {
+    background-color: #e9ecef;
+    border-radius: 0.375rem;
+    height: 1rem;
+    overflow: hidden;
+    margin: 0.5rem 0;
+}
+
+.ams_progress_bar {
+    background-color: #007bff;
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.ams_progress_bar.success {
+    background-color: #28a745;
+}
+
+.ams_progress_bar.warning {
+    background-color: #ffc107;
+}
+
+.ams_progress_bar.danger {
+    background-color: #dc3545;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .ams_member_card_header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .ams_stats_grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ams_comm_pref_grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ams_quick_actions {
+        flex-direction: column;
+    }
+    
+    .ams_quick_action {
+        text-align: center;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .ams_member_card {
+        box-shadow: none;
+        border: 2px solid #000;
+        background: white !important;
+    }
+    
+    .ams_widget {
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+    
+    .ams_quick_actions,
+    .oe_button_box {
+        display: none !important;
+    }
+}
+
+/* Accessibility Enhancements */
+.ams_sr_only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Focus Indicators */
+.ams_quick_action:focus,
+.ams_member_card:focus-within {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .ams_member_card {
+        border-width: 2px;
+    }
+    
+    .ams_status_active,
+    .ams_status_inactive,
+    .ams_status_lapsed,
+    .ams_status_prospect,
+    .ams_status_suspended {
+        border-width: 2px;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .ams_member_card {
+        background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+        border-color: #495057;
+    }
+    
+    .ams_member_card_name {
+        color: #f8f9fa;
+    }
+    
+    .ams_member_card_id {
+        background-color: #495057;
+        color: #f8f9fa;
+        border-color: #6c757d;
+    }
+    
+    .ams_widget {
+        background-color: #343a40;
+        border-color: #495057;
+    }
+    
+    .ams_widget_title {
+        color: #f8f9fa;
+    }
+}
+
+/* Animation Classes */
+.ams_fade_in {
+    animation: ams_fadeIn 0.3s ease-in;
+}
+
+@keyframes ams_fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.ams_slide_in {
+    animation: ams_slideIn 0.3s ease-out;
+}
+
+@keyframes ams_slideIn {
+    from { 
+        transform: translateX(-20px);
+        opacity: 0;
+    }
+    to { 
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Utility Classes */
+.ams_text_center { text-align: center; }
+.ams_text_right { text-align: right; }
+.ams_text_left { text-align: left; }
+
+.ams_mt_1 { margin-top: 0.25rem; }
+.ams_mt_2 { margin-top: 0.5rem; }
+.ams_mt_3 { margin-top: 1rem; }
+.ams_mt_4 { margin-top: 1.5rem; }
+
+.ams_mb_1 { margin-bottom: 0.25rem; }
+.ams_mb_2 { margin-bottom: 0.5rem; }
+.ams_mb_3 { margin-bottom: 1rem; }
+.ams_mb_4 { margin-bottom: 1.5rem; }
+
+.ams_p_1 { padding: 0.25rem; }
+.ams_p_2 { padding: 0.5rem; }
+.ams_p_3 { padding: 1rem; }
+.ams_p_4 { padding: 1.5rem; }
+
+.ams_bold { font-weight: bold; }
+.ams_italic { font-style: italic; }
+.ams_underline { text-decoration: underline; }
+
+.ams_small { font-size: 0.875rem; }
+.ams_large { font-size: 1.125rem; }
+.ams_xlarge { font-size: 1.25rem; }

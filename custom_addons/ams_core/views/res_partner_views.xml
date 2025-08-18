@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Partner Form View - AMS Extensions -->
+        <record id="view_partner_form_ams" model="ir.ui.view">
+            <field name="name">res.partner.form.ams</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                
+                <!-- Add AMS tab after Internal Notes -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Membership" name="ams_membership" groups="ams_core.group_ams_user">
+                        <group>
+                            <group string="Member Information">
+                                <field name="is_member"/>
+                                <field name="member_id" attrs="{'readonly': [('is_member', '=', False)]}"/>
+                                <field name="member_since" attrs="{'readonly': [('is_member', '=', False)]}"/>
+                                <field name="member_status" attrs="{'readonly': [('is_member', '=', False)]}"/>
+                                <field name="member_display_name" invisible="1"/>
+                            </group>
+                            <group string="Primary Contact" attrs="{'invisible': [('is_company', '=', False)]}">
+                                <field name="primary_contact_id"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Communication Preferences">
+                            <group>
+                                <field name="email_opt_out"/>
+                                <field name="phone_opt_out"/>
+                            </group>
+                            <group>
+                                <field name="mail_opt_out"/>
+                            </group>
+                        </group>
+
+                        <separator string="Contact Roles" attrs="{'invisible': [('is_company', '=', True)]}"/>
+                        <field name="contact_role_ids" attrs="{'invisible': [('is_company', '=', True)]}" nolabel="1">
+                            <tree editable="bottom">
+                                <field name="organization_id"/>
+                                <field name="role_id"/>
+                                <field name="date_assigned"/>
+                                <field name="date_end"/>
+                                <field name="active"/>
+                                <field name="is_current"/>
+                            </tree>
+                        </field>
+
+                        <separator string="Primary Contact For" attrs="{'invisible': [('is_company', '=', False)]}"/>
+                        <field name="primary_contact_for_ids" attrs="{'invisible': [('is_company', '=', False)]}" nolabel="1">
+                            <tree>
+                                <field name="name"/>
+                                <field name="email"/>
+                                <field name="phone"/>
+                                <field name="member_id"/>
+                                <field name="member_status"/>
+                            </tree>
+                        </field>
+                    </page>
+                    
+                    <page string="Communication Preferences" name="ams_communication" groups="ams_core.group_ams_user">
+                        <field name="communication_preference_ids" nolabel="1">
+                            <tree editable="bottom">
+                                <field name="preference_type_id"/>
+                                <field name="email_opt_in" string="Email"/>
+                                <field name="phone_opt_in" string="Phone"/>
+                                <field name="mail_opt_in" string="Mail"/>
+                                <field name="sms_opt_in" string="SMS"/>
+                                <field name="consent_date"/>
+                                <field name="consent_method"/>
+                                <field name="any_opt_in" string="Any Opt-In"/>
+                                <field name="active"/>
+                            </tree>
+                            <form>
+                                <sheet>
+                                    <group>
+                                        <group>
+                                            <field name="preference_type_id"/>
+                                            <field name="active"/>
+                                        </group>
+                                        <group>
+                                            <field name="consent_date"/>
+                                            <field name="consent_method"/>
+                                        </group>
+                                    </group>
+                                    
+                                    <group string="Communication Channels">
+                                        <group>
+                                            <field name="email_opt_in"/>
+                                            <field name="phone_opt_in"/>
+                                        </group>
+                                        <group>
+                                            <field name="mail_opt_in"/>
+                                            <field name="sms_opt_in"/>
+                                        </group>
+                                    </group>
+                                    
+                                    <group string="Consent Details">
+                                        <field name="consent_ip_address"/>
+                                        <field name="consent_user_agent"/>
+                                        <field name="consent_notes" colspan="2"/>
+                                    </group>
+                                    
+                                    <group string="Tracking">
+                                        <group>
+                                            <field name="last_updated"/>
+                                            <field name="updated_by"/>
+                                        </group>
+                                    </group>
+                                </sheet>
+                            </form>
+                        </field>
+                    </page>
+                </xpath>
+
+                <!-- Add member ID in header after name for members -->
+                <xpath expr="//div[hasclass('oe_title')]" position="inside">
+                    <h2 attrs="{'invisible': [('member_id', '=', False)]}">
+                        <field name="member_id" readonly="1" class="oe_inline"/>
+                    </h2>
+                </xpath>
+
+                <!-- Add member status indicator -->
+                <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                    <button name="action_make_member" 
+                            type="object" 
+                            class="oe_stat_button" 
+                            icon="fa-user-plus"
+                            attrs="{'invisible': [('is_member', '=', True)]}"
+                            groups="ams_core.group_ams_user">
+                        <div class="o_stat_info">
+                            <span class="o_stat_text">Make</span>
+                            <span class="o_stat_text">Member</span>
+                        </div>
+                    </button>
+                    
+                    <button name="action_deactivate_member" 
+                            type="object" 
+                            class="oe_stat_button" 
+                            icon="fa-user-times"
+                            attrs="{'invisible': ['|', ('is_member', '=', False), ('member_status', '!=', 'active')]}"
+                            groups="ams_core.group_ams_manager">
+                        <div class="o_stat_info">
+                            <span class="o_stat_text">Deactivate</span>
+                            <span class="o_stat_text">Member</span>
+                        </div>
+                    </button>
+                    
+                    <button name="action_reactivate_member" 
+                            type="object" 
+                            class="oe_stat_button" 
+                            icon="fa-user-check"
+                            attrs="{'invisible': ['|', ('is_member', '=', False), ('member_status', 'in', ['active', 'prospect'])]}"
+                            groups="ams_core.group_ams_manager">
+                        <div class="o_stat_info">
+                            <span class="o_stat_text">Reactivate</span>
+                            <span class="o_stat_text">Member</span>
+                        </div>
+                    </button>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- Partner Tree View - AMS Extensions -->
+        <record id="view_partner_tree_ams" model="ir.ui.view">
+            <field name="name">res.partner.tree.ams</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_tree"/>
+            <field name="arch" type="xml">
+                <!-- Add member fields to tree view -->
+                <xpath expr="//field[@name='display_name']" position="after">
+                    <field name="member_id" optional="show"/>
+                    <field name="member_status" optional="show"/>
+                    <field name="is_member" optional="hide"/>
+                    <field name="member_since" optional="hide"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Partner Search View - AMS Extensions -->
+        <record id="view_partner_search_ams" model="ir.ui.view">
+            <field name="name">res.partner.search.ams</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_res_partner_filter"/>
+            <field name="arch" type="xml">
+                <!-- Add member search filters -->
+                <xpath expr="//filter[@name='customer']" position="after">
+                    <separator/>
+                    <filter string="Members" name="members" domain="[('is_member', '=', True)]"/>
+                    <filter string="Active Members" name="active_members" domain="[('is_member', '=', True), ('member_status', '=', 'active')]"/>
+                    <filter string="Inactive Members" name="inactive_members" domain="[('is_member', '=', True), ('member_status', '=', 'inactive')]"/>
+                    <filter string="Lapsed Members" name="lapsed_members" domain="[('is_member', '=', True), ('member_status', '=', 'lapsed')]"/>
+                    <filter string="Prospects" name="prospects" domain="[('member_status', '=', 'prospect')]"/>
+                </xpath>
+
+                <!-- Add member search fields -->
+                <xpath expr="//field[@name='category_id']" position="after">
+                    <field name="member_id"/>
+                    <field name="member_status"/>
+                </xpath>
+
+                <!-- Add member grouping -->
+                <xpath expr="//group[@string='Group By']" position="inside">
+                    <filter string="Member Status" name="group_member_status" context="{'group_by': 'member_status'}"/>
+                    <filter string="Member Since (Year)" name="group_member_year" context="{'group_by': 'member_since:year'}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Members Action -->
+        <record id="action_members" model="ir.actions.act_window">
+            <field name="name">Members</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('is_member', '=', True)]</field>
+            <field name="context">{
+                'default_is_member': True,
+                'search_default_active_members': 1
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first member!
+                </p>
+                <p>
+                    Members are individuals or organizations that belong to your association.
+                    Track their membership status, contact information, and communication preferences.
+                </p>
+            </field>
+        </record>
+
+        <!-- Active Members Action -->
+        <record id="action_active_members" model="ir.actions.act_window">
+            <field name="name">Active Members</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('is_member', '=', True), ('member_status', '=', 'active')]</field>
+            <field name="context">{
+                'default_is_member': True,
+                'default_member_status': 'active'
+            }</field>
+        </record>
+
+        <!-- Prospects Action -->
+        <record id="action_prospects" model="ir.actions.act_window">
+            <field name="name">Prospects</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('member_status', '=', 'prospect')]</field>
+            <field name="context">{
+                'default_member_status': 'prospect'
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No prospects yet!
+                </p>
+                <p>
+                    Prospects are potential members who have shown interest in your association.
+                    Convert them to members when they join.
+                </p>
+            </field>
+        </record>
+
+        <!-- Lapsed Members Action -->
+        <record id="action_lapsed_members" model="ir.actions.act_window">
+            <field name="name">Lapsed Members</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('is_member', '=', True), ('member_status', '=', 'lapsed')]</field>
+            <field name="context">{}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No lapsed members!
+                </p>
+                <p>
+                    Lapsed members are former members whose membership has expired.
+                    Use this list for renewal campaigns.
+                </p>
+            </field>
+        </record>
+
+        <!-- Member Statistics Dashboard Action -->
+        <record id="action_member_stats" model="ir.actions.server">
+            <field name="name">Member Statistics</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="state">code</field>
+            <field name="code">
+stats = model.get_member_stats()
+action = {
+    'type': 'ir.actions.client',
+    'tag': 'display_notification',
+    'params': {
+        'title': 'Member Statistics',
+        'message': f"""
+Total Members: {stats.get('total_members', 0)}
+Active: {stats.get('active_members', 0)}
+Inactive: {stats.get('inactive_members', 0)}
+Lapsed: {stats.get('lapsed_members', 0)}
+Suspended: {stats.get('suspended_members', 0)}
+        """,
+        'type': 'info',
+        'sticky': True
+    }
+}
+            </field>
+        </record>
+
+        <!-- Partner Kanban View - AMS Extensions -->
+        <record id="view_partner_kanban_ams" model="ir.ui.view">
+            <field name="name">res.partner.kanban.ams</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.res_partner_kanban_view"/>
+            <field name="arch" type="xml">
+                <!-- Add member badge -->
+                <xpath expr="//div[hasclass('oe_kanban_details')]" position="inside">
+                    <div class="oe_kanban_footer" attrs="{'invisible': [('is_member', '=', False)]}">
+                        <div class="oe_kanban_footer_left">
+                            <span class="badge badge-pill badge-info" attrs="{'invisible': [('member_status', '!=', 'active')]}">
+                                Active Member
+                            </span>
+                            <span class="badge badge-pill badge-warning" attrs="{'invisible': [('member_status', '!=', 'inactive')]}">
+                                Inactive Member
+                            </span>
+                            <span class="badge badge-pill badge-danger" attrs="{'invisible': [('member_status', '!=', 'lapsed')]}">
+                                Lapsed Member
+                            </span>
+                            <span class="badge badge-pill badge-secondary" attrs="{'invisible': [('member_status', '!=', 'prospect')]}">
+                                Prospect
+                            </span>
+                        </div>
+                        <div class="oe_kanban_footer_right">
+                            <field name="member_id"/>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

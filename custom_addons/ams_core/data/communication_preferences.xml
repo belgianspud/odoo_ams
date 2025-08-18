@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Default Communication Preference Types -->
+        
+        <!-- Newsletter Preference -->
+        <record id="pref_type_newsletter" model="ams.communication.preference.type">
+            <field name="name">Newsletter</field>
+            <field name="code">NEWSLETTER</field>
+            <field name="description">Regular newsletter with updates, news, and announcements from the organization.</field>
+            <field name="sequence">10</field>
+            <field name="applies_to_email" eval="True"/>
+            <field name="applies_to_phone" eval="False"/>
+            <field name="applies_to_mail" eval="True"/>
+            <field name="applies_to_sms" eval="False"/>
+            <field name="default_opt_in" eval="True"/>
+            <field name="required_preference" eval="False"/>
+            <field name="requires_explicit_consent" eval="False"/>
+            <field name="legal_basis">legitimate_interests</field>
+        </record>
+
+        <!-- Event Notifications Preference -->
+        <record id="pref_type_events" model="ams.communication.preference.type">
+            <field name="name">Event Notifications</field>
+            <field name="code">EVENTS</field>
+            <field name="description">Notifications about upcoming events, conferences, workshops, and training sessions.</field>
+            <field name="sequence">20</field>
+            <field name="applies_to_email" eval="True"/>
+            <field name="applies_to_phone" eval="False"/>
+            <field name="applies_to_mail" eval="True"/>
+            <field name="applies_to_sms" eval="True"/>
+            <field name="default_opt_in" eval="True"/>
+            <field name="required_preference" eval="False"/>
+            <field name="requires_explicit_consent" eval="False"/>
+            <field name="legal_basis">legitimate_interests</field>
+        </record>
+
+        <!-- Marketing Communications Preference -->
+        <record id="pref_type_marketing" model="ams.communication.preference.type">
+            <field name="name">Marketing Communications</field>
+            <field name="code">MARKETING</field>
+            <field name="description">Promotional materials, special offers, and marketing communications from the organization and partners.</field>
+            <field name="sequence">30</field>
+            <field name="applies_to_email" eval="True"/>
+            <field name="applies_to_phone" eval="True"/>
+            <field name="applies_to_mail" eval="True"/>
+            <field name="applies_to_sms" eval="True"/>
+            <field name="default_opt_in" eval="False"/>
+            <field name="required_preference" eval="False"/>
+            <field name="requires_explicit_consent" eval="True"/>
+            <field name="legal_basis">consent</field>
+        </record>
+
+        <!-- Billing and Account Preference -->
+        <record id="pref_type_billing" model="ams.communication.preference.type">
+            <field name="name">Billing and Account</field>
+            <field name="code">BILLING</field>
+            <field name="description">Billing statements, payment reminders, account notifications, and financial communications.</field>
+            <field name="sequence">40</field>
+            <field name="applies_to_email" eval="True"/>
+            <field name="applies_to_phone" eval="True"/>
+            <field name="applies_to_mail" eval="True"/>
+            <field name="applies_to_sms" eval="False"/>
+            <field name="default_opt_in" eval="True"/>
+            <field name="required_preference" eval="True"/>
+            <field name="requires_explicit_consent" eval="False"/>
+            <field name="legal_basis">contract</field>
+        </record>
+
+        <!-- Membership Renewal Preference -->
+        <record id="pref_type_renewal" model="ams.communication.preference.type">
+            <field name="name">Membership Renewal</field>
+            <field name="code">RENEWAL</field>
+            <field name="description">Membership renewal reminders, notices, and related communications.</field>
+            <field name="sequence">50</field>
+            <field name="applies_to_email" eval="True"/>
+            <field name="applies_to_phone" eval="True"/>
+            <field name="applies_to_mail" eval="True"/>
+            <field name="applies_to_sms" eval="False"/>
+            <field name="default_opt_in" eval="True"/>
+            <field name="required_preference" eval="True"/>
+            <field name="requires_explicit_consent" eval="False"/>
+            <field name="legal_basis">contract</field>
+        </record>
+
+        <!-- Important Announcements Preference -->
+        <record id="pref_type_announcements" model="ams.communication.preference.type">
+            <field name="name">Important Announcements</field>
+            <field name="code">ANNOUNCEMENTS</field>
+            <field name="description">Critical announcements, policy changes, and urgent member communications.</field>
+            <field name="sequence">60</field>
+            <field name="applies_to_email" eval="True"/>
+            <field name="applies_to_phone" eval="True"/>
+            <field name="applies_to_mail" eval="True"/>
+            <field name="applies_to_sms" eval="True"/>
+            <field name="default_opt_in" eval="True"/>
+            <field name="required_preference" eval="True"/>
+            <field name="requires_explicit_consent" eval="False"/>
+            <field name="legal_basis">legitimate_interests</field>
+        </record>
+
+        <!-- Survey and Research Preference -->
+        <record id="pref_type_surveys" model="ams.communication.preference.type">
+            <field name="name">Surveys and Research</field>
+            <field name="code">SURVEYS</field>
+            <field name="description">Member surveys, research studies, and feedback requests from the organization.</field>
+            <field name="sequence">70</field>
+            <field name="applies_to_email" eval="True"/>
+            <field name="applies_to_phone" eval="True"/>
+            <field name="applies_to_mail" eval="False"/>
+            <field name="applies_to_sms" eval="False"/>
+            <field name="default_opt_in" eval="False"/>
+            <field name="required_preference" eval="False"/>
+            <field name="requires_explicit_consent" eval="True"/>
+            <field name="legal_basis">consent</field>
+        </record>
+
+        <!-- Educational Content Preference -->
+        <record id="pref_type_education" model="ams.communication.preference.type">
+            <field name="name">Educational Content</field>
+            <field name="code">EDUCATION</field>
+            <field name="description">Educational materials, webinars, training opportunities, and professional development content.</field>
+            <field name="sequence">80</field>
+            <field name="applies_to_email" eval="True"/>
+            <field name="applies_to_phone" eval="False"/>
+            <field name="applies_to_mail" eval="True"/>
+            <field name="applies_to_sms" eval="False"/>
+            <field name="default_opt_in" eval="True"/>
+            <field name="required_preference" eval="False"/>
+            <field name="requires_explicit_consent" eval="False"/>
+            <field name="legal_basis">legitimate_interests</field>
+        </record>
+
+        <!-- Community and Networking Preference -->
+        <record id="pref_type_community" model="ams.communication.preference.type">
+            <field name="name">Community and Networking</field>
+            <field name="code">COMMUNITY</field>
+            <field name="description">Community updates, networking opportunities, member spotlights, and social activities.</field>
+            <field name="sequence">90</field>
+            <field name="applies_to_email" eval="True"/>
+            <field name="applies_to_phone" eval="False"/>
+            <field name="applies_to_mail" eval="False"/>
+            <field name="applies_to_sms" eval="False"/>
+            <field name="default_opt_in" eval="True"/>
+            <field name="required_preference" eval="False"/>
+            <field name="requires_explicit_consent" eval="False"/>
+            <field name="legal_basis">legitimate_interests</field>
+        </record>
+
+        <!-- Board and Governance Preference -->
+        <record id="pref_type_governance" model="ams.communication.preference.type">
+            <field name="name">Board and Governance</field>
+            <field name="code">GOVERNANCE</field>
+            <field name="description">Board meeting notices, governance updates, voting information, and official organization business.</field>
+            <field name="sequence">100</field>
+            <field name="applies_to_email" eval="True"/>
+            <field name="applies_to_phone" eval="False"/>
+            <field name="applies_to_mail" eval="True"/>
+            <field name="applies_to_sms" eval="False"/>
+            <field name="default_opt_in" eval="True"/>
+            <field name="required_preference" eval="False"/>
+            <field name="requires_explicit_consent" eval="False"/>
+            <field name="legal_basis">legitimate_interests</field>
+        </record>
+
+        <!-- Emergency Notifications Preference -->
+        <record id="pref_type_emergency" model="ams.communication.preference.type">
+            <field name="name">Emergency Notifications</field>
+            <field name="code">EMERGENCY</field>
+            <field name="description">Emergency alerts, safety notifications, and urgent communications requiring immediate attention.</field>
+            <field name="sequence">110</field>
+            <field name="applies_to_email" eval="True"/>
+            <field name="applies_to_phone" eval="True"/>
+            <field name="applies_to_mail" eval="False"/>
+            <field name="applies_to_sms" eval="True"/>
+            <field name="default_opt_in" eval="True"/>
+            <field name="required_preference" eval="True"/>
+            <field name="requires_explicit_consent" eval="False"/>
+            <field name="legal_basis">vital_interests</field>
+        </record>
+
+        <!-- Chapter Communications Preference -->
+        <record id="pref_type_chapter" model="ams.communication.preference.type">
+            <field name="name">Chapter Communications</field>
+            <field name="code">CHAPTER</field>
+            <field name="description">Local chapter news, events, and communications specific to regional or specialty groups.</field>
+            <field name="sequence">120</field>
+            <field name="applies_to_email" eval="True"/>
+            <field name="applies_to_phone" eval="False"/>
+            <field name="applies_to_mail" eval="True"/>
+            <field name="applies_to_sms" eval="False"/>
+            <field name="default_opt_in" eval="True"/>
+            <field name="required_preference" eval="False"/>
+            <field name="requires_explicit_consent" eval="False"/>
+            <field name="legal_basis">legitimate_interests</field>
+        </record>
+
+        <!-- Third Party Communications Preference -->
+        <record id="pref_type_third_party" model="ams.communication.preference.type">
+            <field name="name">Third Party Communications</field>
+            <field name="code">THIRD_PARTY</field>
+            <field name="description">Communications from approved third parties, sponsors, and partner organizations.</field>
+            <field name="sequence">130</field>
+            <field name="applies_to_email" eval="True"/>
+            <field name="applies_to_phone" eval="True"/>
+            <field name="applies_to_mail" eval="True"/>
+            <field name="applies_to_sms" eval="False"/>
+            <field name="default_opt_in" eval="False"/>
+            <field name="required_preference" eval="False"/>
+            <field name="requires_explicit_consent" eval="True"/>
+            <field name="legal_basis">consent</field>
+        </record>
+
+        <!-- Job and Career Opportunities Preference -->
+        <record id="pref_type_careers" model="ams.communication.preference.type">
+            <field name="name">Job and Career Opportunities</field>
+            <field name="code">CAREERS</field>
+            <field name="description">Job postings, career opportunities, and professional placement services.</field>
+            <field name="sequence">140</field>
+            <field name="applies_to_email" eval="True"/>
+            <field name="applies_to_phone" eval="False"/>
+            <field name="applies_to_mail" eval="False"/>
+            <field name="applies_to_sms" eval="False"/>
+            <field name="default_opt_in" eval="False"/>
+            <field name="required_preference" eval="False"/>
+            <field name="requires_explicit_consent" eval="True"/>
+            <field name="legal_basis">consent</field>
+        </record>
+
+        <!-- Publications and Resources Preference -->
+        <record id="pref_type_publications" model="ams.communication.preference.type">
+            <field name="name">Publications and Resources</field>
+            <field name="code">PUBLICATIONS</field>
+            <field name="description">Professional publications, journals, white papers, and resource materials.</field>
+            <field name="sequence">150</field>
+            <field name="applies_to_email" eval="True"/>
+            <field name="applies_to_phone" eval="False"/>
+            <field name="applies_to_mail" eval="True"/>
+            <field name="applies_to_sms" eval="False"/>
+            <field name="default_opt_in" eval="True"/>
+            <field name="required_preference" eval="False"/>
+            <field name="requires_explicit_consent" eval="False"/>
+            <field name="legal_basis">legitimate_interests</field>
+        </record>
+
+    </data>
+</odoo>

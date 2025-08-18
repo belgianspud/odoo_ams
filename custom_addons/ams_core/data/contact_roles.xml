@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Default Contact Roles -->
+        
+        <!-- Primary Contact Role -->
+        <record id="contact_role_primary" model="ams.contact.role">
+            <field name="name">Primary Contact</field>
+            <field name="code">PRIMARY</field>
+            <field name="description">Main point of contact for the organization. Receives all general communications and has authority to make decisions.</field>
+            <field name="sequence">10</field>
+            <field name="is_primary" eval="True"/>
+            <field name="allow_multiple" eval="False"/>
+            <field name="for_individuals" eval="True"/>
+            <field name="for_organizations" eval="True"/>
+        </record>
+
+        <!-- Billing Contact Role -->
+        <record id="contact_role_billing" model="ams.contact.role">
+            <field name="name">Billing Contact</field>
+            <field name="code">BILLING</field>
+            <field name="description">Contact responsible for billing, invoicing, and payment matters. Receives all financial communications.</field>
+            <field name="sequence">20</field>
+            <field name="is_primary" eval="False"/>
+            <field name="allow_multiple" eval="False"/>
+            <field name="for_individuals" eval="True"/>
+            <field name="for_organizations" eval="True"/>
+        </record>
+
+        <!-- Technical Contact Role -->
+        <record id="contact_role_technical" model="ams.contact.role">
+            <field name="name">Technical Contact</field>
+            <field name="code">TECHNICAL</field>
+            <field name="description">Contact for technical matters, system access, and IT-related communications.</field>
+            <field name="sequence">30</field>
+            <field name="is_primary" eval="False"/>
+            <field name="allow_multiple" eval="True"/>
+            <field name="for_individuals" eval="True"/>
+            <field name="for_organizations" eval="True"/>
+        </record>
+
+        <!-- Emergency Contact Role -->
+        <record id="contact_role_emergency" model="ams.contact.role">
+            <field name="name">Emergency Contact</field>
+            <field name="code">EMERGENCY</field>
+            <field name="description">Contact to reach in case of emergencies. Usually a family member or close colleague.</field>
+            <field name="sequence">40</field>
+            <field name="is_primary" eval="False"/>
+            <field name="allow_multiple" eval="True"/>
+            <field name="for_individuals" eval="True"/>
+            <field name="for_organizations" eval="False"/>
+        </record>
+
+        <!-- Executive Contact Role -->
+        <record id="contact_role_executive" model="ams.contact.role">
+            <field name="name">Executive Contact</field>
+            <field name="code">EXECUTIVE</field>
+            <field name="description">Senior executive or decision maker within the organization. Receives executive-level communications.</field>
+            <field name="sequence">50</field>
+            <field name="is_primary" eval="False"/>
+            <field name="allow_multiple" eval="True"/>
+            <field name="for_individuals" eval="False"/>
+            <field name="for_organizations" eval="True"/>
+        </record>
+
+        <!-- Member Representative Role -->
+        <record id="contact_role_member_rep" model="ams.contact.role">
+            <field name="name">Member Representative</field>
+            <field name="code">MEMBER_REP</field>
+            <field name="description">Designated representative for membership matters, benefits, and member services.</field>
+            <field name="sequence">60</field>
+            <field name="is_primary" eval="False"/>
+            <field name="allow_multiple" eval="True"/>
+            <field name="for_individuals" eval="True"/>
+            <field name="for_organizations" eval="True"/>
+        </record>
+
+        <!-- Marketing Contact Role -->
+        <record id="contact_role_marketing" model="ams.contact.role">
+            <field name="name">Marketing Contact</field>
+            <field name="code">MARKETING</field>
+            <field name="description">Contact for marketing communications, promotional materials, and event announcements.</field>
+            <field name="sequence">70</field>
+            <field name="is_primary" eval="False"/>
+            <field name="allow_multiple" eval="True"/>
+            <field name="for_individuals" eval="True"/>
+            <field name="for_organizations" eval="True"/>
+        </record>
+
+        <!-- Legal Contact Role -->
+        <record id="contact_role_legal" model="ams.contact.role">
+            <field name="name">Legal Contact</field>
+            <field name="code">LEGAL</field>
+            <field name="description">Contact for legal matters, contracts, and compliance communications.</field>
+            <field name="sequence">80</field>
+            <field name="is_primary" eval="False"/>
+            <field name="allow_multiple" eval="True"/>
+            <field name="for_individuals" eval="False"/>
+            <field name="for_organizations" eval="True"/>
+        </record>
+
+        <!-- Board Member Role -->
+        <record id="contact_role_board_member" model="ams.contact.role">
+            <field name="name">Board Member</field>
+            <field name="code">BOARD_MEMBER</field>
+            <field name="description">Member of the organization's board of directors or governing body.</field>
+            <field name="sequence">90</field>
+            <field name="is_primary" eval="False"/>
+            <field name="allow_multiple" eval="True"/>
+            <field name="for_individuals" eval="True"/>
+            <field name="for_organizations" eval="False"/>
+        </record>
+
+        <!-- Committee Member Role -->
+        <record id="contact_role_committee_member" model="ams.contact.role">
+            <field name="name">Committee Member</field>
+            <field name="code">COMMITTEE_MEMBER</field>
+            <field name="description">Member of a specific committee or working group within the organization.</field>
+            <field name="sequence">100</field>
+            <field name="is_primary" eval="False"/>
+            <field name="allow_multiple" eval="True"/>
+            <field name="for_individuals" eval="True"/>
+            <field name="for_organizations" eval="False"/>
+        </record>
+
+        <!-- Vendor Contact Role -->
+        <record id="contact_role_vendor" model="ams.contact.role">
+            <field name="name">Vendor Contact</field>
+            <field name="code">VENDOR</field>
+            <field name="description">Contact for vendor or supplier relationships and procurement matters.</field>
+            <field name="sequence">110</field>
+            <field name="is_primary" eval="False"/>
+            <field name="allow_multiple" eval="True"/>
+            <field name="for_individuals" eval="True"/>
+            <field name="for_organizations" eval="True"/>
+        </record>
+
+        <!-- Alumni Contact Role -->
+        <record id="contact_role_alumni" model="ams.contact.role">
+            <field name="name">Alumni Contact</field>
+            <field name="code">ALUMNI</field>
+            <field name="description">Former member or participant who maintains connection with the organization.</field>
+            <field name="sequence">120</field>
+            <field name="is_primary" eval="False"/>
+            <field name="allow_multiple" eval="False"/>
+            <field name="for_individuals" eval="True"/>
+            <field name="for_organizations" eval="False"/>
+        </record>
+
+        <!-- Spouse/Partner Role -->
+        <record id="contact_role_spouse" model="ams.contact.role">
+            <field name="name">Spouse/Partner</field>
+            <field name="code">SPOUSE</field>
+            <field name="description">Spouse or domestic partner of a member. May receive family-related communications.</field>
+            <field name="sequence">130</field>
+            <field name="is_primary" eval="False"/>
+            <field name="allow_multiple" eval="False"/>
+            <field name="for_individuals" eval="True"/>
+            <field name="for_organizations" eval="False"/>
+        </record>
+
+        <!-- Dependent Role -->
+        <record id="contact_role_dependent" model="ams.contact.role">
+            <field name="name">Dependent</field>
+            <field name="code">DEPENDENT</field>
+            <field name="description">Dependent family member (child, etc.) of a member.</field>
+            <field name="sequence">140</field>
+            <field name="is_primary" eval="False"/>
+            <field name="allow_multiple" eval="True"/>
+            <field name="for_individuals" eval="True"/>
+            <field name="for_organizations" eval="False"/>
+        </record>
+
+        <!-- Referral Contact Role -->
+        <record id="contact_role_referral" model="ams.contact.role">
+            <field name="name">Referral Contact</field>
+            <field name="code">REFERRAL</field>
+            <field name="description">Contact who referred this member to the organization.</field>
+            <field name="sequence">150</field>
+            <field name="is_primary" eval="False"/>
+            <field name="allow_multiple" eval="True"/>
+            <field name="for_individuals" eval="True"/>
+            <field name="for_organizations" eval="True"/>
+        </record>
+
+        <!-- Guest Role -->
+        <record id="contact_role_guest" model="ams.contact.role">
+            <field name="name">Guest</field>
+            <field name="code">GUEST</field>
+            <field name="description">Guest or visitor to events and activities. Limited access and communications.</field>
+            <field name="sequence">160</field>
+            <field name="is_primary" eval="False"/>
+            <field name="allow_multiple" eval="False"/>
+            <field name="for_individuals" eval="True"/>
+            <field name="for_organizations" eval="False"/>
+        </record>
+
+    </data>
+</odoo>

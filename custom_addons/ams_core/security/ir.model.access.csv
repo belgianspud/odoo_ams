@@ -1,0 +1,19 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ams_contact_role_user,ams.contact.role user,model_ams_contact_role,group_ams_user,1,0,0,0
+access_ams_contact_role_manager,ams.contact.role manager,model_ams_contact_role,group_ams_manager,1,1,1,1
+access_ams_contact_role_admin,ams.contact.role admin,model_ams_contact_role,group_ams_admin,1,1,1,1
+access_ams_contact_role_assignment_user,ams.contact.role.assignment user,model_ams_contact_role_assignment,group_ams_user,1,1,1,0
+access_ams_contact_role_assignment_manager,ams.contact.role.assignment manager,model_ams_contact_role_assignment,group_ams_manager,1,1,1,1
+access_ams_contact_role_assignment_admin,ams.contact.role.assignment admin,model_ams_contact_role_assignment,group_ams_admin,1,1,1,1
+access_ams_communication_preference_type_user,ams.communication.preference.type user,model_ams_communication_preference_type,group_ams_user,1,0,0,0
+access_ams_communication_preference_type_manager,ams.communication.preference.type manager,model_ams_communication_preference_type,group_ams_manager,1,1,1,1
+access_ams_communication_preference_type_admin,ams.communication.preference.type admin,model_ams_communication_preference_type,group_ams_admin,1,1,1,1
+access_ams_communication_preference_user,ams.communication.preference user,model_ams_communication_preference,group_ams_user,1,1,1,0
+access_ams_communication_preference_manager,ams.communication.preference manager,model_ams_communication_preference,group_ams_manager,1,1,1,1
+access_ams_communication_preference_admin,ams.communication.preference admin,model_ams_communication_preference,group_ams_admin,1,1,1,1
+access_ams_audit_log_user,ams.audit.log user,model_ams_audit_log,group_ams_user,1,0,0,0
+access_ams_audit_log_manager,ams.audit.log manager,model_ams_audit_log,group_ams_manager,1,0,0,0
+access_ams_audit_log_admin,ams.audit.log admin,model_ams_audit_log,group_ams_admin,1,1,1,1
+access_res_partner_ams_user,res.partner ams user,base.model_res_partner,group_ams_user,1,1,1,0
+access_res_partner_ams_manager,res.partner ams manager,base.model_res_partner,group_ams_manager,1,1,1,1
+access_res_partner_ams_admin,res.partner ams admin,base.model_res_partner,group_ams_admin,1,1,1,1

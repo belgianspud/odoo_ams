@@ -8,7 +8,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 class AMSSubscription(models.Model):
-    """Subscription model with billing functionality - can work standalone or extend existing"""
+    """Standalone AMS Subscription model for billing management"""
     _name = 'ams.subscription'
     _description = 'AMS Subscription'
     _order = 'name desc'
@@ -37,7 +37,7 @@ class AMSSubscription(models.Model):
         'product.product',
         string='Product/Service',
         required=True,
-        domain=[('type', '=', 'service')],
+        domain=[('sale_ok', '=', True)],
         tracking=True
     )
     
@@ -88,7 +88,7 @@ class AMSSubscription(models.Model):
     ], string='Status', default='draft', required=True, tracking=True)
 
     # =============================================================================
-    # BASIC BILLING CONFIGURATION
+    # BILLING CONFIGURATION
     # =============================================================================
     
     # Auto-Billing Settings
@@ -556,107 +556,3 @@ class AMSSubscription(models.Model):
                 'type': 'success',
             }
         }
-
-
-# If ams_subscriptions module exists, try to extend it instead of creating new model
-try:
-    # Check if parent model exists
-    from odoo.addons.ams_subscriptions.models.ams_subscription import AMSSubscription as ParentSubscription
-    
-    class AMSSubscriptionExtend(models.Model):
-        """Extension of existing AMS Subscription with billing functionality"""
-        _inherit = 'ams.subscription'
-        
-        # Add only the billing-specific fields to existing model
-        enable_auto_billing = fields.Boolean(
-            string='Enable Auto Billing',
-            default=True,
-            help='Automatically generate invoices for this subscription',
-            tracking=True
-        )
-        
-        auto_send_invoices = fields.Boolean(
-            string='Auto Send Invoices',
-            default=True,
-            help='Automatically send invoices to customer'
-        )
-        
-        next_billing_date = fields.Date(
-            string='Next Billing Date',
-            index=True,
-            tracking=True,
-            help='Date when next invoice will be generated'
-        )
-        
-        last_billing_date = fields.Date(
-            string='Last Billing Date',
-            readonly=True,
-            help='Date of last successful billing'
-        )
-        
-        payment_status = fields.Selection([
-            ('current', 'Current'),
-            ('overdue', 'Overdue'),
-            ('pending', 'Pending Payment'),
-        ], string='Payment Status', compute='_compute_payment_status', store=True)
-        
-        has_overdue_invoices = fields.Boolean(
-            string='Has Overdue Invoices',
-            compute='_compute_payment_status',
-            store=True,
-            help='Customer has overdue invoices'
-        )
-        
-        days_overdue = fields.Integer(
-            string='Days Overdue',
-            compute='_compute_payment_status',
-            store=True
-        )
-        
-        total_invoiced = fields.Monetary(
-            string='Total Invoiced',
-            compute='_compute_billing_stats',
-            currency_field='currency_id',
-            store=True
-        )
-        
-        total_paid = fields.Monetary(
-            string='Total Paid',
-            compute='_compute_billing_stats',
-            currency_field='currency_id',
-            store=True
-        )
-        
-        outstanding_balance = fields.Monetary(
-            string='Outstanding Balance',
-            compute='_compute_billing_stats',
-            currency_field='currency_id',
-            store=True
-        )
-        
-        billing_schedule_ids = fields.One2many(
-            'ams.billing.schedule',
-            'subscription_id',
-            string='Billing Schedules'
-        )
-        
-        billing_event_ids = fields.One2many(
-            'ams.billing.event',
-            'subscription_id',
-            string='Billing Events'
-        )
-        
-        subscription_invoice_ids = fields.One2many(
-            'account.move',
-            'subscription_id',
-            string='Subscription Invoices',
-            domain=[('move_type', '=', 'out_invoice')]
-        )
-        
-        # Copy all the methods from the standalone model
-        # (methods would be copied here but for brevity, using the same logic)
-        
-except ImportError:
-    # Parent model doesn't exist, use standalone model
-    _logger.info("ams_subscriptions module not found, using standalone subscription model")
-    pass
