@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ams_partner_relationship_viewer,ams.partner.relationship viewer,model_ams_partner_relationship,group_relationship_viewer,1,0,0,0
+access_ams_partner_relationship_manager,ams.partner.relationship manager,model_ams_partner_relationship,group_relationship_manager,1,1,1,0
+access_ams_partner_relationship_admin,ams.partner.relationship admin,model_ams_partner_relationship,group_relationship_admin,1,1,1,1
+access_ams_relationship_type_public,ams.relationship.type public,model_ams_relationship_type,base.group_user,1,0,0,0
+access_ams_relationship_type_viewer,ams.relationship.type viewer,model_ams_relationship_type,group_relationship_viewer,1,0,0,0
+access_ams_relationship_type_manager,ams.relationship.type manager,model_ams_relationship_type,group_relationship_manager,1,1,1,0
+access_ams_relationship_type_admin,ams.relationship.type admin,model_ams_relationship_type,group_relationship_admin,1,1,1,1

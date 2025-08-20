@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ===== RELATIONSHIP TYPE FORM VIEW ===== -->
+    <record id="view_relationship_type_form" model="ir.ui.view">
+        <field name="name">ams.relationship.type.form</field>
+        <field name="model">ams.relationship.type</field>
+        <field name="arch" type="xml">
+            <form string="Relationship Type">
+                <header>
+                    <button name="action_create_inverse_type" string="Create Inverse Type" 
+                            type="object" class="btn-primary"
+                            attrs="{'invisible': [('inverse_type_id', '!=', False)]}"/>
+                    <button name="toggle_active" string="Archive" 
+                            type="object" class="btn-secondary"
+                            attrs="{'invisible': [('active', '=', False)]}"/>
+                    <button name="toggle_active" string="Unarchive" 
+                            type="object" class="btn-primary"
+                            attrs="{'invisible': [('active', '=', True)]}"/>
+                    <field name="active" invisible="1"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_relationships" type="object" 
+                                class="oe_stat_button" icon="fa-sitemap">
+                            <field name="relationship_count" widget="statinfo" string="Relationships"/>
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="e.g., Employs"/>
+                        </h1>
+                        <div class="o_row">
+                            <label for="code" class="oe_edit_only"/>
+                            <h3>
+                                <field name="code" placeholder="e.g., EMP"/>
+                            </h3>
+                        </div>
+                        <div class="o_row">
+                            <field name="category" widget="badge"/>
+                            <field name="relationship_nature" widget="badge"/>
+                        </div>
+                    </div>
+                    
+                    <notebook>
+                        
+                        <!-- Basic Information Tab -->
+                        <page string="Basic Information" name="basic_info">
+                            <group>
+                                <group string="Classification">
+                                    <field name="category"/>
+                                    <field name="relationship_nature"/>
+                                    <field name="sequence"/>
+                                    <field name="icon"/>
+                                    <field name="color"/>
+                                </group>
+                                <group string="Visual Display">
+                                    <field name="icon" widget="char" placeholder="fa-users"/>
+                                    <field name="color" widget="color"/>
+                                </group>
+                            </group>
+                            
+                            <group>
+                                <field name="description" colspan="2" nolabel="1" 
+                                       placeholder="Detailed description of this relationship type..."/>
+                            </group>
+                        </page>
+                        
+                        <!-- Bidirectional Settings Tab -->
+                        <page string="Bidirectional Settings" name="bidirectional">
+                            <group>
+                                <group string="Inverse Relationship">
+                                    <field name="is_bidirectional"/>
+                                    <field name="inverse_type_id" 
+                                           attrs="{'invisible': [('is_bidirectional', '=', False)]}"/>
+                                    <field name="inverse_name" readonly="1"
+                                           attrs="{'invisible': [('inverse_type_id', '=', False)]}"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <!-- Partner Constraints Tab -->
+                        <page string="Partner Constraints" name="constraints">
+                            <group>
+                                <group string="Organization Requirements">
+                                    <field name="requires_same_organization"/>
+                                    <field name="requires_different_organization"/>
+                                </group>
+                                <group string="Partner Type Constraints">
+                                    <field name="allows_individual_to_individual"/>
+                                    <field name="allows_individual_to_organization"/>
+                                    <field name="allows_organization_to_organization"/>
+                                </group>
+                            </group>
+                            
+                            <group>
+                                <group string="Relationship Limits">
+                                    <field name="max_relationships_per_partner"/>
+                                    <field name="is_exclusive"/>
+                                    <field name="requires_approval"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <!-- Default Permissions Tab -->
+                        <page string="Default Permissions" name="permissions">
+                            <group>
+                                <group string="Access Rights">
+                                    <field name="default_can_access_info"/>
+                                    <field name="default_can_make_decisions"/>
+                                    <field name="default_financial_responsibility"/>
+                                </group>
+                                <group string="Special Designations">
+                                    <field name="default_emergency_contact"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <!-- Temporal Settings Tab -->
+                        <page string="Temporal Settings" name="temporal">
+                            <group>
+                                <group string="Duration Controls">
+                                    <field name="has_duration_limit"/>
+                                    <field name="max_duration_days" 
+                                           attrs="{'invisible': [('has_duration_limit', '=', False)]}"/>
+                                    <field name="auto_expire" 
+                                           attrs="{'invisible': [('has_duration_limit', '=', False)]}"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <!-- Usage Statistics Tab -->
+                        <page string="Usage &amp; Statistics" name="statistics">
+                            <group>
+                                <group string="Usage Statistics">
+                                    <field name="relationship_count" readonly="1"/>
+                                </group>
+                                <group string="Metadata">
+                                    <field name="created_by" readonly="1"/>
+                                    <field name="last_updated" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- ===== RELATIONSHIP TYPE TREE VIEW ===== -->
+    <record id="view_relationship_type_tree" model="ir.ui.view">
+        <field name="name">ams.relationship.type.tree</field>
+        <field name="model">ams.relationship.type</field>
+        <field name="arch" type="xml">
+            <tree string="Relationship Types" default_order="category, sequence, name">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="category"/>
+                <field name="relationship_nature" optional="hide"/>
+                <field name="is_bidirectional" optional="show"/>
+                <field name="inverse_type_id" optional="hide"/>
+                <field name="relationship_count" optional="show"/>
+                <field name="is_exclusive" optional="hide"/>
+                <field name="max_relationships_per_partner" optional="hide"/>
+                <field name="requires_approval" optional="hide"/>
+                <field name="has_duration_limit" optional="hide"/>
+                <field name="active" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- ===== RELATIONSHIP TYPE KANBAN VIEW ===== -->
+    <record id="view_relationship_type_kanban" model="ir.ui.view">
+        <field name="name">ams.relationship.type.kanban</field>
+        <field name="model">ams.relationship.type</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="category">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="category"/>
+                <field name="relationship_nature"/>
+                <field name="is_bidirectional"/>
+                <field name="inverse_type_id"/>
+                <field name="relationship_count"/>
+                <field name="icon"/>
+                <field name="color"/>
+                <field name="is_exclusive"/>
+                <field name="requires_approval"/>
+                
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <i t-if="record.icon.raw_value" 
+                                               t-att-class="record.icon.value + ' mr-2'"/>
+                                            <field name="name"/>
+                                        </strong>
+                                        <span class="o_kanban_record_subtitle" t-if="record.code.raw_value">
+                                            [<field name="code"/>]
+                                        </span>
+                                    </div>
+                                    <div class="o_kanban_record_top_right">
+                                        <span class="badge badge-pill" 
+                                              t-att-class="'badge-' + (record.color.raw_value % 12)">
+                                            <t t-esc="record.relationship_nature.value"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="o_kanban_record_body">
+                                    <div class="oe_kanban_relationship_type_info">
+                                        <div t-if="record.is_bidirectional.raw_value and record.inverse_type_id.raw_value">
+                                            <i class="fa fa-exchange-alt text-info"/> 
+                                            Bidirectional ↔ <t t-esc="record.inverse_type_id.value"/>
+                                        </div>
+                                        <div t-if="record.is_exclusive.raw_value">
+                                            <i class="fa fa-lock text-warning"/> Exclusive relationship
+                                        </div>
+                                        <div t-if="record.requires_approval.raw_value">
+                                            <i class="fa fa-check-circle text-primary"/> Requires approval
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <span class="badge badge-secondary">
+                                            <i class="fa fa-sitemap"/> 
+                                            <t t-esc="record.relationship_count.value"/> relationships
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    
+    <!-- ===== RELATIONSHIP TYPE SEARCH VIEW ===== -->
+    <record id="view_relationship_type_search" model="ir.ui.view">
+        <field name="name">ams.relationship.type.search</field>
+        <field name="model">ams.relationship.type</field>
+        <field name="arch" type="xml">
+            <search string="Search Relationship Types">
+                
+                <field name="name"/>
+                <field name="code"/>
+                <field name="description"/>
+                <field name="inverse_type_id"/>
+                
+                <separator/>
+                <filter string="Bidirectional" name="bidirectional"
+                        domain="[('is_bidirectional', '=', True)]"/>
+                <filter string="Unidirectional" name="unidirectional"
+                        domain="[('is_bidirectional', '=', False)]"/>
+                
+                <separator/>
+                <filter string="Exclusive" name="exclusive"
+                        domain="[('is_exclusive', '=', True)]"/>
+                <filter string="Requires Approval" name="requires_approval"
+                        domain="[('requires_approval', '=', True)]"/>
+                <filter string="Has Duration Limit" name="has_duration_limit"
+                        domain="[('has_duration_limit', '=', True)]"/>
+                
+                <separator/>
+                <filter string="Employment" name="employment"
+                        domain="[('category', '=', 'employment')]"/>
+                <filter string="Family" name="family"
+                        domain="[('category', '=', 'family')]"/>
+                <filter string="Household" name="household"
+                        domain="[('category', '=', 'household')]"/>
+                <filter string="Emergency" name="emergency"
+                        domain="[('category', '=', 'emergency')]"/>
+                <filter string="Professional" name="professional"
+                        domain="[('category', '=', 'professional')]"/>
+                <filter string="Business" name="business"
+                        domain="[('category', '=', 'business')]"/>
+                
+                <separator/>
+                <filter string="Hierarchical" name="hierarchical"
+                        domain="[('relationship_nature', '=', 'hierarchical')]"/>
+                <filter string="Peer" name="peer"
+                        domain="[('relationship_nature', '=', 'peer')]"/>
+                <filter string="Dependency" name="dependency"
+                        domain="[('relationship_nature', '=', 'dependency')]"/>
+                <filter string="Service" name="service"
+                        domain="[('relationship_nature', '=', 'service')]"/>
+                
+                <separator/>
+                <filter string="Popular" name="popular"
+                        domain="[('relationship_count', '>', 0)]"/>
+                <filter string="Unused" name="unused"
+                        domain="[('relationship_count', '=', 0)]"/>
+                
+                <separator/>
+                <filter string="Archived" name="inactive" 
+                        domain="[('active', '=', False)]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter string="Category" name="group_category"
+                            domain="[]" context="{'group_by': 'category'}"/>
+                    <filter string="Relationship Nature" name="group_nature"
+                            domain="[]" context="{'group_by': 'relationship_nature'}"/>
+                    <filter string="Bidirectional" name="group_bidirectional"
+                            domain="[]" context="{'group_by': 'is_bidirectional'}"/>
+                    <filter string="Exclusive" name="group_exclusive"
+                            domain="[]" context="{'group_by': 'is_exclusive'}"/>
+                    <filter string="Requires Approval" name="group_approval"
+                            domain="[]" context="{'group_by': 'requires_approval'}"/>
+                </group>
+                
+            </search>
+        </field>
+    </record>
+    
+    <!-- ===== RELATIONSHIP TYPES ACTION ===== -->
+    <record id="action_relationship_types" model="ir.actions.act_window">
+        <field name="name">Relationship Types</field>
+        <field name="res_model">ams.relationship.type</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_relationship_type_search"/>
+        <field name="context">{'search_default_group_category': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first relationship type!
+            </p>
+            <p>
+                Define the types of relationships that can exist between partners.
+                Examples include employment, family, business, and professional relationships.
+            </p>
+        </field>
+    </record>
+    
+    <!-- ===== EMPLOYMENT TYPES ACTION ===== -->
+    <record id="action_employment_types" model="ir.actions.act_window">
+        <field name="name">Employment Relationship Types</field>
+        <field name="res_model">ams.relationship.type</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('category', '=', 'employment')]</field>
+        <field name="context">{'default_category': 'employment'}</field>
+        <field name="search_view_id" ref="view_relationship_type_search"/>
+    </record>
+    
+    <!-- ===== FAMILY TYPES ACTION ===== -->
+    <record id="action_family_types" model="ir.actions.act_window">
+        <field name="name">Family Relationship Types</field>
+        <field name="res_model">ams.relationship.type</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('category', '=', 'family')]</field>
+        <field name="context">{'default_category': 'family'}</field>
+        <field name="search_view_id" ref="view_relationship_type_search"/>
+    </record>
+    
+    <!-- ===== EMERGENCY CONTACT TYPES ACTION ===== -->
+    <record id="action_emergency_contact_types" model="ir.actions.act_window">
+        <field name="name">Emergency Contact Types</field>
+        <field name="res_model">ams.relationship.type</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('category', '=', 'emergency')]</field>
+        <field name="context">{'default_category': 'emergency'}</field>
+        <field name="search_view_id" ref="view_relationship_type_search"/>
+    </record>
+    
+    <!-- ===== BIDIRECTIONAL TYPES ACTION ===== -->
+    <record id="action_bidirectional_types" model="ir.actions.act_window">
+        <field name="name">Bidirectional Relationship Types</field>
+        <field name="res_model">ams.relationship.type</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('is_bidirectional', '=', True)]</field>
+        <field name="search_view_id" ref="view_relationship_type_search"/>
+    </record>
+    
+    <!-- ===== POPULAR TYPES ACTION ===== -->
+    <record id="action_popular_relationship_types" model="ir.actions.act_window">
+        <field name="name">Popular Relationship Types</field>
+        <field name="res_model">ams.relationship.type</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('relationship_count', '>', 0)]</field>
+        <field name="context">{'search_default_popular': 1}</field>
+        <field name="search_view_id" ref="view_relationship_type_search"/>
+    </record>
+    
+</odoo>

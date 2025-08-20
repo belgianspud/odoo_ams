@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- ===== RELATIONSHIP SECURITY GROUPS ===== -->
+        
+        <!-- Relationship Viewer Group - Can view relationships -->
+        <record id="group_relationship_viewer" model="res.groups">
+            <field name="name">Relationship Viewer</field>
+            <field name="implied_ids" eval="[(4, ref('ams_core_base.group_ams_member'))]"/>
+            <field name="comment">Can view relationship information</field>
+        </record>
+
+        <!-- Relationship Manager Group - Can manage relationships -->
+        <record id="group_relationship_manager" model="res.groups">
+            <field name="name">Relationship Manager</field>
+            <field name="implied_ids" eval="[(4, ref('group_relationship_viewer')), (4, ref('ams_core_base.group_ams_staff'))]"/>
+            <field name="comment">Can create, edit, and manage relationships</field>
+        </record>
+
+        <!-- Relationship Administrator Group - Full relationship system access -->
+        <record id="group_relationship_admin" model="res.groups">
+            <field name="name">Relationship Administrator</field>
+            <field name="implied_ids" eval="[(4, ref('group_relationship_manager')), (4, ref('ams_core_base.group_ams_admin'))]"/>
+            <field name="comment">Full access to relationship system including types and configuration</field>
+        </record>
+
+        <!-- ===== RECORD RULES FOR PARTNER RELATIONSHIPS ===== -->
+        
+        <!-- Members can only see their own relationships -->
+        <record id="partner_relationship_member_rule" model="ir.rule">
+            <field name="name">Member: Own Relationships Only</field>
+            <field name="model_id" ref="model_ams_partner_relationship"/>
+            <field name="domain_force">['|', ('partner_a_id', '=', user.partner_id.id), ('partner_b_id', '=', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('ams_core_base.group_ams_member'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Relationship viewers can see all relationships -->
+        <record id="partner_relationship_viewer_rule" model="ir.rule">
+            <field name="name">Viewer: All Relationships</field>
+            <field name="model_id" ref="model_ams_partner_relationship"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_relationship_viewer'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Relationship managers can create and edit relationships -->
+        <record id="partner_relationship_manager_rule" model="ir.rule">
+            <field name="name">Manager: Full Relationship Access</field>
+            <field name="model_id" ref="model_ams_partner_relationship"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_relationship_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Relationship admins can delete relationships -->
+        <record id="partner_relationship_admin_rule" model="ir.rule">
+            <field name="name">Admin: Complete Relationship Control</field>
+            <field name="model_id" ref="model_ams_partner_relationship"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_relationship_admin'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- ===== RECORD RULES FOR RELATIONSHIP TYPES ===== -->
+        
+        <!-- All users can read relationship types -->
+        <record id="relationship_type_read_rule" model="ir.rule">
+            <field name="name">All: Read Relationship Types</field>
+            <field name="model_id" ref="model_ams_relationship_type"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Relationship managers can create and edit relationship types -->
+        <record id="relationship_type_manager_rule" model="ir.rule">
+            <field name="name">Manager: Manage Relationship Types</field>
+            <field name="model_id" ref="model_ams_relationship_type"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_relationship_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Relationship admins can delete relationship types -->
+        <record id="relationship_type_admin_rule" model="ir.rule">
+            <field name="name">Admin: Complete Type Control</field>
+            <field name="model_id" ref="model_ams_relationship_type"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_relationship_admin'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- ===== FIELD-LEVEL SECURITY ===== -->
+        
+        <!-- Sensitive relationship fields restricted to managers+ -->
+        <record id="field_relationship_notes" model="ir.model.fields">
+            <field name="name">notes</field>
+            <field name="model">ams.partner.relationship</field>
+            <field name="groups" eval="[(4, ref('group_relationship_manager'))]"/>
+        </record>
+
+        <record id="field_relationship_can_access_info" model="ir.model.fields">
+            <field name="name">can_access_info</field>
+            <field name="model">ams.partner.relationship</field>
+            <field name="groups" eval="[(4, ref('group_relationship_manager'))]"/>
+        </record>
+
+        <record id="field_relationship_can_make_decisions" model="ir.model.fields">
+            <field name="name">can_make_decisions</field>
+            <field name="model">ams.partner.relationship</field>
+            <field name="groups" eval="[(4, ref('group_relationship_manager'))]"/>
+        </record>
+
+        <record id="field_relationship_financial_responsibility" model="ir.model.fields">
+            <field name="name">financial_responsibility</field>
+            <field name="model">ams.partner.relationship</field>
+            <field name="groups" eval="[(4, ref('group_relationship_manager'))]"/>
+        </record>
+
+        <!-- Metadata fields restricted to admins -->
+        <record id="field_relationship_created_by" model="ir.model.fields">
+            <field name="name">created_by</field>
+            <field name="model">ams.partner.relationship</field>
+            <field name="groups" eval="[(4, ref('group_relationship_admin'))]"/>
+        </record>
+
+        <record id="field_relationship_last_updated" model="ir.model.fields">
+            <field name="name">last_updated</field>
+            <field name="model">ams.partner.relationship</field>
+            <field name="groups" eval="[(4, ref('group_relationship_admin'))]"/>
+        </record>
+
+        <!-- Relationship type sensitive fields -->
+        <record id="field_type_max_relationships_per_partner" model="ir.model.fields">
+            <field name="name">max_relationships_per_partner</field>
+            <field name="model">ams.relationship.type</field>
+            <field name="groups" eval="[(4, ref('group_relationship_admin'))]"/>
+        </record>
+
+        <record id="field_type_requires_approval" model="ir.model.fields">
+            <field name="name">requires_approval</field>
+            <field name="model">ams.relationship.type</field>
+            <field name="groups" eval="[(4, ref('group_relationship_admin'))]"/>
+        </record>
+
+        <!-- ===== PRIVACY-SENSITIVE RELATIONSHIP CATEGORIES ===== -->
+        
+        <!-- Family relationship access rules (more restrictive) -->
+        <record id="family_relationship_privacy_rule" model="ir.rule">
+            <field name="name">Privacy: Family Relationships</field>
+            <field name="model_id" ref="model_ams_partner_relationship"/>
+            <field name="domain_force">[
+                '|', 
+                ('relationship_type_id.category', '!=', 'family'),
+                '|', 
+                ('partner_a_id', '=', user.partner_id.id), 
+                ('partner_b_id', '=', user.partner_id.id)
+            ]</field>
+            <field name="groups" eval="[(4, ref('ams_core_base.group_ams_member'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Emergency contact access rules -->
+        <record id="emergency_contact_access_rule" model="ir.rule">
+            <field name="name">Emergency: Emergency Contact Access</field>
+            <field name="model_id" ref="model_ams_partner_relationship"/>
+            <field name="domain_force">[
+                '|', 
+                ('emergency_contact', '=', False),
+                '|', 
+                ('partner_a_id', '=', user.partner_id.id), 
+                ('partner_b_id', '=', user.partner_id.id)
+            ]</field>
+            <field name="groups" eval="[(4, ref('ams_core_base.group_ams_member'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- ===== EMPLOYMENT RELATIONSHIP SECURITY ===== -->
+        
+        <!-- Employment relationships visible to HR and managers -->
+        <record id="employment_relationship_hr_rule" model="ir.rule">
+            <field name="name">HR: Employment Relationships</field>
+            <field name="model_id" ref="model_ams_partner_relationship"/>
+            <field name="domain_force">[('relationship_type_id.category', '=', 'employment')]</field>
+            <field name="groups" eval="[(4, ref('ams_core_base.group_ams_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- ===== BUSINESS RELATIONSHIP SECURITY ===== -->
+        
+        <!-- Business relationships for business development -->
+        <record id="business_relationship_sales_rule" model="ir.rule">
+            <field name="name">Sales: Business Relationships</field>
+            <field name="model_id" ref="model_ams_partner_relationship"/>
+            <field name="domain_force">[('relationship_type_id.category', '=', 'business')]</field>
+            <field name="groups" eval="[(4, ref('ams_core_base.group_ams_staff'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- ===== TEMPORAL SECURITY RULES ===== -->
+        
+        <!-- Only current relationships visible to basic users -->
+        <record id="current_relationships_only_rule" model="ir.rule">
+            <field name="name">Members: Current Relationships Only</field>
+            <field name="model_id" ref="model_ams_partner_relationship"/>
+            <field name="domain_force">[
+                '|',
+                ('is_active', '=', True),
+                '|', 
+                ('partner_a_id', '=', user.partner_id.id), 
+                ('partner_b_id', '=', user.partner_id.id)
+            ]</field>
+            <field name="groups" eval="[(4, ref('ams_core_base.group_ams_member'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- ===== SELF-SERVICE RELATIONSHIP RULES ===== -->
+        
+        <!-- Members can create certain types of relationships for themselves -->
+        <record id="self_service_relationship_rule" model="ir.rule">
+            <field name="name">Self-Service: Limited Relationship Creation</field>
+            <field name="model_id" ref="model_ams_partner_relationship"/>
+            <field name="domain_force">[
+                ('partner_a_id', '=', user.partner_id.id),
+                ('relationship_type_id.category', 'in', ['emergency', 'professional'])
+            ]</field>
+            <field name="groups" eval="[(4, ref('ams_core_base.group_ams_member'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- ===== INVERSE RELATIONSHIP SECURITY ===== -->
+        
+        <!-- System can create inverse relationships -->
+        <record id="system_inverse_relationship_rule" model="ir.rule">
+            <field name="name">System: Inverse Relationship Creation</field>
+            <field name="model_id" ref="model_ams_partner_relationship"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+    </data>
+</odoo>
