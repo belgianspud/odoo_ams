@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- ===== DEFAULT DATA RETENTION POLICIES ===== -->
+        
+        <!-- Member Data Retention Policy -->
+        <record id="policy_member_data_retention" model="ams.data.retention.policy">
+            <field name="name">Active Member Data Retention</field>
+            <field name="code">MEMBER_DATA</field>
+            <field name="description">Retention policy for active member personal data and profiles</field>
+            <field name="sequence">10</field>
+            <field name="model_name">res.partner</field>
+            <field name="domain_filter">[('is_member', '=', True), ('member_status', '=', 'active')]</field>
+            <field name="retention_period_type">years</field>
+            <field name="retention_period_value">7</field>
+            <field name="trigger_field">member_since</field>
+            <field name="regulatory_basis">association_rules</field>
+            <field name="auto_execute">False</field>
+            <field name="require_approval">True</field>
+            <field name="notification_days_before">60</field>
+            <field name="legal_hold_exemption">True</field>
+            <field name="member_status_exemptions">active,emeritus</field>
+        </record>
+
+        <!-- Lapsed Member Data Retention Policy -->
+        <record id="policy_lapsed_member_retention" model="ams.data.retention.policy">
+            <field name="name">Lapsed Member Data Retention</field>
+            <field name="code">LAPSED_MEMBER</field>
+            <field name="description">Retention policy for lapsed member data - shorter retention period</field>
+            <field name="sequence">20</field>
+            <field name="model_name">res.partner</field>
+            <field name="domain_filter">[('member_status', '=', 'lapsed')]</field>
+            <field name="retention_period_type">years</field>
+            <field name="retention_period_value">3</field>
+            <field name="trigger_field">write_date</field>
+            <field name="regulatory_basis">business_practice</field>
+            <field name="auto_execute">False</field>
+            <field name="require_approval">True</field>
+            <field name="notification_days_before">30</field>
+            <field name="legal_hold_exemption">True</field>
+        </record>
+
+        <!-- Prospect Data Retention Policy -->
+        <record id="policy_prospect_retention" model="ams.data.retention.policy">
+            <field name="name">Prospect Data Retention</field>
+            <field name="code">PROSPECT_DATA</field>
+            <field name="description">Retention policy for prospect data - limited retention</field>
+            <field name="sequence">30</field>
+            <field name="model_name">res.partner</field>
+            <field name="domain_filter">[('member_status', '=', 'prospect'), ('is_member', '=', False)]</field>
+            <field name="retention_period_type">years</field>
+            <field name="retention_period_value">2</field>
+            <field name="trigger_field">create_date</field>
+            <field name="regulatory_basis">gdpr</field>
+            <field name="auto_execute">False</field>
+            <field name="require_approval">True</field>
+            <field name="notification_days_before">30</field>
+            <field name="legal_hold_exemption">True</field>
+        </record>
+
+        <!-- Privacy Consent Records Retention -->
+        <record id="policy_consent_retention" model="ams.data.retention.policy">
+            <field name="name">Privacy Consent Records Retention</field>
+            <field name="code">CONSENT_RECORDS</field>
+            <field name="description">Retention policy for privacy consent records - keep for legal compliance</field>
+            <field name="sequence">40</field>
+            <field name="model_name">ams.privacy.consent</field>
+            <field name="domain_filter">[('status', 'in', ['expired', 'withdrawn'])]</field>
+            <field name="retention_period_type">years</field>
+            <field name="retention_period_value">7</field>
+            <field name="trigger_field">withdrawal_date</field>
+            <field name="additional_conditions">Records must be older than 7 years from withdrawal/expiry</field>
+            <field name="regulatory_basis">gdpr</field>
+            <field name="auto_execute">False</field>
+            <field name="require_approval">True</field>
+            <field name="notification_days_before">90</field>
+            <field name="legal_hold_exemption">True</field>
+        </record>
+
+        <!-- Audit Log Retention Policy -->
+        <record id="policy_audit_log_retention" model="ams.data.retention.policy">
+            <field name="name">Audit Log Retention</field>
+            <field name="code">AUDIT_LOGS</field>
+            <field name="description">Retention policy for audit logs - keep for compliance</field>
+            <field name="sequence">50</field>
+            <field name="model_name">ams.audit.log</field>
+            <field name="domain_filter">[('privacy_impact', '=', False)]</field>
+            <field name="retention_period_type">years</field>
+            <field name="retention_period_value">5</field>
+            <field name="trigger_field">timestamp</field>
+            <field name="regulatory_basis">business_practice</field>
+            <field name="auto_execute">True</field>
+            <field name="require_approval">False</field>
+            <field name="notification_days_before">30</field>
+            <field name="legal_hold_exemption">True</field>
+        </record>
+
+        <!-- Privacy-Related Audit Log Retention (Longer) -->
+        <record id="policy_privacy_audit_retention" model="ams.data.retention.policy">
+            <field name="name">Privacy Audit Log Retention</field>
+            <field name="code">PRIVACY_AUDIT</field>
+            <field name="description">Extended retention for privacy-related audit logs</field>
+            <field name="sequence">55</field>
+            <field name="model_name">ams.audit.log</field>
+            <field name="domain_filter">[('privacy_impact', '=', True)]</field>
+            <field name="retention_period_type">years</field>
+            <field name="retention_period_value">10</field>
+            <field name="trigger_field">timestamp</field>
+            <field name="regulatory_basis">gdpr</field>
+            <field name="auto_execute">False</field>
+            <field name="require_approval">True</field>
+            <field name="notification_days_before">60</field>
+            <field name="legal_hold_exemption">True</field>
+        </record>
+
+        <!-- Email/Message Retention Policy -->
+        <record id="policy_email_retention" model="ams.data.retention.policy">
+            <field name="name">Email and Message Retention</field>
+            <field name="code">EMAIL_MSG</field>
+            <field name="description">Retention policy for emails and messages</field>
+            <field name="sequence">60</field>
+            <field name="model_name">mail.message</field>
+            <field name="domain_filter">[('message_type', 'in', ['email', 'comment'])]</field>
+            <field name="retention_period_type">years</field>
+            <field name="retention_period_value">3</field>
+            <field name="trigger_field">date</field>
+            <field name="regulatory_basis">business_practice</field>
+            <field name="auto_execute">True</field>
+            <field name="require_approval">False</field>
+            <field name="notification_days_before">30</field>
+            <field name="legal_hold_exemption">True</field>
+        </record>
+
+        <!-- Member Profile Extended Data Retention -->
+        <record id="policy_member_profile_retention" model="ams.data.retention.policy">
+            <field name="name">Member Profile Data Retention</field>
+            <field name="code">PROFILE_DATA</field>
+            <field name="description">Retention policy for extended member profile data</field>
+            <field name="sequence">70</field>
+            <field name="model_name">ams.member.profile</field>
+            <field name="domain_filter">[]</field>
+            <field name="retention_period_type">years</field>
+            <field name="retention_period_value">7</field>
+            <field name="trigger_field">create_date</field>
+            <field name="additional_conditions">Only delete if associated partner is also eligible for deletion</field>
+            <field name="regulatory_basis">association_rules</field>
+            <field name="auto_execute">False</field>
+            <field name="require_approval">True</field>
+            <field name="notification_days_before">60</field>
+            <field name="legal_hold_exemption">True</field>
+        </record>
+
+        <!-- ===== REGULATORY-SPECIFIC POLICIES ===== -->
+
+        <!-- GDPR-Specific Policy for EU Members -->
+        <record id="policy_gdpr_compliance" model="ams.data.retention.policy">
+            <field name="name">GDPR Compliance Policy</field>
+            <field name="code">GDPR_EU</field>
+            <field name="description">GDPR-compliant retention for EU residents</field>
+            <field name="sequence">100</field>
+            <field name="model_name">res.partner</field>
+            <field name="domain_filter">[('country_id.code', 'in', ['BE', 'BG', 'CZ', 'DK', 'DE', 'EE', 'IE', 'EL', 'ES', 'FR', 'HR', 'IT', 'CY', 'LV', 'LT', 'LU', 'HU', 'MT', 'NL', 'AT', 'PL', 'PT', 'RO', 'SI', 'SK', 'FI', 'SE'])]</field>
+            <field name="retention_period_type">years</field>
+            <field name="retention_period_value">6</field>
+            <field name="trigger_field">write_date</field>
+            <field name="regulatory_basis">gdpr</field>
+            <field name="legal_citation">GDPR Article 5(1)(e) - Storage limitation principle</field>
+            <field name="auto_execute">False</field>
+            <field name="require_approval">True</field>
+            <field name="notification_days_before">90</field>
+            <field name="legal_hold_exemption">True</field>
+            <field name="member_status_exemptions">active</field>
+        </record>
+
+        <!-- Healthcare Professional Data (HIPAA-like) -->
+        <record id="policy_healthcare_data" model="ams.data.retention.policy">
+            <field name="name">Healthcare Professional Data</field>
+            <field name="code">HEALTHCARE</field>
+            <field name="description">Extended retention for healthcare professionals due to regulatory requirements</field>
+            <field name="sequence">110</field>
+            <field name="model_name">res.partner</field>
+            <field name="domain_filter">[('category_id', 'ilike', 'healthcare'), ('professional_designation_ids', '!=', False)]</field>
+            <field name="retention_period_type">years</field>
+            <field name="retention_period_value">10</field>
+            <field name="trigger_field">member_since</field>
+            <field name="regulatory_basis">hipaa</field>
+            <field name="legal_citation">Healthcare record retention requirements</field>
+            <field name="auto_execute">False</field>
+            <field name="require_approval">True</field>
+            <field name="notification_days_before">120</field>
+            <field name="legal_hold_exemption">True</field>
+            <field name="member_status_exemptions">active,emeritus</field>
+        </record>
+
+        <!-- ===== SYSTEM CONFIGURATION PARAMETERS ===== -->
+
+        <!-- Default retention policy settings -->
+        <record id="param_default_retention_period" model="ir.config_parameter">
+            <field name="key">ams.privacy.default_retention_years</field>
+            <field name="value">7</field>
+        </record>
+
+        <record id="param_auto_cleanup_enabled" model="ir.config_parameter">
+            <field name="key">ams.privacy.auto_cleanup_enabled</field>
+            <field name="value">False</field>
+        </record>
+
+        <record id="param_require_approval_deletions" model="ir.config_parameter">
+            <field name="key">ams.privacy.require_approval_deletions</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- Privacy compliance settings -->
+        <record id="param_consent_renewal_days" model="ir.config_parameter">
+            <field name="key">ams.privacy.consent_renewal_days</field>
+            <field name="value">30</field>
+        </record>
+
+        <record id="param_privacy_officer_email" model="ir.config_parameter">
+            <field name="key">ams.privacy.officer_email</field>
+            <field name="value">privacy@example.com</field>
+        </record>
+
+        <record id="param_gdpr_compliance_mode" model="ir.config_parameter">
+            <field name="key">ams.privacy.gdpr_compliance_mode</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- Data export settings -->
+        <record id="param_default_export_format" model="ir.config_parameter">
+            <field name="key">ams.privacy.default_export_format</field>
+            <field name="value">json</field>
+        </record>
+
+        <record id="param_include_attachments_export" model="ir.config_parameter">
+            <field name="key">ams.privacy.include_attachments_export</field>
+            <field name="value">False</field>
+        </record>
+
+        <record id="param_max_export_records" model="ir.config_parameter">
+            <field name="key">ams.privacy.max_export_records</field>
+            <field name="value">1000</field>
+        </record>
+
+        <!-- Legal hold settings -->
+        <record id="param_legal_hold_notification" model="ir.config_parameter">
+            <field name="key">ams.privacy.legal_hold_notification_enabled</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="param_legal_hold_admin_only" model="ir.config_parameter">
+            <field name="key">ams.privacy.legal_hold_admin_only</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- Audit and monitoring settings -->
+        <record id="param_privacy_audit_all_changes" model="ir.config_parameter">
+            <field name="key">ams.privacy.audit_all_changes</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="param_consent_change_notification" model="ir.config_parameter">
+            <field name="key">ams.privacy.consent_change_notification</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- Backup and archival settings -->
+        <record id="param_backup_before_deletion" model="ir.config_parameter">
+            <field name="key">ams.privacy.backup_before_deletion</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="param_archive_location" model="ir.config_parameter">
+            <field name="key">ams.privacy.archive_location</field>
+            <field name="value">/opt/odoo/ams_archives</field>
+        </record>
+
+        <!-- Communication and notification settings -->
+        <record id="param_deletion_notification_template" model="ir.config_parameter">
+            <field name="key">ams.privacy.deletion_notification_template</field>
+            <field name="value">privacy_deletion_notification</field>
+        </record>
+
+        <record id="param_consent_expiry_notification_template" model="ir.config_parameter">
+            <field name="key">ams.privacy.consent_expiry_template</field>
+            <field name="value">privacy_consent_expiry</field>
+        </record>
+
+        <!-- ===== ASSOCIATION-SPECIFIC CUSTOMIZATION ===== -->
+
+        <!-- Medical Association Settings -->
+        <record id="param_medical_retention_period" model="ir.config_parameter">
+            <field name="key">ams.privacy.medical.retention_years</field>
+            <field name="value">10</field>
+        </record>
+
+        <!-- Legal Association Settings -->
+        <record id="param_legal_retention_period" model="ir.config_parameter">
+            <field name="key">ams.privacy.legal.retention_years</field>
+            <field name="value">7</field>
+        </record>
+
+        <!-- Engineering Association Settings -->
+        <record id="param_engineering_retention_period" model="ir.config_parameter">
+            <field name="key">ams.privacy.engineering.retention_years</field>
+            <field name="value">5</field>
+        </record>
+
+        <!-- Aviation Association Settings -->
+        <record id="param_aviation_retention_period" model="ir.config_parameter">
+            <field name="key">ams.privacy.aviation.retention_years</field>
+            <field name="value">10</field>
+        </record>
+
+        <!-- ===== DEMO RETENTION EXECUTION LOGS ===== -->
+
+        <!-- Sample execution log for demonstration -->
+        <record id="demo_execution_log_1" model="ams.data.retention.execution">
+            <field name="policy_id" ref="policy_audit_log_retention"/>
+            <field name="execution_date">2024-01-15 10:30:00</field>
+            <field name="executed_by" ref="base.user_admin"/>
+            <field name="records_found">150</field>
+            <field name="records_deleted">150</field>
+            <field name="execution_status">success</field>
+        </record>
+
+        <record id="demo_execution_log_2" model="ams.data.retention.execution">
+            <field name="policy_id" ref="policy_email_retention"/>
+            <field name="execution_date">2024-01-20 02:00:00</field>
+            <field name="executed_by" ref="base.user_admin"/>
+            <field name="records_found">2500</field>
+            <field name="records_deleted">2500</field>
+            <field name="execution_status">success</field>
+        </record>
+
+        <!-- ===== SCHEDULED ACTIONS FOR RETENTION POLICIES ===== -->
+
+        <!-- Daily check for retention policies -->
+        <record id="ir_cron_retention_policy_check" model="ir.cron">
+            <field name="name">AMS: Check Data Retention Policies</field>
+            <field name="model_id" ref="model_ams_data_retention_policy"/>
+            <field name="state">code</field>
+            <field name="code">model.run_scheduled_policies()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active">True</field>
+            <field name="priority">5</field>
+        </record>
+
+        <!-- Weekly check for expiring consents -->
+        <record id="ir_cron_consent_expiry_check" model="ir.cron">
+            <field name="name">AMS: Check Expiring Consents</field>
+            <field name="model_id" ref="ams_core_privacy.model_ams_privacy_consent"/>
+            <field name="state">code</field>
+            <field name="code">model.check_expiring_consents()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">weeks</field>
+            <field name="active">True</field>
+            <field name="priority">10</field>
+        </record>
+
+        <!-- Monthly privacy compliance report -->
+        <record id="ir_cron_privacy_compliance_report" model="ir.cron">
+            <field name="name">AMS: Generate Privacy Compliance Report</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="state">code</field>
+            <field name="code">
+# Generate monthly privacy compliance summary
+partners = model.search([('is_member', '=', True)])
+total_members = len(partners)
+compliant_members = len(partners.filtered(lambda p: p.privacy_compliance_score >= 80))
+compliance_rate = (compliant_members / total_members * 100) if total_members > 0 else 0
+
+# Log the compliance summary
+model.env['ams.audit.log'].create({
+    'model_name': 'res.partner',
+    'record_id': 0,
+    'operation': 'other',
+    'description': f'Monthly Privacy Compliance Report',
+    'user_id': 1,
+    'data': f'Total members: {total_members}, Compliant: {compliant_members}, Rate: {compliance_rate:.1f}%',
+    'privacy_impact': True,
+})
+            </field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">months</field>
+            <field name="active">True</field>
+            <field name="priority">15</field>
+        </record>
+
+    </data>
+</odoo>
