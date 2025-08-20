@@ -1,0 +1,408 @@
+/* ===== AMS CORE BASE STYLES ===== */
+
+/* Main AMS branding and theme */
+.o_main_navbar .navbar-nav .nav-link[data-menu-xmlid="ams_core_base.menu_ams_root"] {
+    background-color: #2E86AB;
+    color: white !important;
+    border-radius: 4px;
+    margin: 2px;
+}
+
+.o_main_navbar .navbar-nav .nav-link[data-menu-xmlid="ams_core_base.menu_ams_root"]:hover {
+    background-color: #1F5F7A;
+}
+
+/* ===== MEMBER STATUS BADGES ===== */
+.oe_kanban_member_info {
+    margin: 5px 0;
+}
+
+.oe_kanban_member_info .badge {
+    margin-right: 5px;
+    font-size: 11px;
+}
+
+.oe_kanban_profession {
+    margin: 3px 0;
+    color: #666;
+    font-size: 12px;
+}
+
+/* Member status color coding */
+.badge-member-active {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-member-lapsed {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-member-student {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.badge-member-emeritus {
+    background-color: #6c757d;
+    color: white;
+}
+
+.badge-member-prospect {
+    background-color: #007bff;
+    color: white;
+}
+
+/* ===== ENGAGEMENT INDICATORS ===== */
+.engagement-high {
+    color: #28a745;
+}
+
+.engagement-medium {
+    color: #ffc107;
+}
+
+.engagement-low {
+    color: #dc3545;
+}
+
+.engagement-score-bar {
+    width: 100%;
+    height: 8px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.engagement-score-bar .progress {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.engagement-score-bar .progress.high {
+    background-color: #28a745;
+}
+
+.engagement-score-bar .progress.medium {
+    background-color: #ffc107;
+}
+
+.engagement-score-bar .progress.low {
+    background-color: #dc3545;
+}
+
+/* ===== PROFESSIONAL DESIGNATION STYLES ===== */
+.oe_kanban_designation_info {
+    margin: 8px 0;
+}
+
+.oe_kanban_designation_info div {
+    margin: 2px 0;
+    font-size: 12px;
+}
+
+.oe_kanban_designation_info i {
+    width: 16px;
+    margin-right: 4px;
+}
+
+/* ===== SPECIALTY HIERARCHY STYLES ===== */
+.oe_kanban_specialty_info {
+    margin: 8px 0;
+}
+
+.oe_kanban_specialty_info div {
+    margin: 2px 0;
+    font-size: 12px;
+}
+
+.specialty-hierarchy-indent {
+    margin-left: 20px;
+    border-left: 2px solid #dee2e6;
+    padding-left: 10px;
+}
+
+/* ===== AUDIT LOG STYLES ===== */
+.audit-log-critical {
+    border-left: 4px solid #dc3545;
+    background-color: #f8d7da;
+}
+
+.audit-log-high {
+    border-left: 4px solid #fd7e14;
+    background-color: #fff3cd;
+}
+
+.audit-log-medium {
+    border-left: 4px solid #ffc107;
+    background-color: #fff3cd;
+}
+
+.audit-log-sensitive {
+    background-color: #e2e3e5;
+    border: 1px solid #ced4da;
+}
+
+/* Risk level indicators */
+.risk-critical {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.risk-high {
+    color: #fd7e14;
+    font-weight: bold;
+}
+
+.risk-medium {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.risk-low {
+    color: #6c757d;
+}
+
+/* ===== FORM STYLING ===== */
+.ams-member-form .oe_title h1 {
+    color: #2E86AB;
+}
+
+.ams-member-form .oe_title h2 {
+    color: #6c757d;
+    font-weight: normal;
+}
+
+/* Member ID styling */
+.member-id-display {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #2E86AB;
+    background-color: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid #dee2e6;
+}
+
+/* ===== PROFILE COMPLETENESS INDICATORS ===== */
+.profile-completeness-high {
+    color: #28a745;
+}
+
+.profile-completeness-medium {
+    color: #ffc107;
+}
+
+.profile-completeness-low {
+    color: #dc3545;
+}
+
+.profile-completeness-bar {
+    width: 100%;
+    height: 6px;
+    background-color: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 2px;
+}
+
+.profile-completeness-bar .fill {
+    height: 100%;
+    background-color: #28a745;
+    transition: width 0.3s ease;
+}
+
+/* ===== VOLUNTEER STATUS INDICATORS ===== */
+.volunteer-available {
+    color: #28a745;
+}
+
+.volunteer-limited {
+    color: #ffc107;
+}
+
+.volunteer-current {
+    color: #17a2b8;
+}
+
+.volunteer-not-available {
+    color: #6c757d;
+}
+
+/* ===== PRIVACY CONSENT INDICATORS ===== */
+.consent-granted {
+    color: #28a745;
+}
+
+.consent-denied {
+    color: #dc3545;
+}
+
+.consent-expired {
+    color: #ffc107;
+}
+
+/* ===== STAT BUTTON CUSTOMIZATIONS ===== */
+.oe_stat_button .o_stat_info .o_stat_value {
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.oe_stat_button.member-count {
+    border-color: #2E86AB;
+}
+
+.oe_stat_button.member-count:hover {
+    background-color: #f0f8ff;
+}
+
+/* ===== SEARCH AND FILTER STYLES ===== */
+.o_searchview .o_searchview_facet {
+    background-color: #2E86AB;
+    color: white;
+}
+
+.o_searchview .o_searchview_facet .o_facet_remove {
+    color: white;
+}
+
+/* ===== KANBAN CARD ENHANCEMENTS ===== */
+.oe_kanban_card.member-card {
+    border-left: 4px solid #2E86AB;
+}
+
+.oe_kanban_card.prospect-card {
+    border-left: 4px solid #007bff;
+}
+
+.oe_kanban_card.lapsed-card {
+    border-left: 4px solid #ffc107;
+}
+
+.oe_kanban_card.at-risk-card {
+    border-left: 4px solid #dc3545;
+}
+
+/* ===== PROFESSIONAL NETWORK LINKS ===== */
+.professional-links a {
+    color: #2E86AB;
+    text-decoration: none;
+    margin-right: 10px;
+}
+
+.professional-links a:hover {
+    text-decoration: underline;
+}
+
+.professional-links .fa {
+    margin-right: 3px;
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+@media (max-width: 768px) {
+    .oe_kanban_member_info .badge {
+        font-size: 10px;
+        margin-right: 3px;
+    }
+    
+    .member-id-display {
+        font-size: 12px;
+        padding: 1px 4px;
+    }
+    
+    .oe_stat_button .o_stat_info .o_stat_value {
+        font-size: 1.5em;
+    }
+}
+
+/* ===== HIERARCHY TREE STYLES ===== */
+.hierarchy-tree {
+    font-family: monospace;
+}
+
+.hierarchy-level-0 {
+    font-weight: bold;
+    color: #2E86AB;
+}
+
+.hierarchy-level-1 {
+    margin-left: 20px;
+    color: #495057;
+}
+
+.hierarchy-level-2 {
+    margin-left: 40px;
+    color: #6c757d;
+}
+
+.hierarchy-level-3 {
+    margin-left: 60px;
+    color: #868e96;
+}
+
+/* ===== LOADING AND TRANSITION EFFECTS ===== */
+.ams-loading {
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+}
+
+.ams-card-hover {
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.ams-card-hover:hover {
+    box-shadow: 0 4px 8px rgba(46, 134, 171, 0.2);
+    transform: translateY(-2px);
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+    .oe_button_box,
+    .o_cp_controller,
+    .o_control_panel {
+        display: none !important;
+    }
+    
+    .ams-member-form {
+        font-size: 12pt;
+    }
+    
+    .member-id-display {
+        border: 1px solid #000;
+        background-color: #f0f0f0;
+    }
+}
+
+/* ===== ACCESSIBILITY IMPROVEMENTS ===== */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .oe_kanban_member_info .badge {
+        border: 2px solid;
+    }
+    
+    .member-id-display {
+        border: 2px solid;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .engagement-score-bar .progress,
+    .ams-card-hover,
+    .ams-loading {
+        transition: none;
+    }
+}

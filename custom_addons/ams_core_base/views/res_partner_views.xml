@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ===== PARTNER FORM VIEW EXTENSION ===== -->
+    <record id="view_partner_form_ams" model="ir.ui.view">
+        <field name="name">res.partner.form.ams</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add Member ID field next to name -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="member_id" readonly="1" attrs="{'invisible': [('is_member', '=', False)]}"/>
+            </xpath>
+            
+            <!-- Add member status indicator in header -->
+            <xpath expr="//div[hasclass('oe_title')]" position="after">
+                <div class="oe_button_box" name="button_box">
+                    <button name="action_make_member" type="object" 
+                            class="oe_stat_button" icon="fa-user-plus"
+                            attrs="{'invisible': [('is_member', '=', True)]}">
+                        <div class="o_field_widget o_stat_info">
+                            <span class="o_stat_text">Make Member</span>
+                        </div>
+                    </button>
+                    <button name="action_remove_member_status" type="object" 
+                            class="oe_stat_button" icon="fa-user-times"
+                            attrs="{'invisible': [('is_member', '=', False)]}">
+                        <div class="o_field_widget o_stat_info">
+                            <span class="o_stat_text">Remove Member Status</span>
+                        </div>
+                    </button>
+                </div>
+            </xpath>
+            
+            <!-- Add Member Information tab for individuals -->
+            <xpath expr="//page[@name='contact_addresses']" position="after">
+                <page string="Member Information" name="member_info" 
+                      attrs="{'invisible': [('is_company', '=', True)]}">
+                    
+                    <group>
+                        <group string="Member Identity">
+                            <field name="is_member"/>
+                            <field name="member_status"/>
+                            <field name="member_since"/>
+                            <field name="emeritus_flag"/>
+                        </group>
+                        <group string="Contact Preferences">
+                            <field name="preferred_name"/>
+                            <field name="preferred_contact_method"/>
+                            <field name="alternate_emails" widget="text"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="Professional Information">
+                            <field name="profession_discipline"/>
+                            <field name="professional_designation_ids" widget="many2many_tags"/>
+                            <field name="specialty_ids" widget="many2many_tags"/>
+                            <field name="license_certification_number"/>
+                            <field name="career_stage"/>
+                        </group>
+                        <group string="Employment">
+                            <field name="employer_id"/>
+                            <field name="job_title_role"/>
+                            <field name="mentorship_role"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="Personal Demographics" 
+                               groups="ams_core_base.group_ams_staff">
+                            <field name="date_of_birth"/>
+                            <field name="age" readonly="1"/>
+                            <field name="gender"/>
+                            <field name="nationality"/>
+                        </group>
+                        <group string="Member Categories">
+                            <field name="member_category_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                    
+                </page>
+            </xpath>
+            
+            <!-- Add Organization Information tab for companies -->
+            <xpath expr="//page[@name='contact_addresses']" position="after">
+                <page string="Organization Information" name="organization_info" 
+                      attrs="{'invisible': [('is_company', '=', False)]}">
+                    
+                    <group>
+                        <group string="Organization Identity">
+                            <field name="is_member"/>
+                            <field name="member_status"/>
+                            <field name="member_since"/>
+                            <field name="organization_type"/>
+                        </group>
+                        <group string="Organization Details">
+                            <field name="industry_sector"/>
+                            <field name="employee_count_bracket"/>
+                            <field name="tax_id_registration" 
+                                   groups="ams_core_base.group_ams_staff"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="Contact Preferences">
+                            <field name="preferred_contact_method"/>
+                            <field name="alternate_emails" widget="text"/>
+                        </group>
+                        <group string="Member Categories">
+                            <field name="member_category_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                    
+                </page>
+            </xpath>
+            
+            <!-- Add Member Profile link -->
+            <xpath expr="//page[@name='member_info']" position="after">
+                <page string="Extended Profile" name="extended_profile" 
+                      attrs="{'invisible': ['|', ('is_company', '=', True), ('is_member', '=', False)]}">
+                    <field name="member_profile_id" mode="tree,form"/>
+                </page>
+            </xpath>
+            
+        </field>
+    </record>
+    
+    <!-- ===== PARTNER TREE VIEW EXTENSION ===== -->
+    <record id="view_partner_tree_ams" model="ir.ui.view">
+        <field name="name">res.partner.tree.ams</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_tree"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add member fields to tree view -->
+            <xpath expr="//field[@name='display_name']" position="after">
+                <field name="member_id" optional="show"/>
+                <field name="is_member" optional="show"/>
+                <field name="member_status" optional="show"/>
+                <field name="member_since" optional="hide"/>
+            </xpath>
+            
+            <!-- Add professional fields -->
+            <xpath expr="//field[@name='email']" position="after">
+                <field name="profession_discipline" optional="hide"/>
+                <field name="career_stage" optional="hide"/>
+                <field name="employer_id" optional="hide"/>
+            </xpath>
+            
+        </field>
+    </record>
+    
+    <!-- ===== PARTNER KANBAN VIEW EXTENSION ===== -->
+    <record id="view_partner_kanban_ams" model="ir.ui.view">
+        <field name="name">res.partner.kanban.ams</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.res_partner_kanban_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add member information to kanban cards -->
+            <xpath expr="//div[hasclass('oe_kanban_details')]" position="inside">
+                <div t-if="record.is_member.raw_value" class="oe_kanban_member_info">
+                    <span class="badge badge-primary" t-if="record.member_id.raw_value">
+                        <i class="fa fa-id-card"/> <t t-esc="record.member_id.value"/>
+                    </span>
+                    <span class="badge badge-success" t-if="record.member_status.raw_value == 'active'">
+                        Active Member
+                    </span>
+                    <span class="badge badge-warning" t-if="record.member_status.raw_value == 'lapsed'">
+                        Lapsed
+                    </span>
+                    <span class="badge badge-info" t-if="record.member_status.raw_value == 'student'">
+                        Student
+                    </span>
+                    <span class="badge badge-secondary" t-if="record.member_status.raw_value == 'emeritus'">
+                        Emeritus
+                    </span>
+                </div>
+                <div t-if="record.profession_discipline.raw_value" class="oe_kanban_profession">
+                    <i class="fa fa-briefcase"/> <t t-esc="record.profession_discipline.value"/>
+                </div>
+            </xpath>
+            
+        </field>
+    </record>
+    
+    <!-- ===== PARTNER SEARCH VIEW EXTENSION ===== -->
+    <record id="view_partner_search_ams" model="ir.ui.view">
+        <field name="name">res.partner.search.ams</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_res_partner_filter"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add member search fields -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="member_id"/>
+                <field name="profession_discipline"/>
+                <field name="professional_designation_ids"/>
+                <field name="specialty_ids"/>
+                <field name="employer_id"/>
+            </xpath>
+            
+            <!-- Add member filters -->
+            <xpath expr="//filter[@name='supplier']" position="after">
+                <separator/>
+                <filter string="Members" name="is_member" 
+                        domain="[('is_member', '=', True)]"/>
+                <filter string="Active Members" name="active_members" 
+                        domain="[('is_member', '=', True), ('member_status', '=', 'active')]"/>
+                <filter string="Student Members" name="student_members" 
+                        domain="[('member_status', '=', 'student')]"/>
+                <filter string="Emeritus Members" name="emeritus_members" 
+                        domain="[('member_status', '=', 'emeritus')]"/>
+                <filter string="Lapsed Members" name="lapsed_members" 
+                        domain="[('member_status', '=', 'lapsed')]"/>
+                <filter string="Prospects" name="prospects" 
+                        domain="[('member_status', '=', 'prospect')]"/>
+            </xpath>
+            
+            <!-- Add member grouping -->
+            <xpath expr="//group[@string='Group By']" position="inside">
+                <separator/>
+                <filter string="Member Status" name="group_member_status" 
+                        domain="[]" context="{'group_by': 'member_status'}"/>
+                <filter string="Career Stage" name="group_career_stage" 
+                        domain="[]" context="{'group_by': 'career_stage'}"/>
+                <filter string="Profession" name="group_profession" 
+                        domain="[]" context="{'group_by': 'profession_discipline'}"/>
+                <filter string="Employer" name="group_employer" 
+                        domain="[]" context="{'group_by': 'employer_id'}"/>
+            </xpath>
+            
+        </field>
+    </record>
+    
+    <!-- ===== MEMBERS MENU ACTION ===== -->
+    <record id="action_members" model="ir.actions.act_window">
+        <field name="name">Members</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('is_member', '=', True)]</field>
+        <field name="context">{'default_is_member': True, 'default_member_status': 'active'}</field>
+        <field name="search_view_id" ref="view_partner_search_ams"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first member!
+            </p>
+            <p>
+                Add individual and organizational members to your association.
+                Members can have professional designations, specialties, and extended profiles.
+            </p>
+        </field>
+    </record>
+    
+    <!-- ===== ACTIVE MEMBERS ACTION ===== -->
+    <record id="action_active_members" model="ir.actions.act_window">
+        <field name="name">Active Members</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('is_member', '=', True), ('member_status', '=', 'active')]</field>
+        <field name="context">{'default_is_member': True, 'default_member_status': 'active'}</field>
+        <field name="search_view_id" ref="view_partner_search_ams"/>
+    </record>
+    
+    <!-- ===== PROSPECTS ACTION ===== -->
+    <record id="action_prospects" model="ir.actions.act_window">
+        <field name="name">Prospects</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('member_status', '=', 'prospect')]</field>
+        <field name="context">{'default_member_status': 'prospect', 'default_is_member': False}</field>
+        <field name="search_view_id" ref="view_partner_search_ams"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add your first prospect!
+            </p>
+            <p>
+                Track potential members and convert them to full membership.
+                Use the "Make Member" button to convert prospects to active members.
+            </p>
+        </field>
+    </record>
+    
+    <!-- ===== LAPSED MEMBERS ACTION ===== -->
+    <record id="action_lapsed_members" model="ir.actions.act_window">
+        <field name="name">Lapsed Members</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('member_status', '=', 'lapsed')]</field>
+        <field name="context">{'default_member_status': 'lapsed'}</field>
+        <field name="search_view_id" ref="view_partner_search_ams"/>
+    </record>
+    
+    <!-- ===== ORGANIZATIONS ACTION ===== -->
+    <record id="action_organizations" model="ir.actions.act_window">
+        <field name="name">Organizations</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('is_company', '=', True)]</field>
+        <field name="context">{'default_is_company': True, 'default_supplier_rank': 0}</field>
+        <field name="search_view_id" ref="view_partner_search_ams"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add your first organization!
+            </p>
+            <p>
+                Manage corporate members, employers, sponsors, and other organizations.
+                Organizations can have institutional memberships and employee relationships.
+            </p>
+        </field>
+    </record>
+    
+</odoo>

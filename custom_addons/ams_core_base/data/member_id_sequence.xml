@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- ===== MEMBER ID SEQUENCE ===== -->
+        <record id="seq_member_id" model="ir.sequence">
+            <field name="name">AMS Member ID</field>
+            <field name="code">ams.member.id</field>
+            <field name="prefix">MEM-</field>
+            <field name="suffix"></field>
+            <field name="padding">6</field>
+            <field name="number_increment">1</field>
+            <field name="number_next">1</field>
+            <field name="implementation">standard</field>
+            <field name="active">True</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- ===== ORGANIZATION ID SEQUENCE ===== -->
+        <record id="seq_organization_id" model="ir.sequence">
+            <field name="name">AMS Organization ID</field>
+            <field name="code">ams.organization.id</field>
+            <field name="prefix">ORG-</field>
+            <field name="suffix"></field>
+            <field name="padding">5</field>
+            <field name="number_increment">1</field>
+            <field name="number_next">1</field>
+            <field name="implementation">standard</field>
+            <field name="active">True</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- ===== PROFESSIONAL DESIGNATION SEQUENCE ===== -->
+        <record id="seq_professional_designation" model="ir.sequence">
+            <field name="name">AMS Professional Designation</field>
+            <field name="code">ams.professional.designation</field>
+            <field name="prefix">PD-</field>
+            <field name="suffix"></field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="number_next">1</field>
+            <field name="implementation">standard</field>
+            <field name="active">True</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- ===== MEMBER SPECIALTY SEQUENCE ===== -->
+        <record id="seq_member_specialty" model="ir.sequence">
+            <field name="name">AMS Member Specialty</field>
+            <field name="code">ams.member.specialty</field>
+            <field name="prefix">SP-</field>
+            <field name="suffix"></field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="number_next">1</field>
+            <field name="implementation">standard</field>
+            <field name="active">True</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- ===== AUDIT LOG SEQUENCE ===== -->
+        <record id="seq_audit_log" model="ir.sequence">
+            <field name="name">AMS Audit Log</field>
+            <field name="code">ams.audit.log</field>
+            <field name="prefix">AL-</field>
+            <field name="suffix"></field>
+            <field name="padding">8</field>
+            <field name="number_increment">1</field>
+            <field name="number_next">1</field>
+            <field name="implementation">standard</field>
+            <field name="active">True</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- ===== CONFIGURABLE SEQUENCE PARAMETERS ===== -->
+        <!-- These can be modified by administrators through settings -->
+        
+        <!-- System Parameters for Member ID Configuration -->
+        <record id="param_member_id_prefix" model="ir.config_parameter">
+            <field name="key">ams.member_id.prefix</field>
+            <field name="value">MEM-</field>
+        </record>
+
+        <record id="param_member_id_padding" model="ir.config_parameter">
+            <field name="key">ams.member_id.padding</field>
+            <field name="value">6</field>
+        </record>
+
+        <record id="param_member_id_suffix" model="ir.config_parameter">
+            <field name="key">ams.member_id.suffix</field>
+            <field name="value"></field>
+        </record>
+
+        <!-- System Parameters for Organization ID Configuration -->
+        <record id="param_org_id_prefix" model="ir.config_parameter">
+            <field name="key">ams.organization_id.prefix</field>
+            <field name="value">ORG-</field>
+        </record>
+
+        <record id="param_org_id_padding" model="ir.config_parameter">
+            <field name="key">ams.organization_id.padding</field>
+            <field name="value">5</field>
+        </record>
+
+        <!-- Association-specific Member ID formats -->
+        <!-- These examples show how different associations might configure IDs -->
+        
+        <!-- Medical Association Example -->
+        <record id="param_member_id_format_medical" model="ir.config_parameter">
+            <field name="key">ams.member_id.format.medical</field>
+            <field name="value">MD{YYYY}{000000}</field>
+        </record>
+
+        <!-- Engineering Association Example -->
+        <record id="param_member_id_format_engineering" model="ir.config_parameter">
+            <field name="key">ams.member_id.format.engineering</field>
+            <field name="value">PE-{000000}</field>
+        </record>
+
+        <!-- Legal Association Example -->
+        <record id="param_member_id_format_legal" model="ir.config_parameter">
+            <field name="key">ams.member_id.format.legal</field>
+            <field name="value">{YY}L{00000}</field>
+        </record>
+
+        <!-- Aviation Association Example -->
+        <record id="param_member_id_format_aviation" model="ir.config_parameter">
+            <field name="key">ams.member_id.format.aviation</field>
+            <field name="value">ATP{000000}</field>
+        </record>
+
+        <!-- Auto-increment settings -->
+        <record id="param_auto_assign_member_id" model="ir.config_parameter">
+            <field name="key">ams.auto_assign_member_id</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="param_auto_assign_on_create" model="ir.config_parameter">
+            <field name="key">ams.auto_assign_on_create</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="param_auto_assign_on_member_flag" model="ir.config_parameter">
+            <field name="key">ams.auto_assign_on_member_flag</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- Sequence reset options -->
+        <record id="param_reset_sequence_annually" model="ir.config_parameter">
+            <field name="key">ams.reset_sequence_annually</field>
+            <field name="value">False</field>
+        </record>
+
+        <record id="param_include_year_in_sequence" model="ir.config_parameter">
+            <field name="key">ams.include_year_in_sequence</field>
+            <field name="value">False</field>
+        </record>
+
+        <!-- Backup/legacy sequence support -->
+        <record id="param_legacy_member_id_support" model="ir.config_parameter">
+            <field name="key">ams.legacy_member_id_support</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="param_allow_manual_member_id" model="ir.config_parameter">
+            <field name="key">ams.allow_manual_member_id</field>
+            <field name="value">False</field>
+        </record>
+
+        <!-- Validation settings -->
+        <record id="param_validate_member_id_format" model="ir.config_parameter">
+            <field name="key">ams.validate_member_id_format</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="param_member_id_regex_pattern" model="ir.config_parameter">
+            <field name="key">ams.member_id_regex_pattern</field>
+            <field name="value">^[A-Z0-9\-]+$</field>
+        </record>
+
+    </data>
+</odoo>

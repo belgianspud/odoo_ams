@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- ===== PROFESSIONAL DESIGNATIONS ===== -->
+        
+        <!-- Medical Designations -->
+        <record id="designation_md" model="ams.professional.designation">
+            <field name="name">Doctor of Medicine</field>
+            <field name="code">MD</field>
+            <field name="description">Medical degree for practicing physicians</field>
+            <field name="designation_type">degree</field>
+            <field name="category">healthcare</field>
+            <field name="requires_license">True</field>
+            <field name="requires_continuing_education">True</field>
+            <field name="ce_hours_required_annual">50</field>
+            <field name="has_expiry">True</field>
+            <field name="validity_period_years">2</field>
+            <field name="issuing_organization">Various Medical Schools</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <record id="designation_do" model="ams.professional.designation">
+            <field name="name">Doctor of Osteopathic Medicine</field>
+            <field name="code">DO</field>
+            <field name="description">Osteopathic medical degree</field>
+            <field name="designation_type">degree</field>
+            <field name="category">healthcare</field>
+            <field name="requires_license">True</field>
+            <field name="requires_continuing_education">True</field>
+            <field name="ce_hours_required_annual">50</field>
+            <field name="has_expiry">True</field>
+            <field name="validity_period_years">2</field>
+            <field name="sequence">11</field>
+        </record>
+
+        <record id="designation_rn" model="ams.professional.designation">
+            <field name="name">Registered Nurse</field>
+            <field name="code">RN</field>
+            <field name="description">Licensed registered nursing professional</field>
+            <field name="designation_type">license</field>
+            <field name="category">healthcare</field>
+            <field name="requires_license">True</field>
+            <field name="requires_continuing_education">True</field>
+            <field name="ce_hours_required_annual">24</field>
+            <field name="has_expiry">True</field>
+            <field name="validity_period_years">2</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <record id="designation_pharmd" model="ams.professional.designation">
+            <field name="name">Doctor of Pharmacy</field>
+            <field name="code">PharmD</field>
+            <field name="description">Professional pharmacy degree</field>
+            <field name="designation_type">degree</field>
+            <field name="category">healthcare</field>
+            <field name="requires_license">True</field>
+            <field name="requires_continuing_education">True</field>
+            <field name="ce_hours_required_annual">30</field>
+            <field name="sequence">30</field>
+        </record>
+
+        <!-- Engineering Designations -->
+        <record id="designation_pe" model="ams.professional.designation">
+            <field name="name">Professional Engineer</field>
+            <field name="code">PE</field>
+            <field name="description">Licensed professional engineering certification</field>
+            <field name="designation_type">license</field>
+            <field name="category">engineering</field>
+            <field name="requires_license">True</field>
+            <field name="requires_continuing_education">True</field>
+            <field name="ce_hours_required_annual">30</field>
+            <field name="has_expiry">True</field>
+            <field name="validity_period_years">2</field>
+            <field name="sequence">40</field>
+        </record>
+
+        <record id="designation_eit" model="ams.professional.designation">
+            <field name="name">Engineer in Training</field>
+            <field name="code">EIT</field>
+            <field name="description">Entry-level engineering certification</field>
+            <field name="designation_type">certification</field>
+            <field name="category">engineering</field>
+            <field name="requires_license">False</field>
+            <field name="requires_continuing_education">False</field>
+            <field name="sequence">41</field>
+        </record>
+
+        <record id="designation_bsee" model="ams.professional.designation">
+            <field name="name">Bachelor of Science in Electrical Engineering</field>
+            <field name="code">BSEE</field>
+            <field name="description">Undergraduate degree in electrical engineering</field>
+            <field name="designation_type">degree</field>
+            <field name="category">engineering</field>
+            <field name="sequence">42</field>
+        </record>
+
+        <record id="designation_msme" model="ams.professional.designation">
+            <field name="name">Master of Science in Mechanical Engineering</field>
+            <field name="code">MSME</field>
+            <field name="description">Graduate degree in mechanical engineering</field>
+            <field name="designation_type">degree</field>
+            <field name="category">engineering</field>
+            <field name="sequence">43</field>
+        </record>
+
+        <!-- Legal Designations -->
+        <record id="designation_jd" model="ams.professional.designation">
+            <field name="name">Juris Doctor</field>
+            <field name="code">JD</field>
+            <field name="description">Professional law degree</field>
+            <field name="designation_type">degree</field>
+            <field name="category">legal</field>
+            <field name="requires_license">True</field>
+            <field name="requires_continuing_education">True</field>
+            <field name="ce_hours_required_annual">15</field>
+            <field name="sequence">50</field>
+        </record>
+
+        <record id="designation_esq" model="ams.professional.designation">
+            <field name="name">Esquire</field>
+            <field name="code">Esq.</field>
+            <field name="description">Professional title for licensed attorneys</field>
+            <field name="designation_type">title</field>
+            <field name="category">legal</field>
+            <field name="requires_license">True</field>
+            <field name="sequence">51</field>
+        </record>
+
+        <!-- Aviation Designations -->
+        <record id="designation_atp" model="ams.professional.designation">
+            <field name="name">Airline Transport Pilot</field>
+            <field name="code">ATP</field>
+            <field name="description">Highest level pilot certification</field>
+            <field name="designation_type">license</field>
+            <field name="category">aviation</field>
+            <field name="requires_license">True</field>
+            <field name="requires_continuing_education">True</field>
+            <field name="ce_hours_required_annual">24</field>
+            <field name="has_expiry">True</field>
+            <field name="validity_period_years">2</field>
+            <field name="sequence">60</field>
+        </record>
+
+        <record id="designation_cfi" model="ams.professional.designation">
+            <field name="name">Certified Flight Instructor</field>
+            <field name="code">CFI</field>
+            <field name="description">Flight instructor certification</field>
+            <field name="designation_type">certification</field>
+            <field name="category">aviation</field>
+            <field name="requires_license">True</field>
+            <field name="has_expiry">True</field>
+            <field name="validity_period_years">2</field>
+            <field name="sequence">61</field>
+        </record>
+
+        <record id="designation_amt" model="ams.professional.designation">
+            <field name="name">Aircraft Maintenance Technician</field>
+            <field name="code">AMT</field>
+            <field name="description">Aircraft maintenance certification</field>
+            <field name="designation_type">certification</field>
+            <field name="category">aviation</field>
+            <field name="requires_license">True</field>
+            <field name="sequence">62</field>
+        </record>
+
+        <!-- Business/Finance Designations -->
+        <record id="designation_cpa" model="ams.professional.designation">
+            <field name="name">Certified Public Accountant</field>
+            <field name="code">CPA</field>
+            <field name="description">Professional accounting certification</field>
+            <field name="designation_type">certification</field>
+            <field name="category">business</field>
+            <field name="requires_license">True</field>
+            <field name="requires_continuing_education">True</field>
+            <field name="ce_hours_required_annual">40</field>
+            <field name="has_expiry">True</field>
+            <field name="validity_period_years">3</field>
+            <field name="sequence">70</field>
+        </record>
+
+        <record id="designation_mba" model="ams.professional.designation">
+            <field name="name">Master of Business Administration</field>
+            <field name="code">MBA</field>
+            <field name="description">Graduate business degree</field>
+            <field name="designation_type">degree</field>
+            <field name="category">business</field>
+            <field name="sequence">71</field>
+        </record>
+
+        <!-- Academic Designations -->
+        <record id="designation_phd" model="ams.professional.designation">
+            <field name="name">Doctor of Philosophy</field>
+            <field name="code">PhD</field>
+            <field name="description">Doctoral degree</field>
+            <field name="designation_type">degree</field>
+            <field name="category">education</field>
+            <field name="sequence">80</field>
+        </record>
+
+        <record id="designation_ms" model="ams.professional.designation">
+            <field name="name">Master of Science</field>
+            <field name="code">MS</field>
+            <field name="description">Graduate science degree</field>
+            <field name="designation_type">degree</field>
+            <field name="category">science</field>
+            <field name="sequence">81</field>
+        </record>
+
+        <record id="designation_bs" model="ams.professional.designation">
+            <field name="name">Bachelor of Science</field>
+            <field name="code">BS</field>
+            <field name="description">Undergraduate science degree</field>
+            <field name="designation_type">degree</field>
+            <field name="category">science</field>
+            <field name="sequence">82</field>
+        </record>
+
+        <!-- ===== MEMBER SPECIALTIES ===== -->
+        
+        <!-- Medical Specialties -->
+        <record id="specialty_cardiology" model="ams.member.specialty">
+            <field name="name">Cardiology</field>
+            <field name="code">CARD</field>
+            <field name="description">Heart and cardiovascular system specialty</field>
+            <field name="category">medical</field>
+            <field name="specialty_type">subspecialty</field>
+            <field name="requires_certification">True</field>
+            <field name="min_experience_years">3</field>
+            <field name="training_required">True</field>
+            <field name="training_description">Cardiology fellowship required</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <record id="specialty_emergency_medicine" model="ams.member.specialty">
+            <field name="name">Emergency Medicine</field>
+            <field name="code">EM</field>
+            <field name="description">Emergency and urgent care medicine</field>
+            <field name="category">medical</field>
+            <field name="specialty_type">practice_area</field>
+            <field name="requires_certification">True</field>
+            <field name="min_experience_years">0</field>
+            <field name="sequence">11</field>
+        </record>
+
+        <record id="specialty_pediatrics" model="ams.member.specialty">
+            <field name="name">Pediatrics</field>
+            <field name="code">PEDS</field>
+            <field name="description">Medical care of infants, children, and adolescents</field>
+            <field name="category">medical</field>
+            <field name="specialty_type">practice_area</field>
+            <field name="requires_certification">True</field>
+            <field name="sequence">12</field>
+        </record>
+
+        <!-- Engineering Specialties -->
+        <record id="specialty_structural" model="ams.member.specialty">
+            <field name="name">Structural Engineering</field>
+            <field name="code">STRUCT</field>
+            <field name="description">Design and analysis of structures</field>
+            <field name="category">engineering</field>
+            <field name="specialty_type">subspecialty</field>
+            <field name="requires_certification">False</field>
+            <field name="min_experience_years">2</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <record id="specialty_software_dev" model="ams.member.specialty">
+            <field name="name">Software Development</field>
+            <field name="code">SOFT</field>
+            <field name="description">Software engineering and development</field>
+            <field name="category">technology</field>
+            <field name="specialty_type">practice_area</field>
+            <field name="sequence">21</field>
+        </record>
+
+        <record id="specialty_power_systems" model="ams.member.specialty">
+            <field name="name">Power Systems</field>
+            <field name="code">POWER</field>
+            <field name="description">Electrical power generation and distribution</field>
+            <field name="category">engineering</field>
+            <field name="specialty_type">subspecialty</field>
+            <field name="min_experience_years">3</field>
+            <field name="sequence">22</field>
+        </record>
+
+        <!-- Legal Specialties -->
+        <record id="specialty_corporate_law" model="ams.member.specialty">
+            <field name="name">Corporate Law</field>
+            <field name="code">CORP</field>
+            <field name="description">Business and corporate legal matters</field>
+            <field name="category">legal</field>
+            <field name="specialty_type">practice_area</field>
+            <field name="min_experience_years">1</field>
+            <field name="sequence">30</field>
+        </record>
+
+        <record id="specialty_family_law" model="ams.member.specialty">
+            <field name="name">Family Law</field>
+            <field name="code">FAM</field>
+            <field name="description">Family legal matters including divorce and custody</field>
+            <field name="category">legal</field>
+            <field name="specialty_type">practice_area</field>
+            <field name="sequence">31</field>
+        </record>
+
+        <record id="specialty_criminal_law" model="ams.member.specialty">
+            <field name="name">Criminal Law</field>
+            <field name="code">CRIM</field>
+            <field name="description">Criminal defense and prosecution</field>
+            <field name="category">legal</field>
+            <field name="specialty_type">practice_area</field>
+            <field name="sequence">32</field>
+        </record>
+
+        <!-- Aviation Specialties -->
+        <record id="specialty_commercial_aviation" model="ams.member.specialty">
+            <field name="name">Commercial Aviation</field>
+            <field name="code">COMM</field>
+            <field name="description">Commercial airline operations</field>
+            <field name="category">aviation</field>
+            <field name="specialty_type">industry_focus</field>
+            <field name="sequence">40</field>
+        </record>
+
+        <record id="specialty_aviation_maintenance" model="ams.member.specialty">
+            <field name="name">Aviation Maintenance</field>
+            <field name="code">MAINT</field>
+            <field name="description">Aircraft maintenance and repair</field>
+            <field name="category">aviation</field>
+            <field name="specialty_type">practice_area</field>
+            <field name="requires_certification">True</field>
+            <field name="sequence">41</field>
+        </record>
+
+        <!-- Business Specialties -->
+        <record id="specialty_financial_planning" model="ams.member.specialty">
+            <field name="name">Financial Planning</field>
+            <field name="code">FP</field>
+            <field name="description">Personal and business financial planning</field>
+            <field name="category">business</field>
+            <field name="specialty_type">practice_area</field>
+            <field name="sequence">50</field>
+        </record>
+
+        <record id="specialty_tax_accounting" model="ams.member.specialty">
+            <field name="name">Tax Accounting</field>
+            <field name="code">TAX</field>
+            <field name="description">Tax preparation and planning</field>
+            <field name="category">business</field>
+            <field name="specialty_type">subspecialty</field>
+            <field name="min_experience_years">1</field>
+            <field name="sequence">51</field>
+        </record>
+
+        <record id="specialty_management_consulting" model="ams.member.specialty">
+            <field name="name">Management Consulting</field>
+            <field name="code">MGMT</field>
+            <field name="description">Business management and strategy consulting</field>
+            <field name="category">consulting</field>
+            <field name="specialty_type">practice_area</field>
+            <field name="min_experience_years">5</field>
+            <field name="sequence">52</field>
+        </record>
+
+        <!-- Research Areas -->
+        <record id="specialty_biomedical_research" model="ams.member.specialty">
+            <field name="name">Biomedical Research</field>
+            <field name="code">BIOMED</field>
+            <field name="description">Medical and biological research</field>
+            <field name="category">research</field>
+            <field name="specialty_type">expertise</field>
+            <field name="sequence">60</field>
+        </record>
+
+        <record id="specialty_data_science" model="ams.member.specialty">
+            <field name="name">Data Science</field>
+            <field name="code">DATA</field>
+            <field name="description">Data analysis and machine learning</field>
+            <field name="category">technology</field>
+            <field name="specialty_type">expertise</field>
+            <field name="sequence">61</field>
+        </record>
+
+        <!-- ===== PREREQUISITE RELATIONSHIPS ===== -->
+        
+        <!-- MD requires BS -->
+        <record id="md_bs_prerequisite" model="ams.professional.designation">
+            <field name="id" ref="designation_md"/>
+            <field name="prerequisite_ids" eval="[(4, ref('designation_bs'))]"/>
+        </record>
+
+        <!-- PE requires Engineering Degree -->
+        <record id="pe_engineering_prerequisite" model="ams.professional.designation">
+            <field name="id" ref="designation_pe"/>
+            <field name="prerequisite_ids" eval="[(4, ref('designation_bsee'))]"/>
+        </record>
+
+        <!-- Specialty Requirements -->
+        <record id="cardiology_md_requirement" model="ams.member.specialty">
+            <field name="id" ref="specialty_cardiology"/>
+            <field name="required_designation_ids" eval="[(4, ref('designation_md'))]"/>
+        </record>
+
+        <record id="structural_pe_requirement" model="ams.member.specialty">
+            <field name="id" ref="specialty_structural"/>
+            <field name="required_designation_ids" eval="[(4, ref('designation_pe'))]"/>
+        </record>
+
+    </data>
+</odoo>

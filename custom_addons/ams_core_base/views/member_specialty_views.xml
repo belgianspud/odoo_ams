@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ===== MEMBER SPECIALTY FORM VIEW ===== -->
+    <record id="view_member_specialty_form" model="ir.ui.view">
+        <field name="name">ams.member.specialty.form</field>
+        <field name="model">ams.member.specialty</field>
+        <field name="arch" type="xml">
+            <form string="Member Specialty">
+                <header>
+                    <button name="action_view_children" string="View Sub-specialties" 
+                            type="object" class="btn-primary"
+                            attrs="{'invisible': [('child_ids', '=', [])]}"/>
+                    <button name="action_create_child_specialty" string="Create Sub-specialty" 
+                            type="object" class="btn-secondary"/>
+                    <button name="toggle_active" string="Archive" 
+                            type="object" class="btn-secondary"
+                            attrs="{'invisible': [('active', '=', False)]}"/>
+                    <button name="toggle_active" string="Unarchive" 
+                            type="object" class="btn-primary"
+                            attrs="{'invisible': [('active', '=', True)]}"/>
+                    <field name="active" invisible="1"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_members" type="object" 
+                                class="oe_stat_button" icon="fa-users">
+                            <field name="member_count" widget="statinfo" string="Members"/>
+                        </button>
+                        <button name="action_view_children" type="object" 
+                                class="oe_stat_button" icon="fa-sitemap"
+                                attrs="{'invisible': [('child_ids', '=', [])]}">
+                            <field name="child_ids" widget="statinfo" string="Sub-specialties"/>
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="e.g., Cardiology"/>
+                        </h1>
+                        <div class="o_row" attrs="{'invisible': [('code', '=', False)]}">
+                            <label for="code" class="oe_edit_only"/>
+                            <h3>
+                                <field name="code" placeholder="e.g., CARD"/>
+                            </h3>
+                        </div>
+                        <div class="o_row" attrs="{'invisible': [('parent_id', '=', False)]}">
+                            <span class="text-muted">Sub-specialty of </span>
+                            <field name="parent_id" class="oe_inline"/>
+                        </div>
+                    </div>
+                    
+                    <notebook>
+                        
+                        <!-- Basic Information Tab -->
+                        <page string="Basic Information" name="basic_info">
+                            <group>
+                                <group string="Classification">
+                                    <field name="category"/>
+                                    <field name="specialty_type"/>
+                                    <field name="sequence"/>
+                                    <field name="level" readonly="1"/>
+                                </group>
+                                <group string="Hierarchy">
+                                    <field name="parent_id"/>
+                                </group>
+                            </group>
+                            
+                            <group>
+                                <field name="description" colspan="2" nolabel="1" 
+                                       placeholder="Detailed description of this specialty area..."/>
+                            </group>
+                            
+                            <group>
+                                <field name="keyword_tags" colspan="2" 
+                                       placeholder="comma, separated, keywords, for, searching"/>
+                            </group>
+                        </page>
+                        
+                        <!-- Requirements Tab -->
+                        <page string="Requirements" name="requirements">
+                            <group>
+                                <group string="Professional Requirements">
+                                    <field name="requires_certification"/>
+                                    <field name="min_experience_years"/>
+                                    <field name="training_required"/>
+                                </group>
+                                <group string="Required Designations">
+                                    <field name="required_designation_ids" nolabel="1" 
+                                           widget="many2many_tags"/>
+                                </group>
+                            </group>
+                            
+                            <group attrs="{'invisible': [('training_required', '=', False)]}">
+                                <field name="training_description" colspan="2" nolabel="1" 
+                                       placeholder="Describe required training or education..."/>
+                            </group>
+                        </page>
+                        
+                        <!-- Industry Information Tab -->
+                        <page string="Industry Info" name="industry">
+                            <group>
+                                <group string="Industry Context">
+                                    <field name="industry_sectors"/>
+                                    <field name="regulatory_body"/>
+                                    <field name="license_required"/>
+                                </group>
+                            </group>
+                            
+                            <group>
+                                <field name="related_associations" colspan="2" 
+                                       placeholder="Other professional associations relevant to this specialty..."/>
+                            </group>
+                        </page>
+                        
+                        <!-- Sub-specialties Tab -->
+                        <page string="Sub-specialties" name="children" 
+                              attrs="{'invisible': [('child_ids', '=', [])]}">
+                            <field name="child_ids" nolabel="1">
+                                <tree editable="false">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="code"/>
+                                    <field name="specialty_type"/>
+                                    <field name="member_count"/>
+                                    <field name="requires_certification"/>
+                                    <field name="min_experience_years"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <!-- Members Tab -->
+                        <page string="Members" name="members">
+                            <field name="member_ids" nolabel="1">
+                                <tree editable="false">
+                                    <field name="name"/>
+                                    <field name="member_id"/>
+                                    <field name="member_status"/>
+                                    <field name="profession_discipline"/>
+                                    <field name="career_stage"/>
+                                    <field name="employer_id"/>
+                                    <field name="email"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <!-- Notes Tab -->
+                        <page string="Notes" name="notes">
+                            <group>
+                                <field name="notes" nolabel="1" colspan="2" 
+                                       placeholder="Additional notes about this specialty..."/>
+                            </group>
+                            
+                            <group>
+                                <group string="Metadata">
+                                    <field name="created_by" readonly="1"/>
+                                    <field name="last_updated" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- ===== MEMBER SPECIALTY TREE VIEW ===== -->
+    <record id="view_member_specialty_tree" model="ir.ui.view">
+        <field name="name">ams.member.specialty.tree</field>
+        <field name="model">ams.member.specialty</field>
+        <field name="arch" type="xml">
+            <tree string="Member Specialties" default_order="category, parent_id, sequence, name">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="category"/>
+                <field name="specialty_type"/>
+                <field name="parent_id" optional="show"/>
+                <field name="level" optional="hide"/>
+                <field name="requires_certification" optional="hide"/>
+                <field name="min_experience_years" optional="hide"/>
+                <field name="member_count" optional="show"/>
+                <field name="regulatory_body" optional="hide"/>
+                <field name="active" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- ===== MEMBER SPECIALTY KANBAN VIEW ===== -->
+    <record id="view_member_specialty_kanban" model="ir.ui.view">
+        <field name="name">ams.member.specialty.kanban</field>
+        <field name="model">ams.member.specialty</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="category">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="category"/>
+                <field name="specialty_type"/>
+                <field name="member_count"/>
+                <field name="requires_certification"/>
+                <field name="min_experience_years"/>
+                <field name="parent_id"/>
+                <field name="level"/>
+                
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <span t-if="record.level.raw_value > 0" 
+                                                  class="text-muted">
+                                                <t t-esc="'  '.repeat(record.level.raw_value)"/>↳ 
+                                            </span>
+                                            <field name="name"/>
+                                        </strong>
+                                        <span class="o_kanban_record_subtitle" t-if="record.code.raw_value">
+                                            [<field name="code"/>]
+                                        </span>
+                                    </div>
+                                    <div class="o_kanban_record_top_right">
+                                        <span class="badge badge-pill badge-info">
+                                            <t t-esc="record.specialty_type.value"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="o_kanban_record_body">
+                                    <div class="oe_kanban_specialty_info">
+                                        <div t-if="record.parent_id.raw_value" class="text-muted">
+                                            <i class="fa fa-level-up"/> 
+                                            Sub-specialty of <t t-esc="record.parent_id.value"/>
+                                        </div>
+                                        <div t-if="record.requires_certification.raw_value">
+                                            <i class="fa fa-certificate text-warning"/> Certification Required
+                                        </div>
+                                        <div t-if="record.min_experience_years.raw_value > 0">
+                                            <i class="fa fa-clock text-info"/> 
+                                            Min. <t t-esc="record.min_experience_years.value"/> years experience
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <span class="badge badge-secondary">
+                                            <i class="fa fa-users"/> 
+                                            <t t-esc="record.member_count.value"/> members
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    
+    <!-- ===== MEMBER SPECIALTY SEARCH VIEW ===== -->
+    <record id="view_member_specialty_search" model="ir.ui.view">
+        <field name="name">ams.member.specialty.search</field>
+        <field name="model">ams.member.specialty</field>
+        <field name="arch" type="xml">
+            <search string="Search Member Specialties">
+                
+                <field name="name"/>
+                <field name="code"/>
+                <field name="description"/>
+                <field name="keyword_tags"/>
+                <field name="regulatory_body"/>
+                <field name="industry_sectors"/>
+                
+                <separator/>
+                <filter string="Requires Certification" name="requires_certification"
+                        domain="[('requires_certification', '=', True)]"/>
+                <filter string="License Required" name="license_required"
+                        domain="[('license_required', '=', True)]"/>
+                <filter string="Training Required" name="training_required"
+                        domain="[('training_required', '=', True)]"/>
+                
+                <separator/>
+                <filter string="Root Specialties" name="root_specialties"
+                        domain="[('parent_id', '=', False)]"/>
+                <filter string="Sub-specialties" name="sub_specialties"
+                        domain="[('parent_id', '!=', False)]"/>
+                
+                <separator/>
+                <filter string="Practice Areas" name="practice_areas"
+                        domain="[('specialty_type', '=', 'practice_area')]"/>
+                <filter string="Subspecialties" name="subspecialties"
+                        domain="[('specialty_type', '=', 'subspecialty')]"/>
+                <filter string="Certification Areas" name="certification_areas"
+                        domain="[('specialty_type', '=', 'certification_area')]"/>
+                <filter string="Interest Areas" name="interest_areas"
+                        domain="[('specialty_type', '=', 'interest_area')]"/>
+                
+                <separator/>
+                <filter string="Medical" name="medical"
+                        domain="[('category', '=', 'medical')]"/>
+                <filter string="Surgical" name="surgical"
+                        domain="[('category', '=', 'surgical')]"/>
+                <filter string="Engineering" name="engineering"
+                        domain="[('category', '=', 'engineering')]"/>
+                <filter string="Legal" name="legal"
+                        domain="[('category', '=', 'legal')]"/>
+                <filter string="Business" name="business"
+                        domain="[('category', '=', 'business')]"/>
+                <filter string="Aviation" name="aviation"
+                        domain="[('category', '=', 'aviation')]"/>
+                <filter string="Technology" name="technology"
+                        domain="[('category', '=', 'technology')]"/>
+                
+                <separator/>
+                <filter string="Popular" name="popular"
+                        domain="[('member_count', '>', 0)]"/>
+                <filter string="Unused" name="unused"
+                        domain="[('member_count', '=', 0)]"/>
+                
+                <separator/>
+                <filter string="Archived" name="inactive" 
+                        domain="[('active', '=', False)]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter string="Category" name="group_category"
+                            domain="[]" context="{'group_by': 'category'}"/>
+                    <filter string="Specialty Type" name="group_type"
+                            domain="[]" context="{'group_by': 'specialty_type'}"/>
+                    <filter string="Parent Specialty" name="group_parent"
+                            domain="[]" context="{'group_by': 'parent_id'}"/>
+                    <filter string="Requires Certification" name="group_certification"
+                            domain="[]" context="{'group_by': 'requires_certification'}"/>
+                    <filter string="Regulatory Body" name="group_regulatory"
+                            domain="[]" context="{'group_by': 'regulatory_body'}"/>
+                </group>
+                
+            </search>
+        </field>
+    </record>
+    
+    <!-- ===== MEMBER SPECIALTIES ACTION ===== -->
+    <record id="action_member_specialties" model="ir.actions.act_window">
+        <field name="name">Member Specialties</field>
+        <field name="res_model">ams.member.specialty</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_member_specialty_search"/>
+        <field name="context">{'search_default_group_category': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first member specialty!
+            </p>
+            <p>
+                Add practice areas, subspecialties, and areas of expertise that members can be assigned to.
+                Specialties can be organized hierarchically and have specific requirements.
+            </p>
+        </field>
+    </record>
+    
+    <!-- ===== PRACTICE AREAS ACTION ===== -->
+    <record id="action_practice_areas" model="ir.actions.act_window">
+        <field name="name">Practice Areas</field>
+        <field name="res_model">ams.member.specialty</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('specialty_type', '=', 'practice_area')]</field>
+        <field name="context">{'default_specialty_type': 'practice_area'}</field>
+        <field name="search_view_id" ref="view_member_specialty_search"/>
+    </record>
+    
+    <!-- ===== SUBSPECIALTIES ACTION ===== -->
+    <record id="action_subspecialties" model="ir.actions.act_window">
+        <field name="name">Subspecialties</field>
+        <field name="res_model">ams.member.specialty</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('specialty_type', '=', 'subspecialty')]</field>
+        <field name="context">{'default_specialty_type': 'subspecialty'}</field>
+        <field name="search_view_id" ref="view_member_specialty_search"/>
+    </record>
+    
+    <!-- ===== ROOT SPECIALTIES ACTION ===== -->
+    <record id="action_root_specialties" model="ir.actions.act_window">
+        <field name="name">Root Specialties</field>
+        <field name="res_model">ams.member.specialty</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('parent_id', '=', False)]</field>
+        <field name="search_view_id" ref="view_member_specialty_search"/>
+    </record>
+    
+    <!-- ===== POPULAR SPECIALTIES ACTION ===== -->
+    <record id="action_popular_specialties" model="ir.actions.act_window">
+        <field name="name">Popular Specialties</field>
+        <field name="res_model">ams.member.specialty</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('member_count', '>', 0)]</field>
+        <field name="context">{'search_default_popular': 1}</field>
+        <field name="search_view_id" ref="view_member_specialty_search"/>
+    </record>
+    
+</odoo>

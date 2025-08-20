@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- ===== DEMO MEMBER PROFILES ===== -->
+        
+        <!-- Dr. Sarah Smith Profile -->
+        <record id="demo_profile_dr_smith" model="ams.member.profile">
+            <field name="partner_id" ref="demo_member_dr_smith"/>
+            <field name="graduation_year">2005</field>
+            <field name="graduation_institution">Harvard Medical School</field>
+            <field name="ethnicity">white</field>
+            <field name="primary_language" ref="base.lang_en"/>
+            <field name="language_ids" eval="[(4, ref('base.lang_en')), (4, ref('base.lang_es'))]"/>
+            <field name="time_zone">US/Eastern</field>
+            <field name="geographic_region">Northeast US</field>
+            <field name="linkedin_url">https://linkedin.com/in/sarahsmith-md</field>
+            <field name="orcid_id">0000-0000-0000-0001</field>
+            <field name="interests_tags" eval="[(4, ref('category_research')), (4, ref('category_leadership'))]"/>
+            <field name="volunteer_status">current_volunteer</field>
+            <field name="volunteer_skills">Committee leadership, medical education, research mentoring</field>
+            <field name="photo_permission">True</field>
+            <field name="marketing_consent">True</field>
+            <field name="directory_listing_consent">True</field>
+            <field name="data_sharing_consent">False</field>
+            <field name="continuing_education_hours">55.0</field>
+            <field name="ce_hours_required">50.0</field>
+            <field name="certification_expiry_date">2025-12-31</field>
+            <field name="emergency_contact_name">Dr. Michael Smith</field>
+            <field name="emergency_contact_relationship">Spouse</field>
+            <field name="emergency_contact_phone">+1-555-9001</field>
+            <field name="emergency_contact_email">michael.smith@example.com</field>
+            <field name="total_events_attended">15</field>
+            <field name="member_notes">Interested in advanced cardiac procedures and research opportunities.</field>
+            <field name="internal_notes">Committee chair candidate. Excellent speaker for conferences.</field>
+        </record>
+
+        <!-- John Doe Profile (Student) -->
+        <record id="demo_profile_john_doe" model="ams.member.profile">
+            <field name="partner_id" ref="demo_member_john_doe"/>
+            <field name="graduation_year">2024</field>
+            <field name="graduation_institution">Tech University</field>
+            <field name="ethnicity">asian</field>
+            <field name="primary_language" ref="base.lang_en"/>
+            <field name="language_ids" eval="[(4, ref('base.lang_en'))]"/>
+            <field name="time_zone">US/Pacific</field>
+            <field name="geographic_region">West Coast US</field>
+            <field name="linkedin_url">https://linkedin.com/in/johndoe-ee</field>
+            <field name="twitter_handle">@johndoe_ee</field>
+            <field name="interests_tags" eval="[(4, ref('category_research')), (4, ref('category_education'))]"/>
+            <field name="volunteer_status">available</field>
+            <field name="volunteer_skills">Technical writing, student mentoring, social media</field>
+            <field name="photo_permission">True</field>
+            <field name="marketing_consent">True</field>
+            <field name="directory_listing_consent">True</field>
+            <field name="data_sharing_consent">True</field>
+            <field name="continuing_education_hours">20.0</field>
+            <field name="ce_hours_required">15.0</field>
+            <field name="emergency_contact_name">Susan Doe</field>
+            <field name="emergency_contact_relationship">Mother</field>
+            <field name="emergency_contact_phone">+1-555-9002</field>
+            <field name="emergency_contact_email">susan.doe@example.com</field>
+            <field name="total_events_attended">8</field>
+            <field name="member_notes">Looking for internship opportunities in power systems.</field>
+            <field name="internal_notes">Promising student. Consider for student ambassador program.</field>
+        </record>
+
+        <!-- Jane Wilson Profile (Emeritus) -->
+        <record id="demo_profile_jane_wilson" model="ams.member.profile">
+            <field name="partner_id" ref="demo_member_jane_wilson"/>
+            <field name="graduation_year">1982</field>
+            <field name="graduation_institution">Yale Law School</field>
+            <field name="ethnicity">white</field>
+            <field name="primary_language" ref="base.lang_en"/>
+            <field name="language_ids" eval="[(4, ref('base.lang_en')), (4, ref('base.lang_fr'))]"/>
+            <field name="time_zone">US/Eastern</field>
+            <field name="geographic_region">Northeast US</field>
+            <field name="linkedin_url">https://linkedin.com/in/janewilson-esq</field>
+            <field name="interests_tags" eval="[(4, ref('category_leadership')), (4, ref('category_advocacy'))]"/>
+            <field name="volunteer_status">limited</field>
+            <field name="volunteer_skills">Legal expertise, board governance, strategic planning</field>
+            <field name="photo_permission">False</field>
+            <field name="marketing_consent">True</field>
+            <field name="directory_listing_consent">True</field>
+            <field name="data_sharing_consent">False</field>
+            <field name="continuing_education_hours">25.0</field>
+            <field name="ce_hours_required">20.0</field>
+            <field name="emergency_contact_name">Thomas Wilson</field>
+            <field name="emergency_contact_relationship">Son</field>
+            <field name="emergency_contact_phone">+1-555-9003</field>
+            <field name="emergency_contact_email">thomas.wilson@example.com</field>
+            <field name="total_events_attended">25</field>
+            <field name="member_notes">Enjoys emeritus events and networking opportunities.</field>
+            <field name="internal_notes">Former board chair. Valuable institutional knowledge. Mentor potential.</field>
+        </record>
+
+        <!-- Mike Johnson Profile (Aviation) -->
+        <record id="demo_profile_mike_johnson" model="ams.member.profile">
+            <field name="partner_id" ref="demo_member_mike_johnson"/>
+            <field name="graduation_year">2008</field>
+            <field name="graduation_institution">Embry-Riddle Aeronautical University</field>
+            <field name="ethnicity">white</field>
+            <field name="primary_language" ref="base.lang_en"/>
+            <field name="language_ids" eval="[(4, ref('base.lang_en'))]"/>
+            <field name="time_zone">US/Central</field>
+            <field name="geographic_region">Midwest US</field>
+            <field name="linkedin_url">https://linkedin.com/in/mikejohnson-pilot</field>
+            <field name="interests_tags" eval="[(4, ref('category_education')), (4, ref('category_networking'))]"/>
+            <field name="volunteer_status">current_volunteer</field>
+            <field name="volunteer_skills">Flight training, safety education, curriculum development</field>
+            <field name="photo_permission">True</field>
+            <field name="marketing_consent">True</field>
+            <field name="directory_listing_consent">True</field>
+            <field name="data_sharing_consent">True</field>
+            <field name="continuing_education_hours">30.0</field>
+            <field name="ce_hours_required">24.0</field>
+            <field name="certification_expiry_date">2025-08-15</field>
+            <field name="emergency_contact_name">Jennifer Johnson</field>
+            <field name="emergency_contact_relationship">Wife</field>
+            <field name="emergency_contact_phone">+1-555-9004</field>
+            <field name="emergency_contact_email">jennifer.johnson@example.com</field>
+            <field name="total_events_attended">12</field>
+            <field name="member_notes">Active in safety training programs. Interested in instructor opportunities.</field>
+            <field name="internal_notes">Excellent safety record. Great speaker for aviation events.</field>
+        </record>
+
+        <!-- Lisa Chen Profile (CPA) -->
+        <record id="demo_profile_lisa_chen" model="ams.member.profile">
+            <field name="partner_id" ref="demo_member_lisa_chen"/>
+            <field name="graduation_year">2010</field>
+            <field name="graduation_institution">Wharton School of Business</field>
+            <field name="ethnicity">asian</field>
+            <field name="primary_language" ref="base.lang_en"/>
+            <field name="language_ids" eval="[(4, ref('base.lang_en'))]"/>
+            <field name="time_zone">US/Pacific</field>
+            <field name="geographic_region">West Coast US</field>
+            <field name="linkedin_url">https://linkedin.com/in/lisachen-cpa</field>
+            <field name="twitter_handle">@lisachen_cpa</field>
+            <field name="interests_tags" eval="[(4, ref('category_education')), (4, ref('category_leadership'))]"/>
+            <field name="volunteer_status">current_volunteer</field>
+            <field name="volunteer_skills">Financial analysis, tax expertise, business planning</field>
+            <field name="photo_permission">True</field>
+            <field name="marketing_consent">True</field>
+            <field name="directory_listing_consent">True</field>
+            <field name="data_sharing_consent">False</field>
+            <field name="continuing_education_hours">45.0</field>
+            <field name="ce_hours_required">40.0</field>
+            <field name="certification_expiry_date">2025-12-31</field>
+            <field name="emergency_contact_name">David Chen</field>
+            <field name="emergency_contact_relationship">Husband</field>
+            <field name="emergency_contact_phone">+1-555-9005</field>
+            <field name="emergency_contact_email">david.chen@example.com</field>
+            <field name="total_events_attended">18</field>
+            <field name="member_notes">Specializes in tax planning for small businesses. Frequent conference speaker.</field>
+            <field name="internal_notes">Committee member. Excellent presenter. Consider for board nomination.</field>
+        </record>
+
+        <!-- Robert Brown Profile (Lapsed) -->
+        <record id="demo_profile_robert_brown" model="ams.member.profile">
+            <field name="partner_id" ref="demo_member_robert_brown"/>
+            <field name="graduation_year">2000</field>
+            <field name="graduation_institution">Stanford Graduate School of Business</field>
+            <field name="ethnicity">white</field>
+            <field name="primary_language" ref="base.lang_en"/>
+            <field name="language_ids" eval="[(4, ref('base.lang_en'))]"/>
+            <field name="time_zone">US/Mountain</field>
+            <field name="geographic_region">Mountain West US</field>
+            <field name="linkedin_url">https://linkedin.com/in/robertbrown-consultant</field>
+            <field name="interests_tags" eval="[(4, ref('category_networking'))]"/>
+            <field name="volunteer_status">not_available</field>
+            <field name="volunteer_skills">Strategic planning, organizational development</field>
+            <field name="photo_permission">False</field>
+            <field name="marketing_consent">False</field>
+            <field name="directory_listing_consent">False</field>
+            <field name="data_sharing_consent">False</field>
+            <field name="continuing_education_hours">10.0</field>
+            <field name="ce_hours_required">20.0</field>
+            <field name="emergency_contact_name">Mary Brown</field>
+            <field name="emergency_contact_relationship">Wife</field>
+            <field name="emergency_contact_phone">+1-555-9006</field>
+            <field name="emergency_contact_email">mary.brown@example.com</field>
+            <field name="total_events_attended">5</field>
+            <field name="member_notes">Former active member. Interested in returning if schedule permits.</field>
+            <field name="internal_notes">Lapsed due to busy work schedule. Good candidate for re-engagement campaign.</field>
+        </record>
+
+        <!-- Amy Davis Profile (Prospect) -->
+        <record id="demo_profile_amy_davis" model="ams.member.profile">
+            <field name="partner_id" ref="demo_prospect_amy_davis"/>
+            <field name="graduation_year">2022</field>
+            <field name="graduation_institution">Johns Hopkins School of Medicine</field>
+            <field name="ethnicity">black</field>
+            <field name="primary_language" ref="base.lang_en"/>
+            <field name="language_ids" eval="[(4, ref('base.lang_en'))]"/>
+            <field name="time_zone">US/Eastern</field>
+            <field name="geographic_region">Mid-Atlantic US</field>
+            <field name="linkedin_url">https://linkedin.com/in/amydavis-md</field>
+            <field name="twitter_handle">@amydavis_md</field>
+            <field name="interests_tags" eval="[(4, ref('category_education')), (4, ref('category_research'))]"/>
+            <field name="volunteer_status">available</field>
+            <field name="volunteer_skills">Emergency medicine, patient education, community outreach</field>
+            <field name="photo_permission">True</field>
+            <field name="marketing_consent">True</field>
+            <field name="directory_listing_consent">True</field>
+            <field name="data_sharing_consent">True</field>
+            <field name="continuing_education_hours">35.0</field>
+            <field name="ce_hours_required">50.0</field>
+            <field name="emergency_contact_name">William Davis</field>
+            <field name="emergency_contact_relationship">Father</field>
+            <field name="emergency_contact_phone">+1-555-9007</field>
+            <field name="emergency_contact_email">william.davis@example.com</field>
+            <field name="total_events_attended">3</field>
+            <field name="member_notes">Completing residency. Interested in joining after graduation.</field>
+            <field name="internal_notes">Strong prospect. Follow up when residency completes. Potential young professional leader.</field>
+        </record>
+
+        <!-- Pierre Dubois Profile (International) -->
+        <record id="demo_profile_pierre_dubois" model="ams.member.profile">
+            <field name="partner_id" ref="demo_member_pierre_dubois"/>
+            <field name="graduation_year">2012</field>
+            <field name="graduation_institution">Université Paris Descartes</field>
+            <field name="ethnicity">white</field>
+            <field name="primary_language" ref="base.lang_fr"/>
+            <field name="language_ids" eval="[(4, ref('base.lang_fr')), (4, ref('base.lang_en'))]"/>
+            <field name="time_zone">Europe/Paris</field>
+            <field name="geographic_region">Western Europe</field>
+            <field name="linkedin_url">https://linkedin.com/in/pierredubois-surgeon</field>
+            <field name="interests_tags" eval="[(4, ref('category_research')), (4, ref('category_education'))]"/>
+            <field name="volunteer_status">available</field>
+            <field name="volunteer_skills">Surgical expertise, international collaboration, medical education</field>
+            <field name="photo_permission">True</field>
+            <field name="marketing_consent">True</field>
+            <field name="directory_listing_consent">True</field>
+            <field name="data_sharing_consent">True</field>
+            <field name="continuing_education_hours">40.0</field>
+            <field name="ce_hours_required">35.0</field>
+            <field name="emergency_contact_name">Marie Dubois</field>
+            <field name="emergency_contact_relationship">Wife</field>
+            <field name="emergency_contact_phone">+33-1-98-76-54-32</field>
+            <field name="emergency_contact_email">marie.dubois@example.fr</field>
+            <field name="total_events_attended">6</field>
+            <field name="member_notes">Interested in international collaboration and exchange programs.</field>
+            <field name="internal_notes">International member. Valuable for global initiatives. French/English bilingual.</field>
+        </record>
+
+    </data>
+</odoo>

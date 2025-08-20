@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- ===== DEMO INDIVIDUAL MEMBERS ===== -->
+        
+        <!-- Active Member - Doctor -->
+        <record id="demo_member_dr_smith" model="res.partner">
+            <field name="name">Dr. Sarah Smith</field>
+            <field name="email">sarah.smith@example.com</field>
+            <field name="phone">+1-555-0101</field>
+            <field name="is_member">True</field>
+            <field name="member_status">active</field>
+            <field name="member_since">2020-03-15</field>
+            <field name="is_company">False</field>
+            <field name="preferred_name">Sarah</field>
+            <field name="profession_discipline">Cardiology</field>
+            <field name="career_stage">senior</field>
+            <field name="job_title_role">Chief of Cardiology</field>
+            <field name="professional_designation_ids" eval="[(4, ref('designation_md'))]"/>
+            <field name="specialty_ids" eval="[(4, ref('specialty_cardiology'))]"/>
+            <field name="category_id" eval="[(4, ref('category_active_member')), (4, ref('category_physician'))]"/>
+        </record>
+
+        <!-- Student Member - Engineering -->
+        <record id="demo_member_john_doe" model="res.partner">
+            <field name="name">John Doe</field>
+            <field name="email">john.doe@university.edu</field>
+            <field name="phone">+1-555-0102</field>
+            <field name="is_member">True</field>
+            <field name="member_status">student</field>
+            <field name="member_since">2023-09-01</field>
+            <field name="is_company">False</field>
+            <field name="preferred_name">John</field>
+            <field name="profession_discipline">Electrical Engineering</field>
+            <field name="career_stage">student</field>
+            <field name="job_title_role">Graduate Student</field>
+            <field name="professional_designation_ids" eval="[(4, ref('designation_bsee'))]"/>
+            <field name="specialty_ids" eval="[(4, ref('specialty_power_systems'))]"/>
+            <field name="category_id" eval="[(4, ref('category_student_member')), (4, ref('category_electrical_engineer'))]"/>
+        </record>
+
+        <!-- Emeritus Member - Legal -->
+        <record id="demo_member_jane_wilson" model="res.partner">
+            <field name="name">Jane Wilson, Esq.</field>
+            <field name="email">jane.wilson@retired.com</field>
+            <field name="phone">+1-555-0103</field>
+            <field name="is_member">True</field>
+            <field name="member_status">emeritus</field>
+            <field name="member_since">1985-06-01</field>
+            <field name="emeritus_flag">True</field>
+            <field name="is_company">False</field>
+            <field name="preferred_name">Jane</field>
+            <field name="profession_discipline">Corporate Law</field>
+            <field name="career_stage">retired</field>
+            <field name="job_title_role">Retired Partner</field>
+            <field name="professional_designation_ids" eval="[(4, ref('designation_jd')), (4, ref('designation_esq'))]"/>
+            <field name="specialty_ids" eval="[(4, ref('specialty_corporate_law'))]"/>
+            <field name="category_id" eval="[(4, ref('category_emeritus_member')), (4, ref('category_attorney'))]"/>
+        </record>
+
+        <!-- Aviation Professional -->
+        <record id="demo_member_mike_johnson" model="res.partner">
+            <field name="name">Captain Mike Johnson</field>
+            <field name="email">mike.johnson@airline.com</field>
+            <field name="phone">+1-555-0104</field>
+            <field name="is_member">True</field>
+            <field name="member_status">active</field>
+            <field name="member_since">2018-11-20</field>
+            <field name="is_company">False</field>
+            <field name="preferred_name">Mike</field>
+            <field name="profession_discipline">Commercial Aviation</field>
+            <field name="career_stage">mid_career</field>
+            <field name="job_title_role">Captain</field>
+            <field name="professional_designation_ids" eval="[(4, ref('designation_atp')), (4, ref('designation_cfi'))]"/>
+            <field name="specialty_ids" eval="[(4, ref('specialty_commercial_aviation'))]"/>
+            <field name="category_id" eval="[(4, ref('category_active_member')), (4, ref('category_pilot'))]"/>
+        </record>
+
+        <!-- Business Professional -->
+        <record id="demo_member_lisa_chen" model="res.partner">
+            <field name="name">Lisa Chen, CPA</field>
+            <field name="email">lisa.chen@accounting.com</field>
+            <field name="phone">+1-555-0105</field>
+            <field name="is_member">True</field>
+            <field name="member_status">active</field>
+            <field name="member_since">2019-01-10</field>
+            <field name="is_company">False</field>
+            <field name="preferred_name">Lisa</field>
+            <field name="profession_discipline">Accounting</field>
+            <field name="career_stage">mid_career</field>
+            <field name="job_title_role">Senior Partner</field>
+            <field name="professional_designation_ids" eval="[(4, ref('designation_cpa')), (4, ref('designation_mba'))]"/>
+            <field name="specialty_ids" eval="[(4, ref('specialty_tax_accounting'))]"/>
+            <field name="category_id" eval="[(4, ref('category_active_member')), (4, ref('category_accountant'))]"/>
+        </record>
+
+        <!-- Lapsed Member -->
+        <record id="demo_member_robert_brown" model="res.partner">
+            <field name="name">Robert Brown</field>
+            <field name="email">robert.brown@consulting.com</field>
+            <field name="phone">+1-555-0106</field>
+            <field name="is_member">False</field>
+            <field name="member_status">lapsed</field>
+            <field name="member_since">2017-04-01</field>
+            <field name="is_company">False</field>
+            <field name="profession_discipline">Management Consulting</field>
+            <field name="career_stage">senior</field>
+            <field name="job_title_role">Principal Consultant</field>
+            <field name="professional_designation_ids" eval="[(4, ref('designation_mba'))]"/>
+            <field name="specialty_ids" eval="[(4, ref('specialty_management_consulting'))]"/>
+            <field name="category_id" eval="[(4, ref('category_lapsed_member')), (4, ref('category_consultant'))]"/>
+        </record>
+
+        <!-- Prospect -->
+        <record id="demo_prospect_amy_davis" model="res.partner">
+            <field name="name">Amy Davis</field>
+            <field name="email">amy.davis@hospital.org</field>
+            <field name="phone">+1-555-0107</field>
+            <field name="is_member">False</field>
+            <field name="member_status">prospect</field>
+            <field name="is_company">False</field>
+            <field name="profession_discipline">Emergency Medicine</field>
+            <field name="career_stage">early_career</field>
+            <field name="job_title_role">Resident Physician</field>
+            <field name="professional_designation_ids" eval="[(4, ref('designation_md'))]"/>
+            <field name="specialty_ids" eval="[(4, ref('specialty_emergency_medicine'))]"/>
+            <field name="category_id" eval="[(4, ref('category_prospect')), (4, ref('category_physician'))]"/>
+        </record>
+
+        <!-- ===== DEMO ORGANIZATIONS ===== -->
+        
+        <!-- Corporate Member - Hospital -->
+        <record id="demo_org_general_hospital" model="res.partner">
+            <field name="name">General Hospital</field>
+            <field name="email">info@generalhospital.org</field>
+            <field name="phone">+1-555-0201</field>
+            <field name="is_member">True</field>
+            <field name="member_status">active</field>
+            <field name="member_since">2015-01-01</field>
+            <field name="is_company">True</field>
+            <field name="organization_type">hospital</field>
+            <field name="industry_sector">Healthcare</field>
+            <field name="employee_count_bracket">1000_plus</field>
+            <field name="category_id" eval="[(4, ref('category_institutional_member'))]"/>
+        </record>
+
+        <!-- University Member -->
+        <record id="demo_org_tech_university" model="res.partner">
+            <field name="name">Tech University Engineering School</field>
+            <field name="email">engineering@techuniversity.edu</field>
+            <field name="phone">+1-555-0202</field>
+            <field name="is_member">True</field>
+            <field name="member_status">active</field>
+            <field name="member_since">2010-08-15</field>
+            <field name="is_company">True</field>
+            <field name="organization_type">university</field>
+            <field name="industry_sector">Education</field>
+            <field name="employee_count_bracket">201_1000</field>
+            <field name="category_id" eval="[(4, ref('category_academic_member'))]"/>
+        </record>
+
+        <!-- Corporate Sponsor -->
+        <record id="demo_org_tech_solutions" model="res.partner">
+            <field name="name">Tech Solutions Inc.</field>
+            <field name="email">partnerships@techsolutions.com</field>
+            <field name="phone">+1-555-0203</field>
+            <field name="is_member">False</field>
+            <field name="member_status">prospect</field>
+            <field name="is_company">True</field>
+            <field name="organization_type">company</field>
+            <field name="industry_sector">Technology</field>
+            <field name="employee_count_bracket">51_200</field>
+            <field name="category_id" eval="[(4, ref('category_sponsor'))]"/>
+        </record>
+
+        <!-- Law Firm -->
+        <record id="demo_org_law_firm" model="res.partner">
+            <field name="name">Wilson &amp; Associates Law Firm</field>
+            <field name="email">contact@wilsonlaw.com</field>
+            <field name="phone">+1-555-0204</field>
+            <field name="is_member">True</field>
+            <field name="member_status">active</field>
+            <field name="member_since">2012-03-01</field>
+            <field name="is_company">True</field>
+            <field name="organization_type">company</field>
+            <field name="industry_sector">Legal Services</field>
+            <field name="employee_count_bracket">11_50</field>
+            <field name="category_id" eval="[(4, ref('category_corporate_member'))]"/>
+        </record>
+
+        <!-- ===== EMPLOYER RELATIONSHIPS ===== -->
+        
+        <!-- Set employer relationships -->
+        <record id="demo_member_dr_smith" model="res.partner">
+            <field name="employer_id" ref="demo_org_general_hospital"/>
+        </record>
+
+        <record id="demo_member_john_doe" model="res.partner">
+            <field name="employer_id" ref="demo_org_tech_university"/>
+        </record>
+
+        <record id="demo_member_jane_wilson" model="res.partner">
+            <field name="employer_id" ref="demo_org_law_firm"/>
+        </record>
+
+        <record id="demo_prospect_amy_davis" model="res.partner">
+            <field name="employer_id" ref="demo_org_general_hospital"/>
+        </record>
+
+        <!-- ===== DEMO VENDORS AND CONTACTS ===== -->
+        
+        <!-- Equipment Vendor -->
+        <record id="demo_vendor_med_supply" model="res.partner">
+            <field name="name">Medical Supply Co.</field>
+            <field name="email">sales@medsupply.com</field>
+            <field name="phone">+1-555-0301</field>
+            <field name="is_member">False</field>
+            <field name="member_status">prospect</field>
+            <field name="is_company">True</field>
+            <field name="organization_type">vendor</field>
+            <field name="industry_sector">Medical Equipment</field>
+            <field name="employee_count_bracket">11_50</field>
+            <field name="category_id" eval="[(4, ref('category_vendor'))]"/>
+        </record>
+
+        <!-- Professional Service Provider -->
+        <record id="demo_vendor_training_center" model="res.partner">
+            <field name="name">Professional Training Center</field>
+            <field name="email">info@protraining.com</field>
+            <field name="phone">+1-555-0302</field>
+            <field name="is_member">False</field>
+            <field name="member_status">prospect</field>
+            <field name="is_company">True</field>
+            <field name="organization_type">company</field>
+            <field name="industry_sector">Education &amp; Training</field>
+            <field name="employee_count_bracket">1_10</field>
+            <field name="category_id" eval="[(4, ref('category_vendor'))]"/>
+        </record>
+
+        <!-- ===== INTERNATIONAL MEMBERS ===== -->
+        
+        <!-- International Member -->
+        <record id="demo_member_pierre_dubois" model="res.partner">
+            <field name="name">Dr. Pierre Dubois</field>
+            <field name="email">pierre.dubois@hospital.fr</field>
+            <field name="phone">+33-1-23-45-67-89</field>
+            <field name="is_member">True</field>
+            <field name="member_status">active</field>
+            <field name="member_since">2021-06-01</field>
+            <field name="is_company">False</field>
+            <field name="preferred_name">Pierre</field>
+            <field name="profession_discipline">Surgery</field>
+            <field name="career_stage">mid_career</field>
+            <field name="job_title_role">Surgeon</field>
+            <field name="nationality">French</field>
+            <field name="professional_designation_ids" eval="[(4, ref('designation_md'))]"/>
+            <field name="category_id" eval="[(4, ref('category_international_member')), (4, ref('category_physician'))]"/>
+            <field name="country_id" ref="base.fr"/>
+        </record>
+
+    </data>
+</odoo>

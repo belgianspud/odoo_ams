@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ===== AUDIT LOG FORM VIEW ===== -->
+    <record id="view_audit_log_form" model="ir.ui.view">
+        <field name="name">ams.audit.log.form</field>
+        <field name="model">ams.audit.log</field>
+        <field name="arch" type="xml">
+            <form string="Audit Log Entry" create="false" edit="false">
+                <header>
+                    <button name="action_mark_reviewed" string="Mark as Reviewed" 
+                            type="object" class="btn-primary"
+                            attrs="{'invisible': [('reviewed', '=', True)]}"
+                            groups="ams_core_base.group_ams_manager"/>
+                    <button name="action_view_record" string="View Record" 
+                            type="object" class="btn-secondary"
+                            attrs="{'invisible': [('record_reference', '=', False)]}"/>
+                    <field name="reviewed" invisible="1"/>
+                    <field name="record_reference" invisible="1"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="action" icon="fa-shield"
+                                attrs="{'invisible': [('risk_level', 'not in', ['high', 'critical'])]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="risk_level"/>
+                                </span>
+                                <span class="o_stat_text">Risk Level</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <h1>
+                            <field name="description"/>
+                        </h1>
+                        <h3 class="text-muted">
+                            <field name="operation"/> on <field name="model_name"/> 
+                            <span attrs="{'invisible': [('record_name', '=', False)]}">
+                                - <field name="record_name"/>
+                            </span>
+                        </h3>
+                    </div>
+                    
+                    <group>
+                        <group string="Operation Details">
+                            <field name="timestamp"/>
+                            <field name="user_id"/>
+                            <field name="operation"/>
+                            <field name="model_name"/>
+                            <field name="record_id"/>
+                        </group>
+                        <group string="Context Information">
+                            <field name="ip_address" groups="ams_core_base.group_ams_manager"/>
+                            <field name="session_id" groups="ams_core_base.group_ams_manager"/>
+                            <field name="is_system_operation"/>
+                            <field name="related_partner_id"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="Risk Assessment">
+                            <field name="risk_level"/>
+                            <field name="is_sensitive"/>
+                            <field name="privacy_impact"/>
+                            <field name="requires_review"/>
+                        </group>
+                        <group string="Review Status" groups="ams_core_base.group_ams_manager">
+                            <field name="reviewed"/>
+                            <field name="reviewed_by" attrs="{'invisible': [('reviewed', '=', False)]}"/>
+                            <field name="reviewed_date" attrs="{'invisible': [('reviewed', '=', False)]}"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        
+                        <!-- Data Changes Tab -->
+                        <page string="Data Changes" name="data_changes">
+                            <group>
+                                <field name="data" widget="text" nolabel="1" readonly="1"/>
+                            </group>
+                            <group attrs="{'invisible': [('data_json', '=', False)]}">
+                                <label for="data_json"/>
+                                <field name="data_json" widget="ace" options="{'mode': 'json'}" nolabel="1" readonly="1"/>
+                            </group>
+                        </page>
+                        
+                        <!-- Technical Details Tab -->
+                        <page string="Technical Details" name="technical" groups="ams_core_base.group_ams_admin">
+                            <group>
+                                <group string="Session Information">
+                                    <field name="user_agent"/>
+                                    <field name="session_id"/>
+                                </group>
+                                <group string="Related Records">
+                                    <field name="related_model"/>
+                                    <field name="related_record_id"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <!-- Notes Tab -->
+                        <page string="Notes" name="notes" groups="ams_core_base.group_ams_manager">
+                            <group>
+                                <field name="notes" nolabel="1" widget="text" 
+                                       placeholder="Add review notes or comments..."/>
+                            </group>
+                        </page>
+                        
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- ===== AUDIT LOG TREE VIEW ===== -->
+    <record id="view_audit_log_tree" model="ir.ui.view">
+        <field name="name">ams.audit.log.tree</field>
+        <field name="model">ams.audit.log</field>
+        <field name="arch" type="xml">
+            <tree string="Audit Log" default_order="timestamp desc" create="false" edit="false">
+                <field name="timestamp"/>
+                <field name="operation" decoration-danger="operation == 'unlink'" 
+                       decoration-warning="operation == 'merge'"
+                       decoration-info="operation == 'export'"/>
+                <field name="model_name"/>
+                <field name="record_name" optional="show"/>
+                <field name="user_id"/>
+                <field name="description"/>
+                <field name="risk_level" decoration-danger="risk_level == 'critical'" 
+                       decoration-warning="risk_level == 'high'"
+                       decoration-info="risk_level == 'medium'"/>
+                <field name="is_sensitive" optional="hide"/>
+                <field name="privacy_impact" optional="hide"/>
+                <field name="requires_review" optional="show"/>
+                <field name="reviewed" optional="show"/>
+                <field name="related_partner_id" optional="hide"/>
+                <field name="ip_address" optional="hide" groups="ams_core_base.group_ams_manager"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- ===== AUDIT LOG KANBAN VIEW ===== -->
+    <record id="view_audit_log_kanban" model="ir.ui.view">
+        <field name="name">ams.audit.log.kanban</field>
+        <field name="model">ams.audit.log</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="operation" create="false" edit="false">
+                <field name="timestamp"/>
+                <field name="operation"/>
+                <field name="model_name"/>
+                <field name="record_name"/>
+                <field name="user_id"/>
+                <field name="description"/>
+                <field name="risk_level"/>
+                <field name="is_sensitive"/>
+                <field name="requires_review"/>
+                <field name="reviewed"/>
+                
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="description"/>
+                                        </strong>
+                                        <span class="o_kanban_record_subtitle text-muted">
+                                            <t t-esc="record.timestamp.value"/>
+                                        </span>
+                                    </div>
+                                    <div class="o_kanban_record_top_right">
+                                        <span class="badge badge-pill badge-danger" 
+                                              t-if="record.risk_level.raw_value == 'critical'">
+                                            Critical
+                                        </span>
+                                        <span class="badge badge-pill badge-warning" 
+                                              t-if="record.risk_level.raw_value == 'high'">
+                                            High Risk
+                                        </span>
+                                        <span class="badge badge-pill badge-info" 
+                                              t-if="record.is_sensitive.raw_value">
+                                            Sensitive
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="o_kanban_record_body">
+                                    <div>
+                                        <i class="fa fa-user"/> <t t-esc="record.user_id.value"/>
+                                    </div>
+                                    <div>
+                                        <i class="fa fa-database"/> 
+                                        <t t-esc="record.model_name.value"/>
+                                        <span t-if="record.record_name.raw_value">
+                                            - <t t-esc="record.record_name.value"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <span t-if="record.requires_review.raw_value and !record.reviewed.raw_value"
+                                              class="badge badge-warning">
+                                            <i class="fa fa-eye"/> Needs Review
+                                        </span>
+                                        <span t-if="record.reviewed.raw_value"
+                                              class="badge badge-success">
+                                            <i class="fa fa-check"/> Reviewed
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    
+    <!-- ===== AUDIT LOG SEARCH VIEW ===== -->
+    <record id="view_audit_log_search" model="ir.ui.view">
+        <field name="name">ams.audit.log.search</field>
+        <field name="model">ams.audit.log</field>
+        <field name="arch" type="xml">
+            <search string="Search Audit Log">
+                
+                <field name="description"/>
+                <field name="model_name"/>
+                <field name="record_name"/>
+                <field name="user_id"/>
+                <field name="related_partner_id"/>
+                <field name="ip_address" groups="ams_core_base.group_ams_manager"/>
+                
+                <separator/>
+                <filter string="Today" name="today"
+                        domain="[('timestamp', '&gt;=', datetime.datetime.combine(context_today(), datetime.time(0,0,0)))]"/>
+                <filter string="This Week" name="this_week"
+                        domain="[('timestamp', '&gt;=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <filter string="This Month" name="this_month"
+                        domain="[('timestamp', '&gt;=', (context_today().replace(day=1)).strftime('%Y-%m-%d'))]"/>
+                
+                <separator/>
+                <filter string="Critical Risk" name="critical_risk"
+                        domain="[('risk_level', '=', 'critical')]"/>
+                <filter string="High Risk" name="high_risk"
+                        domain="[('risk_level', '=', 'high')]"/>
+                <filter string="Sensitive Data" name="sensitive"
+                        domain="[('is_sensitive', '=', True)]"/>
+                <filter string="Privacy Impact" name="privacy_impact"
+                        domain="[('privacy_impact', '=', True)]"/>
+                
+                <separator/>
+                <filter string="Create Operations" name="create_ops"
+                        domain="[('operation', '=', 'create')]"/>
+                <filter string="Update Operations" name="update_ops"
+                        domain="[('operation', '=', 'write')]"/>
+                <filter string="Delete Operations" name="delete_ops"
+                        domain="[('operation', '=', 'unlink')]"/>
+                <filter string="Export Operations" name="export_ops"
+                        domain="[('operation', '=', 'export')]"/>
+                <filter string="Merge Operations" name="merge_ops"
+                        domain="[('operation', '=', 'merge')]"/>
+                
+                <separator/>
+                <filter string="Requires Review" name="requires_review"
+                        domain="[('requires_review', '=', True)]"/>
+                <filter string="Unreviewed" name="unreviewed"
+                        domain="[('requires_review', '=', True), ('reviewed', '=', False)]"/>
+                <filter string="Reviewed" name="reviewed"
+                        domain="[('reviewed', '=', True)]"/>
+                
+                <separator/>
+                <filter string="System Operations" name="system_ops"
+                        domain="[('is_system_operation', '=', True)]"/>
+                <filter string="User Operations" name="user_ops"
+                        domain="[('is_system_operation', '=', False)]"/>
+                
+                <separator/>
+                <filter string="Member Records" name="member_records"
+                        domain="[('model_name', '=', 'res.partner')]"/>
+                <filter string="Profile Records" name="profile_records"
+                        domain="[('model_name', '=', 'ams.member.profile')]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter string="Operation" name="group_operation"
+                            domain="[]" context="{'group_by': 'operation'}"/>
+                    <filter string="Model" name="group_model"
+                            domain="[]" context="{'group_by': 'model_name'}"/>
+                    <filter string="User" name="group_user"
+                            domain="[]" context="{'group_by': 'user_id'}"/>
+                    <filter string="Risk Level" name="group_risk"
+                            domain="[]" context="{'group_by': 'risk_level'}"/>
+                    <filter string="Date" name="group_date"
+                            domain="[]" context="{'group_by': 'timestamp:day'}"/>
+                    <filter string="Review Status" name="group_review"
+                            domain="[]" context="{'group_by': 'reviewed'}"/>
+                </group>
+                
+            </search>
+        </field>
+    </record>
+    
+    <!-- ===== AUDIT LOG ACTION ===== -->
+    <record id="action_audit_log" model="ir.actions.act_window">
+        <field name="name">Audit Log</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+        <field name="context">{'search_default_this_week': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No audit log entries found!
+            </p>
+            <p>
+                Audit log entries are automatically created when members and system data are modified.
+                Use filters to find specific operations or users.
+            </p>
+        </field>
+    </record>
+    
+    <!-- ===== HIGH RISK OPERATIONS ACTION ===== -->
+    <record id="action_high_risk_audit" model="ir.actions.act_window">
+        <field name="name">High Risk Operations</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('risk_level', 'in', ['high', 'critical'])]</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+        <field name="context">{'search_default_this_month': 1}</field>
+    </record>
+    
+    <!-- ===== SENSITIVE DATA OPERATIONS ACTION ===== -->
+    <record id="action_sensitive_audit" model="ir.actions.act_window">
+        <field name="name">Sensitive Data Operations</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('is_sensitive', '=', True)]</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+        <field name="context">{'search_default_this_month': 1}</field>
+    </record>
+    
+    <!-- ===== PENDING REVIEW ACTION ===== -->
+    <record id="action_pending_review_audit" model="ir.actions.act_window">
+        <field name="name">Pending Review</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('requires_review', '=', True), ('reviewed', '=', False)]</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+    </record>
+    
+    <!-- ===== DELETE OPERATIONS ACTION ===== -->
+    <record id="action_delete_audit" model="ir.actions.act_window">
+        <field name="name">Delete Operations</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('operation', '=', 'unlink')]</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+        <field name="context">{'search_default_this_month': 1}</field>
+    </record>
+    
+    <!-- ===== EXPORT OPERATIONS ACTION ===== -->
+    <record id="action_export_audit" model="ir.actions.act_window">
+        <field name="name">Data Export Operations</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('operation', '=', 'export')]</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+        <field name="context">{'search_default_this_month': 1}</field>
+    </record>
+    
+</odoo>

@@ -1,0 +1,25 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ams_member_profile_member,ams.member.profile member,model_ams_member_profile,group_ams_member,1,1,1,0
+access_ams_member_profile_staff,ams.member.profile staff,model_ams_member_profile,group_ams_staff,1,1,1,0
+access_ams_member_profile_manager,ams.member.profile manager,model_ams_member_profile,group_ams_manager,1,1,1,1
+access_ams_member_profile_admin,ams.member.profile admin,model_ams_member_profile,group_ams_admin,1,1,1,1
+access_ams_member_profile_privacy,ams.member.profile privacy,model_ams_member_profile,group_ams_privacy_officer,1,1,1,0
+access_ams_member_profile_data,ams.member.profile data,model_ams_member_profile,group_ams_data_officer,1,1,1,0
+access_ams_professional_designation_public,ams.professional.designation public,model_ams_professional_designation,base.group_user,1,0,0,0
+access_ams_professional_designation_member,ams.professional.designation member,model_ams_professional_designation,group_ams_member,1,0,0,0
+access_ams_professional_designation_staff,ams.professional.designation staff,model_ams_professional_designation,group_ams_staff,1,1,1,0
+access_ams_professional_designation_manager,ams.professional.designation manager,model_ams_professional_designation,group_ams_manager,1,1,1,0
+access_ams_professional_designation_admin,ams.professional.designation admin,model_ams_professional_designation,group_ams_admin,1,1,1,1
+access_ams_professional_designation_privacy,ams.professional.designation privacy,model_ams_professional_designation,group_ams_privacy_officer,1,0,0,0
+access_ams_professional_designation_data,ams.professional.designation data,model_ams_professional_designation,group_ams_data_officer,1,1,1,0
+access_ams_member_specialty_public,ams.member.specialty public,model_ams_member_specialty,base.group_user,1,0,0,0
+access_ams_member_specialty_member,ams.member.specialty member,model_ams_member_specialty,group_ams_member,1,0,0,0
+access_ams_member_specialty_staff,ams.member.specialty staff,model_ams_member_specialty,group_ams_staff,1,1,1,0
+access_ams_member_specialty_manager,ams.member.specialty manager,model_ams_member_specialty,group_ams_manager,1,1,1,0
+access_ams_member_specialty_admin,ams.member.specialty admin,model_ams_member_specialty,group_ams_admin,1,1,1,1
+access_ams_member_specialty_privacy,ams.member.specialty privacy,model_ams_member_specialty,group_ams_privacy_officer,1,0,0,0
+access_ams_member_specialty_data,ams.member.specialty data,model_ams_member_specialty,group_ams_data_officer,1,1,1,0
+access_ams_audit_log_staff,ams.audit.log staff,model_ams_audit_log,group_ams_staff,1,0,0,0
+access_ams_audit_log_manager,ams.audit.log manager,model_ams_audit_log,group_ams_manager,1,1,0,0
+access_ams_audit_log_admin,ams.audit.log admin,model_ams_audit_log,group_ams_admin,1,1,1,1
+access_ams_audit_log_privacy,ams.audit.log privacy,model_ams_audit_log,group_ams_privacy_officer,1,1,0,0

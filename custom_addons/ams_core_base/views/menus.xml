@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ===== MAIN AMS ROOT MENU ===== -->
+    <menuitem id="menu_ams_root" 
+              name="Association Management" 
+              web_icon="ams_core_base,static/description/icon.png"
+              sequence="10"/>
+    
+    <!-- ===== MEMBERS SECTION ===== -->
+    <menuitem id="menu_ams_members" 
+              name="Members" 
+              parent="menu_ams_root" 
+              sequence="10"/>
+    
+    <!-- Member Management Submenus -->
+    <menuitem id="menu_ams_all_members" 
+              name="All Members" 
+              parent="menu_ams_members" 
+              action="action_members" 
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_active_members" 
+              name="Active Members" 
+              parent="menu_ams_members" 
+              action="action_active_members" 
+              sequence="15"/>
+    
+    <menuitem id="menu_ams_prospects" 
+              name="Prospects" 
+              parent="menu_ams_members" 
+              action="action_prospects" 
+              sequence="20"/>
+    
+    <menuitem id="menu_ams_lapsed_members" 
+              name="Lapsed Members" 
+              parent="menu_ams_members" 
+              action="action_lapsed_members" 
+              sequence="25"/>
+    
+    <menuitem id="menu_ams_organizations" 
+              name="Organizations" 
+              parent="menu_ams_members" 
+              action="action_organizations" 
+              sequence="30"/>
+    
+    <!-- Member Profile Submenus -->
+    <menuitem id="menu_ams_member_profiles" 
+              name="Member Profiles" 
+              parent="menu_ams_members" 
+              action="action_member_profiles" 
+              sequence="40"/>
+    
+    <menuitem id="menu_ams_high_engagement" 
+              name="High Engagement" 
+              parent="menu_ams_members" 
+              action="action_high_engagement_profiles" 
+              sequence="45"/>
+    
+    <menuitem id="menu_ams_at_risk" 
+              name="At Risk Members" 
+              parent="menu_ams_members" 
+              action="action_at_risk_profiles" 
+              sequence="50"/>
+    
+    <menuitem id="menu_ams_incomplete_profiles" 
+              name="Incomplete Profiles" 
+              parent="menu_ams_members" 
+              action="action_incomplete_profiles" 
+              sequence="55"/>
+    
+    <menuitem id="menu_ams_volunteers" 
+              name="Volunteers" 
+              parent="menu_ams_members" 
+              action="action_volunteers" 
+              sequence="60"/>
+    
+    <!-- ===== PROFESSIONAL DATA SECTION ===== -->
+    <menuitem id="menu_ams_professional" 
+              name="Professional Data" 
+              parent="menu_ams_root" 
+              sequence="20"/>
+    
+    <!-- Professional Designations Submenus -->
+    <menuitem id="menu_ams_designations" 
+              name="Designations" 
+              parent="menu_ams_professional" 
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_all_designations" 
+              name="All Designations" 
+              parent="menu_ams_designations" 
+              action="action_professional_designations" 
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_degrees" 
+              name="Degrees" 
+              parent="menu_ams_designations" 
+              action="action_degrees" 
+              sequence="15"/>
+    
+    <menuitem id="menu_ams_certifications" 
+              name="Certifications" 
+              parent="menu_ams_designations" 
+              action="action_certifications" 
+              sequence="20"/>
+    
+    <menuitem id="menu_ams_licenses" 
+              name="Licenses" 
+              parent="menu_ams_designations" 
+              action="action_licenses" 
+              sequence="25"/>
+    
+    <menuitem id="menu_ams_popular_designations" 
+              name="Popular Designations" 
+              parent="menu_ams_designations" 
+              action="action_popular_designations" 
+              sequence="30"/>
+    
+    <!-- Member Specialties Submenus -->
+    <menuitem id="menu_ams_specialties" 
+              name="Specialties" 
+              parent="menu_ams_professional" 
+              sequence="20"/>
+    
+    <menuitem id="menu_ams_all_specialties" 
+              name="All Specialties" 
+              parent="menu_ams_specialties" 
+              action="action_member_specialties" 
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_practice_areas" 
+              name="Practice Areas" 
+              parent="menu_ams_specialties" 
+              action="action_practice_areas" 
+              sequence="15"/>
+    
+    <menuitem id="menu_ams_subspecialties" 
+              name="Subspecialties" 
+              parent="menu_ams_specialties" 
+              action="action_subspecialties" 
+              sequence="20"/>
+    
+    <menuitem id="menu_ams_root_specialties" 
+              name="Root Specialties" 
+              parent="menu_ams_specialties" 
+              action="action_root_specialties" 
+              sequence="25"/>
+    
+    <menuitem id="menu_ams_popular_specialties" 
+              name="Popular Specialties" 
+              parent="menu_ams_specialties" 
+              action="action_popular_specialties" 
+              sequence="30"/>
+    
+    <!-- ===== DATA QUALITY SECTION ===== -->
+    <menuitem id="menu_ams_data_quality" 
+              name="Data Quality" 
+              parent="menu_ams_root" 
+              sequence="30"
+              groups="ams_core_base.group_ams_staff"/>
+    
+    <!-- Audit Log Submenus -->
+    <menuitem id="menu_ams_audit" 
+              name="Audit Trail" 
+              parent="menu_ams_data_quality" 
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_all_audit" 
+              name="All Audit Logs" 
+              parent="menu_ams_audit" 
+              action="action_audit_log" 
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_high_risk_audit" 
+              name="High Risk Operations" 
+              parent="menu_ams_audit" 
+              action="action_high_risk_audit" 
+              sequence="15"/>
+    
+    <menuitem id="menu_ams_sensitive_audit" 
+              name="Sensitive Data Operations" 
+              parent="menu_ams_audit" 
+              action="action_sensitive_audit" 
+              sequence="20"/>
+    
+    <menuitem id="menu_ams_pending_review" 
+              name="Pending Review" 
+              parent="menu_ams_audit" 
+              action="action_pending_review_audit" 
+              sequence="25"/>
+    
+    <menuitem id="menu_ams_delete_audit" 
+              name="Delete Operations" 
+              parent="menu_ams_audit" 
+              action="action_delete_audit" 
+              sequence="30"/>
+    
+    <menuitem id="menu_ams_export_audit" 
+              name="Export Operations" 
+              parent="menu_ams_audit" 
+              action="action_export_audit" 
+              sequence="35"
+              groups="ams_core_base.group_ams_privacy_officer"/>
+    
+    <!-- Data Quality Tools (Future placeholder) -->
+    <menuitem id="menu_ams_data_tools" 
+              name="Data Tools" 
+              parent="menu_ams_data_quality" 
+              sequence="20"
+              groups="ams_core_base.group_ams_data_officer"/>
+    
+    <!-- ===== CONFIGURATION SECTION ===== -->
+    <menuitem id="menu_ams_config" 
+              name="Configuration" 
+              parent="menu_ams_root" 
+              sequence="90"
+              groups="ams_core_base.group_ams_admin"/>
+    
+    <!-- System Configuration -->
+    <menuitem id="menu_ams_system_config" 
+              name="System Settings" 
+              parent="menu_ams_config" 
+              sequence="10"/>
+    
+    <!-- Professional Data Configuration -->
+    <menuitem id="menu_ams_professional_config" 
+              name="Professional Data" 
+              parent="menu_ams_config" 
+              sequence="20"/>
+    
+    <menuitem id="menu_ams_config_designations" 
+              name="Manage Designations" 
+              parent="menu_ams_professional_config" 
+              action="action_professional_designations" 
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_config_specialties" 
+              name="Manage Specialties" 
+              parent="menu_ams_professional_config" 
+              action="action_member_specialties" 
+              sequence="15"/>
+    
+    <!-- Member Categories Configuration -->
+    <menuitem id="menu_ams_member_config" 
+              name="Member Management" 
+              parent="menu_ams_config" 
+              sequence="30"/>
+    
+    <!-- Create our own member categories action -->
+    <record id="action_member_categories" model="ir.actions.act_window">
+        <field name="name">Member Categories</field>
+        <field name="res_model">res.partner.category</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first member category!
+            </p>
+            <p>
+                Organize members using categories like Active Member, Student Member, 
+                Professional specialties, and engagement levels.
+            </p>
+        </field>
+    </record>
+    
+    <menuitem id="menu_ams_config_categories" 
+              name="Member Categories" 
+              parent="menu_ams_member_config" 
+              action="action_member_categories" 
+              sequence="10"/>
+    
+    <!-- Privacy & Security Configuration -->
+    <menuitem id="menu_ams_privacy_config" 
+              name="Privacy &amp; Security" 
+              parent="menu_ams_config" 
+              sequence="40"
+              groups="ams_core_base.group_ams_privacy_officer"/>
+    
+    <!-- ===== REPORTS SECTION (Future placeholder) ===== -->
+    <menuitem id="menu_ams_reports" 
+              name="Reports" 
+              parent="menu_ams_root" 
+              sequence="80"
+              groups="ams_core_base.group_ams_staff"/>
+    
+    <!-- Member Reports -->
+    <menuitem id="menu_ams_member_reports" 
+              name="Member Reports" 
+              parent="menu_ams_reports" 
+              sequence="10"/>
+    
+    <!-- Engagement Reports -->
+    <menuitem id="menu_ams_engagement_reports" 
+              name="Engagement Reports" 
+              parent="menu_ams_reports" 
+              sequence="20"/>
+    
+    <!-- Professional Reports -->
+    <menuitem id="menu_ams_professional_reports" 
+              name="Professional Reports" 
+              parent="menu_ams_reports" 
+              sequence="30"/>
+    
+    <!-- ===== QUICK ACCESS SHORTCUTS ===== -->
+    <menuitem id="menu_ams_shortcuts" 
+              name="Quick Access" 
+              parent="menu_ams_root" 
+              sequence="5"/>
+    
+    <menuitem id="menu_ams_new_member" 
+              name="New Member" 
+              parent="menu_ams_shortcuts" 
+              action="action_members" 
+              sequence="10"/>
+    
+    <menuitem id="menu_ams_member_search" 
+              name="Search Members" 
+              parent="menu_ams_shortcuts" 
+              action="action_members" 
+              sequence="15"/>
+    
+    <menuitem id="menu_ams_today_activity" 
+              name="Today's Activity" 
+              parent="menu_ams_shortcuts" 
+              action="action_audit_log" 
+              sequence="20"
+              groups="ams_core_base.group_ams_staff"/>
+    
+</odoo>
