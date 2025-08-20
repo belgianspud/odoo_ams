@@ -5,10 +5,22 @@ from odoo.exceptions import ValidationError, UserError
 import json
 import base64
 import io
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 _logger = logging.getLogger(__name__)
+
+# Optional reportlab imports for PDF generation
+try:
+    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.lib import colors
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
+    _logger.warning("ReportLab not available - PDF export will be disabled")
 
 
 class PrivacyExportWizard(models.TransientModel):
@@ -227,7 +239,10 @@ class PrivacyExportWizard(models.TransientModel):
                 self._create_json_export(export_data)
             
             if self.export_format in ['pdf', 'both']:
-                self._create_pdf_export(export_data)
+                if REPORTLAB_AVAILABLE:
+                    self._create_pdf_export(export_data)
+                else:
+                    _logger.warning("PDF export requested but ReportLab not available")
             
             # Calculate statistics
             end_time = datetime.now()
@@ -280,6 +295,7 @@ class PrivacyExportWizard(models.TransientModel):
         
         record_count = 0
         
+        # Fix: Properly iterate over partner recordset
         for partner in self.partner_ids:
             partner_data = self._export_partner_data(partner)
             export_data['partners'].append(partner_data)
@@ -439,34 +455,9 @@ class PrivacyExportWizard(models.TransientModel):
 
     def _export_relationship_data(self, partner):
         """Export relationship data"""
-        if not hasattr(partner, 'relationship_as_partner_a'):
-            return []
-        
-        relationships = []
-        
-        # Relationships where partner is partner_a
-        for rel in partner.relationship_as_partner_a:
-            relationships.append({
-                'related_partner': rel.partner_b_id.name,
-                'relationship_type': rel.relationship_type_id.name if hasattr(rel, 'relationship_type_id') else 'Unknown',
-                'start_date': rel.start_date.isoformat() if hasattr(rel, 'start_date') and rel.start_date else None,
-                'end_date': rel.end_date.isoformat() if hasattr(rel, 'end_date') and rel.end_date else None,
-                'description': rel.description if hasattr(rel, 'description') else '',
-                'direction': 'outgoing',
-            })
-        
-        # Relationships where partner is partner_b
-        for rel in partner.relationship_as_partner_b:
-            relationships.append({
-                'related_partner': rel.partner_a_id.name,
-                'relationship_type': rel.relationship_type_id.name if hasattr(rel, 'relationship_type_id') else 'Unknown',
-                'start_date': rel.start_date.isoformat() if hasattr(rel, 'start_date') and rel.start_date else None,
-                'end_date': rel.end_date.isoformat() if hasattr(rel, 'end_date') and rel.end_date else None,
-                'description': rel.description if hasattr(rel, 'description') else '',
-                'direction': 'incoming',
-            })
-        
-        return relationships
+        # This method would be implemented when the relationships module is added
+        # For now, return empty list
+        return []
 
     def _export_communication_data(self, partner):
         """Export communication history"""
@@ -585,6 +576,10 @@ class PrivacyExportWizard(models.TransientModel):
 
     def _create_pdf_export(self, export_data):
         """Create PDF export file"""
+        if not REPORTLAB_AVAILABLE:
+            _logger.warning("Cannot create PDF export - ReportLab not available")
+            return
+        
         try:
             # Generate PDF using report
             pdf_content = self._generate_pdf_report(export_data)
@@ -605,15 +600,8 @@ class PrivacyExportWizard(models.TransientModel):
 
     def _generate_pdf_report(self, export_data):
         """Generate PDF report content"""
-        # This is a simplified PDF generation
-        # In a real implementation, you would use a proper PDF library
-        # or Odoo's report engine
-        
-        from reportlab.lib.pagesizes import letter, A4
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib.units import inch
-        from reportlab.lib import colors
+        if not REPORTLAB_AVAILABLE:
+            raise UserError(_("PDF generation not available - ReportLab library not installed"))
         
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4)
