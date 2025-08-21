@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import ValidationError
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -18,15 +18,18 @@ class ResPartner(models.Model):
         index=True,
         help="Unique member identifier assigned automatically"
     )
+    
     is_member = fields.Boolean(
         string='Is Member',
         default=False,
         help="Check if this contact is an association member"
     )
+    
     member_since = fields.Date(
         string='Member Since',
         help="Date when this contact first became a member"
     )
+    
     member_status = fields.Selection([
         ('active', 'Active'),
         ('lapsed', 'Lapsed'),
@@ -44,55 +47,24 @@ class ResPartner(models.Model):
         help="Former member with emeritus status"
     )
     
-    # ===== PROFESSIONAL INFORMATION =====
+    # ===== BASIC PROFESSIONAL INFORMATION =====
     profession_discipline = fields.Char(
         string='Profession/Discipline',
-        help="Primary profession or discipline"
-    )
-    
-    professional_designation_ids = fields.Many2many(
-        'ams.professional.designation',
-        string='Professional Designations',
-        help="Professional titles, certifications, degrees"
-    )
-    
-    specialty_ids = fields.Many2many(
-        'ams.member.specialty',
-        string='Specialties/Practice Areas',
-        help="Areas of specialization or practice"
-    )
-    
-    license_certification_number = fields.Char(
-        string='License/Certification Number',
-        help="Professional license or certification number"
+        help="Primary profession or discipline (e.g., 'Cardiology', 'Corporate Law')"
     )
     
     career_stage = fields.Selection([
         ('student', 'Student'),
-        ('early_career', 'Early Career'),
-        ('mid_career', 'Mid-Career'),
-        ('senior', 'Senior'),
+        ('early_career', 'Early Career (0-5 years)'),
+        ('mid_career', 'Mid-Career (5-15 years)'),
+        ('senior', 'Senior (15+ years)'),
         ('retired', 'Retired/Emeritus'),
     ], string='Career Stage')
-    
-    employer_id = fields.Many2one(
-        'res.partner',
-        string='Employer',
-        domain="[('is_company', '=', True)]",
-        help="Current employer organization"
-    )
     
     job_title_role = fields.Char(
         string='Job Title/Role',
         help="Current job title or role"
     )
-    
-    mentorship_role = fields.Selection([
-        ('none', 'None'),
-        ('mentor', 'Mentor'),
-        ('mentee', 'Mentee'),
-        ('both', 'Both'),
-    ], string='Mentorship Role', default='none')
 
     # ===== PERSONAL DEMOGRAPHICS =====
     preferred_name = fields.Char(
@@ -122,6 +94,7 @@ class ResPartner(models.Model):
         ('company', 'Company'),
         ('university', 'University'),
         ('hospital', 'Hospital'),
+        ('research_institute', 'Research Institute'),
         ('nonprofit', 'Nonprofit'),
         ('government', 'Government Agency'),
         ('sponsor', 'Sponsor'),
@@ -190,6 +163,7 @@ class ResPartner(models.Model):
 
     @api.depends('name', 'preferred_name')
     def _compute_full_member_name(self):
+        """Compute display name including preferred name"""
         for partner in self:
             if partner.preferred_name:
                 partner.full_member_name = f"{partner.name} ({partner.preferred_name})"
@@ -198,6 +172,7 @@ class ResPartner(models.Model):
 
     @api.depends('date_of_birth')
     def _compute_age(self):
+        """Compute age from date of birth"""
         today = fields.Date.today()
         for partner in self:
             if partner.date_of_birth:
@@ -210,30 +185,22 @@ class ResPartner(models.Model):
 
     @api.model
     def create(self, vals):
-        # Auto-assign member ID if is_member is True or if creating with member data
-        if vals.get('is_member') or vals.get('member_since') or vals.get('member_status') != 'prospect':
+        """Auto-assign member ID when creating members"""
+        # Auto-assign member ID if is_member is True or member data is provided
+        if (vals.get('is_member') or 
+            vals.get('member_since') or 
+            vals.get('member_status') not in [False, 'prospect']):
+            
             if not vals.get('member_id'):
                 vals['member_id'] = self._generate_member_id()
                 vals['is_member'] = True
                 if not vals.get('member_since'):
                     vals['member_since'] = fields.Date.today()
         
-        partner = super(ResPartner, self).create(vals)
-        
-        # Log creation in audit log
-        self._log_audit_trail(partner, 'create', 'Partner created', vals)
-        
-        return partner
+        return super(ResPartner, self).create(vals)
 
     def write(self, vals):
-        # Capture old values for audit logging
-        old_values = {}
-        for partner in self:
-            old_values[partner.id] = {
-                field: getattr(partner, field) for field in vals.keys()
-                if hasattr(partner, field)
-            }
-        
+        """Auto-assign member ID when converting to member"""
         # Auto-assign member ID if becoming a member
         if vals.get('is_member') and not any(partner.member_id for partner in self):
             for partner in self:
@@ -242,54 +209,26 @@ class ResPartner(models.Model):
                     if not vals.get('member_since') and not partner.member_since:
                         vals['member_since'] = fields.Date.today()
         
-        result = super(ResPartner, self).write(vals)
-        
-        # Log changes in audit log
-        for partner in self:
-            if partner.id in old_values:
-                changes = {}
-                for field, new_value in vals.items():
-                    if hasattr(partner, field):
-                        old_value = old_values[partner.id].get(field)
-                        if old_value != new_value:
-                            changes[field] = {'old': old_value, 'new': new_value}
-                
-                if changes:
-                    self._log_audit_trail(partner, 'write', 'Partner updated', changes)
-        
-        return result
+        return super(ResPartner, self).write(vals)
 
     def _generate_member_id(self):
         """Generate next member ID using configured sequence"""
         sequence = self.env['ir.sequence'].next_by_code('ams.member.id')
         if not sequence:
-            # Fallback if sequence doesn't exist
-            sequence = self.env['ir.sequence'].create({
+            # Fallback if sequence doesn't exist - create default sequence
+            sequence_obj = self.env['ir.sequence'].create({
                 'name': 'AMS Member ID',
                 'code': 'ams.member.id',
                 'prefix': 'MEM-',
                 'padding': 6,
                 'number_increment': 1,
-            }).next_by_code('ams.member.id')
-        return sequence
-
-    def _log_audit_trail(self, record, operation, description, data):
-        """Log changes to audit trail"""
-        try:
-            self.env['ams.audit.log'].sudo().create({
-                'model_name': record._name,
-                'record_id': record.id,
-                'operation': operation,
-                'description': description,
-                'user_id': self.env.user.id,
-                'data': str(data),
-                'timestamp': fields.Datetime.now(),
             })
-        except Exception as e:
-            _logger.warning(f"Failed to log audit trail: {e}")
+            sequence = sequence_obj.next_by_code('ams.member.id')
+        return sequence
 
     @api.constrains('member_id')
     def _check_member_id_unique(self):
+        """Ensure member IDs are unique"""
         for partner in self:
             if partner.member_id:
                 existing = self.search([
@@ -297,8 +236,10 @@ class ResPartner(models.Model):
                     ('id', '!=', partner.id)
                 ])
                 if existing:
-                    raise ValidationError(_("Member ID %s already exists for %s") % 
-                                        (partner.member_id, existing.name))
+                    raise ValidationError(
+                        _("Member ID %s already exists for %s") % 
+                        (partner.member_id, existing.name)
+                    )
 
     @api.constrains('email')
     def _check_email_unique_for_members(self):
@@ -312,8 +253,10 @@ class ResPartner(models.Model):
                     ('id', '!=', partner.id)
                 ])
                 if existing:
-                    raise ValidationError(_("Email %s is already used by member %s") % 
-                                        (partner.email, existing.name))
+                    raise ValidationError(
+                        _("Email %s is already used by member %s") % 
+                        (partner.email, existing.name)
+                    )
 
     def action_make_member(self):
         """Convert contact to member"""
@@ -344,8 +287,9 @@ class ResPartner(models.Model):
             if partner.member_id:
                 name = f"[{partner.member_id}] {name}"
             
-            # Add preferred name if different
-            if partner.preferred_name and partner.preferred_name != partner.name:
+            # Add preferred name if different and exists
+            if (partner.preferred_name and 
+                partner.preferred_name != partner.name):
                 name = f"{name} ({partner.preferred_name})"
             
             result.append((partner.id, name))
