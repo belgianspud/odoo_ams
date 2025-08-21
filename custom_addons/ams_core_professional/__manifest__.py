@@ -2,49 +2,39 @@
 {
     'name': 'AMS Core Professional',
     'version': '18.0.1.0.0',
-    'category': 'Association/Professional',
-    'summary': 'Professional designations, specialties, and career tracking',
+    'category': 'Association/Core',
+    'summary': 'Professional designations, specialties, licenses, and career tracking',
     'description': """
 AMS Core Professional Module
 ============================
 
-Extends the AMS Core Base with comprehensive professional designation and specialty management
-specifically designed for professional associations.
+This module extends the AMS Core Base with professional-specific functionality:
 
-Key Features:
--------------
-* Professional designations (degrees, certifications, licenses, titles)
-* Hierarchical specialty and practice area management
-* License and certification tracking with expiry dates
-* Continuing education requirements and tracking
-* Professional networking profile fields
-* Career progression and milestone tracking
-* Industry-specific designation templates
-
-Professional Association Types Supported:
------------------------------------------
-* Medical associations (MD, DO, RN, specialties)
-* Legal associations (JD, Esq., practice areas)
-* Engineering associations (PE, EIT, disciplines)
-* Aviation associations (ATP, CFI, AMT)
-* Business associations (CPA, MBA, consulting areas)
-* Academic associations (PhD, research areas)
-
-This module extends ams_core_base with professional-specific functionality
-while maintaining the microservice architecture for flexibility.
+Professional Features:
+* Professional designations and certifications
+* Member specialties and areas of expertise  
+* License and certification number tracking
+* Professional networking profiles (LinkedIn, ORCID, etc.)
+* Continuing education hours tracking
+* Career progression monitoring
 
 Integration:
-------------
-* Seamlessly extends res.partner with professional fields
-* Integrates with member profiles for complete professional tracking
-* Provides foundation for other modules (billing, education, etc.)
-* Supports multi-industry association management
-    """,
+* Extends res.partner with professional fields
+* Extends ams.member.profile with career data
+* Provides professional data templates
+* Professional designation and specialty management
+
+Dependencies:
+* Requires ams_core_base
+* Extends Odoo contacts module
+""",
     'author': 'AMS Development Team',
-    'website': 'https://github.com/yourusername/ams-odoo',
+    'website': 'https://www.yourorganization.com',
     'license': 'LGPL-3',
     'depends': [
         'ams_core_base',
+        'contacts',
+        'mail',
     ],
     'data': [
         # Security
@@ -59,12 +49,12 @@ Integration:
         'views/member_specialty_views.xml',
         'views/res_partner_views.xml',
         'views/member_profile_views.xml',
-        'views/menus.xml',
     ],
     'demo': [
-        'demo/demo_professional_data.xml',
+        # Demo data can be added here if needed
     ],
     'installable': True,
+    'application': False,
     'auto_install': False,
-    'sequence': 11,
+    'sequence': 102,  # Load after ams_core_base (sequence 101)
 }

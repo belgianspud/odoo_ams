@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_professional_designation_member,ams.professional.designation member,model_ams_professional_designation,ams_core_base.group_ams_member,1,0,0,0
+access_professional_designation_staff,ams.professional.designation staff,model_ams_professional_designation,ams_core_base.group_ams_staff,1,1,1,0
+access_professional_designation_admin,ams.professional.designation admin,model_ams_professional_designation,ams_core_base.group_ams_admin,1,1,1,1
+access_member_designation_member,ams.member.designation member,model_ams_member_designation,ams_core_base.group_ams_member,1,1,1,0
+access_member_designation_staff,ams.member.designation staff,model_ams_member_designation,ams_core_base.group_ams_staff,1,1,1,1
+access_member_designation_admin,ams.member.designation admin,model_ams_member_designation,ams_core_base.group_ams_admin,1,1,1,1
+access_member_specialty_member,ams.member.specialty member,model_ams_member_specialty,ams_core_base.group_ams_member,1,0,0,0
+access_member_specialty_staff,ams.member.specialty staff,model_ams_member_specialty,ams_core_base.group_ams_staff,1,1,1,0
+access_member_specialty_admin,ams.member.specialty admin,model_ams_member_specialty,ams_core_base.group_ams_admin,1,1,1,1
+access_member_specialty_line_member,ams.member.specialty.line member,model_ams_member_specialty_line,ams_core_base.group_ams_member,1,1,1,0
+access_member_specialty_line_staff,ams.member.specialty.line staff,model_ams_member_specialty_line,ams_core_base.group_ams_staff,1,1,1,1
+access_member_specialty_line_admin,ams.member.specialty.line admin,model_ams_member_specialty_line,ams_core_base.group_ams_admin,1,1,1,1

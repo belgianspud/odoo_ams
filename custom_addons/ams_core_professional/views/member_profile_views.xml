@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Extend Member Profile Form View with Professional Information -->
+    <record id="view_member_profile_form_professional" model="ir.ui.view">
+        <field name="name">ams.member.profile.form.professional</field>
+        <field name="model">ams.member.profile</field>
+        <field name="inherit_id" ref="ams_core_base.view_member_profile_form"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add Professional Networks tab after Demographics -->
+            <xpath expr="//page[@name='demographics']" position="after">
+                <page string="Professional Networks" name="professional_networks">
+                    
+                    <group string="Professional Social Media">
+                        <group name="professional_social_left">
+                            <field name="linkedin_url" widget="url"/>
+                            <field name="twitter_handle"/>
+                            <field name="facebook_url" widget="url"/>
+                            <field name="instagram_handle"/>
+                        </group>
+                        <group name="professional_social_right">
+                            <field name="youtube_channel" widget="url"/>
+                            <field name="professional_network_summary" readonly="1"/>
+                            <field name="social_media_summary" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Academic &amp; Research Networks">
+                        <group name="academic_left">
+                            <field name="researchgate_url" widget="url"/>
+                            <field name="academia_edu_url" widget="url"/>
+                            <field name="pubmed_author_id"/>
+                            <field name="scopus_author_id"/>
+                        </group>
+                        <group name="academic_right">
+                            <field name="h_index"/>
+                            <field name="publications_count"/>
+                            <field name="peer_review_journals" widget="text"/>
+                        </group>
+                    </group>
+
+                    <group string="Industry-Specific Networks">
+                        <group name="industry_left">
+                            <field name="doximity_profile" widget="url"/>
+                            <field name="medscape_profile" widget="url"/>
+                            <field name="avvo_profile" widget="url"/>
+                            <field name="martindale_hubbell_id"/>
+                        </group>
+                        <group name="industry_right">
+                            <field name="ieee_profile" widget="url"/>
+                            <field name="github_profile" widget="url"/>
+                            <field name="stackoverflow_profile" widget="url"/>
+                        </group>
+                    </group>
+
+                </page>
+            </xpath>
+
+            <!-- Add Career & Education tab -->
+            <xpath expr="//page[@name='professional_networks']" position="after">
+                <page string="Career &amp; Education" name="career_education">
+                    
+                    <group string="Educational Background">
+                        <group name="education_left">
+                            <field name="alma_mater"/>
+                            <field name="graduation_year"/>
+                            <field name="residency_program"/>
+                            <field name="fellowship_program"/>
+                        </group>
+                        <group name="education_right">
+                            <field name="bar_admission_year"/>
+                            <field name="bar_admission_state"/>
+                        </group>
+                    </group>
+
+                    <group string="Research &amp; Publications">
+                        <group name="research_left">
+                            <field name="research_interests" widget="text"/>
+                            <field name="awards_honors" widget="text"/>
+                        </group>
+                        <group name="research_right">
+                            <field name="speaking_topics" widget="text"/>
+                            <field name="media_appearances" widget="text"/>
+                        </group>
+                    </group>
+
+                    <group string="Professional Service">
+                        <group name="service_left">
+                            <field name="editorial_boards" widget="text"/>
+                            <field name="professional_committees" widget="text"/>
+                        </group>
+                        <group name="service_right">
+                            <field name="volunteer_activities" widget="text"/>
+                            <field name="teaching_appointments" widget="text"/>
+                        </group>
+                    </group>
+
+                    <group string="Mentoring &amp; Teaching">
+                        <group name="mentoring_left">
+                            <field name="mentoring_activities" widget="text"/>
+                            <field name="guest_lectures" widget="text"/>
+                        </group>
+                        <group name="mentoring_right">
+                            <field name="available_for_mentoring"/>
+                            <field name="seeking_mentorship"/>
+                            <field name="available_for_speaking"/>
+                            <field name="available_for_consulting"/>
+                        </group>
+                    </group>
+
+                </page>
+            </xpath>
+
+            <!-- Add Professional Goals tab -->
+            <xpath expr="//page[@name='career_education']" position="after">
+                <page string="Professional Goals" name="professional_goals">
+                    
+                    <group string="Career Development">
+                        <group name="career_left">
+                            <field name="career_goals" widget="text"/>
+                            <field name="skill_development_areas" widget="text"/>
+                        </group>
+                        <group name="career_right">
+                            <field name="professional_interests" widget="text"/>
+                            <field name="networking_interests" widget="text"/>
+                        </group>
+                    </group>
+
+                    <group string="Collaboration &amp; Networking">
+                        <group name="collaboration_left">
+                            <field name="collaboration_interests" widget="text"/>
+                            <field name="referral_interests" widget="text"/>
+                        </group>
+                        <group name="collaboration_right">
+                            <!-- Networking availability fields already added above -->
+                        </group>
+                    </group>
+
+                </page>
+            </xpath>
+
+            <!-- Add Professional Directory tab -->
+            <xpath expr="//page[@name='professional_goals']" position="after">
+                <page string="Directory Settings" name="directory_settings">
+                    
+                    <group string="Directory Visibility">
+                        <group name="directory_left">
+                            <field name="directory_photo_permission"/>
+                            <field name="directory_contact_permission"/>
+                            <field name="directory_practice_info_permission"/>
+                        </group>
+                        <group name="directory_right">
+                            <!-- Add summary info or other directory settings -->
+                        </group>
+                    </group>
+
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Extend Member Profile Tree View with Professional Information -->
+    <record id="view_member_profile_tree_professional" model="ir.ui.view">
+        <field name="name">ams.member.profile.tree.professional</field>
+        <field name="model">ams.member.profile</field>
+        <field name="inherit_id" ref="ams_core_base.view_member_profile_tree"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add professional columns to tree view -->
+            <xpath expr="//field[@name='continuing_education_hours']" position="after">
+                <field name="alma_mater" optional="hide"/>
+                <field name="graduation_year" optional="hide"/>
+                <field name="publications_count" optional="hide"/>
+                <field name="h_index" optional="hide"/>
+                <field name="available_for_mentoring" optional="hide"/>
+                <field name="available_for_speaking" optional="hide"/>
+                <field name="professional_network_summary" optional="hide"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Extend Member Profile Kanban View with Professional Information -->
+    <record id="view_member_profile_kanban_professional" model="ir.ui.view">
+        <field name="name">ams.member.profile.kanban.professional</field>
+        <field name="model">ams.member.profile</field>
+        <field name="inherit_id" ref="ams_core_base.view_member_profile_kanban"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add professional fields to kanban -->
+            <xpath expr="//field[@name='continuing_education_hours']" position="after">
+                <field name="alma_mater"/>
+                <field name="graduation_year"/>
+                <field name="linkedin_url"/>
+                <field name="publications_count"/>
+                <field name="h_index"/>
+                <field name="available_for_mentoring"/>
+                <field name="available_for_speaking"/>
+                <field name="professional_network_summary"/>
+            </xpath>
+
+            <!-- Add professional information to kanban card -->
+            <xpath expr="//div[@class='oe_kanban_record_body']" position="inside">
+                <div t-if="record.alma_mater.raw_value" class="oe_kanban_professional_info">
+                    <i class="fa fa-university"/> <t t-esc="record.alma_mater.value"/>
+                    <span t-if="record.graduation_year.raw_value">
+                        (<t t-esc="record.graduation_year.value"/>)
+                    </span>
+                </div>
+                <div t-if="record.publications_count.raw_value" class="oe_kanban_professional_info">
+                    <i class="fa fa-book"/> <t t-esc="record.publications_count.value"/> publications
+                    <span t-if="record.h_index.raw_value">
+                        (H-index: <t t-esc="record.h_index.value"/>)
+                    </span>
+                </div>
+                <div t-if="record.linkedin_url.raw_value" class="oe_kanban_professional_info">
+                    <i class="fa fa-linkedin"/> LinkedIn Profile
+                </div>
+            </xpath>
+
+            <!-- Add professional badges -->
+            <xpath expr="//div[@class='oe_kanban_bottom_right']" position="inside">
+                <span t-if="record.available_for_mentoring.raw_value" class="badge badge-success" title="Available for Mentoring">
+                    <i class="fa fa-graduation-cap"/> Mentor
+                </span>
+                <span t-if="record.available_for_speaking.raw_value" class="badge badge-info" title="Available for Speaking">
+                    <i class="fa fa-microphone"/> Speaker
+                </span>
+                <span t-if="record.professional_network_summary.raw_value" class="badge badge-secondary" title="Professional Networks">
+                    <i class="fa fa-network-wired"/> Networks
+                </span>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Extend Member Profile Search View with Professional Information -->
+    <record id="view_member_profile_search_professional" model="ir.ui.view">
+        <field name="name">ams.member.profile.search.professional</field>
+        <field name="model">ams.member.profile</field>
+        <field name="inherit_id" ref="ams_core_base.view_member_profile_search"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add professional search fields -->
+            <xpath expr="//field[@name='interests_tags']" position="after">
+                <field name="alma_mater"/>
+                <field name="graduation_year"/>
+                <field name="research_interests"/>
+                <field name="speaking_topics"/>
+                <field name="linkedin_url"/>
+                <field name="professional_interests"/>
+            </xpath>
+
+            <!-- Add professional filters -->
+            <xpath expr="//filter[@name='photo_permission']" position="after">
+                <separator/>
+                <filter string="Available for Mentoring" name="available_mentoring" domain="[('available_for_mentoring', '=', True)]"/>
+                <filter string="Seeking Mentorship" name="seeking_mentorship" domain="[('seeking_mentorship', '=', True)]"/>
+                <filter string="Available for Speaking" name="available_speaking" domain="[('available_for_speaking', '=', True)]"/>
+                <filter string="Available for Consulting" name="available_consulting" domain="[('available_for_consulting', '=', True)]"/>
+                <separator/>
+                <filter string="Has LinkedIn" name="has_linkedin" domain="[('linkedin_url', '!=', False)]"/>
+                <filter string="Has Publications" name="has_publications" domain="[('publications_count', '>', 0)]"/>
+                <filter string="Research Active" name="research_active" domain="[('research_interests', '!=', False)]"/>
+                <filter string="Teaching/Speaking" name="teaching_speaking" domain="['|', ('teaching_appointments', '!=', False), ('available_for_speaking', '=', True)]"/>
+                <separator/>
+                <filter string="Directory Photo OK" name="directory_photo_ok" domain="[('directory_photo_permission', '=', True)]"/>
+                <filter string="Directory Contact OK" name="directory_contact_ok" domain="[('directory_contact_permission', '=', True)]"/>
+            </xpath>
+
+            <!-- Add professional grouping options -->
+            <xpath expr="//filter[@name='group_language']" position="after">
+                <filter string="Alma Mater" name="group_alma_mater" domain="[]" context="{'group_by': 'alma_mater'}"/>
+                <filter string="Graduation Year" name="group_graduation_year" domain="[]" context="{'group_by': 'graduation_year'}"/>
+                <filter string="Mentoring Availability" name="group_mentoring" domain="[]" context="{'group_by': 'available_for_mentoring'}"/>
+                <filter string="Speaking Availability" name="group_speaking" domain="[]" context="{'group_by': 'available_for_speaking'}"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Professional Member Actions -->
+    
+    <!-- Mentors Action -->
+    <record id="action_mentors" model="ir.actions.act_window">
+        <field name="name">Mentors</field>
+        <field name="res_model">ams.member.profile</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('available_for_mentoring', '=', True)]</field>
+        <field name="search_view_id" ref="view_member_profile_search_professional"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No mentors available yet!
+            </p>
+            <p>
+                Members who are available for mentoring will appear here.
+                Encourage experienced members to mark themselves as available for mentoring.
+            </p>
+        </field>
+    </record>
+
+    <!-- Speakers Action -->
+    <record id="action_speakers" model="ir.actions.act_window">
+        <field name="name">Available Speakers</field>
+        <field name="res_model">ams.member.profile</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('available_for_speaking', '=', True)]</field>
+        <field name="search_view_id" ref="view_member_profile_search_professional"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No speakers available yet!
+            </p>
+            <p>
+                Members who are available for speaking engagements will appear here.
+                Use this list to find speakers for events and conferences.
+            </p>
+        </field>
+    </record>
+
+    <!-- Researchers Action -->
+    <record id="action_researchers" model="ir.actions.act_window">
+        <field name="name">Researchers</field>
+        <field name="res_model">ams.member.profile</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('publications_count', '>', 0)]</field>
+        <field name="search_view_id" ref="view_member_profile_search_professional"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No researchers found!
+            </p>
+            <p>
+                Members with publications and research activities will appear here.
+                Track research output and academic achievements.
+            </p>
+        </field>
+    </record>
+
+    <!-- Professional Network Members Action -->
+    <record id="action_networked_members" model="ir.actions.act_window">
+        <field name="name">Networked Members</field>
+        <field name="res_model">ams.member.profile</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('linkedin_url', '!=', False)]</field>
+        <field name="search_view_id" ref="view_member_profile_search_professional"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No networked members found!
+            </p>
+            <p>
+                Members with professional networking profiles will appear here.
+                Encourage members to add their LinkedIn and other professional profiles.
+            </p>
+        </field>
+    </record>
+
+    <!-- Seeking Mentorship Action -->
+    <record id="action_seeking_mentorship" model="ir.actions.act_window">
+        <field name="name">Seeking Mentorship</field>
+        <field name="res_model">ams.member.profile</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('seeking_mentorship', '=', True)]</field>
+        <field name="search_view_id" ref="view_member_profile_search_professional"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No members seeking mentorship!
+            </p>
+            <p>
+                Members who are seeking professional mentorship will appear here.
+                Use this list to match mentees with available mentors.
+            </p>
+        </field>
+    </record>
+
+    <!-- Directory-Ready Members Action -->
+    <record id="action_directory_ready" model="ir.actions.act_window">
+        <field name="name">Directory-Ready Members</field>
+        <field name="res_model">ams.member.profile</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('directory_photo_permission', '=', True), ('directory_contact_permission', '=', True)]</field>
+        <field name="search_view_id" ref="view_member_profile_search_professional"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No directory-ready members found!
+            </p>
+            <p>
+                Members who have given permission for directory inclusion will appear here.
+                These members can be included in public member directories.
+            </p>
+        </field>
+    </record>
+
+</odoo>
