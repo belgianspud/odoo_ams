@@ -1,0 +1,627 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ===== AUDIT LOG TREE VIEW ===== -->
+    <record id="view_audit_log_tree" model="ir.ui.view">
+        <field name="name">ams.audit.log.tree</field>
+        <field name="model">ams.audit.log</field>
+        <field name="arch" type="xml">
+            <tree string="Audit Log" default_order="timestamp desc" create="false" edit="false"
+                  decoration-danger="risk_level == 'critical'" 
+                  decoration-warning="risk_level == 'high'"
+                  decoration-info="requires_review == True and reviewed == False">
+                
+                <field name="timestamp"/>
+                <field name="user_id"/>
+                <field name="action" decoration-danger="action == 'unlink'" 
+                       decoration-warning="action in ('merge', 'export')"
+                       decoration-info="action == 'create'"/>
+                <field name="model_description"/>
+                <field name="record_name"/>
+                <field name="description"/>
+                <field name="category"/>
+                <field name="risk_level" widget="badge" 
+                       decoration-danger="risk_level == 'critical'" 
+                       decoration-warning="risk_level == 'high'"
+                       decoration-info="risk_level == 'medium'"
+                       decoration-muted="risk_level == 'low'"/>
+                <field name="is_sensitive" widget="boolean_toggle" optional="show"/>
+                <field name="privacy_impact" widget="boolean_toggle" optional="show"/>
+                <field name="requires_review" widget="boolean_toggle" optional="show"/>
+                <field name="reviewed" widget="boolean_toggle" optional="show"/>
+                <field name="related_partner_id" optional="hide"/>
+                <field name="ip_address" optional="hide" groups="ams_core_audit.group_audit_manager"/>
+                
+                <!-- Action buttons -->
+                <button name="action_mark_reviewed" 
+                        type="object" 
+                        icon="fa-check-circle" 
+                        title="Mark as Reviewed"
+                        attrs="{'invisible': [('reviewed', '=', True)]}"
+                        groups="ams_core_audit.group_audit_manager"/>
+                
+                <button name="action_view_record" 
+                        type="object" 
+                        icon="fa-external-link" 
+                        title="View Record"
+                        attrs="{'invisible': [('action', '=', 'unlink')]}"/>
+                
+            </tree>
+        </field>
+    </record>
+
+    <!-- ===== AUDIT LOG FORM VIEW ===== -->
+    <record id="view_audit_log_form" model="ir.ui.view">
+        <field name="name">ams.audit.log.form</field>
+        <field name="model">ams.audit.log</field>
+        <field name="arch" type="xml">
+            <form string="Audit Log Entry" create="false" edit="false">
+                <header>
+                    <button name="action_mark_reviewed" 
+                            string="Mark as Reviewed" 
+                            type="object" 
+                            class="btn-primary"
+                            attrs="{'invisible': [('reviewed', '=', True)]}"
+                            groups="ams_core_audit.group_audit_manager"/>
+                    
+                    <button name="action_view_record" 
+                            string="View Record" 
+                            type="object" 
+                            class="btn-secondary"
+                            attrs="{'invisible': [('action', '=', 'unlink')]}"/>
+                    
+                    <field name="risk_level" widget="statusbar" 
+                           statusbar_visible="low,medium,high,critical"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" 
+                                name="action_view_record" icon="fa-external-link"
+                                attrs="{'invisible': [('action', '=', 'unlink')]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">View Record</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <h1>
+                            <field name="description"/>
+                        </h1>
+                        <h2 class="text-muted">
+                            <field name="action" widget="badge"/> on 
+                            <field name="model_description"/> 
+                            <span attrs="{'invisible': [('record_name', '=', False)]}">
+                                - <field name="record_name"/>
+                            </span>
+                        </h2>
+                    </div>
+                    
+                    <group>
+                        <group string="Operation Details">
+                            <field name="timestamp"/>
+                            <field name="user_id"/>
+                            <field name="model_name"/>
+                            <field name="record_id"/>
+                            <field name="category"/>
+                        </group>
+                        <group string="Classification">
+                            <field name="is_sensitive" widget="boolean"/>
+                            <field name="privacy_impact" widget="boolean"/>
+                            <field name="is_system_operation" widget="boolean"/>
+                            <field name="related_partner_id"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="Review Information" 
+                               groups="ams_core_audit.group_audit_manager">
+                            <field name="requires_review" widget="boolean"/>
+                            <field name="reviewed" widget="boolean"/>
+                            <field name="reviewed_by" 
+                                   attrs="{'invisible': [('reviewed', '=', False)]}"/>
+                            <field name="reviewed_date" 
+                                   attrs="{'invisible': [('reviewed', '=', False)]}"/>
+                        </group>
+                        <group string="Technical Details" 
+                               groups="ams_core_audit.group_audit_manager">
+                            <field name="ip_address"/>
+                            <field name="session_id"/>
+                            <field name="retention_date"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        
+                        <!-- Field Changes Tab -->
+                        <page string="Field Changes" name="field_changes"
+                              attrs="{'invisible': [('field_changes', '=', False)]}">
+                            <group>
+                                <field name="field_changes" widget="text" nolabel="1" readonly="1"/>
+                            </group>
+                            <group attrs="{'invisible': [('field_changes_json', '=', False)]}"
+                                   groups="ams_core_audit.group_audit_manager">
+                                <label for="field_changes_json" string="JSON Data"/>
+                                <field name="field_changes_json" widget="ace" 
+                                       options="{'mode': 'json'}" nolabel="1" readonly="1"/>
+                            </group>
+                        </page>
+                        
+                        <!-- Technical Details Tab -->
+                        <page string="Technical Details" name="technical" 
+                              groups="ams_core_audit.group_audit_manager">
+                            <group>
+                                <group string="Session Information">
+                                    <field name="user_agent"/>
+                                    <field name="session_id"/>
+                                    <field name="ip_address"/>
+                                </group>
+                                <group string="Related Records">
+                                    <field name="related_model"/>
+                                    <field name="related_record_id"/>
+                                    <field name="record_reference"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <!-- Notes Tab -->
+                        <page string="Notes" name="notes">
+                            <group>
+                                <field name="notes" nolabel="1" widget="text" 
+                                       placeholder="Add review notes or comments..."
+                                       groups="ams_core_audit.group_audit_manager"/>
+                            </group>
+                        </page>
+                        
+                    </notebook>
+                </sheet>
+                
+                <div class="oe_chatter" groups="ams_core_audit.group_audit_manager">
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ===== AUDIT LOG KANBAN VIEW ===== -->
+    <record id="view_audit_log_kanban" model="ir.ui.view">
+        <field name="name">ams.audit.log.kanban</field>
+        <field name="model">ams.audit.log</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="category" create="false" edit="false" class="o_kanban_mobile">
+                <field name="timestamp"/>
+                <field name="user_id"/>
+                <field name="action"/>
+                <field name="model_description"/>
+                <field name="record_name"/>
+                <field name="description"/>
+                <field name="category"/>
+                <field name="risk_level"/>
+                <field name="is_sensitive"/>
+                <field name="privacy_impact"/>
+                <field name="requires_review"/>
+                <field name="reviewed"/>
+                <field name="related_partner_id"/>
+                
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="description"/>
+                                    </strong>
+                                    <span class="o_kanban_record_subtitle text-muted">
+                                        <t t-esc="record.timestamp.value"/>
+                                    </span>
+                                </div>
+                                <div class="o_kanban_record_top_right">
+                                    <span t-if="record.risk_level.raw_value == 'critical'" 
+                                          class="badge badge-danger">Critical</span>
+                                    <span t-if="record.risk_level.raw_value == 'high'" 
+                                          class="badge badge-warning">High Risk</span>
+                                    <span t-if="record.is_sensitive.raw_value" 
+                                          class="badge badge-info">Sensitive</span>
+                                    <span t-if="record.privacy_impact.raw_value" 
+                                          class="badge badge-secondary">Privacy</span>
+                                </div>
+                            </div>
+                            
+                            <div class="o_kanban_record_body">
+                                <div class="oe_kanban_audit_info">
+                                    <div>
+                                        <i class="fa fa-user"/> <t t-esc="record.user_id.value"/>
+                                    </div>
+                                    <div>
+                                        <i class="fa fa-cog"/> 
+                                        <span t-att-class="'badge badge-' + (record.action.raw_value == 'unlink' and 'danger' or record.action.raw_value == 'create' and 'success' or 'primary')">
+                                            <t t-esc="record.action.value"/>
+                                        </span>
+                                        <t t-esc="record.model_description.value"/>
+                                    </div>
+                                    <div t-if="record.record_name.raw_value">
+                                        <i class="fa fa-file-o"/> <t t-esc="record.record_name.value"/>
+                                    </div>
+                                    <div t-if="record.related_partner_id.raw_value">
+                                        <i class="fa fa-user-circle"/> <t t-esc="record.related_partner_id.value"/>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_left">
+                                    <span t-if="record.requires_review.raw_value and !record.reviewed.raw_value"
+                                          class="badge badge-warning">
+                                        <i class="fa fa-eye"/> Needs Review
+                                    </span>
+                                    <span t-if="record.reviewed.raw_value"
+                                          class="badge badge-success">
+                                        <i class="fa fa-check"/> Reviewed
+                                    </span>
+                                </div>
+                                <div class="oe_kanban_bottom_right">
+                                    <span t-att-class="'badge badge-' + (record.risk_level.raw_value == 'critical' and 'danger' or record.risk_level.raw_value == 'high' and 'warning' or record.risk_level.raw_value == 'medium' and 'info' or 'secondary')">
+                                        <t t-esc="record.risk_level.value"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ===== AUDIT LOG SEARCH VIEW ===== -->
+    <record id="view_audit_log_search" model="ir.ui.view">
+        <field name="name">ams.audit.log.search</field>
+        <field name="model">ams.audit.log</field>
+        <field name="arch" type="xml">
+            <search string="Search Audit Log">
+                
+                <field name="description"/>
+                <field name="model_name"/>
+                <field name="record_name"/>
+                <field name="user_id"/>
+                <field name="related_partner_id"/>
+                <field name="ip_address" groups="ams_core_audit.group_audit_manager"/>
+                
+                <separator/>
+                <filter string="Today" name="today"
+                        domain="[('timestamp', '&gt;=', datetime.datetime.combine(context_today(), datetime.time(0,0,0)))]"/>
+                <filter string="This Week" name="this_week"
+                        domain="[('timestamp', '&gt;=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <filter string="This Month" name="this_month"
+                        domain="[('timestamp', '&gt;=', (context_today().replace(day=1)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Last 3 Months" name="last_three_months"
+                        domain="[('timestamp', '&gt;=', (context_today() - datetime.timedelta(days=90)).strftime('%Y-%m-%d'))]"/>
+                
+                <separator/>
+                <filter string="Critical Risk" name="critical_risk"
+                        domain="[('risk_level', '=', 'critical')]"/>
+                <filter string="High Risk" name="high_risk"
+                        domain="[('risk_level', '=', 'high')]"/>
+                <filter string="Medium Risk" name="medium_risk"
+                        domain="[('risk_level', '=', 'medium')]"/>
+                <filter string="Low Risk" name="low_risk"
+                        domain="[('risk_level', '=', 'low')]"/>
+                
+                <separator/>
+                <filter string="Sensitive Data" name="sensitive"
+                        domain="[('is_sensitive', '=', True)]"/>
+                <filter string="Privacy Impact" name="privacy_impact"
+                        domain="[('privacy_impact', '=', True)]"/>
+                <filter string="System Operations" name="system_ops"
+                        domain="[('is_system_operation', '=', True)]"/>
+                <filter string="User Operations" name="user_ops"
+                        domain="[('is_system_operation', '=', False)]"/>
+                
+                <separator/>
+                <filter string="Create Operations" name="create_ops"
+                        domain="[('action', '=', 'create')]"/>
+                <filter string="Update Operations" name="update_ops"
+                        domain="[('action', '=', 'write')]"/>
+                <filter string="Delete Operations" name="delete_ops"
+                        domain="[('action', '=', 'unlink')]"/>
+                <filter string="Export Operations" name="export_ops"
+                        domain="[('action', '=', 'export')]"/>
+                <filter string="Merge Operations" name="merge_ops"
+                        domain="[('action', '=', 'merge')]"/>
+                <filter string="Read Operations" name="read_ops"
+                        domain="[('action', '=', 'read')]"/>
+                
+                <separator/>
+                <filter string="Member Data" name="member_data"
+                        domain="[('category', '=', 'member_data')]"/>
+                <filter string="Financial" name="financial"
+                        domain="[('category', '=', 'financial')]"/>
+                <filter string="Privacy" name="privacy_category"
+                        domain="[('category', '=', 'privacy')]"/>
+                <filter string="Security" name="security"
+                        domain="[('category', '=', 'security')]"/>
+                <filter string="Professional" name="professional"
+                        domain="[('category', '=', 'professional')]"/>
+                <filter string="Configuration" name="configuration"
+                        domain="[('category', '=', 'configuration')]"/>
+                
+                <separator/>
+                <filter string="Requires Review" name="requires_review"
+                        domain="[('requires_review', '=', True)]"/>
+                <filter string="Unreviewed" name="unreviewed"
+                        domain="[('requires_review', '=', True), ('reviewed', '=', False)]"/>
+                <filter string="Reviewed" name="reviewed"
+                        domain="[('reviewed', '=', True)]"/>
+                
+                <separator/>
+                <filter string="Partner Records" name="partner_records"
+                        domain="[('model_name', '=', 'res.partner')]"/>
+                <filter string="Profile Records" name="profile_records"
+                        domain="[('model_name', '=', 'ams.member.profile')]"/>
+                <filter string="Designation Records" name="designation_records"
+                        domain="[('model_name', 'like', 'designation')]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter string="Action" name="group_action"
+                            domain="[]" context="{'group_by': 'action'}"/>
+                    <filter string="Category" name="group_category"
+                            domain="[]" context="{'group_by': 'category'}"/>
+                    <filter string="Model" name="group_model"
+                            domain="[]" context="{'group_by': 'model_name'}"/>
+                    <filter string="User" name="group_user"
+                            domain="[]" context="{'group_by': 'user_id'}"/>
+                    <filter string="Risk Level" name="group_risk"
+                            domain="[]" context="{'group_by': 'risk_level'}"/>
+                    <filter string="Date" name="group_date"
+                            domain="[]" context="{'group_by': 'timestamp:day'}"/>
+                    <filter string="Review Status" name="group_review"
+                            domain="[]" context="{'group_by': 'reviewed'}"/>
+                    <filter string="Related Member" name="group_partner"
+                            domain="[]" context="{'group_by': 'related_partner_id'}"/>
+                </group>
+                
+            </search>
+        </field>
+    </record>
+
+    <!-- ===== AUDIT LOG PIVOT VIEW ===== -->
+    <record id="view_audit_log_pivot" model="ir.ui.view">
+        <field name="name">ams.audit.log.pivot</field>
+        <field name="model">ams.audit.log</field>
+        <field name="arch" type="xml">
+            <pivot string="Audit Log Analysis">
+                <field name="timestamp" type="row" interval="day"/>
+                <field name="category" type="col"/>
+                <field name="risk_level" type="col"/>
+                <field name="id" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ===== AUDIT LOG GRAPH VIEW ===== -->
+    <record id="view_audit_log_graph" model="ir.ui.view">
+        <field name="name">ams.audit.log.graph</field>
+        <field name="model">ams.audit.log</field>
+        <field name="arch" type="xml">
+            <graph string="Audit Log Statistics" type="line">
+                <field name="timestamp" type="row" interval="day"/>
+                <field name="id" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ===== ACTIONS ===== -->
+    
+    <!-- Main Audit Log Action -->
+    <record id="action_audit_log" model="ir.actions.act_window">
+        <field name="name">Audit Log</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,kanban,form,pivot,graph</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+        <field name="context">{'search_default_this_week': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No audit log entries found!
+            </p>
+            <p>
+                Audit log entries are automatically created when members and system data are modified.
+                Use filters to find specific operations, users, or time periods.
+            </p>
+        </field>
+    </record>
+
+    <!-- High Risk Operations Action -->
+    <record id="action_high_risk_audit" model="ir.actions.act_window">
+        <field name="name">High Risk Operations</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('risk_level', 'in', ['high', 'critical'])]</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+        <field name="context">{'search_default_this_month': 1, 'search_default_group_risk': 1}</field>
+    </record>
+
+    <!-- Sensitive Data Operations Action -->
+    <record id="action_sensitive_audit" model="ir.actions.act_window">
+        <field name="name">Sensitive Data Operations</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('is_sensitive', '=', True)]</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+        <field name="context">{'search_default_this_month': 1, 'search_default_group_user': 1}</field>
+    </record>
+
+    <!-- Privacy Impact Operations Action -->
+    <record id="action_privacy_audit" model="ir.actions.act_window">
+        <field name="name">Privacy Impact Operations</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('privacy_impact', '=', True)]</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+        <field name="context">{'search_default_this_month': 1}</field>
+    </record>
+
+    <!-- Pending Review Action -->
+    <record id="action_pending_review_audit" model="ir.actions.act_window">
+        <field name="name">Pending Review</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('requires_review', '=', True), ('reviewed', '=', False)]</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+        <field name="context">{'search_default_group_risk': 1}</field>
+    </record>
+
+    <!-- Delete Operations Action -->
+    <record id="action_delete_audit" model="ir.actions.act_window">
+        <field name="name">Delete Operations</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('action', '=', 'unlink')]</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+        <field name="context">{'search_default_this_month': 1, 'search_default_group_model': 1}</field>
+    </record>
+
+    <!-- Export Operations Action -->
+    <record id="action_export_audit" model="ir.actions.act_window">
+        <field name="name">Data Export Operations</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('action', '=', 'export')]</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+        <field name="context">{'search_default_this_month': 1, 'search_default_group_user': 1}</field>
+    </record>
+
+    <!-- Financial Operations Action -->
+    <record id="action_financial_audit" model="ir.actions.act_window">
+        <field name="name">Financial Operations</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('category', '=', 'financial')]</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+        <field name="context">{'search_default_this_month': 1}</field>
+    </record>
+
+    <!-- Member Data Operations Action -->
+    <record id="action_member_data_audit" model="ir.actions.act_window">
+        <field name="name">Member Data Operations</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('category', '=', 'member_data')]</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+        <field name="context">{'search_default_this_week': 1, 'search_default_group_action': 1}</field>
+    </record>
+
+    <!-- System Operations Action -->
+    <record id="action_system_audit" model="ir.actions.act_window">
+        <field name="name">System Operations</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('category', '=', 'system')]</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+        <field name="context">{'search_default_this_week': 1}</field>
+    </record>
+
+    <!-- Recent Activity Action -->
+    <record id="action_recent_audit" model="ir.actions.act_window">
+        <field name="name">Recent Activity</field>
+        <field name="res_model">ams.audit.log</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="view_audit_log_search"/>
+        <field name="context">{'search_default_today': 1, 'search_default_group_user': 1}</field>
+        <field name="limit">100</field>
+    </record>
+
+    <!-- ===== MENU ITEMS ===== -->
+    
+    <!-- Audit Root Menu -->
+    <menuitem id="menu_audit_root"
+              name="Audit"
+              parent="ams_core_base.menu_ams_root"
+              sequence="70"
+              groups="ams_core_audit.group_audit_viewer"/>
+
+    <!-- Audit Logs Submenu -->
+    <menuitem id="menu_audit_logs"
+              name="Audit Logs"
+              parent="menu_audit_root"
+              sequence="10"/>
+
+    <menuitem id="menu_audit_all_logs"
+              name="All Audit Logs"
+              parent="menu_audit_logs"
+              action="action_audit_log"
+              sequence="10"/>
+
+    <menuitem id="menu_audit_recent"
+              name="Recent Activity"
+              parent="menu_audit_logs"
+              action="action_recent_audit"
+              sequence="15"/>
+
+    <menuitem id="menu_audit_high_risk"
+              name="High Risk Operations"
+              parent="menu_audit_logs"
+              action="action_high_risk_audit"
+              sequence="20"/>
+
+    <menuitem id="menu_audit_pending_review"
+              name="Pending Review"
+              parent="menu_audit_logs"
+              action="action_pending_review_audit"
+              sequence="25"
+              groups="ams_core_audit.group_audit_manager"/>
+
+    <!-- Compliance Submenu -->
+    <menuitem id="menu_audit_compliance"
+              name="Compliance"
+              parent="menu_audit_root"
+              sequence="20"
+              groups="ams_core_audit.group_audit_manager"/>
+
+    <menuitem id="menu_audit_sensitive"
+              name="Sensitive Data"
+              parent="menu_audit_compliance"
+              action="action_sensitive_audit"
+              sequence="10"/>
+
+    <menuitem id="menu_audit_privacy"
+              name="Privacy Impact"
+              parent="menu_audit_compliance"
+              action="action_privacy_audit"
+              sequence="15"/>
+
+    <menuitem id="menu_audit_financial"
+              name="Financial Operations"
+              parent="menu_audit_compliance"
+              action="action_financial_audit"
+              sequence="20"/>
+
+    <menuitem id="menu_audit_exports"
+              name="Data Exports"
+              parent="menu_audit_compliance"
+              action="action_export_audit"
+              sequence="25"/>
+
+    <!-- Operations Submenu -->
+    <menuitem id="menu_audit_operations"
+              name="Operations"
+              parent="menu_audit_root"
+              sequence="30"/>
+
+    <menuitem id="menu_audit_member_data"
+              name="Member Data"
+              parent="menu_audit_operations"
+              action="action_member_data_audit"
+              sequence="10"/>
+
+    <menuitem id="menu_audit_deletes"
+              name="Delete Operations"
+              parent="menu_audit_operations"
+              action="action_delete_audit"
+              sequence="15"/>
+
+    <menuitem id="menu_audit_system"
+              name="System Operations"
+              parent="menu_audit_operations"
+              action="action_system_audit"
+              sequence="20"/>
+
+</odoo>

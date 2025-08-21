@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- ===== AUDIT CATEGORY CONFIGURATION ===== -->
+        
+        <!-- System Parameters for Audit Category Settings -->
+        <record id="param_category_member_data_retention" model="ir.config_parameter">
+            <field name="key">ams.audit.category.member_data.retention_years</field>
+            <field name="value">7</field>
+        </record>
+
+        <record id="param_category_financial_retention" model="ir.config_parameter">
+            <field name="key">ams.audit.category.financial.retention_years</field>
+            <field name="value">10</field>
+        </record>
+
+        <record id="param_category_privacy_retention" model="ir.config_parameter">
+            <field name="key">ams.audit.category.privacy.retention_years</field>
+            <field name="value">7</field>
+        </record>
+
+        <record id="param_category_security_retention" model="ir.config_parameter">
+            <field name="key">ams.audit.category.security.retention_years</field>
+            <field name="value">5</field>
+        </record>
+
+        <record id="param_category_configuration_retention" model="ir.config_parameter">
+            <field name="key">ams.audit.category.configuration.retention_years</field>
+            <field name="value">3</field>
+        </record>
+
+        <record id="param_category_professional_retention" model="ir.config_parameter">
+            <field name="key">ams.audit.category.professional.retention_years</field>
+            <field name="value">7</field>
+        </record>
+
+        <record id="param_category_membership_retention" model="ir.config_parameter">
+            <field name="key">ams.audit.category.membership.retention_years</field>
+            <field name="value">7</field>
+        </record>
+
+        <record id="param_category_communication_retention" model="ir.config_parameter">
+            <field name="key">ams.audit.category.communication.retention_years</field>
+            <field name="value">3</field>
+        </record>
+
+        <record id="param_category_system_retention" model="ir.config_parameter">
+            <field name="key">ams.audit.category.system.retention_years</field>
+            <field name="value">2</field>
+        </record>
+
+        <!-- ===== RISK LEVEL THRESHOLDS ===== -->
+        
+        <!-- Risk level escalation thresholds -->
+        <record id="param_risk_escalation_threshold_medium" model="ir.config_parameter">
+            <field name="key">ams.audit.risk.medium_threshold_hours</field>
+            <field name="value">72</field> <!-- 3 days -->
+        </record>
+
+        <record id="param_risk_escalation_threshold_high" model="ir.config_parameter">
+            <field name="key">ams.audit.risk.high_threshold_hours</field>
+            <field name="value">24</field> <!-- 1 day -->
+        </record>
+
+        <record id="param_risk_escalation_threshold_critical" model="ir.config_parameter">
+            <field name="key">ams.audit.risk.critical_threshold_hours</field>
+            <field name="value">4</field> <!-- 4 hours -->
+        </record>
+
+        <!-- ===== SENSITIVE FIELD DEFINITIONS ===== -->
+        
+        <!-- Member data sensitive fields -->
+        <record id="param_sensitive_fields_member" model="ir.config_parameter">
+            <field name="key">ams.audit.sensitive_fields.res.partner</field>
+            <field name="value">date_of_birth,gender,nationality,tax_id_registration,license_certification_number,alternate_emails,ssn,tax_id</field>
+        </record>
+
+        <!-- Professional data sensitive fields -->
+        <record id="param_sensitive_fields_professional" model="ir.config_parameter">
+            <field name="key">ams.audit.sensitive_fields.ams.professional.designation</field>
+            <field name="value">license_number,certification_number,ssn,tax_id</field>
+        </record>
+
+        <!-- Member profile sensitive fields -->
+        <record id="param_sensitive_fields_profile" model="ir.config_parameter">
+            <field name="key">ams.audit.sensitive_fields.ams.member.profile</field>
+            <field name="value">ethnicity,emergency_contact_name,emergency_contact_phone,emergency_contact_email,internal_notes</field>
+        </record>
+
+        <!-- ===== PRIVACY IMPACT FIELD DEFINITIONS ===== -->
+        
+        <!-- Member data privacy fields -->
+        <record id="param_privacy_fields_member" model="ir.config_parameter">
+            <field name="key">ams.audit.privacy_fields.res.partner</field>
+            <field name="value">email,phone,mobile,street,street2,city,zip,date_of_birth,gender,nationality,alternate_emails,name</field>
+        </record>
+
+        <!-- Member profile privacy fields -->
+        <record id="param_privacy_fields_profile" model="ir.config_parameter">
+            <field name="key">ams.audit.privacy_fields.ams.member.profile</field>
+            <field name="value">marketing_consent,directory_listing_consent,photo_permission,data_sharing_consent,linkedin_url,twitter_handle,facebook_url</field>
+        </record>
+
+        <!-- ===== AUDIT MONITORING THRESHOLDS ===== -->
+        
+        <!-- Daily access thresholds by category -->
+        <record id="param_threshold_member_access_daily" model="ir.config_parameter">
+            <field name="key">ams.audit.threshold.member_access_daily</field>
+            <field name="value">50</field>
+        </record>
+
+        <record id="param_threshold_sensitive_access_daily" model="ir.config_parameter">
+            <field name="key">ams.audit.threshold.sensitive_access_daily</field>
+            <field name="value">20</field>
+        </record>
+
+        <record id="param_threshold_privacy_changes_daily" model="ir.config_parameter">
+            <field name="key">ams.audit.threshold.privacy_changes_daily</field>
+            <field name="value">10</field>
+        </record>
+
+        <record id="param_threshold_export_operations_daily" model="ir.config_parameter">
+            <field name="key">ams.audit.threshold.export_operations_daily</field>
+            <field name="value">5</field>
+        </record>
+
+        <record id="param_threshold_delete_operations_daily" model="ir.config_parameter">
+            <field name="key">ams.audit.threshold.delete_operations_daily</field>
+            <field name="value">3</field>
+        </record>
+
+        <!-- ===== COMPLIANCE REPORTING SETTINGS ===== -->
+        
+        <!-- GDPR compliance settings -->
+        <record id="param_gdpr_audit_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.compliance.gdpr_enabled</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="param_gdpr_data_retention_years" model="ir.config_parameter">
+            <field name="key">ams.audit.compliance.gdpr_retention_years</field>
+            <field name="value">6</field>
+        </record>
+
+        <!-- SOX compliance settings (for financial associations) -->
+        <record id="param_sox_audit_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.compliance.sox_enabled</field>
+            <field name="value">False</field>
+        </record>
+
+        <record id="param_sox_financial_retention_years" model="ir.config_parameter">
+            <field name="key">ams.audit.compliance.sox_retention_years</field>
+            <field name="value">7</field>
+        </record>
+
+        <!-- HIPAA compliance settings (for healthcare associations) -->
+        <record id="param_hipaa_audit_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.compliance.hipaa_enabled</field>
+            <field name="value">False</field>
+        </record>
+
+        <record id="param_hipaa_retention_years" model="ir.config_parameter">
+            <field name="key">ams.audit.compliance.hipaa_retention_years</field>
+            <field name="value">6</field>
+        </record>
+
+        <!-- ===== NOTIFICATION SETTINGS ===== -->
+        
+        <!-- Email notification settings -->
+        <record id="param_notifications_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.notifications.enabled</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="param_notifications_high_risk_immediate" model="ir.config_parameter">
+            <field name="key">ams.audit.notifications.high_risk_immediate</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="param_notifications_daily_summary" model="ir.config_parameter">
+            <field name="key">ams.audit.notifications.daily_summary</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="param_notifications_weekly_report" model="ir.config_parameter">
+            <field name="key">ams.audit.notifications.weekly_report</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- Notification recipients -->
+        <record id="param_notification_admin_email" model="ir.config_parameter">
+            <field name="key">ams.audit.notifications.admin_email</field>
+            <field name="value">admin@example.com</field>
+        </record>
+
+        <record id="param_notification_compliance_email" model="ir.config_parameter">
+            <field name="key">ams.audit.notifications.compliance_email</field>
+            <field name="value">compliance@example.com</field>
+        </record>
+
+        <!-- ===== AUDIT PERFORMANCE SETTINGS ===== -->
+        
+        <!-- Batch processing settings -->
+        <record id="param_batch_log_creation" model="ir.config_parameter">
+            <field name="key">ams.audit.performance.batch_creation</field>
+            <field name="value">False</field>
+        </record>
+
+        <record id="param_batch_size_default" model="ir.config_parameter">
+            <field name="key">ams.audit.performance.batch_size</field>
+            <field name="value">100</field>
+        </record>
+
+        <!-- Async processing settings -->
+        <record id="param_async_logging_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.performance.async_logging</field>
+            <field name="value">False</field>
+        </record>
+
+        <!-- Database optimization settings -->
+        <record id="param_index_optimization" model="ir.config_parameter">
+            <field name="key">ams.audit.performance.index_optimization</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="param_archive_compression" model="ir.config_parameter">
+            <field name="key">ams.audit.performance.archive_compression</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- ===== MODEL-SPECIFIC AUDIT SETTINGS ===== -->
+        
+        <!-- Partner model audit settings -->
+        <record id="param_audit_partner_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.model.res.partner.enabled</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="param_audit_partner_all_fields" model="ir.config_parameter">
+            <field name="key">ams.audit.model.res.partner.all_fields</field>
+            <field name="value">False</field>
+        </record>
+
+        <!-- Member profile audit settings -->
+        <record id="param_audit_profile_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.model.ams.member.profile.enabled</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- Professional designation audit settings -->
+        <record id="param_audit_designation_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.model.ams.professional.designation.enabled</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- Member designation audit settings -->
+        <record id="param_audit_member_designation_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.model.ams.member.designation.enabled</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- ===== INTEGRATION SETTINGS ===== -->
+        
+        <!-- External audit system integration -->
+        <record id="param_external_audit_integration" model="ir.config_parameter">
+            <field name="key">ams.audit.integration.external_system</field>
+            <field name="value">False</field>
+        </record>
+
+        <record id="param_external_audit_endpoint" model="ir.config_parameter">
+            <field name="key">ams.audit.integration.external_endpoint</field>
+            <field name="value"></field>
+        </record>
+
+        <record id="param_external_audit_api_key" model="ir.config_parameter">
+            <field name="key">ams.audit.integration.external_api_key</field>
+            <field name="value"></field>
+        </record>
+
+        <!-- SIEM integration settings -->
+        <record id="param_siem_integration_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.integration.siem_enabled</field>
+            <field name="value">False</field>
+        </record>
+
+        <record id="param_siem_endpoint" model="ir.config_parameter">
+            <field name="key">ams.audit.integration.siem_endpoint</field>
+            <field name="value"></field>
+        </record>
+
+        <!-- Log forwarding settings -->
+        <record id="param_log_forwarding_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.integration.log_forwarding</field>
+            <field name="value">False</field>
+        </record>
+
+        <!-- ===== DEFAULT AUDIT ACTIONS FOR COMMON OPERATIONS ===== -->
+        
+        <!-- Member onboarding audit tracking -->
+        <record id="param_track_member_onboarding" model="ir.config_parameter">
+            <field name="key">ams.audit.track.member_onboarding</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- Membership renewal audit tracking -->
+        <record id="param_track_membership_renewal" model="ir.config_parameter">
+            <field name="key">ams.audit.track.membership_renewal</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- Payment processing audit tracking -->
+        <record id="param_track_payment_processing" model="ir.config_parameter">
+            <field name="key">ams.audit.track.payment_processing</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- Communication audit tracking -->
+        <record id="param_track_communications" model="ir.config_parameter">
+            <field name="key">ams.audit.track.communications</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- Directory access audit tracking -->
+        <record id="param_track_directory_access" model="ir.config_parameter">
+            <field name="key">ams.audit.track.directory_access</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- ===== AUDIT DASHBOARD CONFIGURATION ===== -->
+        
+        <!-- Dashboard refresh interval (minutes) -->
+        <record id="param_dashboard_refresh_interval" model="ir.config_parameter">
+            <field name="key">ams.audit.dashboard.refresh_interval</field>
+            <field name="value">5</field>
+        </record>
+
+        <!-- Dashboard data retention (days) -->
+        <record id="param_dashboard_data_retention" model="ir.config_parameter">
+            <field name="key">ams.audit.dashboard.data_retention_days</field>
+            <field name="value">30</field>
+        </record>
+
+        <!-- Enable real-time dashboard updates -->
+        <record id="param_dashboard_realtime" model="ir.config_parameter">
+            <field name="key">ams.audit.dashboard.realtime_updates</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- ===== EXPORT AND REPORTING SETTINGS ===== -->
+        
+        <!-- CSV export settings -->
+        <record id="param_export_csv_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.export.csv_enabled</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- Excel export settings -->
+        <record id="param_export_excel_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.export.excel_enabled</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- PDF report generation -->
+        <record id="param_export_pdf_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.export.pdf_enabled</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- API access for audit data -->
+        <record id="param_api_access_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.api.access_enabled</field>
+            <field name="value">False</field>
+        </record>
+
+        <!-- Maximum export records per request -->
+        <record id="param_export_max_records" model="ir.config_parameter">
+            <field name="key">ams.audit.export.max_records</field>
+            <field name="value">10000</field>
+        </record>
+
+    </data>
+</odoo>

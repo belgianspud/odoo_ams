@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- ===== AUDIT LOG CLEANUP CRON JOB ===== -->
+        <record id="cron_audit_log_cleanup" model="ir.cron">
+            <field name="name">Audit Log Cleanup</field>
+            <field name="model_id" ref="model_ams_audit_log"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_cleanup_old_logs()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">weeks</field>
+            <field name="active" eval="True"/>
+            <field name="priority">5</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- ===== AUDIT COMPLIANCE MONITORING CRON JOB ===== -->
+        <record id="cron_audit_compliance_check" model="ir.cron">
+            <field name="name">Audit Compliance Check</field>
+            <field name="model_id" ref="model_ams_audit_log"/>
+            <field name="state">code</field>
+            <field name="code">
+# Check for unreviewed high-risk audit entries
+unreviewed = model.search([
+    ('risk_level', 'in', ['high', 'critical']),
+    ('requires_review', '=', True),
+    ('reviewed', '=', False),
+    ('timestamp', '&lt;', fields.Datetime.now() - datetime.timedelta(days=7))
+])
+
+if unreviewed:
+    # Send notification to audit managers
+    audit_managers = env.ref('ams_core_audit.group_audit_manager').users
+    for manager in audit_managers:
+        env['mail.mail'].create({
+            'subject': f'Audit Alert: {len(unreviewed)} Unreviewed High-Risk Entries',
+            'body_html': f'''
+                &lt;p&gt;Dear {manager.name},&lt;/p&gt;
+                &lt;p&gt;There are {len(unreviewed)} unreviewed high-risk audit entries older than 7 days.&lt;/p&gt;
+                &lt;p&gt;Please review these entries for compliance purposes.&lt;/p&gt;
+                &lt;p&gt;Access the audit logs &lt;a href="/web#action=ams_core_audit.action_pending_review_audit"&gt;here&lt;/a&gt;.&lt;/p&gt;
+            ''',
+            'email_to': manager.email,
+            'auto_delete': True,
+        }).send()
+            </field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="True"/>
+            <field name="priority">10</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- ===== AUDIT STATISTICS GENERATION CRON JOB ===== -->
+        <record id="cron_audit_statistics" model="ir.cron">
+            <field name="name">Generate Audit Statistics</field>
+            <field name="model_id" ref="model_ams_audit_log"/>
+            <field name="state">code</field>
+            <field name="code">
+# Generate weekly audit statistics
+import json
+from datetime import datetime, timedelta
+
+# Calculate date range (last 7 days)
+end_date = fields.Date.today()
+start_date = end_date - timedelta(days=7)
+
+# Get audit logs from the past week
+logs = model.search([
+    ('timestamp', '&gt;=', start_date),
+    ('timestamp', '&lt;=', end_date)
+])
+
+# Generate statistics
+stats = {
+    'period': f'{start_date} to {end_date}',
+    'total_entries': len(logs),
+    'by_category': {},
+    'by_risk_level': {},
+    'by_model': {},
+    'sensitive_data_access': len(logs.filtered('is_sensitive')),
+    'privacy_impact_changes': len(logs.filtered('privacy_impact')),
+    'high_risk_entries': len(logs.filtered(lambda l: l.risk_level in ['high', 'critical'])),
+    'unreviewed_entries': len(logs.filtered(lambda l: l.requires_review and not l.reviewed)),
+}
+
+# Count by category
+for log in logs:
+    stats['by_category'][log.category] = stats['by_category'].get(log.category, 0) + 1
+    stats['by_risk_level'][log.risk_level] = stats['by_risk_level'].get(log.risk_level, 0) + 1
+    stats['by_model'][log.model_name] = stats['by_model'].get(log.model_name, 0) + 1
+
+# Store statistics as system parameter
+env['ir.config_parameter'].sudo().set_param(
+    'ams.audit.weekly_stats',
+    json.dumps(stats, default=str)
+)
+
+# Log the statistics generation
+model.create_audit_log(
+    model_name='ams.audit.log',
+    record_id=0,
+    action='other',
+    description=f'Weekly audit statistics generated: {stats["total_entries"]} entries processed',
+    category='system',
+    risk_level='low',
+    notes=f'Statistics period: {stats["period"]}'
+)
+            </field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">weeks</field>
+            <field name="active" eval="True"/>
+            <field name="priority">15</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- ===== AUDIT LOG ARCHIVAL CRON JOB ===== -->
+        <record id="cron_audit_log_archival" model="ir.cron">
+            <field name="name">Audit Log Archival</field>
+            <field name="model_id" ref="model_ams_audit_log"/>
+            <field name="state">code</field>
+            <field name="code">
+# Archive audit logs older than retention period
+cutoff_date = fields.Date.today() - datetime.timedelta(days=2555)  # 7 years default
+
+# Find logs eligible for archival (not high-risk, not financial, not privacy-critical)
+archival_candidates = model.search([
+    ('timestamp', '&lt;', cutoff_date),
+    ('risk_level', 'not in', ['high', 'critical']),
+    ('category', 'not in', ['financial', 'privacy']),
+    ('notes', 'not ilike', 'Archived by')
+])
+
+if archival_candidates:
+    # Mark as archived instead of deleting for compliance
+    archival_candidates.write({
+        'notes': f'Archived by automated process on {fields.Date.today()}'
+    })
+    
+    # Log the archival action
+    model.create_audit_log(
+        model_name='ams.audit.log',
+        record_id=0,
+        action='archive',
+        description=f'Archived {len(archival_candidates)} old audit log entries',
+        category='system',
+        risk_level='medium',
+        notes=f'Archival cutoff date: {cutoff_date}'
+    )
+            </field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">months</field>
+            <field name="active" eval="True"/>
+            <field name="priority">20</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- ===== SENSITIVE DATA ACCESS MONITORING CRON JOB ===== -->
+        <record id="cron_sensitive_data_monitoring" model="ir.cron">
+            <field name="name">Sensitive Data Access Monitoring</field>
+            <field name="model_id" ref="model_ams_audit_log"/>
+            <field name="state">code</field>
+            <field name="code">
+# Monitor for unusual sensitive data access patterns
+from collections import defaultdict
+
+# Get sensitive data access from last 24 hours
+recent_sensitive = model.search([
+    ('timestamp', '&gt;=', fields.Datetime.now() - datetime.timedelta(hours=24)),
+    ('is_sensitive', '=', True)
+])
+
+# Group by user
+user_access = defaultdict(int)
+for log in recent_sensitive:
+    user_access[log.user_id.id] += 1
+
+# Check for users with excessive sensitive data access
+threshold = int(env['ir.config_parameter'].sudo().get_param('ams.audit.sensitive_access_threshold', '20'))
+alerts = []
+
+for user_id, count in user_access.items():
+    if count &gt; threshold:
+        user = env['res.users'].browse(user_id)
+        alerts.append(f'{user.name}: {count} sensitive data accesses')
+
+if alerts:
+    # Send alert to compliance officers
+    compliance_officers = env.ref('ams_core_audit.group_compliance_officer').users
+    if not compliance_officers:
+        compliance_officers = env.ref('ams_core_audit.group_audit_manager').users
+    
+    for officer in compliance_officers:
+        env['mail.mail'].create({
+            'subject': 'Sensitive Data Access Alert',
+            'body_html': f'''
+                &lt;p&gt;Dear {officer.name},&lt;/p&gt;
+                &lt;p&gt;Unusual sensitive data access patterns detected in the last 24 hours:&lt;/p&gt;
+                &lt;ul&gt;
+                    {''.join(f'&lt;li&gt;{alert}&lt;/li&gt;' for alert in alerts)}
+                &lt;/ul&gt;
+                &lt;p&gt;Please review these access patterns for compliance.&lt;/p&gt;
+            ''',
+            'email_to': officer.email,
+            'auto_delete': True,
+        }).send()
+    
+    # Log the alert
+    model.create_audit_log(
+        model_name='ams.audit.log',
+        record_id=0,
+        action='other',
+        description=f'Sensitive data access alert: {len(alerts)} users exceeded threshold',
+        category='security',
+        risk_level='high',
+        notes=f'Alerts: {"; ".join(alerts)}'
+    )
+            </field>
+            <field name="interval_number">4</field>
+            <field name="interval_type">hours</field>
+            <field name="active" eval="True"/>
+            <field name="priority">25</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- ===== AUDIT BACKUP CRON JOB ===== -->
+        <record id="cron_audit_backup" model="ir.cron">
+            <field name="name">Audit Log Backup</field>
+            <field name="model_id" ref="model_ams_audit_log"/>
+            <field name="state">code</field>
+            <field name="code">
+# Create backup record of critical audit information
+critical_logs = model.search([
+    ('risk_level', 'in', ['high', 'critical']),
+    ('timestamp', '&gt;=', fields.Datetime.now() - datetime.timedelta(days=30))
+])
+
+backup_count = len(critical_logs)
+
+if backup_count &gt; 0:
+    # Log the backup creation
+    model.create_audit_log(
+        model_name='ams.audit.log',
+        record_id=0,
+        action='other',
+        description=f'Audit backup checkpoint created: {backup_count} critical logs secured',
+        category='system',
+        risk_level='low',
+        notes=f'Backup includes last 30 days of high and critical risk audit entries'
+    )
+            </field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="True"/>
+            <field name="priority">30</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- ===== SYSTEM PARAMETERS FOR AUDIT CONFIGURATION ===== -->
+        
+        <!-- Audit log retention period (in days) -->
+        <record id="param_audit_retention_days" model="ir.config_parameter">
+            <field name="key">ams.audit.retention_days</field>
+            <field name="value">2555</field> <!-- 7 years -->
+        </record>
+
+        <!-- High-risk audit log retention period (in days) -->
+        <record id="param_audit_high_risk_retention_days" model="ir.config_parameter">
+            <field name="key">ams.audit.high_risk_retention_days</field>
+            <field name="value">3650</field> <!-- 10 years -->
+        </record>
+
+        <!-- Financial audit log retention period (in days) -->
+        <record id="param_audit_financial_retention_days" model="ir.config_parameter">
+            <field name="key">ams.audit.financial_retention_days</field>
+            <field name="value">3650</field> <!-- 10 years -->
+        </record>
+
+        <!-- Privacy audit log retention period (in days) -->
+        <record id="param_audit_privacy_retention_days" model="ir.config_parameter">
+            <field name="key">ams.audit.privacy_retention_days</field>
+            <field name="value">2555</field> <!-- 7 years -->
+        </record>
+
+        <!-- Sensitive data access threshold for monitoring -->
+        <record id="param_sensitive_access_threshold" model="ir.config_parameter">
+            <field name="key">ams.audit.sensitive_access_threshold</field>
+            <field name="value">20</field>
+        </record>
+
+        <!-- Enable/disable audit logging globally -->
+        <record id="param_audit_logging_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.logging_enabled</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- Enable/disable sensitive operations audit only -->
+        <record id="param_audit_sensitive_only" model="ir.config_parameter">
+            <field name="key">ams.audit.sensitive_operations_only</field>
+            <field name="value">False</field>
+        </record>
+
+        <!-- Audit log cleanup batch size -->
+        <record id="param_audit_cleanup_batch_size" model="ir.config_parameter">
+            <field name="key">ams.audit.cleanup_batch_size</field>
+            <field name="value">1000</field>
+        </record>
+
+        <!-- Enable/disable automatic audit alerts -->
+        <record id="param_audit_alerts_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit.alerts_enabled</field>
+            <field name="value">True</field>
+        </record>
+
+        <!-- Audit statistics retention period (in months) -->
+        <record id="param_audit_stats_retention_months" model="ir.config_parameter">
+            <field name="key">ams.audit.stats_retention_months</field>
+            <field name="value">24</field>
+        </record>
+
+    </data>
+</odoo>
