@@ -161,6 +161,9 @@
     </record>
     
     <record id="action_ams_active_subscriptions" model="ir.actions.act_window">
+        <field name="name">Active Subscriptions</field>  <!-- ✅ ADD THIS LINE -->
+        <field name="res_model">ams.subscription</field>  <!-- ✅ ADD THIS LINE -->
         <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('state', '=', 'active')]</field>  <!-- ✅ ADD THIS LINE -->
     </record>
 </odoo>

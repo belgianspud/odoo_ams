@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- Tree View -->
+    <!-- Simplified Tree View -->
     <record id="view_ams_subscription_tree" model="ir.ui.view">
         <field name="name">ams.subscription.tree</field>
         <field name="model">ams.subscription</field>
@@ -11,13 +11,13 @@
                 <field name="partner_id"/>
                 <field name="tier_id"/>
                 <field name="state"/>
+                <field name="start_date"/>
                 <field name="paid_through_date"/>
-                <field name="total_seats"/>
             </list>
         </field>
     </record>
 
-    <!-- Form View -->
+    <!-- Simplified Form View -->
     <record id="view_ams_subscription_form" model="ir.ui.view">
         <field name="name">ams.subscription.form</field>
         <field name="model">ams.subscription</field>
@@ -38,7 +38,6 @@
                     <group>
                         <group string="Basic Information">
                             <field name="name"/>
-                            <field name="product_id" options="{'no_create': True}"/>
                             <field name="subscription_type"/>
                             <field name="tier_id" domain="[('subscription_type', '=', subscription_type)]"/>
                         </group>
@@ -48,41 +47,29 @@
                         </group>
                     </group>
                     <group>
+                        <group string="Product &amp; Sales">
+                            <field name="product_id"/>
+                            <field name="invoice_id" readonly="1"/>
+                            <field name="invoice_payment_state" readonly="1"/>
+                        </group>
                         <group string="Dates">
                             <field name="start_date"/>
                             <field name="paid_through_date"/>
-                            <field name="grace_end_date" readonly="1"/>
-                            <field name="suspend_end_date" readonly="1"/>
-                            <field name="terminate_date" readonly="1"/>
-                        </group>
-                        <group string="Enterprise Seats" invisible="subscription_type != 'enterprise'">
-                            <field name="base_seats"/>
-                            <field name="extra_seats"/>
-                            <field name="total_seats" readonly="1"/>
+                            <field name="membership_year" readonly="1"/>
                         </group>
                     </group>
-                    <group>
-                        <group string="Settings">
-                            <field name="auto_renew"/>
-                            <field name="is_free"/>
-                        </group>
-                        <group string="Related Records">
-                            <field name="sale_order_id" readonly="1"/>
-                            <field name="invoice_id" readonly="1"/>
-                        </group>
+                    <group string="Settings">
+                        <field name="auto_renew"/>
+                        <field name="is_free"/>
+                        <field name="allow_modifications"/>
+                        <field name="allow_pausing"/>
                     </group>
-                    <notebook>
-                        <page string="Seats">
-                            <field name="seat_ids">
-                                <list editable="bottom">
-                                    <field name="contact_id"/>
-                                    <field name="assigned_date"/>
-                                    <field name="active"/>
-                                </list>
-                            </field>
-                        </page>
-                    </notebook>
                 </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
             </form>
         </field>
     </record>
@@ -97,8 +84,13 @@
                 <field name="partner_id"/>
                 <field name="subscription_type"/>
                 <filter name="filter_active" string="Active" domain="[('state','=','active')]"/>
-                <filter name="filter_suspended" string="Suspended" domain="[('state','=','suspended')]"/>
+                <filter name="filter_draft" string="Draft" domain="[('state','=','draft')]"/>
                 <filter name="filter_terminated" string="Terminated" domain="[('state','=','terminated')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_by_state" string="Status" domain="[]" context="{'group_by': 'state'}"/>
+                    <filter name="group_by_type" string="Type" domain="[]" context="{'group_by': 'subscription_type'}"/>
+                    <filter name="group_by_partner" string="Customer" domain="[]" context="{'group_by': 'partner_id'}"/>
+                </group>
             </search>
         </field>
     </record>

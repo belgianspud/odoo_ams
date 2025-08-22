@@ -32,9 +32,9 @@ class IrModuleModule(models.Model):
 
         #Custom Modules
         'ams_subscriptions',    # AMS Subscriptions
-        'ams_base_accounting',  # AMS Accounting ← Financial app
-        'ams_revenue_recognition', # AMS Accounting Supporting Module For Managing Revenue Recognition
-        'ams_subscription_billing', # AMS Accounting Supporting Module For Managing Subscription Billing
+        'ams_base_accounting',  # AMS Accounting
+        'ams_revenue_recognition', # AMS Revenue Recognition
+        'ams_subscription_billing', # AMS Subscription Billing
 
         #External Modules
         'base_accounting_kit',
@@ -59,53 +59,67 @@ class IrModuleModule(models.Model):
         'sale_report_advanced',
         'subscription_package',
         'user_audit',
-
     ]
+    
+    def _is_apps_menu_context(self, domain=None):
+        """Check if this is specifically the Apps menu context"""
+        context = self.env.context
+        
+        # Check for Apps menu specific contexts
+        if context.get('search_default_app'):
+            return True
+            
+        # Check if domain contains Apps menu specific filters
+        if domain:
+            for condition in domain:
+                if isinstance(condition, (list, tuple)) and len(condition) >= 3:
+                    field, operator, value = condition[0], condition[1], condition[2]
+                    # Apps menu typically searches for application=True and installable=True
+                    if field == 'application' and value is True:
+                        return True
+                    if field == 'installable' and value is True and \
+                       any('application' in str(c) for c in domain):
+                        return True
+        
+        return False
     
     @api.model
     def search(self, args, offset=0, limit=None, order=None):
-        """Override search to show only allowed modules in Apps menu"""
-        # Log when this method is called
-        _logger.info("AMS Module Manager: search() called")
-        _logger.info(f"Search args: {args}")
-        _logger.info(f"Context: {self.env.context}")
-        
-        # Apply filtering for Apps menu searches - show ONLY allowed modules
-        if any('category_id' in str(arg) for arg in args if isinstance(arg, (list, tuple))):
-            _logger.info("Applying AMS module filter - showing only allowed modules")
-            # Show ONLY allowed modules
+        """Override search - only filter for Apps menu, not main dashboard"""
+        # Only apply filtering if this is specifically the Apps menu
+        if self._is_apps_menu_context():
+            _logger.info("AMS Module Manager: Filtering for Apps menu only")
+            # Add filter to show only allowed modules
             module_filter = ('name', 'in', self.ALLOWED_MODULES)
             args = args + [module_filter]
-            _logger.info(f"Updated args to show only allowed modules")
         
         return super().search(args, offset=offset, limit=limit, order=order)
     
     @api.model
     def web_search_read(self, domain=None, specification=None, offset=0, limit=None, order=None, count_limit=None):
-        """Override web_search_read to show only allowed modules in Apps menu"""
-        _logger.info("AMS Module Manager: web_search_read() called")
-        _logger.info(f"Domain: {domain}")
-        _logger.info(f"Context: {self.env.context}")
-        
-        # Get the results first
-        result = super().web_search_read(domain=domain, specification=specification, offset=offset, limit=limit, order=order, count_limit=count_limit)
-        
-        # Filter to show ONLY allowed modules
-        if result and 'records' in result:
-            module_names = [record.get('name') for record in result['records'] if record.get('name')]
-            _logger.info(f"Found modules: {module_names}")
+        """Override web_search_read - only filter for Apps menu"""
+        # Check if this is the Apps menu context
+        if self._is_apps_menu_context(domain):
+            _logger.info("AMS Module Manager: Filtering web_search_read for Apps menu")
             
-            # Keep ONLY allowed modules
-            filtered_records = []
-            for record in result['records']:
-                module_name = record.get('name', '')
-                if module_name in self.ALLOWED_MODULES:
-                    filtered_records.append(record)
-                    _logger.info(f"Keeping allowed module: {module_name}")
-                else:
-                    _logger.info(f"Hiding module: {module_name}")
+            # Get the results first
+            result = super().web_search_read(domain=domain, specification=specification, 
+                                           offset=offset, limit=limit, order=order, count_limit=count_limit)
             
-            result['records'] = filtered_records
-            result['length'] = len(filtered_records)
-        
-        return result
+            if result and 'records' in result:
+                # Keep ONLY allowed modules
+                filtered_records = []
+                for record in result['records']:
+                    module_name = record.get('name', '')
+                    if module_name in self.ALLOWED_MODULES:
+                        filtered_records.append(record)
+                
+                result['records'] = filtered_records
+                result['length'] = len(filtered_records)
+            
+            return result
+        else:
+            # For main dashboard and other contexts, don't filter
+            _logger.info("AMS Module Manager: Not filtering - allowing all modules for dashboard")
+            return super().web_search_read(domain=domain, specification=specification, 
+                                         offset=offset, limit=limit, order=order, count_limit=count_limit)

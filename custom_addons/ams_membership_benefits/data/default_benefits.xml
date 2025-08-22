@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Default benefits that most associations would want -->
+        <record id="benefit_event_discount" model="ams.membership.benefit">
+            <field name="name">Member Event Discount</field>
+            <field name="benefit_type">discount_event</field>
+            <field name="discount_percentage">20</field>
+            <field name="description">20% discount on all association events and conferences</field>
+            <field name="sequence">10</field>
+        </record>
+        
+        <record id="benefit_directory_access" model="ams.membership.benefit">
+            <field name="name">Member Directory Access</field>
+            <field name="benefit_type">directory</field>
+            <field name="description">Access to searchable member directory for networking</field>
+            <field name="sequence">20</field>
+        </record>
+        
+        <record id="benefit_webinar_access" model="ams.membership.benefit">
+            <field name="name">Webinar Library Access</field>
+            <field name="benefit_type">webinar_access</field>
+            <field name="description">Access to archived webinars and continuing education content</field>
+            <field name="sequence">30</field>
+        </record>
+    </data>
+</odoo>
