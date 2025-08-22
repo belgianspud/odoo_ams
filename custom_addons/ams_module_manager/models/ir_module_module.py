@@ -29,10 +29,37 @@ class IrModuleModule(models.Model):
         'im_livechat',          # Live Chat
         'survey',               # Surveys
         'mass_mailing_sms',     # SMS Marketing
+
+        #Custom Modules
         'ams_subscriptions',    # AMS Subscriptions
         'ams_base_accounting',  # AMS Accounting ← Financial app
         'ams_revenue_recognition', # AMS Accounting Supporting Module For Managing Revenue Recognition
         'ams_subscription_billing', # AMS Accounting Supporting Module For Managing Subscription Billing
+
+        #External Modules
+        'base_accounting_kit',
+        'base_account_budget',
+        'master_search',
+        'auto_database_backup',
+        'custom_receipts_for_pos',
+        'dynamic_accounts_report',
+        'inventory_barcode_scanning',
+        'inventory_stock_dashboard_odoo',
+        'invoice_format_editor',
+        'invoice_merging',
+        'login_user_detail',
+        'low_stocks_product_alert',
+        'odoo_accounting_dashboard',
+        'pos_product_stock',
+        'pos_restrict_product_stock',
+        'product_management_app',
+        'purchase_product_history',
+        'rest_api_odoo',
+        'sale_discount_total',
+        'sale_report_advanced',
+        'subscription_package',
+        'user_audit',
+
     ]
     
     @api.model
