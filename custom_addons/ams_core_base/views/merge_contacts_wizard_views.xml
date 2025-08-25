@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Merge Contacts Wizard Form View -->
+        <record id="view_merge_contacts_wizard_form" model="ir.ui.view">
+            <field name="name">merge.contacts.wizard.form</field>
+            <field name="model">merge.contacts.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Merge Contacts">
+                    <header>
+                        <button name="action_validate" type="object" string="Validate" 
+                                class="btn-primary" attrs="{'invisible': [('state', '!=', 'select')]}"/>
+                        <button name="action_preview" type="object" string="Preview" 
+                                class="btn-primary" attrs="{'invisible': [('state', '!=', 'validate')]}"/>
+                        <button name="action_confirm_merge" type="object" string="Confirm Merge" 
+                                class="btn-primary" attrs="{'invisible': [('state', '!=', 'preview')]}"/>
+                        <button name="action_back" type="object" string="Back" 
+                                class="btn-secondary" attrs="{'invisible': [('state', '=', 'select')]}"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>Merge AMS Contacts</h1>
+                        </div>
+
+                        <!-- Step 1: Select Contacts -->
+                        <group attrs="{'invisible': [('state', '!=', 'select')]}">
+                            <group name="contact_selection" string="Select Contacts to Merge">
+                                <field name="source_partner_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                                <field name="target_partner_id" domain="[('id', 'in', source_partner_ids)]"/>
+                            </group>
+                            <group name="merge_options" string="Merge Options">
+                                <field name="merge_mode"/>
+                                <field name="preserve_member_id"/>
+                                <field name="merge_addresses"/>
+                                <field name="merge_relationships"/>
+                                <field name="merge_activities"/>
+                            </group>
+                        </group>
+
+                        <!-- Step 2: Validation Results -->
+                        <group attrs="{'invisible': [('state', '!=', 'validate')]}">
+                            <div class="alert alert-success" role="alert" attrs="{'invisible': [('validation_passed', '=', False)]}">
+                                <strong>Validation Passed!</strong> The merge operation can proceed safely.
+                            </div>
+                            <div class="alert alert-warning" role="alert" attrs="{'invisible': [('validation_warnings', '=', False)]}">
+                                <strong>Warnings:</strong><br/>
+                                <field name="validation_warnings" nolabel="1" readonly="1"/>
+                            </div>
+                            <div class="alert alert-danger" role="alert" attrs="{'invisible': [('validation_errors', '=', False)]}">
+                                <strong>Errors:</strong><br/>
+                                <field name="validation_errors" nolabel="1" readonly="1"/>
+                            </div>
+                            <field name="validation_passed" invisible="1"/>
+                        </group>
+
+                        <!-- Step 3: Preview -->
+                        <group attrs="{'invisible': [('state', '!=', 'preview')]}">
+                            <group name="merge_preview" string="Merge Preview">
+                                <field name="preview_data" nolabel="1" readonly="1" widget="text"/>
+                            </group>
+                        </group>
+
+                        <!-- Progress Information -->
+                        <div class="alert alert-info" role="alert">
+                            <div attrs="{'invisible': [('state', '!=', 'select')]}">
+                                <strong>Step 1:</strong> Select the contacts you want to merge and choose which one should be the target (survivor).
+                                The target contact will keep all its data and absorb data from the other contacts.
+                            </div>
+                            <div attrs="{'invisible': [('state', '!=', 'validate')]}">
+                                <strong>Step 2:</strong> Review validation results. Fix any errors or use force mode to override warnings.
+                            </div>
+                            <div attrs="{'invisible': [('state', '!=', 'preview')]}">
+                                <strong>Step 3:</strong> Review what will be merged and confirm the operation.
+                            </div>
+                        </div>
+
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Merge Contacts Wizard Action -->
+        <record id="action_merge_contacts_wizard" model="ir.actions.act_window">
+            <field name="name">Merge Contacts</field>
+            <field name="res_model">merge.contacts.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_merge_contacts_wizard_form"/>
+            <field name="target">new</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Safely merge duplicate contacts
+                </p>
+                <p>
+                    Select contacts to merge and follow the guided process to consolidate duplicate records safely.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

@@ -148,7 +148,7 @@
             </field>
         </record>
 
-        <!-- Update the main relationships action to use these views -->
+        <!-- Relationships Action -->
         <record id="action_ams_relationships" model="ir.actions.act_window">
             <field name="name">Partner Relationships</field>
             <field name="res_model">res.partner.relationship</field>

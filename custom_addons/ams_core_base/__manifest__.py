@@ -57,6 +57,8 @@ It contains no hard-coded values - all behavior is driven by configuration.
         'views/ams_config_views.xml', 
         'views/ams_lookup_views.xml',
         'views/res_partner_views.xml',
+        'views/res_partner_relationship_views.xml',
+        'views/merge_contacts_wizard_views.xml',
     ],
     'demo': [],
     'images': ['static/description/icon.png'],

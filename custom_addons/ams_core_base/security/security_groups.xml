@@ -73,7 +73,7 @@
 
         <!-- Record Rules for Data Access -->
         
-        <!-- Partners: Guests can only see public contacts -->
+        <!-- Partners: Guests can only see published contacts -->
         <record id="rule_partner_guest" model="ir.rule">
             <field name="name">AMS Guest: Public Contacts Only</field>
             <field name="model_id" ref="base.model_res_partner"/>
@@ -106,22 +106,6 @@
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="False"/>
-            <field name="perm_unlink" eval="False"/>
-        </record>
-
-        <!-- Partners: Company POCs can manage their employees -->
-        <record id="rule_partner_company_poc" model="ir.rule">
-            <field name="name">AMS Company POC: Manage Employees</field>
-            <field name="model_id" ref="base.model_res_partner"/>
-            <field name="domain_force">[
-                '|', 
-                ('user_ids', 'in', [user.id]),
-                ('id', 'in', [emp.partner_id.id for company in user.managed_company_ids for emp in company.get_employees()])
-            ]</field>
-            <field name="groups" eval="[(4, ref('group_ams_company_poc'))]"/>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="True"/>
-            <field name="perm_create" eval="True"/>
             <field name="perm_unlink" eval="False"/>
         </record>
 
@@ -182,22 +166,6 @@
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="False"/>
-            <field name="perm_unlink" eval="False"/>
-        </record>
-
-        <!-- Relationships: Company POCs can manage employee relationships -->
-        <record id="rule_relationship_company_poc" model="ir.rule">
-            <field name="name">AMS Company POC: Employee Relationships</field>
-            <field name="model_id" ref="model_res_partner_relationship"/>
-            <field name="domain_force">[
-                '|',
-                ('partner_id.user_ids', 'in', [user.id]),
-                ('partner_id.id', 'in', [emp.partner_id.id for company in user.managed_company_ids for emp in company.get_employees()])
-            ]</field>
-            <field name="groups" eval="[(4, ref('group_ams_company_poc'))]"/>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="True"/>
-            <field name="perm_create" eval="True"/>
             <field name="perm_unlink" eval="False"/>
         </record>
 
