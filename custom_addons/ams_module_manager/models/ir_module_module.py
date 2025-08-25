@@ -35,6 +35,7 @@ class IrModuleModule(models.Model):
         'ams_base_accounting',  # AMS Accounting
         'ams_revenue_recognition', # AMS Revenue Recognition
         'ams_subscription_billing', # AMS Subscription Billing
+        'ams_core_base',        # AMS base items for individuals and companies (contacts and accounts)
 
         #External Modules
         'base_accounting_kit',
