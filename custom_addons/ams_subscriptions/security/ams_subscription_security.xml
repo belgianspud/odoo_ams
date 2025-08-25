@@ -13,4 +13,8 @@
         <field name="implied_ids" eval="[(4, ref('group_ams_subscription_admin'))]"/>
         <field name="comment">Basic user for AMS subscriptions, can create and edit.</field>
     </record>
+        <!-- AUTO-ASSIGN ADMIN USERS TO AMS GROUP -->
+    <record id="base.group_system" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_ams_subscription_user'))]"/>
+    </record>
 </odoo>

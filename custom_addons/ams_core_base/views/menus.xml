@@ -1,132 +1,148 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    
-    <!-- ===== MAIN AMS ROOT MENU ===== -->
-    <menuitem id="menu_ams_root" 
-              name="Association Management" 
-              web_icon="ams_core_base,static/description/icon.png"
-              sequence="10"/>
-    
-    <!-- ===== MEMBERS SECTION ===== -->
-    <menuitem id="menu_ams_members" 
-              name="Members" 
-              parent="menu_ams_root" 
-              sequence="10"/>
-    
-    <!-- Member Management Submenus -->
-    <menuitem id="menu_ams_all_members" 
-              name="All Members" 
-              parent="menu_ams_members" 
-              action="action_members" 
-              sequence="10"/>
-    
-    <menuitem id="menu_ams_active_members" 
-              name="Active Members" 
-              parent="menu_ams_members" 
-              action="action_active_members" 
-              sequence="15"/>
-    
-    <menuitem id="menu_ams_prospects" 
-              name="Prospects" 
-              parent="menu_ams_members" 
-              action="action_prospects" 
-              sequence="20"/>
-    
-    <menuitem id="menu_ams_lapsed_members" 
-              name="Lapsed Members" 
-              parent="menu_ams_members" 
-              action="action_lapsed_members" 
-              sequence="25"/>
-    
-    <menuitem id="menu_ams_organizations" 
-              name="Organizations" 
-              parent="menu_ams_members" 
-              action="action_organizations" 
-              sequence="30"/>
-    
-    <!-- Member Profile Submenus -->
-    <menuitem id="menu_ams_member_profiles" 
-              name="Member Profiles" 
-              parent="menu_ams_members" 
-              action="action_member_profiles" 
-              sequence="40"/>
-    
-    <menuitem id="menu_ams_incomplete_profiles" 
-              name="Incomplete Profiles" 
-              parent="menu_ams_members" 
-              action="action_incomplete_profiles" 
-              sequence="50"/>
-    
-    <menuitem id="menu_ams_volunteers" 
-              name="Volunteers" 
-              parent="menu_ams_members" 
-              action="action_volunteers" 
-              sequence="60"/>
-    
-    <!-- ===== CONFIGURATION SECTION ===== -->
-    <menuitem id="menu_ams_config" 
-              name="Configuration" 
-              parent="menu_ams_root" 
-              sequence="90"
-              groups="ams_core_base.group_ams_admin"/>
-    
-    <!-- Member Categories Configuration -->
-    <menuitem id="menu_ams_member_config" 
-              name="Member Management" 
-              parent="menu_ams_config" 
-              sequence="10"/>
-    
-    <!-- Create member categories action -->
-    <record id="action_member_categories" model="ir.actions.act_window">
-        <field name="name">Member Categories</field>
-        <field name="res_model">res.partner.category</field>
-        <field name="view_mode">tree,form</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Create your first member category!
-            </p>
-            <p>
-                Organize members using categories like Active Member, Student Member, 
-                professional areas, and engagement levels.
-            </p>
-        </field>
-    </record>
-    
-    <menuitem id="menu_ams_config_categories" 
-              name="Member Categories" 
-              parent="menu_ams_member_config" 
-              action="action_member_categories" 
-              sequence="10"/>
-    
-    <!-- ===== REPORTS SECTION (Basic) ===== -->
-    <menuitem id="menu_ams_reports" 
-              name="Reports" 
-              parent="menu_ams_root" 
-              sequence="80"
-              groups="ams_core_base.group_ams_staff"/>
-    
-    <!-- Member Reports -->
-    <menuitem id="menu_ams_member_reports" 
-              name="Member Reports" 
-              parent="menu_ams_reports" 
-              sequence="10"/>
-    
-    <!-- ===== QUICK ACCESS SHORTCUTS ===== -->
-    <menuitem id="menu_ams_shortcuts" 
-              name="Quick Access" 
-              parent="menu_ams_root" 
-              sequence="5"/>
-    
-    <menuitem id="menu_ams_new_member" 
-              name="New Member" 
-              parent="menu_ams_shortcuts" 
-              action="action_members" 
-              sequence="10"/>
-    
-    <menuitem id="menu_ams_member_search" 
-              name="Search Members" 
-              parent="menu_ams_shortcuts" 
-              action="action_members" 
-              sequence="15"/>
-    
+    <data>
+
+        <!-- Root AMS Menu -->
+        <menuitem 
+            id="menu_ams_root" 
+            name="Association Management" 
+            sequence="5"
+            web_icon="ams_core_base,static/description/icon.png"
+        />
+
+        <!-- Configuration Menu -->
+        <menuitem 
+            id="menu_ams_configuration" 
+            name="Configuration" 
+            parent="menu_ams_root" 
+            sequence="100"
+            groups="group_ams_admin"
+        />
+
+        <!-- AMS Configuration -->
+        <menuitem 
+            id="menu_ams_config" 
+            name="AMS Configuration" 
+            parent="menu_ams_configuration" 
+            action="action_ams_config" 
+            sequence="10"
+            groups="group_ams_admin"
+        />
+
+        <!-- Lookup Configuration -->
+        <menuitem 
+            id="menu_ams_lookup" 
+            name="Lookup Values" 
+            parent="menu_ams_configuration" 
+            action="action_ams_lookup" 
+            sequence="20"
+            groups="group_ams_staff"
+        />
+
+        <!-- Lookup Categories -->
+        <menuitem 
+            id="menu_ams_lookup_category" 
+            name="Lookup Categories" 
+            parent="menu_ams_configuration" 
+            action="action_ams_lookup_category" 
+            sequence="30"
+            groups="group_ams_admin"
+        />
+
+        <!-- User Role Management -->
+        <menuitem 
+            id="menu_ams_user_roles" 
+            name="User Roles" 
+            parent="menu_ams_configuration" 
+            action="action_ams_user_role" 
+            sequence="40"
+            groups="group_ams_admin"
+        />
+
+        <!-- Members Menu -->
+        <menuitem 
+            id="menu_ams_members" 
+            name="Members" 
+            parent="menu_ams_root" 
+            sequence="10"
+        />
+
+        <!-- All Contacts (Enhanced) -->
+        <menuitem 
+            id="menu_ams_contacts" 
+            name="All Contacts" 
+            parent="menu_ams_members" 
+            action="action_ams_contacts" 
+            sequence="10"
+            groups="group_ams_staff"
+        />
+
+        <!-- Members Only -->
+        <menuitem 
+            id="menu_ams_members_only" 
+            name="Members Only" 
+            parent="menu_ams_members" 
+            action="action_ams_members_only" 
+            sequence="20"
+            groups="group_ams_member"
+        />
+
+        <!-- Organizations -->
+        <menuitem 
+            id="menu_ams_organizations" 
+            name="Organizations" 
+            parent="menu_ams_members" 
+            action="action_ams_organizations" 
+            sequence="30"
+            groups="group_ams_member"
+        />
+
+        <!-- Relationships -->
+        <menuitem 
+            id="menu_ams_relationships" 
+            name="Relationships" 
+            parent="menu_ams_members" 
+            action="action_ams_relationships" 
+            sequence="40"
+            groups="group_ams_staff"
+        />
+
+        <!-- Tools Menu -->
+        <menuitem 
+            id="menu_ams_tools" 
+            name="Tools" 
+            parent="menu_ams_root" 
+            sequence="90"
+            groups="group_ams_staff"
+        />
+
+        <!-- Merge Contacts Tool -->
+        <menuitem 
+            id="menu_ams_merge_contacts" 
+            name="Merge Contacts" 
+            parent="menu_ams_tools" 
+            action="action_merge_contacts_wizard" 
+            sequence="10"
+            groups="group_ams_staff"
+        />
+
+        <!-- Reports Menu -->
+        <menuitem 
+            id="menu_ams_reports" 
+            name="Reports" 
+            parent="menu_ams_root" 
+            sequence="80"
+            groups="group_ams_staff"
+        />
+
+        <!-- Member Statistics -->
+        <menuitem 
+            id="menu_ams_member_stats" 
+            name="Member Statistics" 
+            parent="menu_ams_reports" 
+            sequence="10"
+            groups="group_ams_staff"
+        />
+
+    </data>
 </odoo>

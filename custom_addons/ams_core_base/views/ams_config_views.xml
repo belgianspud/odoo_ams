@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- AMS Configuration Tree View -->
+        <record id="view_ams_config_tree" model="ir.ui.view">
+            <field name="name">ams.config.tree</field>
+            <field name="model">ams.config</field>
+            <field name="arch" type="xml">
+                <tree string="AMS Configuration">
+                    <field name="name"/>
+                    <field name="active" widget="boolean_toggle"/>
+                    <field name="industry_type"/>
+                    <field name="member_id_prefix"/>
+                    <field name="member_id_sequence_length"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- AMS Configuration Form View -->
+        <record id="view_ams_config_form" model="ir.ui.view">
+            <field name="name">ams.config.form</field>
+            <field name="model">ams.config</field>
+            <field name="arch" type="xml">
+                <form string="AMS Configuration">
+                    <header>
+                        <button name="generate_member_id" type="object" string="Test Member ID Generation" 
+                                class="btn-secondary" groups="group_ams_admin"/>
+                    </header>
+                    <sheet>
+                        <widget name="web_ribbon" title="Active" bg_color="bg-success" 
+                                attrs="{'invisible': [('active', '=', False)]}"/>
+                        <widget name="web_ribbon" title="Inactive" bg_color="bg-danger" 
+                                attrs="{'invisible': [('active', '=', True)]}"/>
+
+                        <div class="oe_title">
+                            <label for="name" class="oe_edit_only"/>
+                            <h1><field name="name" placeholder="Configuration Name"/></h1>
+                        </div>
+
+                        <group>
+                            <group name="basic_info" string="Basic Information">
+                                <field name="active"/>
+                                <field name="industry_type"/>
+                            </group>
+                        </group>
+
+                        <notebook>
+                            <page string="Member ID Settings" name="member_id">
+                                <group>
+                                    <group name="member_id_config" string="Member ID Configuration">
+                                        <field name="member_id_prefix" placeholder="M- or AMS"/>
+                                        <field name="member_id_sequence_length"/>
+                                        <div class="text-muted">
+                                            Preview: <span class="fw-bold">M-000001</span>
+                                        </div>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page string="Address Settings" name="addresses">
+                                <group>
+                                    <group name="address_config" string="Address Configuration">
+                                        <field name="enable_multiple_addresses"/>
+                                        <field name="max_addresses_per_contact" 
+                                               attrs="{'invisible': [('enable_multiple_addresses', '=', False)]}"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page string="Relationship Settings" name="relationships">
+                                <group>
+                                    <group name="relationship_config" string="Relationship Configuration">
+                                        <field name="enable_partner_relationships"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page string="Security Settings" name="security">
+                                <group>
+                                    <group name="security_config" string="Security Configuration">
+                                        <field name="default_portal_access"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page string="Communication Settings" name="communication">
+                                <group>
+                                    <group name="comm_config" string="Communication Configuration">
+                                        <field name="require_primary_email"/>
+                                        <field name="require_primary_phone"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page string="Industry Fields" name="industry_fields">
+                                <group>
+                                    <group name="industry_config" string="Industry-Specific Fields">
+                                        <field name="enable_professional_category"/>
+                                        <field name="enable_credentials"/>
+                                        <field name="enable_license_numbers"/>
+                                        <div class="alert alert-info" role="alert">
+                                            These fields are automatically enabled/disabled based on the selected industry type.
+                                        </div>
+                                    </group>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- AMS Configuration Action -->
+        <record id="action_ams_config" model="ir.actions.act_window">
+            <field name="name">AMS Configuration</field>
+            <field name="res_model">ams.config</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_ams_config_tree"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Configure your Association Management System
+                </p>
+                <p>
+                    Set up industry-specific settings, member ID formats, and system preferences.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

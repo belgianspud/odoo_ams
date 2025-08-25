@@ -1,0 +1,616 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- ==== LOOKUP CATEGORIES ==== -->
+        
+        <!-- Universal Categories (All Industries) -->
+        <record id="category_member_type" model="ams.lookup.category">
+            <field name="name">Member Type</field>
+            <field name="code">member_type</field>
+            <field name="description">Categories of membership types</field>
+            <field name="sequence">10</field>
+            <field name="industry_specific" eval="False"/>
+            <field name="applicable_industries">all</field>
+        </record>
+
+        <record id="category_language" model="ams.lookup.category">
+            <field name="name">Language</field>
+            <field name="code">language</field>
+            <field name="description">Spoken languages</field>
+            <field name="sequence">20</field>
+            <field name="industry_specific" eval="False"/>
+            <field name="applicable_industries">all</field>
+        </record>
+
+        <record id="category_relationship_type" model="ams.lookup.category">
+            <field name="name">Relationship Type</field>
+            <field name="code">relationship_type</field>
+            <field name="description">Types of relationships between contacts</field>
+            <field name="sequence">30</field>
+            <field name="industry_specific" eval="False"/>
+            <field name="applicable_industries">all</field>
+        </record>
+
+        <record id="category_address_type" model="ams.lookup.category">
+            <field name="name">Address Type</field>
+            <field name="code">address_type</field>
+            <field name="description">Types of addresses</field>
+            <field name="sequence">40</field>
+            <field name="industry_specific" eval="False"/>
+            <field name="applicable_industries">all</field>
+        </record>
+
+        <record id="category_contact_source" model="ams.lookup.category">
+            <field name="name">Contact Source</field>
+            <field name="code">contact_source</field>
+            <field name="description">How contacts were acquired</field>
+            <field name="sequence">50</field>
+            <field name="industry_specific" eval="False"/>
+            <field name="applicable_industries">all</field>
+        </record>
+
+        <!-- ==== UNIVERSAL LOOKUP VALUES ==== -->
+
+        <!-- Member Types -->
+        <record id="member_type_standard" model="ams.lookup">
+            <field name="category">member_type</field>
+            <field name="name">Standard Member</field>
+            <field name="code">standard</field>
+            <field name="sequence">10</field>
+            <field name="industry_types">all</field>
+            <field name="is_default" eval="True"/>
+            <field name="description">Standard membership level</field>
+        </record>
+
+        <record id="member_type_premium" model="ams.lookup">
+            <field name="category">member_type</field>
+            <field name="name">Premium Member</field>
+            <field name="code">premium</field>
+            <field name="sequence">20</field>
+            <field name="industry_types">all</field>
+            <field name="description">Premium membership level with additional benefits</field>
+        </record>
+
+        <record id="member_type_student" model="ams.lookup">
+            <field name="category">member_type</field>
+            <field name="name">Student Member</field>
+            <field name="code">student</field>
+            <field name="sequence">30</field>
+            <field name="industry_types">all</field>
+            <field name="description">Student or trainee membership</field>
+        </record>
+
+        <record id="member_type_retired" model="ams.lookup">
+            <field name="category">member_type</field>
+            <field name="name">Retired Member</field>
+            <field name="code">retired</field>
+            <field name="sequence">40</field>
+            <field name="industry_types">all</field>
+            <field name="description">Retired professional membership</field>
+        </record>
+
+        <record id="member_type_corporate" model="ams.lookup">
+            <field name="category">member_type</field>
+            <field name="name">Corporate Member</field>
+            <field name="code">corporate</field>
+            <field name="sequence">50</field>
+            <field name="industry_types">all</field>
+            <field name="description">Organizational membership</field>
+        </record>
+
+        <record id="member_type_honorary" model="ams.lookup">
+            <field name="category">member_type</field>
+            <field name="name">Honorary Member</field>
+            <field name="code">honorary</field>
+            <field name="sequence">60</field>
+            <field name="industry_types">all</field>
+            <field name="description">Honorary membership recognition</field>
+        </record>
+
+        <!-- Languages -->
+        <record id="language_english" model="ams.lookup">
+            <field name="category">language</field>
+            <field name="name">English</field>
+            <field name="code">en</field>
+            <field name="sequence">10</field>
+            <field name="industry_types">all</field>
+            <field name="is_default" eval="True"/>
+        </record>
+
+        <record id="language_spanish" model="ams.lookup">
+            <field name="category">language</field>
+            <field name="name">Spanish</field>
+            <field name="code">es</field>
+            <field name="sequence">20</field>
+            <field name="industry_types">all</field>
+        </record>
+
+        <record id="language_french" model="ams.lookup">
+            <field name="category">language</field>
+            <field name="name">French</field>
+            <field name="code">fr</field>
+            <field name="sequence">30</field>
+            <field name="industry_types">all</field>
+        </record>
+
+        <record id="language_german" model="ams.lookup">
+            <field name="category">language</field>
+            <field name="name">German</field>
+            <field name="code">de</field>
+            <field name="sequence">40</field>
+            <field name="industry_types">all</field>
+        </record>
+
+        <record id="language_mandarin" model="ams.lookup">
+            <field name="category">language</field>
+            <field name="name">Mandarin</field>
+            <field name="code">zh</field>
+            <field name="sequence">50</field>
+            <field name="industry_types">all</field>
+        </record>
+
+        <record id="language_other" model="ams.lookup">
+            <field name="category">language</field>
+            <field name="name">Other</field>
+            <field name="code">other</field>
+            <field name="sequence">99</field>
+            <field name="industry_types">all</field>
+        </record>
+
+        <!-- Relationship Types -->
+        <record id="relationship_employee" model="ams.lookup">
+            <field name="category">relationship_type</field>
+            <field name="name">Employee</field>
+            <field name="code">employee</field>
+            <field name="sequence">10</field>
+            <field name="industry_types">all</field>
+            <field name="description">Individual employed by organization</field>
+        </record>
+
+        <record id="relationship_employer" model="ams.lookup">
+            <field name="category">relationship_type</field>
+            <field name="name">Employer</field>
+            <field name="code">employer</field>
+            <field name="sequence">20</field>
+            <field name="industry_types">all</field>
+            <field name="description">Organization employing individual</field>
+        </record>
+
+        <record id="relationship_parent_org" model="ams.lookup">
+            <field name="category">relationship_type</field>
+            <field name="name">Parent Organization</field>
+            <field name="code">parent_org</field>
+            <field name="sequence">30</field>
+            <field name="industry_types">all</field>
+            <field name="description">Parent company or system</field>
+        </record>
+
+        <record id="relationship_child_org" model="ams.lookup">
+            <field name="category">relationship_type</field>
+            <field name="name">Child Organization</field>
+            <field name="code">child_org</field>
+            <field name="sequence">40</field>
+            <field name="industry_types">all</field>
+            <field name="description">Subsidiary or division</field>
+        </record>
+
+        <record id="relationship_system" model="ams.lookup">
+            <field name="category">relationship_type</field>
+            <field name="name">System</field>
+            <field name="code">system</field>
+            <field name="sequence">50</field>
+            <field name="industry_types">all</field>
+            <field name="description">System level organization</field>
+        </record>
+
+        <record id="relationship_location" model="ams.lookup">
+            <field name="category">relationship_type</field>
+            <field name="name">Location</field>
+            <field name="code">location</field>
+            <field name="sequence">60</field>
+            <field name="industry_types">all</field>
+            <field name="description">Physical location or branch</field>
+        </record>
+
+        <!-- Address Types -->
+        <record id="address_home" model="ams.lookup">
+            <field name="category">address_type</field>
+            <field name="name">Home</field>
+            <field name="code">home</field>
+            <field name="sequence">10</field>
+            <field name="industry_types">all</field>
+            <field name="is_default" eval="True"/>
+            <field name="description">Primary residential address</field>
+        </record>
+
+        <record id="address_work" model="ams.lookup">
+            <field name="category">address_type</field>
+            <field name="name">Work</field>
+            <field name="code">work</field>
+            <field name="sequence">20</field>
+            <field name="industry_types">all</field>
+            <field name="description">Workplace address</field>
+        </record>
+
+        <record id="address_mailing" model="ams.lookup">
+            <field name="category">address_type</field>
+            <field name="name">Mailing</field>
+            <field name="code">mailing</field>
+            <field name="sequence">30</field>
+            <field name="industry_types">all</field>
+            <field name="description">Preferred mailing address</field>
+        </record>
+
+        <!-- Contact Sources -->
+        <record id="contact_source_website" model="ams.lookup">
+            <field name="category">contact_source</field>
+            <field name="name">Website Registration</field>
+            <field name="code">website</field>
+            <field name="sequence">10</field>
+            <field name="industry_types">all</field>
+            <field name="description">Registered through website</field>
+        </record>
+
+        <record id="contact_source_event" model="ams.lookup">
+            <field name="category">contact_source</field>
+            <field name="name">Event/Conference</field>
+            <field name="code">event</field>
+            <field name="sequence">20</field>
+            <field name="industry_types">all</field>
+            <field name="description">Met at event or conference</field>
+        </record>
+
+        <record id="contact_source_referral" model="ams.lookup">
+            <field name="category">contact_source</field>
+            <field name="name">Member Referral</field>
+            <field name="code">referral</field>
+            <field name="sequence">30</field>
+            <field name="industry_types">all</field>
+            <field name="description">Referred by existing member</field>
+        </record>
+
+        <record id="contact_source_import" model="ams.lookup">
+            <field name="category">contact_source</field>
+            <field name="name">Data Import</field>
+            <field name="code">import</field>
+            <field name="sequence">40</field>
+            <field name="industry_types">all</field>
+            <field name="description">Imported from external system</field>
+        </record>
+
+        <record id="contact_source_staff" model="ams.lookup">
+            <field name="category">contact_source</field>
+            <field name="name">Staff Entry</field>
+            <field name="code">staff</field>
+            <field name="sequence">50</field>
+            <field name="industry_types">all</field>
+            <field name="description">Entered by staff member</field>
+        </record>
+
+        <!-- ==== HEALTHCARE-SPECIFIC LOOKUPS ==== -->
+
+        <!-- Professional Categories - Healthcare -->
+        <record id="prof_cat_physician" model="ams.lookup">
+            <field name="category">professional_category</field>
+            <field name="name">Physician (MD)</field>
+            <field name="code">md</field>
+            <field name="sequence">10</field>
+            <field name="industry_types">healthcare</field>
+            <field name="description">Medical Doctor</field>
+        </record>
+
+        <record id="prof_cat_nurse" model="ams.lookup">
+            <field name="category">professional_category</field>
+            <field name="name">Registered Nurse (RN)</field>
+            <field name="code">rn</field>
+            <field name="sequence">20</field>
+            <field name="industry_types">healthcare</field>
+            <field name="description">Registered Nurse</field>
+        </record>
+
+        <record id="prof_cat_nurse_practitioner" model="ams.lookup">
+            <field name="category">professional_category</field>
+            <field name="name">Nurse Practitioner (NP)</field>
+            <field name="code">np</field>
+            <field name="sequence">30</field>
+            <field name="industry_types">healthcare</field>
+            <field name="description">Nurse Practitioner</field>
+        </record>
+
+        <record id="prof_cat_respiratory_therapist" model="ams.lookup">
+            <field name="category">professional_category</field>
+            <field name="name">Respiratory Therapist (RT)</field>
+            <field name="code">rt</field>
+            <field name="sequence">40</field>
+            <field name="industry_types">healthcare</field>
+            <field name="description">Respiratory Therapist</field>
+        </record>
+
+        <record id="prof_cat_pharmacist" model="ams.lookup">
+            <field name="category">professional_category</field>
+            <field name="name">Pharmacist (PharmD)</field>
+            <field name="code">pharmd</field>
+            <field name="sequence">50</field>
+            <field name="industry_types">healthcare</field>
+            <field name="description">Doctor of Pharmacy</field>
+        </record>
+
+        <!-- Healthcare Designations -->
+        <record id="designation_fccm" model="ams.lookup">
+            <field name="category">designation</field>
+            <field name="name">FCCM</field>
+            <field name="code">fccm</field>
+            <field name="sequence">10</field>
+            <field name="industry_types">healthcare</field>
+            <field name="description">Fellow of the College of Critical Care Medicine</field>
+        </record>
+
+        <record id="designation_mccm" model="ams.lookup">
+            <field name="category">designation</field>
+            <field name="name">MCCM</field>
+            <field name="code">mccm</field>
+            <field name="sequence">20</field>
+            <field name="industry_types">healthcare</field>
+            <field name="description">Member of the College of Critical Care Medicine</field>
+        </record>
+
+        <!-- ==== AVIATION-SPECIFIC LOOKUPS ==== -->
+
+        <!-- Professional Categories - Aviation -->
+        <record id="prof_cat_pilot" model="ams.lookup">
+            <field name="category">professional_category</field>
+            <field name="name">Pilot</field>
+            <field name="code">pilot</field>
+            <field name="sequence">10</field>
+            <field name="industry_types">aviation</field>
+            <field name="description">Commercial or Private Pilot</field>
+        </record>
+
+        <record id="prof_cat_atc" model="ams.lookup">
+            <field name="category">professional_category</field>
+            <field name="name">Air Traffic Controller</field>
+            <field name="code">atc</field>
+            <field name="sequence">20</field>
+            <field name="industry_types">aviation</field>
+            <field name="description">Air Traffic Controller</field>
+        </record>
+
+        <record id="prof_cat_mechanic" model="ams.lookup">
+            <field name="category">professional_category</field>
+            <field name="name">Aircraft Mechanic</field>
+            <field name="code">mechanic</field>
+            <field name="sequence">30</field>
+            <field name="industry_types">aviation</field>
+            <field name="description">Aircraft Maintenance Technician</field>
+        </record>
+
+        <record id="prof_cat_flight_attendant" model="ams.lookup">
+            <field name="category">professional_category</field>
+            <field name="name">Flight Attendant</field>
+            <field name="code">fa</field>
+            <field name="sequence">40</field>
+            <field name="industry_types">aviation</field>
+            <field name="description">Cabin Crew Member</field>
+        </record>
+
+        <!-- Aviation Designations -->
+        <record id="designation_atp" model="ams.lookup">
+            <field name="category">designation</field>
+            <field name="name">ATP</field>
+            <field name="code">atp</field>
+            <field name="sequence">10</field>
+            <field name="industry_types">aviation</field>
+            <field name="description">Airline Transport Pilot License</field>
+        </record>
+
+        <record id="designation_cfi" model="ams.lookup">
+            <field name="category">designation</field>
+            <field name="name">CFI</field>
+            <field name="code">cfi</field>
+            <field name="sequence">20</field>
+            <field name="industry_types">aviation</field>
+            <field name="description">Certified Flight Instructor</field>
+        </record>
+
+        <!-- ==== LEGAL-SPECIFIC LOOKUPS ==== -->
+
+        <!-- Professional Categories - Legal -->
+        <record id="prof_cat_attorney" model="ams.lookup">
+            <field name="category">professional_category</field>
+            <field name="name">Attorney</field>
+            <field name="code">attorney</field>
+            <field name="sequence">10</field>
+            <field name="industry_types">legal</field>
+            <field name="description">Licensed Attorney</field>
+        </record>
+
+        <record id="prof_cat_paralegal" model="ams.lookup">
+            <field name="category">professional_category</field>
+            <field name="name">Paralegal</field>
+            <field name="code">paralegal</field>
+            <field name="sequence">20</field>
+            <field name="industry_types">legal</field>
+            <field name="description">Certified Paralegal</field>
+        </record>
+
+        <record id="prof_cat_judge" model="ams.lookup">
+            <field name="category">professional_category</field>
+            <field name="name">Judge</field>
+            <field name="code">judge</field>
+            <field name="sequence">30</field>
+            <field name="industry_types">legal</field>
+            <field name="description">Judge or Magistrate</field>
+        </record>
+
+        <!-- Legal Designations -->
+        <record id="designation_jd" model="ams.lookup">
+            <field name="category">designation</field>
+            <field name="name">J.D.</field>
+            <field name="code">jd</field>
+            <field name="sequence">10</field>
+            <field name="industry_types">legal</field>
+            <field name="description">Juris Doctor</field>
+        </record>
+
+        <record id="designation_llm" model="ams.lookup">
+            <field name="category">designation</field>
+            <field name="name">LL.M.</field>
+            <field name="code">llm</field>
+            <field name="sequence">20</field>
+            <field name="industry_types">legal</field>
+            <field name="description">Master of Laws</field>
+        </record>
+
+        <!-- ==== ENGINEERING-SPECIFIC LOOKUPS ==== -->
+
+        <!-- Professional Categories - Engineering -->
+        <record id="prof_cat_pe" model="ams.lookup">
+            <field name="category">professional_category</field>
+            <field name="name">Professional Engineer</field>
+            <field name="code">pe</field>
+            <field name="sequence">10</field>
+            <field name="industry_types">engineering</field>
+            <field name="description">Licensed Professional Engineer</field>
+        </record>
+
+        <record id="prof_cat_eit" model="ams.lookup">
+            <field name="category">professional_category</field>
+            <field name="name">Engineer in Training</field>
+            <field name="code">eit</field>
+            <field name="sequence">20</field>
+            <field name="industry_types">engineering</field>
+            <field name="description">Engineer in Training</field>
+        </record>
+
+        <!-- Engineering Designations -->
+        <record id="designation_bsee" model="ams.lookup">
+            <field name="category">designation</field>
+            <field name="name">B.S.E.E.</field>
+            <field name="code">bsee</field>
+            <field name="sequence">10</field>
+            <field name="industry_types">engineering</field>
+            <field name="description">Bachelor of Science in Electrical Engineering</field>
+        </record>
+
+        <record id="designation_msee" model="ams.lookup">
+            <field name="category">designation</field>
+            <field name="name">M.S.E.E.</field>
+            <field name="code">msee</field>
+            <field name="sequence">20</field>
+            <field name="industry_types">engineering</field>
+            <field name="description">Master of Science in Electrical Engineering</field>
+        </record>
+
+        <!-- ==== COMMON PERSONAL INFORMATION LOOKUPS ==== -->
+
+        <!-- Gender Identity -->
+        <record id="gender_male" model="ams.lookup">
+            <field name="category">gender_identity</field>
+            <field name="name">Male</field>
+            <field name="code">male</field>
+            <field name="sequence">10</field>
+            <field name="industry_types">all</field>
+        </record>
+
+        <record id="gender_female" model="ams.lookup">
+            <field name="category">gender_identity</field>
+            <field name="name">Female</field>
+            <field name="code">female</field>
+            <field name="sequence">20</field>
+            <field name="industry_types">all</field>
+        </record>
+
+        <record id="gender_nonbinary" model="ams.lookup">
+            <field name="category">gender_identity</field>
+            <field name="name">Non-binary</field>
+            <field name="code">nonbinary</field>
+            <field name="sequence">30</field>
+            <field name="industry_types">all</field>
+        </record>
+
+        <record id="gender_prefer_not_to_say" model="ams.lookup">
+            <field name="category">gender_identity</field>
+            <field name="name">Prefer not to say</field>
+            <field name="code">prefer_not_say</field>
+            <field name="sequence">40</field>
+            <field name="industry_types">all</field>
+        </record>
+
+        <record id="gender_other" model="ams.lookup">
+            <field name="category">gender_identity</field>
+            <field name="name">Other</field>
+            <field name="code">other</field>
+            <field name="sequence">99</field>
+            <field name="industry_types">all</field>
+        </record>
+
+        <!-- Pronouns -->
+        <record id="pronouns_he_him" model="ams.lookup">
+            <field name="category">pronouns</field>
+            <field name="name">He/Him</field>
+            <field name="code">he_him</field>
+            <field name="sequence">10</field>
+            <field name="industry_types">all</field>
+        </record>
+
+        <record id="pronouns_she_her" model="ams.lookup">
+            <field name="category">pronouns</field>
+            <field name="name">She/Her</field>
+            <field name="code">she_her</field>
+            <field name="sequence">20</field>
+            <field name="industry_types">all</field>
+        </record>
+
+        <record id="pronouns_they_them" model="ams.lookup">
+            <field name="category">pronouns</field>
+            <field name="name">They/Them</field>
+            <field name="code">they_them</field>
+            <field name="sequence">30</field>
+            <field name="industry_types">all</field>
+        </record>
+
+        <record id="pronouns_other" model="ams.lookup">
+            <field name="category">pronouns</field>
+            <field name="name">Other</field>
+            <field name="code">other</field>
+            <field name="sequence">99</field>
+            <field name="industry_types">all</field>
+        </record>
+
+        <!-- Communication Preferences -->
+        <record id="comm_email" model="ams.lookup">
+            <field name="category">communication_preference</field>
+            <field name="name">Email</field>
+            <field name="code">email</field>
+            <field name="sequence">10</field>
+            <field name="industry_types">all</field>
+            <field name="is_default" eval="True"/>
+        </record>
+
+        <record id="comm_phone" model="ams.lookup">
+            <field name="category">communication_preference</field>
+            <field name="name">Phone</field>
+            <field name="code">phone</field>
+            <field name="sequence">20</field>
+            <field name="industry_types">all</field>
+        </record>
+
+        <record id="comm_mail" model="ams.lookup">
+            <field name="category">communication_preference</field>
+            <field name="name">Postal Mail</field>
+            <field name="code">mail</field>
+            <field name="sequence">30</field>
+            <field name="industry_types">all</field>
+        </record>
+
+        <record id="comm_sms" model="ams.lookup">
+            <field name="category">communication_preference</field>
+            <field name="name">SMS/Text</field>
+            <field name="code">sms</field>
+            <field name="sequence">40</field>
+            <field name="industry_types">all</field>
+        </record>
+
+    </data>
+</odoo>

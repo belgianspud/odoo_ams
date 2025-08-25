@@ -2,48 +2,41 @@
 {
     'name': 'AMS Core Base',
     'version': '18.0.1.0.0',
-    'category': 'Association/Core',
-    'summary': 'Foundation layer - member IDs, basic demographics, security',
+    'category': 'Association Management',
+    'sequence': 10,
+    'summary': 'Foundation layer for Association Management System',
     'description': """
 AMS Core Base Module
-====================
+===================
 
-Foundation layer that makes Odoo "association-aware" with core partner extensions,
-member IDs, basic demographics, and security infrastructure.
+This module provides the foundational layer for the Association Management System (AMS).
+It extends Odoo's standard Contacts and Users to be association-aware with configurable
+fields and relationships suitable for professional associations across industries.
 
-This module provides ONLY the essential functionality for professional associations:
+Key Features:
+-----------
+* Industry-configurable contact and account fields
+* Member ID assignment and tracking  
+* Professional relationship management (Employee/Employer, Parent/Child Organization)
+* Multi-address support (billing, shipping, residential, corporate)
+* Configurable lookup values by industry type
+* AMS security roles (Guest, Member, Company POC, Staff, Admin)
+* Safe contact deduplication and merging
+* Generic configuration framework for association settings
 
-Core Features:
---------------
-* Member ID generation with configurable sequences
-* Basic member status tracking (active, lapsed, prospect, etc.)
-* Extended partner model with association-specific fields
-* Simple member profile for extended demographics
-* Member categories and classification
-* Core security groups (member, staff, admin)
-* Professional association contact preferences
+Supported Industries:
+-------------------
+* Healthcare/Medical
+* Aviation  
+* Legal
+* Engineering
+* And other professional associations
 
-Professional Association Focus:
--------------------------------
-* Medical associations (doctors, nurses, specialists)
-* Legal associations (attorneys, paralegals, judges) 
-* Engineering associations (PE, civil, mechanical, etc.)
-* Aviation associations (pilots, mechanics, controllers)
-* Business associations (CPAs, consultants, executives)
-* Academic associations (researchers, educators)
-
-This is the foundation module that all other AMS modules depend on.
-Additional functionality is available through complementary modules:
-
-* Professional designations & specialties → ams_core_professional
-* Audit logging & compliance → ams_core_audit  
-* Privacy & consent management → ams_core_privacy
-* Partner relationships → ams_core_relationships
-* Communication preferences → ams_core_communications
-* Duplicate detection → ams_core_deduplication
-    """,
-    'author': 'AMS Development Team',
-    'website': 'https://github.com/yourusername/ams-odoo',
+This module serves as the foundation that other AMS modules build upon.
+It contains no hard-coded values - all behavior is driven by configuration.
+""",
+    'author': 'Your Company',
+    'website': 'https://www.yourcompany.com',
     'license': 'LGPL-3',
     'depends': [
         'base',
@@ -52,20 +45,26 @@ Additional functionality is available through complementary modules:
     ],
     'data': [
         # Security
-        'security/security.xml',
+        'security/security_groups.xml',
         'security/ir.model.access.csv',
         
-        # Data
-        'data/member_id_sequence.xml',
-        'data/member_categories.xml',
-        'data/default_groups.xml',
+        # Data  
+        'data/ams_config_data.xml',
+        'data/ams_lookup_data.xml',
         
         # Views
+        'views/menus.xml',
+        'views/ams_config_views.xml', 
+        'views/ams_lookup_views.xml',
         'views/res_partner_views.xml',
-        'views/member_profile_views.xml',
     ],
-    'application': True,
+    'demo': [],
+    'images': ['static/description/icon.png'],
     'installable': True,
+    'application': True,
     'auto_install': False,
-    'sequence': 10,
+    'post_init_hook': None,
+    'external_dependencies': {
+        'python': [],
+    },
 }

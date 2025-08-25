@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Partner Relationship Tree View -->
+        <record id="view_res_partner_relationship_tree" model="ir.ui.view">
+            <field name="name">res.partner.relationship.tree</field>
+            <field name="model">res.partner.relationship</field>
+            <field name="arch" type="xml">
+                <tree string="Partner Relationships">
+                    <field name="partner_id"/>
+                    <field name="relationship_type_id"/>
+                    <field name="related_partner_id"/>
+                    <field name="role_title"/>
+                    <field name="department"/>
+                    <field name="start_date"/>
+                    <field name="end_date"/>
+                    <field name="is_current" widget="boolean_toggle"/>
+                    <field name="is_primary" widget="boolean_toggle"/>
+                    <field name="active" widget="boolean_toggle"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Partner Relationship Form View -->
+        <record id="view_res_partner_relationship_form" model="ir.ui.view">
+            <field name="name">res.partner.relationship.form</field>
+            <field name="model">res.partner.relationship</field>
+            <field name="arch" type="xml">
+                <form string="Partner Relationship">
+                    <header>
+                        <button name="end_relationship" type="object" string="End Relationship" 
+                                class="btn-secondary" attrs="{'invisible': [('active', '=', False)]}"/>
+                        <button name="create_reverse_relationship" type="object" string="Create Reverse" 
+                                class="btn-secondary" attrs="{'invisible': [('active', '=', False)]}"/>
+                        <field name="active" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1><field name="display_name" readonly="1"/></h1>
+                        </div>
+
+                        <group>
+                            <group name="relationship_info" string="Relationship Details">
+                                <field name="partner_id"/>
+                                <field name="relationship_type_id"/>
+                                <field name="related_partner_id"/>
+                                <field name="is_primary"/>
+                            </group>
+                            <group name="relationship_dates" string="Dates">
+                                <field name="start_date"/>
+                                <field name="end_date"/>
+                                <field name="is_current" readonly="1"/>
+                            </group>
+                        </group>
+
+                        <group name="additional_info" string="Additional Information">
+                            <group>
+                                <field name="role_title"/>
+                                <field name="department"/>
+                            </group>
+                            <group>
+                                <field name="created_by_user_id" readonly="1"/>
+                            </group>
+                        </group>
+
+                        <group name="notes" string="Notes">
+                            <field name="notes" nolabel="1"/>
+                        </group>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!-- Partner Relationship Search View -->
+        <record id="view_res_partner_relationship_search" model="ir.ui.view">
+            <field name="name">res.partner.relationship.search</field>
+            <field name="model">res.partner.relationship</field>
+            <field name="arch" type="xml">
+                <search string="Search Relationships">
+                    <field name="partner_id" string="Partner"/>
+                    <field name="related_partner_id" string="Related Partner"/>
+                    <field name="relationship_type_id" string="Relationship Type"/>
+                    <field name="role_title" string="Role"/>
+                    <field name="department" string="Department"/>
+                    
+                    <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                    <filter string="Current" name="current" domain="[('is_current', '=', True)]"/>
+                    <filter string="Primary" name="primary" domain="[('is_primary', '=', True)]"/>
+                    <filter string="Ended" name="ended" domain="[('end_date', '!=', False)]"/>
+                    
+                    <separator/>
+                    <filter string="Employment" name="employment" domain="[('relationship_type_id.code', 'in', ['employee', 'employer'])]"/>
+                    <filter string="Organization Hierarchy" name="org_hierarchy" domain="[('relationship_type_id.code', 'in', ['parent_org', 'child_org', 'system', 'location'])]"/>
+                    
+                    <separator/>
+                    <group expand="1" string="Group By">
+                        <filter string="Relationship Type" name="group_type" context="{'group_by': 'relationship_type_id'}"/>
+                        <filter string="Partner" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                        <filter string="Related Partner" name="group_related" context="{'group_by': 'related_partner_id'}"/>
+                        <filter string="Start Date" name="group_start_date" context="{'group_by': 'start_date'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Partner Relationship Kanban View -->
+        <record id="view_res_partner_relationship_kanban" model="ir.ui.view">
+            <field name="name">res.partner.relationship.kanban</field>
+            <field name="model">res.partner.relationship</field>
+            <field name="arch" type="xml">
+                <kanban>
+                    <field name="id"/>
+                    <field name="partner_id"/>
+                    <field name="related_partner_id"/>
+                    <field name="relationship_type_id"/>
+                    <field name="role_title"/>
+                    <field name="is_current"/>
+                    <field name="is_primary"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_card oe_kanban_global_click">
+                                <div class="oe_kanban_details">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="partner_id"/>
+                                    </strong>
+                                    <div class="o_kanban_tags_section">
+                                        <span class="badge badge-secondary">
+                                            <field name="relationship_type_id"/>
+                                        </span>
+                                        <span t-if="record.is_primary.value" class="badge badge-success">Primary</span>
+                                        <span t-if="!record.is_current.value" class="badge badge-warning">Ended</span>
+                                    </div>
+                                    <ul>
+                                        <li><strong>Related to:</strong> <field name="related_partner_id"/></li>
+                                        <li t-if="record.role_title.value"><strong>Role:</strong> <field name="role_title"/></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- Update the main relationships action to use these views -->
+        <record id="action_ams_relationships" model="ir.actions.act_window">
+            <field name="name">Partner Relationships</field>
+            <field name="res_model">res.partner.relationship</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="view_id" ref="view_res_partner_relationship_kanban"/>
+            <field name="search_view_id" ref="view_res_partner_relationship_search"/>
+            <field name="context">{'search_default_current': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No relationships found
+                </p>
+                <p>
+                    Create relationships between contacts and organizations to track employment, partnerships, and hierarchies.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

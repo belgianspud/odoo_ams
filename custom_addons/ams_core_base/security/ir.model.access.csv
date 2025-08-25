@@ -1,25 +1,30 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_ams_member_profile_member,ams.member.profile member,model_ams_member_profile,group_ams_member,1,1,1,0
-access_ams_member_profile_staff,ams.member.profile staff,model_ams_member_profile,group_ams_staff,1,1,1,0
-access_ams_member_profile_manager,ams.member.profile manager,model_ams_member_profile,group_ams_manager,1,1,1,1
-access_ams_member_profile_admin,ams.member.profile admin,model_ams_member_profile,group_ams_admin,1,1,1,1
-access_ams_member_profile_privacy,ams.member.profile privacy,model_ams_member_profile,group_ams_privacy_officer,1,1,1,0
-access_ams_member_profile_data,ams.member.profile data,model_ams_member_profile,group_ams_data_officer,1,1,1,0
-access_ams_professional_designation_public,ams.professional.designation public,model_ams_professional_designation,base.group_user,1,0,0,0
-access_ams_professional_designation_member,ams.professional.designation member,model_ams_professional_designation,group_ams_member,1,0,0,0
-access_ams_professional_designation_staff,ams.professional.designation staff,model_ams_professional_designation,group_ams_staff,1,1,1,0
-access_ams_professional_designation_manager,ams.professional.designation manager,model_ams_professional_designation,group_ams_manager,1,1,1,0
-access_ams_professional_designation_admin,ams.professional.designation admin,model_ams_professional_designation,group_ams_admin,1,1,1,1
-access_ams_professional_designation_privacy,ams.professional.designation privacy,model_ams_professional_designation,group_ams_privacy_officer,1,0,0,0
-access_ams_professional_designation_data,ams.professional.designation data,model_ams_professional_designation,group_ams_data_officer,1,1,1,0
-access_ams_member_specialty_public,ams.member.specialty public,model_ams_member_specialty,base.group_user,1,0,0,0
-access_ams_member_specialty_member,ams.member.specialty member,model_ams_member_specialty,group_ams_member,1,0,0,0
-access_ams_member_specialty_staff,ams.member.specialty staff,model_ams_member_specialty,group_ams_staff,1,1,1,0
-access_ams_member_specialty_manager,ams.member.specialty manager,model_ams_member_specialty,group_ams_manager,1,1,1,0
-access_ams_member_specialty_admin,ams.member.specialty admin,model_ams_member_specialty,group_ams_admin,1,1,1,1
-access_ams_member_specialty_privacy,ams.member.specialty privacy,model_ams_member_specialty,group_ams_privacy_officer,1,0,0,0
-access_ams_member_specialty_data,ams.member.specialty data,model_ams_member_specialty,group_ams_data_officer,1,1,1,0
-access_ams_audit_log_staff,ams.audit.log staff,model_ams_audit_log,group_ams_staff,1,0,0,0
-access_ams_audit_log_manager,ams.audit.log manager,model_ams_audit_log,group_ams_manager,1,1,0,0
-access_ams_audit_log_admin,ams.audit.log admin,model_ams_audit_log,group_ams_admin,1,1,1,1
-access_ams_audit_log_privacy,ams.audit.log privacy,model_ams_audit_log,group_ams_privacy_officer,1,1,0,0
+access_ams_config_admin,ams.config admin,model_ams_config,group_ams_admin,1,1,1,1
+access_ams_config_staff,ams.config staff,model_ams_config,group_ams_staff,1,0,0,0
+access_ams_lookup_admin,ams.lookup admin,model_ams_lookup,group_ams_admin,1,1,1,1
+access_ams_lookup_staff,ams.lookup staff,model_ams_lookup,group_ams_staff,1,1,1,0
+access_ams_lookup_member,ams.lookup member,model_ams_lookup,group_ams_member,1,0,0,0
+access_ams_lookup_guest,ams.lookup guest,model_ams_lookup,group_ams_guest,1,0,0,0
+access_ams_lookup_category_admin,ams.lookup.category admin,model_ams_lookup_category,group_ams_admin,1,1,1,1
+access_ams_lookup_category_staff,ams.lookup.category staff,model_ams_lookup_category,group_ams_staff,1,1,1,0
+access_ams_lookup_category_member,ams.lookup.category member,model_ams_lookup_category,group_ams_member,1,0,0,0
+access_res_partner_admin,res.partner admin,base.model_res_partner,group_ams_admin,1,1,1,1
+access_res_partner_staff,res.partner staff,base.model_res_partner,group_ams_staff,1,1,1,1
+access_res_partner_company_poc,res.partner company poc,base.model_res_partner,group_ams_company_poc,1,1,1,0
+access_res_partner_member,res.partner member,base.model_res_partner,group_ams_member,1,0,0,0
+access_res_partner_guest,res.partner guest,base.model_res_partner,group_ams_guest,1,0,0,0
+access_res_partner_address_admin,res.partner.address admin,model_res_partner_address,group_ams_admin,1,1,1,1
+access_res_partner_address_staff,res.partner.address staff,model_res_partner_address,group_ams_staff,1,1,1,1
+access_res_partner_address_company_poc,res.partner.address company poc,model_res_partner_address,group_ams_company_poc,1,1,1,0
+access_res_partner_address_member,res.partner.address member,model_res_partner_address,group_ams_member,1,0,0,0
+access_res_partner_relationship_admin,res.partner.relationship admin,model_res_partner_relationship,group_ams_admin,1,1,1,1
+access_res_partner_relationship_staff,res.partner.relationship staff,model_res_partner_relationship,group_ams_staff,1,1,1,1
+access_res_partner_relationship_company_poc,res.partner.relationship company poc,model_res_partner_relationship,group_ams_company_poc,1,1,1,0
+access_res_partner_relationship_member,res.partner.relationship member,model_res_partner_relationship,group_ams_member,1,0,0,0
+access_res_users_admin,res.users admin,base.model_res_users,group_ams_admin,1,1,1,1
+access_res_users_staff,res.users staff,base.model_res_users,group_ams_staff,1,1,1,0
+access_res_users_company_poc,res.users company poc,base.model_res_users,group_ams_company_poc,1,0,0,0
+access_res_users_member,res.users member,base.model_res_users,group_ams_member,1,0,0,0
+access_ams_user_role_admin,ams.user.role admin,model_ams_user_role,group_ams_admin,1,1,1,1
+access_ams_user_role_staff,ams.user.role staff,model_ams_user_role,group_ams_staff,1,0,0,0
+access_ams_user_role_member,ams.user.role member,model_ams_user_role,group_ams_member,1,0,0,0
