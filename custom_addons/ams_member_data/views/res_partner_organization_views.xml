@@ -39,17 +39,17 @@
                 </button>
             </xpath>
 
+            <!-- Add member type and status for organizations -->
+            <xpath expr="//field[@name='name']" position="before">
+                <field name="member_type_id" attrs="{'invisible': [('is_company', '=', False)]}"/>
+                <field name="member_status_id" attrs="{'invisible': ['|', ('member_type_id', '=', False), ('is_company', '=', False)]}"/>
+            </xpath>
+
             <!-- Add organization fields after company name -->
             <xpath expr="//field[@name='name']" position="after">
                 <field name="acronym" placeholder="Acronym" 
                        attrs="{'invisible': [('is_company', '=', False)]}"/>
                 <field name="member_id" attrs="{'invisible': [('member_id', '=', False)]}"/>
-            </xpath>
-
-            <!-- Add member type and status for organizations -->
-            <xpath expr="//field[@name='category_id']" position="before">
-                <field name="member_type_id" attrs="{'invisible': [('is_company', '=', False)]}"/>
-                <field name="member_status_id" attrs="{'invisible': ['|', ('member_type_id', '=', False), ('is_company', '=', False)]}"/>
             </xpath>
 
             <!-- Extend organization information -->

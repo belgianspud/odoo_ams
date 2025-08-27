@@ -16,33 +16,29 @@
                 </button>
             </xpath>
 
-            <!-- Replace name field with name components for individuals -->
-            <xpath expr="//field[@name='name']" position="replace">
-                <div class="o_row" attrs="{'invisible': [('member_type_id', '=', False)]}">
-                    <field name="first_name" placeholder="First Name" 
-                           attrs="{'invisible': ['|', ('member_type_id', '=', False), ('member_type_id.is_individual', '=', False)]}"/>
-                    <field name="middle_name" placeholder="Middle" 
-                           attrs="{'invisible': ['|', ('member_type_id', '=', False), ('member_type_id.is_individual', '=', False)]}"/>
-                    <field name="last_name" placeholder="Last Name" 
-                           attrs="{'invisible': ['|', ('member_type_id', '=', False), ('member_type_id.is_individual', '=', False)]}"/>
-                    <field name="suffix" placeholder="Jr/Sr" 
-                           attrs="{'invisible': ['|', ('member_type_id', '=', False), ('member_type_id.is_individual', '=', False)]}"/>
-                </div>
-                <field name="name" placeholder="Name" 
-                       attrs="{'invisible': [('member_type_id', '!=', False)]}"/>
+            <!-- Add member type and status at the top of the form -->
+            <xpath expr="//field[@name='name']" position="before">
+                <field name="member_type_id"/>
+                <field name="member_status_id" attrs="{'invisible': [('member_type_id', '=', False)]}"/>
             </xpath>
 
-            <!-- Add member fields after name -->
-            <xpath expr="//field[@name='category_id']" position="after">
+            <!-- Replace name field with name components for individuals -->
+            <xpath expr="//field[@name='name']" position="replace">
+                <div class="o_row" attrs="{'invisible': ['|', ('member_type_id', '=', False), ('member_type_id.is_individual', '=', False)]}">
+                    <field name="first_name" placeholder="First Name"/>
+                    <field name="middle_name" placeholder="Middle"/>
+                    <field name="last_name" placeholder="Last Name"/>
+                    <field name="suffix" placeholder="Jr/Sr"/>
+                </div>
+                <field name="name" placeholder="Name" 
+                       attrs="{'invisible': ['&', ('member_type_id', '!=', False), ('member_type_id.is_individual', '=', True)]}"/>
+            </xpath>
+
+            <!-- Add member ID and nickname after name -->
+            <xpath expr="//field[@name='name']" position="after">
                 <field name="member_id" attrs="{'invisible': [('member_id', '=', False)]}"/>
                 <field name="nickname" placeholder="Preferred Name" 
                        attrs="{'invisible': ['|', ('member_type_id', '=', False), ('member_type_id.is_individual', '=', False)]}"/>
-            </xpath>
-
-            <!-- Add member type and status -->
-            <xpath expr="//field[@name='category_id']" position="before">
-                <field name="member_type_id"/>
-                <field name="member_status_id" attrs="{'invisible': [('member_type_id', '=', False)]}"/>
             </xpath>
 
             <!-- Extend contact information -->
@@ -211,6 +207,9 @@
                 <separator/>
                 <filter string="Recent Additions" name="recent" 
                         domain="[('create_date', '>=', (context_today() - datetime.timedelta(days=30)))]"/>
+                <!-- Add missing filter referenced by actions -->
+                <filter string="Has Member Type" name="has_member_type" 
+                        domain="[('member_type_id', '!=', False)]"/>
 
                 <group expand="0" string="Group By">
                     <filter string="Member Type" name="group_member_type" 

@@ -104,7 +104,7 @@ class ResPartnerOrganization(models.Model):
                 partner.total_seats = 0
                 continue
                 
-            # This computation depends on ams_enterprise_seats module
+            # This computation will be enhanced by ams_enterprise_seats module
             # For now, we'll compute basic stats from employee relationships
             total_employees = len(partner.employee_ids)
             member_employees = len(partner.employee_ids.filtered('is_member'))
@@ -122,9 +122,61 @@ class ResPartnerOrganization(models.Model):
                 partner.exhibitor_points = 0.0
                 continue
                 
-            # This computation depends on ams_event_sponsorship module
+            # This computation will be enhanced by ams_event_sponsorship module
             # For now, return 0 - will be enhanced by event modules
             partner.exhibitor_points = 0.0
+
+    # ==========================================
+    # ACTION METHODS
+    # ==========================================
+
+    def action_view_employees(self):
+        """Open a view showing all employees of this organization."""
+        self.ensure_one()
+        return {
+            'name': f'Employees - {self.name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'res.partner',
+            'view_mode': 'tree,form',
+            'domain': [('parent_id', '=', self.id), ('is_company', '=', False)],
+            'context': {
+                'default_parent_id': self.id,
+                'default_is_company': False,
+            },
+        }
+
+    def action_view_member_employees(self):
+        """Open a view showing only member employees."""
+        self.ensure_one()
+        return {
+            'name': f'Member Employees - {self.name}',
+            'type': 'ir.actions.act_window', 
+            'res_model': 'res.partner',
+            'view_mode': 'tree,form',
+            'domain': [
+                ('parent_id', '=', self.id),
+                ('is_company', '=', False),
+                ('is_member', '=', True)
+            ],
+            'context': {
+                'default_parent_id': self.id,
+                'default_is_company': False,
+            },
+        }
+
+    def action_view_participations(self):
+        """Open organization participations view."""
+        self.ensure_one()
+        # This will be enhanced when ams_participation module is installed
+        return {
+            'name': f'Participations - {self.display_name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'ams.participation',
+            'view_mode': 'tree,form',
+            'domain': [('company_id', '=', self.id)],
+            'context': {'default_company_id': self.id},
+            'help': '<p>No participations found. Install ams_participation module to manage organization participations.</p>'
+        }
 
     # ==========================================
     # VALIDATION & CONSTRAINTS  
@@ -185,40 +237,6 @@ class ResPartnerOrganization(models.Model):
     # ==========================================
     # BUSINESS LOGIC METHODS
     # ==========================================
-
-    def action_view_employees(self):
-        """Open a view showing all employees of this organization."""
-        self.ensure_one()
-        return {
-            'name': f'Employees - {self.name}',
-            'type': 'ir.actions.act_window',
-            'res_model': 'res.partner',
-            'view_mode': 'tree,form',
-            'domain': [('parent_id', '=', self.id), ('is_company', '=', False)],
-            'context': {
-                'default_parent_id': self.id,
-                'default_is_company': False,
-            },
-        }
-
-    def action_view_member_employees(self):
-        """Open a view showing only member employees."""
-        self.ensure_one()
-        return {
-            'name': f'Member Employees - {self.name}',
-            'type': 'ir.actions.act_window', 
-            'res_model': 'res.partner',
-            'view_mode': 'tree,form',
-            'domain': [
-                ('parent_id', '=', self.id),
-                ('is_company', '=', False),
-                ('is_member', '=', True)
-            ],
-            'context': {
-                'default_parent_id': self.id,
-                'default_is_company': False,
-            },
-        }
 
     @api.model
     def get_organizations_with_enterprise_seats(self):

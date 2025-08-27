@@ -194,7 +194,7 @@ class ResPartnerIndividual(models.Model):
     # COMPUTED FIELDS & METHODS
     # ==========================================
 
-    @api.depends('member_type_id')
+    @api.depends('first_name', 'middle_name', 'last_name', 'suffix', 'member_type_id')
     def _compute_display_name(self):
         """Override display name computation to use proper name components."""
         for partner in self:
@@ -217,53 +217,32 @@ class ResPartnerIndividual(models.Model):
             else:
                 super(ResPartnerIndividual, partner)._compute_display_name()
 
-    @api.depends('first_name', 'middle_name', 'last_name', 'suffix')
-    def _compute_name(self):
-        """Auto-populate name field from components for individuals.""" 
-        for partner in self:
-            if partner.member_type_id and partner.member_type_id.is_individual:
-                name_parts = []
-                if partner.first_name:
-                    name_parts.append(partner.first_name)
-                if partner.middle_name:
-                    name_parts.append(partner.middle_name)  
-                if partner.last_name:
-                    name_parts.append(partner.last_name)
-                if partner.suffix:
-                    name_parts.append(partner.suffix)
-                    
-                partner.name = ' '.join(name_parts) if name_parts else partner.name
-
-    @api.depends('participation_ids.status')
+    @api.depends('member_status_id')
     def _compute_is_member(self):
-        """Compute member status based on active participations."""
+        """Compute member status based on member status."""
+        # This will be enhanced when ams_participation module is installed
         for partner in self:
-            # Check if partner has any active participations
-            active_participations = partner.participation_ids.filtered(
-                lambda p: p.status in ['active', 'grace']
-            )
-            partner.is_member = bool(active_participations)
+            # For now, base it on member_status_id
+            if partner.member_status_id and partner.member_status_id.is_active:
+                partner.is_member = True
+            else:
+                partner.is_member = False
 
-    @api.depends('participation_ids.paid_through_date', 'participation_ids.status')
+    @api.depends('member_status_id')
     def _compute_paid_through_date(self):
         """Compute latest paid through date from active participations."""
+        # This will be enhanced when ams_participation module is installed
         for partner in self:
-            active_participations = partner.participation_ids.filtered(
-                lambda p: p.status in ['active', 'grace'] and p.paid_through_date
-            )
-            if active_participations:
-                partner.paid_through_date = max(active_participations.mapped('paid_through_date'))
-            else:
-                partner.paid_through_date = False
+            # For now, set to None - will be computed by participation module
+            partner.paid_through_date = False
 
-    @api.depends('participation_ids.status')
+    @api.depends('member_status_id')
     def _compute_primary_membership(self):
         """Identify the primary active membership."""
+        # This will be enhanced when ams_participation module is installed
         for partner in self:
-            primary_participation = partner.participation_ids.filtered(
-                lambda p: p.status == 'active' and p.participation_type == 'membership'
-            )
-            partner.primary_membership_id = primary_participation[0] if primary_participation else False
+            # For now, set to None - will be computed by participation module
+            partner.primary_membership_id = False
 
     @api.depends('member_status_id', 'is_member')
     def _compute_current_status(self):
@@ -277,6 +256,41 @@ class ResPartnerIndividual(models.Model):
                 partner.current_status = 'inactive'
             else:
                 partner.current_status = 'never_member'
+
+    @api.onchange('first_name', 'middle_name', 'last_name', 'suffix', 'member_type_id')
+    def _onchange_name_components(self):
+        """Auto-populate name field from components for individuals."""
+        if self.member_type_id and self.member_type_id.is_individual:
+            name_parts = []
+            if self.first_name:
+                name_parts.append(self.first_name)
+            if self.middle_name:
+                name_parts.append(self.middle_name)  
+            if self.last_name:
+                name_parts.append(self.last_name)
+            if self.suffix:
+                name_parts.append(self.suffix)
+                
+            if name_parts:
+                self.name = ' '.join(name_parts)
+
+    # ==========================================
+    # ACTION METHODS
+    # ==========================================
+
+    def action_view_participations(self):
+        """Open member participations view."""
+        self.ensure_one()
+        # This will be enhanced when ams_participation module is installed
+        return {
+            'name': f'Participations - {self.display_name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'ams.participation',
+            'view_mode': 'tree,form',
+            'domain': [('partner_id', '=', self.id)],
+            'context': {'default_partner_id': self.id},
+            'help': '<p>No participations found. Install ams_participation module to manage member participations.</p>'
+        }
 
     # ==========================================
     # VALIDATION & CONSTRAINTS
@@ -335,7 +349,11 @@ class ResPartnerIndividual(models.Model):
         for vals in vals_list:
             # Generate member ID if this is going to be a member
             if vals.get('member_type_id') and not vals.get('member_id'):
-                vals['member_id'] = self.env['ir.sequence'].next_by_code('ams.member.id')
+                try:
+                    vals['member_id'] = self.env['ir.sequence'].next_by_code('ams.member.id')
+                except Exception:
+                    # Fallback if sequence doesn't exist yet
+                    pass
             
             # Set original join date if not provided
             if vals.get('member_type_id') and not vals.get('original_join_date'):
@@ -346,11 +364,21 @@ class ResPartnerIndividual(models.Model):
     def write(self, vals):
         """Override write to handle member type changes.""" 
         # Generate member ID when member type is assigned
-        if vals.get('member_type_id') and not self.member_id:
-            vals['member_id'] = self.env['ir.sequence'].next_by_code('ams.member.id')
+        if vals.get('member_type_id'):
+            for record in self:
+                if not record.member_id:
+                    try:
+                        vals['member_id'] = self.env['ir.sequence'].next_by_code('ams.member.id')
+                        break  # Only set once for the batch
+                    except Exception:
+                        # Fallback if sequence doesn't exist yet
+                        pass
             
         # Set original join date when first becoming a member
-        if vals.get('member_type_id') and not self.original_join_date:
-            vals['original_join_date'] = fields.Date.context_today(self)
+        if vals.get('member_type_id'):
+            for record in self:
+                if not record.original_join_date:
+                    vals['original_join_date'] = fields.Date.context_today(self)
+                    break  # Only set once for the batch
             
         return super().write(vals)
