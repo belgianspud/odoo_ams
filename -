@@ -1,0 +1,334 @@
+2025-08-27 18:19:25,230 19788 INFO ? odoo: Odoo version 18.0 
+2025-08-27 18:19:25,230 19788 INFO ? odoo: Using configuration file at C:\odoo-ams\odoo.conf 
+2025-08-27 18:19:25,230 19788 INFO ? odoo: addons paths: ['C:\\odoo-ams\\odoo\\odoo\\addons', 'c:\\users\\johnj\\appdata\\local\\packages\\pythonsoftwarefoundation.python.3.11_qbz5n2kfra8p0\\localcache\\local\\openerp s.a\\odoo\\addons\\18.0', 'c:\\odoo-ams\\odoo\\addons', 'c:\\odoo-ams\\odoo\\odoo\\addons', 'c:\\odoo-ams\\custom_addons'] 
+2025-08-27 18:19:25,230 19788 INFO ? odoo: database: odoo@localhost:5432 
+2025-08-27 18:19:26,033 19788 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2025-08-27 18:19:26,065 19788 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltoimage to generate images from html. 
+2025-08-27 18:19:27,774 19788 INFO ? odoo.service.server: HTTP service (werkzeug) running on DESKTOP-L0HCGBH:8070 
+2025-08-27 18:19:27,961 19788 INFO odoo_ams_development odoo.modules.loading: loading 1 modules... 
+2025-08-27 18:19:27,963 19788 INFO odoo_ams_development odoo.modules.loading: 1 modules loaded in 0.00s, 0 queries (+0 extra) 
+2025-08-27 18:19:29,597 19788 INFO odoo_ams_development odoo.modules.loading: loading 155 modules... 
+2025-08-27 18:19:45,109 19788 INFO odoo_ams_development odoo.modules.loading: 155 modules loaded in 15.51s, 0 queries (+0 extra) 
+2025-08-27 18:19:45,439 19788 INFO odoo_ams_development odoo.modules.loading: Modules loaded. 
+2025-08-27 18:19:45,445 19788 INFO odoo_ams_development odoo.modules.registry: Registry loaded in 17.670s 
+2025-08-27 18:19:45,452 19788 INFO odoo_ams_development odoo.addons.base.models.ir_http: Generating routing map for key 1 
+2025-08-27 18:19:46,730 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:19:46] "GET / HTTP/1.1" 200 - 175 0.138 18.645
+2025-08-27 18:19:52,344 19788 WARNING ? odoo.modules.module: Missing `license` key in manifest for 'app_landing_page', defaulting to LGPL-3 
+2025-08-27 18:19:52,344 19788 WARNING ? odoo.modules.module: Missing `license` key in manifest for 'app_landing_page', defaulting to LGPL-3 
+2025-08-27 18:19:52,687 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:19:52] "GET /web/static/src/libs/fontawesome/fonts/fontawesome-webfont.woff2?v=4.7.0 HTTP/1.1" 200 - 0 0.000 5.947
+2025-08-27 18:19:53,090 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:19:53] "GET /web/assets/1/9ddbeac/web.assets_frontend_minimal.min.js HTTP/1.1" 200 - 4 0.012 0.067
+2025-08-27 18:20:02,971 19788 INFO odoo_ams_development odoo.addons.base.models.assetsbundle: Generating a new asset bundle attachment /web/assets/1/4161926/web.assets_frontend.min.css (id:1047) 
+2025-08-27 18:20:02,972 19788 INFO odoo_ams_development odoo.addons.base.models.assetsbundle: Deleting attachments [1001] (matching /web/assets/1/_______/web.assets_frontend.min.css) because it was replaced with /web/assets/1/4161926/web.assets_frontend.min.css 
+2025-08-27 18:20:03,022 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:03] "GET /web/assets/1/4161926/web.assets_frontend.min.css HTTP/1.1" 200 - 18 0.064 15.908
+2025-08-27 18:20:03,461 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:03] "GET /web/static/lib/odoo_ui_icons/fonts/odoo_ui_icons.woff2 HTTP/1.1" 200 - 0 0.000 0.023
+2025-08-27 18:20:03,471 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:03] "GET /web/image/website/1/logo/My%20Website?unique=bfa9641 HTTP/1.1" 200 - 5 0.005 0.025
+2025-08-27 18:20:03,542 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:03] "GET /web/static/fonts/twitter_x_only.woff HTTP/1.1" 200 - 0 0.000 0.007
+2025-08-27 18:20:03,696 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:03] "GET /web/static/img/odoo_logo_tiny.png HTTP/1.1" 200 - 0 0.000 0.008
+2025-08-27 18:20:03,795 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:03] "GET /web/image/website/1/favicon?unique=bfa9641 HTTP/1.1" 200 - 5 0.004 0.012
+2025-08-27 18:20:09,158 19788 INFO odoo_ams_development odoo.addons.base.models.assetsbundle: Generating a new asset bundle attachment /web/assets/1/adf29b1/web.assets_frontend_lazy.min.js (id:1048) 
+2025-08-27 18:20:09,159 19788 INFO odoo_ams_development odoo.addons.base.models.assetsbundle: Deleting attachments [1002] (matching /web/assets/1/_______/web.assets_frontend_lazy.min.js) because it was replaced with /web/assets/1/adf29b1/web.assets_frontend_lazy.min.js 
+2025-08-27 18:20:09,721 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:09] "GET /web/assets/1/adf29b1/web.assets_frontend_lazy.min.js HTTP/1.1" 200 - 11 0.008 5.695
+2025-08-27 18:20:09,864 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:09] "GET /website/translations/9f9d993c90e79f817b52eab288b1467ce3f2b1b1?lang=en_US HTTP/1.1" 200 - 1 0.000 0.005
+2025-08-27 18:20:10,284 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:10] "GET /web/login HTTP/1.1" 200 - 19 0.011 0.045
+2025-08-27 18:20:14,373 19788 INFO odoo_ams_development odoo.addons.base.models.res_users: Login successful for db:odoo_ams_development login:admin from 127.0.0.1 
+2025-08-27 18:20:14,406 19788 INFO odoo_ams_development odoo.models.unlink: User #4 deleted website.visitor records with IDs: [3] 
+2025-08-27 18:20:14,408 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:14] "POST /web/login HTTP/1.1" 303 - 60 0.083 0.748
+2025-08-27 18:20:14,756 19788 INFO odoo_ams_development odoo.addons.base.models.res_device: User 2 inserts device log (EjI40OIzaQnKVa4rhz9TJ9V5QK53Wi6u6YYZSjvBZr) 
+2025-08-27 18:20:16,089 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:16] "GET /odoo HTTP/1.1" 200 - 98 0.013 1.350
+2025-08-27 18:20:16,523 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:16] "GET /web/webclient/translations/f00b4cd325ab606d3fa35b315bbaea2cd60f260d?lang=en_US HTTP/1.1" 200 - 1 0.003 0.097
+2025-08-27 18:20:16,656 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:16] "GET /web/webclient/load_menus/83eeecbe9b779f6c58c75bb6f36f31a0c48ad823a4e08f95162c3e5d897fc53b HTTP/1.1" 200 - 194 0.103 0.131
+2025-08-27 18:20:17,189 19788 INFO odoo_ams_development odoo.addons.base.models.assetsbundle: Found a similar attachment for /web/assets/3d0655e/web.assets_web.min.js, copying from /web/assets/1/3d0655e/web.assets_web.min.js 
+2025-08-27 18:20:17,224 19788 INFO odoo_ams_development odoo.addons.base.models.assetsbundle: Deleting attachments [842] (matching /web/assets/_______/web.assets_web.min.js) because it was replaced with /web/assets/3d0655e/web.assets_web.min.js 
+2025-08-27 18:20:17,255 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:17] "GET /web/assets/3d0655e/web.assets_web.min.js HTTP/1.1" 200 - 29 0.054 0.796
+2025-08-27 18:20:33,460 19788 INFO odoo_ams_development odoo.addons.base.models.assetsbundle: Generating a new asset bundle attachment /web/assets/9d25623/web.assets_web.min.css (id:1050) 
+2025-08-27 18:20:33,461 19788 INFO odoo_ams_development odoo.addons.base.models.assetsbundle: Generating a new asset bundle attachment /web/assets/5ddebbc/web.assets_web_print.min.css (id:1051) 
+2025-08-27 18:20:33,462 19788 INFO odoo_ams_development odoo.addons.base.models.assetsbundle: Deleting attachments [840] (matching /web/assets/_______/web.assets_web.min.css) because it was replaced with /web/assets/9d25623/web.assets_web.min.css 
+2025-08-27 18:20:33,462 19788 INFO odoo_ams_development odoo.addons.base.models.assetsbundle: Deleting attachments [841] (matching /web/assets/_______/web.assets_web_print.min.css) because it was replaced with /web/assets/5ddebbc/web.assets_web_print.min.css 
+2025-08-27 18:20:33,483 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:33] "GET /web/assets/5ddebbc/web.assets_web_print.min.css HTTP/1.1" 200 - 28 0.058 15.739
+2025-08-27 18:20:33,536 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:33] "GET /web/assets/9d25623/web.assets_web.min.css HTTP/1.1" 200 - 32 0.062 17.384
+2025-08-27 18:20:34,057 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:34] "GET /web/static/img/favicon.ico HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:34,073 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:34] "POST /web/action/load HTTP/1.1" 200 - 6 0.000 0.016
+2025-08-27 18:20:34,145 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:34] "POST /mail/data HTTP/1.1" 200 - 34 0.037 0.021
+2025-08-27 18:20:34,176 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:34] "GET /web/image?model=res.users&field=avatar_128&id=2 HTTP/1.1" 200 - 9 0.004 0.026
+2025-08-27 18:20:34,206 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:34] "GET /web/image/res.partner/3/avatar_128?unique=1756324917000 HTTP/1.1" 200 - 8 0.048 0.010
+2025-08-27 18:20:34,225 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:34] "POST /mail/data HTTP/1.1" 200 - 53 0.053 0.026
+2025-08-27 18:20:34,377 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:34] "POST /mail/inbox/messages HTTP/1.1" 200 - 5 0.001 0.004
+2025-08-27 18:20:34,426 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:34] "GET /web/image/discuss.channel/2/avatar_128?unique=827ae6afbd28e4f6aad12ecf5264fb2b96deffd322ce36f59d8ba0b50bdad8af79ad1809eda925cae796a4bb8f7d54c7fe475cac16b37a6b148227ce34ec8be0 HTTP/1.1" 200 - 9 0.000 0.001
+2025-08-27 18:20:34,573 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:34] "GET /web/image/discuss.channel/1/avatar_128?unique=634a1ce87380ff37748f7f9fc27a88b596b998ae64fca5cde7fb5b7ea61a45a32eac78aa22ba1ebe91cd59807a2b9d146ed855d8a590104782d40def710ee24a HTTP/1.1" 200 - 4 0.000 0.000
+2025-08-27 18:20:34,626 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:34] "GET /web/service-worker.js HTTP/1.1" 200 - 1 0.000 0.018
+2025-08-27 18:20:34,628 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:34] "GET /bus/websocket_worker_bundle?v=18.0-5 HTTP/1.1" 200 - 4 0.016 0.005
+2025-08-27 18:20:34,631 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:34] "GET /web/image/res.partner/2/avatar_128?unique=1756310517000 HTTP/1.1" 200 - 7 0.018 0.006
+2025-08-27 18:20:34,972 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:34] "GET /websocket?version=18.0-5 HTTP/1.1" 101 - 1 0.015 0.016
+2025-08-27 18:20:34,972 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:34] "GET /odoo/offline HTTP/1.1" 200 - 6 0.015 0.016
+2025-08-27 18:20:35,300 19788 INFO ? odoo.addons.bus.models.bus: Bus.loop listen imbus on db postgres 
+2025-08-27 18:20:51,214 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:51] "POST /web/action/load HTTP/1.1" 200 - 10 0.005 0.003
+2025-08-27 18:20:51,615 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:51] "POST /web/dataset/call_kw/ir.module.module/get_views HTTP/1.1" 200 - 56 0.040 0.032
+2025-08-27 18:20:51,797 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:51] "POST /web/dataset/call_kw/ir.module.module/search_panel_select_range HTTP/1.1" 200 - 1 0.005 0.000
+2025-08-27 18:20:51,925 19788 INFO odoo_ams_development odoo.addons.ams_module_manager.models.ir_module_module: AMS Module Manager: Filtering web_search_read for Apps menu 
+2025-08-27 18:20:51,974 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:51] "POST /web/dataset/call_kw/ir.module.module/search_panel_select_range HTTP/1.1" 200 - 56 0.032 0.017
+2025-08-27 18:20:52,007 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:52] "POST /web/dataset/call_kw/ir.module.module/web_search_read HTTP/1.1" 200 - 4 0.016 0.066
+2025-08-27 18:20:52,117 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:52] "GET /base/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.002
+2025-08-27 18:20:52,429 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:52] "GET /rest_api_odoo/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.001
+2025-08-27 18:20:52,441 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:52] "GET /mass_mailing/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.012
+2025-08-27 18:20:52,443 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:52] "GET /data_recycle/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.014
+2025-08-27 18:20:52,444 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:52] "GET /product_management_app/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.016
+2025-08-27 18:20:52,444 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:52] "GET /mail/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.016
+2025-08-27 18:20:52,444 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:52] "GET /user_audit/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.016
+2025-08-27 18:20:52,743 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:52] "GET /website_sale/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:52,743 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:52] "GET /subscription_package/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:52,768 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:52] "GET /im_livechat/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.007
+2025-08-27 18:20:52,768 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:52] "GET /website_slides/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.008
+2025-08-27 18:20:52,768 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:52] "GET /project/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.006
+2025-08-27 18:20:52,768 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:52] "GET /master_search/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.007
+2025-08-27 18:20:53,068 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:53] "GET /website_event/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.008
+2025-08-27 18:20:53,078 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:53] "GET /calendar/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:53,090 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:53] "GET /contacts/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.013
+2025-08-27 18:20:53,092 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:53] "GET /marketing_card/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.015
+2025-08-27 18:20:53,092 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:53] "GET /point_of_sale/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.014
+2025-08-27 18:20:53,092 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:53] "GET /survey/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.014
+2025-08-27 18:20:53,384 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:53] "GET /base_accounting_kit/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.002
+2025-08-27 18:20:53,415 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:53] "GET /mass_mailing_sms/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.007
+2025-08-27 18:20:53,416 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:53] "GET /crm/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.007
+2025-08-27 18:20:53,417 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:53] "GET /account/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.008
+2025-08-27 18:20:53,418 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:53] "GET /sale_management/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.008
+2025-08-27 18:20:53,418 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:53] "GET /website/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.005
+2025-08-27 18:20:53,690 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:53] "GET /stock/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:53,724 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:53] "GET /purchase/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.002
+2025-08-27 18:20:56,056 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:56] "POST /web/dataset/call_kw/ir.module.module/search_panel_select_range HTTP/1.1" 200 - 55 0.015 0.018
+2025-08-27 18:20:56,278 19788 INFO odoo_ams_development odoo.addons.ams_module_manager.models.ir_module_module: AMS Module Manager: Not filtering - allowing all modules for dashboard 
+2025-08-27 18:20:56,305 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:56] "POST /web/dataset/call_kw/ir.module.module/web_search_read HTTP/1.1" 200 - 4 0.002 0.029
+2025-08-27 18:20:56,393 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:56] "GET /pos_restaurant/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.002
+2025-08-27 18:20:56,700 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:56] "GET /base/static/img/icons/sign.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:56,711 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:56] "GET /base/static/img/icons/web_studio.png HTTP/1.1" 200 - 0 0.000 0.011
+2025-08-27 18:20:56,711 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:56] "GET /base/static/img/icons/sale_subscription.png HTTP/1.1" 200 - 0 0.000 0.011
+2025-08-27 18:20:56,711 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:56] "GET /hr/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.011
+2025-08-27 18:20:56,711 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:56] "GET /hr_recruitment/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.011
+2025-08-27 18:20:56,711 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:56] "GET /base/static/img/icons/planning.png HTTP/1.1" 200 - 0 0.000 0.011
+2025-08-27 18:20:57,016 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /base/static/img/icons/helpdesk.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:57,016 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /base/static/img/icons/quality_control.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:57,016 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /hr_holidays/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:57,016 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /base/static/img/icons/industry_fsm.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:57,016 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /maintenance/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:57,031 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /base/static/img/icons/mrp_workorder.png HTTP/1.1" 200 - 0 0.000 0.015
+2025-08-27 18:20:57,343 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /base/static/img/icons/mrp_plm.png HTTP/1.1" 200 - 0 0.000 0.004
+2025-08-27 18:20:57,345 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /base/static/img/icons/account_accountant.png HTTP/1.1" 200 - 0 0.000 0.008
+2025-08-27 18:20:57,348 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /base/static/img/icons/timesheet_grid.png HTTP/1.1" 200 - 0 0.000 0.010
+2025-08-27 18:20:57,350 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /mrp/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.012
+2025-08-27 18:20:57,350 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /base/static/img/icons/knowledge.png HTTP/1.1" 200 - 0 0.000 0.013
+2025-08-27 18:20:57,351 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /hr_expense/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.013
+2025-08-27 18:20:57,649 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /base/static/img/icons/social.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:57,649 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /base/static/img/icons/hr_appraisal.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:57,663 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /base/static/img/icons/marketing_automation.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:57,663 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /fleet/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:57,663 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /base/static/img/icons/appointment.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:57,663 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /base/static/img/icons/web_mobile.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:57,969 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /repair/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.001
+2025-08-27 18:20:57,969 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /hr_attendance/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:57,986 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /base/static/img/icons/stock_barcode.png HTTP/1.1" 200 - 0 0.000 0.017
+2025-08-27 18:20:57,987 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /base/static/img/icons/voip.png HTTP/1.1" 200 - 0 0.000 0.019
+2025-08-27 18:20:57,988 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /project_todo/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.019
+2025-08-27 18:20:57,989 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:57] "GET /hr_skills/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.020
+2025-08-27 18:20:58,283 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:58] "GET /lunch/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:58,302 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:58] "GET /base/static/img/icons/sale_amazon.png HTTP/1.1" 200 - 0 0.000 0.004
+2025-08-27 18:20:58,302 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:58] "GET /website_hr_recruitment/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.005
+2025-08-27 18:20:58,352 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:58] "POST /web/dataset/call_kw/ir.module.module/search_panel_select_range HTTP/1.1" 200 - 55 0.063 0.006
+2025-08-27 18:20:58,403 19788 INFO odoo_ams_development odoo.addons.ams_module_manager.models.ir_module_module: AMS Module Manager: Not filtering - allowing all modules for dashboard 
+2025-08-27 18:20:58,412 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:58] "POST /web/dataset/call_kw/ir.module.module/web_search_read HTTP/1.1" 200 - 3 0.004 0.008
+2025-08-27 18:20:58,675 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:58] "GET /hr_contract/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:20:58,737 19788 INFO ? werkzeug: 127.0.0.1 - - [27/Aug/2025 18:20:58] "GET /website_sale_loyalty/static/description/icon.png HTTP/1.1" 200 - 0 0.000 0.000
+2025-08-27 18:21:00,184 19788 INFO odoo_ams_development odoo.addons.base.models.ir_module: ALLOW access to module.button_immediate_install on ['AMS Member Data'] to user admin #2 via 127.0.0.1 
+2025-08-27 18:21:00,184 19788 INFO odoo_ams_development odoo.addons.base.models.ir_module: User #2 triggered module installation 
+2025-08-27 18:21:00,184 19788 INFO odoo_ams_development odoo.addons.base.models.ir_module: ALLOW access to module.button_install on ['AMS Member Data'] to user admin #2 via 127.0.0.1 
+2025-08-27 18:21:00,265 19788 INFO odoo_ams_development odoo.modules.loading: loading 1 modules... 
+2025-08-27 18:21:00,281 19788 INFO odoo_ams_development odoo.modules.loading: 1 modules loaded in 0.02s, 0 queries (+0 extra) 
+2025-08-27 18:21:00,298 19788 INFO odoo_ams_development odoo.modules.loading: updating modules list 
+2025-08-27 18:21:00,298 19788 INFO odoo_ams_development odoo.addons.base.models.ir_module: ALLOW access to module.update_list on [] to user __system__ #1 via 127.0.0.1 
+2025-08-27 18:21:00,995 19788 INFO odoo_ams_development odoo.modules.loading: loading 155 modules... 
+2025-08-27 18:21:01,058 19788 INFO odoo_ams_development odoo.modules.loading: 155 modules loaded in 0.06s, 0 queries (+0 extra) 
+2025-08-27 18:21:01,058 19788 INFO odoo_ams_development odoo.modules.loading: loading 156 modules... 
+2025-08-27 18:21:01,058 19788 INFO odoo_ams_development odoo.modules.loading: Loading module ams_member_data (45/156) 
+2025-08-27 18:21:01,230 19788 WARNING odoo_ams_development odoo.fields: Field res.partner.primary_membership_id with unknown comodel_name 'ams.participation' 
+2025-08-27 18:21:01,308 19788 INFO odoo_ams_development odoo.modules.registry: module ams_member_data: creating or updating database tables 
+2025-08-27 18:21:01,354 19788 INFO odoo_ams_development odoo.models: Prepare computation of res.partner.primary_membership_id 
+2025-08-27 18:21:01,354 19788 INFO odoo_ams_development odoo.models: Prepare computation of res.partner.current_status 
+2025-08-27 18:21:01,354 19788 INFO odoo_ams_development odoo.models: Prepare computation of res.partner.paid_through_date 
+2025-08-27 18:21:01,354 19788 INFO odoo_ams_development odoo.models: Prepare computation of res.partner.is_member 
+2025-08-27 18:21:01,370 19788 WARNING odoo_ams_development odoo.addons.base.models.ir_model: Two fields (website_url, website_id) of res.partner() have the same label: Website. [Modules: ams_member_data and website] 
+2025-08-27 18:21:01,370 19788 WARNING odoo_ams_development odoo.addons.base.models.ir_model: Two fields (website_url, website_id) of res.users() have the same label: Website. [Modules: None and website] 
+2025-08-27 18:21:01,480 19788 WARNING odoo_ams_development odoo.models: method res.partner._validate_website_url: @constrains parameter 'website_url' is not writeable 
+2025-08-27 18:21:01,745 19788 INFO odoo_ams_development odoo.modules.loading: loading ams_member_data/security/ir.model.access.csv 
+2025-08-27 18:21:01,761 19788 INFO odoo_ams_development odoo.modules.loading: loading ams_member_data/data/ir_sequence_data.xml 
+2025-08-27 18:21:01,761 19788 INFO odoo_ams_development odoo.modules.loading: loading ams_member_data/data/member_type_data.xml 
+2025-08-27 18:21:01,776 19788 INFO odoo_ams_development odoo.modules.loading: loading ams_member_data/data/member_status_data.xml 
+2025-08-27 18:21:01,792 19788 INFO odoo_ams_development odoo.modules.loading: loading ams_member_data/views/member_type_views.xml 
+2025-08-27 18:21:01,839 19788 WARNING odoo_ams_development odoo.modules.loading: Transient module states were reset 
+2025-08-27 18:21:01,839 19788 ERROR odoo_ams_development odoo.modules.registry: Failed to load registry 
+2025-08-27 18:21:01,854 19788 INFO odoo_ams_development odoo.modules.loading: loading 1 modules... 
+2025-08-27 18:21:01,854 19788 INFO odoo_ams_development odoo.modules.loading: 1 modules loaded in 0.00s, 0 queries (+0 extra) 
+2025-08-27 18:21:01,870 19788 INFO odoo_ams_development odoo.modules.loading: loading 155 modules... 
+2025-08-27 18:21:01,933 19788 INFO odoo_ams_development odoo.modules.loading: 155 modules loaded in 0.06s, 0 queries (+0 extra) 
+2025-08-27 18:21:02,167 19788 INFO odoo_ams_development odoo.modules.loading: Modules loaded. 
+2025-08-27 18:21:02,173 19788 INFO odoo_ams_development odoo.modules.registry: Registry loaded in 0.334s 
+2025-08-27 18:21:02,205 19788 ERROR odoo_ams_development odoo.http: Exception during request handling. 
+Traceback (most recent call last):
+  File "C:\odoo-ams\odoo\odoo\tools\cache.py", line 103, in lookup
+    r = d[key]
+        ~^^^^^
+  File "C:\Users\johnj\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\tools\func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\tools\lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: ('ir.model.data', <function IrModelData._xmlid_lookup at 0x000001C669C9E980>, 'ams_member_data.action_view_members_by_type')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\odoo-ams\odoo\odoo\tools\convert.py", line 544, in _tag_root
+    f(rec)
+  File "C:\odoo-ams\odoo\odoo\tools\convert.py", line 412, in _tag_record
+    f_val = _eval_xml(self, field, env)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\tools\convert.py", line 127, in _eval_xml
+    +_process("".join(etree.tostring(n, encoding='unicode') for n in node))
+     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\tools\convert.py", line 116, in _process
+    self.idref[id] = self.id_get(id)
+                     ^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\tools\convert.py", line 526, in id_get
+    res = self.model_id_get(id_str, raise_if_not_found)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\tools\convert.py", line 532, in model_id_get
+    return self.env['ir.model.data']._xmlid_to_res_model_res_id(id_str, raise_if_not_found=raise_if_not_found)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\addons\base\models\ir_model.py", line 2253, in _xmlid_to_res_model_res_id
+    return self._xmlid_lookup(xmlid)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\johnj\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\tools\cache.py", line 110, in lookup
+    value = d[key] = self.method(*args, **kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\addons\base\models\ir_model.py", line 2246, in _xmlid_lookup
+    raise ValueError('External ID not found in the system: %s' % xmlid)
+ValueError: External ID not found in the system: ams_member_data.action_view_members_by_type
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\odoo-ams\odoo\odoo\http.py", line 2554, in __call__
+    response = request._serve_db()
+               ^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\http.py", line 2081, in _serve_db
+    return self._transactioning(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\http.py", line 2144, in _transactioning
+    return service_model.retrying(func, env=self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\service\model.py", line 156, in retrying
+    result = func()
+             ^^^^^^
+  File "C:\odoo-ams\odoo\odoo\http.py", line 2111, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\http.py", line 2359, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\addons\base\models\ir_http.py", line 333, in _dispatch
+    result = endpoint(**request.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\http.py", line 754, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\odoo-ams\odoo\addons\web\controllers\dataset.py", line 42, in call_button
+    action = call_kw(request.env[model], method, args, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\api.py", line 535, in call_kw
+    result = getattr(recs, name)(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\johnj\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\addons\base\models\ir_module.py", line 75, in check_and_log
+    return method(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\addons\base\models\ir_module.py", line 487, in button_immediate_install
+    return self._button_immediate_function(self.env.registry[self._name].button_install)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\addons\base\models\ir_module.py", line 611, in _button_immediate_function
+    registry = modules.registry.Registry.new(self._cr.dbname, update_module=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\johnj\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\tools\func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\modules\registry.py", line 129, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "C:\odoo-ams\odoo\odoo\modules\loading.py", line 489, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\modules\loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\odoo-ams\odoo\odoo\modules\loading.py", line 228, in load_module_graph
+    load_data(env, idref, mode, kind='data', package=package)
+  File "C:\odoo-ams\odoo\odoo\modules\loading.py", line 72, in load_data
+    tools.convert_file(env, package.name, filename, idref, mode, noupdate, kind)
+  File "C:\odoo-ams\odoo\odoo\tools\convert.py", line 615, in convert_file
+    convert_xml_import(env, module, fp, idref, mode, noupdate)
+  File "C:\odoo-ams\odoo\odoo\tools\convert.py", line 686, in convert_xml_import
+    obj.parse(doc.getroot())
+  File "C:\odoo-ams\odoo\odoo\tools\convert.py", line 601, in parse
+    self._tag_root(de)
+  File "C:\odoo-ams\odoo\odoo\tools\convert.py", line 557, in _tag_root
+    raise ParseError('while parsing %s:%s, somewhere inside\n%s' % (
+odoo.tools.convert.ParseError: while parsing file:/c:/odoo-ams/custom_addons/ams_member_data/views/member_type_views.xml:21, somewhere inside
+<record id="view_ams_member_type_form" model="ir.ui.view">
+        <field name="name">ams.member.type.form</field>
+        <field name="model">ams.member.type</field>
+        <field name="arch" type="xml">
+            <form string="Member Type">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(action_view_members_by_type)d" type="action" class="oe_stat_button" icon="fa-users" context="{'search_default_member_type_id': active_id}">
+                            <field name="member_count" widget="statinfo" string="Members"/>
+                        </button>
+                    </div>
+                    
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
+                    
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Member Type Name..."/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="is_individual"/>
+                            <field name="is_organization"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Description">
+                            <field name="description" placeholder="Detailed description of this member type..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+2025-08-27 18:21:02,205 19788 INFO odoo_ams_development werkzeug: 127.0.0.1 - - [27/Aug/2025 18:21:02] "POST /web/dataset/call_button/ir.module.module/button_immediate_install HTTP/1.1" 200 - 2005 0.727 1.295

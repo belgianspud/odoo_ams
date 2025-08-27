@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Member Type Tree View -->
+    <!-- Member Type List View -->
     <record id="view_ams_member_type_tree" model="ir.ui.view">
         <field name="name">ams.member.type.tree</field>
         <field name="model">ams.member.type</field>
         <field name="arch" type="xml">
-            <tree string="Member Types" default_order="sequence,name">
+            <list string="Member Types" default_order="sequence,name">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="code"/>
@@ -13,7 +13,7 @@
                 <field name="is_organization"/>
                 <field name="member_count"/>
                 <field name="active"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -97,7 +97,7 @@
     <record id="action_ams_member_type" model="ir.actions.act_window">
         <field name="name">Member Types</field>
         <field name="res_model">ams.member.type</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="context">{'search_default_active': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -115,7 +115,7 @@
     <record id="action_view_members_by_type" model="ir.actions.act_window">
         <field name="name">Members</field>
         <field name="res_model">res.partner</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="domain">[('member_type_id', '!=', False)]</field>
     </record>
 
