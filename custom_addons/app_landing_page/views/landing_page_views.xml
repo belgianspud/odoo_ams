@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Menu item to access the landing page -->
+        <menuitem 
+            id="menu_app_landing_page"
+            name="App Dashboard"
+            sequence="1"
+            web_icon="app_landing_page,static/description/icon.png"
+            action=""
+        />
+        
+        <!-- Menu action that opens the landing page -->
+        <record id="action_landing_page" model="ir.actions.act_url">
+            <field name="name">App Landing Page</field>
+            <field name="url">/apps/landing</field>
+            <field name="target">self</field>
+        </record>
+        
+        <menuitem 
+            id="menu_landing_page_action"
+            name="Dashboard"
+            parent="menu_app_landing_page"
+            action="action_landing_page"
+            sequence="10"
+        />
+    </data>
+</odoo>
