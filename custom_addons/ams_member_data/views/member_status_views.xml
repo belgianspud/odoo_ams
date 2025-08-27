@@ -1,18 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Member Status Tree View -->
-    <record id="view_ams_member_status_tree" model="ir.ui.view">
-        <field name="name">ams.member.status.tree</field>
+    <!-- Action to view members by status -->
+    <record id="action_view_members_by_status" model="ir.actions.act_window">
+        <field name="name">Members</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('member_status_id', '!=', False)]</field>
+    </record>
+
+    <!-- Member Status List View -->
+    <record id="view_ams_member_status_list" model="ir.ui.view">
+        <field name="name">ams.member.status.list</field>
         <field name="model">ams.member.status</field>
         <field name="arch" type="xml">
-            <tree string="Member Statuses" default_order="sequence,name">
+            <list string="Member Statuses" default_order="sequence,name">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="code"/>
                 <field name="is_active"/>
                 <field name="member_count"/>
                 <field name="color" widget="color"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -28,7 +36,7 @@
                                 type="action" 
                                 class="oe_stat_button" 
                                 icon="fa-users"
-                                context="{'search_default_member_status_id': active_id}">
+                                context="{'search_default_member_status_id': id}">
                             <field name="member_count" widget="statinfo" string="Members"/>
                         </button>
                     </div>
@@ -120,14 +128,11 @@
                 <field name="code"/>
                 <field name="description"/>
                 
-                <filter string="Active Member Status" name="is_active" 
-                        domain="[('is_active', '=', True)]"/>
-                <filter string="Inactive Member Status" name="is_inactive" 
-                        domain="[('is_active', '=', False)]"/>
+                <filter string="Active Member Status" name="is_active" domain="[('is_active', '=', True)]"/>
+                <filter string="Inactive Member Status" name="is_inactive" domain="[('is_active', '=', False)]"/>
                 
                 <group expand="0" string="Group By">
-                    <filter string="Active Status" name="group_by_is_active" 
-                            context="{'group_by': 'is_active'}"/>
+                    <filter string="Active Status" name="group_by_is_active" context="{'group_by': 'is_active'}"/>
                 </group>
             </search>
         </field>
@@ -137,7 +142,7 @@
     <record id="action_ams_member_status" model="ir.actions.act_window">
         <field name="name">Member Status</field>
         <field name="res_model">ams.member.status</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create your first member status
@@ -148,14 +153,6 @@
                 permissions.
             </p>
         </field>
-    </record>
-
-    <!-- Action to view members by status -->
-    <record id="action_view_members_by_status" model="ir.actions.act_window">
-        <field name="name">Members</field>
-        <field name="res_model">res.partner</field>
-        <field name="view_mode">tree,form</field>
-        <field name="domain">[('member_status_id', '!=', False)]</field>
     </record>
 
     <!-- Menu Item -->

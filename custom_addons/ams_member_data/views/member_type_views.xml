@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Action to view members by type -->
+    <record id="action_view_members_by_type" model="ir.actions.act_window">
+        <field name="name">Members</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('member_type_id', '!=', False)]</field>
+    </record>
+
     <!-- Member Type List View -->
     <record id="view_ams_member_type_tree" model="ir.ui.view">
         <field name="name">ams.member.type.tree</field>
@@ -29,14 +37,15 @@
                                 type="action" 
                                 class="oe_stat_button" 
                                 icon="fa-users"
-                                context="{'search_default_member_type_id': active_id}">
+                                context="{'search_default_member_type_id': id}">
                             <field name="member_count" widget="statinfo" string="Members"/>
                         </button>
                     </div>
-                    
-                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" 
-                            attrs="{'invisible': [('active', '=', True)]}"/>
-                    
+
+                    <!-- Replaced attrs with modifiers -->
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger"
+                            modifiers='{"invisible": [["active", "=", true]]}'/>
+
                     <div class="oe_title">
                         <h1>
                             <field name="name" placeholder="Member Type Name..."/>
@@ -109,14 +118,6 @@
                 fields and features are available.
             </p>
         </field>
-    </record>
-
-    <!-- Action to view members by type -->
-    <record id="action_view_members_by_type" model="ir.actions.act_window">
-        <field name="name">Members</field>
-        <field name="res_model">res.partner</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('member_type_id', '!=', False)]</field>
     </record>
 
     <!-- Menu Items -->
