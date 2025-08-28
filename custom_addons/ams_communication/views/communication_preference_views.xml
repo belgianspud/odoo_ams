@@ -329,7 +329,7 @@ if records:
     <!-- Menu Items -->
     <menuitem id="menu_ams_communication" 
               name="Communication" 
-              parent="ams_member_data.menu_ams_root" 
+              parent="ams_system_config.menu_ams_root" 
               sequence="50"/>
 
     <menuitem id="menu_ams_communication_preferences" 

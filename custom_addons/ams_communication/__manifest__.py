@@ -29,6 +29,7 @@
         'mail',
         'contacts',
         'sms',
+        'ams_system_config',  # Add this dependency
         'ams_member_data',
     ],
     'data': [

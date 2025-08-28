@@ -32,7 +32,6 @@ class AMSConfigSettings(models.TransientModel):
     member_id_sequence = fields.Many2one(
         'ir.sequence',
         string='Member ID Sequence',
-        config_parameter='ams_system_config.member_id_sequence_id',
         help="Sequence used for member ID generation"
     )
     
@@ -104,7 +103,6 @@ class AMSConfigSettings(models.TransientModel):
     default_currency_id = fields.Many2one(
         'res.currency',
         string='Default Currency',
-        config_parameter='ams_system_config.default_currency_id',
         help="Primary currency for membership dues and transactions"
     )
     
@@ -347,9 +345,41 @@ class AMSConfigSettings(models.TransientModel):
     # MODEL CREATION HOOKS
     # ========================================================================
     
+    def get_values(self):
+        """Override to handle Many2one fields manually."""
+        res = super().get_values()
+        
+        # Handle default_currency_id
+        currency_id = self.env['ir.config_parameter'].sudo().get_param(
+            'ams_system_config.default_currency_id', False
+        )
+        if currency_id:
+            res['default_currency_id'] = int(currency_id)
+        
+        # Handle member_id_sequence
+        sequence_id = self.env['ir.config_parameter'].sudo().get_param(
+            'ams_system_config.member_id_sequence_id', False
+        )
+        if sequence_id:
+            res['member_id_sequence'] = int(sequence_id)
+            
+        return res
+
     def set_values(self):
-        """Override to handle special configuration actions."""
+        """Override to handle Many2one fields manually and special configuration actions."""
         super().set_values()
+        
+        # Handle default_currency_id
+        self.env['ir.config_parameter'].sudo().set_param(
+            'ams_system_config.default_currency_id', 
+            self.default_currency_id.id if self.default_currency_id else False
+        )
+        
+        # Handle member_id_sequence
+        self.env['ir.config_parameter'].sudo().set_param(
+            'ams_system_config.member_id_sequence_id',
+            self.member_id_sequence.id if self.member_id_sequence else False
+        )
         
         # Create member ID sequence if auto generation is enabled and no sequence exists
         if self.auto_member_id and not self.member_id_sequence:

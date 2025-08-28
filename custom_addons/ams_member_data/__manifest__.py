@@ -28,6 +28,7 @@ This module provides the core data structures that all other AMS modules depend 
         'base',
         'contacts',
         'mail',
+        'ams_system_config',  # Added dependency for foundation menus and config
     ],
     'data': [
         # Security
@@ -48,5 +49,5 @@ This module provides the core data structures that all other AMS modules depend 
     'installable': True,
     'auto_install': False,
     'application': True,
-    'sequence': 1,
+    'sequence': 2,  # After ams_system_config
 }

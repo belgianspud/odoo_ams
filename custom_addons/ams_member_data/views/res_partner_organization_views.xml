@@ -241,17 +241,17 @@
         </field>
     </record>
 
-    <!-- Organization Members menu under Members parent -->
+    <!-- Organization Members menu under Members parent (provided by ams_system_config) -->
     <menuitem id="menu_ams_organization_members" 
               name="Organization Members" 
-              parent="menu_ams_members"
+              parent="ams_system_config.menu_ams_members"
               action="action_partner_organization_members" 
               sequence="20"/>
 
-    <!-- All Contacts menu under Members parent -->
+    <!-- All Contacts menu under Members parent (provided by ams_system_config) -->
     <menuitem id="menu_ams_all_contacts" 
               name="All Contacts" 
-              parent="menu_ams_members"
+              parent="ams_system_config.menu_ams_members"
               action="action_partner_all_contacts" 
               sequence="30"/>
 

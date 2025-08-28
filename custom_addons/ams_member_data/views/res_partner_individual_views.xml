@@ -199,10 +199,10 @@
         </field>
     </record>
 
-    <!-- Individual Members menu under Members -->
+    <!-- Individual Members menu under Members parent (provided by ams_system_config) -->
     <menuitem id="menu_ams_individual_members" 
               name="Individual Members" 
-              parent="menu_ams_members"
+              parent="ams_system_config.menu_ams_members"
               action="action_partner_individual_members" 
               sequence="10"/>
 

@@ -31,7 +31,7 @@
                                     <div class="text-muted">
                                         Automatically assign unique member IDs to new members
                                     </div>
-                                    <div class="content-group" attrs="{'invisible': [('auto_member_id', '=', False)]}">
+                                    <div class="content-group" invisible="auto_member_id == False">>
                                         <div class="row">
                                             <label for="member_id_prefix" string="ID Prefix" class="col-3 o_light_label"/>
                                             <field name="member_id_prefix" class="col-3"/>
@@ -49,7 +49,7 @@
                                 <div class="o_setting_left_pane">
                                 </div>
                                 <div class="o_setting_right_pane">
-                                    <label string="Membership Lifecycle" class="o_form_label"/>
+                                    <div class="o_form_label">Membership Lifecycle</div>
                                     <div class="text-muted">
                                         Configure default policies for membership management
                                     </div>
@@ -94,7 +94,7 @@
                                     <div class="text-muted">
                                         Enable member self-service portal access
                                     </div>
-                                    <div class="content-group" attrs="{'invisible': [('portal_enabled', '=', False)]}">
+                                    <div class="content-group" invisible="portal_enabled == False">>
                                         <div class="row">
                                             <div class="o_setting_left_pane">
                                                 <field name="portal_self_registration"/>
@@ -115,7 +115,7 @@
                                 <div class="o_setting_left_pane">
                                 </div>
                                 <div class="o_setting_right_pane">
-                                    <label string="Communication Preferences" class="o_form_label"/>
+                                    <div class="o_form_label">Communication Preferences</div>
                                     <div class="text-muted">
                                         Default communication settings for new members
                                     </div>
@@ -159,7 +159,7 @@
                                 <div class="o_setting_left_pane">
                                 </div>
                                 <div class="o_setting_right_pane">
-                                    <label string="Currency &amp; Fiscal Configuration" class="o_form_label"/>
+                                    <div class="o_form_label">Currency &amp; Fiscal Configuration</div>
                                     <div class="text-muted">
                                         Primary financial settings for the system
                                     </div>
@@ -186,7 +186,7 @@
                                     <div class="text-muted">
                                         Enable revenue sharing with local chapters
                                     </div>
-                                    <div class="content-group" attrs="{'invisible': [('chapter_revenue_sharing', '=', False)]}">
+                                    <div class="content-group" invisible="chapter_revenue_sharing == False">>
                                         <div class="row">
                                             <label for="default_chapter_percentage" string="Default Share %" class="col-4 o_light_label"/>
                                             <field name="default_chapter_percentage" class="col-3"/>
@@ -269,31 +269,33 @@
         <field name="context">{}</field>
     </record>
 
-    <!-- Configuration Menu Items -->
-    <menuitem 
-        id="menu_ams_root" 
-        name="AMS" 
-        sequence="10"/>
+    <!-- CORE MENU STRUCTURE - Foundation menus for entire AMS -->
+    <menuitem id="menu_ams_root" name="AMS" sequence="10"/>
     
-    <menuitem 
-        id="menu_ams_settings" 
-        name="Settings" 
-        parent="menu_ams_root" 
-        sequence="100"/>
+    <!-- Members parent menu - all member-related functionality -->
+    <menuitem id="menu_ams_members" 
+              name="Members" 
+              parent="menu_ams_root" 
+              sequence="10"/>
     
-    <menuitem 
-        id="menu_ams_configuration" 
-        name="AMS Configuration" 
-        parent="menu_ams_settings" 
-        action="action_ams_config_settings" 
-        sequence="10"/>
+    <!-- Configuration parent menu - all configuration functionality -->
+    <menuitem id="menu_ams_configuration" 
+              name="Configuration" 
+              parent="menu_ams_root" 
+              sequence="100"/>
+    
+    <!-- AMS Configuration menu under Configuration parent -->
+    <menuitem id="menu_ams_system_configuration" 
+              name="AMS Configuration" 
+              parent="menu_ams_configuration"
+              action="action_ams_config_settings" 
+              sequence="1"/>
 
     <!-- Alternative access through Settings menu -->
-    <menuitem 
-        id="menu_ams_config_settings" 
-        name="AMS Configuration" 
-        parent="base.menu_administration"
-        action="action_ams_config_settings" 
-        sequence="50"
-        groups="base.group_system"/>
+    <menuitem id="menu_ams_config_settings" 
+              name="AMS Configuration" 
+              parent="base.menu_administration"
+              action="action_ams_config_settings" 
+              sequence="50"
+              groups="base.group_system"/>
 </odoo>

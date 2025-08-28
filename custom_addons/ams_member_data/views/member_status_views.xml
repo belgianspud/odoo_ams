@@ -155,10 +155,10 @@
         </field>
     </record>
 
-    <!-- Member Status menu under Configuration parent -->
+    <!-- Member Status menu under Configuration parent (provided by ams_system_config) -->
     <menuitem id="menu_ams_member_status" 
               name="Member Status" 
-              parent="menu_ams_configuration"
+              parent="ams_system_config.menu_ams_configuration"
               action="action_ams_member_status" 
               sequence="20"/>
 </odoo>
