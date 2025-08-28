@@ -120,14 +120,22 @@
         </field>
     </record>
 
-    <!-- Menu Items -->
+    <!-- CORE MENU STRUCTURE - Foundation menus for entire AMS -->
     <menuitem id="menu_ams_root" name="AMS" sequence="10"/>
     
+    <!-- Members parent menu - all member-related functionality -->
+    <menuitem id="menu_ams_members" 
+              name="Members" 
+              parent="menu_ams_root" 
+              sequence="10"/>
+    
+    <!-- Configuration parent menu - all configuration functionality -->
     <menuitem id="menu_ams_configuration" 
               name="Configuration" 
               parent="menu_ams_root" 
               sequence="100"/>
     
+    <!-- Member Types menu under Configuration -->
     <menuitem id="menu_ams_member_type" 
               name="Member Types" 
               parent="menu_ams_configuration"

@@ -155,7 +155,7 @@
         </field>
     </record>
 
-    <!-- Menu Item -->
+    <!-- Member Status menu under Configuration parent -->
     <menuitem id="menu_ams_member_status" 
               name="Member Status" 
               parent="menu_ams_configuration"

@@ -61,6 +61,7 @@ class IrModuleModule(models.Model):
         'sale_report_advanced',
         'subscription_package',
         'user_audit',
+        'website_hide_button',
     ]
     
     def _is_apps_menu_context(self, domain=None):

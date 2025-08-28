@@ -1,16 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_partner_organization_form_minimal" model="ir.ui.view">
-        <field name="name">res.partner.organization.form.minimal</field>
+    <!-- Organization Member Form View Extension -->
+    <record id="view_partner_organization_form" model="ir.ui.view">
+        <field name="name">res.partner.organization.form</field>
         <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
-            <form string="Partner (Minimal)">
-                <sheet>
+            
+            <!-- Add organization member stat buttons -->
+            <xpath expr="//sheet/div[@class='oe_button_box']" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_participations"
+                        invisible="not member_id or not is_company" icon="fa-building">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value" invisible="not is_member">Active</span>
+                        <span class="o_stat_value" invisible="is_member">Inactive</span>
+                        <span class="o_stat_text">Organization</span>
+                    </div>
+                </button>
+                
+                <button class="oe_stat_button" type="object" name="action_view_employees"
+                        invisible="not member_type_id or not is_company" icon="fa-users">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="assigned_seats" invisible="total_seats == 0"/>
+                            <span invisible="total_seats == 0">/</span>
+                            <field name="total_seats" invisible="total_seats == 0"/>
+                            <span invisible="total_seats != 0">0</span>
+                        </span>
+                        <span class="o_stat_text">Employees</span>
+                    </div>
+                </button>
+            </xpath>
+
+            <!-- Add member type and status for organizations -->
+            <xpath expr="//field[@name='category_id']" position="after">
+                <field name="member_type_id" invisible="not is_company"/>
+                <field name="member_status_id" invisible="not member_type_id or not is_company"/>
+                <field name="member_id" invisible="not member_id"/>
+            </xpath>
+
+            <!-- Add organization specific fields -->
+            <xpath expr="//field[@name='website']" position="after">
+                <field name="acronym" placeholder="Acronym" invisible="not is_company"/>
+                <field name="website_url" invisible="not is_company"/>
+            </xpath>
+
+            <!-- Add tax information -->
+            <xpath expr="//field[@name='vat']" position="after">
+                <field name="tin_number" invisible="not is_company"/>
+                <field name="ein_number" invisible="not is_company"/>
+            </xpath>
+
+            <!-- Add organization membership notebook page -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Organization Membership" invisible="not member_type_id or not is_company">
                     <group>
-                        <field name="name"/>
-                        <field name="company_type"/>
+                        <group string="Membership Information">
+                            <field name="original_join_date"/>
+                            <field name="paid_through_date"/>
+                            <field name="current_status"/>
+                            <field name="primary_membership_id"/>
+                        </group>
+                        <group string="Portal Management">
+                            <field name="portal_primary_contact_id" 
+                                   domain="[('parent_id', '=', id), ('is_company', '=', False)]"/>
+                            <field name="portal_id" groups="base.group_system"/>
+                        </group>
                     </group>
-                </sheet>
-            </form>
+                    
+                    <group string="Enterprise Subscription" invisible="total_seats == 0">
+                        <group>
+                            <field name="total_seats" readonly="1"/>
+                            <field name="assigned_seats" readonly="1"/>
+                            <field name="available_seats" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Legacy Information" invisible="not legacy_contact_id">
+                        <field name="legacy_contact_id"/>
+                    </group>
+                </page>
+            </xpath>
+
+            <!-- Add employees notebook page -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Employees" invisible="not member_type_id or not is_company">
+                    <field name="employee_ids" context="{'default_parent_id': id, 'default_is_company': False}">
+                        <tree>
+                            <field name="member_id"/>
+                            <field name="display_name"/>
+                            <field name="email"/>
+                            <field name="phone"/>
+                            <field name="member_type_id"/>
+                            <field name="member_status_id"/>
+                            <field name="is_member"/>
+                        </tree>
+                        <form>
+                            <sheet>
+                                <group>
+                                    <group>
+                                        <field name="first_name"/>
+                                        <field name="last_name"/>
+                                        <field name="email"/>
+                                        <field name="phone"/>
+                                    </group>
+                                    <group>
+                                        <field name="member_type_id"/>
+                                        <field name="member_status_id"/>
+                                        <field name="is_member"/>
+                                        <field name="member_id"/>
+                                    </group>
+                                </group>
+                            </sheet>
+                        </form>
+                    </field>
+                </page>
+            </xpath>
+
+            <!-- Add business metrics notebook page -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Business Metrics" invisible="not member_type_id or not is_company">
+                    <group>
+                        <group string="Event Participation">
+                            <field name="exhibitor_points"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+
         </field>
     </record>
+
+    <!-- Organization Member List View -->
+    <record id="view_partner_organization_list" model="ir.ui.view">
+        <field name="name">res.partner.organization.list</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list string="Organization Members">
+                <field name="member_id"/>
+                <field name="display_name"/>
+                <field name="acronym"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="member_type_id"/>
+                <field name="member_status_id"/>
+                <field name="is_member"/>
+                <field name="assigned_seats"/>
+                <field name="total_seats"/>
+                <field name="city"/>
+                <field name="country_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Organization Member Search View -->
+    <record id="view_partner_organization_search" model="ir.ui.view">
+        <field name="name">res.partner.organization.search</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <search string="Organization Members">
+                <field name="display_name"/>
+                <field name="member_id"/>
+                <field name="acronym"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="member_type_id"/>
+                <field name="member_status_id"/>
+                <field name="city"/>
+                <field name="website_url"/>
+
+                <filter string="Active Organizations" name="active_organizations" 
+                        domain="[('is_member', '=', True)]"/>
+                <filter string="Inactive Organizations" name="inactive_organizations" 
+                        domain="[('is_member', '=', False), ('member_id', '!=', False)]"/>
+                <filter string="Has Employees" name="has_employees" 
+                        domain="[('child_ids', '!=', False)]"/>
+                <separator/>
+                <filter string="Recent Additions" name="recent" 
+                        domain="[('create_date', '>=', (context_today() - relativedelta(days=30)))]"/>
+
+                <group expand="0" string="Group By">
+                    <filter string="Member Type" name="group_member_type" 
+                            context="{'group_by': 'member_type_id'}"/>
+                    <filter string="Member Status" name="group_member_status" 
+                            context="{'group_by': 'member_status_id'}"/>
+                    <filter string="Country" name="group_country" 
+                            context="{'group_by': 'country_id'}"/>
+                    <filter string="State" name="group_state" 
+                            context="{'group_by': 'state_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action for Organization Members -->
+    <record id="action_partner_organization_members" model="ir.actions.act_window">
+        <field name="name">Organization Members</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('member_type_id.is_organization', '=', True)]</field>
+        <field name="context">{
+            'search_default_active_organizations': 1,
+            'default_is_company': True,
+            'default_supplier_rank': 0,
+            'default_customer_rank': 1
+        }</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+                                      (0, 0, {'view_mode': 'list', 'view_id': ref('view_partner_organization_list')}),
+                                      (0, 0, {'view_mode': 'form', 'view_id': ref('base.view_partner_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first organization member
+            </p>
+            <p>
+                Organization members are companies, institutions, or groups that 
+                belong to your association. Track their membership status, employees, 
+                and enterprise subscriptions.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action for All AMS Contacts -->
+    <record id="action_partner_all_contacts" model="ir.actions.act_window">
+        <field name="name">All Contacts</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('member_type_id', '!=', False)]</field>
+        <field name="context">{
+            'search_default_active_members': 1
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first member
+            </p>
+            <p>
+                This view shows all your association members, both individuals 
+                and organizations. Use the filters to narrow down to specific 
+                member types or statuses.
+            </p>
+        </field>
+    </record>
+
+    <!-- Organization Members menu under Members parent -->
+    <menuitem id="menu_ams_organization_members" 
+              name="Organization Members" 
+              parent="menu_ams_members"
+              action="action_partner_organization_members" 
+              sequence="20"/>
+
+    <!-- All Contacts menu under Members parent -->
+    <menuitem id="menu_ams_all_contacts" 
+              name="All Contacts" 
+              parent="menu_ams_members"
+              action="action_partner_all_contacts" 
+              sequence="30"/>
+
 </odoo>
