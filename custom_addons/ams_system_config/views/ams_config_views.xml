@@ -49,7 +49,7 @@
                                 <div class="o_setting_left_pane">
                                 </div>
                                 <div class="o_setting_right_pane">
-                                    <label string="Membership Lifecycle"/>
+                                    <label string="Membership Lifecycle" class="o_form_label"/>
                                     <div class="text-muted">
                                         Configure default policies for membership management
                                     </div>
@@ -115,7 +115,7 @@
                                 <div class="o_setting_left_pane">
                                 </div>
                                 <div class="o_setting_right_pane">
-                                    <label string="Communication Preferences"/>
+                                    <label string="Communication Preferences" class="o_form_label"/>
                                     <div class="text-muted">
                                         Default communication settings for new members
                                     </div>
@@ -159,7 +159,7 @@
                                 <div class="o_setting_left_pane">
                                 </div>
                                 <div class="o_setting_right_pane">
-                                    <label string="Currency &amp; Fiscal Configuration"/>
+                                    <label string="Currency &amp; Fiscal Configuration" class="o_form_label"/>
                                     <div class="text-muted">
                                         Primary financial settings for the system
                                     </div>
