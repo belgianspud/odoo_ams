@@ -31,7 +31,8 @@ class IrModuleModule(models.Model):
         'mass_mailing_sms',     # SMS Marketing
 
         #Custom Modules
-        'ams_member_data',      # AMS base module for member data structures
+        'ams_member_data',      # AMS base module for member data structures - Layer 1
+        'ams_communication',    # AMS base module to track comms preferences - Layer 1
         'ams_subscriptions',    # AMS Subscriptions
         'ams_base_accounting',  # AMS Accounting
         'ams_revenue_recognition', # AMS Revenue Recognition
