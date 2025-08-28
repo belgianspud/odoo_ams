@@ -86,7 +86,7 @@
             <xpath expr="//notebook" position="inside">
                 <page string="Employees" invisible="not member_type_id or not is_company">
                     <field name="employee_ids" context="{'default_parent_id': id, 'default_is_company': False}">
-                        <tree>
+                        <list>
                             <field name="member_id"/>
                             <field name="display_name"/>
                             <field name="email"/>
@@ -94,7 +94,7 @@
                             <field name="member_type_id"/>
                             <field name="member_status_id"/>
                             <field name="is_member"/>
-                        </tree>
+                        </list>
                         <form>
                             <sheet>
                                 <group>

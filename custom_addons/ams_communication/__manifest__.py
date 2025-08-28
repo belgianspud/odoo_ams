@@ -46,7 +46,7 @@
     'test': [],
     'installable': True,
     'auto_install': False,
-    'application': False,
+    'application': True,
     'sequence': 2,
     'pre_init_hook': None,
     'post_init_hook': None,

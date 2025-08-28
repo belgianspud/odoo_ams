@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Default Cancellation Reasons -->
+        
+        <!-- VOLUNTARY REASONS -->
+        <record id="cancellation_reason_financial" model="ams.cancellation.reason">
+            <field name="name">Financial Hardship</field>
+            <field name="code">FINANCIAL</field>
+            <field name="category">voluntary</field>
+            <field name="sequence">10</field>
+            <field name="allows_reinstatement">True</field>
+            <field name="refund_eligible">True</field>
+            <field name="requires_approval">False</field>
+            <field name="description">Member experiencing financial difficulties preventing payment of dues</field>
+            <field name="internal_notes">Consider payment plans or hardship membership options before cancellation. Document financial hardship details for potential reinstatement.</field>
+        </record>
+
+        <record id="cancellation_reason_moved" model="ams.cancellation.reason">
+            <field name="name">Moved/Relocated</field>
+            <field name="code">MOVED</field>
+            <field name="category">voluntary</field>
+            <field name="sequence">20</field>
+            <field name="allows_reinstatement">True</field>
+            <field name="refund_eligible">False</field>
+            <field name="requires_approval">False</field>
+            <field name="description">Member relocated outside service area or to location without chapter</field>
+            <field name="internal_notes">Check if member can transfer to chapter in new location. Offer virtual/online membership options if available.</field>
+        </record>
+
+        <record id="cancellation_reason_not_relevant" model="ams.cancellation.reason">
+            <field name="name">No Longer Relevant</field>
+            <field name="code">NOT_RELEVANT</field>
+            <field name="category">voluntary</field>
+            <field name="sequence">30</field>
+            <field name="allows_reinstatement">True</field>
+            <field name="refund_eligible">False</field>
+            <field name="requires_approval">False</field>
+            <field name="description">Member no longer finds association services relevant to their needs</field>
+            <field name="internal_notes">Exit interview recommended to understand specific concerns and improve services. Follow up in 6-12 months.</field>
+        </record>
+
+        <record id="cancellation_reason_career_change" model="ams.cancellation.reason">
+            <field name="name">Career Change</field>
+            <field name="code">CAREER_CHANGE</field>
+            <field name="category">voluntary</field>
+            <field name="sequence">40</field>
+            <field name="allows_reinstatement">True</field>
+            <field name="refund_eligible">False</field>
+            <field name="requires_approval">False</field>
+            <field name="description">Member changed careers and no longer requires association membership</field>
+            <field name="internal_notes">Determine if member might benefit from affiliate or associate membership status instead of full cancellation.</field>
+        </record>
+
+        <record id="cancellation_reason_retirement" model="ams.cancellation.reason">
+            <field name="name">Retirement</field>
+            <field name="code">RETIREMENT</field>
+            <field name="category">voluntary</field>
+            <field name="sequence">50</field>
+            <field name="allows_reinstatement">True</field>
+            <field name="refund_eligible">False</field>
+            <field name="requires_approval">False</field>
+            <field name="description">Member retired and no longer wishes to maintain membership</field>
+            <field name="internal_notes">Offer retired membership category with reduced dues if available. Consider emeritus or honorary status options.</field>
+        </record>
+
+        <record id="cancellation_reason_dissatisfaction" model="ams.cancellation.reason">
+            <field name="name">Dissatisfaction with Services</field>
+            <field name="code">DISSATISFIED</field>
+            <field name="category">voluntary</field>
+            <field name="sequence">60</field>
+            <field name="allows_reinstatement">True</field>
+            <field name="refund_eligible">False</field>
+            <field name="requires_approval">False</field>
+            <field name="description">Member unsatisfied with association services or value proposition</field>
+            <field name="internal_notes">Conduct detailed exit interview. Document specific concerns for service improvement. Consider retention offers.</field>
+        </record>
+
+        <record id="cancellation_reason_duplicate" model="ams.cancellation.reason">
+            <field name="name">Duplicate Membership</field>
+            <field name="code">DUPLICATE</field>
+            <field name="category">voluntary</field>
+            <field name="sequence">70</field>
+            <field name="allows_reinstatement">False</field>
+            <field name="refund_eligible">True</field>
+            <field name="requires_approval">False</field>
+            <field name="description">Member discovered they have multiple memberships and wants to cancel duplicate</field>
+            <field name="internal_notes">Verify which membership to retain. Consolidate member records and history. Process refund for duplicate payment.</field>
+        </record>
+
+        <!-- INVOLUNTARY REASONS -->
+        <record id="cancellation_reason_non_payment" model="ams.cancellation.reason">
+            <field name="name">Non-Payment</field>
+            <field name="code">NON_PAYMENT</field>
+            <field name="category">involuntary</field>
+            <field name="sequence">100</field>
+            <field name="allows_reinstatement">True</field>
+            <field name="refund_eligible">False</field>
+            <field name="requires_approval">False</field>
+            <field name="description">Member failed to pay dues after grace period and collection attempts</field>
+            <field name="internal_notes">Ensure all collection procedures followed before cancellation. Member can reinstate by paying outstanding balance plus any late fees.</field>
+        </record>
+
+        <record id="cancellation_reason_conduct" model="ams.cancellation.reason">
+            <field name="name">Code of Conduct Violation</field>
+            <field name="code">CONDUCT</field>
+            <field name="category">involuntary</field>
+            <field name="sequence">110</field>
+            <field name="allows_reinstatement">False</field>
+            <field name="refund_eligible">False</field>
+            <field name="requires_approval">True</field>
+            <field name="description">Member violated association code of conduct or ethical standards</field>
+            <field name="internal_notes">Requires board or ethics committee approval. Document all incidents and disciplinary actions. No reinstatement without special board action.</field>
+        </record>
+
+        <record id="cancellation_reason_fraud" model="ams.cancellation.reason">
+            <field name="name">Fraudulent Activity</field>
+            <field name="code">FRAUD</field>
+            <field name="category">involuntary</field>
+            <field name="sequence">120</field>
+            <field name="allows_reinstatement">False</field>
+            <field name="refund_eligible">False</field>
+            <field name="requires_approval">True</field>
+            <field name="description">Member engaged in fraudulent activity related to membership or services</field>
+            <field name="internal_notes">Requires management approval and legal review. Document all evidence. Report to authorities if required by law.</field>
+        </record>
+
+        <record id="cancellation_reason_eligibility" model="ams.cancellation.reason">
+            <field name="name">Eligibility Requirements Not Met</field>
+            <field name="code">INELIGIBLE</field>
+            <field name="category">involuntary</field>
+            <field name="sequence">130</field>
+            <field name="allows_reinstatement">True</field>
+            <field name="refund_eligible">True</field>
+            <field name="requires_approval">True</field>
+            <field name="description">Member no longer meets eligibility requirements for membership</field>
+            <field name="internal_notes">Review eligibility criteria and documentation. Consider alternative membership categories. Refund if membership granted in error.</field>
+        </record>
+
+        <!-- ADMINISTRATIVE REASONS -->
+        <record id="cancellation_reason_data_cleanup" model="ams.cancellation.reason">
+            <field name="name">Data Cleanup</field>
+            <field name="code">DATA_CLEANUP</field>
+            <field name="category">administrative</field>
+            <field name="sequence">200</field>
+            <field name="allows_reinstatement">True</field>
+            <field name="refund_eligible">False</field>
+            <field name="requires_approval">True</field>
+            <field name="description">Administrative cancellation for data quality improvement</field>
+            <field name="internal_notes">Used for cleaning up test records, duplicates, or erroneous entries. Requires management approval to prevent accidental member deletion.</field>
+        </record>
+
+        <record id="cancellation_reason_system_migration" model="ams.cancellation.reason">
+            <field name="name">System Migration</field>
+            <field name="code">MIGRATION</field>
+            <field name="category">administrative</field>
+            <field name="sequence">210</field>
+            <field name="allows_reinstatement">True</field>
+            <field name="refund_eligible">False</field>
+            <field name="requires_approval">True</field>
+            <field name="description">Participation cancelled due to system migration or conversion</field>
+            <field name="internal_notes">Temporary cancellation during system transitions. Ensure member is properly recreated in new system.</field>
+        </record>
+
+        <record id="cancellation_reason_deceased" model="ams.cancellation.reason">
+            <field name="name">Member Deceased</field>
+            <field name="code">DECEASED</field>
+            <field name="category">administrative</field>
+            <field name="sequence">220</field>
+            <field name="allows_reinstatement">False</field>
+            <field name="refund_eligible">True</field>
+            <field name="requires_approval">False</field>
+            <field name="description">Member is deceased</field>
+            <field name="internal_notes">Handle with sensitivity. Consider memorial recognition. Process pro-rated refund to estate if appropriate. Update member status to deceased.</field>
+        </record>
+
+        <record id="cancellation_reason_business_closure" model="ams.cancellation.reason">
+            <field name="name">Business Closure</field>
+            <field name="code">BUSINESS_CLOSURE</field>
+            <field name="category">administrative</field>
+            <field name="sequence">230</field>
+            <field name="allows_reinstatement">False</field>
+            <field name="refund_eligible">False</field>
+            <field name="requires_approval">False</field>
+            <field name="description">Organization member ceased operations or closed business</field>
+            <field name="internal_notes">For organizational memberships only. Check if individual employees want to continue with individual memberships.</field>
+        </record>
+
+        <record id="cancellation_reason_merger_acquisition" model="ams.cancellation.reason">
+            <field name="name">Merger/Acquisition</field>
+            <field name="code">MERGER</field>
+            <field name="category">administrative</field>
+            <field name="sequence">240</field>
+            <field name="allows_reinstatement">True</field>
+            <field name="refund_eligible">False</field>
+            <field name="requires_approval">False</field>
+            <field name="description">Organization member merged with or acquired by another entity</field>
+            <field name="internal_notes">Transfer membership to acquiring entity if they wish to continue. Handle as business transition rather than true cancellation.</field>
+        </record>
+
+        <record id="cancellation_reason_other" model="ams.cancellation.reason">
+            <field name="name">Other</field>
+            <field name="code">OTHER</field>
+            <field name="category">administrative</field>
+            <field name="sequence">999</field>
+            <field name="allows_reinstatement">True</field>
+            <field name="refund_eligible">False</field>
+            <field name="requires_approval">False</field>
+            <field name="description">Other reason not covered by standard categories</field>
+            <field name="internal_notes">Use sparingly. Always provide detailed reason in notes. Consider adding new reason category if this reason is used frequently.</field>
+        </record>
+    </data>
+</odoo>
