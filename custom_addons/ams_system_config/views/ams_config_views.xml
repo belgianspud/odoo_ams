@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- AMS Configuration Settings Form View -->
+    <record id="view_ams_config_settings_form" model="ir.ui.view">
+        <field name="name">AMS Configuration Settings</field>
+        <field name="model">ams.config.settings</field>
+        <field name="arch" type="xml">
+            <form string="AMS Configuration" class="oe_form_configuration">
+                <header>
+                    <button name="execute" string="Save" type="object" class="oe_highlight"/>
+                    or 
+                    <button name="cancel" string="Discard" type="object" class="oe_link"/>
+                </header>
+                
+                <sheet>
+                    <div class="row mt16 o_settings_container">
+                        <!-- Left Column -->
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <!-- Membership Settings Section -->
+                            <div class="row">
+                                <h2>Membership Settings</h2>
+                            </div>
+                            
+                            <!-- Member ID Configuration -->
+                            <div class="row">
+                                <div class="o_setting_left_pane">
+                                    <field name="auto_member_id"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="auto_member_id" string="Member ID Generation"/>
+                                    <div class="text-muted">
+                                        Automatically assign unique member IDs to new members
+                                    </div>
+                                    <div class="content-group" attrs="{'invisible': [('auto_member_id', '=', False)]}">
+                                        <div class="row">
+                                            <label for="member_id_prefix" string="ID Prefix" class="col-3 o_light_label"/>
+                                            <field name="member_id_prefix" class="col-3"/>
+                                        </div>
+                                        <div class="row">
+                                            <label for="member_id_sequence" string="ID Sequence" class="col-3 o_light_label"/>
+                                            <field name="member_id_sequence" class="col-6" options="{'no_create': True}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Membership Lifecycle -->
+                            <div class="row">
+                                <div class="o_setting_left_pane">
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label string="Membership Lifecycle"/>
+                                    <div class="text-muted">
+                                        Configure default policies for membership management
+                                    </div>
+                                    <div class="content-group">
+                                        <div class="row">
+                                            <label for="grace_period_days" string="Grace Period (Days)" class="col-4 o_light_label"/>
+                                            <field name="grace_period_days" class="col-3"/>
+                                        </div>
+                                        <div class="row">
+                                            <label for="renewal_window_days" string="Renewal Window (Days)" class="col-4 o_light_label"/>
+                                            <field name="renewal_window_days" class="col-3"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Multiple Memberships -->
+                            <div class="row">
+                                <div class="o_setting_left_pane">
+                                    <field name="allow_multiple_memberships"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="allow_multiple_memberships" string="Multiple Active Memberships"/>
+                                    <div class="text-muted">
+                                        Allow members to hold multiple active memberships simultaneously
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Communication Settings Section -->
+                            <div class="row mt32">
+                                <h2>Communication &amp; Portal Settings</h2>
+                            </div>
+
+                            <!-- Portal Settings -->
+                            <div class="row">
+                                <div class="o_setting_left_pane">
+                                    <field name="portal_enabled"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="portal_enabled" string="Member Portal"/>
+                                    <div class="text-muted">
+                                        Enable member self-service portal access
+                                    </div>
+                                    <div class="content-group" attrs="{'invisible': [('portal_enabled', '=', False)]}">
+                                        <div class="row">
+                                            <div class="o_setting_left_pane">
+                                                <field name="portal_self_registration"/>
+                                            </div>
+                                            <div class="o_setting_right_pane">
+                                                <label for="portal_self_registration" string="Self-Registration"/>
+                                                <div class="text-muted">
+                                                    Allow new members to register through portal
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Communication Defaults -->
+                            <div class="row">
+                                <div class="o_setting_left_pane">
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label string="Communication Preferences"/>
+                                    <div class="text-muted">
+                                        Default communication settings for new members
+                                    </div>
+                                    <div class="content-group">
+                                        <div class="row">
+                                            <div class="o_setting_left_pane">
+                                                <field name="communication_opt_out_default"/>
+                                            </div>
+                                            <div class="o_setting_right_pane">
+                                                <label for="communication_opt_out_default" string="Default Opt-Out"/>
+                                                <div class="text-muted">New members opt-out of communications by default</div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="o_setting_left_pane">
+                                                <field name="emergency_communications_override"/>
+                                            </div>
+                                            <div class="o_setting_right_pane">
+                                                <label for="emergency_communications_override" string="Emergency Override"/>
+                                                <div class="text-muted">Allow emergency communications regardless of preferences</div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <label for="notification_digest_frequency" string="Notification Frequency" class="col-4 o_light_label"/>
+                                            <field name="notification_digest_frequency" class="col-4"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <!-- Financial Settings Section -->
+                            <div class="row">
+                                <h2>Financial Settings</h2>
+                            </div>
+
+                            <!-- Currency & Fiscal -->
+                            <div class="row">
+                                <div class="o_setting_left_pane">
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label string="Currency &amp; Fiscal Configuration"/>
+                                    <div class="text-muted">
+                                        Primary financial settings for the system
+                                    </div>
+                                    <div class="content-group">
+                                        <div class="row">
+                                            <label for="default_currency_id" string="Default Currency" class="col-4 o_light_label"/>
+                                            <field name="default_currency_id" class="col-4" options="{'no_create': True}"/>
+                                        </div>
+                                        <div class="row">
+                                            <label for="fiscal_year_start" string="Fiscal Year Start" class="col-4 o_light_label"/>
+                                            <field name="fiscal_year_start" class="col-4"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Chapter Revenue Sharing -->
+                            <div class="row">
+                                <div class="o_setting_left_pane">
+                                    <field name="chapter_revenue_sharing"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="chapter_revenue_sharing" string="Chapter Revenue Sharing"/>
+                                    <div class="text-muted">
+                                        Enable revenue sharing with local chapters
+                                    </div>
+                                    <div class="content-group" attrs="{'invisible': [('chapter_revenue_sharing', '=', False)]}">
+                                        <div class="row">
+                                            <label for="default_chapter_percentage" string="Default Share %" class="col-4 o_light_label"/>
+                                            <field name="default_chapter_percentage" class="col-3"/>
+                                            <span class="col-1">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Feature Settings Section -->
+                            <div class="row mt32">
+                                <h2>Feature Settings</h2>
+                            </div>
+
+                            <!-- Enterprise Features -->
+                            <div class="row">
+                                <div class="o_setting_left_pane">
+                                    <field name="enterprise_subscriptions_enabled"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="enterprise_subscriptions_enabled" string="Enterprise Subscriptions"/>
+                                    <div class="text-muted">
+                                        Enable enterprise seat management features for corporate memberships
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Continuing Education -->
+                            <div class="row">
+                                <div class="o_setting_left_pane">
+                                    <field name="continuing_education_required"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="continuing_education_required" string="Continuing Education"/>
+                                    <div class="text-muted">
+                                        Require continuing education credits for membership maintenance
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Fundraising Features -->
+                            <div class="row">
+                                <div class="o_setting_left_pane">
+                                    <field name="fundraising_enabled"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="fundraising_enabled" string="Fundraising Features"/>
+                                    <div class="text-muted">
+                                        Enable donation and campaign management capabilities
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Event Member Pricing -->
+                            <div class="row">
+                                <div class="o_setting_left_pane">
+                                    <field name="event_member_pricing"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="event_member_pricing" string="Member Event Pricing"/>
+                                    <div class="text-muted">
+                                        Enable special pricing for members at association events
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- AMS Configuration Action -->
+    <record id="action_ams_config_settings" model="ir.actions.act_window">
+        <field name="name">AMS Configuration</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">ams.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{}</field>
+    </record>
+
+    <!-- Configuration Menu Items -->
+    <menuitem 
+        id="menu_ams_root" 
+        name="AMS" 
+        sequence="10"/>
+    
+    <menuitem 
+        id="menu_ams_settings" 
+        name="Settings" 
+        parent="menu_ams_root" 
+        sequence="100"/>
+    
+    <menuitem 
+        id="menu_ams_configuration" 
+        name="AMS Configuration" 
+        parent="menu_ams_settings" 
+        action="action_ams_config_settings" 
+        sequence="10"/>
+
+    <!-- Alternative access through Settings menu -->
+    <menuitem 
+        id="menu_ams_config_settings" 
+        name="AMS Configuration" 
+        parent="base.menu_administration"
+        action="action_ams_config_settings" 
+        sequence="50"
+        groups="base.group_system"/>
+</odoo>

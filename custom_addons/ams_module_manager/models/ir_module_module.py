@@ -33,11 +33,15 @@ class IrModuleModule(models.Model):
         #Custom Modules
         'ams_member_data',      # AMS base module for member data structures - Layer 1
         'ams_communication',    # AMS base module to track comms preferences - Layer 1
+        'ams_system_config',    # AMS base module for managing and configuring ams configurations - Layer 1
+        'ams_participation',    # AMS base module for tracking participations(membership/chapter subscription records) - Layer 2
+
+        # Original Custom Modules
         'ams_subscriptions',    # AMS Subscriptions
         'ams_base_accounting',  # AMS Accounting
         'ams_revenue_recognition', # AMS Revenue Recognition
         'ams_subscription_billing', # AMS Subscription Billing
-        'ams_core_base',        # AMS base items for individuals and companies (contacts and accounts)
+        'association_business_automation', # initial automation GUI module for business rules management
 
         #External Modules
         'base_accounting_kit',
