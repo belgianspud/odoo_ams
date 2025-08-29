@@ -172,7 +172,7 @@ class AMSParticipation(models.Model):
     )
     
     # ==========================================
-    # COMPUTED FIELDS
+    # COMPUTED FIELDS (STORED)
     # ==========================================
     
     display_name = fields.Char(
@@ -187,28 +187,32 @@ class AMSParticipation(models.Model):
         store=True
     )
     
+    # ==========================================
+    # COMPUTED FIELDS (NOT STORED - DATE DEPENDENT)
+    # ==========================================
+    
     days_remaining = fields.Integer(
         string='Days Remaining',
-        compute='_compute_days_remaining',
-        store=True
+        compute='_compute_days_remaining'
+        # Removed store=True because this changes daily
     )
     
     is_expired = fields.Boolean(
         string='Is Expired',
-        compute='_compute_is_expired',
-        store=True
+        compute='_compute_is_expired'
+        # Removed store=True because this changes daily
     )
     
     is_in_grace = fields.Boolean(
         string='In Grace Period',
-        compute='_compute_is_in_grace',
-        store=True
+        compute='_compute_is_in_grace'
+        # Removed store=True because this changes daily
     )
     
     is_renewable = fields.Boolean(
         string='Is Renewable',
         compute='_compute_is_renewable',
-        store=True
+        store=True  # This can be stored as it depends on status, not current date
     )
     
     # ==========================================
@@ -254,7 +258,6 @@ class AMSParticipation(models.Model):
         for record in self:
             record.member_display_name = record.partner_id.name if record.partner_id else record.company_id.name
 
-    @api.depends('end_date')
     def _compute_days_remaining(self):
         """Compute days remaining until participation ends."""
         today = fields.Date.context_today(self)
@@ -265,14 +268,12 @@ class AMSParticipation(models.Model):
             else:
                 record.days_remaining = 0
 
-    @api.depends('paid_through_date')
     def _compute_is_expired(self):
         """Compute if participation has expired."""
         today = fields.Date.context_today(self)
         for record in self:
             record.is_expired = record.paid_through_date and record.paid_through_date < today
 
-    @api.depends('status', 'grace_period_end_date')
     def _compute_is_in_grace(self):
         """Compute if participation is in grace period."""
         today = fields.Date.context_today(self)
@@ -283,7 +284,7 @@ class AMSParticipation(models.Model):
                 record.grace_period_end_date >= today
             )
 
-    @api.depends('status', 'end_date')
+    @api.depends('status')
     def _compute_is_renewable(self):
         """Compute if participation can be renewed."""
         for record in self:

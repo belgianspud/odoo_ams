@@ -62,8 +62,8 @@
                                 <field name="paid_through_date"/>
                                 <field name="days_remaining" 
                                        decoration-success="days_remaining > 30"
-                                       decoration-warning="days_remaining less than or equal to 30 and days_remaining are greater than 0"
-                                       decoration-danger="days_remaining less than or equal to 0"/>
+                                       decoration-warning="days_remaining &lt;= 30 and days_remaining > 0"
+                                       decoration-danger="days_remaining &lt;= 0"/>
                                 <field name="committee_position_id" 
                                        invisible="participation_type != 'committee_position'"/>
                                 <field name="auto_pay" widget="boolean_toggle"/>
@@ -176,8 +176,8 @@
                 <field name="paid_through_date" optional="show"/>
                 <field name="days_remaining" optional="show"
                        decoration-success="days_remaining > 30"
-                       decoration-warning="days_remaining less than or equal to 30 and days_remaining greater than 0"
-                       decoration-danger="days_remaining less than or equal to 0"/>
+                       decoration-warning="days_remaining &lt;= 30 and days_remaining > 0"
+                       decoration-danger="days_remaining &lt;= 0"/>
                 <field name="committee_position_id" 
                        invisible="participation_type != 'committee_position'" optional="hide"/>
                 <field name="auto_pay" widget="boolean_toggle" optional="hide"/>

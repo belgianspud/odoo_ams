@@ -1,5 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Create Participations parent menu under Members -->
+    <menuitem id="menu_ams_participations" 
+              name="Participations" 
+              parent="ams_system_config.menu_ams_members"
+              sequence="40"/>
+
+    <!-- Create Reports parent menu under AMS -->
+    <menuitem id="menu_ams_reports" 
+              name="Reports" 
+              parent="ams_system_config.menu_ams_root"
+              sequence="90"/>
+
+    <!-- Participation List View -->
+    <record id="view_ams_participation_list" model="ir.ui.view">
+        <field name="name">ams.participation.list</field>
+        <field name="model">ams.participation</field>
+        <field name="arch" type="xml">
+            <list string="Participations" default_order="begin_date desc">
+                <field name="member_display_name"/>
+                <field name="participation_type"/>
+                <field name="status" decoration-success="status == 'active'" 
+                       decoration-warning="status == 'grace'" 
+                       decoration-danger="status in ('cancelled', 'terminated')"/>
+                <field name="begin_date"/>
+                <field name="end_date"/>
+                <field name="paid_through_date"/>
+                <field name="days_remaining"/>
+                <field name="is_expired" invisible="1"/>
+                <field name="is_renewable" invisible="1"/>
+            </list>
+        </field>
+    </record>
+
     <!-- Enhanced Participation Form View with better formatting -->
     <record id="view_ams_participation_form_enhanced" model="ir.ui.view">
         <field name="name">ams.participation.form.enhanced</field>
@@ -36,14 +69,6 @@
                                 help="View member profile">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Member</span>
-                            </div>
-                        </button>
-                        
-                        <button type="object" name="toggle_active" 
-                                class="oe_stat_button" icon="fa-archive"
-                                help="Archive/Unarchive this participation">
-                            <div class="o_field_widget o_stat_info">
-                                <span class="o_stat_text">Archive</span>
                             </div>
                         </button>
                     </div>
@@ -116,8 +141,8 @@
                                         <field name="is_renewable"/>
                                         <field name="days_remaining" 
                                                decoration-success="days_remaining > 30"
-                                               decoration-warning="days_remaining <= 30 and days_remaining > 0"
-                                               decoration-danger="days_remaining <= 0"/>
+                                               decoration-warning="days_remaining &lt;= 30 and days_remaining > 0"
+                                               decoration-danger="days_remaining &lt;= 0"/>
                                     </group>
                                 </div>
                                 
@@ -180,22 +205,6 @@
                                            options="{'no_create': True}"/>
                                     <field name="terminated_date" readonly="1"/>
                                 </group>
-                            </group>
-                            
-                            <!-- Show cancellation reason details -->
-                            <group string="Reason Information" 
-                                   invisible="not cancellation_reason_id">
-                                <field name="cancellation_reason_id" invisible="1"/>
-                                <div class="o_row" invisible="not cancellation_reason_id">
-                                    <label for="cancellation_reason_id"/>
-                                    <div>
-                                        <strong><field name="cancellation_reason_id" readonly="1" options="{'no_open': True}"/></strong>
-                                        <br/>
-                                        <span class="text-muted">
-                                            Category: <field name="cancellation_reason_id" readonly="1" options="{'no_open': True}"/>
-                                        </span>
-                                    </div>
-                                </div>
                             </group>
                         </page>
 
@@ -274,12 +283,160 @@
         </field>
     </record>
 
-    <!-- Update the action to use the enhanced form -->
+    <!-- Participation Kanban View -->
+    <record id="view_ams_participation_kanban" model="ir.ui.view">
+        <field name="name">ams.participation.kanban</field>
+        <field name="model">ams.participation</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="status" class="o_kanban_small_column">
+                <field name="status"/>
+                <field name="participation_type"/>
+                <field name="days_remaining"/>
+                <field name="is_expired"/>
+                <field name="is_renewable"/>
+                <field name="paid_through_date"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_dropdown_kanban dropdown">
+                                <a role="button" class="dropdown-toggle o-no-caret btn" data-toggle="dropdown" data-display="static" href="#" aria-label="Dropdown menu" title="Dropdown menu">
+                                    <span class="fa fa-ellipsis-v"/>
+                                </a>
+                                <div class="dropdown-menu" role="menu">
+                                    <a t-if="widget.editable" role="menuitem" type="edit" class="dropdown-item">Edit</a>
+                                    <a t-if="widget.deletable" role="menuitem" type="delete" class="dropdown-item">Delete</a>
+                                </div>
+                            </div>
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="member_display_name"/>
+                                        </strong>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div class="text-muted">
+                                        <field name="participation_type"/>
+                                    </div>
+                                    <div class="mt8">
+                                        <span class="badge badge-pill" 
+                                              t-attf-class="badge-#{record.status.raw_value === 'active' ? 'success' : record.status.raw_value === 'grace' ? 'warning' : record.status.raw_value === 'prospect' ? 'info' : 'secondary'}">
+                                            <field name="status"/>
+                                        </span>
+                                    </div>
+                                    <div class="mt8" t-if="record.paid_through_date.raw_value">
+                                        <small>Paid through: <field name="paid_through_date"/></small>
+                                    </div>
+                                    <div class="mt8" t-if="record.days_remaining.raw_value &gt; 0">
+                                        <small class="text-success">
+                                            <t t-esc="record.days_remaining.value"/> days remaining
+                                        </small>
+                                    </div>
+                                    <div class="mt8" t-if="record.days_remaining.raw_value &lt;= 0 and record.days_remaining.raw_value &gt; -30">
+                                        <small class="text-warning">
+                                            Expired <t t-esc="Math.abs(record.days_remaining.value)"/> days ago
+                                        </small>
+                                    </div>
+                                    <div class="mt8" t-if="record.days_remaining.raw_value &lt;= -30">
+                                        <small class="text-danger">
+                                            Long overdue
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Participation Search View -->
+    <record id="view_ams_participation_search" model="ir.ui.view">
+        <field name="name">ams.participation.search</field>
+        <field name="model">ams.participation</field>
+        <field name="arch" type="xml">
+            <search string="Search Participations">
+                <field name="member_display_name"/>
+                <field name="partner_id"/>
+                <field name="company_id"/>
+                <field name="participation_type"/>
+                <field name="status"/>
+                <field name="related_invoice_id"/>
+                <field name="subscription_product_id"/>
+                
+                <!-- Status filters -->
+                <filter string="Active" name="active" 
+                        domain="[('status', '=', 'active')]"/>
+                <filter string="Grace Period" name="grace" 
+                        domain="[('status', '=', 'grace')]"/>
+                <filter string="Prospects" name="prospects" 
+                        domain="[('status', '=', 'prospect')]"/>
+                <filter string="Suspended" name="suspended" 
+                        domain="[('status', '=', 'suspended')]"/>
+                <filter string="Cancelled" name="cancelled" 
+                        domain="[('status', 'in', ('cancelled', 'terminated'))]"/>
+                
+                <separator/>
+                
+                <!-- Type filters -->
+                <filter string="Memberships" name="memberships" 
+                        domain="[('participation_type', '=', 'membership')]"/>
+                <filter string="Chapters" name="chapters" 
+                        domain="[('participation_type', '=', 'chapter')]"/>
+                <filter string="Committees" name="committees" 
+                        domain="[('participation_type', '=', 'committee_position')]"/>
+                
+                <separator/>
+                
+                <!-- Date-based filters -->
+                <filter string="Expired" name="expired" 
+                        domain="[('is_expired', '=', True)]"/>
+                <filter string="Expiring Soon" name="expiring_soon" 
+                        domain="[('days_remaining', '&lt;=', 30), ('days_remaining', '&gt;', 0)]"/>
+                <filter string="Renewable" name="renewable" 
+                        domain="[('is_renewable', '=', True)]"/>
+                <filter string="Auto-Pay Enabled" name="auto_pay" 
+                        domain="[('auto_pay', '=', True)]"/>
+                
+                <separator/>
+                
+                <!-- Individual vs Organization -->
+                <filter string="Individual Members" name="individuals" 
+                        domain="[('partner_id', '!=', False)]"/>
+                <filter string="Organization Members" name="organizations" 
+                        domain="[('company_id', '!=', False)]"/>
+                
+                <separator/>
+                
+                <!-- Time-based filters -->
+                <filter string="This Year" name="this_year" 
+                        domain="[('begin_date', '&gt;=', datetime.datetime.now().replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0).strftime('%Y-%m-%d'))]"/>
+                <filter string="New This Month" name="new_this_month" 
+                        domain="[('create_date', '&gt;=', (context_today() - relativedelta(months=1)).strftime('%Y-%m-%d'))]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_by_status" 
+                            context="{'group_by': 'status'}"/>
+                    <filter string="Participation Type" name="group_by_type" 
+                            context="{'group_by': 'participation_type'}"/>
+                    <filter string="Member" name="group_by_member" 
+                            context="{'group_by': 'partner_id'}"/>
+                    <filter string="Begin Date" name="group_by_begin_date" 
+                            context="{'group_by': 'begin_date:month'}"/>
+                    <filter string="End Date" name="group_by_end_date" 
+                            context="{'group_by': 'end_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- All Participations Action -->
     <record id="action_ams_participation" model="ir.actions.act_window">
         <field name="name">All Participations</field>
         <field name="res_model">ams.participation</field>
         <field name="view_mode">kanban,list,form</field>
-        <field name="view_id" eval="False"/>
         <field name="context">{'search_default_active': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -293,4 +450,96 @@
             </p>
         </field>
     </record>
+
+    <!-- Active Participations Action -->
+    <record id="action_ams_participation_active" model="ir.actions.act_window">
+        <field name="name">Active Participations</field>
+        <field name="res_model">ams.participation</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('status', 'in', ['active', 'grace'])]</field>
+        <field name="context">{'search_default_active': 1}</field>
+    </record>
+
+    <!-- Expired/Grace Participations Action -->
+    <record id="action_ams_participation_expired_grace" model="ir.actions.act_window">
+        <field name="name">Expired/Grace Participations</field>
+        <field name="res_model">ams.participation</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('status', 'in', ['grace']), ('is_expired', '=', True)]</field>
+        <field name="context">{'search_default_grace': 1, 'search_default_expired': 1}</field>
+    </record>
+
+    <!-- Membership Participations Action -->
+    <record id="action_ams_participation_membership" model="ir.actions.act_window">
+        <field name="name">Membership Participations</field>
+        <field name="res_model">ams.participation</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('participation_type', '=', 'membership')]</field>
+        <field name="context">{'search_default_active': 1, 'default_participation_type': 'membership'}</field>
+    </record>
+
+    <!-- Chapter Participations Action -->
+    <record id="action_ams_participation_chapter" model="ir.actions.act_window">
+        <field name="name">Chapter Participations</field>
+        <field name="res_model">ams.participation</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('participation_type', '=', 'chapter')]</field>
+        <field name="context">{'search_default_active': 1, 'default_participation_type': 'chapter'}</field>
+    </record>
+
+    <!-- Committee Participations Action -->
+    <record id="action_ams_participation_committee" model="ir.actions.act_window">
+        <field name="name">Committee Participations</field>
+        <field name="res_model">ams.participation</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('participation_type', '=', 'committee_position')]</field>
+        <field name="context">{'search_default_active': 1, 'default_participation_type': 'committee_position'}</field>
+    </record>
+
+    <!-- MENU STRUCTURE -->
+    
+    <!-- Main Participations menu -->
+    <menuitem id="menu_ams_participations_main" 
+              name="All Participations" 
+              parent="menu_ams_participations"
+              action="action_ams_participation" 
+              sequence="10"/>
+
+    <!-- Active Participations submenu -->
+    <menuitem id="menu_ams_participations_active" 
+              name="Active Participations" 
+              parent="menu_ams_participations"
+              action="action_ams_participation_active" 
+              sequence="20"/>
+
+    <!-- Expired/Grace submenu -->
+    <menuitem id="menu_ams_participations_expired" 
+              name="Expired/Grace" 
+              parent="menu_ams_participations"
+              action="action_ams_participation_expired_grace" 
+              sequence="30"/>
+
+    <!-- By Type submenus -->
+    <menuitem id="menu_ams_participations_by_type" 
+              name="By Type" 
+              parent="menu_ams_participations"
+              sequence="40"/>
+
+    <menuitem id="menu_ams_participations_membership" 
+              name="Memberships" 
+              parent="menu_ams_participations_by_type"
+              action="action_ams_participation_membership" 
+              sequence="10"/>
+
+    <menuitem id="menu_ams_participations_chapter" 
+              name="Chapters" 
+              parent="menu_ams_participations_by_type"
+              action="action_ams_participation_chapter" 
+              sequence="20"/>
+
+    <menuitem id="menu_ams_participations_committee" 
+              name="Committees" 
+              parent="menu_ams_participations_by_type"
+              action="action_ams_participation_committee" 
+              sequence="30"/>
 </odoo>
