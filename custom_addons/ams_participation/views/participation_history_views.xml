@@ -170,7 +170,7 @@
     </record>
 
     <!-- Extended Participation History List View for Member Context -->
-    <record id="view_ams_participation_history_member_list" model="ir.ui.view">
+    <record id="view_ams_participation_history_member_list" model="ir.ui.viewformtt">
         <field name="name">ams.participation.history.member.list</field>
         <field name="model">ams.participation.history</field>
         <field name="arch" type="xml">
