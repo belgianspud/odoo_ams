@@ -36,6 +36,9 @@ class IrModuleModule(models.Model):
         'ams_system_config',    # AMS base module for managing and configuring ams configurations - Layer 1
         'ams_participation',    # AMS base module for tracking participations(membership/chapter subscription records) - Layer 2
 
+        """
+        #commenting out this section to provide clean list of modules to use for ams. 
+        #uncomment modules as needed for missing functionality.
         # Original Custom Modules
         'ams_subscriptions',    # AMS Subscriptions
         'ams_base_accounting',  # AMS Accounting
@@ -66,7 +69,7 @@ class IrModuleModule(models.Model):
         'sale_report_advanced',
         'subscription_package',
         'user_audit',
-        'website_hide_button',
+        'website_hide_button',"""
     ]
     
     def _is_apps_menu_context(self, domain=None):
