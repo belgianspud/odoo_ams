@@ -201,7 +201,7 @@
     <!-- Add History submenu under Participations -->
     <menuitem id="menu_ams_participation_history" 
               name="Change History" 
-              parent="ams_participation.menu_ams_participations"
+              parent="menu_ams_participations"
               action="action_ams_participation_history" 
               sequence="50"/>
 

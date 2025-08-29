@@ -182,11 +182,6 @@
                         domain="[('active', '=', True)]"/>
                 <filter string="Archived" name="inactive" 
                         domain="[('active', '=', False)]"/>
-                <separator/>
-                <filter string="Frequently Used" name="frequently_used" 
-                        domain="[('usage_count', '>', 10)]"/>
-                <filter string="Never Used" name="never_used" 
-                        domain="[('usage_count', '=', 0)]"/>
                 
                 <group expand="0" string="Group By">
                     <filter string="Category" name="group_by_category" 
@@ -222,7 +217,7 @@
     <!-- Cancellation Reasons menu under Configuration -->
     <menuitem id="menu_ams_cancellation_reason" 
               name="Cancellation Reasons" 
-              parent="ams_member_data.menu_ams_configuration"
+              parent="ams_system_config.menu_ams_configuration"
               action="action_ams_cancellation_reason" 
               sequence="30"/>
 </odoo>

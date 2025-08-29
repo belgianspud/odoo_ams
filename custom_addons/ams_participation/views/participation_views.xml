@@ -3,13 +3,13 @@
     <!-- Create Participations parent menu under Members -->
     <menuitem id="menu_ams_participations" 
               name="Participations" 
-              parent="ams_member_data.menu_ams_members"
+              parent="ams_system_config.menu_ams_members"
               sequence="40"/>
 
     <!-- Create Reports parent menu under AMS -->
     <menuitem id="menu_ams_reports" 
               name="Reports" 
-              parent="ams_member_data.menu_ams_root"
+              parent="ams_system_config.menu_ams_root"
               sequence="90"/>
 
     <!-- Participation List View -->
@@ -81,8 +81,7 @@
                                    options="{'no_create': True}"/>
                             <field name="participation_type"/>
                             <field name="committee_position_id" 
-                                   invisible="participation_type != 'committee_position'"
-                                   options="{'no_create': True}"/>
+                                   invisible="participation_type != 'committee_position'"/>
                         </group>
                         <group string="Status Information">
                             <field name="status"/>
@@ -119,8 +118,7 @@
                                 <group string="Renewal Settings">
                                     <field name="auto_pay"/>
                                     <field name="renew_to_product_id" 
-                                           invisible="not auto_pay"
-                                           options="{'no_create': True}"/>
+                                           invisible="not auto_pay"/>
                                 </group>
                             </group>
                         </page>
@@ -130,8 +128,7 @@
                                 <group string="Billing Relationships">
                                     <field name="related_invoice_id" 
                                            options="{'no_create': True}"/>
-                                    <field name="subscription_product_id" 
-                                           options="{'no_create': True}"/>
+                                    <field name="subscription_product_id"/>
                                 </group>
                             </group>
                         </page>

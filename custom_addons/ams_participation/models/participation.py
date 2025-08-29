@@ -57,11 +57,12 @@ class AMSParticipation(models.Model):
         string='Status',
         required=True,
         default='prospect',
-        help='Current participation status'
+        help='Current participation status',
+        tracking=True
     )
     
     # ==========================================
-    # FINANCIAL INTEGRATION
+    # FINANCIAL INTEGRATION (Optional references)
     # ==========================================
     
     related_invoice_id = fields.Many2one(
@@ -70,20 +71,15 @@ class AMSParticipation(models.Model):
         help='Invoice that created or renewed this participation'
     )
     
-    subscription_product_id = fields.Many2one(
-        'ams.subscription.product',
-        string='Related Subscription Product',
-        help='Subscription product that defines this participation'
+    # Note: These will be available when respective modules are installed
+    subscription_product_id = fields.Char(
+        string='Subscription Product Reference',
+        help='Reference to subscription product (will be Many2one when ams_subscription_management is installed)'
     )
     
-    # ==========================================
-    # ORGANIZATIONAL RELATIONSHIPS
-    # ==========================================
-    
-    committee_position_id = fields.Many2one(
-        'ams.committee.position',
-        string='Committee Role',
-        help='Specific committee position (for committee_position type)'
+    committee_position_id = fields.Char(
+        string='Committee Position Reference',
+        help='Reference to committee position (will be Many2one when ams_committees_core is installed)'
     )
     
     # ==========================================
@@ -151,10 +147,9 @@ class AMSParticipation(models.Model):
         help='Automatically renew this participation'
     )
     
-    renew_to_product_id = fields.Many2one(
-        'ams.subscription.product',
-        string='Renewal Target Product',
-        help='Product to use for next renewal (if different)'
+    renew_to_product_id = fields.Char(
+        string='Renewal Target Product Reference',
+        help='Product reference for next renewal (will be Many2one when ams_subscription_management is installed)'
     )
     
     # ==========================================
@@ -222,13 +217,6 @@ class AMSParticipation(models.Model):
         string='Status Change History',
         help='Complete history of status changes'
     )
-    
-    # Note: benefit_assignment_ids will be added by ams_benefits_engine module
-    # benefit_assignment_ids = fields.One2many(
-    #     'ams.participation.benefit',
-    #     'participation_id',
-    #     string='Assigned Benefits'
-    # )
 
     # ==========================================
     # CONSTRAINTS
@@ -330,21 +318,6 @@ class AMSParticipation(models.Model):
                 if record.bill_through_date > record.end_date + timedelta(days=30):
                     # Allow some reasonable overage
                     raise ValidationError("Bill through date significantly exceeds participation end date.")
-                    
-            if record.paid_through_date and record.bill_through_date:
-                # Warn if paid through date is way ahead of billing
-                if record.paid_through_date > record.bill_through_date + timedelta(days=60):
-                    # Log warning but don't prevent
-                    pass
-
-    @api.constrains('participation_type', 'committee_position_id')
-    def _check_committee_position_consistency(self):
-        """Ensure committee position is only set for committee participation types."""
-        for record in self:
-            if record.committee_position_id and record.participation_type != 'committee_position':
-                raise ValidationError("Committee position can only be set for committee position participation type.")
-            if record.participation_type == 'committee_position' and not record.committee_position_id:
-                raise ValidationError("Committee position participation requires a committee position to be specified.")
 
     @api.constrains('cancellation_reason_id', 'status')
     def _check_cancellation_reason(self):
@@ -440,8 +413,12 @@ class AMSParticipation(models.Model):
 
     def _get_grace_period_days(self):
         """Get grace period length in days."""
-        # Default 30 days, can be enhanced with system configuration
-        return 30
+        # Try to get from system configuration, fallback to 30 days
+        try:
+            config_model = self.env['ams.config.settings']
+            return int(config_model.get_global_setting('grace_period_days', 30))
+        except:
+            return 30
 
     def _activate_member_benefits(self):
         """Activate member benefits for this participation."""
@@ -587,3 +564,36 @@ class AMSParticipation(models.Model):
             ('status', '=', 'active'),
             ('paid_through_date', '<=', cutoff_date)
         ])
+
+    # ==========================================
+    # LIFECYCLE METHODS
+    # ==========================================
+    
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Override create to trigger usage count recomputation."""
+        records = super().create(vals_list)
+        # Trigger recomputation of usage_count on affected cancellation reasons
+        reasons = records.mapped('cancellation_reason_id').filtered(lambda r: r)
+        if reasons:
+            reasons._compute_usage_count()
+        return records
+
+    def write(self, vals):
+        """Override write to trigger usage count recomputation."""
+        old_reasons = self.mapped('cancellation_reason_id')
+        result = super().write(vals)
+        if 'cancellation_reason_id' in vals:
+            new_reasons = self.mapped('cancellation_reason_id')
+            affected_reasons = (old_reasons | new_reasons).filtered(lambda r: r)
+            if affected_reasons:
+                affected_reasons._compute_usage_count()
+        return result
+
+    def unlink(self):
+        """Override unlink to trigger usage count recomputation."""
+        reasons = self.mapped('cancellation_reason_id').filtered(lambda r: r)
+        result = super().unlink()
+        if reasons:
+            reasons._compute_usage_count()
+        return result

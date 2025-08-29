@@ -35,6 +35,7 @@ for all membership-related business processes.
         'mail',
         'contacts',
         'ams_member_data',
+        'ams_system_config',
     ],
     'data': [
         # Security

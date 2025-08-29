@@ -92,7 +92,6 @@ class AMSCancellationReason(models.Model):
                 if not record.code.replace('_', '').isalnum():
                     raise ValidationError("Reason code can only contain letters, numbers, and underscores.")
 
-    @api.depends('code')
     def _compute_usage_count(self):
         """Compute how many times this reason has been used."""
         for record in self:
