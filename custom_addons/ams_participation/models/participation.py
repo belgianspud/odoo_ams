@@ -189,22 +189,26 @@ class AMSParticipation(models.Model):
     
     days_remaining = fields.Integer(
         string='Days Remaining',
-        compute='_compute_days_remaining'
+        compute='_compute_days_remaining',
+        store=True
     )
     
     is_expired = fields.Boolean(
         string='Is Expired',
-        compute='_compute_is_expired'
+        compute='_compute_is_expired',
+        store=True
     )
     
     is_in_grace = fields.Boolean(
         string='In Grace Period',
-        compute='_compute_is_in_grace'
+        compute='_compute_is_in_grace',
+        store=True
     )
     
     is_renewable = fields.Boolean(
         string='Is Renewable',
-        compute='_compute_is_renewable'
+        compute='_compute_is_renewable',
+        store=True
     )
     
     # ==========================================

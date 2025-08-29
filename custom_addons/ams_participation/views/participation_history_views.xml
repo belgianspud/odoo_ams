@@ -198,6 +198,9 @@
                                       (0, 0, {'view_mode': 'form', 'view_id': ref('view_ams_participation_history_form')})]"/>
     </record>
 
+    <!-- MENUS - These menus reference parents defined in participation_views.xml -->
+    <!-- which should be loaded before this file based on the manifest order -->
+    
     <!-- Add History submenu under Participations -->
     <menuitem id="menu_ams_participation_history" 
               name="Change History" 

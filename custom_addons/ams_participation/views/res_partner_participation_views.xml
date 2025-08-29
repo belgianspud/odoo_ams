@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extend res.partner form view to add participations tab -->
+    <record id="view_partner_form_participation" model="ir.ui.view">
+        <field name="name">res.partner.form.participation</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <!-- Add smart buttons for participations -->
+            <div name="button_box" position="inside">
+                <button name="action_view_participations" type="object" 
+                        class="oe_stat_button" icon="fa-users"
+                        invisible="participation_count == 0">
+                    <field name="participation_count" widget="statinfo" string="Participations"/>
+                </button>
+                
+                <button name="action_create_participation" type="object" 
+                        class="oe_stat_button" icon="fa-plus-circle"
+                        help="Create new participation">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">New Participation</span>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Add participations notebook page -->
+            <notebook position="inside">
+                <page string="Participations" name="participations" 
+                      invisible="participation_count == 0 and active_participation_count == 0">
+                    
+                    <!-- Active Participations Section -->
+                    <group string="Active Participations" name="active_participations">
+                        <field name="active_participation_count" invisible="1"/>
+                        <field name="has_active_membership" invisible="1"/>
+                        <field name="primary_membership_id" invisible="1"/>
+                        
+                        <div class="alert alert-success" role="alert" 
+                             invisible="active_participation_count == 0">
+                            <strong>Member Status: Active</strong> - 
+                            This member has <field name="active_participation_count" readonly="1" style="display: inline"/> 
+                            active participation(s).
+                        </div>
+                        
+                        <div class="alert alert-warning" role="alert" 
+                             invisible="active_participation_count > 0">
+                            <strong>Member Status: Inactive</strong> - 
+                            This member has no active participations.
+                        </div>
+                        
+                        <field name="active_participation_ids" nolabel="1" 
+                               context="{'default_partner_id': id if not is_company else False, 
+                                        'default_company_id': id if is_company else False}">
+                            <tree string="Active Participations" create="true" delete="false" 
+                                  decoration-success="status == 'active'" 
+                                  decoration-warning="status == 'grace'">
+                                <field name="participation_type"/>
+                                <field name="status" 
+                                       decoration-success="status == 'active'" 
+                                       decoration-warning="status == 'grace'"/>
+                                <field name="begin_date"/>
+                                <field name="end_date"/>
+                                <field name="paid_through_date"/>
+                                <field name="days_remaining" 
+                                       decoration-success="days_remaining > 30"
+                                       decoration-warning="days_remaining less than or equal to 30 and days_remaining are greater than 0"
+                                       decoration-danger="days_remaining less than or equal to 0"/>
+                                <field name="committee_position_id" 
+                                       invisible="participation_type != 'committee_position'"/>
+                                <field name="auto_pay" widget="boolean_toggle"/>
+                                <button name="action_view_history" type="object" 
+                                        icon="fa-history" title="View History"/>
+                            </tree>
+                            <form>
+                                <sheet>
+                                    <group>
+                                        <group>
+                                            <field name="participation_type"/>
+                                            <field name="status"/>
+                                            <field name="begin_date"/>
+                                            <field name="end_date"/>
+                                        </group>
+                                        <group>
+                                            <field name="paid_through_date"/>
+                                            <field name="days_remaining"/>
+                                            <field name="auto_pay"/>
+                                        </group>
+                                    </group>
+                                </sheet>
+                            </form>
+                        </field>
+                    </group>
+
+                    <separator/>
+
+                    <!-- Participation History Section -->
+                    <group string="Participation History" name="participation_history">
+                        <p class="text-muted">
+                            Past and inactive participations for this member. 
+                            This includes completed, cancelled, terminated, and suspended participations.
+                        </p>
+                        
+                        <field name="participation_history_ids" nolabel="1" readonly="1"
+                               context="{'default_partner_id': id if not is_company else False, 
+                                        'default_company_id': id if is_company else False}">
+                            <tree string="Historical Participations" create="false" edit="false" 
+                                  decoration-muted="status in ('cancelled', 'terminated')" 
+                                  decoration-it="status == 'suspended'">
+                                <field name="participation_type"/>
+                                <field name="status" 
+                                       decoration-muted="status in ('cancelled', 'terminated')"
+                                       decoration-warning="status == 'suspended'"/>
+                                <field name="begin_date"/>
+                                <field name="end_date"/>
+                                <field name="terminated_date"/>
+                                <field name="cancellation_reason_id"/>
+                                <field name="committee_position_id" 
+                                       invisible="participation_type != 'committee_position'"/>
+                                <button name="action_view_history" type="object" 
+                                        icon="fa-history" title="View History"/>
+                            </tree>
+                            <form>
+                                <sheet>
+                                    <group>
+                                        <group>
+                                            <field name="participation_type"/>
+                                            <field name="status"/>
+                                            <field name="begin_date"/>
+                                            <field name="end_date"/>
+                                            <field name="terminated_date"/>
+                                        </group>
+                                        <group>
+                                            <field name="cancellation_reason_id"/>
+                                            <field name="committee_position_id" 
+                                                   invisible="participation_type != 'committee_position'"/>
+                                        </group>
+                                    </group>
+                                    <group string="Notes" invisible="not notes">
+                                        <field name="notes" nolabel="1" readonly="1"/>
+                                    </group>
+                                </sheet>
+                            </form>
+                        </field>
+                    </group>
+
+                    <!-- Quick Actions -->
+                    <div class="oe_clear">
+                        <group>
+                            <div class="oe_right">
+                                <button name="action_create_participation" string="Add Participation" 
+                                        type="object" class="btn-primary"/>
+                                <button name="action_view_participations" string="View All" 
+                                        type="object" class="btn-secondary"
+                                        invisible="participation_count == 0"/>
+                            </div>
+                        </group>
+                    </div>
+                </page>
+            </notebook>
+        </field>
+    </record>
+
+    <!-- Simple list view for active participations in member context -->
+    <record id="view_ams_participation_list_member_context" model="ir.ui.view">
+        <field name="name">ams.participation.list.member.context</field>
+        <field name="model">ams.participation</field>
+        <field name="arch" type="xml">
+            <list string="Member Participations" create="true" edit="true" delete="false">
+                <field name="participation_type"/>
+                <field name="status" 
+                       decoration-success="status == 'active'" 
+                       decoration-warning="status == 'grace'"
+                       decoration-danger="status in ('cancelled', 'terminated')"
+                       decoration-muted="status == 'suspended'"/>
+                <field name="begin_date"/>
+                <field name="end_date"/>
+                <field name="paid_through_date" optional="show"/>
+                <field name="days_remaining" optional="show"
+                       decoration-success="days_remaining > 30"
+                       decoration-warning="days_remaining less than or equal to 30 and days_remaining greater than 0"
+                       decoration-danger="days_remaining less than or equal to 0"/>
+                <field name="committee_position_id" 
+                       invisible="participation_type != 'committee_position'" optional="hide"/>
+                <field name="auto_pay" widget="boolean_toggle" optional="hide"/>
+                <field name="cancellation_reason_id" 
+                       invisible="status not in ('cancelled', 'terminated')" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Member-specific participation action -->
+    <record id="action_member_participations" model="ir.actions.act_window">
+        <field name="name">Member Participations</field>
+        <field name="res_model">ams.participation</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+                                      (0, 0, {'view_mode': 'list', 'view_id': ref('view_ams_participation_list_member_context')}),
+                                      (0, 0, {'view_mode': 'form', 'view_id': ref('view_ams_participation_form_enhanced')})]"/>
+        <field name="context">{
+            'search_default_active': 1,
+            'default_partner_id': active_id if not context.get('default_is_company') else False,
+            'default_company_id': active_id if context.get('default_is_company') else False
+        }</field>
+    </record>
+</odoo>

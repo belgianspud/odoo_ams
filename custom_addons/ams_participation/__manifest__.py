@@ -40,14 +40,15 @@ for all membership-related business processes.
     'data': [
         # Security
         'security/ir.model.access.csv',
-        
+    
         # Data
         'data/cancellation_reason_data.xml',
-        
+    
         # Views
         'views/cancellation_reason_views.xml',
         'views/participation_history_views.xml',
         'views/participation_views.xml',
+        'views/res_partner_participation_views.xml',  # Add this line
     ],
     'demo': [],
     'installable': True,
