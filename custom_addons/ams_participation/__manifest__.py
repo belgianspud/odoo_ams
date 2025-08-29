@@ -45,9 +45,9 @@ for all membership-related business processes.
         'data/cancellation_reason_data.xml',
     
         # Views
+        'views/participation_views.xml',
         'views/cancellation_reason_views.xml',
         'views/participation_history_views.xml',
-        'views/participation_views.xml',
         'views/res_partner_participation_views.xml',  # Add this line
     ],
     'demo': [],

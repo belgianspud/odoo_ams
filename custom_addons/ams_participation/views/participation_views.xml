@@ -18,14 +18,14 @@
 			<tree string="Status Changes" create="false" edit="false" delete="false">
 				<field name="change_date"/>
 				<field name="old_status"
-                    decoration-success="old_status == 'prospect'"
-                    decoration-info="old_status == 'active'"
-                    decoration-warning="old_status == 'grace'"
-                    decoration-danger="old_status in ('suspended','terminated','cancelled')"/>
+                   decoration-success="old_status == 'prospect'"
+                   decoration-info="old_status == 'active'"
+                   decoration-warning="old_status == 'grace'"
+                   decoration-danger="old_status == 'suspended' or old_status == 'terminated' or old_status == 'cancelled'"/>
 				<field name="new_status"
-                    decoration-success="new_status == 'active'"
-                    decoration-warning="new_status == 'grace'"
-                    decoration-danger="new_status in ('suspended','terminated','cancelled')"/>
+                   decoration-success="new_status == 'active'"
+                   decoration-warning="new_status == 'grace'"
+                   decoration-danger="new_status == 'suspended' or new_status == 'terminated' or new_status == 'cancelled'"/>
 				<field name="changed_by"/>
 				<field name="automated" widget="boolean_toggle"/>
 				<field name="reason"/>
@@ -122,21 +122,26 @@
                         Consider activating once payment is received or requirements are met.
                     
 					
+					
 					</div>
 					<div class="alert alert-warning" role="alert" invisible="status != 'grace'">
 						<strong>Grace Period:</strong> This participation has expired but is in grace period until 
                         
 						
+						
 						<field name="grace_period_end_date" readonly="1" style="display: inline;"/>.
                     
+					
 					
 					</div>
 					<div class="alert alert-danger" role="alert" invisible="not is_expired or status == 'grace'">
 						<strong>Expired:</strong> This participation expired on 
                         
 						
+						
 						<field name="paid_through_date" readonly="1" style="display: inline;"/>.
                     
+					
 					
 					</div>
 					<div class="oe_title">
@@ -243,6 +248,7 @@
                                 Review the details below for cancellation information and processing notes.
                             
 							
+							
 							</div>
 							<group>
 								<group string="Cancellation Details" class="o_label_nowrap">
@@ -333,6 +339,7 @@
 									<div class="mt8" t-if="record.paid_through_date.raw_value">
 										<small>Paid through: 
 											
+											
 											<field name="paid_through_date"/>
 										</small>
 									</div>
@@ -341,14 +348,17 @@
 											<t t-esc="record.days_remaining.value"/> days remaining
                                         
 										
+										
 										</small>
 									</div>
 									<div class="mt8" t-if="record.days_remaining.raw_value &lt;= 0 and record.days_remaining.raw_value &gt; -30">
 										<small class="text-warning">
                                             Expired 
 											
+											
 											<t t-esc="Math.abs(record.days_remaining.value)"/> days ago
                                         
+										
 										
 										</small>
 									</div>
