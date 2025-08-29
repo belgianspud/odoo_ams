@@ -103,6 +103,9 @@ class AMSConfigSettings(models.TransientModel):
     default_currency_id = fields.Many2one(
         'res.currency',
         string='Default Currency',
+        #config_parameter='ams_system_config.default_currency_id',
+        default_model='res.company',
+        default_field='currency_id',
         help="Primary currency for membership dues and transactions"
     )
     
@@ -125,7 +128,9 @@ class AMSConfigSettings(models.TransientModel):
     default_chapter_percentage = fields.Float(
         string='Default Chapter Revenue Share %',
         default=30.0,
-        config_parameter='ams_system_config.default_chapter_percentage',
+        #config_parameter='ams_system_config.default_chapter_percentage',
+        default_model='res.company',
+        default_field='chapter_revenue_percentage',
         help="Default percentage of revenue shared with chapters"
     )
 
@@ -346,49 +351,39 @@ class AMSConfigSettings(models.TransientModel):
     # ========================================================================
     
     def get_values(self):
-        """Override to handle Many2one fields manually."""
         res = super().get_values()
-        
-        # Handle default_currency_id
-        currency_id = self.env['ir.config_parameter'].sudo().get_param(
-            'ams_system_config.default_currency_id', False
-        )
-        if currency_id:
-            res['default_currency_id'] = int(currency_id)
-        
-        # Handle member_id_sequence
-        sequence_id = self.env['ir.config_parameter'].sudo().get_param(
-            'ams_system_config.member_id_sequence_id', False
-        )
+        ICP = self.env['ir.config_parameter'].sudo()
+
+        # Member sequence
+        sequence_id = ICP.get_param('ams_system_config.member_id_sequence_id', False)
         if sequence_id:
             res['member_id_sequence'] = int(sequence_id)
-            
+
+        # Default currency
+        currency_id = ICP.get_param('ams_system_config.default_currency_id', False)
+        if currency_id:
+            res['default_currency_id'] = int(currency_id)
+
         return res
 
     def set_values(self):
-        """Override to handle Many2one fields manually and special configuration actions."""
         super().set_values()
-        
-        # Handle default_currency_id
-        self.env['ir.config_parameter'].sudo().set_param(
-            'ams_system_config.default_currency_id', 
-            self.default_currency_id.id if self.default_currency_id else False
-        )
-        
-        # Handle member_id_sequence
-        self.env['ir.config_parameter'].sudo().set_param(
-            'ams_system_config.member_id_sequence_id',
-            self.member_id_sequence.id if self.member_id_sequence else False
-        )
-        
-        # Create member ID sequence if auto generation is enabled and no sequence exists
+        ICP = self.env['ir.config_parameter'].sudo()
+
+        # Member sequence
+        ICP.set_param('ams_system_config.member_id_sequence_id',
+                  self.member_id_sequence.id if self.member_id_sequence else False)
+
+        # Default currency
+        ICP.set_param('ams_system_config.default_currency_id',
+                  self.default_currency_id.id if self.default_currency_id else False)
+
+        # Auto-create sequence if needed
         if self.auto_member_id and not self.member_id_sequence:
             sequence = self._create_member_id_sequence()
             if sequence:
-                self.env['ir.config_parameter'].sudo().set_param(
-                    'ams_system_config.member_id_sequence_id', 
-                    sequence.id
-                )
+                ICP.set_param('ams_system_config.member_id_sequence_id', sequence.id)
+
 
     def _create_member_id_sequence(self):
         """Create the member ID sequence if it doesn't exist.
