@@ -30,10 +30,10 @@
                 <header>
                     <button name="action_opt_in" string="Opt In" type="object" 
                             class="btn-success" 
-                            modifiers='{"invisible": [["opted_in", "=", true]]}'/>
+                            invisible="opted_in == True"/>
                     <button name="action_opt_out" string="Opt Out" type="object" 
                             class="btn-warning"
-                            modifiers='{"invisible": [["opted_in", "=", false]]}'/>
+                            invisible="opted_in == False"/>
                     <button name="toggle_preference" string="Toggle" type="object" 
                             class="btn-secondary"/>
                 </header>
@@ -145,7 +145,7 @@
                 <filter string="Members Only" name="members_only" 
                         domain="[('is_member', '=', True)]"/>
                 <filter string="Recent Updates" name="recent_updates" 
-                        domain="[('date_updated', '>=', (context_today() - datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                        domain="[('date_updated', '&gt;=', (context_today() - datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
                 
                 <group expand="0" string="Group By">
                     <filter string="Partner" name="group_partner" 

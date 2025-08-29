@@ -191,6 +191,14 @@ class ResPartnerIndividual(models.Model):
     ], string='Current Status', compute='_compute_current_status', store=True)
 
     # ==========================================
+    # SQL CONSTRAINTS
+    # ==========================================
+    
+    _sql_constraints = [
+        ('member_id_unique', 'UNIQUE(member_id)', 'Member ID must be unique.'),
+    ]
+
+    # ==========================================
     # COMPUTED FIELDS & METHODS
     # ==========================================
 
@@ -217,7 +225,7 @@ class ResPartnerIndividual(models.Model):
             else:
                 super(ResPartnerIndividual, partner)._compute_display_name()
 
-    @api.depends('member_status_id')
+    @api.depends('member_status_id.is_active')
     def _compute_is_member(self):
         """Compute member status based on member status."""
         # This will be enhanced when ams_participation module is installed
@@ -382,3 +390,52 @@ class ResPartnerIndividual(models.Model):
                     break  # Only set once for the batch
             
         return super().write(vals)
+
+    # ==========================================
+    # UTILITY METHODS
+    # ==========================================
+
+    def get_full_name(self):
+        """Get formatted full name from components."""
+        self.ensure_one()
+        name_parts = []
+        if self.first_name:
+            name_parts.append(self.first_name)
+        if self.middle_name:
+            name_parts.append(self.middle_name)
+        if self.last_name:
+            name_parts.append(self.last_name)
+        if self.suffix:
+            name_parts.append(self.suffix)
+        return ' '.join(name_parts) if name_parts else self.name or ''
+
+    def get_preferred_name(self):
+        """Get preferred name for communications."""
+        self.ensure_one()
+        return self.nickname or self.first_name or self.name or 'Member'
+
+    def get_secondary_address(self):
+        """Get formatted secondary address."""
+        self.ensure_one()
+        if not self.secondary_address_line1:
+            return ''
+        
+        address_parts = [self.secondary_address_line1]
+        if self.secondary_address_line2:
+            address_parts.append(self.secondary_address_line2)
+        
+        city_state_zip = []
+        if self.secondary_address_city:
+            city_state_zip.append(self.secondary_address_city)
+        if self.secondary_address_state_id:
+            city_state_zip.append(self.secondary_address_state_id.code or self.secondary_address_state_id.name)
+        if self.secondary_address_zip:
+            city_state_zip.append(self.secondary_address_zip)
+        
+        if city_state_zip:
+            address_parts.append(', '.join(city_state_zip))
+        
+        if self.secondary_address_country_id:
+            address_parts.append(self.secondary_address_country_id.name)
+        
+        return '\n'.join(address_parts)

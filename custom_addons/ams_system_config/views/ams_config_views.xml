@@ -31,7 +31,7 @@
                                     <div class="text-muted">
                                         Automatically assign unique member IDs to new members
                                     </div>
-                                    <div class="content-group" invisible="auto_member_id == False">>
+                                    <div class="content-group" invisible="auto_member_id == False">
                                         <div class="row">
                                             <label for="member_id_prefix" string="ID Prefix" class="col-3 o_light_label"/>
                                             <field name="member_id_prefix" class="col-3"/>
@@ -94,7 +94,7 @@
                                     <div class="text-muted">
                                         Enable member self-service portal access
                                     </div>
-                                    <div class="content-group" invisible="portal_enabled == False">>
+                                    <div class="content-group" invisible="portal_enabled == False">
                                         <div class="row">
                                             <div class="o_setting_left_pane">
                                                 <field name="portal_self_registration"/>
@@ -186,7 +186,7 @@
                                     <div class="text-muted">
                                         Enable revenue sharing with local chapters
                                     </div>
-                                    <div class="content-group" invisible="chapter_revenue_sharing == False">>
+                                    <div class="content-group" invisible="chapter_revenue_sharing == False">
                                         <div class="row">
                                             <label for="default_chapter_percentage" string="Default Share %" class="col-4 o_light_label"/>
                                             <field name="default_chapter_percentage" class="col-3"/>

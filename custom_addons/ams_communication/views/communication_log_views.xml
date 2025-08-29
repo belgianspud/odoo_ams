@@ -39,7 +39,7 @@
 					<div class="oe_button_box" name="button_box">
 						<button name="track_open" string="Track Open" type="object" 
                                 class="oe_stat_button" icon="fa-eye"
-                                modifiers='{"invisible": [["communication_type", "!=", "email"]]}'>
+                                invisible="communication_type != 'email'">
 							<div class="o_field_widget o_stat_info">
 								<span class="o_stat_value">
 									<field name="open_count"/>
@@ -49,7 +49,7 @@
 						</button>
 						<button name="track_click" string="Track Click" type="object" 
                                 class="oe_stat_button" icon="fa-mouse-pointer"
-                                modifiers='{"invisible": [["response_tracked", "=", false]]}'>
+                                invisible="response_tracked == False">
 							<div class="o_field_widget o_stat_info">
 								<span class="o_stat_value">
 									<field name="click_count"/>
@@ -86,7 +86,7 @@
 						<group>
 							<field name="delivery_successful" readonly="1"/>
 							<field name="bounce_reason" readonly="1" 
-                                   modifiers='{"invisible": [["delivery_status", "not in", ["bounced", "failed"]]]}' 
+                                   invisible="delivery_status not in ('bounced', 'failed')"
                                    placeholder="Reason for delivery failure..."/>
 							<field name="response_tracked" readonly="1"/>
 							<field name="engagement_score" readonly="1"/>
@@ -98,16 +98,16 @@
 						</group>
 					</group>
 					<notebook>
-						<page string="Content" modifiers='{"invisible": [["body_plain", "=", false], ["body_html", "=", false]]}'>
+						<page string="Content" invisible="not body_plain and not body_html">
 							<group>
 								<field name="body_html" widget="html" readonly="1" 
-                                       modifiers='{"invisible": [["body_html", "=", false]]}'/>
+                                       invisible="not body_html"/>
 								<field name="body_plain" readonly="1" 
-                                       modifiers='{"invisible": [["body_plain", "=", false]]}' 
+                                       invisible="not body_plain"
                                        widget="text"/>
 							</group>
 						</page>
-						<page string="Attachments" modifiers='{"invisible": [["attachment_ids", "=", []]]}'>
+						<page string="Attachments" invisible="not attachment_ids">
 							<field name="attachment_ids" mode="kanban" readonly="1">
 								<kanban>
 									<templates>
@@ -435,7 +435,7 @@
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
             <notebook position="inside">
-                <page string="Communication" name="communication" invisible="member_type_id == False">
+                <page string="Communication" name="communication" invisible="not member_type_id">
                     <div class="oe_button_box" name="communication_button_box">
                         <button name="action_view_communication_preferences" 
                                 type="object" 

@@ -177,7 +177,7 @@
                         domain="[('child_ids', '!=', False)]"/>
                 <separator/>
                 <filter string="Recent Additions" name="recent" 
-                        domain="[('create_date', '>=', (context_today() - relativedelta(days=30)))]"/>
+                        domain="[('create_date', '&gt;=', (context_today() - relativedelta(days=30)))]"/>
 
                 <group expand="0" string="Group By">
                     <filter string="Member Type" name="group_member_type" 

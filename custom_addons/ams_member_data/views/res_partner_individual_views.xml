@@ -155,7 +155,7 @@
                         domain="[('member_id', '=', False)]"/>
                 <separator/>
                 <filter string="Recent Additions" name="recent" 
-                        domain="[('create_date', '>=', (context_today() - relativedelta(days=30)))]"/>
+                        domain="[('create_date', '&gt;=', (context_today() - relativedelta(days=30)))]"/>
                 <filter string="Has Member Type" name="has_member_type" 
                         domain="[('member_type_id', '!=', False)]"/>
 

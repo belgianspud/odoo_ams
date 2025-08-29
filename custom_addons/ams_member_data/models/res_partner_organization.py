@@ -49,18 +49,21 @@ class ResPartnerOrganization(models.Model):
     available_seats = fields.Integer(
         string='Available Seats',
         compute='_compute_enterprise_seats',
+        store=True,
         help='Enterprise subscription seats available for assignment'
     )
     
     assigned_seats = fields.Integer(
         string='Assigned Seats', 
         compute='_compute_enterprise_seats',
+        store=True,
         help='Enterprise subscription seats currently assigned'
     )
     
     total_seats = fields.Integer(
         string='Total Seats',
         compute='_compute_enterprise_seats',
+        store=True,
         help='Total enterprise subscription seats purchased'
     )
     
@@ -71,6 +74,7 @@ class ResPartnerOrganization(models.Model):
     exhibitor_points = fields.Float(
         string='Exhibitor Points',
         compute='_compute_exhibitor_points',
+        store=True,
         help='Points earned from event exhibition participation'
     )
     
@@ -89,12 +93,12 @@ class ResPartnerOrganization(models.Model):
     # Note: These relationships will be added by dependent modules
     # corporate_benefit_ids - added by ams_benefits_engine
     # sponsorship_ids - added by ams_event_sponsorship
-    
+
     # ==========================================
     # COMPUTED METHODS
     # ==========================================
 
-    @api.depends('employee_ids')
+    @api.depends('employee_ids', 'employee_ids.is_member')
     def _compute_enterprise_seats(self):
         """Compute enterprise seat statistics from subscriptions."""
         for partner in self:
@@ -178,6 +182,24 @@ class ResPartnerOrganization(models.Model):
             'help': '<p>No participations found. Install ams_participation module to manage organization participations.</p>'
         }
 
+    def action_manage_enterprise_seats(self):
+        """Open enterprise seat management for this organization."""
+        self.ensure_one()
+        if not self.is_company:
+            raise ValidationError("Only organizations can manage enterprise seats.")
+        
+        return {
+            'name': f'Enterprise Seats - {self.name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'ams.enterprise.seat',
+            'view_mode': 'tree,form',
+            'domain': [('organization_id', '=', self.id)],
+            'context': {
+                'default_organization_id': self.id,
+            },
+            'help': '<p>No enterprise seats configured. Install ams_enterprise_seats module to manage seat allocations.</p>'
+        }
+
     # ==========================================
     # VALIDATION & CONSTRAINTS  
     # ==========================================
@@ -204,7 +226,7 @@ class ResPartnerOrganization(models.Model):
     def _validate_tax_numbers(self):
         """Validate tax identification numbers."""
         for partner in self:
-            # TIN validation (basic US format: XX-XXXXXXX)
+            # TIN validation (basic US format: XX-XXXXXXX or 9-10 digits)
             if partner.tin_number:
                 tin_clean = partner.tin_number.replace('-', '').replace(' ', '')
                 if not tin_clean.isdigit() or len(tin_clean) not in [9, 10]:
@@ -212,7 +234,7 @@ class ResPartnerOrganization(models.Model):
                         "TIN format is invalid. Use format: XX-XXXXXXX"
                     )
             
-            # EIN validation (US format: XX-XXXXXXX)
+            # EIN validation (US format: XX-XXXXXXX or 9 digits)
             if partner.ein_number:
                 ein_clean = partner.ein_number.replace('-', '').replace(' ', '')
                 if not ein_clean.isdigit() or len(ein_clean) != 9:
@@ -233,6 +255,16 @@ class ResPartnerOrganization(models.Model):
                     raise ValidationError(
                         "Portal primary contact must be an individual, not a company."
                     )
+
+    @api.constrains('acronym')
+    def _validate_acronym_length(self):
+        """Validate acronym length and format."""
+        for partner in self:
+            if partner.acronym:
+                if len(partner.acronym) > 20:
+                    raise ValidationError("Acronym cannot be longer than 20 characters.")
+                if not partner.acronym.replace(' ', '').isalnum():
+                    raise ValidationError("Acronym should contain only letters and numbers.")
 
     # ==========================================
     # BUSINESS LOGIC METHODS
@@ -277,6 +309,27 @@ class ResPartnerOrganization(models.Model):
         # Logic for actual seat release will be in ams_enterprise_seats module
         return True
 
+    def get_employee_count_by_status(self):
+        """Get count of employees by member status."""
+        self.ensure_one()
+        if not self.is_company:
+            return {}
+        
+        result = {}
+        for employee in self.employee_ids:
+            status = employee.member_status_id.name if employee.member_status_id else 'No Status'
+            result[status] = result.get(status, 0) + 1
+        
+        return result
+
+    def get_enterprise_utilization_rate(self):
+        """Calculate enterprise seat utilization rate."""
+        self.ensure_one()
+        if not self.is_company or self.total_seats == 0:
+            return 0.0
+        
+        return (self.assigned_seats / self.total_seats) * 100.0
+
     # ==========================================
     # ONCHANGE METHODS
     # ==========================================
@@ -295,4 +348,111 @@ class ResPartnerOrganization(models.Model):
     def _onchange_website(self):
         """Auto-populate website_url from website field."""
         if self.website and not self.website_url:
-            self.website_url = self.website
+            # Ensure proper URL format
+            if not self.website.startswith(('http://', 'https://')):
+                self.website_url = 'https://' + self.website
+            else:
+                self.website_url = self.website
+
+    @api.onchange('is_company')
+    def _onchange_is_company(self):
+        """Clear organization-specific fields when changing to individual."""
+        if not self.is_company:
+            self.acronym = False
+            self.website_url = False
+            self.tin_number = False
+            self.ein_number = False
+            self.portal_primary_contact_id = False
+
+    # ==========================================
+    # UTILITY METHODS
+    # ==========================================
+
+    def get_primary_contact_info(self):
+        """Get primary contact information for this organization."""
+        self.ensure_one()
+        if not self.is_company:
+            return {}
+        
+        primary_contact = self.portal_primary_contact_id
+        if not primary_contact:
+            # Try to find a primary contact from employees
+            primary_contact = self.employee_ids.filtered(lambda e: e.email)[:1]
+        
+        if primary_contact:
+            return {
+                'name': primary_contact.name,
+                'email': primary_contact.email,
+                'phone': primary_contact.phone or primary_contact.mobile,
+                'title': primary_contact.function or 'Contact'
+            }
+        
+        return {}
+
+    def get_organization_summary(self):
+        """Get a summary of organization details."""
+        self.ensure_one()
+        if not self.is_company:
+            return {}
+        
+        return {
+            'name': self.name,
+            'acronym': self.acronym,
+            'website': self.website_url,
+            'member_status': self.member_status_id.name if self.member_status_id else 'No Status',
+            'is_member': self.is_member,
+            'employee_count': len(self.employee_ids),
+            'member_employee_count': len(self.employee_ids.filtered('is_member')),
+            'enterprise_seats': {
+                'total': self.total_seats,
+                'assigned': self.assigned_seats,
+                'available': self.available_seats,
+                'utilization_rate': self.get_enterprise_utilization_rate()
+            },
+            'primary_contact': self.get_primary_contact_info()
+        }
+
+    def format_organization_address(self, include_secondary=False):
+        """Get formatted organization address."""
+        self.ensure_one()
+        if not self.is_company:
+            return ''
+        
+        # Primary address
+        address_parts = []
+        if self.street:
+            address_parts.append(self.street)
+        if self.street2:
+            address_parts.append(self.street2)
+        
+        city_state_zip = []
+        if self.city:
+            city_state_zip.append(self.city)
+        if self.state_id:
+            city_state_zip.append(self.state_id.code or self.state_id.name)
+        if self.zip:
+            city_state_zip.append(self.zip)
+        
+        if city_state_zip:
+            address_parts.append(', '.join(city_state_zip))
+        
+        if self.country_id:
+            address_parts.append(self.country_id.name)
+        
+        return '\n'.join(address_parts)
+
+    # ==========================================
+    # LIFECYCLE METHODS
+    # ==========================================
+
+    def write(self, vals):
+        """Override write to handle organization-specific updates."""
+        # Auto-update website_url when website changes
+        if 'website' in vals and vals['website'] and not vals.get('website_url'):
+            website = vals['website']
+            if not website.startswith(('http://', 'https://')):
+                vals['website_url'] = 'https://' + website
+            else:
+                vals['website_url'] = website
+        
+        return super().write(vals)

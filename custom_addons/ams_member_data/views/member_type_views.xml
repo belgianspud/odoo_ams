@@ -42,7 +42,7 @@
                         </button>
                     </div>
 
-                    <!-- Replaced attrs with modifiers -->
+                    <!-- Updated ribbon syntax for Odoo 18 -->
                     <widget name="web_ribbon" title="Archived" bg_color="bg-danger"
                             invisible="active == True"/>
 

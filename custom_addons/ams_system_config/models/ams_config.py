@@ -32,7 +32,6 @@ class AMSConfigSettings(models.TransientModel):
     member_id_sequence = fields.Many2one(
         'ir.sequence',
         string='Member ID Sequence',
-        default_model='ir.sequence',  # CHANGED: Use default_model instead
         help="Sequence used for member ID generation"
     )
     
@@ -104,7 +103,6 @@ class AMSConfigSettings(models.TransientModel):
     default_currency_id = fields.Many2one(
         'res.currency',
         string='Default Currency',
-        default_model='res.currency',  # CHANGED: Use default_model instead
         help="Primary currency for membership dues and transactions"
     )
     
