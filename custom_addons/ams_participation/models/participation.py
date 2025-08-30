@@ -237,58 +237,92 @@ class AMSParticipation(models.Model):
     ]
 
     # ==========================================
-    # COMPUTED FIELD METHODS
+    # COMPUTED FIELD METHODS - FIXED FOR NEW RECORDS
     # ==========================================
     
     @api.depends('partner_id', 'company_id', 'participation_type', 'status')
     def _compute_display_name(self):
         """Compute display name for participation records."""
         for record in self:
-            member_name = record.partner_id.name if record.partner_id else record.company_id.name
-            if member_name:
-                type_label = dict(record.PARTICIPATION_TYPES).get(record.participation_type, record.participation_type)
-                status_label = dict(record.STATUS_SELECTION).get(record.status, record.status)
-                record.display_name = f"{member_name} - {type_label} ({status_label})"
-            else:
+            # Handle case where record is not yet saved/created
+            try:
+                # Get member name safely
+                member_name = None
+                if record.partner_id:
+                    member_name = record.partner_id.name
+                elif record.company_id:
+                    member_name = record.company_id.name
+                
+                if member_name:
+                    # Get type and status labels safely
+                    type_label = dict(self.PARTICIPATION_TYPES).get(record.participation_type, record.participation_type or 'Participation')
+                    status_label = dict(self.STATUS_SELECTION).get(record.status, record.status or 'New')
+                    record.display_name = f"{member_name} - {type_label} ({status_label})"
+                else:
+                    # Handle new records or records without members
+                    record.display_name = f"Participation {record.id or 'New'}"
+            except:
+                # Fallback for any errors during computation
                 record.display_name = f"Participation {record.id or 'New'}"
 
     @api.depends('partner_id', 'company_id')
     def _compute_member_display_name(self):
         """Compute member display name for easier reporting."""
         for record in self:
-            record.member_display_name = record.partner_id.name if record.partner_id else record.company_id.name
+            try:
+                if record.partner_id and hasattr(record.partner_id, 'name'):
+                    record.member_display_name = record.partner_id.name or ''
+                elif record.company_id and hasattr(record.company_id, 'name'):
+                    record.member_display_name = record.company_id.name or ''
+                else:
+                    record.member_display_name = ''
+            except:
+                # Fallback for any errors during computation
+                record.member_display_name = ''
 
     def _compute_days_remaining(self):
         """Compute days remaining until participation ends."""
         today = fields.Date.context_today(self)
         for record in self:
-            if record.end_date:
-                delta = record.end_date - today
-                record.days_remaining = delta.days
-            else:
+            try:
+                if record.end_date:
+                    delta = record.end_date - today
+                    record.days_remaining = delta.days
+                else:
+                    record.days_remaining = 0
+            except:
                 record.days_remaining = 0
 
     def _compute_is_expired(self):
         """Compute if participation has expired."""
         today = fields.Date.context_today(self)
         for record in self:
-            record.is_expired = record.paid_through_date and record.paid_through_date < today
+            try:
+                record.is_expired = record.paid_through_date and record.paid_through_date < today
+            except:
+                record.is_expired = False
 
     def _compute_is_in_grace(self):
         """Compute if participation is in grace period."""
         today = fields.Date.context_today(self)
         for record in self:
-            record.is_in_grace = (
-                record.status == 'grace' and 
-                record.grace_period_end_date and 
-                record.grace_period_end_date >= today
-            )
+            try:
+                record.is_in_grace = (
+                    record.status == 'grace' and 
+                    record.grace_period_end_date and 
+                    record.grace_period_end_date >= today
+                )
+            except:
+                record.is_in_grace = False
 
     @api.depends('status')
     def _compute_is_renewable(self):
         """Compute if participation can be renewed."""
         for record in self:
-            record.is_renewable = record.status in ['active', 'grace', 'suspended']
+            try:
+                record.is_renewable = record.status in ['active', 'grace', 'suspended']
+            except:
+                record.is_renewable = False
 
     # ==========================================
     # VALIDATION METHODS
@@ -474,7 +508,7 @@ class AMSParticipation(models.Model):
             'name': f'Participation History - {self.member_display_name}',
             'type': 'ir.actions.act_window',
             'res_model': 'ams.participation.history',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('participation_id', '=', self.id)],
             'context': {'default_participation_id': self.id},
         }
