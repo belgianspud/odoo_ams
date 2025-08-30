@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action to view products by AMS type -->
+    <record id="action_view_products_by_ams_type" model="ir.actions.act_window">
+        <field name="name">Products</field>
+        <field name="res_model">product.product</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_ams_product', '=', True)]</field>
+    </record>
+
+    <!-- AMS Product Standard List View -->
+    <record id="view_ams_product_standard_list" model="ir.ui.view">
+        <field name="name">ams.product.standard.list</field>
+        <field name="model">ams.product.standard</field>
+        <field name="arch" type="xml">
+            <list string="AMS Products" default_order="ams_product_type,name">
+                <field name="name"/>
+                <field name="ams_product_type"/>
+                <field name="sku"/>
+                <field name="member_price" widget="monetary"/>
+                <field name="non_member_price" widget="monetary"/>
+                <field name="member_discount_percentage" widget="percentage"/>
+                <field name="digital_delivery_enabled"/>
+                <field name="requires_membership"/>
+                <field name="stock_controlled"/>
+                <field name="active"/>
+                <field name="currency_id" invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- AMS Product Standard Form View -->
+    <record id="view_ams_product_standard_form" model="ir.ui.view">
+        <field name="name">ams.product.standard.form</field>
+        <field name="model">ams.product.standard</field>
+        <field name="arch" type="xml">
+            <form string="AMS Product">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(action_view_products_by_ams_type)d" 
+                                type="action" 
+                                class="oe_stat_button" 
+                                icon="fa-cube"
+                                context="{'search_default_ams_product_type': ams_product_type}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">View Product</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger"
+                            invisible="active == True"/>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                        <div class="o_row">
+                            <field name="ams_product_type" required="1"/>
+                        </div>
+                    </div>
+                    
+                    <group>
+                        <group string="Product Information">
+                            <field name="product_id" options="{'no_create': True}"/>
+                            <field name="sku"/>
+                            <field name="product_code"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Product Features">
+                            <field name="featured_product"/>
+                            <field name="new_product"/>
+                            <field name="stock_controlled"/>
+                            <field name="digital_delivery_enabled"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Pricing" name="pricing">
+                            <group>
+                                <group string="Member Pricing">
+                                    <field name="currency_id" invisible="1"/>
+                                    <field name="member_price" widget="monetary"/>
+                                    <field name="non_member_price" widget="monetary"/>
+                                    <field name="member_discount_percentage" widget="percentage" readonly="1"/>
+                                </group>
+                                <group string="Inventory">
+                                    <field name="minimum_stock_level" invisible="not stock_controlled"/>
+                                    <field name="maximum_stock_level" invisible="not stock_controlled"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Digital Delivery" name="digital" invisible="not digital_delivery_enabled">
+                            <group>
+                                <group string="Digital Content">
+                                    <field name="digital_download_url"/>
+                                    <field name="digital_attachment_id"/>
+                                </group>
+                                <group string="Access Control">
+                                    <field name="download_limit"/>
+                                    <field name="access_expiry_days"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Access Control" name="access">
+                            <group>
+                                <group string="Membership Requirements">
+                                    <field name="requires_membership"/>
+                                    <field name="member_types_allowed" widget="many2many_tags" 
+                                           invisible="not requires_membership"/>
+                                </group>
+                                <group string="Geographic Restrictions">
+                                    <field name="chapter_specific"/>
+                                    <!-- Placeholder for future chapter integration -->
+                                    <!-- <field name="allowed_chapter_ids" widget="many2many_tags" 
+                                           invisible="not chapter_specific"/> -->
+                                    <div invisible="not chapter_specific" class="alert alert-info">
+                                        Chapter restrictions will be available when ams_chapters_core module is installed.
+                                    </div>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Seasonal Availability" name="seasonal" invisible="not seasonal_product">
+                            <group>
+                                <field name="seasonal_product"/>
+                                <field name="season_start_date" invisible="not seasonal_product"/>
+                                <field name="season_end_date" invisible="not seasonal_product"/>
+                            </group>
+                        </page>
+
+                        <page string="Content &amp; Marketing" name="content">
+                            <group>
+                                <field name="detailed_description" widget="html"/>
+                            </group>
+                            <group string="Technical Information">
+                                <field name="specifications" placeholder="Technical specifications or detailed attributes..."/>
+                            </group>
+                            <group string="Member Benefits">
+                                <field name="benefits_description" widget="html" 
+                                       placeholder="Describe special member benefits for this product..."/>
+                            </group>
+                        </page>
+
+                        <page string="Integration" name="integration" groups="base.group_system">
+                            <group>
+                                <group string="External Systems">
+                                    <field name="external_product_id"/>
+                                    <field name="supplier_product_code"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- AMS Product Standard Kanban View -->
+    <record id="view_ams_product_standard_kanban" model="ir.ui.view">
+        <field name="name">ams.product.standard.kanban</field>
+        <field name="model">ams.product.standard</field>
+        <field name="arch" type="xml">
+            <kanban default_order="ams_product_type">
+                <field name="name"/>
+                <field name="ams_product_type"/>
+                <field name="member_price"/>
+                <field name="non_member_price"/>
+                <field name="digital_delivery_enabled"/>
+                <field name="requires_membership"/>
+                <field name="featured_product"/>
+                <field name="new_product"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_dropdown_kanban dropdown">
+                                <a role="button" class="dropdown-toggle o-no-caret btn" data-toggle="dropdown" data-display="static" href="#" aria-label="Dropdown menu" title="Dropdown menu">
+                                    <span class="fa fa-ellipsis-v"/>
+                                </a>
+                                <div class="dropdown-menu" role="menu">
+                                    <a t-if="widget.editable" role="menuitem" type="edit" class="dropdown-item">Edit</a>
+                                    <a t-if="widget.deletable" role="menuitem" type="delete" class="dropdown-item">Delete</a>
+                                </div>
+                            </div>
+                            
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                        </strong>
+                                    </div>
+                                </div>
+                                
+                                <div class="o_kanban_record_body">
+                                    <div class="o_kanban_tags_section">
+                                        <span class="badge badge-primary">
+                                            <t t-esc="record.ams_product_type.value"/>
+                                        </span>
+                                        <t t-if="record.digital_delivery_enabled.raw_value">
+                                            <span class="badge badge-info">Digital</span>
+                                        </t>
+                                        <t t-if="record.requires_membership.raw_value">
+                                            <span class="badge badge-warning">Members Only</span>
+                                        </t>
+                                        <t t-if="record.featured_product.raw_value">
+                                            <span class="badge badge-success">Featured</span>
+                                        </t>
+                                        <t t-if="record.new_product.raw_value">
+                                            <span class="badge badge-secondary">New</span>
+                                        </t>
+                                    </div>
+                                    
+                                    <div class="o_kanban_record_pricing">
+                                        <t t-if="record.member_price.raw_value">
+                                            <div class="text-success">
+                                                <strong>Member: <t t-esc="record.member_price.value"/></strong>
+                                            </div>
+                                        </t>
+                                        <t t-if="record.non_member_price.raw_value">
+                                            <div class="text-muted">
+                                                Non-Member: <t t-esc="record.non_member_price.value"/>
+                                            </div>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- AMS Product Standard Search View -->
+    <record id="view_ams_product_standard_search" model="ir.ui.view">
+        <field name="name">ams.product.standard.search</field>
+        <field name="model">ams.product.standard</field>
+        <field name="arch" type="xml">
+            <search string="Search AMS Products">
+                <field name="name"/>
+                <field name="sku"/>
+                <field name="product_code"/>
+                <field name="ams_product_type"/>
+                <field name="detailed_description"/>
+
+                <filter string="Merchandise" name="merchandise" 
+                        domain="[('ams_product_type', '=', 'merchandise')]"/>
+                <filter string="Publications" name="publications" 
+                        domain="[('ams_product_type', '=', 'publication')]"/>
+                <filter string="Certification Packages" name="certifications" 
+                        domain="[('ams_product_type', '=', 'certification_package')]"/>
+                <filter string="Digital Downloads" name="digital_downloads" 
+                        domain="[('ams_product_type', '=', 'digital_download')]"/>
+                <filter string="Event Materials" name="event_materials" 
+                        domain="[('ams_product_type', '=', 'event_material')]"/>
+                
+                <separator/>
+                
+                <filter string="Digital Products" name="digital_products" 
+                        domain="[('digital_delivery_enabled', '=', True)]"/>
+                <filter string="Physical Products" name="physical_products" 
+                        domain="[('digital_delivery_enabled', '=', False)]"/>
+                
+                <separator/>
+                
+                <filter string="Members Only" name="members_only" 
+                        domain="[('requires_membership', '=', True)]"/>
+                <filter string="Public Access" name="public_access" 
+                        domain="[('requires_membership', '=', False)]"/>
+                
+                <separator/>
+                
+                <filter string="Member Pricing" name="member_pricing" 
+                        domain="[('member_price', '>', 0), ('non_member_price', '>', 0)]"/>
+                <filter string="Featured Products" name="featured" 
+                        domain="[('featured_product', '=', True)]"/>
+                <filter string="New Products" name="new_products" 
+                        domain="[('new_product', '=', True)]"/>
+                <filter string="Seasonal Products" name="seasonal" 
+                        domain="[('seasonal_product', '=', True)]"/>
+                
+                <separator/>
+                
+                <filter string="Stock Controlled" name="stock_controlled" 
+                        domain="[('stock_controlled', '=', True)]"/>
+                <filter string="Chapter Restricted" name="chapter_restricted" 
+                        domain="[('chapter_specific', '=', True)]"/>
+                
+                <separator/>
+                
+                <filter string="Active" name="active" 
+                        domain="[('active', '=', True)]"/>
+                <filter string="Archived" name="inactive" 
+                        domain="[('active', '=', False)]"/>
+
+                <group expand="0" string="Group By">
+                    <filter string="Product Type" name="group_by_type" 
+                            context="{'group_by': 'ams_product_type'}"/>
+                    <filter string="Digital/Physical" name="group_by_digital" 
+                            context="{'group_by': 'digital_delivery_enabled'}"/>
+                    <filter string="Access Level" name="group_by_access" 
+                            context="{'group_by': 'requires_membership'}"/>
+                    <filter string="Stock Control" name="group_by_stock" 
+                            context="{'group_by': 'stock_controlled'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- AMS Product Standard Action -->
+    <record id="action_ams_product_standard" model="ir.actions.act_window">
+        <field name="name">AMS Products</field>
+        <field name="res_model">ams.product.standard</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first AMS product
+            </p>
+            <p>
+                AMS Products extend standard Odoo products with association-specific 
+                features like member pricing, digital delivery, and access control.
+            </p>
+        </field>
+    </record>
+
+    <!-- Product.Product Form View Extension -->
+    <record id="view_product_form_ams_extend" model="ir.ui.view">
+        <field name="name">product.product.form.ams</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add AMS stat button -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_ams_extension"
+                        invisible="not is_ams_product" icon="fa-star">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">AMS Product</span>
+                    </div>
+                </button>
+                
+                <button class="oe_stat_button" type="object" name="action_create_ams_extension"
+                        invisible="is_ams_product" icon="fa-plus">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Create AMS</span>
+                    </div>
+                </button>
+            </xpath>
+
+            <!-- Add AMS fields to General Information -->
+            <xpath expr="//group[@name='group_general']" position="inside">
+                <field name="is_ams_product" readonly="1"/>
+                <field name="ams_product_type" readonly="1" invisible="not is_ams_product"/>
+            </xpath>
+
+            <!-- Add AMS pricing information -->
+            <xpath expr="//group[@name='group_standard_price']" position="after">
+                <group string="AMS Member Pricing" name="group_ams_pricing" 
+                       invisible="not is_ams_product or not has_member_pricing">
+                    <field name="member_price" widget="monetary" readonly="1"/>
+                    <field name="non_member_price" widget="monetary" readonly="1"/>
+                    <field name="member_discount_percentage" widget="percentage" readonly="1"/>
+                </group>
+            </xpath>
+
+            <!-- Add AMS features -->
+            <xpath expr="//group[@name='group_general']" position="after">
+                <group string="AMS Features" name="group_ams_features" invisible="not is_ams_product">
+                    <field name="is_digital_product" readonly="1"/>
+                    <field name="requires_membership" readonly="1"/>
+                    <field name="is_chapter_restricted" readonly="1"/>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Product.Product List View Extension -->
+    <record id="view_product_product_list_ams" model="ir.ui.view">
+        <field name="name">product.product.list.ams</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_product_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='list_price']" position="after">
+                <field name="is_ams_product" optional="show"/>
+                <field name="ams_product_type" optional="hide"/>
+                <field name="member_price" widget="monetary" optional="hide"/>
+                <field name="has_member_pricing" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Actions for specific product types -->
+    <record id="action_ams_merchandise_products" model="ir.actions.act_window">
+        <field name="name">Merchandise</field>
+        <field name="res_model">ams.product.standard</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('ams_product_type', '=', 'merchandise')]</field>
+        <field name="context">{'search_default_active': 1, 'default_ams_product_type': 'merchandise'}</field>
+    </record>
+
+    <record id="action_ams_publication_products" model="ir.actions.act_window">
+        <field name="name">Publications</field>
+        <field name="res_model">ams.product.standard</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('ams_product_type', '=', 'publication')]</field>
+        <field name="context">{'search_default_active': 1, 'default_ams_product_type': 'publication'}</field>
+    </record>
+
+    <record id="action_ams_digital_products" model="ir.actions.act_window">
+        <field name="name">Digital Downloads</field>
+        <field name="res_model">ams.product.standard</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('ams_product_type', '=', 'digital_download')]</field>
+        <field name="context">{'search_default_active': 1, 'default_ams_product_type': 'digital_download'}</field>
+    </record>
+
+    <record id="action_ams_certification_products" model="ir.actions.act_window">
+        <field name="name">Certification Packages</field>
+        <field name="res_model">ams.product.standard</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('ams_product_type', '=', 'certification_package')]</field>
+        <field name="context">{'search_default_active': 1, 'default_ams_product_type': 'certification_package'}</field>
+    </record>
+
+    <!-- Menu Structure -->
+    <!-- Main AMS Products menu under ams_system_config.menu_ams_main -->
+    <menuitem id="menu_ams_products_main" 
+              name="Products" 
+              parent="ams_system_config.menu_ams_root"
+              action="action_ams_product_standard" 
+              sequence="30"/>
+
+    <!-- Product type submenus -->
+    <menuitem id="menu_ams_merchandise" 
+              name="Merchandise" 
+              parent="menu_ams_products_main"
+              action="action_ams_merchandise_products" 
+              sequence="10"/>
+
+    <menuitem id="menu_ams_publications" 
+              name="Publications" 
+              parent="menu_ams_products_main"
+              action="action_ams_publication_products" 
+              sequence="20"/>
+
+    <menuitem id="menu_ams_digital_downloads" 
+              name="Digital Downloads" 
+              parent="menu_ams_products_main"
+              action="action_ams_digital_products" 
+              sequence="30"/>
+
+    <menuitem id="menu_ams_certifications" 
+              name="Certifications" 
+              parent="menu_ams_products_main"
+              action="action_ams_certification_products" 
+              sequence="40"/>
+
+</odoo>

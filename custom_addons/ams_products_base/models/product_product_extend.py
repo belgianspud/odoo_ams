@@ -1,12 +1,12 @@
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError,UserError
 
-
-class ProductProduct(models.Model):
-    """Extend product.product with AMS integration points."""
+class ProductProductExtend(models.Model):
+    """Extend product.product with AMS-specific computed fields and methods."""
     _inherit = 'product.product'
 
     # ==========================================
-    # COMPUTED AMS FIELDS
+    # AMS INTEGRATION FIELDS
     # ==========================================
     
     is_ams_product = fields.Boolean(
@@ -21,7 +21,7 @@ class ProductProduct(models.Model):
         string='AMS Product Record',
         compute='_compute_ams_product',
         store=True,
-        help='Related AMS product extension'
+        help='Related AMS product extension record'
     )
     
     # ==========================================
@@ -32,14 +32,14 @@ class ProductProduct(models.Model):
         string='Member Price',
         related='ams_product_id.member_price',
         readonly=True,
-        help='Special pricing for association members'
+        help='Special price for association members'
     )
     
     non_member_price = fields.Monetary(
-        string='Non-Member Price', 
+        string='Non-Member Price',
         related='ams_product_id.non_member_price',
         readonly=True,
-        help='Standard pricing for non-members'
+        help='Standard price for non-members'
     )
     
     has_member_pricing = fields.Boolean(
@@ -104,238 +104,255 @@ class ProductProduct(models.Model):
     def _compute_ams_product(self):
         """Compute AMS product relationship."""
         for product in self:
-            ams_products = self.env['ams.product.standard'].search([
+            ams_product = self.env['ams.product.standard'].search([
                 ('product_id', '=', product.id)
             ], limit=1)
             
-            if ams_products:
-                product.is_ams_product = True
-                product.ams_product_id = ams_products.id
-            else:
-                product.is_ams_product = False
-                product.ams_product_id = False
+            product.is_ams_product = bool(ams_product)
+            product.ams_product_id = ams_product.id if ams_product else False
 
     @api.depends('ams_product_id.member_price', 'ams_product_id.non_member_price')
     def _compute_has_member_pricing(self):
         """Compute whether product has member-specific pricing."""
         for product in self:
-            if (product.ams_product_id and 
-                product.ams_product_id.member_price and 
-                product.ams_product_id.non_member_price):
-                product.has_member_pricing = True
+            if product.ams_product_id:
+                product.has_member_pricing = bool(
+                    product.ams_product_id.member_price and 
+                    product.ams_product_id.non_member_price and
+                    product.ams_product_id.member_price != product.ams_product_id.non_member_price
+                )
             else:
                 product.has_member_pricing = False
 
     # ==========================================
-    # BUSINESS LOGIC METHODS
+    # AMS BUSINESS METHODS
     # ==========================================
 
-    def get_price_for_partner(self, partner_id, quantity=1):
-        """Get appropriate price for a specific partner."""
+    def get_ams_price_for_partner(self, partner_id, quantity=1):
+        """Get AMS-specific pricing for a partner."""
         self.ensure_one()
         
         if not self.is_ams_product:
-            # Standard Odoo pricing
+            # Return standard Odoo pricing
             return {
                 'unit_price': self.list_price,
                 'final_price': self.list_price,
                 'total_price': self.list_price * quantity,
                 'price_type': 'standard',
-                'currency': self.currency_id.name or self.env.company.currency_id.name
+                'discount_applied': False,
+                'currency': self.env.company.currency_id.name
             }
         
-        # Use AMS pricing logic
         return self.ams_product_id.get_customer_price(partner_id, quantity)
 
-    def check_availability_for_partner(self, partner_id, quantity=1):
-        """Check if product is available for a specific partner."""
+    def check_ams_eligibility(self, partner_id):
+        """Check AMS-specific eligibility for partner."""
         self.ensure_one()
         
         if not self.is_ams_product:
-            # Standard availability check
+            return {'eligible': True, 'reason': None, 'action': None}
+        
+        return self.ams_product_id.check_product_eligibility(partner_id)
+
+    def get_ams_stock_info(self, quantity=1):
+        """Get AMS-specific stock availability."""
+        self.ensure_one()
+        
+        if not self.is_ams_product:
+            # Use standard Odoo stock
             return {'available': True, 'quantity': quantity}
         
-        # Check AMS eligibility
-        eligibility = self.ams_product_id.check_product_eligibility(partner_id)
-        if not eligibility['eligible']:
-            return {
-                'available': False,
-                'reason': eligibility['reason'],
-                'action': eligibility['action']
-            }
-        
-        # Check stock availability
         return self.ams_product_id.check_stock_availability(quantity)
 
-    def create_ams_extension(self, ams_product_type='merchandise'):
-        """Create AMS product extension for this product."""
+    def create_ams_extension(self, ams_values=None):
+        """Create AMS extension for this product."""
         self.ensure_one()
         
         if self.is_ams_product:
-            raise ValueError("Product already has AMS extension")
+            raise UserError("Product already has AMS extension")
         
-        ams_product = self.env['ams.product.standard'].create({
+        values = {
             'product_id': self.id,
-            'ams_product_type': ams_product_type,
-            'non_member_price': self.list_price,  # Default non-member price to list price
-        })
+            'ams_product_type': 'merchandise',  # Default type
+        }
+        
+        if ams_values:
+            values.update(ams_values)
+        
+        ams_product = self.env['ams.product.standard'].create(values)
+        
+        # Trigger recomputation
+        self._compute_ams_product()
         
         return ams_product
 
-    def get_digital_download_info(self, partner_id):
-        """Get digital download information for a partner."""
-        self.ensure_one()
-        
-        if not self.is_ams_product or not self.is_digital_product:
-            return None
-            
-        return self.ams_product_id.get_digital_download_info(partner_id)
-
-    # ==========================================
-    # E-COMMERCE INTEGRATION METHODS
-    # ==========================================
-
-    def _get_website_price(self, partner=None):
-        """Override website pricing for member discounts."""
-        if not partner or not self.is_ams_product:
-            return super()._get_website_price(partner)
-
-        try:
-            price_info = self.get_price_for_partner(partner.id)
-            return price_info['unit_price']
-        except Exception:
-            # Fallback to standard pricing
-            return super()._get_website_price(partner)
-
-    def _is_available_for_partner(self, partner=None):
-        """Check product availability for specific partner."""
-        available = super()._is_available_for_partner(partner)
-        
-        if not available or not partner or not self.is_ams_product:
-            return available
-
-        try:
-            availability = self.check_availability_for_partner(partner.id)
-            return availability.get('available', True)
-        except Exception:
-            # Fallback to standard availability
-            return available
-
-    # ==========================================
-    # SEARCH AND FILTERING METHODS
-    # ==========================================
-
-    @api.model
-    def search_ams_products(self, domain=None, filters=None):
-        """Search AMS products with additional filters."""
-        domain = domain or []
-        domain.append(('is_ams_product', '=', True))
-        
-        if filters:
-            # Member pricing filter
-            if filters.get('has_member_pricing'):
-                domain.append(('has_member_pricing', '=', True))
-            
-            # Product type filter
-            if filters.get('ams_product_type'):
-                domain.append(('ams_product_type', '=', filters['ams_product_type']))
-            
-            # Digital product filter
-            if filters.get('digital_only'):
-                domain.append(('is_digital_product', '=', True))
-            
-            # Member-only filter
-            if filters.get('members_only'):
-                domain.append(('requires_membership', '=', True))
-        
-        return self.search(domain)
-
-    @api.model
-    def get_ams_product_categories(self):
-        """Get available AMS product categories."""
-        return dict(self.env['ams.product.standard']._fields['ams_product_type'].selection)
-
-    # ==========================================
-    # REPORTING METHODS
-    # ==========================================
-
-    def get_pricing_summary(self):
-        """Get pricing summary for this product."""
+    def remove_ams_extension(self):
+        """Remove AMS extension from this product."""
         self.ensure_one()
         
         if not self.is_ams_product:
-            return {
-                'pricing_type': 'standard',
-                'price': self.list_price,
-                'currency': self.currency_id.name or self.env.company.currency_id.name
-            }
+            raise UserError("Product does not have AMS extension")
         
-        return {
-            'pricing_type': 'member_based',
-            'member_price': self.member_price,
-            'non_member_price': self.non_member_price,
-            'discount_percentage': self.member_discount_percentage,
-            'currency': self.ams_product_id.currency_id.name
-        }
+        self.ams_product_id.unlink()
+        
+        # Trigger recomputation
+        self._compute_ams_product()
 
-    def get_product_features(self):
-        """Get product feature summary."""
-        self.ensure_one()
+    # ==========================================
+    # WEBSITE/E-COMMERCE INTEGRATION
+    # ==========================================
+
+    def _get_website_price(self, partner=None, **kwargs):
+        """Override website pricing for member discounts."""
+        # Check if we should use AMS pricing
+        if self.is_ams_product and partner:
+            try:
+                price_info = self.get_ams_price_for_partner(partner.id)
+                return price_info['unit_price']
+            except:
+                # Fallback to standard pricing if AMS pricing fails
+                pass
         
-        features = {
-            'is_ams_product': self.is_ams_product,
-            'digital_delivery': self.is_digital_product,
-            'member_pricing': self.has_member_pricing,
-            'membership_required': self.requires_membership,
-            'chapter_restricted': self.is_chapter_restricted,
-        }
+        # Use standard Odoo pricing
+        return super()._get_website_price(partner=partner, **kwargs)
+
+    def _is_available_for_partner(self, partner=None, **kwargs):
+        """Check product availability for specific partner."""
+        available = super()._is_available_for_partner(partner=partner, **kwargs)
         
-        if self.is_ams_product:
-            features.update({
-                'product_type': self.ams_product_type,
-                'stock_controlled': self.ams_product_id.stock_controlled,
-                'featured': self.ams_product_id.featured_product,
-                'seasonal': self.ams_product_id.seasonal_product,
-            })
+        # Add AMS-specific availability checks
+        if available and self.is_ams_product and partner:
+            try:
+                eligibility = self.check_ams_eligibility(partner.id)
+                return eligibility['eligible']
+            except:
+                # If AMS check fails, use standard availability
+                pass
         
-        return features
+        return available
 
     # ==========================================
     # ACTION METHODS
     # ==========================================
 
     def action_view_ams_extension(self):
-        """Open AMS product extension form."""
+        """Open the AMS product extension form."""
         self.ensure_one()
         
         if not self.is_ams_product:
-            # Create AMS extension
-            return {
-                'type': 'ir.actions.act_window',
-                'name': 'Create AMS Product Extension',
-                'res_model': 'ams.product.standard',
-                'view_mode': 'form',
-                'context': {'default_product_id': self.id},
-                'target': 'new',
-            }
+            raise UserError("This product does not have an AMS extension")
         
         return {
+            'name': f'AMS Extension - {self.name}',
             'type': 'ir.actions.act_window',
-            'name': 'AMS Product Extension',
             'res_model': 'ams.product.standard',
-            'res_id': self.ams_product_id.id,
             'view_mode': 'form',
-            'target': 'current',
+            'res_id': self.ams_product_id.id,
+            'target': 'new',
         }
 
-    def action_toggle_ams_extension(self):
-        """Toggle AMS extension on/off."""
+    def action_create_ams_extension(self):
+        """Wizard to create AMS extension for this product."""
         self.ensure_one()
         
         if self.is_ams_product:
-            # Remove AMS extension
-            self.ams_product_id.unlink()
-            return {'type': 'ir.actions.client', 'tag': 'reload'}
-        else:
-            # Create AMS extension
-            return self.action_view_ams_extension()
+            raise UserError("Product already has AMS extension")
+        
+        return {
+            'name': f'Create AMS Extension - {self.name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'ams.product.standard',
+            'view_mode': 'form',
+            'context': {
+                'default_product_id': self.id,
+                'default_ams_product_type': 'merchandise',
+            },
+            'target': 'new',
+        }
+
+    # ==========================================
+    # SEARCH AND FILTERING
+    # ==========================================
+
+    @api.model
+    def _search(self, args, offset=0, limit=None, order=None, count=False, access_rights_uid=None):
+        """Enhanced search to support AMS-specific filtering."""
+        # Add support for searching by AMS fields
+        new_args = []
+        for arg in args:
+            if isinstance(arg, (list, tuple)) and len(arg) == 3:
+                field, operator, value = arg
+                
+                # Map AMS-specific search fields
+                if field == 'ams_product_type':
+                    new_args.append(('ams_product_id.ams_product_type', operator, value))
+                elif field == 'member_price':
+                    new_args.append(('ams_product_id.member_price', operator, value))
+                elif field == 'requires_membership':
+                    new_args.append(('ams_product_id.requires_membership', operator, value))
+                else:
+                    new_args.append(arg)
+            else:
+                new_args.append(arg)
+        
+        return super()._search(
+            new_args, offset=offset, limit=limit, order=order, 
+            count=count, access_rights_uid=access_rights_uid
+        )
+
+    # ==========================================
+    # UTILITY METHODS
+    # ==========================================
+
+    def get_ams_product_summary(self):
+        """Get summary of AMS product features."""
+        self.ensure_one()
+        
+        if not self.is_ams_product:
+            return {'has_ams_extension': False}
+        
+        ams = self.ams_product_id
+        return {
+            'has_ams_extension': True,
+            'ams_product_type': ams.ams_product_type,
+            'has_member_pricing': self.has_member_pricing,
+            'member_price': ams.member_price,
+            'non_member_price': ams.non_member_price,
+            'discount_percentage': ams.member_discount_percentage,
+            'is_digital': ams.digital_delivery_enabled,
+            'requires_membership': ams.requires_membership,
+            'is_chapter_restricted': ams.chapter_specific,
+            'stock_controlled': ams.stock_controlled,
+        }
+
+    @api.model
+    def get_ams_products_by_type(self, product_type):
+        """Get all products of specific AMS type."""
+        return self.search([
+            ('is_ams_product', '=', True),
+            ('ams_product_type', '=', product_type)
+        ])
+
+    @api.model
+    def get_member_priced_products(self):
+        """Get all products with member pricing."""
+        return self.search([('has_member_pricing', '=', True)])
+
+    @api.model
+    def get_digital_products(self):
+        """Get all digital products."""
+        return self.search([('is_digital_product', '=', True)])
+
+    # ==========================================
+    # LIFECYCLE METHODS
+    # ==========================================
+
+    def unlink(self):
+        """Override unlink to clean up AMS extensions."""
+        # Remove AMS extensions before deleting products
+        ams_products = self.env['ams.product.standard'].search([
+            ('product_id', 'in', self.ids)
+        ])
+        ams_products.unlink()
+        
+        return super().unlink()
