@@ -272,9 +272,12 @@
     <!-- CORE MENU STRUCTURE - Foundation menus for entire AMS -->
     <menuitem id="menu_ams_root" name="AMS" sequence="10"/>
     
-    <!-- Members parent menu - all member-related functionality -->
-    <menuitem id="menu_ams_members" 
-              name="Members" 
+    <!-- CORE MENU STRUCTURE - Foundation menus for entire AMS -->
+    <menuitem id="menu_ams_root" name="AMS" sequence="10"/>
+    
+    <!-- Contacts parent menu - all contact/member functionality -->
+    <menuitem id="menu_ams_contacts" 
+              name="Contacts" 
               parent="menu_ams_root" 
               sequence="10"/>
     

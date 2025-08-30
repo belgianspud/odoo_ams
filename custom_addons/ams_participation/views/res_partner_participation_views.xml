@@ -1,17 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Extend res.partner form view to add participations tab -->
+    <!-- Enhanced participation view - stays within ams_participation module scope -->
     <record id="view_partner_form_participation" model="ir.ui.view">
         <field name="name">res.partner.form.participation</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
-            <!-- Add smart buttons for participations -->
+            <!-- Enhanced smart buttons -->
             <div name="button_box" position="inside">
                 <button name="action_view_participations" type="object" 
                         class="oe_stat_button" icon="fa-users"
                         invisible="participation_count == 0">
                     <field name="participation_count" widget="statinfo" string="Participations"/>
+                </button>
+                
+                <button name="action_view_active_participations" type="object" 
+                        class="oe_stat_button" icon="fa-check-circle"
+                        invisible="active_participation_count == 0">
+                    <field name="active_participation_count" widget="statinfo" string="Active"/>
                 </button>
                 
                 <button name="action_create_participation" type="object" 
@@ -23,75 +29,126 @@
                 </button>
             </div>
 
-            <!-- Add participations notebook page -->
+            <!-- Enhanced participations notebook page -->
             <notebook position="inside">
-                <page string="Participations" name="participations" 
-                      invisible="participation_count == 0 and active_participation_count == 0">
+                <page string="Participations" name="participations">
                     
-                    <!-- Participation Summary -->
-                    <group string="Participation Summary" name="participation_summary">
+                    <!-- Participation Status Dashboard -->
+                    <group string="Member Status Overview" name="participation_dashboard">
                         <field name="active_participation_count" invisible="1"/>
                         <field name="has_active_membership" invisible="1"/>
                         <field name="primary_membership_id" invisible="1"/>
                         
-                        <div class="alert alert-success" role="alert" 
-                             invisible="active_participation_count == 0">
-                            <strong>Member Status: Active</strong> - 
-                            This member has <field name="active_participation_count" readonly="1" style="display: inline"/> 
-                            active participation(s).
-                        </div>
-                        
-                        <div class="alert alert-warning" role="alert" 
-                             invisible="active_participation_count > 0">
-                            <strong>Member Status: Inactive</strong> - 
-                            This member has no active participations.
-                        </div>
-                        
-                        <div class="alert alert-info" role="alert" 
-                             invisible="not has_active_membership">
-                            <strong>Membership:</strong> This member has an active membership.
-                            <span invisible="not primary_membership_id">
-                                Primary membership: <field name="primary_membership_id" readonly="1" style="display: inline"/>
-                            </span>
-                        </div>
-                    </group>
-
-                    <separator/>
-
-                    <!-- Participation Actions -->
-                    <group string="Participation Management" name="participation_actions">
-                        <p class="text-muted">
-                            Use the buttons below to view and manage this member's participations.
-                        </p>
-                        
-                        <div class="oe_clear">
-                            <group>
-                                <div class="oe_left">
-                                    <button name="action_view_participations" string="View All Participations" 
-                                            type="object" class="btn-primary"
-                                            invisible="participation_count == 0"/>
-                                    <button name="action_create_participation" string="Add New Participation" 
-                                            type="object" class="btn-success"/>
+                        <!-- Status Indicators -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="alert alert-success" role="alert" 
+                                     invisible="active_participation_count == 0">
+                                    <i class="fa fa-check-circle"/> <strong>Active Member</strong><br/>
+                                    <field name="active_participation_count" readonly="1" style="display: inline"/> 
+                                    active participation(s)
                                 </div>
-                            </group>
+                                <div class="alert alert-warning" role="alert" 
+                                     invisible="active_participation_count > 0">
+                                    <i class="fa fa-exclamation-triangle"/> <strong>Inactive Member</strong><br/>
+                                    No active participations
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="alert alert-info" role="alert" 
+                                     invisible="not has_active_membership">
+                                    <strong>Primary Membership:</strong><br/>
+                                    <field name="primary_membership_id" readonly="1" style="display: inline"/>
+                                </div>
+                            </div>
                         </div>
                     </group>
 
-                    <!-- Quick Participation Info (Summary Table) -->
-                    <group string="Participation Summary" name="participation_info" 
-                           invisible="participation_count == 0">
-                        <p class="text-muted">
-                            This member has <field name="participation_count" readonly="1" style="display: inline"/> 
-                            total participation(s) with <field name="active_participation_count" readonly="1" style="display: inline"/> 
-                            currently active.
-                        </p>
-                        
-                        <p class="text-info">
-                            <strong>Primary Membership:</strong> 
-                            <field name="primary_membership_id" readonly="1" invisible="not primary_membership_id"/>
-                            <span invisible="primary_membership_id">No active membership found.</span>
-                        </p>
+                    <separator string="Current Active Participations"/>
+                    
+                    <!-- Dynamic Active Participations List -->
+                    <field name="active_participation_ids" nolabel="1">
+                        <tree string="Active Participations" create="false" editable="false" delete="false">
+                            <field name="participation_type"/>
+                            <field name="status" widget="badge" 
+                                   decoration-success="status == 'active'" 
+                                   decoration-warning="status == 'grace'"
+                                   decoration-info="status == 'suspended'"/>
+                            <field name="begin_date"/>
+                            <field name="end_date"/>
+                            <field name="paid_through_date"/>
+                            <field name="days_remaining" widget="integer"/>
+                            <field name="auto_pay" widget="boolean_toggle"/>
+                            <field name="subscription_product_id" string="Product" optional="show"/>
+                            <button name="action_view_history" type="object" 
+                                    icon="fa-history" title="View History" class="btn-sm"/>
+                            <button name="action_renew" type="object" 
+                                    icon="fa-refresh" title="Renew" class="btn-sm"
+                                    invisible="not is_renewable"/>
+                        </tree>
+                    </field>
+
+                    <!-- Professional Association Specific Section -->
+                    <group string="Professional Association Details" 
+                           invisible="not has_active_membership">
+                        <group>
+                            <field name="member_since" string="Member Since" readonly="1"/>
+                            <field name="membership_grade" string="Membership Grade" readonly="1"/>
+                            <field name="professional_designation" string="Designation"/>
+                        </group>
+                        <group>
+                            <field name="chapter_memberships" string="Chapter Affiliations" readonly="1"/>
+                            <field name="committee_roles" string="Committee Roles" readonly="1"/>
+                            <field name="continuing_education_status" string="CE Status" readonly="1"/>
+                        </group>
                     </group>
+
+                    <separator string="Participation History" invisible="historical_participation_count == 0"/>
+                    
+                    <!-- Historical Participations -->
+                    <field name="historical_participation_ids" nolabel="1" 
+                           invisible="historical_participation_count == 0">
+                        <tree string="Historical Participations" create="false" edit="false" delete="false">
+                            <field name="participation_type"/>
+                            <field name="status" widget="badge" 
+                                   decoration-danger="status in ['terminated', 'cancelled']"
+                                   decoration-muted="status == 'prospect'"/>
+                            <field name="join_date"/>
+                            <field name="begin_date"/>
+                            <field name="end_date"/>
+                            <field name="terminated_date" optional="hide"/>
+                            <field name="cancellation_reason_id" optional="hide"/>
+                            <button name="action_view_history" type="object" 
+                                    icon="fa-history" title="View History" class="btn-sm"/>
+                        </tree>
+                    </field>
+
+                    <!-- Quick Actions -->
+                    <div class="oe_clear mt16">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button name="action_create_participation" string="Add New Participation" 
+                                        type="object" class="btn-success"/>
+                                <button name="action_view_all_participations" string="View All" 
+                                        type="object" class="btn-primary"
+                                        invisible="participation_count == 0"/>
+                            </div>
+                            <div class="col-md-6 text-right">
+                                <button name="action_export_participation_history" string="Export History" 
+                                        type="object" class="btn-secondary"
+                                        invisible="participation_count == 0"/>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Help Text for New Members -->
+                    <div class="oe_clear mt16" invisible="participation_count > 0">
+                        <div class="alert alert-info" role="alert">
+                            <i class="fa fa-info-circle"/> 
+                            <strong>New Member:</strong> This contact has no participations yet. 
+                            Use "Add New Participation" to create their first membership, chapter, or committee participation.
+                        </div>
+                    </div>
                 </page>
             </notebook>
         </field>

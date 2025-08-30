@@ -3,7 +3,7 @@
     <!-- Create Participations parent menu under Members -->
     <menuitem id="menu_ams_participations" 
               name="Participations" 
-              parent="ams_system_config.menu_ams_members"
+              parent="ams_system_config.menu_ams_contacts"
               sequence="40"/>
     
     <!-- Create Reports parent menu under AMS -->
@@ -100,8 +100,10 @@
                         domain="[('status', '=', 'prospect')]"/>
                 <filter string="Suspended" name="suspended" 
                         domain="[('status', '=', 'suspended')]"/>
+                <filter string="Terminated" name="terminated" 
+                        domain="[('status', '=', 'terminated')]"/>
                 <filter string="Cancelled" name="cancelled" 
-                        domain="[('status', 'in', ('cancelled', 'terminated'))]"/>
+                        domain="[('status', '=', 'cancelled')]"/>
                 <separator/>
                 
                 <!-- Type filters -->
@@ -133,12 +135,11 @@
         </field>
     </record>
 
-    <!-- All Participations Action -->
+    <!-- All Participations Action - REMOVED DEFAULT FILTER -->
     <record id="action_ams_participation" model="ir.actions.act_window">
         <field name="name">All Participations</field>
         <field name="res_model">ams.participation</field>
         <field name="view_mode">list,form</field>
-        <field name="context">{'search_default_active': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create your first participation
@@ -149,23 +150,63 @@
         </field>
     </record>
 
+    <!-- STATUS-SPECIFIC ACTIONS -->
+    
+    <!-- Prospect Participations Action -->
+    <record id="action_ams_participation_prospect" model="ir.actions.act_window">
+        <field name="name">Prospect Participations</field>
+        <field name="res_model">ams.participation</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('status', '=', 'prospect')]</field>
+        <field name="context">{'search_default_prospects': 1}</field>
+    </record>
+
     <!-- Active Participations Action -->
     <record id="action_ams_participation_active" model="ir.actions.act_window">
         <field name="name">Active Participations</field>
         <field name="res_model">ams.participation</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[('status', 'in', ['active', 'grace'])]</field>
+        <field name="domain">[('status', '=', 'active')]</field>
         <field name="context">{'search_default_active': 1}</field>
     </record>
 
-    <!-- Expired/Grace Participations Action -->
-    <record id="action_ams_participation_expired_grace" model="ir.actions.act_window">
-        <field name="name">Expired/Grace Participations</field>
+    <!-- Grace Participations Action - RENAMED -->
+    <record id="action_ams_participation_grace" model="ir.actions.act_window">
+        <field name="name">Grace Participations</field>
         <field name="res_model">ams.participation</field>
         <field name="view_mode">list,form</field>
         <field name="domain">[('status', '=', 'grace')]</field>
         <field name="context">{'search_default_grace': 1}</field>
     </record>
+
+    <!-- Suspended Participations Action -->
+    <record id="action_ams_participation_suspended" model="ir.actions.act_window">
+        <field name="name">Suspended Participations</field>
+        <field name="res_model">ams.participation</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('status', '=', 'suspended')]</field>
+        <field name="context">{'search_default_suspended': 1}</field>
+    </record>
+
+    <!-- Terminated Participations Action -->
+    <record id="action_ams_participation_terminated" model="ir.actions.act_window">
+        <field name="name">Terminated Participations</field>
+        <field name="res_model">ams.participation</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('status', '=', 'terminated')]</field>
+        <field name="context">{'search_default_terminated': 1}</field>
+    </record>
+
+    <!-- Cancelled Participations Action -->
+    <record id="action_ams_participation_cancelled" model="ir.actions.act_window">
+        <field name="name">Cancelled Participations</field>
+        <field name="res_model">ams.participation</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('status', '=', 'cancelled')]</field>
+        <field name="context">{'search_default_cancelled': 1}</field>
+    </record>
+
+    <!-- TYPE-SPECIFIC ACTIONS -->
 
     <!-- Membership Participations Action -->
     <record id="action_ams_participation_membership" model="ir.actions.act_window">
@@ -173,7 +214,7 @@
         <field name="res_model">ams.participation</field>
         <field name="view_mode">list,form</field>
         <field name="domain">[('participation_type', '=', 'membership')]</field>
-        <field name="context">{'search_default_active': 1, 'default_participation_type': 'membership'}</field>
+        <field name="context">{'default_participation_type': 'membership'}</field>
     </record>
 
     <!-- Chapter Participations Action -->
@@ -182,7 +223,7 @@
         <field name="res_model">ams.participation</field>
         <field name="view_mode">list,form</field>
         <field name="domain">[('participation_type', '=', 'chapter')]</field>
-        <field name="context">{'search_default_active': 1, 'default_participation_type': 'chapter'}</field>
+        <field name="context">{'default_participation_type': 'chapter'}</field>
     </record>
 
     <!-- Committee Participations Action -->
@@ -191,30 +232,7 @@
         <field name="res_model">ams.participation</field>
         <field name="view_mode">list,form</field>
         <field name="domain">[('participation_type', '=', 'committee_position')]</field>
-        <field name="context">{'search_default_active': 1, 'default_participation_type': 'committee_position'}</field>
-    </record>
-
-    <!-- Participation History Action -->
-    <record id="action_ams_participation_history" model="ir.actions.act_window">
-        <field name="name">Participation History</field>
-        <field name="res_model">ams.participation.history</field>
-        <field name="view_mode">list,form</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No participation history found
-            </p>
-            <p>
-                Participation history automatically tracks all status changes 
-                for member participations, providing a complete audit trail.
-            </p>
-        </field>
-    </record>
-
-    <!-- Participation History Analytics Action -->
-    <record id="action_ams_participation_history_report" model="ir.actions.act_window">
-        <field name="name">Status Change Analytics</field>
-        <field name="res_model">ams.participation.history</field>
-        <field name="view_mode">graph,pivot,list</field>
+        <field name="context">{'default_participation_type': 'committee_position'}</field>
     </record>
 
     <!-- COMPREHENSIVE MENU STRUCTURE -->
@@ -225,25 +243,53 @@
               action="action_ams_participation" 
               sequence="10"/>
 
-    <!-- Active Participations submenu -->
-    <menuitem id="menu_ams_participations_active" 
-              name="Active Participations" 
+    <!-- BY STATUS SUBMENUS -->
+    <menuitem id="menu_ams_participations_by_status" 
+              name="By Status" 
               parent="menu_ams_participations"
+              sequence="20"/>
+
+    <menuitem id="menu_ams_participations_prospect" 
+              name="Prospects" 
+              parent="menu_ams_participations_by_status"
+              action="action_ams_participation_prospect" 
+              sequence="10"/>
+
+    <menuitem id="menu_ams_participations_active" 
+              name="Active" 
+              parent="menu_ams_participations_by_status"
               action="action_ams_participation_active" 
               sequence="20"/>
 
-    <!-- Expired/Grace submenu -->
-    <menuitem id="menu_ams_participations_expired" 
-              name="Expired/Grace" 
-              parent="menu_ams_participations"
-              action="action_ams_participation_expired_grace" 
+    <menuitem id="menu_ams_participations_grace" 
+              name="Grace" 
+              parent="menu_ams_participations_by_status"
+              action="action_ams_participation_grace" 
               sequence="30"/>
 
-    <!-- By Type submenus -->
+    <menuitem id="menu_ams_participations_suspended" 
+              name="Suspended" 
+              parent="menu_ams_participations_by_status"
+              action="action_ams_participation_suspended" 
+              sequence="40"/>
+
+    <menuitem id="menu_ams_participations_terminated" 
+              name="Terminated" 
+              parent="menu_ams_participations_by_status"
+              action="action_ams_participation_terminated" 
+              sequence="50"/>
+
+    <menuitem id="menu_ams_participations_cancelled" 
+              name="Cancelled" 
+              parent="menu_ams_participations_by_status"
+              action="action_ams_participation_cancelled" 
+              sequence="60"/>
+
+    <!-- BY TYPE SUBMENUS -->
     <menuitem id="menu_ams_participations_by_type" 
               name="By Type" 
               parent="menu_ams_participations"
-              sequence="40"/>
+              sequence="30"/>
 
     <menuitem id="menu_ams_participations_membership" 
               name="Memberships" 
