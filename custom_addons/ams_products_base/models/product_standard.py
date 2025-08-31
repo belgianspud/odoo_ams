@@ -1,6 +1,6 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
-
+from datetime import timedelta
 
 class AMSProductStandard(models.Model):
     """AMS-specific product extensions with association features."""
@@ -76,7 +76,7 @@ class AMSProductStandard(models.Model):
     currency_id = fields.Many2one(
         'res.currency',
         string='Currency',
-        default=lambda self: self.env.company.currency_id,
+        default=lambda self: self.env.company.currency_id or self.env['res.currency'].search([('name', '=', 'USD')], limit=1),
         help='Currency for pricing'
     )
     

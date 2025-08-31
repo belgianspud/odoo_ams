@@ -24,6 +24,12 @@ class ProductProductExtend(models.Model):
         help='Related AMS product extension record'
     )
     
+    ams_product_standard_ids = fields.One2many(
+        'ams.product.standard',
+        'product_id',
+        string='AMS Product Extensions'
+    )
+
     # ==========================================
     # MEMBER PRICING INTEGRATION
     # ==========================================
@@ -100,7 +106,7 @@ class ProductProductExtend(models.Model):
     # COMPUTED METHODS
     # ==========================================
 
-    @api.depends('ams_product_standard_ids')
+    @api.depends()
     def _compute_ams_product(self):
         """Compute AMS product relationship."""
         for product in self:
