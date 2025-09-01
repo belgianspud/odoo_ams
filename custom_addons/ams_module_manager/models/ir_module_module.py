@@ -36,7 +36,7 @@ class IrModuleModule(models.Model):
         'ams_system_config',    # AMS base module for managing and configuring ams configurations - Layer 1
         'ams_participation',    # AMS base module for tracking participations(membership/chapter subscription records) - Layer 2
         'ams_products_base',    # AMS base module to buid and define products 
-
+        'ams_subscription_management', # AMS base module to build and manage subscription products 
 
         """
         #commenting out this section to provide clean list of modules to use for ams. 
