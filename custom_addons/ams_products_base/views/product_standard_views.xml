@@ -13,7 +13,7 @@
         <field name="name">ams.product.standard.list</field>
         <field name="model">ams.product.standard</field>
         <field name="arch" type="xml">
-            <list string="AMS Products" default_order="ams_product_type,name">
+            <list string="AMS Products" default_order="ams_product_type,sku">
                 <field name="name"/>
                 <field name="ams_product_type"/>
                 <field name="sku"/>
@@ -108,14 +108,11 @@
                             <group>
                                 <group string="Membership Requirements">
                                     <field name="requires_membership"/>
-                                    <field name="member_types_allowed" widget="many2many_tags" 
-                                           invisible="not requires_membership"/>
+                                    <!-- Removed member_types_allowed field reference -->
                                 </group>
                                 <group string="Geographic Restrictions">
                                     <field name="chapter_specific"/>
                                     <!-- Placeholder for future chapter integration -->
-                                    <!-- <field name="allowed_chapter_ids" widget="many2many_tags" 
-                                           invisible="not chapter_specific"/> -->
                                     <div invisible="not chapter_specific" class="alert alert-info">
                                         Chapter restrictions will be available when ams_chapters_core module is installed.
                                     </div>

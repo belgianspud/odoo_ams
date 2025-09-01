@@ -6,7 +6,7 @@ class AMSProductStandard(models.Model):
     """AMS-specific product extensions with association features."""
     _name = 'ams.product.standard'
     _description = 'AMS Product Standard'
-    _order = 'name, ams_product_type'
+    _order = 'sku, ams_product_type'  # Changed from 'name, ams_product_type'
 
     # ==========================================
     # CORE PRODUCT RELATIONSHIP
@@ -23,7 +23,7 @@ class AMSProductStandard(models.Model):
     name = fields.Char(
         string='Product Name',
         related='product_id.name',
-        store=True,
+        readonly=True,  # Make it readonly instead of stored
         help='Product name from base product'
     )
     
@@ -139,6 +139,7 @@ class AMSProductStandard(models.Model):
         help='Product only available to current members'
     )
     
+    # Member types allowed - now available since ams_member_data is installed
     member_types_allowed = fields.Many2many(
         'ams.member.type',
         string='Allowed Member Types',
@@ -266,14 +267,6 @@ class AMSProductStandard(models.Model):
                     raise ValidationError(
                         "Member price cannot be higher than non-member price"
                     )
-                
-                # Warn if discount is unusually high (>75%)
-                discount_pct = ((record.non_member_price - record.member_price)
-                               / record.non_member_price * 100)
-                if discount_pct > 75:
-                    # Log warning but don't block
-                    self.env['res.partner']  # Just to trigger logging
-                    # Could implement logging here if needed
 
     @api.constrains('season_start_date', 'season_end_date')
     def _check_seasonal_dates(self):
@@ -314,16 +307,18 @@ class AMSProductStandard(models.Model):
         """Check if partner is eligible to purchase this product."""
         partner = self.env['res.partner'].browse(partner_id)
         
-        # Check membership requirement
-        if self.requires_membership and not partner.is_member:
-            return {
-                'eligible': False,
-                'reason': 'Product requires current membership',
-                'action': 'join_or_renew'
-            }
+        # Check membership requirement (simplified check)
+        if self.requires_membership:
+            # Check if partner has is_member field and if it's True
+            if hasattr(partner, 'is_member') and not partner.is_member:
+                return {
+                    'eligible': False,
+                    'reason': 'Product requires current membership',
+                    'action': 'join_or_renew'
+                }
 
         # Check member type restrictions
-        if self.member_types_allowed and partner.member_type_id:
+        if self.member_types_allowed and hasattr(partner, 'member_type_id') and partner.member_type_id:
             if partner.member_type_id not in self.member_types_allowed:
                 return {
                     'eligible': False,
@@ -358,15 +353,15 @@ class AMSProductStandard(models.Model):
         if not eligibility['eligible']:
             raise ValidationError(eligibility['reason'])
 
-        # Determine base price
-        if partner.is_member and self.member_price:
+        # Determine base price (simplified)
+        is_member = hasattr(partner, 'is_member') and partner.is_member
+        if is_member and self.member_price:
             unit_price = self.member_price
             price_type = 'member'
         else:
             unit_price = self.non_member_price or self.product_id.list_price
             price_type = 'non_member'
 
-        # Apply volume discounts if configured (placeholder for future enhancement)
         final_price = unit_price
 
         return {
@@ -384,19 +379,23 @@ class AMSProductStandard(models.Model):
             return {'available': True, 'quantity': quantity_needed}
 
         # Integration with Odoo stock - get current stock
-        stock_quant = self.env['stock.quant'].search([
-            ('product_id', '=', self.product_id.id),
-            ('location_id.usage', '=', 'internal')
-        ])
-        
-        available_qty = sum(stock_quant.mapped('quantity'))
-        
-        if available_qty < quantity_needed:
-            return {
-                'available': False,
-                'quantity': available_qty,
-                'message': f'Only {available_qty} units available'
-            }
+        try:
+            stock_quant = self.env['stock.quant'].search([
+                ('product_id', '=', self.product_id.id),
+                ('location_id.usage', '=', 'internal')
+            ])
+            
+            available_qty = sum(stock_quant.mapped('quantity'))
+            
+            if available_qty < quantity_needed:
+                return {
+                    'available': False,
+                    'quantity': available_qty,
+                    'message': f'Only {available_qty} units available'
+                }
+        except Exception:
+            # If stock module not fully configured, assume available
+            pass
 
         return {'available': True, 'quantity': quantity_needed}
 
@@ -445,8 +444,12 @@ class AMSProductStandard(models.Model):
         for vals in vals_list:
             # Auto-generate SKU if not provided
             if not vals.get('sku') and vals.get('product_id'):
-                product = self.env['product.product'].browse(vals['product_id'])
-                vals['sku'] = f"AMS-{product.default_code or product.id}"
+                try:
+                    product = self.env['product.product'].browse(vals['product_id'])
+                    vals['sku'] = f"AMS-{product.default_code or product.id}"
+                except:
+                    # Fallback if product access fails
+                    vals['sku'] = f"AMS-{vals['product_id']}"
                 
         return super().create(vals_list)
 
@@ -471,9 +474,15 @@ class AMSProductStandard(models.Model):
         """Custom display name."""
         result = []
         for record in self:
-            name = record.name or 'AMS Product'
+            # Use SKU if available, otherwise product name
+            if record.sku:
+                name = f"[{record.sku}] {record.name or 'AMS Product'}"
+            else:
+                name = record.name or 'AMS Product'
+            
             if record.ams_product_type:
-                name = f"[{dict(record._fields['ams_product_type'].selection)[record.ams_product_type]}] {name}"
+                type_label = dict(record._fields['ams_product_type'].selection)[record.ams_product_type]
+                name = f"({type_label}) {name}"
             result.append((record.id, name))
         return result
 

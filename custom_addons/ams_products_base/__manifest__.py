@@ -35,13 +35,13 @@ simple merchandise sales to complex certification packages and digital downloads
         'ams_member_data',  # Required for member pricing logic
     ],
     'data': [
-        # Security
-        'security/ir.model.access.csv',
-        
-        # Data
+        # Data files first (including sample data that might create model records)
         'data/product_types_data.xml',
         
-        # Views
+        # Security files after data
+        'security/ir.model.access.csv',
+        
+        # Views last
         'views/product_standard_views.xml',
     ],
     'demo': [],

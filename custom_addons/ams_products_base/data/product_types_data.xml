@@ -84,6 +84,7 @@
             <field name="non_member_price">150.00</field>
             <field name="stock_controlled">False</field>
             <field name="digital_delivery_enabled">True</field>
+            <field name="digital_download_url">https://example.com/member-portal/journal</field>
             <field name="requires_membership">False</field>
             <field name="chapter_specific">False</field>
             <field name="download_limit">0</field>
@@ -114,6 +115,7 @@
             <field name="non_member_price">29.99</field>
             <field name="stock_controlled">False</field>
             <field name="digital_delivery_enabled">True</field>
+            <field name="digital_download_url">https://example.com/downloads/white-papers/best-practices</field>
             <field name="requires_membership">False</field>
             <field name="chapter_specific">False</field>
             <field name="download_limit">3</field>
@@ -176,6 +178,7 @@
             <field name="non_member_price">299.00</field>
             <field name="stock_controlled">False</field>
             <field name="digital_delivery_enabled">True</field>
+            <field name="digital_download_url">https://example.com/certification-portal/professional-excellence</field>
             <field name="requires_membership">True</field>
             <field name="chapter_specific">False</field>
             <field name="download_limit">0</field>
@@ -207,6 +210,7 @@
             <field name="non_member_price">75.00</field>
             <field name="stock_controlled">False</field>
             <field name="digital_delivery_enabled">True</field>
+            <field name="digital_download_url">https://example.com/conference-materials/2024</field>
             <field name="requires_membership">False</field>
             <field name="chapter_specific">False</field>
             <field name="seasonal_product">True</field>

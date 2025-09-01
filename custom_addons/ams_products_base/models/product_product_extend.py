@@ -1,5 +1,5 @@
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError,UserError
+from odoo.exceptions import ValidationError, UserError
 
 class ProductProductExtend(models.Model):
     """Extend product.product with AMS-specific computed fields and methods."""
@@ -12,7 +12,7 @@ class ProductProductExtend(models.Model):
     is_ams_product = fields.Boolean(
         string='AMS Product',
         compute='_compute_ams_product',
-        store=True,
+        store=False,  # Don't store to avoid computation issues
         help='Whether this product has AMS extensions'
     )
     
@@ -20,7 +20,7 @@ class ProductProductExtend(models.Model):
         'ams.product.standard',
         string='AMS Product Record',
         compute='_compute_ams_product',
-        store=True,
+        store=False,  # Don't store to avoid computation issues
         help='Related AMS product extension record'
     )
     
@@ -51,7 +51,7 @@ class ProductProductExtend(models.Model):
     has_member_pricing = fields.Boolean(
         string='Has Member Pricing',
         compute='_compute_has_member_pricing',
-        store=True,
+        store=False,
         help='Product has different pricing for members vs non-members'
     )
     
@@ -106,16 +106,24 @@ class ProductProductExtend(models.Model):
     # COMPUTED METHODS
     # ==========================================
 
-    @api.depends()
     def _compute_ams_product(self):
         """Compute AMS product relationship."""
         for product in self:
-            ams_product = self.env['ams.product.standard'].search([
-                ('product_id', '=', product.id)
-            ], limit=1)
+            # Use direct SQL query to avoid ordering issues during installation
+            self.env.cr.execute("""
+                SELECT id FROM ams_product_standard 
+                WHERE product_id = %s 
+                LIMIT 1
+            """, (product.id,))
             
-            product.is_ams_product = bool(ams_product)
-            product.ams_product_id = ams_product.id if ams_product else False
+            result = self.env.cr.fetchone()
+            if result:
+                ams_product = self.env['ams.product.standard'].browse(result[0])
+                product.is_ams_product = True
+                product.ams_product_id = ams_product.id
+            else:
+                product.is_ams_product = False
+                product.ams_product_id = False
 
     @api.depends('ams_product_id.member_price', 'ams_product_id.non_member_price')
     def _compute_has_member_pricing(self):
@@ -277,36 +285,6 @@ class ProductProductExtend(models.Model):
         }
 
     # ==========================================
-    # SEARCH AND FILTERING
-    # ==========================================
-
-    @api.model
-    def _search(self, args, offset=0, limit=None, order=None, count=False, access_rights_uid=None):
-        """Enhanced search to support AMS-specific filtering."""
-        # Add support for searching by AMS fields
-        new_args = []
-        for arg in args:
-            if isinstance(arg, (list, tuple)) and len(arg) == 3:
-                field, operator, value = arg
-                
-                # Map AMS-specific search fields
-                if field == 'ams_product_type':
-                    new_args.append(('ams_product_id.ams_product_type', operator, value))
-                elif field == 'member_price':
-                    new_args.append(('ams_product_id.member_price', operator, value))
-                elif field == 'requires_membership':
-                    new_args.append(('ams_product_id.requires_membership', operator, value))
-                else:
-                    new_args.append(arg)
-            else:
-                new_args.append(arg)
-        
-        return super()._search(
-            new_args, offset=offset, limit=limit, order=order, 
-            count=count, access_rights_uid=access_rights_uid
-        )
-
-    # ==========================================
     # UTILITY METHODS
     # ==========================================
 
@@ -348,6 +326,36 @@ class ProductProductExtend(models.Model):
     def get_digital_products(self):
         """Get all digital products."""
         return self.search([('is_digital_product', '=', True)])
+
+    # ==========================================
+    # SEARCH AND FILTERING
+    # ==========================================
+
+    @api.model
+    def _search(self, args, offset=0, limit=None, order=None, count=False, access_rights_uid=None):
+        """Enhanced search to support AMS-specific filtering."""
+        # Add support for searching by AMS fields
+        new_args = []
+        for arg in args:
+            if isinstance(arg, (list, tuple)) and len(arg) == 3:
+                field, operator, value = arg
+                
+                # Map AMS-specific search fields
+                if field == 'ams_product_type':
+                    new_args.append(('ams_product_id.ams_product_type', operator, value))
+                elif field == 'member_price':
+                    new_args.append(('ams_product_id.member_price', operator, value))
+                elif field == 'requires_membership':
+                    new_args.append(('ams_product_id.requires_membership', operator, value))
+                else:
+                    new_args.append(arg)
+            else:
+                new_args.append(arg)
+        
+        return super()._search(
+            new_args, offset=offset, limit=limit, order=order, 
+            count=count, access_rights_uid=access_rights_uid
+        )
 
     # ==========================================
     # LIFECYCLE METHODS
