@@ -108,7 +108,8 @@
                             <group>
                                 <group string="Membership Requirements">
                                     <field name="requires_membership"/>
-                                    <!-- Removed member_types_allowed field reference -->
+                                    <field name="member_types_allowed" widget="many2many_tags" 
+                                           invisible="not requires_membership"/>
                                 </group>
                                 <group string="Geographic Restrictions">
                                     <field name="chapter_specific"/>
@@ -348,41 +349,45 @@
                 </button>
             </xpath>
 
-            <!-- Add AMS fields to General Information -->
-            <xpath expr="//group[@name='group_general']" position="inside">
-                <field name="is_ams_product" readonly="1"/>
-                <field name="ams_product_type" readonly="1" invisible="not is_ams_product"/>
-            </xpath>
-
-            <!-- Add AMS pricing information -->
-            <xpath expr="//group[@name='group_standard_price']" position="after">
+            <!-- Add AMS fields to the form - simplified approach -->
+            <xpath expr="//sheet" position="inside">
+                <group string="AMS Features" name="group_ams_features" invisible="not is_ams_product">
+                    <group>
+                        <field name="is_ams_product" readonly="1"/>
+                        <field name="ams_product_type" readonly="1"/>
+                        <field name="is_digital_product" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="requires_membership" readonly="1"/>
+                        <field name="is_chapter_restricted" readonly="1"/>
+                        <field name="has_member_pricing" readonly="1"/>
+                    </group>
+                </group>
+                
                 <group string="AMS Member Pricing" name="group_ams_pricing" 
                        invisible="not is_ams_product or not has_member_pricing">
-                    <field name="member_price" widget="monetary" readonly="1"/>
-                    <field name="non_member_price" widget="monetary" readonly="1"/>
-                    <field name="member_discount_percentage" widget="percentage" readonly="1"/>
-                </group>
-            </xpath>
-
-            <!-- Add AMS features -->
-            <xpath expr="//group[@name='group_general']" position="after">
-                <group string="AMS Features" name="group_ams_features" invisible="not is_ams_product">
-                    <field name="is_digital_product" readonly="1"/>
-                    <field name="requires_membership" readonly="1"/>
-                    <field name="is_chapter_restricted" readonly="1"/>
+                    <group>
+                        <field name="member_price" widget="monetary" readonly="1"/>
+                        <field name="non_member_price" widget="monetary" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="member_discount_percentage" widget="percentage" readonly="1"/>
+                    </group>
                 </group>
             </xpath>
 
         </field>
     </record>
 
-    <!-- Product.Product List View Extension -->
+    <!-- Product.Product List View Extension - Removed for now due to compatibility issues -->
+    <!-- Will be added back once field structure is verified -->
+    <!--
     <record id="view_product_product_list_ams" model="ir.ui.view">
         <field name="name">product.product.list.ams</field>
         <field name="model">product.product</field>
         <field name="inherit_id" ref="product.product_product_tree_view"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='list_price']" position="after">
+            <xpath expr="//tree" position="inside">
                 <field name="is_ams_product" optional="show"/>
                 <field name="ams_product_type" optional="hide"/>
                 <field name="member_price" widget="monetary" optional="hide"/>
@@ -390,6 +395,7 @@
             </xpath>
         </field>
     </record>
+    -->
 
     <!-- Actions for specific product types -->
     <record id="action_ams_merchandise_products" model="ir.actions.act_window">
