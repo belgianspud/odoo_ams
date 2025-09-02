@@ -1,0 +1,566 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Pricing Tier List View -->
+    <record id="view_pricing_tier_list" model="ir.ui.view">
+        <field name="name">ams.subscription.pricing.tier.list</field>
+        <field name="model">ams.subscription.pricing.tier</field>
+        <field name="arch" type="xml">
+            <list string="Pricing Tiers" default_order="subscription_product_id,member_type_id">
+                <field name="subscription_product_id"/>
+                <field name="member_type_id"/>
+                <field name="price" widget="monetary"/>
+                <field name="discount_percentage" widget="percentage"/>
+                <field name="discount_amount" widget="monetary"/>
+                <field name="valid_from"/>
+                <field name="valid_to"/>
+                <field name="is_current" widget="boolean_toggle"/>
+                <field name="is_promotional" widget="boolean_toggle"/>
+                <field name="requires_verification" widget="boolean_toggle"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="currency_id" invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Pricing Tier Form View -->
+    <record id="view_pricing_tier_form" model="ir.ui.view">
+        <field name="name">ams.subscription.pricing.tier.form</field>
+        <field name="model">ams.subscription.pricing.tier</field>
+        <field name="arch" type="xml">
+            <form string="Pricing Tier">
+                <header>
+                    <button name="action_activate_tier" string="Activate" 
+                            type="object" class="oe_highlight"
+                            invisible="active == True"/>
+                    <button name="action_deactivate_tier" string="Deactivate" 
+                            type="object" class="btn-secondary"
+                            invisible="active == False"/>
+                    <button name="action_duplicate_tier" string="Duplicate" 
+                            type="object" class="btn-secondary"
+                            invisible="not id"/>
+                    <field name="active" widget="statusbar" clickable="True"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" 
+                                name="action_view_subscription_product"
+                                icon="fa-cube" invisible="not subscription_product_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Subscription</span>
+                                <span class="o_stat_text">Product</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <widget name="web_ribbon" title="Current" bg_color="bg-success"
+                            invisible="not is_current"/>
+                    <widget name="web_ribbon" title="Promotional" bg_color="bg-warning"
+                            invisible="not is_promotional"/>
+                    <widget name="web_ribbon" title="Expires Soon" bg_color="bg-danger"
+                            invisible="not expires_soon"/>
+                    <widget name="web_ribbon" title="Inactive" bg_color="bg-secondary"
+                            invisible="active == True"/>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                        <div class="o_row">
+                            <field name="sequence"/>
+                        </div>
+                    </div>
+
+                    <group>
+                        <group string="Basic Information">
+                            <field name="subscription_product_id" options="{'no_create': True}"/>
+                            <field name="member_type_id" options="{'no_create': True}"/>
+                        </group>
+                        <group string="Pricing">
+                            <field name="price" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="discount_percentage" widget="percentage" readonly="1"/>
+                            <field name="discount_amount" widget="monetary" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Validity Period" name="validity">
+                            <group>
+                                <group string="Date Range">
+                                    <field name="valid_from"/>
+                                    <field name="valid_to"/>
+                                    <field name="is_promotional" readonly="1"/>
+                                </group>
+                                <group string="Status">
+                                    <field name="is_current" readonly="1"/>
+                                    <field name="expires_soon" readonly="1"/>
+                                </group>
+                            </group>
+                            
+                            <div class="alert alert-info" invisible="not valid_from and not valid_to">
+                                <t t-if="valid_from and valid_to">
+                                    <strong>Limited Time Offer:</strong> This pricing is valid from 
+                                    <field name="valid_from" readonly="1"/> to <field name="valid_to" readonly="1"/>.
+                                </t>
+                                <t t-elif="valid_from and not valid_to">
+                                    <strong>Effective Date:</strong> This pricing becomes effective on 
+                                    <field name="valid_from" readonly="1"/>.
+                                </t>
+                                <t t-elif="not valid_from and valid_to">
+                                    <strong>Expires:</strong> This pricing expires on 
+                                    <field name="valid_to" readonly="1"/>.
+                                </t>
+                            </div>
+                            
+                            <div class="alert alert-success" invisible="not is_current">
+                                <strong>Currently Active:</strong> This pricing tier is currently valid and available for use.
+                            </div>
+                            
+                            <div class="alert alert-warning" invisible="not expires_soon or not is_current">
+                                <strong>Expires Soon:</strong> This pricing tier will expire within 30 days.
+                            </div>
+                        </page>
+
+                        <page string="Verification Requirements" name="verification">
+                            <group>
+                                <group string="Verification Settings">
+                                    <field name="requires_verification"/>
+                                    <field name="approval_required"/>
+                                </group>
+                                <group string="Verification Status" invisible="not requires_verification">
+                                    <div class="text-muted">
+                                        Members must provide verification to qualify for this pricing tier.
+                                    </div>
+                                </group>
+                            </group>
+                            
+                            <group string="Verification Criteria" invisible="not requires_verification">
+                                <field name="verification_criteria" nolabel="1" 
+                                       placeholder="Describe what verification is required (e.g., student enrollment, employment status, etc.)"/>
+                            </group>
+                            
+                            <div class="alert alert-info" invisible="not requires_verification">
+                                <strong>Verification Required:</strong> Members must provide documentation 
+                                to qualify for this pricing tier. Staff should verify eligibility before 
+                                applying this pricing.
+                            </div>
+                            
+                            <div class="alert alert-warning" invisible="not approval_required">
+                                <strong>Staff Approval:</strong> In addition to any verification requirements, 
+                                staff approval is required before members can access this pricing tier.
+                            </div>
+                        </page>
+
+                        <page string="Description &amp; Notes" name="description">
+                            <group>
+                                <field name="description" nolabel="1" 
+                                       placeholder="Additional details about this pricing tier..."/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Pricing Tier Kanban View -->
+    <record id="view_pricing_tier_kanban" model="ir.ui.view">
+        <field name="name">ams.subscription.pricing.tier.kanban</field>
+        <field name="model">ams.subscription.pricing.tier</field>
+        <field name="arch" type="xml">
+            <kanban default_order="subscription_product_id,sequence,member_type_id" 
+                    class="o_kanban_mobile">
+                <field name="subscription_product_id"/>
+                <field name="member_type_id"/>
+                <field name="price"/>
+                <field name="discount_percentage"/>
+                <field name="is_current"/>
+                <field name="is_promotional"/>
+                <field name="expires_soon"/>
+                <field name="requires_verification"/>
+                <field name="active"/>
+                <field name="currency_id"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_dropdown_kanban dropdown">
+                                <a role="button" class="dropdown-toggle o-no-caret btn" data-toggle="dropdown" data-display="static" href="#" aria-label="Dropdown menu" title="Dropdown menu">
+                                    <span class="fa fa-ellipsis-v"/>
+                                </a>
+                                <div class="dropdown-menu" role="menu">
+                                    <a t-if="widget.editable" role="menuitem" type="edit" class="dropdown-item">Edit</a>
+                                    <a t-if="widget.deletable" role="menuitem" type="delete" class="dropdown-item">Delete</a>
+                                    <div class="dropdown-divider"/>
+                                    <a role="menuitem" type="object" name="action_activate_tier" class="dropdown-item"
+                                       t-if="!record.active.raw_value">Activate</a>
+                                    <a role="menuitem" type="object" name="action_deactivate_tier" class="dropdown-item"
+                                       t-if="record.active.raw_value">Deactivate</a>
+                                    <a role="menuitem" type="object" name="action_duplicate_tier" class="dropdown-item">Duplicate</a>
+                                </div>
+                            </div>
+                            
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="member_type_id"/>
+                                        </strong>
+                                        <small class="o_kanban_record_subtitle text-muted">
+                                            <field name="subscription_product_id"/>
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div class="o_kanban_record_body">
+                                    <div class="o_kanban_record_pricing">
+                                        <div class="text-primary">
+                                            <strong>
+                                                <field name="price" widget="monetary"/>
+                                            </strong>
+                                        </div>
+                                        <t t-if="record.discount_percentage.raw_value > 0">
+                                            <small class="text-success">
+                                                <t t-esc="record.discount_percentage.value"/>% off
+                                            </small>
+                                        </t>
+                                    </div>
+                                    
+                                    <div class="o_kanban_tags_section">
+                                        <t t-if="record.is_current.raw_value">
+                                            <span class="badge badge-success">Current</span>
+                                        </t>
+                                        <t t-if="record.is_promotional.raw_value">
+                                            <span class="badge badge-warning">Promotional</span>
+                                        </t>
+                                        <t t-if="record.expires_soon.raw_value">
+                                            <span class="badge badge-danger">Expires Soon</span>
+                                        </t>
+                                        <t t-if="record.requires_verification.raw_value">
+                                            <span class="badge badge-info">Verification</span>
+                                        </t>
+                                        <t t-if="!record.active.raw_value">
+                                            <span class="badge badge-secondary">Inactive</span>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Pricing Tier Search View -->
+    <record id="view_pricing_tier_search" model="ir.ui.view">
+        <field name="name">ams.subscription.pricing.tier.search</field>
+        <field name="model">ams.subscription.pricing.tier</field>
+        <field name="arch" type="xml">
+            <search string="Search Pricing Tiers">
+                <field name="subscription_product_id"/>
+                <field name="member_type_id"/>
+                <field name="description"/>
+                <field name="verification_criteria"/>
+
+                <filter string="Currently Valid" name="current" 
+                        domain="[('is_current', '=', True)]"/>
+                <filter string="Promotional Pricing" name="promotional" 
+                        domain="[('is_promotional', '=', True)]"/>
+                <filter string="Expires Soon" name="expires_soon" 
+                        domain="[('expires_soon', '=', True)]"/>
+                
+                <separator/>
+                
+                <filter string="Requires Verification" name="verification" 
+                        domain="[('requires_verification', '=', True)]"/>
+                <filter string="Requires Approval" name="approval" 
+                        domain="[('approval_required', '=', True)]"/>
+                
+                <separator/>
+                
+                <filter string="Active" name="active" 
+                        domain="[('active', '=', True)]"/>
+                <filter string="Inactive" name="inactive" 
+                        domain="[('active', '=', False)]"/>
+                
+                <separator/>
+                
+                <filter string="Individual Subscriptions" name="individual_subs" 
+                        domain="[('subscription_product_id.subscription_scope', '=', 'individual')]"/>
+                <filter string="Enterprise Subscriptions" name="enterprise_subs" 
+                        domain="[('subscription_product_id.subscription_scope', '=', 'enterprise')]"/>
+                
+                <separator/>
+                
+                <filter string="High Discounts (>25%)" name="high_discount" 
+                        domain="[('discount_percentage', '>', 25)]"/>
+                <filter string="Medium Discounts (10-25%)" name="medium_discount" 
+                        domain="[('discount_percentage', '>=', 10), ('discount_percentage', '<=', 25)]"/>
+                <filter string="Low Discounts (<10%)" name="low_discount" 
+                        domain="[('discount_percentage', '>', 0), ('discount_percentage', '<', 10)]"/>
+
+                <group expand="0" string="Group By">
+                    <filter string="Subscription Product" name="group_by_product" 
+                            context="{'group_by': 'subscription_product_id'}"/>
+                    <filter string="Member Type" name="group_by_member_type" 
+                            context="{'group_by': 'member_type_id'}"/>
+                    <filter string="Current Status" name="group_by_current" 
+                            context="{'group_by': 'is_current'}"/>
+                    <filter string="Promotional Status" name="group_by_promotional" 
+                            context="{'group_by': 'is_promotional'}"/>
+                    <filter string="Verification Required" name="group_by_verification" 
+                            context="{'group_by': 'requires_verification'}"/>
+                    <filter string="Active Status" name="group_by_active" 
+                            context="{'group_by': 'active'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Pricing Tier Actions -->
+    <record id="action_pricing_tier" model="ir.actions.act_window">
+        <field name="name">Pricing Tiers</field>
+        <field name="res_model">ams.subscription.pricing.tier</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_active': 1, 'search_default_current': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first pricing tier
+            </p>
+            <p>
+                Pricing tiers allow you to offer different subscription prices for 
+                different member types. Common examples include student discounts, 
+                senior member pricing, and international member rates.
+            </p>
+            <p>
+                <strong>Quick Setup:</strong> Use the Bulk Pricing Setup wizard to 
+                create multiple pricing tiers at once with intelligent defaults.
+            </p>
+        </field>
+    </record>
+
+    <!-- Current Pricing Tiers Action -->
+    <record id="action_current_pricing_tiers" model="ir.actions.act_window">
+        <field name="name">Current Pricing Tiers</field>
+        <field name="res_model">ams.subscription.pricing.tier</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_current', '=', True), ('active', '=', True)]</field>
+        <field name="context">{'search_default_current': 1}</field>
+    </record>
+
+    <!-- Promotional Pricing Action -->
+    <record id="action_promotional_pricing" model="ir.actions.act_window">
+        <field name="name">Promotional Pricing</field>
+        <field name="res_model">ams.subscription.pricing.tier</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('is_promotional', '=', True)]</field>
+        <field name="context">{'search_default_promotional': 1}</field>
+    </record>
+
+    <!-- Expiring Soon Action -->
+    <record id="action_expiring_pricing_tiers" model="ir.actions.act_window">
+        <field name="name">Pricing Tiers Expiring Soon</field>
+        <field name="res_model">ams.subscription.pricing.tier</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('expires_soon', '=', True), ('active', '=', True)]</field>
+        <field name="context">{'search_default_expires_soon': 1}</field>
+    </record>
+
+    <!-- Wizard Views -->
+    <record id="view_pricing_tier_wizard_form" model="ir.ui.view">
+        <field name="name">ams.pricing.tier.wizard.form</field>
+        <field name="model">ams.pricing.tier.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Pricing Tier Wizard">
+                <header>
+                    <button name="action_generate_preview" string="Generate Preview" 
+                            type="object" class="oe_highlight"
+                            invisible="show_preview == True"/>
+                    <button name="action_execute_wizard" string="Execute" 
+                            type="object" class="oe_highlight"
+                            invisible="show_preview == False"
+                            confirm="This will create/update pricing tiers. Continue?"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Pricing Tier Management</h1>
+                        <div class="o_row">
+                            <field name="wizard_mode" widget="radio" options="{'horizontal': true}"/>
+                        </div>
+                    </div>
+
+                    <group>
+                        <group string="Target Product">
+                            <field name="subscription_product_id" options="{'no_create': True}"/>
+                            <field name="subscription_product_name" readonly="1"/>
+                            <field name="base_price" widget="monetary" readonly="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Wizard Settings">
+                            <field name="tier_creation_method" 
+                                   invisible="wizard_mode != 'create_bulk'"/>
+                            <field name="update_action" 
+                                   invisible="wizard_mode != 'update_bulk'"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <!-- Bulk Creation Tab -->
+                        <page string="Bulk Creation" name="bulk_creation" 
+                              invisible="wizard_mode != 'create_bulk'">
+                            <group>
+                                <group string="Member Types" 
+                                       invisible="tier_creation_method not in ['standard_tiers', 'percentage_discounts']">
+                                    <field name="member_type_ids" widget="many2many_tags" nolabel="1"/>
+                                </group>
+                                <group string="Discount Settings" 
+                                       invisible="tier_creation_method != 'percentage_discounts'">
+                                    <field name="use_graduated_discounts"/>
+                                    <field name="discount_percentage" 
+                                           invisible="use_graduated_discounts == True"/>
+                                </group>
+                            </group>
+                            
+                            <group invisible="use_graduated_discounts == False or tier_creation_method != 'percentage_discounts'">
+                                <group string="Graduated Discounts">
+                                    <field name="student_discount"/>
+                                    <field name="senior_discount"/>
+                                    <field name="professional_discount"/>
+                                    <field name="international_discount"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Promotional Tab -->
+                        <page string="Promotional Pricing" name="promotional" 
+                              invisible="wizard_mode != 'promotional'">
+                            <group>
+                                <group string="Promotion Settings">
+                                    <field name="promotional_discount"/>
+                                    <field name="promo_valid_from"/>
+                                    <field name="promo_valid_to"/>
+                                </group>
+                                <group string="Promotion Details">
+                                    <field name="member_type_ids" widget="many2many_tags"/>
+                                    <field name="promo_description"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Copy Tiers Tab -->
+                        <page string="Copy Tiers" name="copy_tiers" 
+                              invisible="wizard_mode != 'copy_tiers'">
+                            <group>
+                                <group string="Source Product">
+                                    <field name="source_subscription_id" options="{'no_create': True}"/>
+                                    <field name="copy_all_tiers"/>
+                                    <field name="adjust_copied_prices"/>
+                                </group>
+                                <group string="Tiers to Copy" 
+                                       invisible="copy_all_tiers == True">
+                                    <field name="source_tier_ids" widget="many2many_tags" nolabel="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Bulk Update Tab -->
+                        <page string="Bulk Update" name="bulk_update" 
+                              invisible="wizard_mode != 'update_bulk'">
+                            <group>
+                                <group string="Existing Tiers">
+                                    <field name="existing_tier_ids" widget="many2many_tags" nolabel="1"/>
+                                </group>
+                                <group string="Update Settings" 
+                                       invisible="update_action != 'adjust_prices'">
+                                    <field name="price_adjustment_type"/>
+                                    <field name="adjustment_value"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Verification Settings Tab -->
+                        <page string="Verification" name="verification">
+                            <group>
+                                <group string="Verification Requirements">
+                                    <field name="apply_verification_requirements"/>
+                                    <field name="auto_verification_criteria" 
+                                           invisible="apply_verification_requirements == False"/>
+                                    <field name="default_verification_text" 
+                                           invisible="apply_verification_requirements == False or auto_verification_criteria == True"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Preview Tab -->
+                        <page string="Preview" name="preview" invisible="show_preview == False">
+                            <field name="tier_preview_ids" nolabel="1">
+                                <list>
+                                    <field name="member_type_name"/>
+                                    <field name="action_type"/>
+                                    <field name="original_price" widget="monetary"/>
+                                    <field name="new_price" widget="monetary"/>
+                                    <field name="discount_percentage" widget="percentage"/>
+                                    <field name="requires_verification" widget="boolean"/>
+                                    <field name="preview_description"/>
+                                    <field name="currency_id" invisible="1"/>
+                                </list>
+                            </field>
+                            
+                            <div class="alert alert-info" invisible="not tier_preview_ids">
+                                <strong>Preview:</strong> Review the pricing tiers that will be created/updated above. 
+                                Click Execute to proceed with the changes.
+                            </div>
+                        </page>
+                    </notebook>
+
+                    <div invisible="not creation_summary">
+                        <group string="Results">
+                            <field name="creation_summary" readonly="1" nolabel="1"/>
+                        </group>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_pricing_tiers" 
+              name="Pricing Tiers" 
+              parent="menu_subscription_products_main"
+              action="action_pricing_tier" 
+              sequence="30"/>
+
+    <!-- Configuration submenu for pricing management -->
+    <menuitem id="menu_pricing_management" 
+              name="Pricing Management" 
+              parent="ams_system_config.menu_ams_configuration"
+              sequence="25"/>
+
+    <menuitem id="menu_current_pricing_tiers" 
+              name="Current Pricing Tiers" 
+              parent="menu_pricing_management"
+              action="action_current_pricing_tiers" 
+              sequence="10"/>
+
+    <menuitem id="menu_promotional_pricing" 
+              name="Promotional Pricing" 
+              parent="menu_pricing_management"
+              action="action_promotional_pricing" 
+              sequence="20"/>
+
+    <menuitem id="menu_expiring_pricing" 
+              name="Expiring Soon" 
+              parent="menu_pricing_management"
+              action="action_expiring_pricing_tiers" 
+              sequence="30"/>
+
+</odoo>

@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Product Template Form View Extension - Add Subscription Toggle -->
+    <record id="view_product_template_form_subscription_toggle" model="ir.ui.view">
+        <field name="name">product.template.form.subscription.toggle</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add subscription toggle in the options section -->
+            <xpath expr="//div[@name='options']" position="inside">
+                <div class="o_row">
+                    <field name="is_subscription_product"/>
+                    <label for="is_subscription_product" string="Subscription"/>
+                </div>
+            </xpath>
+
+            <!-- Add subscription smart buttons -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object" name="action_configure_subscription"
+                        invisible="not is_subscription_product" icon="fa-cog">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Configure</span>
+                        <span class="o_stat_text">Subscription</span>
+                    </div>
+                </button>
+                
+                <button class="oe_stat_button" type="object" name="action_manage_pricing_tiers"
+                        invisible="not has_subscription_configuration" icon="fa-tags">
+                    <field name="subscription_pricing_tier_count" widget="statinfo" string="Pricing Tiers"/>
+                </button>
+
+                <button class="oe_stat_button" type="object" name="action_subscription_builder_wizard"
+                        invisible="is_subscription_product" icon="fa-magic">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Enable</span>
+                        <span class="o_stat_text">Subscription</span>
+                    </div>
+                </button>
+            </xpath>
+
+            <!-- Add subscription configuration tab -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Subscription Configuration" name="subscription" 
+                      invisible="not is_subscription_product">
+                    
+                    <div class="alert alert-info" role="alert" invisible="has_subscription_configuration">
+                        <h5><i class="fa fa-info-circle"/> Subscription Enabled</h5>
+                        <p>This product has been configured for subscriptions. Click <strong>Configure Subscription</strong> 
+                        to complete the setup, or use the <strong>Subscription Builder Wizard</strong> for guided configuration.</p>
+                    </div>
+
+                    <div invisible="not has_subscription_configuration">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4>Subscription Overview</h4>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <th width="40%">Subscription Type:</th>
+                                        <td><field name="subscription_scope" readonly="1"/></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Category:</th>
+                                        <td><field name="subscription_type" readonly="1"/></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Base Price:</th>
+                                        <td><field name="subscription_member_price" widget="monetary" readonly="1"/></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Pricing Tiers:</th>
+                                        <td>
+                                            <field name="subscription_pricing_tier_count" readonly="1"/> 
+                                            <span invisible="subscription_pricing_tier_count == 0"> member pricing tiers configured</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h4>Quick Actions</h4>
+                                <div class="btn-group-vertical" role="group">
+                                    <button name="action_configure_subscription" string="Open Full Configuration" 
+                                            type="object" class="btn btn-primary btn-sm mb-2"/>
+                                    <button name="action_manage_pricing_tiers" string="Manage Pricing Tiers" 
+                                            type="object" class="btn btn-secondary btn-sm mb-2"/>
+                                    <button name="action_view_subscription_analytics" string="View Analytics" 
+                                            type="object" class="btn btn-info btn-sm mb-2"/>
+                                    <button name="action_subscription_builder_wizard" string="Reconfigure Wizard" 
+                                            type="object" class="btn btn-outline-secondary btn-sm"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3" invisible="not has_subscription_configuration">
+                        <h5>Subscription Features Summary</h5>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Access Control</h6>
+                                        <ul class="list-unstyled">
+                                            <li>
+                                                <i class="fa fa-check text-success" invisible="not subscription_member_only"/>
+                                                <i class="fa fa-times text-muted" invisible="subscription_member_only"/>
+                                                Members Only
+                                            </li>
+                                            <li>
+                                                <i class="fa fa-check text-success" invisible="not subscription_requires_approval"/>
+                                                <i class="fa fa-times text-muted" invisible="subscription_requires_approval"/>
+                                                Requires Approval
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Pricing Features</h6>
+                                        <ul class="list-unstyled">
+                                            <li>
+                                                <i class="fa fa-check text-success" invisible="subscription_pricing_tier_count == 0"/>
+                                                <i class="fa fa-times text-muted" invisible="subscription_pricing_tier_count > 0"/>
+                                                Member Pricing Tiers
+                                            </li>
+                                            <li>
+                                                <i class="fa fa-check text-success" invisible="subscription_scope != 'enterprise'"/>
+                                                <i class="fa fa-times text-muted" invisible="subscription_scope == 'enterprise'"/>
+                                                Enterprise Features
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Renewal Settings</h6>
+                                        <ul class="list-unstyled">
+                                            <li>
+                                                <i class="fa fa-check text-success" invisible="not subscription_renewable"/>
+                                                <i class="fa fa-times text-muted" invisible="subscription_renewable"/>
+                                                Renewable
+                                            </li>
+                                            <li>
+                                                <i class="fa fa-check text-success" invisible="not subscription_auto_renewal"/>
+                                                <i class="fa fa-times text-muted" invisible="subscription_auto_renewal"/>
+                                                Auto-Renewal
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </page>
+            </xpath>
+
+            <!-- Add subscription fields to form (hidden for computation) -->
+            <xpath expr="//sheet" position="after">
+                <div invisible="1">
+                    <!-- Hidden fields for subscription functionality -->
+                    <field name="has_subscription_configuration"/>
+                    <field name="subscription_scope"/>
+                    <field name="subscription_type"/>
+                    <field name="subscription_member_price"/>
+                    <field name="subscription_pricing_tier_count"/>
+                    <!-- Add other computed fields as needed -->
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Product Template List View Extension -->
+    <record id="view_product_template_list_subscription" model="ir.ui.view">
+        <field name="name">product.template.list.subscription</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='list_price']" position="after">
+                <field name="is_subscription_product" string="Subscription" optional="show"/>
+                <field name="subscription_scope" string="Sub. Type" optional="hide"/>
+                <field name="subscription_member_price" string="Member Price" widget="monetary" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Product Template Kanban View Extension -->
+    <record id="view_product_template_kanban_subscription" model="ir.ui.view">
+        <field name="name">product.template.kanban.subscription</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_kanban_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//templates" position="inside">
+                <field name="is_subscription_product"/>
+                <field name="subscription_scope"/>
+                <field name="has_subscription_configuration"/>
+            </xpath>
+            
+            <xpath expr="//div[hasclass('o_kanban_tags_section')]" position="inside">
+                <t t-if="record.is_subscription_product.raw_value">
+                    <span class="badge badge-primary">
+                        <i class="fa fa-refresh"/> Subscription
+                    </span>
+                </t>
+                <t t-if="record.subscription_scope.raw_value == 'enterprise'">
+                    <span class="badge badge-success">Enterprise</span>
+                </t>
+                <t t-if="record.has_subscription_configuration.raw_value">
+                    <span class="badge badge-info">Configured</span>
+                </t>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Product Template Search View Extension -->
+    <record id="view_product_template_search_subscription" model="ir.ui.view">
+        <field name="name">product.template.search.subscription</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='services']" position="after">
+                <separator/>
+                <filter string="Subscription Products" name="subscription_products" 
+                        domain="[('is_subscription_product', '=', True)]"/>
+                <filter string="Individual Subscriptions" name="individual_subscriptions" 
+                        domain="[('is_subscription_product', '=', True), ('subscription_scope', '=', 'individual')]"/>
+                <filter string="Enterprise Subscriptions" name="enterprise_subscriptions" 
+                        domain="[('is_subscription_product', '=', True), ('subscription_scope', '=', 'enterprise')]"/>
+                <filter string="Configured Subscriptions" name="configured_subscriptions" 
+                        domain="[('has_subscription_configuration', '=', True)]"/>
+            </xpath>
+            
+            <xpath expr="//group[@expand='0']" position="inside">
+                <filter string="Subscription Type" name="group_by_subscription_type" 
+                        context="{'group_by': 'subscription_scope'}"
+                        domain="[('is_subscription_product', '=', True)]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Actions for Subscription Products from Product Views -->
+    <record id="action_products_subscription_enabled" model="ir.actions.act_window">
+        <field name="name">Products with Subscriptions</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('is_subscription_product', '=', True)]</field>
+        <field name="context">{'search_default_subscription_products': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No subscription products found
+            </p>
+            <p>
+                Products with subscription features enabled appear here. Use the 
+                subscription toggle on any product to enable subscription capabilities.
+            </p>
+        </field>
+    </record>
+
+    <!-- Server Actions for Quick Setup -->
+    <record id="action_enable_subscription_bulk" model="ir.actions.server">
+        <field name="name">Enable Subscription Features</field>
+        <field name="model_id" ref="product.model_product_template"/>
+        <field name="binding_model_id" ref="product.model_product_template"/>
+        <field name="state">code</field>
+        <field name="code">
+# Enable subscription features on selected products
+enabled_count = 0
+for product in records:
+    if not product.is_subscription_product:
+        # Enable subscription toggle
+        product.write({
+            'is_subscription_product': True,
+            'detailed_type': 'service',  # Subscriptions are services
+        })
+        
+        # Create subscription definition with defaults
+        try:
+            product._create_subscription_definition()
+            enabled_count += 1
+        except Exception as e:
+            # Log error but continue with other products
+            pass
+
+if enabled_count > 0:
+    action = {
+        'type': 'ir.actions.client',
+        'tag': 'display_notification',
+        'params': {
+            'title': 'Subscriptions Enabled',
+            'message': f'Enabled subscription features on {enabled_count} product(s). Configure pricing and settings as needed.',
+            'type': 'success',
+            'sticky': False,
+        }
+    }
+else:
+    action = {
+        'type': 'ir.actions.client',
+        'tag': 'display_notification',
+        'params': {
+            'title': 'No Changes Made',
+            'message': 'Selected products already have subscription features enabled.',
+            'type': 'info',
+        }
+    }
+        </field>
+    </record>
+
+    <!-- Contextual help and onboarding -->
+    <template id="subscription_toggle_help" name="Subscription Toggle Help">
+        <div class="alert alert-info">
+            <h5><i class="fa fa-lightbulb-o"/> Subscription Features</h5>
+            <p>
+                <strong>Transform any product into a subscription offering!</strong>
+            </p>
+            <ul>
+                <li><strong>Simple Toggle:</strong> Check the "Subscription" box to enable subscription features</li>
+                <li><strong>Smart Defaults:</strong> Intelligent configuration based on your product type</li>
+                <li><strong>Member Pricing:</strong> Create pricing tiers for different member types</li>
+                <li><strong>Enterprise Ready:</strong> Support for organization subscriptions with seat management</li>
+                <li><strong>Flexible Renewals:</strong> Configure renewal policies and auto-renewal options</li>
+            </ul>
+            <p>
+                <strong>Quick Start:</strong> Enable the subscription toggle, then use the Subscription Builder Wizard 
+                for guided setup, or click Configure Subscription for advanced options.
+            </p>
+        </div>
+    </template>
+
+    <!-- Menu items to access subscription products from product menu -->
+    <menuitem id="menu_products_subscriptions" 
+              name="Subscription Products" 
+              parent="sale.prod_config_main"
+              action="action_products_subscription_enabled" 
+              sequence="15"/>
+
+</odoo>

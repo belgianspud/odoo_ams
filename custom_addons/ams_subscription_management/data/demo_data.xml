@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Demo Subscription Products -->
+        
+        <!-- Professional Membership Subscription -->
+        <record id="subscription_professional_membership" model="ams.subscription.product">
+            <field name="name">Professional Membership</field>
+            <field name="code">SUB_PROF_MEM</field>
+            <field name="product_id" ref="ams_products_base.product_membership_professional"/>
+            <field name="subscription_scope">individual</field>
+            <field name="product_type">membership</field>
+            <field name="default_duration">12</field>
+            <field name="duration_unit">months</field>
+            <field name="default_price">250.00</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="is_renewable">True</field>
+            <field name="renewal_window_days">90</field>
+            <field name="auto_renewal_enabled">True</field>
+            <field name="member_only">False</field>
+            <field name="requires_approval">False</field>
+            <field name="description"><![CDATA[
+                <p>Professional membership includes:</p>
+                <ul>
+                    <li>Access to all professional development resources</li>
+                    <li>Quarterly industry reports</li>
+                    <li>Networking events and conferences</li>
+                    <li>Professional certification opportunities</li>
+                    <li>Online learning platform access</li>
+                </ul>
+            ]]></field>
+            <field name="benefits_description"><![CDATA[
+                <p><strong>Member Benefits:</strong></p>
+                <ul>
+                    <li>Priority registration for events</li>
+                    <li>20% discount on additional courses</li>
+                    <li>Access to members-only content</li>
+                    <li>Professional directory listing</li>
+                    <li>Monthly newsletter and updates</li>
+                </ul>
+            ]]></field>
+            <field name="terms_and_conditions"><![CDATA[
+                <p>Membership terms:</p>
+                <ul>
+                    <li>Membership is valid for one calendar year from activation</li>
+                    <li>Auto-renewal may be disabled at any time</li>
+                    <li>Refunds available within 30 days of initial purchase</li>
+                    <li>Members must adhere to the association's code of conduct</li>
+                </ul>
+            ]]></field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Student Membership Subscription -->
+        <record id="subscription_student_membership" model="ams.subscription.product">
+            <field name="name">Student Membership</field>
+            <field name="code">SUB_STUDENT_MEM</field>
+            <field name="product_id" ref="ams_products_base.product_membership_student"/>
+            <field name="subscription_scope">individual</field>
+            <field name="product_type">membership</field>
+            <field name="default_duration">12</field>
+            <field name="duration_unit">months</field>
+            <field name="default_price">75.00</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="is_renewable">True</field>
+            <field name="renewal_window_days">90</field>
+            <field name="auto_renewal_enabled">True</field>
+            <field name="member_only">False</field>
+            <field name="requires_approval">True</field>
+            <field name="description"><![CDATA[
+                <p>Student membership designed for current students and recent graduates:</p>
+                <ul>
+                    <li>Access to student resources and career services</li>
+                    <li>Mentorship program participation</li>
+                    <li>Student-focused events and workshops</li>
+                    <li>Career placement assistance</li>
+                    <li>Reduced-rate conference attendance</li>
+                </ul>
+            ]]></field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Chapter Membership Subscription -->
+        <record id="subscription_chapter_membership" model="ams.subscription.product">
+            <field name="name">Local Chapter Membership</field>
+            <field name="code">SUB_CHAPTER_MEM</field>
+            <field name="product_id" ref="ams_products_base.product_membership_chapter"/>
+            <field name="subscription_scope">individual</field>
+            <field name="product_type">chapter</field>
+            <field name="default_duration">12</field>
+            <field name="duration_unit">months</field>
+            <field name="default_price">150.00</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="is_renewable">True</field>
+            <field name="renewal_window_days">60</field>
+            <field name="auto_renewal_enabled">True</field>
+            <field name="member_only">True</field>
+            <field name="requires_approval">False</field>
+            <field name="description"><![CDATA[
+                <p>Local chapter membership provides regional benefits:</p>
+                <ul>
+                    <li>Local networking events and meetings</li>
+                    <li>Regional professional development sessions</li>
+                    <li>Community service opportunities</li>
+                    <li>Local job board access</li>
+                    <li>Chapter-specific publications</li>
+                </ul>
+            ]]></field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Enterprise Corporate Membership -->
+        <record id="subscription_enterprise_membership" model="ams.subscription.product">
+            <field name="name">Enterprise Corporate Membership</field>
+            <field name="code">SUB_ENTERPRISE</field>
+            <field name="product_id" ref="ams_products_base.product_membership_corporate"/>
+            <field name="subscription_scope">enterprise</field>
+            <field name="product_type">membership</field>
+            <field name="default_duration">12</field>
+            <field name="duration_unit">months</field>
+            <field name="default_price">2500.00</field>
+            <field name="default_seat_count">10</field>
+            <field name="allow_seat_purchase">True</field>
+            <field name="max_additional_seats">50</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="is_renewable">True</field>
+            <field name="renewal_window_days">120</field>
+            <field name="auto_renewal_enabled">True</field>
+            <field name="member_only">False</field>
+            <field name="requires_approval">True</field>
+            <field name="description"><![CDATA[
+                <p>Enterprise membership for organizations:</p>
+                <ul>
+                    <li>Up to 10 employee memberships included</li>
+                    <li>Corporate training and development programs</li>
+                    <li>Executive roundtable access</li>
+                    <li>Custom training and consulting services</li>
+                    <li>Brand visibility opportunities</li>
+                    <li>Industry research and market intelligence</li>
+                </ul>
+            ]]></field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Journal Subscription -->
+        <record id="subscription_professional_journal" model="ams.subscription.product">
+            <field name="name">Professional Journal</field>
+            <field name="code">SUB_JOURNAL</field>
+            <field name="product_id" ref="ams_products_base.product_publication_journal"/>
+            <field name="subscription_scope">individual</field>
+            <field name="product_type">publication</field>
+            <field name="default_duration">12</field>
+            <field name="duration_unit">months</field>
+            <field name="default_price">120.00</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="is_renewable">True</field>
+            <field name="renewal_window_days">60</field>
+            <field name="auto_renewal_enabled">True</field>
+            <field name="member_only">False</field>
+            <field name="requires_approval">False</field>
+            <field name="description"><![CDATA[
+                <p>Monthly professional journal subscription includes:</p>
+                <ul>
+                    <li>12 monthly issues delivered digitally</li>
+                    <li>Archive access to past 5 years</li>
+                    <li>Supplementary research reports</li>
+                    <li>Early access to special issues</li>
+                    <li>Optional print edition (additional fee)</li>
+                </ul>
+            ]]></field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Demo Pricing Tiers -->
+        
+        <!-- Professional Membership Pricing Tiers -->
+        <record id="pricing_tier_prof_student" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_professional_membership"/>
+            <field name="member_type_id" ref="ams_member_management.member_type_student"/>
+            <field name="price">125.00</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="requires_verification">True</field>
+            <field name="verification_criteria">Current student enrollment verification required</field>
+            <field name="sequence">10</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="pricing_tier_prof_senior" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_professional_membership"/>
+            <field name="member_type_id" ref="ams_member_management.member_type_retired"/>
+            <field name="price">175.00</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="requires_verification">True</field>
+            <field name="verification_criteria">Retirement status verification required</field>
+            <field name="sequence">20</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="pricing_tier_prof_international" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_professional_membership"/>
+            <field name="member_type_id" ref="ams_member_management.member_type_international"/>
+            <field name="price">200.00</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="requires_verification">False</field>
+            <field name="sequence">30</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Chapter Membership Pricing Tiers -->
+        <record id="pricing_tier_chapter_student" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_chapter_membership"/>
+            <field name="member_type_id" ref="ams_member_management.member_type_student"/>
+            <field name="price">75.00</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="requires_verification">True</field>
+            <field name="verification_criteria">Student status verification required for chapter membership</field>
+            <field name="sequence">10</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="pricing_tier_chapter_senior" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_chapter_membership"/>
+            <field name="member_type_id" ref="ams_member_management.member_type_retired"/>
+            <field name="price">100.00</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="requires_verification">False</field>
+            <field name="sequence">20</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Journal Subscription Pricing Tiers -->
+        <record id="pricing_tier_journal_member" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_professional_journal"/>
+            <field name="member_type_id" ref="ams_member_management.member_type_professional"/>
+            <field name="price">96.00</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="requires_verification">False</field>
+            <field name="description">Member discount - 20% off regular price</field>
+            <field name="sequence">10</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="pricing_tier_journal_student" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_professional_journal"/>
+            <field name="member_type_id" ref="ams_member_management.member_type_student"/>
+            <field name="price">60.00</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="requires_verification">True</field>
+            <field name="verification_criteria">Student enrollment verification required</field>
+            <field name="description">Student discount - 50% off regular price</field>
+            <field name="sequence">20</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Promotional Pricing Examples -->
+        <record id="pricing_tier_prof_early_bird" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_professional_membership"/>
+            <field name="member_type_id" ref="ams_member_management.member_type_professional"/>
+            <field name="price">225.00</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="valid_from" eval="(datetime.now() + relativedelta(days=1)).strftime('%Y-%m-%d')"/>
+            <field name="valid_to" eval="(datetime.now() + relativedelta(months=3)).strftime('%Y-%m-%d')"/>
+            <field name="requires_verification">False</field>
+            <field name="description">Early bird promotion - 10% discount for renewals 90 days in advance</field>
+            <field name="sequence">5</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Enterprise Pricing Tiers -->
+        <record id="pricing_tier_enterprise_small" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_enterprise_membership"/>
+            <field name="member_type_id" ref="ams_member_management.member_type_corporate"/>
+            <field name="price">2250.00</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="requires_verification">False</field>
+            <field name="approval_required">True</field>
+            <field name="description">Small business discount - 10% off enterprise rate</field>
+            <field name="sequence">10</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Seasonal/Time-Limited Promotions -->
+        <record id="pricing_tier_new_graduate_special" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_professional_membership"/>
+            <field name="member_type_id" ref="ams_member_management.member_type_student"/>
+            <field name="price">150.00</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="valid_from" eval="(datetime.now() + relativedelta(months=5)).strftime('%Y-%m-%d')"/>
+            <field name="valid_to" eval="(datetime.now() + relativedelta(months=8)).strftime('%Y-%m-%d')"/>
+            <field name="requires_verification">True</field>
+            <field name="verification_criteria">Recent graduation (within 2 years) verification required</field>
+            <field name="description">New Graduate Special - Bridge pricing for recent graduates transitioning to professional membership</field>
+            <field name="sequence">15</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Volume Discount Example -->
+        <record id="pricing_tier_enterprise_volume" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_enterprise_membership"/>
+            <field name="member_type_id" ref="ams_member_management.member_type_corporate"/>
+            <field name="price">2000.00</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="requires_verification">False</field>
+            <field name="approval_required">True</field>
+            <field name="description">Volume discount for organizations with 25+ employees - 20% off standard rate</field>
+            <field name="verification_criteria">Organization size verification (25+ employees) required</field>
+            <field name="sequence">20</field>
+            <field name="active">False</field>
+        </record>
+
+    </data>
+</odoo>

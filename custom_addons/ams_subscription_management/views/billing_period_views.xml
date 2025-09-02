@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Billing Period List View -->
+    <record id="view_billing_period_list" model="ir.ui.view">
+        <field name="name">ams.billing.period.list</field>
+        <field name="model">ams.billing.period</field>
+        <field name="arch" type="xml">
+            <list string="Billing Periods" default_order="sequence,period_value">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="period_description"/>
+                <field name="total_days"/>
+                <field name="grace_days"/>
+                <field name="price_multiplier"/>
+                <field name="discount_percentage" widget="percentage"/>
+                <field name="is_default" widget="boolean_toggle"/>
+                <field name="popular" widget="boolean_toggle"/>
+                <field name="recommended" widget="boolean_toggle"/>
+                <field name="usage_count"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Billing Period Form View -->
+    <record id="view_billing_period_form" model="ir.ui.view">
+        <field name="name">ams.billing.period.form</field>
+        <field name="model">ams.billing.period</field>
+        <field name="arch" type="xml">
+            <form string="Billing Period">
+                <header>
+                    <button name="action_set_as_default" string="Set as Default" 
+                            type="object" class="oe_highlight"
+                            invisible="is_default == True"
+                            confirm="This will remove default status from the current default period. Continue?"/>
+                    <button name="action_toggle_popular" string="Toggle Popular" 
+                            type="object" class="btn-secondary"/>
+                    <button name="action_toggle_recommended" string="Toggle Recommended" 
+                            type="object" class="btn-secondary"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <!-- Removed the problematic action_view_subscriptions button -->
+                        <!-- This would be implemented by modules that handle subscription instances -->
+                    </div>
+
+                    <widget name="web_ribbon" title="Default" bg_color="bg-success"
+                            invisible="is_default == False"/>
+                    <widget name="web_ribbon" title="Popular" bg_color="bg-info"
+                            invisible="popular == False or is_default == True"/>
+                    <widget name="web_ribbon" title="Recommended" bg_color="bg-warning"
+                            invisible="recommended == False or is_default == True or popular == True"/>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger"
+                            invisible="active == True"/>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Billing Period Name"/>
+                        </h1>
+                        <div class="o_row">
+                            <field name="code" placeholder="Optional technical code"/>
+                        </div>
+                    </div>
+
+                    <group>
+                        <group string="Period Definition">
+                            <field name="period_value"/>
+                            <field name="period_unit"/>
+                            <field name="total_days" readonly="1"/>
+                            <field name="period_description" readonly="1"/>
+                        </group>
+                        <group string="Settings">
+                            <field name="sequence"/>
+                            <field name="is_default"/>
+                            <field name="popular"/>
+                            <field name="recommended"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Billing Configuration" name="billing">
+                            <group>
+                                <group string="Payment &amp; Grace Periods">
+                                    <field name="grace_days"/>
+                                    <field name="invoice_advance_days"/>
+                                    <field name="payment_terms_days"/>
+                                </group>
+                                <group string="Pricing">
+                                    <field name="price_multiplier"/>
+                                    <field name="discount_percentage" widget="percentage"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Renewal Settings" name="renewal">
+                            <group>
+                                <group string="Auto-Renewal">
+                                    <field name="auto_renewal_enabled"/>
+                                    <field name="renewal_reminder_days" 
+                                           placeholder="90,60,30,7" 
+                                           help="Comma-separated days before expiration to send reminders"/>
+                                </group>
+                                <group string="Early Renewal Incentives">
+                                    <field name="early_renewal_discount_days"/>
+                                    <field name="early_renewal_discount_percentage" widget="percentage"
+                                           invisible="early_renewal_discount_days == 0"/>
+                                </group>
+                            </group>
+                            
+                            <div class="alert alert-info" role="alert">
+                                <strong>Renewal Reminders:</strong> Enter comma-separated numbers representing 
+                                days before expiration to send renewal reminders (e.g., "90,60,30,7" for 
+                                reminders 90, 60, 30, and 7 days before expiration).
+                            </div>
+                        </page>
+
+                        <page string="Description &amp; Terms" name="description">
+                            <group>
+                                <field name="description" nolabel="1" placeholder="Detailed description of this billing period..."/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Billing Period Kanban View -->
+    <record id="view_billing_period_kanban" model="ir.ui.view">
+        <field name="name">ams.billing.period.kanban</field>
+        <field name="model">ams.billing.period</field>
+        <field name="arch" type="xml">
+            <kanban default_order="sequence">
+                <field name="name"/>
+                <field name="period_description"/>
+                <field name="discount_percentage"/>
+                <field name="is_default"/>
+                <field name="popular"/>
+                <field name="recommended"/>
+                <field name="usage_count"/>
+                <field name="active"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_dropdown_kanban dropdown">
+                                <a role="button" class="dropdown-toggle o-no-caret btn" data-toggle="dropdown" data-display="static" href="#" aria-label="Dropdown menu" title="Dropdown menu">
+                                    <span class="fa fa-ellipsis-v"/>
+                                </a>
+                                <div class="dropdown-menu" role="menu">
+                                    <a t-if="widget.editable" role="menuitem" type="edit" class="dropdown-item">Edit</a>
+                                    <a t-if="widget.deletable" role="menuitem" type="delete" class="dropdown-item">Delete</a>
+                                    <div class="dropdown-divider"/>
+                                    <a role="menuitem" type="object" name="action_set_as_default" class="dropdown-item"
+                                       t-if="!record.is_default.raw_value">Set as Default</a>
+                                    <a role="menuitem" type="object" name="action_toggle_popular" class="dropdown-item">
+                                        <t t-if="record.popular.raw_value">Remove from Popular</t>
+                                        <t t-else="">Mark as Popular</t>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                        </strong>
+                                        <small class="o_kanban_record_subtitle text-muted">
+                                            <field name="period_description"/>
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div class="o_kanban_record_body">
+                                    <div class="o_kanban_tags_section">
+                                        <t t-if="record.is_default.raw_value">
+                                            <span class="badge badge-success">Default</span>
+                                        </t>
+                                        <t t-if="record.popular.raw_value">
+                                            <span class="badge badge-info">Popular</span>
+                                        </t>
+                                        <t t-if="record.recommended.raw_value">
+                                            <span class="badge badge-warning">Recommended</span>
+                                        </t>
+                                        <t t-if="record.discount_percentage.raw_value > 0">
+                                            <span class="badge badge-secondary">
+                                                <t t-esc="record.discount_percentage.value"/>% off
+                                            </span>
+                                        </t>
+                                    </div>
+                                    
+                                    <div class="o_kanban_record_bottom">
+                                        <div class="oe_kanban_bottom_left">
+                                            <t t-if="record.usage_count.raw_value > 0">
+                                                <small class="text-muted">
+                                                    <i class="fa fa-users"/> <t t-esc="record.usage_count.value"/> subscriptions
+                                                </small>
+                                            </t>
+                                        </div>
+                                        <div class="oe_kanban_bottom_right">
+                                            <t t-if="!record.active.raw_value">
+                                                <span class="badge badge-danger">Archived</span>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Billing Period Search View -->
+    <record id="view_billing_period_search" model="ir.ui.view">
+        <field name="name">ams.billing.period.search</field>
+        <field name="model">ams.billing.period</field>
+        <field name="arch" type="xml">
+            <search string="Search Billing Periods">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="period_description"/>
+                <field name="description"/>
+
+                <filter string="Active" name="active" 
+                        domain="[('active', '=', True)]"/>
+                <filter string="Archived" name="inactive" 
+                        domain="[('active', '=', False)]"/>
+                
+                <separator/>
+                
+                <filter string="Default Period" name="default" 
+                        domain="[('is_default', '=', True)]"/>
+                <filter string="Popular Choices" name="popular" 
+                        domain="[('popular', '=', True)]"/>
+                <filter string="Recommended" name="recommended" 
+                        domain="[('recommended', '=', True)]"/>
+                
+                <separator/>
+                
+                <filter string="With Discounts" name="discounted" 
+                        domain="[('discount_percentage', '>', 0)]"/>
+                <filter string="Auto-Renewal Enabled" name="auto_renewal" 
+                        domain="[('auto_renewal_enabled', '=', True)]"/>
+                
+                <separator/>
+                
+                <filter string="Monthly Periods" name="monthly" 
+                        domain="[('period_unit', '=', 'months'), ('period_value', '=', 1)]"/>
+                <filter string="Quarterly Periods" name="quarterly" 
+                        domain="[('period_unit', '=', 'months'), ('period_value', '=', 3)]"/>
+                <filter string="Annual Periods" name="annual" 
+                        domain="[('period_unit', '=', 'months'), ('period_value', '=', 12)]"/>
+
+                <group expand="0" string="Group By">
+                    <filter string="Period Unit" name="group_by_unit" 
+                            context="{'group_by': 'period_unit'}"/>
+                    <filter string="Status" name="group_by_status" 
+                            context="{'group_by': 'active'}"/>
+                    <filter string="Features" name="group_by_features" 
+                            context="{'group_by': 'auto_renewal_enabled'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Billing Period Action -->
+    <record id="action_billing_period" model="ir.actions.act_window">
+        <field name="name">Billing Periods</field>
+        <field name="res_model">ams.billing.period</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first billing period
+            </p>
+            <p>
+                Billing periods define how often customers are charged for subscriptions.
+                Common periods include Monthly, Quarterly, and Annual billing cycles.
+            </p>
+            <p>
+                You can set different pricing multipliers and discounts to encourage
+                longer commitments (e.g., 10% discount for annual billing).
+            </p>
+        </field>
+    </record>
+
+    <!-- Quick Setup Actions -->
+    <record id="action_create_standard_periods" model="ir.actions.server">
+        <field name="name">Create Standard Billing Periods</field>
+        <field name="model_id" ref="model_ams_billing_period"/>
+        <field name="binding_model_id" ref="model_ams_billing_period"/>
+        <field name="state">code</field>
+        <field name="code">
+# Create standard billing periods if they don't exist
+standard_periods = [
+    {
+        'name': 'Monthly',
+        'code': 'MONTHLY',
+        'period_value': 1,
+        'period_unit': 'months',
+        'price_multiplier': 1.0,
+        'sequence': 10,
+        'auto_renewal_enabled': True,
+        'grace_days': 7,
+        'renewal_reminder_days': '30,7',
+    },
+    {
+        'name': 'Quarterly',
+        'code': 'QUARTERLY', 
+        'period_value': 3,
+        'period_unit': 'months',
+        'price_multiplier': 0.95,
+        'discount_percentage': 5.0,
+        'sequence': 20,
+        'auto_renewal_enabled': True,
+        'grace_days': 15,
+        'popular': True,
+        'renewal_reminder_days': '60,30,7',
+    },
+    {
+        'name': 'Annual',
+        'code': 'ANNUAL',
+        'period_value': 12, 
+        'period_unit': 'months',
+        'price_multiplier': 0.85,
+        'discount_percentage': 15.0,
+        'sequence': 30,
+        'is_default': True,
+        'recommended': True,
+        'auto_renewal_enabled': True,
+        'grace_days': 30,
+        'renewal_reminder_days': '90,60,30,7',
+        'early_renewal_discount_days': 60,
+        'early_renewal_discount_percentage': 5.0,
+    },
+    {
+        'name': 'Biennial',
+        'code': 'BIENNIAL',
+        'period_value': 24,
+        'period_unit': 'months', 
+        'price_multiplier': 0.80,
+        'discount_percentage': 20.0,
+        'sequence': 40,
+        'auto_renewal_enabled': True,
+        'grace_days': 45,
+        'renewal_reminder_days': '120,90,60,30',
+        'early_renewal_discount_days': 90,
+        'early_renewal_discount_percentage': 7.5,
+    }
+]
+
+created_periods = []
+for period_data in standard_periods:
+    # Check if period already exists
+    existing = env['ams.billing.period'].search([
+        ('code', '=', period_data['code'])
+    ], limit=1)
+    
+    if not existing:
+        period = env['ams.billing.period'].create(period_data)
+        created_periods.append(period.name)
+
+if created_periods:
+    action = {
+        'type': 'ir.actions.client',
+        'tag': 'display_notification',
+        'params': {
+            'title': 'Standard Periods Created',
+            'message': f'Created billing periods: {", ".join(created_periods)}',
+            'type': 'success',
+            'sticky': False,
+        }
+    }
+else:
+    action = {
+        'type': 'ir.actions.client', 
+        'tag': 'display_notification',
+        'params': {
+            'title': 'No Action Needed',
+            'message': 'Standard billing periods already exist',
+            'type': 'info',
+        }
+    }
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_billing_periods" 
+              name="Billing Periods" 
+              parent="ams_system_config.menu_ams_configuration"
+              action="action_billing_period" 
+              sequence="20"/>
+
+</odoo>
