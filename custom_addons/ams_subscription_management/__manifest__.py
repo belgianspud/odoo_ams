@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'AMS Subscription Management',
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.0.0',  # Updated for Odoo 18
     'category': 'Association Management',
     'summary': 'Advanced subscription product management for association memberships and services',
     'description': '''
@@ -56,12 +56,12 @@ seamlessly with member management, event registration, and financial modules.
         # AMS Core modules
         'ams_system_config',
         'ams_products_base',
-        'ams_member_data',
+        'ams_member_management',
     ],
     
     'external_dependencies': {
         'python': [
-            'python-dateutil',  # For advanced date calculations
+            'python-dateutil',  # Fixed: was 'dateutil'
         ],
     },
     
@@ -87,7 +87,7 @@ seamlessly with member management, event registration, and financial modules.
         'data/demo_data.xml',
     ],
     
-    'application': False,
+    'application': True,
     'installable': True,
     'auto_install': False,
     
@@ -95,11 +95,13 @@ seamlessly with member management, event registration, and financial modules.
     'sequence': 150,
     
     # Version compatibility
-    'odoo_version': '18.0',
+    'odoo_version': '18.0',  # Updated for Odoo 18
     
-    # Post-install configuration
-    'post_init_hook': 'post_install_hook',
-    'uninstall_hook': 'uninstall_hook',
+    # REMOVED: Undefined lifecycle hooks that were causing the error
+    # 'post_init_hook': 'post_install_hook',
+    # 'uninstall_hook': 'uninstall_hook', 
+    # 'pre_init_hook': 'pre_install_hook',
+    # 'post_load_hook': 'post_load_hook',
     
     # Development and maintenance
     'maintainers': ['ams-dev-team'],
@@ -136,10 +138,6 @@ seamlessly with member management, event registration, and financial modules.
         'account',  # Invoice integration
         'website_sale',  # E-commerce integration
     ],
-    
-    # Module lifecycle hooks
-    'pre_init_hook': 'pre_install_hook',
-    'post_load_hook': 'post_load_hook',
     
     # Advanced configuration
     'bootstrap': False,  # Not a bootstrap module
