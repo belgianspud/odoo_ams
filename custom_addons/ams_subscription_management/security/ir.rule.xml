@@ -6,7 +6,7 @@
     <record id="rule_subscription_product_user" model="ir.rule">
         <field name="name">Subscription Product: User Access</field>
         <field name="model_id" ref="model_ams_subscription_product"/>
-        <field name="groups" eval="[(4, ref('ams_member_management.group_ams_member_user'))]"/>
+        <field name="groups" eval="[(4, ref('ams_member_data.group_ams_member_user'))]"/>
         <field name="domain_force">[('active', '=', True)]</field>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="False"/>
@@ -17,7 +17,7 @@
     <record id="rule_subscription_product_staff" model="ir.rule">
         <field name="name">Subscription Product: Staff Access</field>
         <field name="model_id" ref="model_ams_subscription_product"/>
-        <field name="groups" eval="[(4, ref('ams_member_management.group_ams_staff'))]"/>
+        <field name="groups" eval="[(4, ref('ams_member_data.group_ams_staff'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
@@ -28,7 +28,7 @@
     <record id="rule_subscription_product_admin" model="ir.rule">
         <field name="name">Subscription Product: Admin Access</field>
         <field name="model_id" ref="model_ams_subscription_product"/>
-        <field name="groups" eval="[(4, ref('ams_member_management.group_ams_admin'))]"/>
+        <field name="groups" eval="[(4, ref('ams_member_data.group_ams_admin'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
@@ -40,7 +40,7 @@
     <record id="rule_pricing_tier_user" model="ir.rule">
         <field name="name">Pricing Tier: User Access</field>
         <field name="model_id" ref="model_ams_subscription_pricing_tier"/>
-        <field name="groups" eval="[(4, ref('ams_member_management.group_ams_member_user'))]"/>
+        <field name="groups" eval="[(4, ref('ams_member_data.group_ams_member_user'))]"/>
         <field name="domain_force">[
             ('active', '=', True),
             ('is_current', '=', True),
@@ -55,7 +55,7 @@
     <record id="rule_pricing_tier_staff" model="ir.rule">
         <field name="name">Pricing Tier: Staff Access</field>
         <field name="model_id" ref="model_ams_subscription_pricing_tier"/>
-        <field name="groups" eval="[(4, ref('ams_member_management.group_ams_staff'))]"/>
+        <field name="groups" eval="[(4, ref('ams_member_data.group_ams_staff'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
@@ -66,7 +66,7 @@
     <record id="rule_pricing_tier_admin" model="ir.rule">
         <field name="name">Pricing Tier: Admin Access</field>
         <field name="model_id" ref="model_ams_subscription_pricing_tier"/>
-        <field name="groups" eval="[(4, ref('ams_member_management.group_ams_admin'))]"/>
+        <field name="groups" eval="[(4, ref('ams_member_data.group_ams_admin'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
@@ -78,7 +78,7 @@
     <record id="rule_billing_period_user" model="ir.rule">
         <field name="name">Billing Period: User Access</field>
         <field name="model_id" ref="model_ams_billing_period"/>
-        <field name="groups" eval="[(4, ref('ams_member_management.group_ams_member_user'))]"/>
+        <field name="groups" eval="[(4, ref('ams_member_data.group_ams_member_user'))]"/>
         <field name="domain_force">[('active', '=', True)]</field>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="False"/>
@@ -89,7 +89,7 @@
     <record id="rule_billing_period_staff" model="ir.rule">
         <field name="name">Billing Period: Staff Access</field>
         <field name="model_id" ref="model_ams_billing_period"/>
-        <field name="groups" eval="[(4, ref('ams_member_management.group_ams_staff'))]"/>
+        <field name="groups" eval="[(4, ref('ams_member_data.group_ams_staff'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
@@ -100,7 +100,7 @@
     <record id="rule_billing_period_admin" model="ir.rule">
         <field name="name">Billing Period: Admin Access</field>
         <field name="model_id" ref="model_ams_billing_period"/>
-        <field name="groups" eval="[(4, ref('ams_member_management.group_ams_admin'))]"/>
+        <field name="groups" eval="[(4, ref('ams_member_data.group_ams_admin'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
@@ -112,7 +112,7 @@
     <record id="rule_product_template_subscription_user" model="ir.rule">
         <field name="name">Product Template: User Subscription Access</field>
         <field name="model_id" ref="product.model_product_template"/>
-        <field name="groups" eval="[(4, ref('ams_member_management.group_ams_member_user'))]"/>
+        <field name="groups" eval="[(4, ref('ams_member_data.group_ams_member_user'))]"/>
         <field name="domain_force">[
             '|',
             ('is_subscription_product', '=', False),
@@ -164,7 +164,7 @@
     <record id="rule_pricing_tier_requires_verification" model="ir.rule">
         <field name="name">Pricing Tier: Verification Required</field>
         <field name="model_id" ref="model_ams_subscription_pricing_tier"/>
-        <field name="groups" eval="[(4, ref('ams_member_management.group_ams_member_user'))]"/>
+        <field name="groups" eval="[(4, ref('ams_member_data.group_ams_member_user'))]"/>
         <field name="domain_force">[
             '|',
             ('requires_verification', '=', False),
@@ -253,7 +253,7 @@
     <record id="rule_subscription_product_archived" model="ir.rule">
         <field name="name">Subscription Product: Hide Archived for Users</field>
         <field name="model_id" ref="model_ams_subscription_product"/>
-        <field name="groups" eval="[(4, ref('ams_member_management.group_ams_member_user')), (4, ref('base.group_portal'))]"/>
+        <field name="groups" eval="[(4, ref('ams_member_data.group_ams_member_user')), (4, ref('base.group_portal'))]"/>
         <field name="domain_force">[('active', '=', True)]</field>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="False"/>
@@ -265,7 +265,7 @@
     <record id="rule_pricing_tier_current_only" model="ir.rule">
         <field name="name">Pricing Tier: Current Only for Users</field>
         <field name="model_id" ref="model_ams_subscription_pricing_tier"/>
-        <field name="groups" eval="[(4, ref('ams_member_management.group_ams_member_user')), (4, ref('base.group_portal'))]"/>
+        <field name="groups" eval="[(4, ref('ams_member_data.group_ams_member_user')), (4, ref('base.group_portal'))]"/>
         <field name="domain_force">[
             ('is_current', '=', True),
             '|',

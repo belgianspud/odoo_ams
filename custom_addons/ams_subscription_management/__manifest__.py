@@ -61,7 +61,7 @@ seamlessly with member management, event registration, and financial modules.
     
     'external_dependencies': {
         'python': [
-            'python-dateutil',  # Fixed: was 'dateutil'
+            'python': ['python-dateutil'],  # Fixed: was 'dateutil'
         ],
     },
     
