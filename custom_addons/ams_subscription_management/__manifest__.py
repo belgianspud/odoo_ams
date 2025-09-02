@@ -57,9 +57,6 @@ seamlessly with member management, event registration, and financial modules.
         'ams_system_config',
         'ams_products_base',
         'ams_member_management',
-        
-        # Optional integrations (soft dependencies)
-        # These will be loaded if available but not required
     ],
     
     'external_dependencies': {
@@ -84,30 +81,13 @@ seamlessly with member management, event registration, and financial modules.
         
         # Wizards
         'wizards/subscription_builder_wizard_views.xml',
-        
-        # Menu structure will be defined in view files
     ],
     
     'demo': [
         'data/demo_data.xml',
     ],
     
-    'assets': {
-        'web.assets_backend': [
-            'ams_subscription_management/static/src/css/subscription_management.css',
-            'ams_subscription_management/static/src/js/subscription_product_widget.js',
-        ],
-        'web.assets_frontend': [
-            'ams_subscription_management/static/src/css/portal_subscription.css',
-            'ams_subscription_management/static/src/js/subscription_selection.js',
-        ],
-    },
-    
-    'qweb': [
-        'static/src/xml/subscription_templates.xml',
-    ],
-    
-    'application': True,
+    'application': False,
     'installable': True,
     'auto_install': False,
     
@@ -146,24 +126,6 @@ seamlessly with member management, event registration, and financial modules.
     'documentation': 'https://docs.ams-odoo.com/subscription-management',
     'repository': 'https://github.com/ams-odoo/ams-subscription-management',
     
-    # Compatibility and testing
-    'test': [
-        'tests/test_subscription_product.py',
-        'tests/test_pricing_tiers.py',
-        'tests/test_billing_periods.py',
-        'tests/test_wizards.py',
-    ],
-    
-    'images': [
-        'static/description/icon.png',
-        'static/description/main_screenshot.png',
-        'static/description/pricing_tiers.png',
-        'static/description/wizard_flow.png',
-    ],
-    
-    # Feature flags and configuration
-    'config_parameter': 'ams_subscription_management',
-    
     # Integration points
     'depends_if_installed': [
         'ams_event_management',  # Event-based subscriptions
@@ -181,7 +143,4 @@ seamlessly with member management, event registration, and financial modules.
     
     # Advanced configuration
     'bootstrap': False,  # Not a bootstrap module
-    'cloc_exclude': [
-        'static/**/*',  # Exclude static files from code analysis
-    ],
 }
