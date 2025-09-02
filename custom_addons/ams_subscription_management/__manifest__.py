@@ -56,7 +56,7 @@ seamlessly with member management, event registration, and financial modules.
         # AMS Core modules
         'ams_system_config',
         'ams_products_base',
-        'ams_member_management',
+        'ams_member_data',
     ],
     
     'external_dependencies': {

@@ -176,7 +176,7 @@
         <!-- Professional Membership Pricing Tiers -->
         <record id="pricing_tier_prof_student" model="ams.subscription.pricing.tier">
             <field name="subscription_product_id" ref="subscription_professional_membership"/>
-            <field name="member_type_id" ref="ams_member_management.member_type_student"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_student"/>
             <field name="price">125.00</field>
             <field name="currency_id" ref="base.USD"/>
             <field name="requires_verification">True</field>
@@ -187,7 +187,7 @@
 
         <record id="pricing_tier_prof_senior" model="ams.subscription.pricing.tier">
             <field name="subscription_product_id" ref="subscription_professional_membership"/>
-            <field name="member_type_id" ref="ams_member_management.member_type_retired"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_retired"/>
             <field name="price">175.00</field>
             <field name="currency_id" ref="base.USD"/>
             <field name="requires_verification">True</field>
@@ -198,7 +198,7 @@
 
         <record id="pricing_tier_prof_international" model="ams.subscription.pricing.tier">
             <field name="subscription_product_id" ref="subscription_professional_membership"/>
-            <field name="member_type_id" ref="ams_member_management.member_type_international"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_international"/>
             <field name="price">200.00</field>
             <field name="currency_id" ref="base.USD"/>
             <field name="requires_verification">False</field>
@@ -209,7 +209,7 @@
         <!-- Chapter Membership Pricing Tiers -->
         <record id="pricing_tier_chapter_student" model="ams.subscription.pricing.tier">
             <field name="subscription_product_id" ref="subscription_chapter_membership"/>
-            <field name="member_type_id" ref="ams_member_management.member_type_student"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_student"/>
             <field name="price">75.00</field>
             <field name="currency_id" ref="base.USD"/>
             <field name="requires_verification">True</field>
@@ -220,7 +220,7 @@
 
         <record id="pricing_tier_chapter_senior" model="ams.subscription.pricing.tier">
             <field name="subscription_product_id" ref="subscription_chapter_membership"/>
-            <field name="member_type_id" ref="ams_member_management.member_type_retired"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_retired"/>
             <field name="price">100.00</field>
             <field name="currency_id" ref="base.USD"/>
             <field name="requires_verification">False</field>
@@ -231,7 +231,7 @@
         <!-- Journal Subscription Pricing Tiers -->
         <record id="pricing_tier_journal_member" model="ams.subscription.pricing.tier">
             <field name="subscription_product_id" ref="subscription_professional_journal"/>
-            <field name="member_type_id" ref="ams_member_management.member_type_professional"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_professional"/>
             <field name="price">96.00</field>
             <field name="currency_id" ref="base.USD"/>
             <field name="requires_verification">False</field>
@@ -242,7 +242,7 @@
 
         <record id="pricing_tier_journal_student" model="ams.subscription.pricing.tier">
             <field name="subscription_product_id" ref="subscription_professional_journal"/>
-            <field name="member_type_id" ref="ams_member_management.member_type_student"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_student"/>
             <field name="price">60.00</field>
             <field name="currency_id" ref="base.USD"/>
             <field name="requires_verification">True</field>
@@ -255,7 +255,7 @@
         <!-- Promotional Pricing Examples -->
         <record id="pricing_tier_prof_early_bird" model="ams.subscription.pricing.tier">
             <field name="subscription_product_id" ref="subscription_professional_membership"/>
-            <field name="member_type_id" ref="ams_member_management.member_type_professional"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_professional"/>
             <field name="price">225.00</field>
             <field name="currency_id" ref="base.USD"/>
             <field name="valid_from" eval="(datetime.now() + relativedelta(days=1)).strftime('%Y-%m-%d')"/>
@@ -269,7 +269,7 @@
         <!-- Enterprise Pricing Tiers -->
         <record id="pricing_tier_enterprise_small" model="ams.subscription.pricing.tier">
             <field name="subscription_product_id" ref="subscription_enterprise_membership"/>
-            <field name="member_type_id" ref="ams_member_management.member_type_corporate"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_corporate"/>
             <field name="price">2250.00</field>
             <field name="currency_id" ref="base.USD"/>
             <field name="requires_verification">False</field>
@@ -282,7 +282,7 @@
         <!-- Seasonal/Time-Limited Promotions -->
         <record id="pricing_tier_new_graduate_special" model="ams.subscription.pricing.tier">
             <field name="subscription_product_id" ref="subscription_professional_membership"/>
-            <field name="member_type_id" ref="ams_member_management.member_type_student"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_student"/>
             <field name="price">150.00</field>
             <field name="currency_id" ref="base.USD"/>
             <field name="valid_from" eval="(datetime.now() + relativedelta(months=5)).strftime('%Y-%m-%d')"/>
@@ -297,7 +297,7 @@
         <!-- Volume Discount Example -->
         <record id="pricing_tier_enterprise_volume" model="ams.subscription.pricing.tier">
             <field name="subscription_product_id" ref="subscription_enterprise_membership"/>
-            <field name="member_type_id" ref="ams_member_management.member_type_corporate"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_corporate"/>
             <field name="price">2000.00</field>
             <field name="currency_id" ref="base.USD"/>
             <field name="requires_verification">False</field>
