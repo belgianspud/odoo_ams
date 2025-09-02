@@ -256,12 +256,17 @@ class AMSSubscriptionPricingTier(models.Model):
 
     def _date_ranges_overlap(self, start1, end1, start2, end2):
         """Check if two date ranges overlap."""
-        # Convert None to extreme dates for comparison
-        start1 = start1 or fields.Date.from_string('1900-01-01')
-        end1 = end1 or fields.Date.from_string('2099-12-31')
-        start2 = start2 or fields.Date.from_string('1900-01-01')
-        end2 = end2 or fields.Date.from_string('2099-12-31')
-        
+        from datetime import date
+    
+        # Use proper constants instead of hardcoded dates
+        MIN_DATE = date(1900, 1, 1)
+        MAX_DATE = date(2099, 12, 31)
+    
+        start1 = start1 or MIN_DATE
+        end1 = end1 or MAX_DATE  
+        start2 = start2 or MIN_DATE
+        end2 = end2 or MAX_DATE
+    
         return start1 <= end2 and end1 >= start2
 
     @api.constrains('requires_verification', 'verification_criteria')

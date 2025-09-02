@@ -1,6 +1,9 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 
+# CORRECTED: Move imports to top of file
+from dateutil.relativedelta import relativedelta
+
 
 class AMSBillingPeriod(models.Model):
     """Define billing periods for subscription products."""
@@ -206,16 +209,24 @@ class AMSBillingPeriod(models.Model):
 
     @api.depends('period_value', 'period_unit')
     def _compute_total_days(self):
-        """Calculate total days in billing period."""
+        """Calculate total days in billing period using proper date arithmetic."""
+        from datetime import date
+        
         for period in self:
             if period.period_unit == 'days':
                 period.total_days = period.period_value
             elif period.period_unit == 'weeks':
                 period.total_days = period.period_value * 7
             elif period.period_unit == 'months':
-                period.total_days = period.period_value * 30  # Approximate
+                # Use proper date calculation instead of approximation
+                start_date = date.today()
+                end_date = start_date + relativedelta(months=period.period_value)
+                period.total_days = (end_date - start_date).days
             elif period.period_unit == 'years':
-                period.total_days = period.period_value * 365  # Approximate
+                # Use proper date calculation instead of approximation
+                start_date = date.today()
+                end_date = start_date + relativedelta(years=period.period_value)
+                period.total_days = (end_date - start_date).days
             else:
                 period.total_days = 0
 
@@ -329,17 +340,16 @@ class AMSBillingPeriod(models.Model):
         if not start_date:
             start_date = fields.Date.today()
         
+        # CORRECTED: No more imports inside method
         if self.period_unit == 'days':
             next_date = start_date + fields.timedelta(days=self.period_value)
         elif self.period_unit == 'weeks':
             next_date = start_date + fields.timedelta(weeks=self.period_value)
         elif self.period_unit == 'months':
-            # Add months properly handling month boundaries
-            import calendar
-            from dateutil.relativedelta import relativedelta
+            # Use relativedelta imported at top of file
             next_date = start_date + relativedelta(months=self.period_value)
         elif self.period_unit == 'years':
-            from dateutil.relativedelta import relativedelta
+            # Use relativedelta imported at top of file  
             next_date = start_date + relativedelta(years=self.period_value)
         else:
             next_date = start_date
@@ -370,6 +380,104 @@ class AMSBillingPeriod(models.Model):
             'early_renewal_discount': {
                 'days': self.early_renewal_discount_days,
                 'percentage': self.early_renewal_discount_percentage
+            }
+        }
+
+    # ==========================================
+    # SERVER ACTION METHODS - MOVED FROM XML
+    # ==========================================
+
+    def action_create_standard_periods(self):
+        """Create standard billing periods with proper error handling."""
+        try:
+            standard_periods_data = self._get_standard_periods_data()
+            created_periods = []
+            
+            for period_data in standard_periods_data:
+                # Check if period already exists
+                existing = self.search([('code', '=', period_data['code'])], limit=1)
+                if not existing:
+                    period = self.create(period_data)
+                    created_periods.append(period.name)
+            
+            if created_periods:
+                message = f'Created billing periods: {", ".join(created_periods)}'
+                return self._show_notification('Standard Periods Created', message, 'success')
+            else:
+                return self._show_notification('No Action Needed', 'Standard billing periods already exist', 'info')
+                
+        except Exception as e:
+            return self._show_notification('Error', f'Failed to create periods: {str(e)}', 'danger')
+
+    def _get_standard_periods_data(self):
+        """Get standard billing periods configuration."""
+        return [
+            {
+                'name': 'Monthly',
+                'code': 'MONTHLY',
+                'period_value': 1,
+                'period_unit': 'months',
+                'price_multiplier': 1.0,
+                'sequence': 10,
+                'auto_renewal_enabled': True,
+                'grace_days': 7,
+                'renewal_reminder_days': '30,7',
+            },
+            {
+                'name': 'Quarterly',
+                'code': 'QUARTERLY', 
+                'period_value': 3,
+                'period_unit': 'months',
+                'price_multiplier': 0.95,
+                'discount_percentage': 5.0,
+                'sequence': 20,
+                'auto_renewal_enabled': True,
+                'grace_days': 15,
+                'popular': True,
+                'renewal_reminder_days': '60,30,7',
+            },
+            {
+                'name': 'Annual',
+                'code': 'ANNUAL',
+                'period_value': 12, 
+                'period_unit': 'months',
+                'price_multiplier': 0.85,
+                'discount_percentage': 15.0,
+                'sequence': 30,
+                'is_default': True,
+                'recommended': True,
+                'auto_renewal_enabled': True,
+                'grace_days': 30,
+                'renewal_reminder_days': '90,60,30,7',
+                'early_renewal_discount_days': 60,
+                'early_renewal_discount_percentage': 5.0,
+            },
+            {
+                'name': 'Biennial',
+                'code': 'BIENNIAL',
+                'period_value': 24,
+                'period_unit': 'months', 
+                'price_multiplier': 0.80,
+                'discount_percentage': 20.0,
+                'sequence': 40,
+                'auto_renewal_enabled': True,
+                'grace_days': 45,
+                'renewal_reminder_days': '120,90,60,30',
+                'early_renewal_discount_days': 90,
+                'early_renewal_discount_percentage': 7.5,
+            }
+        ]
+
+    def _show_notification(self, title, message, notification_type='info'):
+        """Show notification to user."""
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': title,
+                'message': message,
+                'type': notification_type,
+                'sticky': False,
             }
         }
 
@@ -420,15 +528,11 @@ class AMSBillingPeriod(models.Model):
         # Set this as default
         self.is_default = True
         
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': 'Default Period Updated',
-                'message': f'{self.name} is now the default billing period.',
-                'type': 'success',
-            }
-        }
+        return self._show_notification(
+            'Default Period Updated',
+            f'{self.name} is now the default billing period.',
+            'success'
+        )
 
     def action_toggle_popular(self):
         """Toggle popular status."""
@@ -436,15 +540,11 @@ class AMSBillingPeriod(models.Model):
         self.popular = not self.popular
         
         status = "marked as popular" if self.popular else "removed from popular"
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': 'Popular Status Updated',
-                'message': f'{self.name} has been {status}.',
-                'type': 'info',
-            }
-        }
+        return self._show_notification(
+            'Popular Status Updated',
+            f'{self.name} has been {status}.',
+            'info'
+        )
 
     def action_toggle_recommended(self):
         """Toggle recommended status."""
@@ -452,15 +552,11 @@ class AMSBillingPeriod(models.Model):
         self.recommended = not self.recommended
         
         status = "marked as recommended" if self.recommended else "removed from recommended"
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': 'Recommended Status Updated',
-                'message': f'{self.name} has been {status}.',
-                'type': 'info',
-            }
-        }
+        return self._show_notification(
+            'Recommended Status Updated',
+            f'{self.name} has been {status}.',
+            'info'
+        )
 
     # ==========================================
     # LIFECYCLE METHODS

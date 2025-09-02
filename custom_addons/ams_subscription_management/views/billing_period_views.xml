@@ -288,104 +288,13 @@
         </field>
     </record>
 
-    <!-- Quick Setup Actions -->
+    <!-- CORRECTED: Simple Server Action - No embedded Python -->
     <record id="action_create_standard_periods" model="ir.actions.server">
         <field name="name">Create Standard Billing Periods</field>
         <field name="model_id" ref="model_ams_billing_period"/>
         <field name="binding_model_id" ref="model_ams_billing_period"/>
         <field name="state">code</field>
-        <field name="code">
-# Create standard billing periods if they don't exist
-standard_periods = [
-    {
-        'name': 'Monthly',
-        'code': 'MONTHLY',
-        'period_value': 1,
-        'period_unit': 'months',
-        'price_multiplier': 1.0,
-        'sequence': 10,
-        'auto_renewal_enabled': True,
-        'grace_days': 7,
-        'renewal_reminder_days': '30,7',
-    },
-    {
-        'name': 'Quarterly',
-        'code': 'QUARTERLY', 
-        'period_value': 3,
-        'period_unit': 'months',
-        'price_multiplier': 0.95,
-        'discount_percentage': 5.0,
-        'sequence': 20,
-        'auto_renewal_enabled': True,
-        'grace_days': 15,
-        'popular': True,
-        'renewal_reminder_days': '60,30,7',
-    },
-    {
-        'name': 'Annual',
-        'code': 'ANNUAL',
-        'period_value': 12, 
-        'period_unit': 'months',
-        'price_multiplier': 0.85,
-        'discount_percentage': 15.0,
-        'sequence': 30,
-        'is_default': True,
-        'recommended': True,
-        'auto_renewal_enabled': True,
-        'grace_days': 30,
-        'renewal_reminder_days': '90,60,30,7',
-        'early_renewal_discount_days': 60,
-        'early_renewal_discount_percentage': 5.0,
-    },
-    {
-        'name': 'Biennial',
-        'code': 'BIENNIAL',
-        'period_value': 24,
-        'period_unit': 'months', 
-        'price_multiplier': 0.80,
-        'discount_percentage': 20.0,
-        'sequence': 40,
-        'auto_renewal_enabled': True,
-        'grace_days': 45,
-        'renewal_reminder_days': '120,90,60,30',
-        'early_renewal_discount_days': 90,
-        'early_renewal_discount_percentage': 7.5,
-    }
-]
-
-created_periods = []
-for period_data in standard_periods:
-    # Check if period already exists
-    existing = env['ams.billing.period'].search([
-        ('code', '=', period_data['code'])
-    ], limit=1)
-    
-    if not existing:
-        period = env['ams.billing.period'].create(period_data)
-        created_periods.append(period.name)
-
-if created_periods:
-    action = {
-        'type': 'ir.actions.client',
-        'tag': 'display_notification',
-        'params': {
-            'title': 'Standard Periods Created',
-            'message': f'Created billing periods: {", ".join(created_periods)}',
-            'type': 'success',
-            'sticky': False,
-        }
-    }
-else:
-    action = {
-        'type': 'ir.actions.client', 
-        'tag': 'display_notification',
-        'params': {
-            'title': 'No Action Needed',
-            'message': 'Standard billing periods already exist',
-            'type': 'info',
-        }
-    }
-        </field>
+        <field name="code">action = records.action_create_standard_periods()</field>
     </record>
 
     <!-- Menu Items -->

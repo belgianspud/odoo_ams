@@ -61,6 +61,34 @@ class ProductTemplateSubscription(models.Model):
         help='Number of member-type pricing tiers configured'
     )
 
+    subscription_member_only = fields.Boolean(
+        string='Members Only',
+        related='subscription_product_id.member_only',
+        readonly=True,
+        help='Subscription restricted to members only'
+    )
+    
+    subscription_requires_approval = fields.Boolean(
+        string='Requires Approval', 
+        related='subscription_product_id.requires_approval',
+        readonly=True,
+        help='Subscription requires staff approval'
+    )
+    
+    subscription_renewable = fields.Boolean(
+        string='Renewable',
+        related='subscription_product_id.is_renewable',
+        readonly=True,
+        help='Subscription can be renewed'
+    )
+    
+    subscription_auto_renewal = fields.Boolean(
+        string='Auto-Renewal',
+        related='subscription_product_id.auto_renewal_enabled',
+        readonly=True,
+        help='Auto-renewal is enabled'
+    )
+
     # ==========================================
     # COMPUTED METHODS
     # ==========================================
@@ -363,13 +391,16 @@ class ProductTemplateSubscription(models.Model):
 
     @api.constrains('is_subscription_product', 'detailed_type')
     def _check_subscription_product_type(self):
-        """Validate that subscription products are services."""
-        for product in self:
-            if product.is_subscription_product and product.detailed_type not in ['service']:
-                raise ValidationError(
-                    "Subscription products must be of type 'Service'. "
-                    "Please change the product type or disable subscription features."
+        """Ensure subscription products are always of type 'Service'."""
+        invalid_products = self.filtered(
+            lambda p: p.is_subscription_product and p.detailed_type != 'service'
+        )
+        if invalid_products:
+            raise ValidationError(
+                "The following subscription products are not of type 'Service':\n%s" % (
+                    "\n".join(invalid_products.mapped("name"))
                 )
+            )
 
     # ==========================================
     # UTILITY METHODS

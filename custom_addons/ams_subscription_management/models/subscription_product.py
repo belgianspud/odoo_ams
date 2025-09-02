@@ -478,15 +478,22 @@ class AMSSubscriptionProduct(models.Model):
     def _convert_duration_to_days(self):
         """Convert subscription duration to days for calculations."""
         self.ensure_one()
-        
+        from dateutil.relativedelta import relativedelta
+        from datetime import date
+    
+        start_date = date.today()
+    
         if self.duration_unit == 'days':
             return self.default_duration
         elif self.duration_unit == 'months':
-            return self.default_duration * 30  # Approximate
+            end_date = start_date + relativedelta(months=self.default_duration)
+            return (end_date - start_date).days
         elif self.duration_unit == 'years':
-            return self.default_duration * 365  # Approximate
+            end_date = start_date + relativedelta(years=self.default_duration)
+            return (end_date - start_date).days
         else:
             return 365  # Default fallback
+
 
     def get_duration_display(self):
         """Get human-readable duration display."""

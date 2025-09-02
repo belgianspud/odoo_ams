@@ -253,6 +253,36 @@ class AMSSubscriptionBuilderWizard(models.TransientModel):
         help='Summary of subscription configuration'
     )
 
+    # ADD THESE COMPUTED FIELDS:
+    student_calculated_price = fields.Monetary(
+        string='Student Price',
+        compute='_compute_calculated_prices',
+        currency_field='currency_id'
+    )
+    
+    senior_calculated_price = fields.Monetary(
+        string='Senior Price', 
+        compute='_compute_calculated_prices',
+        currency_field='currency_id'
+    )
+    
+    international_calculated_price = fields.Monetary(
+        string='International Price',
+        compute='_compute_calculated_prices', 
+        currency_field='currency_id'
+    )
+    
+    @api.depends('default_price', 'student_discount_percentage', 
+                 'senior_discount_percentage', 'international_discount_percentage')
+    def _compute_calculated_prices(self):
+        """Compute discounted prices for display."""
+        for wizard in self:
+            wizard.student_calculated_price = wizard.default_price * (1 - wizard.student_discount_percentage / 100)
+            wizard.senior_calculated_price = wizard.default_price * (1 - wizard.senior_discount_percentage / 100) 
+            wizard.international_calculated_price = wizard.default_price * (1 - wizard.international_discount_percentage / 100)
+
+
+
     # ==========================================
     # COMPUTED METHODS
     # ==========================================
@@ -480,31 +510,37 @@ class AMSSubscriptionBuilderWizard(models.TransientModel):
 
     def action_create_subscription(self):
         """Create the subscription product based on wizard configuration."""
-        self._validate_all_steps()
+        try:
+            self._validate_all_steps()
         
-        # Create subscription product
-        subscription_vals = self._prepare_subscription_values()
-        subscription_product = self.env['ams.subscription.product'].create(subscription_vals)
+            # Create subscription product
+            subscription_vals = self._prepare_subscription_values()
+            subscription_product = self.env['ams.subscription.product'].create(subscription_vals)
         
-        # Update base product
-        self.product_id.write({
-            'is_subscription_product': True,
-            'subscription_product_id': subscription_product.id,
-            'detailed_type': 'service',
-        })
+            # Update base product
+            self.product_id.write({
+                'is_subscription_product': True,
+                'subscription_product_id': subscription_product.id,
+                'detailed_type': 'service',
+            })
         
-        # Create pricing tiers if configured
-        self._create_pricing_tiers(subscription_product)
+            # Create pricing tiers if configured
+            self._create_pricing_tiers(subscription_product)
         
-        # Show success message and open created subscription
-        return {
-            'name': f'Subscription Product Created - {subscription_product.name}',
-            'type': 'ir.actions.act_window',
-            'res_model': 'ams.subscription.product',
-            'res_id': subscription_product.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
+            return {
+                'name': f'Subscription Product Created - {subscription_product.name}',
+                'type': 'ir.actions.act_window',
+                'res_model': 'ams.subscription.product',
+                'res_id': subscription_product.id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
+        
+        except ValidationError as e:
+            raise e
+        except Exception as e:
+            raise UserError(f"Failed to create subscription: {str(e)}")
+
 
     def _prepare_subscription_values(self):
         """Prepare values for subscription product creation."""
