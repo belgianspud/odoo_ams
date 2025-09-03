@@ -56,13 +56,12 @@ seamlessly with member management, event registration, and financial modules.
         # AMS Core modules
         'ams_system_config',
         'ams_products_base',
-        'ams_member_data',
+        'ams_member_data',  
     ],
     
+    # FIXED: Corrected external_dependencies syntax
     'external_dependencies': {
-        'python': [
-            'python': ['python-dateutil'],  # Fixed: was 'dateutil'
-        ],
+        'python': ['python-dateutil'],  # Removed the nested 'python' key
     },
     
     'data': [
@@ -96,12 +95,6 @@ seamlessly with member management, event registration, and financial modules.
     
     # Version compatibility
     'odoo_version': '18.0',  # Updated for Odoo 18
-    
-    # REMOVED: Undefined lifecycle hooks that were causing the error
-    # 'post_init_hook': 'post_install_hook',
-    # 'uninstall_hook': 'uninstall_hook', 
-    # 'pre_init_hook': 'pre_install_hook',
-    # 'post_load_hook': 'post_load_hook',
     
     # Development and maintenance
     'maintainers': ['ams-dev-team'],
