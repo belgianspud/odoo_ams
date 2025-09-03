@@ -66,7 +66,7 @@ seamlessly with member management, event registration, and financial modules.
     
     'data': [
         # Security
-        'groups.xml',
+        'security/groups.xml',
         'security/ir.model.access.csv',
         'security/ir.rule.xml',
         
