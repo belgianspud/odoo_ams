@@ -1,5 +1,7 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
+from dateutil.relativedelta import relativedelta
+from datetime import date
 
 
 class AMSSubscriptionProduct(models.Model):
@@ -478,9 +480,7 @@ class AMSSubscriptionProduct(models.Model):
     def _convert_duration_to_days(self):
         """Convert subscription duration to days for calculations."""
         self.ensure_one()
-        from dateutil.relativedelta import relativedelta
-        from datetime import date
-    
+        # FIXED: Imports moved to top of file
         start_date = date.today()
     
         if self.duration_unit == 'days':
@@ -493,7 +493,6 @@ class AMSSubscriptionProduct(models.Model):
             return (end_date - start_date).days
         else:
             return 365  # Default fallback
-
 
     def get_duration_display(self):
         """Get human-readable duration display."""

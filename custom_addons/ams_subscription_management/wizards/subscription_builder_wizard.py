@@ -42,11 +42,13 @@ class AMSSubscriptionBuilderWizard(models.TransientModel):
         readonly=True
     )
     
+    # FIXED: Changed to computed field to handle type mismatch
     base_price = fields.Monetary(
         string='Base Product Price',
-        related='product_id.list_price',
+        compute='_compute_base_price',
         readonly=True,
-        currency_field='currency_id'
+        currency_field='currency_id',
+        help='Price from the base product'
     )
     
     subscription_scope = fields.Selection([
@@ -67,6 +69,16 @@ class AMSSubscriptionBuilderWizard(models.TransientModel):
         string='Subscription Name',
         help='Name for the subscription product (auto-generated if empty)'
     )
+
+    # ==========================================
+    # COMPUTED METHOD FOR BASE PRICE
+    # ==========================================
+    
+    @api.depends('product_id.list_price')
+    def _compute_base_price(self):
+        """Compute base price from product list price."""
+        for wizard in self:
+            wizard.base_price = wizard.product_id.list_price if wizard.product_id else 0.0
 
     # ==========================================
     # DURATION & LIFECYCLE FIELDS (Step 1)
@@ -253,7 +265,7 @@ class AMSSubscriptionBuilderWizard(models.TransientModel):
         help='Summary of subscription configuration'
     )
 
-    # ADD THESE COMPUTED FIELDS:
+    # CALCULATED PRICE FIELDS FOR DISPLAY
     student_calculated_price = fields.Monetary(
         string='Student Price',
         compute='_compute_calculated_prices',
@@ -280,8 +292,6 @@ class AMSSubscriptionBuilderWizard(models.TransientModel):
             wizard.student_calculated_price = wizard.default_price * (1 - wizard.student_discount_percentage / 100)
             wizard.senior_calculated_price = wizard.default_price * (1 - wizard.senior_discount_percentage / 100) 
             wizard.international_calculated_price = wizard.default_price * (1 - wizard.international_discount_percentage / 100)
-
-
 
     # ==========================================
     # COMPUTED METHODS
@@ -540,7 +550,6 @@ class AMSSubscriptionBuilderWizard(models.TransientModel):
             raise e
         except Exception as e:
             raise UserError(f"Failed to create subscription: {str(e)}")
-
 
     def _prepare_subscription_values(self):
         """Prepare values for subscription product creation."""

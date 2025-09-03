@@ -66,6 +66,7 @@ seamlessly with member management, event registration, and financial modules.
     
     'data': [
         # Security
+        'groups.xml',
         'security/ir.model.access.csv',
         'security/ir.rule.xml',
         
@@ -82,9 +83,9 @@ seamlessly with member management, event registration, and financial modules.
         'wizards/subscription_builder_wizard_views.xml',
     ],
     
-    'demo': [
-        'data/demo_data.xml',
-    ],
+    #'demo': [
+    #    'data/demo_data.xml',
+    #],
     
     'application': True,
     'installable': True,

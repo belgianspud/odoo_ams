@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Member User Group -->
+    <record id="group_ams_member_user" model="res.groups">
+        <field name="name">AMS Member User</field>
+        <field name="category_id" ref="base.module_category_user_type"/>
+    </record>
+
+    <!-- Member Staff Group -->
+    <record id="group_ams_staff" model="res.groups">
+        <field name="name">AMS Staff</field>
+        <field name="category_id" ref="base.module_category_user_type"/>
+    </record>
+
+    <!-- Member Admin Group -->
+    <record id="group_ams_admin" model="res.groups">
+        <field name="name">AMS Admin</field>
+        <field name="category_id" ref="base.module_category_user_type"/>
+    </record>
+</odoo>

@@ -31,11 +31,13 @@ class AMSPricingTierWizard(models.TransientModel):
         readonly=True
     )
     
+    # FIXED: Changed to computed field to handle type mismatch
     base_price = fields.Monetary(
         string='Base Product Price',
-        related='subscription_product_id.default_price',
+        compute='_compute_base_price',
         readonly=True,
-        currency_field='currency_id'
+        currency_field='currency_id',
+        help='Base price from subscription product'
     )
     
     currency_id = fields.Many2one(
@@ -44,6 +46,16 @@ class AMSPricingTierWizard(models.TransientModel):
         related='subscription_product_id.currency_id',
         readonly=True
     )
+
+    # ==========================================
+    # COMPUTED METHOD FOR BASE PRICE
+    # ==========================================
+    
+    @api.depends('subscription_product_id.default_price')
+    def _compute_base_price(self):
+        """Compute base price from subscription product."""
+        for wizard in self:
+            wizard.base_price = wizard.subscription_product_id.default_price if wizard.subscription_product_id else 0.0
 
     # ==========================================
     # BULK CREATION FIELDS
@@ -59,6 +71,9 @@ class AMSPricingTierWizard(models.TransientModel):
     # Standard member type selection
     member_type_ids = fields.Many2many(
         'ams.member.type',
+        'wizard_member_type_rel',  # Added explicit relation table name
+        'wizard_id',
+        'member_type_id',
         string='Member Types',
         help='Member types to create pricing tiers for'
     )
@@ -157,6 +172,9 @@ class AMSPricingTierWizard(models.TransientModel):
     
     existing_tier_ids = fields.Many2many(
         'ams.subscription.pricing.tier',
+        'wizard_existing_tier_rel',  # Added explicit relation table name
+        'wizard_id',
+        'tier_id',
         string='Existing Pricing Tiers',
         help='Existing tiers to update'
     )
@@ -197,7 +215,9 @@ class AMSPricingTierWizard(models.TransientModel):
     
     source_tier_ids = fields.Many2many(
         'ams.subscription.pricing.tier',
-        'tier_copy_rel',
+        'wizard_source_tier_rel',  # Added explicit relation table name
+        'wizard_id',
+        'source_tier_id',
         string='Source Tiers',
         help='Specific tiers to copy'
     )
@@ -272,7 +292,8 @@ class AMSPricingTierWizard(models.TransientModel):
         """Handle source subscription changes."""
         if self.source_subscription_id:
             source_tiers = self.env['ams.subscription.pricing.tier'].search([
-                ('subscription_product_id', '=', self.source_subscription_id.id)
+                ('subscription_product_id', '=', self.source_subscription_id.id),
+                ('active', '=', True)  # Only get active tiers
             ])
             self.source_tier_ids = [(6, 0, source_tiers.ids)]
 
@@ -304,14 +325,17 @@ class AMSPricingTierWizard(models.TransientModel):
         """Validate discount percentages."""
         for wizard in self:
             discount_fields = [
-                'discount_percentage', 'student_discount', 'senior_discount',
-                'professional_discount', 'international_discount', 'promotional_discount'
+                ('discount_percentage', 'Default Discount'),
+                ('student_discount', 'Student Discount'),
+                ('senior_discount', 'Senior Discount'),
+                ('professional_discount', 'Professional Discount'),
+                ('international_discount', 'International Discount'),
+                ('promotional_discount', 'Promotional Discount')
             ]
             
-            for field_name in discount_fields:
+            for field_name, field_label in discount_fields:
                 value = getattr(wizard, field_name)
                 if value < 0 or value > 100:
-                    field_label = wizard._fields[field_name].string
                     raise ValidationError(f"{field_label} must be between 0 and 100")
 
     # ==========================================
@@ -322,28 +346,35 @@ class AMSPricingTierWizard(models.TransientModel):
         """Generate preview of tiers to be created."""
         self.tier_preview_ids.unlink()  # Clear existing preview
         
-        if self.wizard_mode == 'create_bulk':
-            preview_data = self._generate_creation_preview()
-        elif self.wizard_mode == 'copy_tiers':
-            preview_data = self._generate_copy_preview()
-        elif self.wizard_mode == 'update_bulk':
-            preview_data = self._generate_update_preview()
-        elif self.wizard_mode == 'promotional':
-            preview_data = self._generate_promotional_preview()
-        else:
-            preview_data = []
-        
-        # Create preview records
-        for data in preview_data:
-            data['wizard_id'] = self.id
-            self.env['ams.pricing.tier.preview'].create(data)
-        
-        self.show_preview = True
-        return self._return_wizard_action()
+        try:
+            if self.wizard_mode == 'create_bulk':
+                preview_data = self._generate_creation_preview()
+            elif self.wizard_mode == 'copy_tiers':
+                preview_data = self._generate_copy_preview()
+            elif self.wizard_mode == 'update_bulk':
+                preview_data = self._generate_update_preview()
+            elif self.wizard_mode == 'promotional':
+                preview_data = self._generate_promotional_preview()
+            else:
+                preview_data = []
+            
+            # Create preview records
+            for data in preview_data:
+                data['wizard_id'] = self.id
+                self.env['ams.pricing.tier.preview'].create(data)
+            
+            self.show_preview = True
+            return self._return_wizard_action()
+            
+        except Exception as e:
+            raise UserError(f"Error generating preview: {str(e)}")
 
     def _generate_creation_preview(self):
         """Generate preview for bulk creation."""
         preview_data = []
+        
+        if not self.member_type_ids:
+            raise UserError("Please select member types to create tiers for")
         
         for member_type in self.member_type_ids:
             # Determine discount percentage
@@ -356,7 +387,7 @@ class AMSPricingTierWizard(models.TransientModel):
             price = self.base_price * (1 - discount / 100)
             
             # Determine verification requirements
-            requires_verification = member_type.code.lower() in ['student', 'senior', 'retired']
+            requires_verification = self._should_require_verification(member_type)
             
             preview_data.append({
                 'member_type_id': member_type.id,
@@ -375,8 +406,25 @@ class AMSPricingTierWizard(models.TransientModel):
         """Generate preview for copying tiers."""
         preview_data = []
         
-        tiers_to_copy = self.source_tier_ids if not self.copy_all_tiers else self.source_tier_ids
-        price_ratio = self.base_price / self.source_subscription_id.default_price if self.adjust_copied_prices else 1.0
+        if not self.source_subscription_id:
+            raise UserError("Please select a source subscription product")
+        
+        # FIXED: Proper logic for determining tiers to copy
+        if self.copy_all_tiers:
+            tiers_to_copy = self.env['ams.subscription.pricing.tier'].search([
+                ('subscription_product_id', '=', self.source_subscription_id.id),
+                ('active', '=', True)
+            ])
+        else:
+            tiers_to_copy = self.source_tier_ids
+        
+        if not tiers_to_copy:
+            raise UserError("No tiers found to copy")
+        
+        # Calculate price adjustment ratio if needed
+        price_ratio = 1.0
+        if self.adjust_copied_prices and self.source_subscription_id.default_price > 0:
+            price_ratio = self.base_price / self.source_subscription_id.default_price
         
         for tier in tiers_to_copy:
             new_price = tier.price * price_ratio if self.adjust_copied_prices else tier.price
@@ -386,7 +434,7 @@ class AMSPricingTierWizard(models.TransientModel):
                 'member_type_name': tier.member_type_id.name,
                 'original_price': tier.price,
                 'new_price': new_price,
-                'discount_percentage': tier.discount_percentage,
+                'discount_percentage': ((self.base_price - new_price) / self.base_price * 100) if self.base_price > 0 else 0,
                 'requires_verification': tier.requires_verification,
                 'action_type': 'copy',
                 'preview_description': f"Copy {tier.member_type_id.name} tier from {self.source_subscription_id.name}"
@@ -398,6 +446,9 @@ class AMSPricingTierWizard(models.TransientModel):
         """Generate preview for bulk updates."""
         preview_data = []
         
+        if not self.existing_tier_ids:
+            raise UserError("Please select existing tiers to update")
+        
         for tier in self.existing_tier_ids:
             if self.update_action == 'adjust_prices':
                 new_price = self._calculate_adjusted_price(tier.price)
@@ -405,8 +456,11 @@ class AMSPricingTierWizard(models.TransientModel):
             elif self.update_action == 'extend_validity':
                 action_desc = f"Extend validity to {self.promo_valid_to}"
                 new_price = tier.price
-            else:
-                action_desc = f"{self.update_action.replace('_', ' ').title()}"
+            elif self.update_action == 'add_verification':
+                action_desc = "Add verification requirement"
+                new_price = tier.price
+            else:  # deactivate
+                action_desc = "Deactivate tier"
                 new_price = tier.price
             
             preview_data.append({
@@ -425,6 +479,9 @@ class AMSPricingTierWizard(models.TransientModel):
     def _generate_promotional_preview(self):
         """Generate preview for promotional pricing."""
         preview_data = []
+        
+        if not self.member_type_ids:
+            raise UserError("Please select member types for promotional pricing")
         
         for member_type in self.member_type_ids:
             original_price = self.base_price
@@ -449,25 +506,30 @@ class AMSPricingTierWizard(models.TransientModel):
 
     def action_execute_wizard(self):
         """Execute the wizard action based on mode."""
-        if self.wizard_mode == 'create_bulk':
-            result = self._execute_bulk_creation()
-        elif self.wizard_mode == 'copy_tiers':
-            result = self._execute_copy_tiers()
-        elif self.wizard_mode == 'update_bulk':
-            result = self._execute_bulk_update()
-        elif self.wizard_mode == 'promotional':
-            result = self._execute_promotional_creation()
-        else:
-            raise UserError("Invalid wizard mode")
-        
-        return result
+        try:
+            if self.wizard_mode == 'create_bulk':
+                result = self._execute_bulk_creation()
+            elif self.wizard_mode == 'copy_tiers':
+                result = self._execute_copy_tiers()
+            elif self.wizard_mode == 'update_bulk':
+                result = self._execute_bulk_update()
+            elif self.wizard_mode == 'promotional':
+                result = self._execute_promotional_creation()
+            else:
+                raise UserError("Invalid wizard mode")
+            
+            return result
+            
+        except Exception as e:
+            raise UserError(f"Error executing wizard: {str(e)}")
 
     def _execute_bulk_creation(self):
         """Execute bulk creation of pricing tiers."""
         created_tiers = []
+        skipped_count = 0
         
         for member_type in self.member_type_ids:
-            # Skip if tier already exists
+            # Skip if tier already exists and is active
             existing_tier = self.env['ams.subscription.pricing.tier'].search([
                 ('subscription_product_id', '=', self.subscription_product_id.id),
                 ('member_type_id', '=', member_type.id),
@@ -475,6 +537,7 @@ class AMSPricingTierWizard(models.TransientModel):
             ], limit=1)
             
             if existing_tier:
+                skipped_count += 1
                 continue  # Skip existing tiers
             
             # Calculate pricing
@@ -488,7 +551,7 @@ class AMSPricingTierWizard(models.TransientModel):
             # Determine verification requirements
             requires_verification = (
                 self.apply_verification_requirements and 
-                member_type.code.lower() in ['student', 'senior', 'retired']
+                self._should_require_verification(member_type)
             )
             
             verification_text = None
@@ -520,15 +583,35 @@ class AMSPricingTierWizard(models.TransientModel):
             created_tiers.append(tier)
         
         # Generate summary
-        self.creation_summary = f"Created {len(created_tiers)} pricing tiers"
+        summary_parts = [f"Created {len(created_tiers)} pricing tiers"]
+        if skipped_count > 0:
+            summary_parts.append(f"Skipped {skipped_count} existing tiers")
+        
+        self.creation_summary = "\n".join(summary_parts)
         
         return self._show_success_action(created_tiers)
 
     def _execute_copy_tiers(self):
         """Execute copying tiers between products."""
-        tiers_to_copy = self.source_tier_ids if not self.copy_all_tiers else self.source_tier_ids
+        # FIXED: Proper logic for determining tiers to copy
+        if self.copy_all_tiers:
+            tiers_to_copy = self.env['ams.subscription.pricing.tier'].search([
+                ('subscription_product_id', '=', self.source_subscription_id.id),
+                ('active', '=', True)
+            ])
+        else:
+            tiers_to_copy = self.source_tier_ids
+            
+        if not tiers_to_copy:
+            raise UserError("No tiers found to copy")
+        
         created_tiers = []
-        price_ratio = self.base_price / self.source_subscription_id.default_price if self.adjust_copied_prices else 1.0
+        skipped_count = 0
+        
+        # Calculate price adjustment ratio
+        price_ratio = 1.0
+        if self.adjust_copied_prices and self.source_subscription_id.default_price > 0:
+            price_ratio = self.base_price / self.source_subscription_id.default_price
         
         for source_tier in tiers_to_copy:
             # Check if tier already exists
@@ -539,6 +622,7 @@ class AMSPricingTierWizard(models.TransientModel):
             ], limit=1)
             
             if existing_tier:
+                skipped_count += 1
                 continue  # Skip existing
             
             new_price = source_tier.price * price_ratio if self.adjust_copied_prices else source_tier.price
@@ -556,7 +640,12 @@ class AMSPricingTierWizard(models.TransientModel):
             tier = self.env['ams.subscription.pricing.tier'].create(tier_vals)
             created_tiers.append(tier)
         
-        self.creation_summary = f"Copied {len(created_tiers)} pricing tiers"
+        # Generate summary
+        summary_parts = [f"Copied {len(created_tiers)} pricing tiers"]
+        if skipped_count > 0:
+            summary_parts.append(f"Skipped {skipped_count} existing tiers")
+            
+        self.creation_summary = "\n".join(summary_parts)
         return self._show_success_action(created_tiers)
 
     def _execute_bulk_update(self):
@@ -571,7 +660,8 @@ class AMSPricingTierWizard(models.TransientModel):
                 update_vals['price'] = new_price
             
             elif self.update_action == 'extend_validity':
-                update_vals['valid_to'] = self.promo_valid_to
+                if self.promo_valid_to:
+                    update_vals['valid_to'] = self.promo_valid_to
             
             elif self.update_action == 'add_verification':
                 update_vals.update({
@@ -591,7 +681,9 @@ class AMSPricingTierWizard(models.TransientModel):
 
     def _execute_promotional_creation(self):
         """Execute promotional pricing creation."""
-        return self._execute_bulk_creation()  # Same logic with promotional dates
+        # Use the same logic as bulk creation but with promotional settings
+        self.is_promotional = True
+        return self._execute_bulk_creation()
 
     # ==========================================
     # UTILITY METHODS
@@ -599,6 +691,9 @@ class AMSPricingTierWizard(models.TransientModel):
 
     def _get_graduated_discount(self, member_type):
         """Get appropriate discount percentage for member type."""
+        if not member_type or not member_type.code:
+            return self.discount_percentage
+            
         code = member_type.code.lower()
         
         if 'student' in code:
@@ -612,8 +707,21 @@ class AMSPricingTierWizard(models.TransientModel):
         else:
             return self.discount_percentage
 
+    def _should_require_verification(self, member_type):
+        """Determine if member type should require verification."""
+        if not self.apply_verification_requirements or not member_type or not member_type.code:
+            return False
+            
+        code = member_type.code.lower()
+        verification_types = ['student', 'senior', 'retired']
+        
+        return any(vtype in code for vtype in verification_types)
+
     def _generate_verification_text(self, member_type):
         """Generate verification text based on member type."""
+        if not member_type or not member_type.code:
+            return self.default_verification_text
+            
         code = member_type.code.lower()
         
         if 'student' in code:
@@ -621,7 +729,7 @@ class AMSPricingTierWizard(models.TransientModel):
         elif 'senior' in code or 'retired' in code:
             return "Age or retirement status verification required"
         else:
-            return "Member status verification required"
+            return self.default_verification_text
 
     def _calculate_adjusted_price(self, current_price):
         """Calculate adjusted price based on adjustment settings."""

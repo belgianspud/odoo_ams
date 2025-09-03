@@ -1,5 +1,6 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
+from datetime import date
 
 
 class AMSSubscriptionPricingTier(models.Model):
@@ -256,8 +257,7 @@ class AMSSubscriptionPricingTier(models.Model):
 
     def _date_ranges_overlap(self, start1, end1, start2, end2):
         """Check if two date ranges overlap."""
-        from datetime import date
-    
+        # FIXED: Import moved to top of file
         # Use proper constants instead of hardcoded dates
         MIN_DATE = date(1900, 1, 1)
         MAX_DATE = date(2099, 12, 31)
