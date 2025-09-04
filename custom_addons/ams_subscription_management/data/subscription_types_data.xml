@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Sample Subscription Product Configurations -->
+        
+        <!-- Individual Professional Membership Subscription -->
+        <record id="subscription_individual_professional" model="ams.subscription.product">
+            <field name="name">Professional Membership - Individual</field>
+            <field name="code">PROF_IND_001</field>
+            <field name="product_id" ref="ams_products_base.sample_product_tshirt"/>
+            <field name="subscription_scope">individual</field>
+            <field name="product_type">membership</field>
+            <field name="description">
+                &lt;p&gt;Standard individual professional membership providing full access to association benefits, resources, and networking opportunities.&lt;/p&gt;
+                &lt;ul&gt;
+                    &lt;li&gt;Full member directory access&lt;/li&gt;
+                    &lt;li&gt;Professional development resources&lt;/li&gt;
+                    &lt;li&gt;Member-only event pricing&lt;/li&gt;
+                    &lt;li&gt;Continuing education credits&lt;/li&gt;
+                &lt;/ul&gt;
+            </field>
+            <field name="default_duration">12</field>
+            <field name="duration_unit">months</field>
+            <field name="default_price">299.00</field>
+            <field name="is_renewable">True</field>
+            <field name="renewal_window_days">90</field>
+            <field name="auto_renewal_enabled">True</field>
+            <field name="requires_approval">False</field>
+            <field name="member_only">False</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Student Membership Subscription -->
+        <record id="subscription_student_membership" model="ams.subscription.product">
+            <field name="name">Student Membership</field>
+            <field name="code">STU_MEM_001</field>
+            <field name="product_id" ref="ams_products_base.sample_product_mug"/>
+            <field name="subscription_scope">individual</field>
+            <field name="product_type">membership</field>
+            <field name="description">
+                &lt;p&gt;Special membership pricing for students with verification requirements and academic year alignment.&lt;/p&gt;
+                &lt;ul&gt;
+                    &lt;li&gt;Student-only networking events&lt;/li&gt;
+                    &lt;li&gt;Career development resources&lt;/li&gt;
+                    &lt;li&gt;Reduced event pricing&lt;/li&gt;
+                    &lt;li&gt;Mentorship program access&lt;/li&gt;
+                &lt;/ul&gt;
+            </field>
+            <field name="default_duration">9</field>
+            <field name="duration_unit">months</field>
+            <field name="default_price">99.00</field>
+            <field name="is_renewable">True</field>
+            <field name="renewal_window_days">60</field>
+            <field name="auto_renewal_enabled">False</field>
+            <field name="requires_approval">True</field>
+            <field name="member_only">False</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Enterprise Membership Subscription -->
+        <record id="subscription_enterprise_membership" model="ams.subscription.product">
+            <field name="name">Enterprise Membership</field>
+            <field name="code">ENT_MEM_001</field>
+            <field name="product_id" ref="ams_products_base.sample_product_journal"/>
+            <field name="subscription_scope">enterprise</field>
+            <field name="product_type">membership</field>
+            <field name="description">
+                &lt;p&gt;Corporate membership with seat-based licensing for multiple employees and enhanced business benefits.&lt;/p&gt;
+                &lt;ul&gt;
+                    &lt;li&gt;Up to 10 employee memberships included&lt;/li&gt;
+                    &lt;li&gt;Corporate sponsorship opportunities&lt;/li&gt;
+                    &lt;li&gt;Bulk event registration discounts&lt;/li&gt;
+                    &lt;li&gt;Executive networking access&lt;/li&gt;
+                    &lt;li&gt;Custom training programs&lt;/li&gt;
+                &lt;/ul&gt;
+            </field>
+            <field name="default_duration">12</field>
+            <field name="duration_unit">months</field>
+            <field name="default_price">2499.00</field>
+            <field name="default_seat_count">10</field>
+            <field name="allow_seat_purchase">True</field>
+            <field name="is_renewable">True</field>
+            <field name="renewal_window_days">120</field>
+            <field name="auto_renewal_enabled">True</field>
+            <field name="requires_approval">True</field>
+            <field name="member_only">False</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Additional Enterprise Seat Product -->
+        <record id="subscription_enterprise_additional_seat" model="ams.subscription.product">
+            <field name="name">Additional Enterprise Seat</field>
+            <field name="code">ENT_SEAT_001</field>
+            <field name="product_id" ref="ams_products_base.sample_product_white_paper"/>
+            <field name="subscription_scope">individual</field>
+            <field name="product_type">membership</field>
+            <field name="description">
+                &lt;p&gt;Additional seat for enterprise membership allowing extra employees to access member benefits.&lt;/p&gt;
+            </field>
+            <field name="default_duration">12</field>
+            <field name="duration_unit">months</field>
+            <field name="default_price">149.00</field>
+            <field name="is_renewable">True</field>
+            <field name="renewal_window_days">120</field>
+            <field name="auto_renewal_enabled">True</field>
+            <field name="requires_approval">False</field>
+            <field name="member_only">True</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Link additional seat product to enterprise membership -->
+        <record id="subscription_enterprise_membership" model="ams.subscription.product">
+            <field name="seat_product_id" ref="subscription_enterprise_additional_seat"/>
+        </record>
+
+        <!-- Chapter Membership Subscription -->
+        <record id="subscription_chapter_membership" model="ams.subscription.product">
+            <field name="name">Local Chapter Membership</field>
+            <field name="code">CHAP_MEM_001</field>
+            <field name="product_id" ref="ams_products_base.sample_product_webinar_recording"/>
+            <field name="subscription_scope">individual</field>
+            <field name="product_type">chapter</field>
+            <field name="description">
+                &lt;p&gt;Local chapter membership providing regional networking and specialized local benefits.&lt;/p&gt;
+                &lt;ul&gt;
+                    &lt;li&gt;Local networking events&lt;/li&gt;
+                    &lt;li&gt;Regional job board access&lt;/li&gt;
+                    &lt;li&gt;Chapter-specific resources&lt;/li&gt;
+                    &lt;li&gt;Local leadership opportunities&lt;/li&gt;
+                &lt;/ul&gt;
+            </field>
+            <field name="default_duration">12</field>
+            <field name="duration_unit">months</field>
+            <field name="default_price">149.00</field>
+            <field name="is_renewable">True</field>
+            <field name="renewal_window_days">90</field>
+            <field name="auto_renewal_enabled">True</field>
+            <field name="requires_approval">False</field>
+            <field name="member_only">True</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Publication Subscription -->
+        <record id="subscription_journal_annual" model="ams.subscription.product">
+            <field name="name">Professional Journal - Annual</field>
+            <field name="code">JOUR_ANN_001</field>
+            <field name="product_id" ref="ams_products_base.sample_product_cert_package"/>
+            <field name="subscription_scope">individual</field>
+            <field name="product_type">publication</field>
+            <field name="description">
+                &lt;p&gt;Annual subscription to our peer-reviewed professional journal with digital and print access.&lt;/p&gt;
+                &lt;ul&gt;
+                    &lt;li&gt;4 quarterly print issues&lt;/li&gt;
+                    &lt;li&gt;Digital archive access&lt;/li&gt;
+                    &lt;li&gt;Mobile app access&lt;/li&gt;
+                    &lt;li&gt;Early online article access&lt;/li&gt;
+                &lt;/ul&gt;
+            </field>
+            <field name="default_duration">12</field>
+            <field name="duration_unit">months</field>
+            <field name="default_price">199.00</field>
+            <field name="is_renewable">True</field>
+            <field name="renewal_window_days">60</field>
+            <field name="auto_renewal_enabled">True</field>
+            <field name="requires_approval">False</field>
+            <field name="member_only">False</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Committee Membership Subscription -->
+        <record id="subscription_committee_membership" model="ams.subscription.product">
+            <field name="name">Technical Committee Membership</field>
+            <field name="code">COMM_TEC_001</field>
+            <field name="product_id" ref="ams_products_base.sample_product_conference_materials"/>
+            <field name="subscription_scope">individual</field>
+            <field name="product_type">committee</field>
+            <field name="description">
+                &lt;p&gt;Membership in technical committees for industry standard development and professional governance.&lt;/p&gt;
+                &lt;ul&gt;
+                    &lt;li&gt;Committee meeting participation&lt;/li&gt;
+                    &lt;li&gt;Standard development voting rights&lt;/li&gt;
+                    &lt;li&gt;Technical document access&lt;/li&gt;
+                    &lt;li&gt;Industry influence and recognition&lt;/li&gt;
+                &lt;/ul&gt;
+            </field>
+            <field name="default_duration">24</field>
+            <field name="duration_unit">months</field>
+            <field name="default_price">499.00</field>
+            <field name="is_renewable">True</field>
+            <field name="renewal_window_days">120</field>
+            <field name="auto_renewal_enabled">False</field>
+            <field name="requires_approval">True</field>
+            <field name="member_only">True</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Trial Membership Subscription -->
+        <record id="subscription_30_day_trial" model="ams.subscription.product">
+            <field name="name">30-Day Trial Membership</field>
+            <field name="code">TRIAL_30_001</field>
+            <field name="product_id" ref="ams_products_base.sample_product_member_directory"/>
+            <field name="subscription_scope">individual</field>
+            <field name="product_type">membership</field>
+            <field name="description">
+                &lt;p&gt;30-day trial membership to experience association benefits before committing to full membership.&lt;/p&gt;
+                &lt;ul&gt;
+                    &lt;li&gt;Limited member directory access&lt;/li&gt;
+                    &lt;li&gt;Sample resource downloads&lt;/li&gt;
+                    &lt;li&gt;One complimentary webinar&lt;/li&gt;
+                    &lt;li&gt;Full membership conversion option&lt;/li&gt;
+                &lt;/ul&gt;
+            </field>
+            <field name="default_duration">30</field>
+            <field name="duration_unit">days</field>
+            <field name="default_price">0.00</field>
+            <field name="is_renewable">False</field>
+            <field name="renewal_window_days">0</field>
+            <field name="auto_renewal_enabled">False</field>
+            <field name="requires_approval">False</field>
+            <field name="member_only">False</field>
+            <field name="active">True</field>
+        </record>
+
+    </data>
+
+    <!-- Sample Pricing Tiers for Subscription Products -->
+    <data noupdate="1">
+
+        <!-- Professional Membership Pricing Tiers -->
+        <record id="tier_professional_student" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_individual_professional"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_student"/>
+            <field name="price">99.00</field>
+            <field name="requires_verification">True</field>
+            <field name="verification_criteria">Current enrollment verification required with valid student ID or enrollment certificate.</field>
+        </record>
+
+        <record id="tier_professional_retired" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_individual_professional"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_retired"/>
+            <field name="price">199.00</field>
+            <field name="requires_verification">False</field>
+        </record>
+
+        <record id="tier_professional_individual" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_individual_professional"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_individual"/>
+            <field name="price">299.00</field>
+            <field name="requires_verification">False</field>
+        </record>
+
+        <!-- Journal Subscription Pricing Tiers -->
+        <record id="tier_journal_student" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_journal_annual"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_student"/>
+            <field name="price">49.00</field>
+            <field name="requires_verification">True</field>
+            <field name="verification_criteria">Student status verification required for discounted rate.</field>
+        </record>
+
+        <record id="tier_journal_individual" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_journal_annual"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_individual"/>
+            <field name="price">99.00</field>
+            <field name="requires_verification">False</field>
+        </record>
+
+        <!-- Chapter Membership Pricing Tiers -->
+        <record id="tier_chapter_student" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_chapter_membership"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_student"/>
+            <field name="price">49.00</field>
+            <field name="requires_verification">True</field>
+            <field name="verification_criteria">Must be enrolled student and current association member.</field>
+        </record>
+
+        <record id="tier_chapter_individual" model="ams.subscription.pricing.tier">
+            <field name="subscription_product_id" ref="subscription_chapter_membership"/>
+            <field name="member_type_id" ref="ams_member_data.member_type_individual"/>
+            <field name="price">149.00</field>
+            <field name="requires_verification">False</field>
+        </record>
+
+    </data>
+
+    <!-- Configuration Templates for Different Association Types -->
+    <data noupdate="0">
+
+        <!-- Professional Association Subscription Configuration -->
+        <record id="config_template_professional_subscriptions" model="ir.config_parameter">
+            <field name="key">ams_subscription_management.template.professional_subscriptions</field>
+            <field name="value">{
+                "name": "Professional Association Subscriptions",
+                "description": "Standard subscription configuration for professional associations",
+                "recommended_subscriptions": [
+                    {
+                        "type": "individual_membership",
+                        "scope": "individual",
+                        "duration": "12 months",
+                        "pricing_tiers": ["individual", "student", "retired"],
+                        "auto_renewal": true,
+                        "requires_approval": false
+                    },
+                    {
+                        "type": "enterprise_membership", 
+                        "scope": "enterprise",
+                        "duration": "12 months",
+                        "default_seats": 10,
+                        "auto_renewal": true,
+                        "requires_approval": true
+                    },
+                    {
+                        "type": "publication_subscription",
+                        "scope": "individual",
+                        "duration": "12 months",
+                        "pricing_tiers": ["individual", "student"],
+                        "auto_renewal": true
+                    }
+                ]
+            }</field>
+        </record>
+
+        <!-- Trade Organization Subscription Configuration -->
+        <record id="config_template_trade_subscriptions" model="ir.config_parameter">
+            <field name="key">ams_subscription_management.template.trade_subscriptions</field>
+            <field name="value">{
+                "name": "Trade Organization Subscriptions",
+                "description": "Flexible subscription configuration for trade organizations",
+                "recommended_subscriptions": [
+                    {
+                        "type": "basic_membership",
+                        "scope": "individual", 
+                        "duration": "12 months",
+                        "pricing_tiers": ["individual", "corporate"],
+                        "auto_renewal": true,
+                        "requires_approval": false
+                    },
+                    {
+                        "type": "premium_membership",
+                        "scope": "individual",
+                        "duration": "12 months", 
+                        "pricing_tiers": ["individual", "corporate"],
+                        "auto_renewal": true,
+                        "requires_approval": false
+                    },
+                    {
+                        "type": "chapter_membership",
+                        "scope": "individual",
+                        "duration": "12 months",
+                        "member_only": true,
+                        "auto_renewal": true
+                    }
+                ]
+            }</field>
+        </record>
+
+        <!-- Academic Institution Subscription Configuration -->
+        <record id="config_template_academic_subscriptions" model="ir.config_parameter">
+            <field name="key">ams_subscription_management.template.academic_subscriptions</field>
+            <field name="value">{
+                "name": "Academic Institution Subscriptions", 
+                "description": "Academic-focused subscription configuration",
+                "recommended_subscriptions": [
+                    {
+                        "type": "student_membership",
+                        "scope": "individual",
+                        "duration": "9 months",
+                        "pricing_tiers": ["student"],
+                        "requires_verification": true,
+                        "auto_renewal": false
+                    },
+                    {
+                        "type": "faculty_membership", 
+                        "scope": "individual",
+                        "duration": "12 months",
+                        "pricing_tiers": ["individual"],
+                        "auto_renewal": true,
+                        "requires_approval": false
+                    },
+                    {
+                        "type": "institutional_membership",
+                        "scope": "enterprise", 
+                        "duration": "36 months",
+                        "requires_approval": true,
+                        "auto_renewal": false
+                    }
+                ]
+            }</field>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Standard Billing Periods for Subscription Management -->
+        
+        <!-- Monthly Billing Period -->
+        <record id="billing_period_monthly" model="ams.billing.period">
+            <field name="name">Monthly</field>
+            <field name="code">monthly</field>
+            <field name="period_value">1</field>
+            <field name="period_unit">months</field>
+            <field name="grace_days">7</field>
+            <field name="renewal_notice_days">15</field>
+            <field name="early_renewal_days">7</field>
+            <field name="sequence">10</field>
+            <field name="description">Monthly subscription billing cycle with short grace period and quick renewal notices.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Quarterly Billing Period -->
+        <record id="billing_period_quarterly" model="ams.billing.period">
+            <field name="name">Quarterly</field>
+            <field name="code">quarterly</field>
+            <field name="period_value">3</field>
+            <field name="period_unit">months</field>
+            <field name="grace_days">15</field>
+            <field name="renewal_notice_days">45</field>
+            <field name="early_renewal_days">30</field>
+            <field name="sequence">20</field>
+            <field name="description">Quarterly subscription billing cycle popular for professional memberships and services.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Semi-Annual Billing Period -->
+        <record id="billing_period_semi_annual" model="ams.billing.period">
+            <field name="name">Semi-Annual</field>
+            <field name="code">semi_annual</field>
+            <field name="period_value">6</field>
+            <field name="period_unit">months</field>
+            <field name="grace_days">30</field>
+            <field name="renewal_notice_days">60</field>
+            <field name="early_renewal_days">45</field>
+            <field name="sequence">30</field>
+            <field name="description">Six-month billing cycle offering balance between frequency and member convenience.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Annual Billing Period - Most Common -->
+        <record id="billing_period_annual" model="ams.billing.period">
+            <field name="name">Annual</field>
+            <field name="code">annual</field>
+            <field name="period_value">12</field>
+            <field name="period_unit">months</field>
+            <field name="grace_days">30</field>
+            <field name="renewal_notice_days">90</field>
+            <field name="early_renewal_days">60</field>
+            <field name="sequence">40</field>
+            <field name="description">Standard annual membership cycle with generous grace period and advance renewal notices.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Biennial Billing Period -->
+        <record id="billing_period_biennial" model="ams.billing.period">
+            <field name="name">Biennial</field>
+            <field name="code">biennial</field>
+            <field name="period_value">2</field>
+            <field name="period_unit">years</field>
+            <field name="grace_days">60</field>
+            <field name="renewal_notice_days">120</field>
+            <field name="early_renewal_days">90</field>
+            <field name="sequence">50</field>
+            <field name="description">Two-year membership cycle with extended grace and renewal periods for member convenience.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Triennial Billing Period -->
+        <record id="billing_period_triennial" model="ams.billing.period">
+            <field name="name">Triennial</field>
+            <field name="code">triennial</field>
+            <field name="period_value">3</field>
+            <field name="period_unit">years</field>
+            <field name="grace_days">90</field>
+            <field name="renewal_notice_days">180</field>
+            <field name="early_renewal_days">120</field>
+            <field name="sequence">60</field>
+            <field name="description">Three-year membership cycle for long-term member commitment with extended administrative windows.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Lifetime Billing Period -->
+        <record id="billing_period_lifetime" model="ams.billing.period">
+            <field name="name">Lifetime</field>
+            <field name="code">lifetime</field>
+            <field name="period_value">99</field>
+            <field name="period_unit">years</field>
+            <field name="grace_days">0</field>
+            <field name="renewal_notice_days">0</field>
+            <field name="early_renewal_days">0</field>
+            <field name="sequence">70</field>
+            <field name="description">Lifetime membership with no renewal requirements or expiration.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Weekly Billing Period (for special short-term subscriptions) -->
+        <record id="billing_period_weekly" model="ams.billing.period">
+            <field name="name">Weekly</field>
+            <field name="code">weekly</field>
+            <field name="period_value">1</field>
+            <field name="period_unit">weeks</field>
+            <field name="grace_days">2</field>
+            <field name="renewal_notice_days">3</field>
+            <field name="early_renewal_days">2</field>
+            <field name="sequence">5</field>
+            <field name="description">Weekly subscription for short-term access or trial periods.</field>
+            <field name="active">False</field>
+        </record>
+
+        <!-- Daily Billing Period (for trial/demo access) -->
+        <record id="billing_period_daily" model="ams.billing.period">
+            <field name="name">Daily</field>
+            <field name="code">daily</field>
+            <field name="period_value">1</field>
+            <field name="period_unit">days</field>
+            <field name="grace_days">0</field>
+            <field name="renewal_notice_days">0</field>
+            <field name="early_renewal_days">0</field>
+            <field name="sequence">1</field>
+            <field name="description">Daily access for demonstrations, trials, or temporary access requirements.</field>
+            <field name="active">False</field>
+        </record>
+
+        <!-- 30-Day Trial Period -->
+        <record id="billing_period_30_day_trial" model="ams.billing.period">
+            <field name="name">30-Day Trial</field>
+            <field name="code">30_day_trial</field>
+            <field name="period_value">30</field>
+            <field name="period_unit">days</field>
+            <field name="grace_days">0</field>
+            <field name="renewal_notice_days">7</field>
+            <field name="early_renewal_days">7</field>
+            <field name="sequence">8</field>
+            <field name="description">30-day trial membership for prospective members to evaluate benefits.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Student Academic Year Period -->
+        <record id="billing_period_academic_year" model="ams.billing.period">
+            <field name="name">Academic Year</field>
+            <field name="code">academic_year</field>
+            <field name="period_value">9</field>
+            <field name="period_unit">months</field>
+            <field name="grace_days">30</field>
+            <field name="renewal_notice_days">60</field>
+            <field name="early_renewal_days">45</field>
+            <field name="sequence">35</field>
+            <field name="description">Nine-month academic year cycle aligned with standard university calendars.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Conference Season Period -->
+        <record id="billing_period_conference_season" model="ams.billing.period">
+            <field name="name">Conference Season</field>
+            <field name="code">conference_season</field>
+            <field name="period_value">18</field>
+            <field name="period_unit">months</field>
+            <field name="grace_days">45</field>
+            <field name="renewal_notice_days">90</field>
+            <field name="early_renewal_days">60</field>
+            <field name="sequence">45</field>
+            <field name="description">18-month cycle covering two conference seasons with extended administrative periods.</field>
+            <field name="active">False</field>
+        </record>
+
+    </data>
+
+    <!-- Configuration Templates (updateable data for different association types) -->
+    <data noupdate="0">
+
+        <!-- Professional Association Billing Configuration -->
+        <record id="config_template_professional" model="ir.config_parameter">
+            <field name="key">ams_subscription_management.template.professional_billing</field>
+            <field name="value">{
+                "name": "Professional Association Billing Template",
+                "description": "Standard billing periods for professional associations",
+                "recommended_periods": [
+                    "annual",
+                    "biennial", 
+                    "academic_year",
+                    "30_day_trial"
+                ],
+                "default_grace_days": 30,
+                "default_renewal_notice_days": 90
+            }</field>
+        </record>
+
+        <!-- Trade Organization Billing Configuration -->
+        <record id="config_template_trade" model="ir.config_parameter">
+            <field name="key">ams_subscription_management.template.trade_billing</field>
+            <field name="value">{
+                "name": "Trade Organization Billing Template",
+                "description": "Flexible billing periods for trade organizations",
+                "recommended_periods": [
+                    "monthly",
+                    "quarterly",
+                    "annual",
+                    "30_day_trial"
+                ],
+                "default_grace_days": 15,
+                "default_renewal_notice_days": 45
+            }</field>
+        </record>
+
+        <!-- Academic Institution Billing Configuration -->
+        <record id="config_template_academic" model="ir.config_parameter">
+            <field name="key">ams_subscription_management.template.academic_billing</field>
+            <field name="value">{
+                "name": "Academic Institution Billing Template", 
+                "description": "Academic-aligned billing periods",
+                "recommended_periods": [
+                    "academic_year",
+                    "annual",
+                    "triennial",
+                    "30_day_trial"
+                ],
+                "default_grace_days": 60,
+                "default_renewal_notice_days": 120
+            }</field>
+        </record>
+
+        <!-- Membership Club Billing Configuration -->
+        <record id="config_template_club" model="ir.config_parameter">
+            <field name="key">ams_subscription_management.template.club_billing</field>
+            <field name="value">{
+                "name": "Membership Club Billing Template",
+                "description": "Simple billing periods for membership clubs",
+                "recommended_periods": [
+                    "annual",
+                    "monthly",
+                    "lifetime"
+                ],
+                "default_grace_days": 15,
+                "default_renewal_notice_days": 60
+            }</field>
+        </record>
+
+    </data>
+</odoo>

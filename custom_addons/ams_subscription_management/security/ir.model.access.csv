@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ams_subscription_product_user,ams.subscription.product user,model_ams_subscription_product,base.group_user,1,0,0,0
+access_ams_subscription_product_sales,ams.subscription.product sales,model_ams_subscription_product,sales_team.group_sale_salesman,1,1,1,0
+access_ams_subscription_product_manager,ams.subscription.product manager,model_ams_subscription_product,sales_team.group_sale_manager,1,1,1,1
+access_ams_subscription_product_system,ams.subscription.product system,model_ams_subscription_product,base.group_system,1,1,1,1
+access_ams_subscription_pricing_tier_user,ams.subscription.pricing.tier user,model_ams_subscription_pricing_tier,base.group_user,1,0,0,0
+access_ams_subscription_pricing_tier_sales,ams.subscription.pricing.tier sales,model_ams_subscription_pricing_tier,sales_team.group_sale_salesman,1,1,1,0
+access_ams_subscription_pricing_tier_manager,ams.subscription.pricing.tier manager,model_ams_subscription_pricing_tier,sales_team.group_sale_manager,1,1,1,1
+access_ams_subscription_pricing_tier_system,ams.subscription.pricing.tier system,model_ams_subscription_pricing_tier,base.group_system,1,1,1,1
+access_ams_billing_period_user,ams.billing.period user,model_ams_billing_period,base.group_user,1,0,0,0
+access_ams_billing_period_sales,ams.billing.period sales,model_ams_billing_period,sales_team.group_sale_salesman,1,0,0,0
+access_ams_billing_period_manager,ams.billing.period manager,model_ams_billing_period,sales_team.group_sale_manager,1,1,1,0
+access_ams_billing_period_system,ams.billing.period system,model_ams_billing_period,base.group_system,1,1,1,1
