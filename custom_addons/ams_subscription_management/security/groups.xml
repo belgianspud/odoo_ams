@@ -17,4 +17,11 @@
         <field name="name">AMS Admin</field>
         <field name="category_id" ref="base.module_category_user_type"/>
     </record>
+
+    <!-- System Administrator Group -->
+    <record id="group_ams_system_admin" model="res.groups">
+        <field name="name">AMS System Administrator</field>
+        <field name="category_id" ref="base.module_category_user_type"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_system'))]"/>
+    </record>
 </odoo>
