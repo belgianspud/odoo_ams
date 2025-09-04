@@ -71,7 +71,6 @@ seamlessly with member management, event registration, and financial modules.
         'security/ir.rule.xml',
         
         # Data files
-        'data/billing_period_data.xml',
         
         # Views
         'views/billing_period_views.xml',

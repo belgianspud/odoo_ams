@@ -8,6 +8,7 @@ class AMSSubscriptionProduct(models.Model):
     """Core subscription product definitions with sophisticated configuration."""
     _name = 'ams.subscription.product'
     _description = 'Subscription Product Definition'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'subscription_scope, product_type, name'
 
     # ==========================================
@@ -17,6 +18,7 @@ class AMSSubscriptionProduct(models.Model):
     name = fields.Char(
         string='Product Name',
         required=True,
+        tracking=True,
         help='Subscription product name'
     )
     
@@ -37,6 +39,7 @@ class AMSSubscriptionProduct(models.Model):
     active = fields.Boolean(
         string='Active',
         default=True,
+        tracking=True,
         help='Active subscription products are available for purchase'
     )
 
@@ -101,6 +104,7 @@ class AMSSubscriptionProduct(models.Model):
         string='Base Price',
         required=True,
         currency_field='currency_id',
+        tracking=True,
         help='Standard subscription price'
     )
     
@@ -226,6 +230,13 @@ class AMSSubscriptionProduct(models.Model):
         help='Highest discount percentage available'
     )
 
+    duration_display = fields.Char(
+        string='Duration Display',
+        compute='_compute_duration_display',
+        store=True,
+        help='Human-readable duration display'
+    )
+
     # ==========================================
     # SQL CONSTRAINTS
     # ==========================================
@@ -268,6 +279,18 @@ class AMSSubscriptionProduct(models.Model):
                 subscription.lowest_price = subscription.default_price
                 subscription.highest_discount_percentage = 0.0
 
+    @api.depends('default_duration', 'duration_unit')
+    def _compute_duration_display(self):
+        """Compute human-readable duration display."""
+        for record in self:
+            unit_map = {
+                'days': 'day' if record.default_duration == 1 else 'days',
+                'months': 'month' if record.default_duration == 1 else 'months',
+                'years': 'year' if record.default_duration == 1 else 'years'
+            }
+        
+            unit_display = unit_map.get(record.duration_unit, record.duration_unit)
+            record.duration_display = f"{record.default_duration} {unit_display}"
     # ==========================================
     # VALIDATION METHODS
     # ==========================================
@@ -629,4 +652,20 @@ class AMSSubscriptionProduct(models.Model):
             'res_model': 'ams.subscription.product',
             'view_mode': 'form',
             'res_id': new_subscription.id,
+        }
+
+    def action_view_product(self):
+        """View the base product for this subscription."""
+        self.ensure_one()
+    
+        if not self.product_id:
+            raise UserError("No base product configured for this subscription")
+    
+        return {
+            'name': f'Product - {self.product_id.name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'product.template',
+            'view_mode': 'form',
+            'res_id': self.product_id.id,
+            'target': 'current',
         }

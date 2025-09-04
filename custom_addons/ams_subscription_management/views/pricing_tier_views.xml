@@ -98,19 +98,17 @@
                                 </group>
                             </group>
                             
+                            <!-- FIXED: Removed all OWL directives and simplified -->
                             <div class="alert alert-info" invisible="not valid_from and not valid_to">
-                                <t t-if="valid_from and valid_to">
-                                    <strong>Limited Time Offer:</strong> This pricing is valid from 
-                                    <field name="valid_from" readonly="1"/> to <field name="valid_to" readonly="1"/>.
-                                </t>
-                                <t t-elif="valid_from and not valid_to">
-                                    <strong>Effective Date:</strong> This pricing becomes effective on 
-                                    <field name="valid_from" readonly="1"/>.
-                                </t>
-                                <t t-elif="not valid_from and valid_to">
-                                    <strong>Expires:</strong> This pricing expires on 
-                                    <field name="valid_to" readonly="1"/>.
-                                </t>
+                                <div invisible="not valid_from or not valid_to">
+                                    <strong>Limited Time Offer:</strong> This pricing has validity dates configured.
+                                </div>
+                                <div invisible="not valid_from or valid_to">
+                                    <strong>Effective Date:</strong> This pricing becomes effective on a specific date.
+                                </div>
+                                <div invisible="valid_from or not valid_to">
+                                    <strong>Expires:</strong> This pricing expires on a specific date.
+                                </div>
                             </div>
                             
                             <div class="alert alert-success" invisible="not is_current">
@@ -160,17 +158,11 @@
                         </page>
                     </notebook>
                 </sheet>
-                
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
             </form>
         </field>
     </record>
 
-    <!-- Pricing Tier Kanban View -->
+    <!-- Pricing Tier Kanban View - OWL directives are allowed here -->
     <record id="view_pricing_tier_kanban" model="ir.ui.view">
         <field name="name">ams.subscription.pricing.tier.kanban</field>
         <field name="model">ams.subscription.pricing.tier</field>
@@ -225,7 +217,7 @@
                                                 <field name="price" widget="monetary"/>
                                             </strong>
                                         </div>
-                                        <t t-if="record.discount_percentage.raw_value > 0">
+                                        <t t-if="record.discount_percentage.raw_value &gt; 0">
                                             <small class="text-success">
                                                 <t t-esc="record.discount_percentage.value"/>% off
                                             </small>
@@ -299,12 +291,13 @@
                 
                 <separator/>
                 
+                <!-- FIXED: Escaped the < and > characters in XML domain filters -->
                 <filter string="High Discounts (>25%)" name="high_discount" 
-                        domain="[('discount_percentage', '>', 25)]"/>
+                        domain="[('discount_percentage', '&gt;', 25)]"/>
                 <filter string="Medium Discounts (10-25%)" name="medium_discount" 
-                        domain="[('discount_percentage', '>=', 10), ('discount_percentage', '<=', 25)]"/>
-                <filter string="Low Discounts (<10%)" name="low_discount" 
-                        domain="[('discount_percentage', '>', 0), ('discount_percentage', '<', 10)]"/>
+                        domain="[('discount_percentage', '&gt;=', 10), ('discount_percentage', '&lt;=', 25)]"/>
+                <filter string="Low Discounts (&lt;10%)" name="low_discount" 
+                        domain="[('discount_percentage', '&gt;', 0), ('discount_percentage', '&lt;', 10)]"/>
 
                 <group expand="0" string="Group By">
                     <filter string="Subscription Product" name="group_by_product" 
@@ -373,163 +366,13 @@
         <field name="context">{'search_default_expires_soon': 1}</field>
     </record>
 
-    <!-- Wizard Views -->
-    <record id="view_pricing_tier_wizard_form" model="ir.ui.view">
-        <field name="name">ams.pricing.tier.wizard.form</field>
-        <field name="model">ams.pricing.tier.wizard</field>
-        <field name="arch" type="xml">
-            <form string="Pricing Tier Wizard">
-                <header>
-                    <button name="action_generate_preview" string="Generate Preview" 
-                            type="object" class="oe_highlight"
-                            invisible="show_preview == True"/>
-                    <button name="action_execute_wizard" string="Execute" 
-                            type="object" class="oe_highlight"
-                            invisible="show_preview == False"
-                            confirm="This will create/update pricing tiers. Continue?"/>
-                    <button string="Cancel" class="btn-secondary" special="cancel"/>
-                </header>
-                
-                <sheet>
-                    <div class="oe_title">
-                        <h1>Pricing Tier Management</h1>
-                        <div class="o_row">
-                            <field name="wizard_mode" widget="radio" options="{'horizontal': true}"/>
-                        </div>
-                    </div>
-
-                    <group>
-                        <group string="Target Product">
-                            <field name="subscription_product_id" options="{'no_create': True}"/>
-                            <field name="subscription_product_name" readonly="1"/>
-                            <field name="base_price" widget="monetary" readonly="1"/>
-                            <field name="currency_id" invisible="1"/>
-                        </group>
-                        <group string="Wizard Settings">
-                            <field name="tier_creation_method" 
-                                   invisible="wizard_mode != 'create_bulk'"/>
-                            <field name="update_action" 
-                                   invisible="wizard_mode != 'update_bulk'"/>
-                        </group>
-                    </group>
-
-                    <notebook>
-                        <!-- Bulk Creation Tab -->
-                        <page string="Bulk Creation" name="bulk_creation" 
-                              invisible="wizard_mode != 'create_bulk'">
-                            <group>
-                                <group string="Member Types" 
-                                       invisible="tier_creation_method not in ['standard_tiers', 'percentage_discounts']">
-                                    <field name="member_type_ids" widget="many2many_tags" nolabel="1"/>
-                                </group>
-                                <group string="Discount Settings" 
-                                       invisible="tier_creation_method != 'percentage_discounts'">
-                                    <field name="use_graduated_discounts"/>
-                                    <field name="discount_percentage" 
-                                           invisible="use_graduated_discounts == True"/>
-                                </group>
-                            </group>
-                            
-                            <group invisible="use_graduated_discounts == False or tier_creation_method != 'percentage_discounts'">
-                                <group string="Graduated Discounts">
-                                    <field name="student_discount"/>
-                                    <field name="senior_discount"/>
-                                    <field name="professional_discount"/>
-                                    <field name="international_discount"/>
-                                </group>
-                            </group>
-                        </page>
-
-                        <!-- Promotional Tab -->
-                        <page string="Promotional Pricing" name="promotional" 
-                              invisible="wizard_mode != 'promotional'">
-                            <group>
-                                <group string="Promotion Settings">
-                                    <field name="promotional_discount"/>
-                                    <field name="promo_valid_from"/>
-                                    <field name="promo_valid_to"/>
-                                </group>
-                                <group string="Promotion Details">
-                                    <field name="member_type_ids" widget="many2many_tags"/>
-                                    <field name="promo_description"/>
-                                </group>
-                            </group>
-                        </page>
-
-                        <!-- Copy Tiers Tab -->
-                        <page string="Copy Tiers" name="copy_tiers" 
-                              invisible="wizard_mode != 'copy_tiers'">
-                            <group>
-                                <group string="Source Product">
-                                    <field name="source_subscription_id" options="{'no_create': True}"/>
-                                    <field name="copy_all_tiers"/>
-                                    <field name="adjust_copied_prices"/>
-                                </group>
-                                <group string="Tiers to Copy" 
-                                       invisible="copy_all_tiers == True">
-                                    <field name="source_tier_ids" widget="many2many_tags" nolabel="1"/>
-                                </group>
-                            </group>
-                        </page>
-
-                        <!-- Bulk Update Tab -->
-                        <page string="Bulk Update" name="bulk_update" 
-                              invisible="wizard_mode != 'update_bulk'">
-                            <group>
-                                <group string="Existing Tiers">
-                                    <field name="existing_tier_ids" widget="many2many_tags" nolabel="1"/>
-                                </group>
-                                <group string="Update Settings" 
-                                       invisible="update_action != 'adjust_prices'">
-                                    <field name="price_adjustment_type"/>
-                                    <field name="adjustment_value"/>
-                                </group>
-                            </group>
-                        </page>
-
-                        <!-- Verification Settings Tab -->
-                        <page string="Verification" name="verification">
-                            <group>
-                                <group string="Verification Requirements">
-                                    <field name="apply_verification_requirements"/>
-                                    <field name="auto_verification_criteria" 
-                                           invisible="apply_verification_requirements == False"/>
-                                    <field name="default_verification_text" 
-                                           invisible="apply_verification_requirements == False or auto_verification_criteria == True"/>
-                                </group>
-                            </group>
-                        </page>
-
-                        <!-- Preview Tab -->
-                        <page string="Preview" name="preview" invisible="show_preview == False">
-                            <field name="tier_preview_ids" nolabel="1">
-                                <list>
-                                    <field name="member_type_name"/>
-                                    <field name="action_type"/>
-                                    <field name="original_price" widget="monetary"/>
-                                    <field name="new_price" widget="monetary"/>
-                                    <field name="discount_percentage" widget="percentage"/>
-                                    <field name="requires_verification" widget="boolean"/>
-                                    <field name="preview_description"/>
-                                    <field name="currency_id" invisible="1"/>
-                                </list>
-                            </field>
-                            
-                            <div class="alert alert-info" invisible="not tier_preview_ids">
-                                <strong>Preview:</strong> Review the pricing tiers that will be created/updated above. 
-                                Click Execute to proceed with the changes.
-                            </div>
-                        </page>
-                    </notebook>
-
-                    <div invisible="not creation_summary">
-                        <group string="Results">
-                            <field name="creation_summary" readonly="1" nolabel="1"/>
-                        </group>
-                    </div>
-                </sheet>
-            </form>
-        </field>
+    <!-- Pricing Tier Wizard Action -->
+    <record id="action_pricing_tier_wizard" model="ir.actions.act_window">
+        <field name="name">Pricing Tier Wizard</field>
+        <field name="res_model">ams.pricing.tier.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{}</field>
     </record>
 
     <!-- Menu Items -->
@@ -562,5 +405,5 @@
               parent="menu_pricing_management"
               action="action_expiring_pricing_tiers" 
               sequence="30"/>
-
+-->
 </odoo>

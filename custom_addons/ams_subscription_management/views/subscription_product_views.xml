@@ -10,7 +10,7 @@
                 <field name="code"/>
                 <field name="subscription_scope"/>
                 <field name="product_type"/>
-                <field name="get_duration_display"/>
+                <field name="duration_display"/>
                 <field name="default_price" widget="monetary"/>
                 <field name="pricing_tier_count"/>
                 <field name="has_member_pricing" widget="boolean_toggle"/>
@@ -45,10 +45,9 @@
                             <field name="pricing_tier_count" widget="statinfo" string="Pricing Tiers"/>
                         </button>
                         
-                        <button class="oe_stat_button" type="action"
-                                name="%(ams_products_base.action_view_products_by_ams_type)d" 
-                                icon="fa-cube" invisible="not product_id"
-                                context="{'search_default_product_id': product_id}">
+                        <!-- Removed the problematic button reference to ams_products_base action -->
+                        <button class="oe_stat_button" type="object" name="action_view_product"
+                                icon="fa-cube" invisible="not product_id">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Base Product</span>
                             </div>
@@ -101,20 +100,13 @@
                                 <button name="action_create_pricing_tier" string="Add Pricing Tier" 
                                         type="object" class="btn-primary"
                                         icon="fa-plus"/>
-                                <button name="%(action_pricing_tier_wizard)d" string="Bulk Pricing Setup" 
-                                        type="action" class="btn-secondary"
-                                        icon="fa-magic"
-                                        context="{'default_subscription_product_id': id, 'default_wizard_mode': 'create_bulk'}"/>
+                                <!-- Removed bulk pricing button to avoid loading order issues -->
                             </div>
                             
                             <field name="pricing_tier_ids" nolabel="1">
                                 <list editable="bottom">
-                                    <field name="member_type_id" 
-                                           domain="[('is_individual', '=', True)]"
-                                           invisible="subscription_scope == 'enterprise'"/>
-                                    <field name="member_type_id" 
-                                           domain="[('is_organization', '=', True)]"
-                                           invisible="subscription_scope == 'individual'"/>
+                                    <!-- Simplified member type field without complex domain -->
+                                    <field name="member_type_id"/>
                                     <field name="price" widget="monetary"/>
                                     <field name="discount_percentage" widget="percentage" readonly="1"/>
                                     <field name="valid_from"/>
@@ -227,7 +219,7 @@
                                         </tr>
                                         <tr>
                                             <th>Duration:</th>
-                                            <td><field name="get_duration_display" readonly="1"/></td>
+                                            <td><field name="duration_display" readonly="1"/></td>
                                         </tr>
                                         <tr>
                                             <th>Base Price:</th>
@@ -291,6 +283,14 @@
                 </div>
             </form>
         </field>
+    </record>
+
+    <!-- Add the missing action_view_product method -->
+    <record id="action_view_base_product" model="ir.actions.act_window">
+        <field name="name">Base Product</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
     </record>
 
     <!-- Subscription Product Kanban View -->
@@ -491,15 +491,6 @@
         <field name="view_mode">kanban,list,form</field>
         <field name="domain">[('subscription_scope', '=', 'enterprise')]</field>
         <field name="context">{'search_default_active': 1, 'default_subscription_scope': 'enterprise'}</field>
-    </record>
-
-    <!-- Pricing Tier Wizard Action -->
-    <record id="action_pricing_tier_wizard" model="ir.actions.act_window">
-        <field name="name">Pricing Tier Wizard</field>
-        <field name="res_model">ams.pricing.tier.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-        <field name="context">{}</field>
     </record>
 
     <!-- Menu Items -->

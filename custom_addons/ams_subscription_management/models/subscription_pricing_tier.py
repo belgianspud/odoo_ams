@@ -1,5 +1,5 @@
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 from datetime import date
 
 
@@ -140,12 +140,14 @@ class AMSSubscriptionPricingTier(models.Model):
     is_current = fields.Boolean(
         string='Currently Valid',
         compute='_compute_current_status',
+        store=True,
         help='Whether this pricing tier is currently valid'
     )
     
     expires_soon = fields.Boolean(
         string='Expires Soon',
         compute='_compute_current_status',
+        store=True,
         help='Whether this pricing tier expires within 30 days'
     )
 
@@ -410,6 +412,22 @@ class AMSSubscriptionPricingTier(models.Model):
             'view_mode': 'form',
             'res_id': new_tier.id,
             'target': 'new',
+        }
+
+    def action_view_subscription_product(self):
+        """View the subscription product this pricing tier belongs to."""
+        self.ensure_one()
+    
+        if not self.subscription_product_id:
+            raise UserError("No subscription product configured for this pricing tier")
+    
+        return {
+            'name': f'Subscription Product - {self.subscription_product_id.name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'ams.subscription.product',
+            'view_mode': 'form',
+            'res_id': self.subscription_product_id.id,
+            'target': 'current',
         }
 
     # ==========================================
