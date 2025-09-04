@@ -44,6 +44,7 @@ specialized AMS modules for clean separation of concerns.
         'product',
         'sale_management',
         'account',
+        'mail',  # Added for messaging support
         'ams_member_data',
         'ams_products_base',
     ],

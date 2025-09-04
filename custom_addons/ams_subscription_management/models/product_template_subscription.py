@@ -106,29 +106,25 @@ class ProductTemplateSubscription(models.Model):
     @api.onchange('is_subscription_product')
     def _onchange_is_subscription_product(self):
         """Transform product into subscription with smart defaults."""
-        if self.is_subscription_product:
-            # Configure as service for subscription model
-            if self.detailed_type != 'service':
-                self.detailed_type = 'service'
-            
-            # Ensure product is sellable
-            if not self.sale_ok:
-                self.sale_ok = True
-                
-            # Enable website publication by default
-            if hasattr(self, 'website_published') and not self.website_published:
-                self.website_published = True
-            
-            # Auto-create subscription definition if it doesn't exist
-            if not self.subscription_product_id and not self._context.get('skip_auto_create'):
-                # We'll create this in the write method to avoid issues with new records
-                pass
-        else:
-            # When disabling subscription, clear the subscription definition
-            if self.subscription_product_id:
-                # Don't delete here, just clear the link - actual deletion handled separately
-                self.subscription_product_id = False
+        for product in self:
+            if product.is_subscription_product:
+                # Configure as service for subscription model
+                if product.detailed_type != 'service':
+                    product.detailed_type = 'service'
 
+                # Ensure product is sellable
+                if not product.sale_ok:
+                    product.sale_ok = True
+
+                # Enable website publication by default (if field exists)
+                if hasattr(product, 'website_published') and not product.website_published:
+                    product.website_published = True
+
+                # Don't create subscription definition here — handled in create/write
+            else:
+                # When disabling subscription, just clear link
+                if product.subscription_product_id:
+                    product.subscription_product_id = False
     # ==========================================
     # LIFECYCLE METHODS
     # ==========================================
@@ -179,7 +175,7 @@ class ProductTemplateSubscription(models.Model):
         subscription_vals = {
             'name': f"{self.name} Subscription",
             'code': self._generate_subscription_code(),
-            'product_id': self.product_tmpl_id.id,
+            'product_id': self.id,
             'subscription_scope': defaults['scope'],
             'product_type': defaults['type'],
             'default_duration': defaults['duration'],
@@ -281,7 +277,7 @@ class ProductTemplateSubscription(models.Model):
             'view_mode': 'form',
             'res_id': self.subscription_product_id.id,
             'target': 'new',
-            'context': {'default_product_id': self.product_tmpl_id.id}
+            'context': {'default_product_id': self.id}
         }
 
     def action_manage_pricing_tiers(self):
@@ -314,7 +310,7 @@ class ProductTemplateSubscription(models.Model):
             'view_mode': 'form',
             'target': 'new',
             'context': {
-                'default_product_id': self.product_tmpl_id.id,
+                'default_product_id': self.id,
             }
         }
 

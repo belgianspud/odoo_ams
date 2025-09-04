@@ -176,14 +176,55 @@
                         <page string="Benefits" name="benefits">
                             <div class="alert alert-info" role="alert">
                                 <h6><i class="fa fa-info-circle"/> Subscription Benefits</h6>
-                                <p>Benefits and features included with this subscription will be configured here when the benefits engine is available.</p>
+                                <p>Benefits and features included with this subscription can be configured here.</p>
                             </div>
                             
                             <field name="benefit_assignment_ids" nolabel="1">
-                                <list string="Included Benefits">
+                                <list string="Included Benefits" editable="bottom">
+                                    <field name="sequence" widget="handle"/>
                                     <field name="name"/>
+                                    <field name="benefit_type"/>
                                     <field name="description"/>
+                                    <field name="monetary_value" widget="monetary"/>
+                                    <field name="is_currently_available"/>
+                                    <field name="active"/>
+                                    <field name="currency_id" invisible="1"/>
                                 </list>
+                                <form string="Benefit">
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="name"/>
+                                                <field name="benefit_type"/>
+                                                <field name="sequence"/>
+                                            </group>
+                                            <group>
+                                                <field name="monetary_value" widget="monetary"/>
+                                                <field name="discount_percentage" 
+                                                       invisible="benefit_type != 'discount'"/>
+                                                <field name="active"/>
+                                            </group>
+                                        </group>
+                                        <group string="Description">
+                                            <field name="description" nolabel="1"/>
+                                        </group>
+                                        <group string="Availability">
+                                            <group>
+                                                <field name="available_from"/>
+                                                <field name="available_until"/>
+                                            </group>
+                                            <group>
+                                                <field name="usage_limit"/>
+                                                <field name="usage_period"/>
+                                            </group>
+                                        </group>
+                                        <group string="Digital Access" 
+                                               invisible="benefit_type != 'digital'">
+                                            <field name="digital_access_url"/>
+                                            <field name="access_code_required"/>
+                                        </group>
+                                    </sheet>
+                                </form>
                             </field>
                         </page>
 

@@ -6,6 +6,7 @@ class AMSSubscriptionProduct(models.Model):
     """Core subscription product definition with member-type pricing."""
     _name = 'ams.subscription.product'
     _description = 'Subscription Product Definition'
+    _inherit = ['mail.thread', 'mail.activity.mixin']  # Added for messaging support
     _order = 'product_type, subscription_scope, name'
     _rec_name = 'name'
 
@@ -16,12 +17,14 @@ class AMSSubscriptionProduct(models.Model):
     name = fields.Char(
         string='Product Name',
         required=True,
+        tracking=True,
         help='Subscription product name'
     )
     
     code = fields.Char(
         string='Unique Code',
         required=True,
+        tracking=True,
         help='Unique identifier for this subscription'
     )
     
@@ -30,6 +33,7 @@ class AMSSubscriptionProduct(models.Model):
         string='Related Product',
         required=True,
         ondelete='cascade',
+        tracking=True,
         help='Base product record'
     )
     
@@ -43,6 +47,7 @@ class AMSSubscriptionProduct(models.Model):
     ], string='Subscription Scope',
        required=True,
        default='individual',
+       tracking=True,
        help='Target audience for this subscription')
     
     product_type = fields.Selection([
@@ -53,6 +58,7 @@ class AMSSubscriptionProduct(models.Model):
     ], string='Product Type',
        required=True,
        default='membership',
+       tracking=True,
        help='Type of subscription offering')
     
     description = fields.Html(
@@ -68,6 +74,7 @@ class AMSSubscriptionProduct(models.Model):
         string='Default Duration',
         required=True,
         default=12,
+        tracking=True,
         help='Standard subscription duration'
     )
     
@@ -78,12 +85,14 @@ class AMSSubscriptionProduct(models.Model):
     ], string='Duration Unit',
        required=True,
        default='months',
+       tracking=True,
        help='Unit for duration calculation')
     
     default_price = fields.Monetary(
         string='Default Price',
         required=True,
         currency_field='currency_id',
+        tracking=True,
         help='Base subscription price'
     )
     
@@ -101,6 +110,7 @@ class AMSSubscriptionProduct(models.Model):
     
     default_seat_count = fields.Integer(
         string='Default Seats',
+        tracking=True,
         help='Default number of seats for enterprise subscriptions'
     )
     
@@ -112,6 +122,7 @@ class AMSSubscriptionProduct(models.Model):
     
     allow_seat_purchase = fields.Boolean(
         string='Allow Additional Seats',
+        tracking=True,
         help='Enable purchasing extra seats beyond default allocation'
     )
     
@@ -122,6 +133,7 @@ class AMSSubscriptionProduct(models.Model):
     is_renewable = fields.Boolean(
         string='Is Renewable',
         default=True,
+        tracking=True,
         help='Subscription can be renewed'
     )
     
@@ -132,22 +144,26 @@ class AMSSubscriptionProduct(models.Model):
     
     auto_renewal_enabled = fields.Boolean(
         string='Auto-Renewal Available',
+        tracking=True,
         help='Subscription supports automatic renewal'
     )
     
     requires_approval = fields.Boolean(
         string='Requires Approval',
+        tracking=True,
         help='Staff approval required before activation'
     )
     
     member_only = fields.Boolean(
         string='Members Only',
+        tracking=True,
         help='Restricted to current association members'
     )
     
     active = fields.Boolean(
         string='Active',
         default=True,
+        tracking=True,
         help='Available for new subscriptions'
     )
     
