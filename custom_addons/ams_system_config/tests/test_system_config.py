@@ -4,324 +4,230 @@ from odoo.tests.common import TransactionCase
 from odoo.exceptions import ValidationError
 
 
-class TestAMSSystemConfig(TransactionCase):
-    """Test cases for AMS System Configuration module."""
+class TestAMSConfig(TransactionCase):
 
     def setUp(self):
-        """Set up test environment."""
         super().setUp()
         self.config_model = self.env['ams.config.settings']
-        self.param_model = self.env['ir.config_parameter']
-        self.sequence_model = self.env['ir.sequence']
-        
-        # Create a test configuration record
-        self.config = self.config_model.create({})
 
-    def test_default_configuration_values(self):
-        """Test that default configuration values are properly set."""
-        # Test membership defaults
-        self.assertTrue(self.config.auto_member_id)
-        self.assertEqual(self.config.member_id_prefix, 'M')
-        self.assertEqual(self.config.grace_period_days, 30)
-        self.assertEqual(self.config.renewal_window_days, 90)
-        self.assertFalse(self.config.allow_multiple_memberships)
+    def test_default_values(self):
+        """Test that default configuration values are set correctly"""
+        config = self.config_model.create({})
         
-        # Test portal defaults
-        self.assertTrue(self.config.portal_enabled)
-        self.assertFalse(self.config.portal_self_registration)
-        self.assertFalse(self.config.communication_opt_out_default)
-        self.assertTrue(self.config.emergency_communications_override)
+        # Test default values
+        self.assertTrue(config.auto_member_id)
+        self.assertEqual(config.member_id_prefix, 'M')
+        self.assertEqual(config.member_id_padding, 6)
+        self.assertEqual(config.grace_period_days, 30)
+        self.assertEqual(config.renewal_window_days, 90)
+        self.assertTrue(config.portal_enabled)
+        self.assertEqual(config.fiscal_year_start, 'january')
+
+    def test_member_id_padding_validation(self):
+        """Test member ID padding validation"""
+        config = self.config_model.create({})
         
-        # Test financial defaults
-        self.assertEqual(self.config.fiscal_year_start, 'january')
-        self.assertFalse(self.config.chapter_revenue_sharing)
-        self.assertEqual(self.config.default_chapter_percentage, 30.0)
+        # Test invalid padding values
+        with self.assertRaises(ValidationError):
+            config.member_id_padding = 2  # Too small
         
-        # Test feature defaults
-        self.assertTrue(self.config.enterprise_subscriptions_enabled)
-        self.assertFalse(self.config.continuing_education_required)
-        self.assertTrue(self.config.fundraising_enabled)
-        self.assertTrue(self.config.event_member_pricing)
+        with self.assertRaises(ValidationError):
+            config.member_id_padding = 15  # Too large
+        
+        # Test valid padding values
+        config.member_id_padding = 5  # Should work
+        self.assertEqual(config.member_id_padding, 5)
 
     def test_grace_period_validation(self):
-        """Test grace period validation constraints."""
+        """Test grace period validation"""
+        config = self.config_model.create({})
+        
+        # Test invalid grace periods
+        with self.assertRaises(ValidationError):
+            config.grace_period_days = -1  # Negative
+        
+        with self.assertRaises(ValidationError):
+            config.grace_period_days = 400  # Too large
+        
         # Test valid grace period
-        self.config.grace_period_days = 30
-        # Should not raise exception
-        
-        # Test invalid negative grace period
-        with self.assertRaises(ValidationError):
-            self.config.grace_period_days = -5
-            self.config._check_grace_period_days()
-        
-        # Test invalid excessive grace period
-        with self.assertRaises(ValidationError):
-            self.config.grace_period_days = 400
-            self.config._check_grace_period_days()
+        config.grace_period_days = 45  # Should work
+        self.assertEqual(config.grace_period_days, 45)
 
     def test_renewal_window_validation(self):
-        """Test renewal window validation constraints."""
+        """Test renewal window validation"""
+        config = self.config_model.create({})
+        
+        # Test invalid renewal windows
+        with self.assertRaises(ValidationError):
+            config.renewal_window_days = 5  # Too small
+        
+        with self.assertRaises(ValidationError):
+            config.renewal_window_days = 400  # Too large
+        
         # Test valid renewal window
-        self.config.renewal_window_days = 90
-        # Should not raise exception
-        
-        # Test invalid negative renewal window
-        with self.assertRaises(ValidationError):
-            self.config.renewal_window_days = -10
-            self.config._check_renewal_window_days()
-        
-        # Test invalid excessive renewal window
-        with self.assertRaises(ValidationError):
-            self.config.renewal_window_days = 500
-            self.config._check_renewal_window_days()
+        config.renewal_window_days = 120  # Should work
+        self.assertEqual(config.renewal_window_days, 120)
 
     def test_chapter_percentage_validation(self):
-        """Test chapter revenue percentage validation constraints."""
+        """Test chapter percentage validation"""
+        config = self.config_model.create({})
+        
+        # Test invalid percentages
+        with self.assertRaises(ValidationError):
+            config.default_chapter_percentage = -5  # Negative
+        
+        with self.assertRaises(ValidationError):
+            config.default_chapter_percentage = 105  # Over 100%
+        
         # Test valid percentage
-        self.config.default_chapter_percentage = 25.0
-        # Should not raise exception
+        config.default_chapter_percentage = 25.5  # Should work
+        self.assertEqual(config.default_chapter_percentage, 25.5)
+
+    def test_data_retention_validation(self):
+        """Test data retention years validation"""
+        config = self.config_model.create({})
         
-        # Test invalid negative percentage
+        # Test invalid retention periods
         with self.assertRaises(ValidationError):
-            self.config.default_chapter_percentage = -5.0
-            self.config._check_chapter_percentage()
+            config.data_retention_years = 0  # Too small
         
-        # Test invalid excessive percentage
         with self.assertRaises(ValidationError):
-            self.config.default_chapter_percentage = 150.0
-            self.config._check_chapter_percentage()
+            config.data_retention_years = 75  # Too large
+        
+        # Test valid retention period
+        config.data_retention_years = 10  # Should work
+        self.assertEqual(config.data_retention_years, 10)
 
-    def test_member_id_prefix_validation(self):
-        """Test member ID prefix validation constraints."""
-        # Test valid prefix
-        self.config.auto_member_id = True
-        self.config.member_id_prefix = 'MEMBER'
-        # Should not raise exception
-        
-        # Test invalid long prefix
-        with self.assertRaises(ValidationError):
-            self.config.member_id_prefix = 'VERYLONGPREFIX'
-            self.config._check_member_id_prefix()
-        
-        # Test invalid non-alphanumeric prefix
-        with self.assertRaises(ValidationError):
-            self.config.member_id_prefix = 'M@#'
-            self.config._check_member_id_prefix()
-
-    def test_continuing_education_dependency_check(self):
-        """Test continuing education module dependency validation."""
-        # Mock the module search to simulate missing CE module
-        def mock_search(domain, limit=None):
-            return self.env['ir.module.module']  # Empty recordset
-        
-        original_search = self.env['ir.module.module'].search
-        self.env['ir.module.module'].search = mock_search
-        
-        try:
-            with self.assertRaises(ValidationError):
-                self.config.continuing_education_required = True
-                self.config._check_ce_requirements()
-        finally:
-            # Restore original search method
-            self.env['ir.module.module'].search = original_search
-
-    def test_onchange_auto_member_id(self):
-        """Test onchange behavior for auto member ID toggle."""
-        # Enable auto member ID
-        self.config.auto_member_id = True
-        self.config.member_id_prefix = 'TEST'
-        
-        # Disable auto member ID
-        self.config.auto_member_id = False
-        self.config._onchange_auto_member_id()
-        
-        # Check that dependent fields are cleared
-        self.assertFalse(self.config.member_id_prefix)
-        self.assertFalse(self.config.member_id_sequence)
-
-    def test_onchange_chapter_revenue_sharing(self):
-        """Test onchange behavior for chapter revenue sharing toggle."""
-        # Enable chapter revenue sharing
-        self.config.chapter_revenue_sharing = True
-        self.config.default_chapter_percentage = 25.0
-        
-        # Disable chapter revenue sharing
-        self.config.chapter_revenue_sharing = False
-        self.config._onchange_chapter_revenue_sharing()
-        
-        # Check that percentage is reset
-        self.assertEqual(self.config.default_chapter_percentage, 0.0)
-
-    def test_onchange_portal_enabled(self):
-        """Test onchange behavior for portal enablement."""
-        # Enable portal and self-registration
-        self.config.portal_enabled = True
-        self.config.portal_self_registration = True
-        
-        # Disable portal
-        self.config.portal_enabled = False
-        self.config._onchange_portal_enabled()
-        
-        # Check that self-registration is disabled
-        self.assertFalse(self.config.portal_self_registration)
-
-    def test_get_global_setting(self):
-        """Test utility method for getting global settings."""
-        # Set a test parameter
-        test_key = 'test_setting'
-        test_value = 'test_value'
-        self.param_model.sudo().set_param(f'ams_system_config.{test_key}', test_value)
-        
-        # Test getting the setting
-        result = self.config_model.get_global_setting(test_key)
-        self.assertEqual(result, test_value)
-        
-        # Test getting non-existent setting with default
-        result = self.config_model.get_global_setting('non_existent', 'default_value')
-        self.assertEqual(result, 'default_value')
-
-    def test_set_global_setting(self):
-        """Test utility method for setting global settings."""
-        test_key = 'test_setting_write'
-        test_value = 'test_value_write'
-        
-        # Set the setting
-        self.config_model.set_global_setting(test_key, test_value)
-        
-        # Verify it was set correctly
-        result = self.param_model.sudo().get_param(f'ams_system_config.{test_key}')
-        self.assertEqual(result, test_value)
-
-    def test_get_member_id_format(self):
-        """Test member ID format configuration retrieval."""
-        # Set test values
-        self.param_model.sudo().set_param('ams_system_config.auto_member_id', True)
-        self.param_model.sudo().set_param('ams_system_config.member_id_prefix', 'TEST')
-        
-        # Get format configuration
-        format_config = self.config_model.get_member_id_format()
-        
-        # Verify results
-        self.assertTrue(format_config['auto_generate'])
-        self.assertEqual(format_config['prefix'], 'TEST')
-        self.assertIn('sequence_id', format_config)
-
-    def test_get_membership_policies(self):
-        """Test membership policy configuration retrieval."""
-        # Set test values
-        self.param_model.sudo().set_param('ams_system_config.grace_period_days', '45')
-        self.param_model.sudo().set_param('ams_system_config.renewal_window_days', '120')
-        self.param_model.sudo().set_param('ams_system_config.allow_multiple_memberships', True)
-        
-        # Get policy configuration
-        policies = self.config_model.get_membership_policies()
-        
-        # Verify results
-        self.assertEqual(policies['grace_period_days'], 45)
-        self.assertEqual(policies['renewal_window_days'], 120)
-        self.assertTrue(policies['allow_multiple'])
-
-    def test_get_portal_configuration(self):
-        """Test portal configuration retrieval."""
-        # Set test values
-        self.param_model.sudo().set_param('ams_system_config.portal_enabled', True)
-        self.param_model.sudo().set_param('ams_system_config.portal_self_registration', True)
-        
-        # Get portal configuration
-        portal_config = self.config_model.get_portal_configuration()
-        
-        # Verify results
-        self.assertTrue(portal_config['enabled'])
-        self.assertTrue(portal_config['self_registration'])
-
-    def test_get_feature_flags(self):
-        """Test feature flags retrieval."""
-        # Set test values
-        self.param_model.sudo().set_param('ams_system_config.enterprise_subscriptions_enabled', False)
-        self.param_model.sudo().set_param('ams_system_config.fundraising_enabled', True)
-        
-        # Get feature flags
-        features = self.config_model.get_feature_flags()
-        
-        # Verify results
-        self.assertFalse(features['enterprise_subscriptions'])
-        self.assertTrue(features['fundraising'])
-        self.assertIn('continuing_education', features)
-        self.assertIn('event_member_pricing', features)
-        self.assertIn('chapter_revenue_sharing', features)
-
-    def test_validate_system_configuration(self):
-        """Test system configuration validation."""
-        # Test with missing currency (should generate error)
-        self.param_model.sudo().set_param('ams_system_config.default_currency_id', '')
-        errors = self.config_model.validate_system_configuration()
-        self.assertTrue(any('currency' in error.lower() for error in errors))
-        
-        # Test with auto member ID but no prefix (should generate error)
-        self.param_model.sudo().set_param('ams_system_config.auto_member_id', True)
-        self.param_model.sudo().set_param('ams_system_config.member_id_prefix', '')
-        errors = self.config_model.validate_system_configuration()
-        self.assertTrue(any('prefix' in error.lower() for error in errors))
-
-    def test_create_member_id_sequence(self):
-        """Test member ID sequence creation."""
-        # Set configuration
-        self.config.member_id_prefix = 'TEST'
-        
-        # Create sequence
-        sequence = self.config._create_member_id_sequence()
-        
-        # Verify sequence was created correctly
-        self.assertTrue(sequence)
-        self.assertEqual(sequence.code, 'ams.member.id')
-        self.assertEqual(sequence.prefix, 'TEST')
-        self.assertEqual(sequence.padding, 6)
-
-    def test_set_values_creates_sequence(self):
-        """Test that set_values creates sequence when needed."""
-        # Configure for auto ID generation without existing sequence
-        self.config.auto_member_id = True
-        self.config.member_id_prefix = 'AUTO'
-        self.config.member_id_sequence = False
-        
-        # Save configuration
-        self.config.set_values()
-        
-        # Check that sequence was created and parameter set
-        sequence_id = self.param_model.sudo().get_param('ams_system_config.member_id_sequence_id')
-        self.assertTrue(sequence_id)
-        
-        # Verify sequence exists
-        sequence = self.sequence_model.browse(int(sequence_id))
-        self.assertTrue(sequence.exists())
-        self.assertEqual(sequence.prefix, 'AUTO')
-
-    def test_existing_sequence_update(self):
-        """Test updating existing sequence when prefix changes."""
-        # Create initial sequence
-        sequence = self.sequence_model.create({
-            'name': 'Test AMS Member ID',
-            'code': 'ams.member.id',
-            'prefix': 'OLD',
-            'padding': 6,
+    def test_config_parameter_integration(self):
+        """Test integration with ir.config_parameter"""
+        config = self.config_model.create({
+            'auto_member_id': False,
+            'member_id_prefix': 'MEM',
+            'grace_period_days': 45,
         })
         
-        # Set new prefix
-        self.config.member_id_prefix = 'NEW'
+        # Execute to save parameters
+        config.execute()
         
-        # Create sequence (should update existing)
-        updated_sequence = self.config._create_member_id_sequence()
+        # Check that parameters were saved
+        auto_member_id = self.env['ir.config_parameter'].sudo().get_param('ams.auto_member_id')
+        member_id_prefix = self.env['ir.config_parameter'].sudo().get_param('ams.member_id_prefix')
+        grace_period = self.env['ir.config_parameter'].sudo().get_param('ams.grace_period_days')
         
-        # Verify same sequence was updated, not new one created
-        self.assertEqual(updated_sequence.id, sequence.id)
-        self.assertEqual(updated_sequence.prefix, 'NEW')
+        self.assertEqual(auto_member_id, 'False')
+        self.assertEqual(member_id_prefix, 'MEM')
+        self.assertEqual(grace_period, '45')
 
-    def tearDown(self):
-        """Clean up after tests."""
-        # Clean up any test configuration parameters
-        test_params = self.param_model.search([
-            ('key', 'like', 'ams_system_config.test_%')
-        ])
-        test_params.unlink()
+    def test_get_values_with_defaults(self):
+        """Test that get_values returns proper defaults"""
+        values = self.config_model.get_values()
         
-        super().tearDown()
+        # Check that we get reasonable defaults
+        self.assertIn('auto_member_id', values)
+        self.assertIn('member_id_prefix', values)
+        self.assertIn('grace_period_days', values)
+
+    def test_fiscal_year_dates_calculation(self):
+        """Test fiscal year date calculation"""
+        config = self.config_model.create({'fiscal_year_start': 'july'})
+        config.execute()
+        
+        # Test fiscal year calculation for a date in August (should be current FY)
+        test_date = self.env['ir.fields'].Date.from_string('2023-08-15')
+        start_date, end_date = config.get_fiscal_year_dates(test_date)
+        
+        self.assertEqual(start_date.month, 7)  # July
+        self.assertEqual(start_date.day, 1)
+        self.assertEqual(end_date.month, 6)  # June (next year)
+        self.assertEqual(end_date.day, 30)
+
+    def test_member_sequence_update(self):
+        """Test that member sequence is updated when settings change"""
+        # Get the sequence
+        sequence = self.env.ref('ams_member_data.seq_member_id')
+        original_prefix = sequence.prefix
+        original_padding = sequence.padding
+        
+        # Update config
+        config = self.config_model.create({
+            'member_id_prefix': 'TEST',
+            'member_id_padding': 8,
+            'member_id_sequence_id': sequence.id,
+        })
+        config.set_values()
+        
+        # Check that sequence was updated
+        sequence.refresh()
+        self.assertEqual(sequence.prefix, 'TEST')
+        self.assertEqual(sequence.padding, 8)
+        
+        # Reset for cleanup
+        sequence.write({
+            'prefix': original_prefix,
+            'padding': original_padding,
+        })
+
+    def test_action_reset_member_sequence(self):
+        """Test reset member sequence action"""
+        sequence = self.env.ref('ams_member_data.seq_member_id')
+        
+        # Set sequence to a higher number
+        sequence.number_next = 100
+        
+        config = self.config_model.create({
+            'member_id_sequence_id': sequence.id,
+        })
+        
+        # Reset sequence
+        result = config.action_reset_member_sequence()
+        
+        # Check that sequence was reset
+        sequence.refresh()
+        self.assertEqual(sequence.number_next, 1)
+        
+        # Check return value
+        self.assertEqual(result['type'], 'ir.actions.client')
+        self.assertEqual(result['tag'], 'display_notification')
+
+    def test_action_test_member_id_generation(self):
+        """Test member ID generation test action"""
+        sequence = self.env.ref('ams_member_data.seq_member_id')
+        
+        config = self.config_model.create({
+            'member_id_sequence_id': sequence.id,
+        })
+        
+        # Test generation
+        result = config.action_test_member_id_generation()
+        
+        # Check return value
+        self.assertEqual(result['type'], 'ir.actions.client')
+        self.assertEqual(result['tag'], 'display_notification')
+        self.assertIn('Test Member ID generated:', result['params']['message'])
+
+    def test_feature_toggles(self):
+        """Test feature toggle settings"""
+        config = self.config_model.create({
+            'enterprise_subscriptions_enabled': False,
+            'fundraising_enabled': False,
+            'event_member_pricing': False,
+        })
+        config.execute()
+        
+        # Check that parameters were saved
+        enterprise_enabled = self.env['ir.config_parameter'].sudo().get_param('ams.enterprise_subscriptions_enabled')
+        fundraising_enabled = self.env['ir.config_parameter'].sudo().get_param('ams.fundraising_enabled')
+        event_pricing = self.env['ir.config_parameter'].sudo().get_param('ams.event_member_pricing')
+        
+        self.assertEqual(enterprise_enabled, 'False')
+        self.assertEqual(fundraising_enabled, 'False')
+        self.assertEqual(event_pricing, 'False')
+
+    def test_currency_default_setting(self):
+        """Test that default currency is set from company if not specified"""
+        company_currency = self.env.company.currency_id
+        
+        values = self.config_model.get_values()
+        
+        if company_currency:
+            self.assertEqual(values.get('default_currency_id'), company_currency.id)

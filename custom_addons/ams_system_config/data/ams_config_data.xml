@@ -1,313 +1,138 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
-        <!-- Default Member ID Sequence -->
-        <record id="seq_ams_member_id" model="ir.sequence">
-            <field name="name">AMS Member ID</field>
-            <field name="code">ams.member.id</field>
-            <field name="prefix">M</field>
-            <field name="suffix"></field>
-            <field name="padding">6</field>
-            <field name="number_increment">1</field>
-            <field name="number_next_actual">1</field>
-            <field name="use_date_range">False</field>
-            <field name="company_id" eval="False"/>
-        </record>
 
-        <!-- Alternative Member ID Sequences for Different Association Types -->
-        <record id="seq_ams_member_id_professional" model="ir.sequence">
-            <field name="name">AMS Professional Member ID</field>
-            <field name="code">ams.member.id.professional</field>
-            <field name="prefix">PROF</field>
-            <field name="suffix"></field>
-            <field name="padding">5</field>
-            <field name="number_increment">1</field>
-            <field name="number_next_actual">1</field>
-            <field name="use_date_range">False</field>
-            <field name="company_id" eval="False"/>
-            <field name="active">False</field>
-        </record>
-
-        <record id="seq_ams_member_id_student" model="ir.sequence">
-            <field name="name">AMS Student Member ID</field>
-            <field name="code">ams.member.id.student</field>
-            <field name="prefix">STU</field>
-            <field name="suffix"></field>
-            <field name="padding">5</field>
-            <field name="number_increment">1</field>
-            <field name="number_next_actual">1</field>
-            <field name="use_date_range">False</field>
-            <field name="company_id" eval="False"/>
-            <field name="active">False</field>
-        </record>
-
-        <record id="seq_ams_member_id_corporate" model="ir.sequence">
-            <field name="name">AMS Corporate Member ID</field>
-            <field name="code">ams.member.id.corporate</field>
-            <field name="prefix">CORP</field>
-            <field name="suffix"></field>
-            <field name="padding">4</field>
-            <field name="number_increment">1</field>
-            <field name="number_next_actual">1</field>
-            <field name="use_date_range">False</field>
-            <field name="company_id" eval="False"/>
-            <field name="active">False</field>
-        </record>
-
-        <!-- Default System Configuration Parameters -->
-        <!-- Membership Configuration -->
-        <record id="config_param_auto_member_id" model="ir.config_parameter">
-            <field name="key">ams_system_config.auto_member_id</field>
+        <!-- Default AMS Configuration Parameters -->
+        <record id="config_auto_member_id" model="ir.config_parameter">
+            <field name="key">ams.auto_member_id</field>
             <field name="value">True</field>
         </record>
 
-        <record id="config_param_member_id_prefix" model="ir.config_parameter">
-            <field name="key">ams_system_config.member_id_prefix</field>
+        <record id="config_member_id_prefix" model="ir.config_parameter">
+            <field name="key">ams.member_id_prefix</field>
             <field name="value">M</field>
         </record>
 
-        <record id="config_param_member_id_sequence" model="ir.config_parameter">
-            <field name="key">ams_system_config.member_id_sequence_id</field>
-            <field name="value" ref="seq_ams_member_id"/>
+        <record id="config_member_id_padding" model="ir.config_parameter">
+            <field name="key">ams.member_id_padding</field>
+            <field name="value">6</field>
         </record>
 
-        <record id="config_param_grace_period_days" model="ir.config_parameter">
-            <field name="key">ams_system_config.grace_period_days</field>
+        <record id="config_grace_period_days" model="ir.config_parameter">
+            <field name="key">ams.grace_period_days</field>
             <field name="value">30</field>
         </record>
 
-        <record id="config_param_renewal_window_days" model="ir.config_parameter">
-            <field name="key">ams_system_config.renewal_window_days</field>
+        <record id="config_renewal_window_days" model="ir.config_parameter">
+            <field name="key">ams.renewal_window_days</field>
             <field name="value">90</field>
         </record>
 
-        <record id="config_param_allow_multiple_memberships" model="ir.config_parameter">
-            <field name="key">ams_system_config.allow_multiple_memberships</field>
-            <field name="value">False</field>
+        <record id="config_renewal_reminder_frequency" model="ir.config_parameter">
+            <field name="key">ams.renewal_reminder_frequency</field>
+            <field name="value">monthly</field>
         </record>
 
-        <!-- Communication & Portal Configuration -->
-        <record id="config_param_portal_enabled" model="ir.config_parameter">
-            <field name="key">ams_system_config.portal_enabled</field>
+        <record id="config_auto_renewal_enabled" model="ir.config_parameter">
+            <field name="key">ams.auto_renewal_enabled</field>
             <field name="value">True</field>
         </record>
 
-        <record id="config_param_portal_self_registration" model="ir.config_parameter">
-            <field name="key">ams_system_config.portal_self_registration</field>
-            <field name="value">False</field>
-        </record>
-
-        <record id="config_param_communication_opt_out_default" model="ir.config_parameter">
-            <field name="key">ams_system_config.communication_opt_out_default</field>
-            <field name="value">False</field>
-        </record>
-
-        <record id="config_param_emergency_communications_override" model="ir.config_parameter">
-            <field name="key">ams_system_config.emergency_communications_override</field>
+        <record id="config_portal_enabled" model="ir.config_parameter">
+            <field name="key">ams.portal_enabled</field>
             <field name="value">True</field>
         </record>
 
-        <record id="config_param_notification_digest_frequency" model="ir.config_parameter">
-            <field name="key">ams_system_config.notification_digest_frequency</field>
-            <field name="value">immediate</field>
+        <record id="config_portal_registration_enabled" model="ir.config_parameter">
+            <field name="key">ams.portal_registration_enabled</field>
+            <field name="value">False</field>
         </record>
 
-        <!-- Financial Configuration -->
-        <record id="config_param_fiscal_year_start" model="ir.config_parameter">
-            <field name="key">ams_system_config.fiscal_year_start</field>
+        <record id="config_email_verification_required" model="ir.config_parameter">
+            <field name="key">ams.email_verification_required</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="config_communication_opt_out_default" model="ir.config_parameter">
+            <field name="key">ams.communication_opt_out_default</field>
+            <field name="value">False</field>
+        </record>
+
+        <record id="config_communication_tracking_enabled" model="ir.config_parameter">
+            <field name="key">ams.communication_tracking_enabled</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="config_fiscal_year_start" model="ir.config_parameter">
+            <field name="key">ams.fiscal_year_start</field>
             <field name="value">january</field>
         </record>
 
-        <record id="config_param_chapter_revenue_sharing" model="ir.config_parameter">
-            <field name="key">ams_system_config.chapter_revenue_sharing</field>
+        <record id="config_multi_currency_enabled" model="ir.config_parameter">
+            <field name="key">ams.multi_currency_enabled</field>
             <field name="value">False</field>
         </record>
 
-        <record id="config_param_default_chapter_percentage" model="ir.config_parameter">
-            <field name="key">ams_system_config.default_chapter_percentage</field>
+        <record id="config_chapter_revenue_sharing" model="ir.config_parameter">
+            <field name="key">ams.chapter_revenue_sharing</field>
+            <field name="value">False</field>
+        </record>
+
+        <record id="config_default_chapter_percentage" model="ir.config_parameter">
+            <field name="key">ams.default_chapter_percentage</field>
             <field name="value">30.0</field>
         </record>
 
-        <!-- Feature Toggle Configuration -->
-        <record id="config_param_enterprise_subscriptions_enabled" model="ir.config_parameter">
-            <field name="key">ams_system_config.enterprise_subscriptions_enabled</field>
+        <record id="config_enterprise_subscriptions_enabled" model="ir.config_parameter">
+            <field name="key">ams.enterprise_subscriptions_enabled</field>
             <field name="value">True</field>
         </record>
 
-        <record id="config_param_continuing_education_required" model="ir.config_parameter">
-            <field name="key">ams_system_config.continuing_education_required</field>
+        <record id="config_event_member_pricing" model="ir.config_parameter">
+            <field name="key">ams.event_member_pricing</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="config_continuing_education_required" model="ir.config_parameter">
+            <field name="key">ams.continuing_education_required</field>
             <field name="value">False</field>
         </record>
 
-        <record id="config_param_fundraising_enabled" model="ir.config_parameter">
-            <field name="key">ams_system_config.fundraising_enabled</field>
+        <record id="config_fundraising_enabled" model="ir.config_parameter">
+            <field name="key">ams.fundraising_enabled</field>
             <field name="value">True</field>
         </record>
 
-        <record id="config_param_event_member_pricing" model="ir.config_parameter">
-            <field name="key">ams_system_config.event_member_pricing</field>
-            <field name="value">True</field>
-        </record>
-    </data>
-
-    <!-- Configuration Templates (updateable data) -->
-    <data noupdate="0">
-        <!-- Professional Association Configuration Template -->
-        <record id="template_professional_association" model="ir.config_parameter">
-            <field name="key">ams_system_config.template.professional_association</field>
-            <field name="value">{
-                "name": "Professional Association Template",
-                "description": "Standard configuration for professional associations",
-                "settings": {
-                    "auto_member_id": true,
-                    "member_id_prefix": "PROF",
-                    "grace_period_days": 60,
-                    "renewal_window_days": 120,
-                    "allow_multiple_memberships": false,
-                    "portal_enabled": true,
-                    "portal_self_registration": false,
-                    "continuing_education_required": true,
-                    "enterprise_subscriptions_enabled": true,
-                    "fundraising_enabled": false,
-                    "event_member_pricing": true,
-                    "chapter_revenue_sharing": true,
-                    "default_chapter_percentage": 25.0,
-                    "fiscal_year_start": "january"
-                }
-            }</field>
-        </record>
-
-        <!-- Trade Organization Configuration Template -->
-        <record id="template_trade_organization" model="ir.config_parameter">
-            <field name="key">ams_system_config.template.trade_organization</field>
-            <field name="value">{
-                "name": "Trade Organization Template",
-                "description": "Standard configuration for trade organizations",
-                "settings": {
-                    "auto_member_id": true,
-                    "member_id_prefix": "TRADE",
-                    "grace_period_days": 30,
-                    "renewal_window_days": 90,
-                    "allow_multiple_memberships": true,
-                    "portal_enabled": true,
-                    "portal_self_registration": true,
-                    "continuing_education_required": false,
-                    "enterprise_subscriptions_enabled": true,
-                    "fundraising_enabled": true,
-                    "event_member_pricing": true,
-                    "chapter_revenue_sharing": false,
-                    "default_chapter_percentage": 0.0,
-                    "fiscal_year_start": "july"
-                }
-            }</field>
-        </record>
-
-        <!-- Membership Club Configuration Template -->
-        <record id="template_membership_club" model="ir.config_parameter">
-            <field name="key">ams_system_config.template.membership_club</field>
-            <field name="value">{
-                "name": "Membership Club Template",
-                "description": "Standard configuration for membership clubs",
-                "settings": {
-                    "auto_member_id": true,
-                    "member_id_prefix": "CLUB",
-                    "grace_period_days": 15,
-                    "renewal_window_days": 60,
-                    "allow_multiple_memberships": false,
-                    "portal_enabled": true,
-                    "portal_self_registration": true,
-                    "continuing_education_required": false,
-                    "enterprise_subscriptions_enabled": false,
-                    "fundraising_enabled": true,
-                    "event_member_pricing": true,
-                    "chapter_revenue_sharing": false,
-                    "default_chapter_percentage": 0.0,
-                    "fiscal_year_start": "january"
-                }
-            }</field>
-        </record>
-
-        <!-- Academic Institution Configuration Template -->
-        <record id="template_academic_institution" model="ir.config_parameter">
-            <field name="key">ams_system_config.template.academic_institution</field>
-            <field name="value">{
-                "name": "Academic Institution Template",
-                "description": "Standard configuration for academic institutions",
-                "settings": {
-                    "auto_member_id": true,
-                    "member_id_prefix": "ACAD",
-                    "grace_period_days": 90,
-                    "renewal_window_days": 180,
-                    "allow_multiple_memberships": true,
-                    "portal_enabled": true,
-                    "portal_self_registration": false,
-                    "continuing_education_required": true,
-                    "enterprise_subscriptions_enabled": false,
-                    "fundraising_enabled": true,
-                    "event_member_pricing": true,
-                    "chapter_revenue_sharing": true,
-                    "default_chapter_percentage": 40.0,
-                    "fiscal_year_start": "july"
-                }
-            }</field>
-        </record>
-    </data>
-
-    <!-- System Integration Data -->
-    <data noupdate="1">
-        <!-- Configuration Version Tracking -->
-        <record id="config_param_system_version" model="ir.config_parameter">
-            <field name="key">ams_system_config.version</field>
-            <field name="value">1.0.0</field>
-        </record>
-
-        <record id="config_param_config_schema_version" model="ir.config_parameter">
-            <field name="key">ams_system_config.schema_version</field>
-            <field name="value">1</field>
-        </record>
-
-        <record id="config_param_installation_date" model="ir.config_parameter">
-            <field name="key">ams_system_config.installation_date</field>
-            <field name="value" eval="datetime.now().strftime('%Y-%m-%d %H:%M:%S')"/>
-        </record>
-
-        <!-- Default Configuration State -->
-        <record id="config_param_initial_setup_completed" model="ir.config_parameter">
-            <field name="key">ams_system_config.initial_setup_completed</field>
-            <field name="value">False</field>
-        </record>
-
-        <!-- Integration Settings -->
-        <record id="config_param_api_enabled" model="ir.config_parameter">
-            <field name="key">ams_system_config.api_enabled</field>
+        <record id="config_duplicate_detection_enabled" model="ir.config_parameter">
+            <field name="key">ams.duplicate_detection_enabled</field>
             <field name="value">True</field>
         </record>
 
-        <record id="config_param_webhook_enabled" model="ir.config_parameter">
-            <field name="key">ams_system_config.webhook_enabled</field>
-            <field name="value">False</field>
-        </record>
-
-        <!-- Performance & Optimization Settings -->
-        <record id="config_param_batch_size_default" model="ir.config_parameter">
-            <field name="key">ams_system_config.batch_size_default</field>
-            <field name="value">1000</field>
-        </record>
-
-        <record id="config_param_cache_timeout" model="ir.config_parameter">
-            <field name="key">ams_system_config.cache_timeout</field>
-            <field name="value">3600</field>
-        </record>
-
-        <!-- Audit and Logging Configuration -->
-        <record id="config_param_audit_configuration_changes" model="ir.config_parameter">
-            <field name="key">ams_system_config.audit_configuration_changes</field>
+        <record id="config_audit_trail_enabled" model="ir.config_parameter">
+            <field name="key">ams.audit_trail_enabled</field>
             <field name="value">True</field>
         </record>
 
-        <record id="config_param_log_level" model="ir.config_parameter">
-            <field name="key">ams_system_config.log_level</field>
-            <field name="value">INFO</field>
+        <record id="config_data_retention_years" model="ir.config_parameter">
+            <field name="key">ams.data_retention_years</field>
+            <field name="value">7</field>
         </record>
+
+        <record id="config_batch_processing_size" model="ir.config_parameter">
+            <field name="key">ams.batch_processing_size</field>
+            <field name="value">100</field>
+        </record>
+
+        <record id="config_cache_timeout_minutes" model="ir.config_parameter">
+            <field name="key">ams.cache_timeout_minutes</field>
+            <field name="value">30</field>
+        </record>
+
+        <!-- Link to the member ID sequence from ams_member_data module -->
+        <function model="ir.config_parameter" name="set_param">
+            <value>ams.member_id_sequence_id</value>
+            <value eval="ref('ams_member_data.seq_member_id')" />
+        </function>
+
     </data>
 </odoo>

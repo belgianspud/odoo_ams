@@ -1,54 +1,52 @@
+# -*- coding: utf-8 -*-
 {
-    'name': 'AMS System Config',
-    'version': '1.0.0',
+    'name': 'AMS System Configuration',
+    'version': '18.0.1.0.0',
     'category': 'Association Management',
-    'summary': 'Global configuration management for Association Management System',
-    'description': '''
-AMS System Config Module
+    'summary': 'Global AMS configuration and system settings',
+    'description': """
+AMS System Configuration
 ========================
 
-Centralized configuration management for all Association Management System 
-settings. Provides unified configuration interface that controls system-wide 
-behaviors, default values, and feature enablement across all AMS modules.
+This module provides global configuration settings for the Association Management System:
+
+* Member ID generation settings
+* Membership lifecycle defaults
+* Portal and communication preferences
+* Financial configuration (fiscal year, currency)
+* Feature toggles for AMS modules
+* System-wide defaults and policies
+
+This is a Layer 1 foundation module that provides configuration infrastructure
+for all other AMS modules.
 
 Key Features:
-* Centralized system-wide configuration management
-* Member ID generation and formatting control
-* Membership lifecycle policy settings (grace periods, renewals)
-* Financial configuration (currency, fiscal year, revenue sharing)
-* Feature toggle management for all AMS modules
-* Portal access and communication defaults
-* Integration settings for external systems
-* Multi-environment configuration support
-* Configuration validation and dependency checking
-* Audit trail for all configuration changes
-
-This module serves as the central control point for AMS system behavior, 
-enabling administrators to configure membership policies, financial settings, 
-feature toggles, and default values that affect all other AMS modules while 
-ensuring consistent system operation.
-    ''',
-    'author': 'AMS Development Team',
-    'website': 'https://www.example.com',
+* Centralized system configuration
+* Member ID formatting control
+* Default grace periods and renewal windows
+* Feature toggle management
+* Fiscal year and currency settings
+* Portal and communication defaults
+    """,
+    'author': 'Your Organization',
+    'website': 'https://your-website.com',
     'license': 'LGPL-3',
     'depends': [
         'base',
-        'web',
-        'mail',
+        'base_setup',
     ],
     'data': [
         # Security
         'security/ir.model.access.csv',
-        
         # Data
         'data/ams_config_data.xml',
-        
         # Views
         'views/ams_config_views.xml',
     ],
     'demo': [],
+    'images': ['static/description/icon.png'],
     'installable': True,
     'auto_install': False,
     'application': True,
-    'sequence': 1,
+    'sequence': 2,
 }
