@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Pricing Tier Wizard Form View -->
+    <record id="view_pricing_tier_wizard_form" model="ir.ui.view">
+        <field name="name">ams.pricing.tier.wizard.form</field>
+        <field name="model">ams.pricing.tier.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Pricing Tier Management">
+                <header>
+                    <!-- Step indicators -->
+                    <div class="o_wizard_step_indicators">
+                        <div t-attf-class="o_wizard_step #{'o_wizard_step_current' if state == 'selection' else ''}">
+                            <span class="o_wizard_step_number">1</span>
+                            <span class="o_wizard_step_title">Selection</span>
+                        </div>
+                        <div t-attf-class="o_wizard_step #{'o_wizard_step_current' if state == 'configuration' else ''}">
+                            <span class="o_wizard_step_number">2</span>
+                            <span class="o_wizard_step_title">Configuration</span>
+                        </div>
+                        <div t-attf-class="o_wizard_step #{'o_wizard_step_current' if state == 'review' else ''}">
+                            <span class="o_wizard_step_number">3</span>
+                            <span class="o_wizard_step_title">Review</span>
+                        </div>
+                        <div t-attf-class="o_wizard_step #{'o_wizard_step_current' if state == 'complete' else ''}">
+                            <span class="o_wizard_step_number">4</span>
+                            <span class="o_wizard_step_title">Complete</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation buttons -->
+                    <button string="Previous" name="action_previous_step" type="object" 
+                            class="btn-secondary" invisible="state in ['selection', 'complete']"/>
+                    <button string="Next" name="action_next_step" type="object" 
+                            class="btn-primary" invisible="state in ['complete']"/>
+                </header>
+                
+                <sheet>
+                    <!-- Step 1: Selection -->
+                    <div invisible="state != 'selection'">
+                        <div class="oe_title">
+                            <h1>Target Selection</h1>
+                            <p>Select the subscription products and member types to apply pricing changes to.</p>
+                        </div>
+                        
+                        <group>
+                            <group string="Operation Type">
+                                <field name="wizard_type"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <group string="Target Subscription Products">
+                                <field name="apply_to_all_subscriptions"/>
+                                <field name="subscription_product_ids" widget="many2many_tags" 
+                                       invisible="apply_to_all_subscriptions"
+                                       options="{'no_create': True}"/>
+                            </group>
+                            <group string="Target Member Types">
+                                <field name="apply_to_all_member_types"/>
+                                <field name="member_type_ids" widget="many2many_tags" 
+                                       invisible="apply_to_all_member_types"
+                                       options="{'no_create': True}"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Copy Source" invisible="wizard_type != 'copy_pricing'">
+                            <group>
+                                <field name="source_subscription_id" 
+                                       options="{'no_create': True}" 
+                                       required="wizard_type == 'copy_pricing'"/>
+                                <field name="source_member_type_id" 
+                                       options="{'no_create': True}"
+                                       invisible="wizard_type != 'copy_pricing'"/>
+                            </group>
+                        </group>
+                    </div>
+                    
+                    <!-- Step 2: Configuration -->
+                    <div invisible="state != 'configuration'">
+                        <div class="oe_title">
+                            <h1>Pricing Configuration</h1>
+                            <p>Configure how pricing should be calculated and applied.</p>
+                        </div>
+                        
+                        <group>
+                            <group string="Pricing Strategy">
+                                <field name="pricing_template" invisible="wizard_type != 'template_application'"/>
+                                <field name="pricing_method"/>
+                                <field name="currency_id"/>
+                            </group>
+                        </group>
+                        
+                        <group invisible="pricing_method != 'fixed_amount'">
+                            <group string="Fixed Amount">
+                                <field name="fixed_price" widget="monetary" 
+                                       required="pricing_method == 'fixed_amount'"/>
+                            </group>
+                        </group>
+                        
+                        <group invisible="pricing_method not in ['percentage_discount', 'percentage_markup']">
+                            <group string="Percentage Configuration">
+                                <field name="percentage_value" widget="percentage" 
+                                       required="pricing_method in ['percentage_discount', 'percentage_markup']"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <group string="Validity Period">
+                                <field name="set_validity_period"/>
+                                <field name="valid_from" invisible="not set_validity_period"/>
+                                <field name="valid_to" invisible="not set_validity_period"/>
+                            </group>
+                            <group string="Verification">
+                                <field name="requires_verification"/>
+                            </group>
+                        </group>
+                        
+                        <group invisible="not requires_verification">
+                            <field name="verification_criteria" nolabel="1" 
+                                   placeholder="Describe the verification requirements for this pricing..."/>
+                        </group>
+                        
+                        <group>
+                            <group string="Operation Options">
+                                <field name="overwrite_existing"/>
+                                <field name="round_prices"/>
+                                <field name="minimum_price" widget="monetary"/>
+                            </group>
+                        </group>
+                    </div>
+                    
+                    <!-- Step 3: Review -->
+                    <div invisible="state != 'review'">
+                        <div class="oe_title">
+                            <h1>Review Changes</h1>
+                            <p>Review the pricing changes that will be applied.</p>
+                        </div>
+                        
+                        <group>
+                            <group string="Operation Summary">
+                                <field name="wizard_type" readonly="1"/>
+                                <field name="pricing_method" readonly="1"/>
+                                <field name="overwrite_existing" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Pricing Preview">
+                            <field name="preview_line_ids" nolabel="1">
+                                <list>
+                                    <field name="subscription_product_id"/>
+                                    <field name="member_type_id"/>
+                                    <field name="current_price" widget="monetary"/>
+                                    <field name="new_price" widget="monetary"/>
+                                    <field name="price_change" widget="monetary"/>
+                                    <field name="percentage_change" widget="percentage"/>
+                                    <field name="action"/>
+                                    <field name="has_existing"/>
+                                    <field name="currency_id" invisible="1"/>
+                                </list>
+                            </field>
+                        </group>
+                        
+                        <div class="alert alert-warning" invisible="not preview_line_ids">
+                            <h6><i class="fa fa-exclamation-triangle"/> Important</h6>
+                            <p>
+                                Please review the pricing changes carefully. 
+                                <span invisible="not overwrite_existing">Existing pricing tiers will be updated.</span>
+                                <span invisible="overwrite_existing">Existing pricing tiers will be skipped.</span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 4: Complete -->
+                    <div invisible="state != 'complete'">
+                        <div class="oe_title">
+                            <h1><i class="fa fa-check text-success"/> Pricing Changes Applied!</h1>
+                            <p>Your pricing tier changes have been successfully applied.</p>
+                        </div>
+                        
+                        <group>
+                            <group string="Results Summary">
+                                <field name="created_tier_count" readonly="1"/>
+                                <field name="updated_tier_count" readonly="1"/>
+                                <field name="error_count" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Operation Log" invisible="not operation_log">
+                            <field name="operation_log" nolabel="1" readonly="1"/>
+                        </group>
+                        
+                        <div class="mt16">
+                            <button name="action_view_created_tiers" string="View Pricing Tiers" 
+                                    type="object" class="btn-primary" 
+                                    invisible="created_tier_count == 0 and updated_tier_count == 0"/>
+                            <button name="action_close_wizard" string="Done" 
+                                    type="object" class="btn-secondary ml8"/>
+                        </div>
+                        
+                        <div class="alert alert-danger mt16" invisible="error_count == 0">
+                            <h6><i class="fa fa-exclamation-circle"/> Errors Encountered</h6>
+                            <p>Some pricing tiers could not be processed. Check the operation log for details.</p>
+                        </div>
+                    </div>
+                </sheet>
+                
+                <footer invisible="state != 'complete'">
+                    <button string="Close" special="cancel" class="btn-primary"/>
+                </footer>
+                
+                <footer invisible="state == 'complete'">
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Pricing Tier Wizard Line List View -->
+    <record id="view_pricing_tier_wizard_line_list" model="ir.ui.view">
+        <field name="name">ams.pricing.tier.wizard.line.list</field>
+        <field name="model">ams.pricing.tier.wizard.line</field>
+        <field name="arch" type="xml">
+            <list string="Pricing Preview" editable="bottom">
+                <field name="subscription_product_id" readonly="1"/>
+                <field name="member_type_id" readonly="1"/>
+                <field name="current_price" widget="monetary" readonly="1"/>
+                <field name="new_price" widget="monetary"/>
+                <field name="price_change" widget="monetary" readonly="1"/>
+                <field name="percentage_change" widget="percentage" readonly="1"/>
+                <field name="action" readonly="1"/>
+                <field name="has_existing" readonly="1"/>
+                <field name="currency_id" invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Bulk Create Pricing Tiers Action -->
+    <record id="action_pricing_tier_bulk_create" model="ir.actions.act_window">
+        <field name="name">Bulk Create Pricing Tiers</field>
+        <field name="res_model">ams.pricing.tier.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_wizard_type': 'bulk_create'}</field>
+    </record>
+
+    <!-- Bulk Update Pricing Tiers Action -->
+    <record id="action_pricing_tier_bulk_update" model="ir.actions.act_window">
+        <field name="name">Bulk Update Pricing Tiers</field>
+        <field name="res_model">ams.pricing.tier.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_wizard_type': 'bulk_update'}</field>
+    </record>
+
+    <!-- Copy Pricing Action -->
+    <record id="action_pricing_tier_copy" model="ir.actions.act_window">
+        <field name="name">Copy Pricing from Another Subscription</field>
+        <field name="res_model">ams.pricing.tier.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_wizard_type': 'copy_pricing'}</field>
+    </record>
+
+    <!-- Percentage Adjustment Action -->
+    <record id="action_pricing_tier_percentage_adjustment" model="ir.actions.act_window">
+        <field name="name">Percentage Price Adjustment</field>
+        <field name="res_model">ams.pricing.tier.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_wizard_type': 'percentage_adjustment'}</field>
+    </record>
+
+    <!-- Apply Template Action -->
+    <record id="action_pricing_tier_apply_template" model="ir.actions.act_window">
+        <field name="name">Apply Pricing Template</field>
+        <field name="res_model">ams.pricing.tier.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_wizard_type': 'template_application'}</field>
+    </record>
+
+    <!-- Menu items for pricing tier wizards -->
+    <menuitem id="menu_pricing_tier_tools" 
+              name="Pricing Tools" 
+              parent="ams_subscription_management.menu_subscription_pricing_tiers"
+              sequence="50"/>
+
+    <menuitem id="menu_pricing_tier_bulk_create" 
+              name="Bulk Create Tiers" 
+              parent="menu_pricing_tier_tools"
+              action="action_pricing_tier_bulk_create" 
+              sequence="10"/>
+
+    <menuitem id="menu_pricing_tier_bulk_update" 
+              name="Bulk Update Tiers" 
+              parent="menu_pricing_tier_tools"
+              action="action_pricing_tier_bulk_update" 
+              sequence="20"/>
+
+    <menuitem id="menu_pricing_tier_copy" 
+              name="Copy Pricing" 
+              parent="menu_pricing_tier_tools"
+              action="action_pricing_tier_copy" 
+              sequence="30"/>
+
+    <menuitem id="menu_pricing_tier_percentage" 
+              name="Percentage Adjustment" 
+              parent="menu_pricing_tier_tools"
+              action="action_pricing_tier_percentage_adjustment" 
+              sequence="40"/>
+
+    <menuitem id="menu_pricing_tier_template" 
+              name="Apply Template" 
+              parent="menu_pricing_tier_tools"
+              action="action_pricing_tier_apply_template" 
+              sequence="50"/>
+
+</odoo>

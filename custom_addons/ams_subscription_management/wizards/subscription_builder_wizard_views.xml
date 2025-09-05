@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Subscription Builder Wizard Form View -->
+    <record id="view_subscription_builder_wizard_form" model="ir.ui.view">
+        <field name="name">ams.subscription.builder.wizard.form</field>
+        <field name="model">ams.subscription.builder.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Create Subscription Product">
+                <header>
+                    <!-- Step indicators -->
+                    <div class="o_wizard_step_indicators">
+                        <div t-attf-class="o_wizard_step #{'o_wizard_step_current' if state == 'basic' else ''}">
+                            <span class="o_wizard_step_number">1</span>
+                            <span class="o_wizard_step_title">Basic Information</span>
+                        </div>
+                        <div t-attf-class="o_wizard_step #{'o_wizard_step_current' if state == 'configuration' else ''}">
+                            <span class="o_wizard_step_number">2</span>
+                            <span class="o_wizard_step_title">Configuration</span>
+                        </div>
+                        <div t-attf-class="o_wizard_step #{'o_wizard_step_current' if state == 'pricing' else ''}">
+                            <span class="o_wizard_step_number">3</span>
+                            <span class="o_wizard_step_title">Pricing Setup</span>
+                        </div>
+                        <div t-attf-class="o_wizard_step #{'o_wizard_step_current' if state == 'review' else ''}">
+                            <span class="o_wizard_step_number">4</span>
+                            <span class="o_wizard_step_title">Review</span>
+                        </div>
+                        <div t-attf-class="o_wizard_step #{'o_wizard_step_current' if state == 'complete' else ''}">
+                            <span class="o_wizard_step_number">5</span>
+                            <span class="o_wizard_step_title">Complete</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation buttons -->
+                    <button string="Previous" name="action_previous_step" type="object" 
+                            class="btn-secondary" invisible="state in ['basic', 'complete']"/>
+                    <button string="Next" name="action_next_step" type="object" 
+                            class="btn-primary" invisible="state in ['complete']"/>
+                    <button string="Skip Step" name="action_skip_step" type="object" 
+                            class="btn-link" invisible="state in ['basic', 'review', 'complete']"/>
+                </header>
+                
+                <sheet>
+                    <!-- Step 1: Basic Information -->
+                    <div invisible="state != 'basic'">
+                        <div class="oe_title">
+                            <h1>Basic Information</h1>
+                            <p>Define the basic properties of your subscription product.</p>
+                        </div>
+                        
+                        <group>
+                            <group string="Product Selection">
+                                <field name="create_new_product"/>
+                                <field name="product_id" invisible="create_new_product" 
+                                       options="{'no_create': True}"/>
+                            </group>
+                            <group string="Template" invisible="not create_new_product">
+                                <field name="subscription_template"/>
+                            </group>
+                        </group>
+                        
+                        <group invisible="not create_new_product">
+                            <group string="Product Information">
+                                <field name="product_name" required="create_new_product"/>
+                                <field name="product_code"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <group string="Subscription Classification">
+                                <field name="subscription_scope"/>
+                                <field name="product_type"/>
+                            </group>
+                        </group>
+                    </div>
+                    
+                    <!-- Step 2: Configuration -->
+                    <div invisible="state != 'configuration'">
+                        <div class="oe_title">
+                            <h1>Subscription Configuration</h1>
+                            <p>Configure duration, pricing, and subscription features.</p>
+                        </div>
+                        
+                        <group>
+                            <group string="Duration &amp; Pricing">
+                                <label for="default_duration" string="Duration"/>
+                                <div class="o_row">
+                                    <field name="default_duration"/>
+                                    <field name="duration_unit"/>
+                                </div>
+                                <field name="duration_display" readonly="1"/>
+                                <field name="currency_id"/>
+                                <field name="default_price" widget="monetary"/>
+                            </group>
+                            <group string="Subscription Features">
+                                <field name="is_renewable"/>
+                                <field name="auto_renewal_enabled" invisible="not is_renewable"/>
+                                <field name="requires_approval"/>
+                                <field name="member_only"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Enterprise Features" invisible="subscription_scope != 'enterprise'">
+                            <group>
+                                <field name="default_seat_count"/>
+                                <field name="allow_seat_purchase"/>
+                            </group>
+                        </group>
+                    </div>
+                    
+                    <!-- Step 3: Pricing Setup -->
+                    <div invisible="state != 'pricing'">
+                        <div class="oe_title">
+                            <h1>Member Pricing Setup</h1>
+                            <p>Configure special pricing for different member types.</p>
+                        </div>
+                        
+                        <group>
+                            <group string="Pricing Strategy">
+                                <field name="setup_member_pricing"/>
+                                <field name="pricing_strategy" invisible="not setup_member_pricing"/>
+                            </group>
+                        </group>
+                        
+                        <group invisible="not setup_member_pricing or pricing_strategy != 'percentage'">
+                            <group string="Member Discounts &amp; Markups">
+                                <field name="student_discount" widget="percentage"/>
+                                <field name="retired_discount" widget="percentage"/>
+                                <field name="corporate_markup" widget="percentage"/>
+                            </group>
+                            <group string="Estimated Pricing">
+                                <field name="estimated_student_price" widget="monetary" readonly="1"/>
+                                <field name="estimated_retired_price" widget="monetary" readonly="1"/>
+                                <field name="estimated_corporate_price" widget="monetary" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <div class="alert alert-info" invisible="not setup_member_pricing">
+                            <h6><i class="fa fa-info-circle"/> Member Pricing Information</h6>
+                            <p>
+                                Member pricing allows you to offer different rates based on member types.
+                                Common examples include student discounts, retired member rates, or corporate premiums.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 4: Review -->
+                    <div invisible="state != 'review'">
+                        <div class="oe_title">
+                            <h1>Review &amp; Create</h1>
+                            <p>Review your subscription configuration before creating.</p>
+                        </div>
+                        
+                        <group>
+                            <group string="Product Information">
+                                <field name="product_name" readonly="1"/>
+                                <field name="product_code" readonly="1"/>
+                                <field name="subscription_scope" readonly="1"/>
+                                <field name="product_type" readonly="1"/>
+                            </group>
+                            <group string="Configuration">
+                                <field name="duration_display" readonly="1"/>
+                                <field name="default_price" widget="monetary" readonly="1"/>
+                                <field name="is_renewable" readonly="1"/>
+                                <field name="auto_renewal_enabled" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Access Control">
+                            <group>
+                                <field name="requires_approval" readonly="1"/>
+                                <field name="member_only" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Enterprise Configuration" invisible="subscription_scope != 'enterprise'">
+                            <group>
+                                <field name="default_seat_count" readonly="1"/>
+                                <field name="allow_seat_purchase" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Member Pricing" invisible="not setup_member_pricing">
+                            <group>
+                                <field name="pricing_strategy" readonly="1"/>
+                                <field name="student_discount" widget="percentage" readonly="1"/>
+                                <field name="retired_discount" widget="percentage" readonly="1"/>
+                                <field name="corporate_markup" widget="percentage" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <div class="alert alert-success">
+                            <h6><i class="fa fa-check"/> Ready to Create</h6>
+                            <p>Click "Next" to create your subscription product with the configuration above.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 5: Complete -->
+                    <div invisible="state != 'complete'">
+                        <div class="oe_title">
+                            <h1><i class="fa fa-check text-success"/> Subscription Created Successfully!</h1>
+                            <p>Your subscription product has been created and configured.</p>
+                        </div>
+                        
+                        <group string="Created Items">
+                            <field name="created_product_id" readonly="1"/>
+                            <field name="created_subscription_id" readonly="1"/>
+                        </group>
+                        
+                        <div class="alert alert-success mt16">
+                            <h6><i class="fa fa-check"/> What was created:</h6>
+                            <ul>
+                                <li>Base product record with subscription features enabled</li>
+                                <li>Subscription configuration with your specified settings</li>
+                                <li invisible="not setup_member_pricing">Member-specific pricing tiers for different member types</li>
+                                <li invisible="subscription_scope != 'enterprise'">Enterprise subscription with seat management</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mt16">
+                            <button name="action_view_created_product" string="View Product" 
+                                    type="object" class="btn-primary" 
+                                    invisible="not created_product_id"/>
+                            <button name="action_view_created_subscription" string="View Subscription" 
+                                    type="object" class="btn-secondary ml8" 
+                                    invisible="not created_subscription_id"/>
+                            <button name="action_create_another" string="Create Another" 
+                                    type="object" class="btn-link ml8"/>
+                        </div>
+                    </div>
+                </sheet>
+                
+                <footer invisible="state != 'complete'">
+                    <button string="Close" special="cancel" class="btn-primary"/>
+                </footer>
+                
+                <footer invisible="state == 'complete'">
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Subscription Builder Wizard Action -->
+    <record id="action_subscription_builder_wizard" model="ir.actions.act_window">
+        <field name="name">Create Subscription Product</field>
+        <field name="res_model">ams.subscription.builder.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{}</field>
+    </record>
+
+    <!-- Action to launch wizard from subscription products -->
+    <record id="action_launch_subscription_builder" model="ir.actions.server">
+        <field name="name">Create Subscription Product</field>
+        <field name="model_id" ref="model_ams_subscription_product"/>
+        <field name="state">code</field>
+        <field name="code">
+action = {
+    'name': 'Create Subscription Product',
+    'type': 'ir.actions.act_window',
+    'res_model': 'ams.subscription.builder.wizard',
+    'view_mode': 'form',
+    'target': 'new',
+    'context': {}
+}
+        </field>
+    </record>
+
+    <!-- Menuitem for wizard -->
+    <menuitem id="menu_subscription_builder_wizard" 
+              name="Create Subscription" 
+              parent="ams_subscription_management.menu_subscription_product_management"
+              action="action_subscription_builder_wizard" 
+              sequence="5"/>
+
+    <!-- Quick action from Products menu -->
+    <menuitem id="menu_subscription_builder_quick" 
+              name="New Subscription" 
+              parent="ams_products_base.menu_ams_products_main"
+              action="action_subscription_builder_wizard" 
+              sequence="5"/>
+
+</odoo>
