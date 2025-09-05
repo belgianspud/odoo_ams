@@ -1,6 +1,9 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 from dateutil.relativedelta import relativedelta
+import logging
+
+_logger = logging.getLogger(__name__)
 
 class AMSBillingPeriod(models.Model):
     """Billing period definitions for subscription management."""
@@ -158,57 +161,82 @@ class AMSBillingPeriod(models.Model):
     def _compute_period_display(self):
         """Generate human-readable period display."""
         for record in self:
-            if record.period_value and record.period_unit:
-                unit_name = dict(record._fields['period_unit'].selection)[record.period_unit]
-                if record.period_value == 1:
-                    # Singular form
-                    unit_name = unit_name.rstrip('s')
-                record.period_display = f"{record.period_value} {unit_name}"
-            else:
-                record.period_display = "Not configured"
+            try:
+                if record.period_value and record.period_unit:
+                    unit_name = dict(record._fields['period_unit'].selection)[record.period_unit]
+                    if record.period_value == 1:
+                        # Singular form
+                        unit_name = unit_name.rstrip('s')
+                    record.period_display = f"{record.period_value} {unit_name}"
+                else:
+                    record.period_display = "Not configured"
+            except Exception as e:
+                _logger.warning(f"Error computing period display for record {record.id}: {e}")
+                record.period_display = "Error"
 
     @api.depends('period_value', 'period_unit')
     def _compute_total_days(self):
         """Calculate approximate total days for comparison purposes."""
         for record in self:
-            if record.period_value and record.period_unit:
-                # Approximate conversion to days
-                multipliers = {
-                    'days': 1,
-                    'weeks': 7,
-                    'months': 30,  # Approximate
-                    'years': 365,  # Approximate
-                }
-                multiplier = multipliers.get(record.period_unit, 1)
-                record.total_days = record.period_value * multiplier
-            else:
+            try:
+                if record.period_value and record.period_unit:
+                    # Approximate conversion to days
+                    multipliers = {
+                        'days': 1,
+                        'weeks': 7,
+                        'months': 30,  # Approximate
+                        'years': 365,  # Approximate
+                    }
+                    multiplier = multipliers.get(record.period_unit, 1)
+                    record.total_days = record.period_value * multiplier
+                else:
+                    record.total_days = 0
+            except Exception as e:
+                _logger.warning(f"Error computing total days for record {record.id}: {e}")
                 record.total_days = 0
 
     @api.depends('total_days')
     def _compute_period_classification(self):
         """Classify periods as short-term or long-term."""
         for record in self:
-            record.is_short_term = record.total_days <= 90  # 3 months or less
-            record.is_long_term = record.total_days >= 365  # 12 months or more
+            try:
+                record.is_short_term = record.total_days <= 90  # 3 months or less
+                record.is_long_term = record.total_days >= 365  # 12 months or more
+            except Exception as e:
+                _logger.warning(f"Error computing period classification for record {record.id}: {e}")
+                record.is_short_term = False
+                record.is_long_term = False
 
     def _compute_subscription_count(self):
         """Count subscription products using this billing period."""
         for record in self:
-            # This would be enhanced when subscription instances are implemented
-            # For now, we'll count based on duration matching
-            matching_subscriptions = self.env['ams.subscription.product'].search([
-                ('default_duration', '=', record.period_value),
-                ('duration_unit', '=', record.period_unit)
-            ])
-            record.subscription_count = len(matching_subscriptions)
+            try:
+                # This would be enhanced when subscription instances are implemented
+                # For now, we'll count based on duration matching
+                if self.env.get('ams.subscription.product'):
+                    matching_subscriptions = self.env['ams.subscription.product'].search([
+                        ('default_duration', '=', record.period_value),
+                        ('duration_unit', '=', record.period_unit)
+                    ])
+                    record.subscription_count = len(matching_subscriptions)
+                else:
+                    record.subscription_count = 0
+            except Exception as e:
+                _logger.warning(f"Error computing subscription count for record {record.id}: {e}")
+                record.subscription_count = 0
 
     def _compute_renewal_statistics(self):
         """Compute renewal and churn statistics."""
         for record in self:
-            # Placeholder for future implementation with actual subscription data
-            # This would integrate with ams_participation module for real statistics
-            record.renewal_rate = 0.0
-            record.churn_rate = 0.0
+            try:
+                # Placeholder for future implementation with actual subscription data
+                # This would integrate with ams_participation module for real statistics
+                record.renewal_rate = 0.0
+                record.churn_rate = 0.0
+            except Exception as e:
+                _logger.warning(f"Error computing renewal statistics for record {record.id}: {e}")
+                record.renewal_rate = 0.0
+                record.churn_rate = 0.0
 
     # ==========================================
     # VALIDATION CONSTRAINTS
@@ -218,40 +246,44 @@ class AMSBillingPeriod(models.Model):
     def _validate_renewal_notice(self):
         """Validate renewal notice period is reasonable."""
         for record in self:
-            if record.renewal_notice_days and record.total_days:
-                if record.renewal_notice_days > record.total_days:
-                    raise ValidationError(
-                        f"Renewal notice period ({record.renewal_notice_days} days) "
-                        f"cannot exceed total period length ({record.total_days} days)."
-                    )
-                
-                # Warning for very long notice periods
-                if record.renewal_notice_days > record.total_days * 0.5:
-                    # This is a warning, not an error
-                    pass
+            try:
+                if record.renewal_notice_days and record.total_days:
+                    if record.renewal_notice_days > record.total_days:
+                        raise ValidationError(
+                            f"Renewal notice period ({record.renewal_notice_days} days) "
+                            f"cannot exceed total period length ({record.total_days} days)."
+                        )
+            except Exception as e:
+                _logger.warning(f"Error validating renewal notice for record {record.id}: {e}")
 
     @api.constrains('early_renewal_days', 'total_days')
     def _validate_early_renewal(self):
         """Validate early renewal window is reasonable."""
         for record in self:
-            if record.early_renewal_days and record.total_days:
-                if record.early_renewal_days > record.total_days:
-                    raise ValidationError(
-                        f"Early renewal window ({record.early_renewal_days} days) "
-                        f"cannot exceed total period length ({record.total_days} days)."
-                    )
+            try:
+                if record.early_renewal_days and record.total_days:
+                    if record.early_renewal_days > record.total_days:
+                        raise ValidationError(
+                            f"Early renewal window ({record.early_renewal_days} days) "
+                            f"cannot exceed total period length ({record.total_days} days)."
+                        )
+            except Exception as e:
+                _logger.warning(f"Error validating early renewal for record {record.id}: {e}")
 
     @api.constrains('grace_days', 'total_days')
     def _validate_grace_period(self):
         """Validate grace period is reasonable."""
         for record in self:
-            if record.grace_days and record.total_days:
-                # Grace period shouldn't be longer than the billing period itself
-                if record.grace_days > record.total_days:
-                    raise ValidationError(
-                        f"Grace period ({record.grace_days} days) should not exceed "
-                        f"the billing period length ({record.total_days} days)."
-                    )
+            try:
+                if record.grace_days and record.total_days:
+                    # Grace period shouldn't be longer than the billing period itself
+                    if record.grace_days > record.total_days:
+                        raise ValidationError(
+                            f"Grace period ({record.grace_days} days) should not exceed "
+                            f"the billing period length ({record.total_days} days)."
+                        )
+            except Exception as e:
+                _logger.warning(f"Error validating grace period for record {record.id}: {e}")
 
     # ==========================================
     # BUSINESS LOGIC METHODS
@@ -268,16 +300,20 @@ class AMSBillingPeriod(models.Model):
         """
         self.ensure_one()
         
-        if self.period_unit == 'days':
-            return start_date + fields.timedelta(days=self.period_value)
-        elif self.period_unit == 'weeks':
-            return start_date + fields.timedelta(weeks=self.period_value)
-        elif self.period_unit == 'months':
-            # Use dateutil for month arithmetic
-            return start_date + relativedelta(months=self.period_value)
-        elif self.period_unit == 'years':
-            return start_date + relativedelta(years=self.period_value)
-        return start_date
+        try:
+            if self.period_unit == 'days':
+                return start_date + fields.timedelta(days=self.period_value)
+            elif self.period_unit == 'weeks':
+                return start_date + fields.timedelta(weeks=self.period_value)
+            elif self.period_unit == 'months':
+                # Use dateutil for month arithmetic
+                return start_date + relativedelta(months=self.period_value)
+            elif self.period_unit == 'years':
+                return start_date + relativedelta(years=self.period_value)
+            return start_date
+        except Exception as e:
+            _logger.error(f"Error calculating next billing date: {e}")
+            return start_date
 
     def calculate_renewal_notice_date(self, expiry_date):
         """Calculate when to send renewal notices.
@@ -290,8 +326,12 @@ class AMSBillingPeriod(models.Model):
         """
         self.ensure_one()
         
-        notice_days = self.renewal_notice_days or 30
-        return expiry_date - fields.timedelta(days=notice_days)
+        try:
+            notice_days = self.renewal_notice_days or 30
+            return expiry_date - fields.timedelta(days=notice_days)
+        except Exception as e:
+            _logger.error(f"Error calculating renewal notice date: {e}")
+            return expiry_date
 
     def calculate_grace_period_end(self, expiry_date):
         """Calculate grace period end date.
@@ -304,7 +344,11 @@ class AMSBillingPeriod(models.Model):
         """
         self.ensure_one()
         
-        return expiry_date + fields.timedelta(days=self.grace_days)
+        try:
+            return expiry_date + fields.timedelta(days=self.grace_days)
+        except Exception as e:
+            _logger.error(f"Error calculating grace period end: {e}")
+            return expiry_date
 
     def is_suitable_for_duration(self, duration, unit):
         """Check if this billing period matches given duration.
@@ -328,26 +372,30 @@ class AMSBillingPeriod(models.Model):
         """
         self.ensure_one()
         
-        return {
-            'id': self.id,
-            'name': self.name,
-            'code': self.code,
-            'period': {
-                'value': self.period_value,
-                'unit': self.period_unit,
-                'display': self.period_display,
-                'total_days': self.total_days,
-            },
-            'configuration': {
-                'grace_days': self.grace_days,
-                'renewal_notice_days': self.renewal_notice_days,
-                'early_renewal_days': self.early_renewal_days,
-            },
-            'classification': {
-                'is_short_term': self.is_short_term,
-                'is_long_term': self.is_long_term,
+        try:
+            return {
+                'id': self.id,
+                'name': self.name,
+                'code': self.code,
+                'period': {
+                    'value': self.period_value,
+                    'unit': self.period_unit,
+                    'display': self.period_display,
+                    'total_days': self.total_days,
+                },
+                'configuration': {
+                    'grace_days': self.grace_days,
+                    'renewal_notice_days': self.renewal_notice_days,
+                    'early_renewal_days': self.early_renewal_days,
+                },
+                'classification': {
+                    'is_short_term': self.is_short_term,
+                    'is_long_term': self.is_long_term,
+                }
             }
-        }
+        except Exception as e:
+            _logger.error(f"Error getting billing configuration: {e}")
+            return {}
 
     # ==========================================
     # UTILITY METHODS
@@ -360,8 +408,12 @@ class AMSBillingPeriod(models.Model):
         Returns:
             recordset: Standard billing periods
         """
-        standard_codes = ['monthly', 'quarterly', 'annual']
-        return self.search([('code', 'in', standard_codes), ('active', '=', True)])
+        try:
+            standard_codes = ['monthly', 'quarterly', 'annual']
+            return self.search([('code', 'in', standard_codes), ('active', '=', True)])
+        except Exception as e:
+            _logger.error(f"Error getting standard periods: {e}")
+            return self.browse()
 
     @api.model
     def get_period_for_duration(self, duration, unit):
@@ -374,11 +426,15 @@ class AMSBillingPeriod(models.Model):
         Returns:
             recordset: Matching period (empty if none found)
         """
-        return self.search([
-            ('period_value', '=', duration),
-            ('period_unit', '=', unit),
-            ('active', '=', True)
-        ], limit=1)
+        try:
+            return self.search([
+                ('period_value', '=', duration),
+                ('period_unit', '=', unit),
+                ('active', '=', True)
+            ], limit=1)
+        except Exception as e:
+            _logger.error(f"Error finding period for duration: {e}")
+            return self.browse()
 
     @api.model
     def create_standard_periods(self):
@@ -437,11 +493,14 @@ class AMSBillingPeriod(models.Model):
         
         created_periods = self.env['ams.billing.period']
         
-        for period_data in standard_periods:
-            # Check if period already exists
-            existing = self.search([('code', '=', period_data['code'])])
-            if not existing:
-                created_periods |= self.create(period_data)
+        try:
+            for period_data in standard_periods:
+                # Check if period already exists
+                existing = self.search([('code', '=', period_data['code'])])
+                if not existing:
+                    created_periods |= self.create(period_data)
+        except Exception as e:
+            _logger.error(f"Error creating standard periods: {e}")
         
         return created_periods
 
@@ -524,11 +583,15 @@ class AMSBillingPeriod(models.Model):
         """Custom display name with period information."""
         result = []
         for record in self:
-            if record.period_display:
-                name = f"{record.name} ({record.period_display})"
-            else:
-                name = record.name
-            result.append((record.id, name))
+            try:
+                if record.period_display:
+                    name = f"{record.name} ({record.period_display})"
+                else:
+                    name = record.name
+                result.append((record.id, name))
+            except Exception as e:
+                _logger.warning(f"Error in name_get for record {record.id}: {e}")
+                result.append((record.id, record.name or 'Billing Period'))
         return result
 
     @api.model

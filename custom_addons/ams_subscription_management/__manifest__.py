@@ -35,6 +35,9 @@ Business Functions:
 This module focuses exclusively on subscription product configuration and pricing
 strategies, leaving subscription lifecycle, billing, and portal services to other
 specialized AMS modules for clean separation of concerns.
+
+NOTE: This module currently operates in standalone mode. Full functionality requires
+ams_member_data and ams_products_base modules which will be installed separately.
     ''',
     'author': 'AMS Development Team',
     'website': 'https://www.example.com',
@@ -44,15 +47,15 @@ specialized AMS modules for clean separation of concerns.
         'product',
         'sale_management',
         'account',
-        'mail',  # Added for messaging support
-        'ams_member_data',
-        'ams_products_base',
+        'mail',
+        'ams_member_data',    # Member types and member management
+        'ams_products_base',  # Product extensions and base functionality
     ],
     'data': [
         # Security
         'security/ir.model.access.csv',
         
-        # Data
+        # Data - Basic billing periods only until dependencies available
         'data/billing_periods_data.xml',
         'data/subscription_types_data.xml',
         
@@ -71,4 +74,21 @@ specialized AMS modules for clean separation of concerns.
     'auto_install': False,
     'application': True,
     'sequence': 9,  # Layer 2 - Core Business Entities, after ams_products_base (8)
+    
+    # Development and compatibility information
+    'external_dependencies': {
+        'python': ['dateutil'],
+    },
+    
+    # Module compatibility and requirements
+    'depends_if_installed': [
+        'ams_member_data',
+        'ams_products_base',
+    ],
+    
+    # Post-init hook to handle missing dependencies gracefully
+    'post_init_hook': 'post_init_hook',
+    
+    # Module lifecycle hooks
+    'pre_init_hook': 'pre_init_hook',
 }

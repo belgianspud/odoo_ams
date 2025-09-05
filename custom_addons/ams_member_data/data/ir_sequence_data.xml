@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
+
         <!-- Member ID Sequence -->
-        <record id="sequence_ams_member_id" model="ir.sequence">
+        <record id="seq_member_id" model="ir.sequence">
             <field name="name">AMS Member ID</field>
             <field name="code">ams.member.id</field>
             <field name="prefix">M</field>
@@ -10,7 +11,8 @@
             <field name="number_next">1</field>
             <field name="number_increment">1</field>
             <field name="implementation">standard</field>
-            <field name="active">True</field>
+            <field name="company_id" eval="False"/>
         </record>
+
     </data>
 </odoo>

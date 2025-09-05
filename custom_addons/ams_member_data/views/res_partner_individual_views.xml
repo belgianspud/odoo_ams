@@ -1,107 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Individual Member Form View Extension -->
+
+    <!-- Individual Member Form View -->
     <record id="view_partner_individual_form" model="ir.ui.view">
         <field name="name">res.partner.individual.form</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
             
-            <!-- Add individual member stat button -->
-            <xpath expr="//sheet/div[@class='oe_button_box']" position="inside">
-                <button class="oe_stat_button" type="object" name="action_view_participations"
-                        invisible="not member_id or is_company" icon="fa-id-card">
-                    <div class="o_field_widget o_stat_info">
-                        <span class="o_stat_value" invisible="not is_member">Active</span>
-                        <span class="o_stat_value" invisible="is_member">Inactive</span>
-                        <span class="o_stat_text">Member</span>
-                    </div>
-                </button>
-            </xpath>
+            <!-- Add Member ID after name -->
+            <field name="name" position="after">
+                <field name="member_id" readonly="1" attrs="{'invisible': [('is_company', '=', True)]}"/>
+            </field>
 
             <!-- Replace name field with name components for individuals -->
-            <xpath expr="//field[@name='name']" position="replace">
-                <div class="o_row" invisible="is_company or not member_type_id or not member_type_id.is_individual">
-                    <field name="first_name" placeholder="First Name"/>
-                    <field name="middle_name" placeholder="Middle"/>
-                    <field name="last_name" placeholder="Last Name"/>
-                    <field name="suffix" placeholder="Jr/Sr"/>
-                </div>
-                <field name="name" placeholder="Name" 
-                       invisible="not is_company and member_type_id and member_type_id.is_individual"/>
-            </xpath>
-
-            <!-- Add member type and status for individuals -->
-            <xpath expr="//field[@name='category_id']" position="after">
-                <field name="member_type_id" invisible="is_company"/>
-                <field name="member_status_id" invisible="not member_type_id or is_company"/>
-                <field name="member_id" invisible="not member_id"/>
-                <field name="nickname" placeholder="Preferred Name" invisible="is_company or not member_type_id or not member_type_id.is_individual"/>
-            </xpath>
-
-            <!-- Extend contact information -->
-            <xpath expr="//field[@name='mobile']" position="after">
-                <field name="business_phone" invisible="is_company or not member_type_id or not member_type_id.is_individual"/>
-                <field name="mobile_phone" invisible="is_company or not member_type_id or not member_type_id.is_individual"/>
-                <field name="secondary_email" invisible="is_company or not member_type_id or not member_type_id.is_individual"/>
-            </xpath>
-
-            <!-- Add membership notebook page -->
-            <xpath expr="//notebook" position="inside">
-                <page string="Membership" invisible="not member_type_id or is_company">
+            <field name="name" position="attributes">
+                <attribute name="attrs">{'invisible': [('is_company', '=', False)]}</attribute>
+            </field>
+            
+            <field name="name" position="before">
+                <group string="Name" attrs="{'invisible': [('is_company', '=', True)]}">
                     <group>
-                        <group string="Membership Information">
-                            <field name="original_join_date"/>
-                            <field name="paid_through_date"/>
-                            <field name="current_status"/>
-                            <field name="primary_membership_id"/>
-                        </group>
-                        <group string="Demographics" invisible="is_company or not member_type_id or not member_type_id.is_individual">
-                            <field name="gender"/>
-                            <field name="date_of_birth"/>
-                        </group>
+                        <field name="first_name" attrs="{'required': [('is_company', '=', False)]}"/>
+                        <field name="last_name" attrs="{'required': [('is_company', '=', False)]}"/>
                     </group>
-                    <group string="Legacy Information" invisible="not legacy_contact_id">
-                        <field name="legacy_contact_id"/>
-                    </group>
-                </page>
-            </xpath>
-
-            <!-- Add addresses notebook page -->
-            <xpath expr="//notebook" position="inside">
-                <page string="Addresses" invisible="is_company or not member_type_id or not member_type_id.is_individual">
                     <group>
-                        <group string="Primary Address">
-                            <field name="primary_address_type"/>
-                            <field name="street" nolabel="1"/>
-                            <field name="street2" nolabel="1"/>
-                            <div class="o_address_format">
-                                <field name="city" placeholder="City" style="width: 40%"/>
-                                <field name="state_id" class="o_address_state" placeholder="State" style="width: 24%" options='{"no_open": True}' context="{'country_id': country_id, 'default_country_id': country_id, 'zip': zip}"/>
-                                <field name="zip" placeholder="ZIP" style="width: 24%"/>
-                            </div>
-                            <field name="country_id" placeholder="Country" options='{"no_open": True, "no_create": True}'/>
-                        </group>
-                        <group string="Secondary Address">
+                        <field name="middle_name"/>
+                        <field name="suffix"/>
+                        <field name="nickname"/>
+                    </group>
+                </group>
+            </field>
+
+            <!-- Add demographics section -->
+            <field name="category_id" position="after">
+                <group string="Demographics" attrs="{'invisible': [('is_company', '=', True)]}">
+                    <group>
+                        <field name="gender"/>
+                        <field name="date_of_birth"/>
+                    </group>
+                </group>
+            </field>
+
+            <!-- Enhanced contact information -->
+            <field name="phone" position="after">
+                <field name="business_phone" attrs="{'invisible': [('is_company', '=', True)]}"/>
+                <field name="mobile_phone" attrs="{'invisible': [('is_company', '=', True)]}"/>
+            </field>
+
+            <field name="email" position="after">
+                <field name="secondary_email" attrs="{'invisible': [('is_company', '=', True)]}"/>
+            </field>
+
+            <!-- Address type for primary address -->
+            <field name="street" position="before">
+                <field name="primary_address_type" attrs="{'invisible': [('is_company', '=', True)]}"/>
+            </field>
+
+            <!-- Secondary address section -->
+            <xpath expr="//page[@name='contact_addresses']" position="after">
+                <page string="Secondary Address" attrs="{'invisible': [('is_company', '=', True)]}">
+                    <group>
+                        <group string="Secondary Address Details">
                             <field name="secondary_address_type"/>
-                            <field name="secondary_address_line1" placeholder="Address Line 1"/>
-                            <field name="secondary_address_line2" placeholder="Address Line 2"/>
-                            <div class="o_address_format">
-                                <field name="secondary_address_city" placeholder="City" style="width: 40%"/>
-                                <field name="secondary_address_state_id" class="o_address_state" placeholder="State" style="width: 24%" options='{"no_open": True}' context="{'country_id': secondary_address_country_id}"/>
-                                <field name="secondary_address_zip" placeholder="ZIP" style="width: 24%"/>
-                            </div>
-                            <field name="secondary_address_country_id" placeholder="Country" options='{"no_open": True, "no_create": True}'/>
+                            <field name="secondary_address_line1"/>
+                            <field name="secondary_address_line2"/>
+                            <field name="secondary_address_city"/>
+                            <field name="secondary_address_state_id"/>
+                            <field name="secondary_address_zip"/>
+                            <field name="secondary_address_country_id"/>
+                        </group>
+                        <group string="Formatted Address">
+                            <field name="formatted_secondary_address" readonly="1"/>
                         </group>
                     </group>
                 </page>
             </xpath>
 
-            <!-- Add portal information page -->
+            <!-- System information tab -->
             <xpath expr="//notebook" position="inside">
-                <page string="Portal Access" invisible="not member_type_id or is_company" groups="base.group_system">
+                <page string="System Information" groups="base.group_system">
                     <group>
-                        <field name="portal_id"/>
+                        <group string="Integration">
+                            <field name="legacy_contact_id"/>
+                            <field name="portal_id"/>
+                            <field name="original_join_date"/>
+                        </group>
+                        <group string="Computed Information">
+                            <field name="display_name"/>
+                            <field name="formatted_address"/>
+                        </group>
                     </group>
                 </page>
             </xpath>
@@ -109,101 +97,126 @@
         </field>
     </record>
 
-    <!-- Individual Member List View -->
-    <record id="view_partner_individual_list" model="ir.ui.view">
-        <field name="name">res.partner.individual.list</field>
+    <!-- Individual Members Tree View -->
+    <record id="view_partner_individual_tree" model="ir.ui.view">
+        <field name="name">res.partner.individual.tree</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
-            <list string="Individual Members">
+            <tree string="Individual Members">
                 <field name="member_id"/>
                 <field name="display_name"/>
                 <field name="email"/>
                 <field name="phone"/>
-                <field name="mobile"/>
-                <field name="member_type_id"/>
-                <field name="member_status_id"/>
-                <field name="is_member"/>
-                <field name="paid_through_date"/>
+                <field name="mobile_phone"/>
                 <field name="city"/>
+                <field name="state_id"/>
                 <field name="country_id"/>
-            </list>
+            </tree>
         </field>
     </record>
 
-    <!-- Individual Member Search View -->
+    <!-- Individual Members Kanban View -->
+    <record id="view_partner_individual_kanban" model="ir.ui.view">
+        <field name="name">res.partner.individual.kanban</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <kanban string="Individual Members">
+                <field name="member_id"/>
+                <field name="display_name"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="image_128"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_image">
+                                <img t-att-src="kanban_image('res.partner', 'image_128', record.id.raw_value)" alt="Contact"/>
+                            </div>
+                            <div class="oe_kanban_details">
+                                <strong class="o_kanban_record_title">
+                                    <field name="display_name"/>
+                                </strong>
+                                <div t-if="record.member_id.value">
+                                    <i class="fa fa-id-card" title="Member ID"/>
+                                    <field name="member_id"/>
+                                </div>
+                                <div t-if="record.email.value">
+                                    <i class="fa fa-envelope" title="Email"/>
+                                    <field name="email"/>
+                                </div>
+                                <div t-if="record.phone.value">
+                                    <i class="fa fa-phone" title="Phone"/>
+                                    <field name="phone"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Individual Members Search View -->
     <record id="view_partner_individual_search" model="ir.ui.view">
         <field name="name">res.partner.individual.search</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
-            <search string="Individual Members">
-                <field name="display_name"/>
+            <search string="Search Individual Members">
+                <field name="display_name" string="Name" 
+                       filter_domain="['|', '|', '|', ('display_name', 'ilike', self), ('first_name', 'ilike', self), ('last_name', 'ilike', self), ('nickname', 'ilike', self)]"/>
                 <field name="member_id"/>
                 <field name="email"/>
                 <field name="phone"/>
-                <field name="mobile"/>
-                <field name="first_name"/>
-                <field name="last_name"/>
-                <field name="member_type_id"/>
-                <field name="member_status_id"/>
+                <field name="mobile_phone"/>
                 <field name="city"/>
-
-                <filter string="Active Members" name="active_members" 
-                        domain="[('is_member', '=', True)]"/>
-                <filter string="Inactive Members" name="inactive_members" 
-                        domain="[('is_member', '=', False), ('member_id', '!=', False)]"/>
-                <filter string="Never Members" name="never_members" 
-                        domain="[('member_id', '=', False)]"/>
+                <field name="state_id"/>
+                <field name="country_id"/>
+                
+                <filter string="Has Member ID" name="has_member_id" domain="[('member_id', '!=', False)]"/>
+                <filter string="Missing Member ID" name="no_member_id" domain="[('member_id', '=', False)]"/>
+                <filter string="Has Email" name="has_email" domain="[('email', '!=', False)]"/>
+                <filter string="Has Phone" name="has_phone" domain="['|', ('phone', '!=', False), ('mobile_phone', '!=', False)]"/>
+                
                 <separator/>
-                <filter string="Recent Additions" name="recent" 
-                        domain="[('create_date', '&gt;=', (context_today() - relativedelta(days=30)))]"/>
-                <filter string="Has Member Type" name="has_member_type" 
-                        domain="[('member_type_id', '!=', False)]"/>
-
+                <filter string="Male" name="male" domain="[('gender', '=', 'male')]"/>
+                <filter string="Female" name="female" domain="[('gender', '=', 'female')]"/>
+                
+                <separator/>
+                <filter string="Individuals Only" name="individuals_only" domain="[('is_company', '=', False)]"/>
+                
                 <group expand="0" string="Group By">
-                    <filter string="Member Type" name="group_member_type" 
-                            context="{'group_by': 'member_type_id'}"/>
-                    <filter string="Member Status" name="group_member_status" 
-                            context="{'group_by': 'member_status_id'}"/>
-                    <filter string="Country" name="group_country" 
-                            context="{'group_by': 'country_id'}"/>
-                    <filter string="State" name="group_state" 
-                            context="{'group_by': 'state_id'}"/>
+                    <filter string="Gender" name="group_gender" context="{'group_by': 'gender'}"/>
+                    <filter string="State" name="group_state" context="{'group_by': 'state_id'}"/>
+                    <filter string="Country" name="group_country" context="{'group_by': 'country_id'}"/>
                 </group>
             </search>
         </field>
     </record>
 
-    <!-- Action for Individual Members -->
-    <record id="action_partner_individual_members" model="ir.actions.act_window">
+    <!-- Individual Members Action -->
+    <record id="action_partner_individual" model="ir.actions.act_window">
         <field name="name">Individual Members</field>
         <field name="res_model">res.partner</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('member_type_id.is_individual', '=', True)]</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('is_company', '=', False)]</field>
         <field name="context">{
-            'search_default_active_members': 1,
             'default_is_company': False,
-            'default_supplier_rank': 0,
-            'default_customer_rank': 1
+            'default_customer_rank': 1,
         }</field>
         <field name="view_ids" eval="[(5, 0, 0),
-                                      (0, 0, {'view_mode': 'list', 'view_id': ref('view_partner_individual_list')}),
-                                      (0, 0, {'view_mode': 'form', 'view_id': ref('base.view_partner_form')})]"/>
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_partner_individual_kanban')}),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_partner_individual_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_individual_form')})]"/>
+        <field name="search_view_id" ref="view_partner_individual_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Create your first individual member
+                Create your first individual member!
             </p>
             <p>
-                Individual members are people who belong to your association.
-                Track their membership status, contact information, and participation.
+                Individual members are people who have personal memberships with your association.
+                This includes professionals, students, retirees, and other individual participants.
             </p>
         </field>
     </record>
-
-    <!-- Individual Members menu under Members parent (provided by ams_system_config) -->
-    <menuitem id="menu_ams_individual_contacts" 
-          name="Individual Contacts" 
-          parent="ams_system_config.menu_ams_contacts"
-          action="action_partner_individual_members" 
-          sequence="10"/>
 
 </odoo>

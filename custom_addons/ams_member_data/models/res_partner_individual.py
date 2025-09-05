@@ -1,213 +1,131 @@
-import re
+# -*- coding: utf-8 -*-
+
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+import re
 
 
 class ResPartnerIndividual(models.Model):
-    """Extend res.partner with individual member specific fields."""
     _inherit = 'res.partner'
 
-    # ==========================================
-    # IDENTITY & DEMOGRAPHICS
-    # ==========================================
-    
+    # Identity & Demographics
     member_id = fields.Char(
-        string='Member ID',
+        string="Member ID", 
         readonly=True,
         copy=False,
-        index=True,
-        help='Auto-generated unique member identifier'
+        help="Unique member identifier auto-generated upon first save"
     )
-    
-    is_member = fields.Boolean(
-        string='Is Member',
-        compute='_compute_is_member',
-        store=True,
-        help='Current member status based on active participations'
-    )
-    
-    member_type_id = fields.Many2one(
-        'ams.member.type',
-        string='Member Type',
-        help='Member classification (Individual, Student, Retired, etc.)'
-    )
-    
-    member_status_id = fields.Many2one(
-        'ams.member.status', 
-        string='Member Status',
-        help='Current membership status'
-    )
-    
-    legacy_contact_id = fields.Char(
-        string='Legacy Contact ID',
-        help='Reference ID from legacy system imports'
-    )
-    
     first_name = fields.Char(
-        string='First Name',
-        help='Given name'
+        string="First Name",
+        help="Individual's first/given name"
     )
-    
     middle_name = fields.Char(
-        string='Middle Name',
-        help='Middle name or initial'
+        string="Middle Name",
+        help="Individual's middle name or initial"
     )
-    
     last_name = fields.Char(
-        string='Last Name',
-        help='Family/surname'
+        string="Last Name",
+        help="Individual's last/family name"
     )
-    
     suffix = fields.Char(
-        string='Suffix',
-        help='Name suffix (Jr, Sr, III, etc.)'
+        string="Suffix",
+        help="Name suffix (Jr., Sr., III, etc.)"
     )
-    
     nickname = fields.Char(
-        string='Nickname',
-        help='Preferred name for communications'
+        string="Nickname",
+        help="Preferred name for informal communications"
     )
-    
     gender = fields.Selection([
         ('male', 'Male'),
-        ('female', 'Female'), 
+        ('female', 'Female'),
         ('other', 'Other'),
         ('prefer_not_to_say', 'Prefer not to say')
-    ], string='Gender', help='Gender identification')
-    
+    ], string="Gender")
     date_of_birth = fields.Date(
-        string='Date of Birth',
-        help='Birth date for demographics and age calculations'
+        string="Date of Birth",
+        help="Individual's birth date for demographics and age verification"
     )
-    
-    # ==========================================
-    # MEMBERSHIP TRACKING
-    # ==========================================
-    
-    original_join_date = fields.Date(
-        string='Original Join Date',
-        help='Date of first membership (set once, never changed)'
-    )
-    
-    paid_through_date = fields.Date(
-        string='Paid Through Date',
-        compute='_compute_paid_through_date',
-        store=True,
-        help='Membership expiration based on current participation'
-    )
-    
-    primary_membership_id = fields.Many2one(
-        'ams.participation',
-        string='Primary Membership',
-        compute='_compute_primary_membership',
-        store=True,
-        help='Current active membership participation'
-    )
-    
-    # ==========================================
-    # ENHANCED CONTACT INFORMATION
-    # ==========================================
-    
+
+    # Contact Information Extensions
     business_phone = fields.Char(
-        string='Business Phone',
-        help='Work phone number (E.164 format preferred)'
+        string="Business Phone",
+        help="Primary business phone number"
     )
-    
     mobile_phone = fields.Char(
-        string='Mobile Phone',
-        help='Mobile phone number (E.164 format preferred)'
+        string="Mobile Phone", 
+        help="Mobile/cell phone number"
     )
-    
     secondary_email = fields.Char(
-        string='Secondary Email',
-        help='Additional email address'
+        string="Secondary Email",
+        help="Backup email address"
     )
-    
+
+    # Address Extensions
     primary_address_type = fields.Selection([
-        ('billing', 'Billing'),
-        ('shipping', 'Shipping'),
         ('residential', 'Residential'),
         ('business', 'Business'),
-        ('primary', 'Primary'),
-        ('other', 'Other')
-    ], string='Primary Address Type', default='primary')
+        ('billing', 'Billing'),
+        ('shipping', 'Shipping')
+    ], string="Primary Address Type", default='residential')
     
-    # Secondary Address Fields
-    secondary_address_line1 = fields.Char(
-        string='Secondary Address Line 1',
-        help='Alternative address line 1'
-    )
-    
-    secondary_address_line2 = fields.Char(
-        string='Secondary Address Line 2', 
-        help='Alternative address line 2'
-    )
-    
-    secondary_address_city = fields.Char(
-        string='Secondary City',
-        help='Alternative address city'
-    )
-    
+    secondary_address_line1 = fields.Char(string="Secondary Address Line 1")
+    secondary_address_line2 = fields.Char(string="Secondary Address Line 2")
+    secondary_address_city = fields.Char(string="Secondary City")
     secondary_address_state_id = fields.Many2one(
-        'res.country.state',
-        string='Secondary State',
-        help='Alternative address state/province'
+        'res.country.state', 
+        string="Secondary State"
     )
-    
-    secondary_address_zip = fields.Char(
-        string='Secondary ZIP',
-        help='Alternative address postal code'
-    )
-    
+    secondary_address_zip = fields.Char(string="Secondary ZIP")
     secondary_address_country_id = fields.Many2one(
-        'res.country',
-        string='Secondary Country',
-        help='Alternative address country'
+        'res.country', 
+        string="Secondary Country"
     )
-    
     secondary_address_type = fields.Selection([
-        ('billing', 'Billing'),
-        ('shipping', 'Shipping'), 
         ('residential', 'Residential'),
         ('business', 'Business'),
-        ('primary', 'Primary'),
-        ('other', 'Other')
-    ], string='Secondary Address Type')
-    
-    # ==========================================
-    # PORTAL & SYSTEM INTEGRATION
-    # ==========================================
-    
+        ('billing', 'Billing'),
+        ('shipping', 'Shipping')
+    ], string="Secondary Address Type", default='residential')
+
+    # System Fields
+    legacy_contact_id = fields.Char(
+        string="Legacy Contact ID",
+        help="Original contact ID from legacy system for data migration"
+    )
     portal_id = fields.Char(
-        string='Portal ID',
-        help='Portal access identifier'
+        string="Portal ID", 
+        readonly=True,
+        help="Portal user identifier"
     )
     
-    current_status = fields.Selection([
-        ('active', 'Active'),
-        ('inactive', 'Inactive'),
-        ('deceased', 'Deceased'),
-        ('never_member', 'Never Member')
-    ], string='Current Status', compute='_compute_current_status', store=True)
+    # Original join date - will be set by membership modules
+    original_join_date = fields.Date(
+        string="Original Join Date", 
+        readonly=True,
+        help="Date when member first joined the association"
+    )
 
-    # ==========================================
-    # SQL CONSTRAINTS
-    # ==========================================
+    # Computed Fields
+    display_name = fields.Char(
+        string="Display Name",
+        compute='_compute_display_name',
+        store=True
+    )
     
-    _sql_constraints = [
-        ('member_id_unique', 'UNIQUE(member_id)', 'Member ID must be unique.'),
-    ]
+    formatted_address = fields.Text(
+        string="Formatted Address",
+        compute='_compute_formatted_address'
+    )
+    
+    formatted_secondary_address = fields.Text(
+        string="Formatted Secondary Address", 
+        compute='_compute_formatted_secondary_address'
+    )
 
-    # ==========================================
-    # COMPUTED FIELDS & METHODS
-    # ==========================================
-
-    @api.depends('first_name', 'middle_name', 'last_name', 'suffix', 'member_type_id')
+    @api.depends('first_name', 'last_name', 'middle_name', 'suffix', 'name')
     def _compute_display_name(self):
-        """Override display name computation to use proper name components."""
+        """Compute display name from name components or fall back to name field"""
         for partner in self:
-            if partner.member_type_id and partner.member_type_id.is_individual:
-                # Build name from components for individuals
+            if partner.first_name or partner.last_name:
                 name_parts = []
                 if partner.first_name:
                     name_parts.append(partner.first_name)
@@ -217,225 +135,117 @@ class ResPartnerIndividual(models.Model):
                     name_parts.append(partner.last_name)
                 if partner.suffix:
                     name_parts.append(partner.suffix)
+                partner.display_name = ' '.join(name_parts)
+            else:
+                partner.display_name = partner.name or ''
+
+    @api.depends('street', 'street2', 'city', 'state_id', 'zip', 'country_id')
+    def _compute_formatted_address(self):
+        """Format primary address for display"""
+        for partner in self:
+            address_parts = []
+            if partner.street:
+                address_parts.append(partner.street)
+            if partner.street2:
+                address_parts.append(partner.street2)
+            
+            city_line = []
+            if partner.city:
+                city_line.append(partner.city)
+            if partner.state_id:
+                city_line.append(partner.state_id.name)
+            if partner.zip:
+                city_line.append(partner.zip)
+            if city_line:
+                address_parts.append(', '.join(city_line))
                 
-                if name_parts:
-                    partner.display_name = ' '.join(name_parts)
-                else:
-                    partner.display_name = partner.name or 'Unknown'
-            else:
-                super(ResPartnerIndividual, partner)._compute_display_name()
+            if partner.country_id:
+                address_parts.append(partner.country_id.name)
+                
+            partner.formatted_address = '\n'.join(address_parts)
 
-    @api.depends('member_status_id.is_active')
-    def _compute_is_member(self):
-        """Compute member status based on member status."""
-        # This will be enhanced when ams_participation module is installed
+    @api.depends('secondary_address_line1', 'secondary_address_line2', 
+                 'secondary_address_city', 'secondary_address_state_id', 
+                 'secondary_address_zip', 'secondary_address_country_id')
+    def _compute_formatted_secondary_address(self):
+        """Format secondary address for display"""
         for partner in self:
-            # For now, base it on member_status_id
-            if partner.member_status_id and partner.member_status_id.is_active:
-                partner.is_member = True
-            else:
-                partner.is_member = False
+            address_parts = []
+            if partner.secondary_address_line1:
+                address_parts.append(partner.secondary_address_line1)
+            if partner.secondary_address_line2:
+                address_parts.append(partner.secondary_address_line2)
+            
+            city_line = []
+            if partner.secondary_address_city:
+                city_line.append(partner.secondary_address_city)
+            if partner.secondary_address_state_id:
+                city_line.append(partner.secondary_address_state_id.name)
+            if partner.secondary_address_zip:
+                city_line.append(partner.secondary_address_zip)
+            if city_line:
+                address_parts.append(', '.join(city_line))
+                
+            if partner.secondary_address_country_id:
+                address_parts.append(partner.secondary_address_country_id.name)
+                
+            partner.formatted_secondary_address = '\n'.join(address_parts)
 
-    @api.depends('member_status_id')
-    def _compute_paid_through_date(self):
-        """Compute latest paid through date from active participations."""
-        # This will be enhanced when ams_participation module is installed
-        for partner in self:
-            # For now, set to None - will be computed by participation module
-            partner.paid_through_date = False
+    @api.model
+    def create(self, vals):
+        """Override create to auto-generate member ID"""
+        if not vals.get('member_id') and not vals.get('is_company'):
+            # Generate member ID for individuals only
+            vals['member_id'] = self.env['ir.sequence'].next_by_code('ams.member.id')
+        return super().create(vals)
 
-    @api.depends('member_status_id')
-    def _compute_primary_membership(self):
-        """Identify the primary active membership."""
-        # This will be enhanced when ams_participation module is installed
-        for partner in self:
-            # For now, set to None - will be computed by participation module
-            partner.primary_membership_id = False
+    def _format_phone_number(self, phone):
+        """Basic phone number formatting - can be enhanced by other modules"""
+        if not phone:
+            return phone
+        # Remove all non-digit characters
+        digits = re.sub(r'\D', '', phone)
+        # Basic US formatting
+        if len(digits) == 10:
+            return f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"
+        elif len(digits) == 11 and digits[0] == '1':
+            return f"+1 ({digits[1:4]}) {digits[4:7]}-{digits[7:]}"
+        return phone
 
-    @api.depends('member_status_id', 'is_member')
-    def _compute_current_status(self):
-        """Compute overall current status."""
-        for partner in self:
-            if partner.member_status_id and partner.member_status_id.code == 'deceased':
-                partner.current_status = 'deceased'
-            elif partner.is_member:
-                partner.current_status = 'active'
-            elif partner.member_id:  # Has member ID but not active
-                partner.current_status = 'inactive'
-            else:
-                partner.current_status = 'never_member'
+    @api.onchange('business_phone')
+    def _onchange_business_phone(self):
+        """Format business phone on change"""
+        if self.business_phone:
+            self.business_phone = self._format_phone_number(self.business_phone)
 
-    @api.onchange('first_name', 'middle_name', 'last_name', 'suffix', 'member_type_id')
+    @api.onchange('mobile_phone')
+    def _onchange_mobile_phone(self):
+        """Format mobile phone on change"""
+        if self.mobile_phone:
+            self.mobile_phone = self._format_phone_number(self.mobile_phone)
+
+    @api.onchange('first_name', 'last_name', 'middle_name', 'suffix')
     def _onchange_name_components(self):
-        """Auto-populate name field from components for individuals."""
-        if self.member_type_id and self.member_type_id.is_individual:
+        """Update name field when components change"""
+        if self.first_name or self.last_name:
             name_parts = []
             if self.first_name:
                 name_parts.append(self.first_name)
             if self.middle_name:
-                name_parts.append(self.middle_name)  
+                name_parts.append(self.middle_name)
             if self.last_name:
                 name_parts.append(self.last_name)
             if self.suffix:
                 name_parts.append(self.suffix)
-                
-            if name_parts:
-                self.name = ' '.join(name_parts)
+            self.name = ' '.join(name_parts)
 
-    # ==========================================
-    # ACTION METHODS
-    # ==========================================
-
-    def action_view_participations(self):
-        """Open member participations view."""
-        self.ensure_one()
-        # This will be enhanced when ams_participation module is installed
-        return {
-            'name': f'Participations - {self.display_name}',
-            'type': 'ir.actions.act_window',
-            'res_model': 'ams.participation',
-            'view_mode': 'tree,form',
-            'domain': [('partner_id', '=', self.id)],
-            'context': {'default_partner_id': self.id},
-            'help': '<p>No participations found. Install ams_participation module to manage member participations.</p>'
-        }
-
-    # ==========================================
-    # VALIDATION & CONSTRAINTS
-    # ==========================================
-
-    @api.constrains('business_phone', 'mobile_phone', 'phone')
-    def _validate_phone_format(self):
-        """Validate phone number formats."""
-        phone_regex = re.compile(r'^\+?[1-9]\d{1,14}$')  # Basic E.164 validation
-        
+    @api.constrains('secondary_email')
+    def _check_secondary_email(self):
+        """Validate secondary email format"""
         for partner in self:
-            phones_to_check = [
-                ('business_phone', partner.business_phone),
-                ('mobile_phone', partner.mobile_phone),
-                ('phone', partner.phone)
-            ]
-            
-            for field_name, phone_value in phones_to_check:
-                if phone_value and not phone_regex.match(phone_value.replace(' ', '').replace('-', '')):
-                    raise ValidationError(
-                        f"Invalid phone format in {field_name}. Use international format: +1234567890"
+            if partner.secondary_email:
+                email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                if not re.match(email_pattern, partner.secondary_email):
+                    raise models.ValidationError(
+                        "Please enter a valid secondary email address."
                     )
-
-    @api.constrains('email', 'secondary_email')
-    def _validate_email_format(self):
-        """Validate email formats."""
-        email_regex = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-        
-        for partner in self:
-            if partner.email and not email_regex.match(partner.email):
-                raise ValidationError("Primary email format is invalid.")
-            if partner.secondary_email and not email_regex.match(partner.secondary_email):
-                raise ValidationError("Secondary email format is invalid.")
-
-    @api.constrains('member_type_id', 'is_company')
-    def _validate_member_type_consistency(self):
-        """Ensure member type matches individual/company setting."""
-        for partner in self:
-            if partner.member_type_id:
-                if partner.member_type_id.is_individual and partner.is_company:
-                    raise ValidationError(
-                        "Individual member types cannot be assigned to companies."
-                    )
-                if partner.member_type_id.is_organization and not partner.is_company:
-                    raise ValidationError(
-                        "Organization member types can only be assigned to companies."
-                    )
-
-    # ==========================================
-    # LIFECYCLE METHODS
-    # ==========================================
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        """Override create to generate member IDs and set defaults."""
-        for vals in vals_list:
-            # Generate member ID if this is going to be a member
-            if vals.get('member_type_id') and not vals.get('member_id'):
-                try:
-                    vals['member_id'] = self.env['ir.sequence'].next_by_code('ams.member.id')
-                except Exception:
-                    # Fallback if sequence doesn't exist yet
-                    pass
-            
-            # Set original join date if not provided
-            if vals.get('member_type_id') and not vals.get('original_join_date'):
-                vals['original_join_date'] = fields.Date.context_today(self)
-                
-        return super().create(vals_list)
-
-    def write(self, vals):
-        """Override write to handle member type changes.""" 
-        # Generate member ID when member type is assigned
-        if vals.get('member_type_id'):
-            for record in self:
-                if not record.member_id:
-                    try:
-                        vals['member_id'] = self.env['ir.sequence'].next_by_code('ams.member.id')
-                        break  # Only set once for the batch
-                    except Exception:
-                        # Fallback if sequence doesn't exist yet
-                        pass
-            
-        # Set original join date when first becoming a member
-        if vals.get('member_type_id'):
-            for record in self:
-                if not record.original_join_date:
-                    vals['original_join_date'] = fields.Date.context_today(self)
-                    break  # Only set once for the batch
-            
-        return super().write(vals)
-
-    # ==========================================
-    # UTILITY METHODS
-    # ==========================================
-
-    def get_full_name(self):
-        """Get formatted full name from components."""
-        self.ensure_one()
-        name_parts = []
-        if self.first_name:
-            name_parts.append(self.first_name)
-        if self.middle_name:
-            name_parts.append(self.middle_name)
-        if self.last_name:
-            name_parts.append(self.last_name)
-        if self.suffix:
-            name_parts.append(self.suffix)
-        return ' '.join(name_parts) if name_parts else self.name or ''
-
-    def get_preferred_name(self):
-        """Get preferred name for communications."""
-        self.ensure_one()
-        return self.nickname or self.first_name or self.name or 'Member'
-
-    def get_secondary_address(self):
-        """Get formatted secondary address."""
-        self.ensure_one()
-        if not self.secondary_address_line1:
-            return ''
-        
-        address_parts = [self.secondary_address_line1]
-        if self.secondary_address_line2:
-            address_parts.append(self.secondary_address_line2)
-        
-        city_state_zip = []
-        if self.secondary_address_city:
-            city_state_zip.append(self.secondary_address_city)
-        if self.secondary_address_state_id:
-            city_state_zip.append(self.secondary_address_state_id.code or self.secondary_address_state_id.name)
-        if self.secondary_address_zip:
-            city_state_zip.append(self.secondary_address_zip)
-        
-        if city_state_zip:
-            address_parts.append(', '.join(city_state_zip))
-        
-        if self.secondary_address_country_id:
-            address_parts.append(self.secondary_address_country_id.name)
-        
-        return '\n'.join(address_parts)
