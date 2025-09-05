@@ -128,11 +128,8 @@
             <field name="value">30</field>
         </record>
 
-        <!-- Link to the member ID sequence from ams_member_data module -->
-        <function model="ir.config_parameter" name="set_param">
-            <value>ams.member_id_sequence_id</value>
-            <value eval="ref('ams_member_data.seq_member_id')" />
-        </function>
+        <!-- NOTE: member_id_sequence_id parameter will be set by ams_member_data module -->
+        <!-- This maintains proper layer separation -->
 
     </data>
 </odoo>
