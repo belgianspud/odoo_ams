@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Core Member Statuses - Standard Lifecycle -->
+        
+        <!-- Pending Status -->
+        <record id="member_status_pending" model="ams.member.status">
+            <field name="name">Pending</field>
+            <field name="code">PENDING</field>
+            <field name="is_active">False</field>
+            <field name="sequence">10</field>
+            <field name="description">New membership application pending approval or payment.</field>
+            <field name="color">1</field>
+            <field name="can_renew">False</field>
+            <field name="can_purchase">False</field>
+            <field name="is_pending">True</field>
+            <field name="is_suspended">False</field>
+            <field name="is_terminated">False</field>
+            <field name="allows_portal_access">False</field>
+            <field name="requires_approval">True</field>
+            <field name="auto_transition_days">30</field>
+            <field name="next_status_id" ref="member_status_expired"/>
+        </record>
+
+        <!-- Active Status -->
+        <record id="member_status_active" model="ams.member.status">
+            <field name="name">Active</field>
+            <field name="code">ACTIVE</field>
+            <field name="is_active">True</field>
+            <field name="sequence">20</field>
+            <field name="description">Active member in good standing with full benefits and privileges.</field>
+            <field name="color">10</field>
+            <field name="can_renew">True</field>
+            <field name="can_purchase">True</field>
+            <field name="is_pending">False</field>
+            <field name="is_suspended">False</field>
+            <field name="is_terminated">False</field>
+            <field name="allows_portal_access">True</field>
+            <field name="requires_approval">False</field>
+            <field name="auto_transition_days">0</field>
+        </record>
+
+        <!-- Grace Period Status -->
+        <record id="member_status_grace" model="ams.member.status">
+            <field name="name">Grace Period</field>
+            <field name="code">GRACE</field>
+            <field name="is_active">True</field>
+            <field name="sequence">25</field>
+            <field name="description">Membership expired but still within grace period for renewal.</field>
+            <field name="color">2</field>
+            <field name="can_renew">True</field>
+            <field name="can_purchase">True</field>
+            <field name="is_pending">False</field>
+            <field name="is_suspended">False</field>
+            <field name="is_terminated">False</field>
+            <field name="allows_portal_access">True</field>
+            <field name="requires_approval">False</field>
+            <field name="auto_transition_days">30</field>
+            <field name="next_status_id" ref="member_status_lapsed"/>
+        </record>
+
+        <!-- Lapsed Status -->
+        <record id="member_status_lapsed" model="ams.member.status">
+            <field name="name">Lapsed</field>
+            <field name="code">LAPSED</field>
+            <field name="is_active">False</field>
+            <field name="sequence">30</field>
+            <field name="description">Membership has lapsed due to non-renewal. Can be reinstated.</field>
+            <field name="color">3</field>
+            <field name="can_renew">True</field>
+            <field name="can_purchase">False</field>
+            <field name="is_pending">False</field>
+            <field name="is_suspended">False</field>
+            <field name="is_terminated">False</field>
+            <field name="allows_portal_access">False</field>
+            <field name="requires_approval">False</field>
+            <field name="auto_transition_days">365</field>
+            <field name="next_status_id" ref="member_status_expired"/>
+        </record>
+
+        <!-- Expired Status -->
+        <record id="member_status_expired" model="ams.member.status">
+            <field name="name">Expired</field>
+            <field name="code">EXPIRED</field>
+            <field name="is_active">False</field>
+            <field name="sequence">40</field>
+            <field name="description">Membership has expired and requires reapplication for reinstatement.</field>
+            <field name="color">8</field>
+            <field name="can_renew">False</field>
+            <field name="can_purchase">False</field>
+            <field name="is_pending">False</field>
+            <field name="is_suspended">False</field>
+            <field name="is_terminated">False</field>
+            <field name="allows_portal_access">False</field>
+            <field name="requires_approval">False</field>
+            <field name="auto_transition_days">0</field>
+        </record>
+
+        <!-- Suspended Status -->
+        <record id="member_status_suspended" model="ams.member.status">
+            <field name="name">Suspended</field>
+            <field name="code">SUSPENDED</field>
+            <field name="is_active">False</field>
+            <field name="sequence">50</field>
+            <field name="description">Membership suspended due to disciplinary action or non-compliance.</field>
+            <field name="color">4</field>
+            <field name="can_renew">False</field>
+            <field name="can_purchase">False</field>
+            <field name="is_pending">False</field>
+            <field name="is_suspended">True</field>
+            <field name="is_terminated">False</field>
+            <field name="allows_portal_access">False</field>
+            <field name="requires_approval">True</field>
+            <field name="auto_transition_days">0</field>
+        </record>
+
+        <!-- Terminated Status -->
+        <record id="member_status_terminated" model="ams.member.status">
+            <field name="name">Terminated</field>
+            <field name="code">TERMINATED</field>
+            <field name="is_active">False</field>
+            <field name="sequence">60</field>
+            <field name="description">Membership permanently terminated due to serious violations or resignation.</field>
+            <field name="color">0</field>
+            <field name="can_renew">False</field>
+            <field name="can_purchase">False</field>
+            <field name="is_pending">False</field>
+            <field name="is_suspended">False</field>
+            <field name="is_terminated">True</field>
+            <field name="allows_portal_access">False</field>
+            <field name="requires_approval">False</field>
+            <field name="auto_transition_days">0</field>
+        </record>
+
+        <!-- Deceased Status -->
+        <record id="member_status_deceased" model="ams.member.status">
+            <field name="name">Deceased</field>
+            <field name="code">DECEASED</field>
+            <field name="is_active">False</field>
+            <field name="sequence">70</field>
+            <field name="description">Member is deceased. Maintained for historical records and memorial purposes.</field>
+            <field name="color">7</field>
+            <field name="can_renew">False</field>
+            <field name="can_purchase">False</field>
+            <field name="is_pending">False</field>
+            <field name="is_suspended">False</field>
+            <field name="is_terminated">True</field>
+            <field name="allows_portal_access">False</field>
+            <field name="requires_approval">False</field>
+            <field name="auto_transition_days">0</field>
+        </record>
+    </data>
+
+    <!-- Additional statuses that can be modified -->
+    <data noupdate="0">
+        <!-- Special Member Statuses -->
+        
+        <!-- Trial Status -->
+        <record id="member_status_trial" model="ams.member.status">
+            <field name="name">Trial</field>
+            <field name="code">TRIAL</field>
+            <field name="is_active">True</field>
+            <field name="sequence">15</field>
+            <field name="description">Trial membership with limited benefits for evaluation period.</field>
+            <field name="color">5</field>
+            <field name="can_renew">True</field>
+            <field name="can_purchase">True</field>
+            <field name="is_pending">False</field>
+            <field name="is_suspended">False</field>
+            <field name="is_terminated">False</field>
+            <field name="allows_portal_access">True</field>
+            <field name="requires_approval">False</field>
+            <field name="auto_transition_days">30</field>
+            <field name="next_status_id" ref="member_status_expired"/>
+        </record>
+
+        <!-- Provisional Status -->
+        <record id="member_status_provisional" model="ams.member.status">
+            <field name="name">Provisional</field>
+            <field name="code">PROVISIONAL</field>
+            <field name="is_active">True</field>
+            <field name="sequence">18</field>
+            <field name="description">Provisional membership pending completion of requirements or probationary period.</field>
+            <field name="color">6</field>
+            <field name="can_renew">False</field>
+            <field name="can_purchase">True</field>
+            <field name="is_pending">True</field>
+            <field name="is_suspended">False</field>
+            <field name="is_terminated">False</field>
+            <field name="allows_portal_access">True</field>
+            <field name="requires_approval">True</field>
+            <field name="auto_transition_days">90</field>
+            <field name="next_status_id" ref="member_status_active"/>
+        </record>
+
+        <!-- Honorary Status -->
+        <record id="member_status_honorary" model="ams.member.status">
+            <field name="name">Honorary</field>
+            <field name="code">HONORARY</field>
+            <field name="is_active">True</field>
+            <field name="sequence">5</field>
+            <field name="description">Honorary membership status with special recognition and privileges.</field>
+            <field name="color">9</field>
+            <field name="can_renew">False</field>
+            <field name="can_purchase">True</field>
+            <field name="is_pending">False</field>
+            <field name="is_suspended">False</field>
+            <field name="is_terminated">False</field>
+            <field name="allows_portal_access">True</field>
+            <field name="requires_approval">True</field>
+            <field name="auto_transition_days">0</field>
+        </record>
+
+        <!-- Lifetime Status -->
+        <record id="member_status_lifetime" model="ams.member.status">
+            <field name="name">Lifetime</field>
+            <field name="code">LIFETIME</field>
+            <field name="is_active">True</field>
+            <field name="sequence">1</field>
+            <field name="description">Lifetime membership status with permanent benefits and no renewal required.</field>
+            <field name="color">11</field>
+            <field name="can_renew">False</field>
+            <field name="can_purchase">True</field>
+            <field name="is_pending">False</field>
+            <field name="is_suspended">False</field>
+            <field name="is_terminated">False</field>
+            <field name="allows_portal_access">True</field>
+            <field name="requires_approval">True</field>
+            <field name="auto_transition_days">0</field>
+        </record>
+
+        <!-- Leave of Absence Status -->
+        <record id="member_status_leave" model="ams.member.status">
+            <field name="name">Leave of Absence</field>
+            <field name="code">LEAVE</field>
+            <field name="is_active">False</field>
+            <field name="sequence">35</field>
+            <field name="description">Temporary leave of absence with preserved membership status.</field>
+            <field name="color">4</field>
+            <field name="can_renew">True</field>
+            <field name="can_purchase">False</field>
+            <field name="is_pending">False</field>
+            <field name="is_suspended">False</field>
+            <field name="is_terminated">False</field>
+            <field name="allows_portal_access">True</field>
+            <field name="requires_approval">True</field>
+            <field name="auto_transition_days">365</field>
+            <field name="next_status_id" ref="member_status_active"/>
+        </record>
+
+        <!-- Emeritus Status -->
+        <record id="member_status_emeritus" model="ams.member.status">
+            <field name="name">Emeritus</field>
+            <field name="code">EMERITUS</field>
+            <field name="is_active">True</field>
+            <field name="sequence">3</field>
+            <field name="description">Emeritus status for retired members with continued recognition and limited benefits.</field>
+            <field name="color">6</field>
+            <field name="can_renew">False</field>
+            <field name="can_purchase">True</field>
+            <field name="is_pending">False</field>
+            <field name="is_suspended">False</field>
+            <field name="is_terminated">False</field>
+            <field name="allows_portal_access">True</field>
+            <field name="requires_approval">True</field>
+            <field name="auto_transition_days">0</field>
+        </record>
+    </data>
+</odoo>

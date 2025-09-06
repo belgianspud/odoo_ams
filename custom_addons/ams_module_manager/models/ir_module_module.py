@@ -32,15 +32,20 @@ class IrModuleModule(models.Model):
 
         #Custom Modules
         'ams_member_data',      # AMS base module for member data structures - Layer 1
-        'ams_communication',    # AMS base module to track comms preferences - Layer 1
         'ams_system_config',    # AMS base module for managing and configuring ams configurations - Layer 1
-        'ams_participation',    # AMS base module for tracking participations(membership/chapter subscription records) - Layer 2
-        'ams_products_base',    # AMS base module to buid and define products 
-        'ams_subscription_management', # AMS base module to build and manage subscription products 
+        'ams_member_types',     # AMS base module for defining member status and types - layer 1
+
 
         """
         #commenting out this section to provide clean list of modules to use for ams. 
         #uncomment modules as needed for missing functionality.
+        #old Custom Modules
+        'ams_communication',    # AMS base module to track comms preferences - Layer 1
+        'ams_participation',    # AMS base module for tracking participations(membership/chapter subscription records) - Layer 2
+        'ams_products_base',    # AMS base module to buid and define products 
+        'ams_subscription_management', # AMS base module to build and manage subscription products 
+
+
         # Original Custom Modules
         'ams_subscriptions',    # AMS Subscriptions
         'ams_base_accounting',  # AMS Accounting

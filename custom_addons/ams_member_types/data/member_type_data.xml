@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Standard Individual Member Types -->
+        <record id="member_type_regular" model="ams.member.type">
+            <field name="name">Regular Member</field>
+            <field name="code">REGULAR</field>
+            <field name="is_individual">True</field>
+            <field name="is_organization">False</field>
+            <field name="sequence">10</field>
+            <field name="description">Standard individual membership with full benefits and voting rights.</field>
+            <field name="min_age">18</field>
+            <field name="max_age">0</field>
+            <field name="requires_verification">False</field>
+            <field name="auto_approve">True</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="member_type_student" model="ams.member.type">
+            <field name="name">Student Member</field>
+            <field name="code">STUDENT</field>
+            <field name="is_individual">True</field>
+            <field name="is_organization">False</field>
+            <field name="sequence">20</field>
+            <field name="description">Discounted membership for full-time students. Requires verification of enrollment status.</field>
+            <field name="min_age">16</field>
+            <field name="max_age">35</field>
+            <field name="requires_verification">True</field>
+            <field name="auto_approve">False</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="member_type_senior" model="ams.member.type">
+            <field name="name">Senior Member</field>
+            <field name="code">SENIOR</field>
+            <field name="is_individual">True</field>
+            <field name="is_organization">False</field>
+            <field name="sequence">30</field>
+            <field name="description">Discounted membership for senior citizens with special benefits and recognition.</field>
+            <field name="min_age">65</field>
+            <field name="max_age">0</field>
+            <field name="requires_verification">False</field>
+            <field name="auto_approve">True</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="member_type_young_professional" model="ams.member.type">
+            <field name="name">Young Professional</field>
+            <field name="code">YOUNG_PROF</field>
+            <field name="is_individual">True</field>
+            <field name="is_organization">False</field>
+            <field name="sequence">25</field>
+            <field name="description">Special membership for professionals under 35 with networking and development opportunities.</field>
+            <field name="min_age">22</field>
+            <field name="max_age">35</field>
+            <field name="requires_verification">False</field>
+            <field name="auto_approve">True</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Organizational Member Types -->
+        <record id="member_type_corporate" model="ams.member.type">
+            <field name="name">Corporate Member</field>
+            <field name="code">CORPORATE</field>
+            <field name="is_individual">False</field>
+            <field name="is_organization">True</field>
+            <field name="sequence">100</field>
+            <field name="description">Full organizational membership for corporations with employee benefits and representation rights.</field>
+            <field name="min_age">0</field>
+            <field name="max_age">0</field>
+            <field name="requires_verification">True</field>
+            <field name="auto_approve">False</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="member_type_nonprofit" model="ams.member.type">
+            <field name="name">Non-Profit Member</field>
+            <field name="code">NONPROFIT</field>
+            <field name="is_individual">False</field>
+            <field name="is_organization">True</field>
+            <field name="sequence">110</field>
+            <field name="description">Discounted organizational membership for registered non-profit organizations.</field>
+            <field name="min_age">0</field>
+            <field name="max_age">0</field>
+            <field name="requires_verification">True</field>
+            <field name="auto_approve">False</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="member_type_educational" model="ams.member.type">
+            <field name="name">Educational Institution</field>
+            <field name="code">EDUCATION</field>
+            <field name="is_individual">False</field>
+            <field name="is_organization">True</field>
+            <field name="sequence">120</field>
+            <field name="description">Special membership for educational institutions including schools, colleges, and universities.</field>
+            <field name="min_age">0</field>
+            <field name="max_age">0</field>
+            <field name="requires_verification">True</field>
+            <field name="auto_approve">False</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Special Member Types -->
+        <record id="member_type_lifetime" model="ams.member.type">
+            <field name="name">Lifetime Member</field>
+            <field name="code">LIFETIME</field>
+            <field name="is_individual">True</field>
+            <field name="is_organization">False</field>
+            <field name="sequence">5</field>
+            <field name="description">Lifetime membership with permanent benefits. Requires special approval and payment.</field>
+            <field name="min_age">18</field>
+            <field name="max_age">0</field>
+            <field name="requires_verification">True</field>
+            <field name="auto_approve">False</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="member_type_honorary" model="ams.member.type">
+            <field name="name">Honorary Member</field>
+            <field name="code">HONORARY</field>
+            <field name="is_individual">True</field>
+            <field name="is_organization">True</field>
+            <field name="sequence">1</field>
+            <field name="description">Honorary membership bestowed for exceptional service or contribution to the association.</field>
+            <field name="min_age">0</field>
+            <field name="max_age">0</field>
+            <field name="requires_verification">True</field>
+            <field name="auto_approve">False</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="member_type_associate" model="ams.member.type">
+            <field name="name">Associate Member</field>
+            <field name="code">ASSOCIATE</field>
+            <field name="is_individual">True</field>
+            <field name="is_organization">True</field>
+            <field name="sequence">50</field>
+            <field name="description">Limited membership with restricted benefits and no voting rights.</field>
+            <field name="min_age">16</field>
+            <field name="max_age">0</field>
+            <field name="requires_verification">False</field>
+            <field name="auto_approve">True</field>
+            <field name="active">True</field>
+        </record>
+    </data>
+
+    <!-- Additional member types that can be modified -->
+    <data noupdate="0">
+        <!-- Professional Member Types (updateable) -->
+        <record id="member_type_professional" model="ams.member.type">
+            <field name="name">Professional Member</field>
+            <field name="code">PROFESSIONAL</field>
+            <field name="is_individual">True</field>
+            <field name="is_organization">False</field>
+            <field name="sequence">15</field>
+            <field name="description">Professional membership with enhanced benefits and industry recognition.</field>
+            <field name="min_age">21</field>
+            <field name="max_age">0</field>
+            <field name="requires_verification">True</field>
+            <field name="auto_approve">False</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="member_type_international" model="ams.member.type">
+            <field name="name">International Member</field>
+            <field name="code">INTERNATIONAL</field>
+            <field name="is_individual">True</field>
+            <field name="is_organization">True</field>
+            <field name="sequence">40</field>
+            <field name="description">Membership for international individuals and organizations with global benefits.</field>
+            <field name="min_age">18</field>
+            <field name="max_age">0</field>
+            <field name="requires_verification">True</field>
+            <field name="auto_approve">False</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Trial/Temporary Member Types -->
+        <record id="member_type_trial" model="ams.member.type">
+            <field name="name">Trial Member</field>
+            <field name="code">TRIAL</field>
+            <field name="is_individual">True</field>
+            <field name="is_organization">False</field>
+            <field name="sequence">60</field>
+            <field name="description">Temporary trial membership with limited access to evaluate association benefits.</field>
+            <field name="min_age">18</field>
+            <field name="max_age">0</field>
+            <field name="requires_verification">False</field>
+            <field name="auto_approve">True</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="member_type_guest" model="ams.member.type">
+            <field name="name">Guest Member</field>
+            <field name="code">GUEST</field>
+            <field name="is_individual">True</field>
+            <field name="is_organization">False</field>
+            <field name="sequence">70</field>
+            <field name="description">Temporary guest access for events and special occasions.</field>
+            <field name="min_age">16</field>
+            <field name="max_age">0</field>
+            <field name="requires_verification">False</field>
+            <field name="auto_approve">True</field>
+            <field name="active">False</field>
+        </record>
+    </data>
+</odoo>

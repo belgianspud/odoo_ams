@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Member Type Form View -->
+    <record id="view_member_type_form" model="ir.ui.view">
+        <field name="name">ams.member.type.form</field>
+        <field name="model">ams.member.type</field>
+        <field name="arch" type="xml">
+            <form string="Member Type">
+                <header>
+                    <button name="action_view_members" type="object" string="View Members" class="oe_highlight" 
+                            invisible="member_count == 0"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_members" type="object" class="oe_stat_button" icon="fa-users">
+                            <field name="member_count" widget="statinfo" string="Members"/>
+                        </button>
+                    </div>
+                    
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="active"/>
+                    
+                    <div class="oe_title">
+                        <div class="oe_edit_only">
+                            <label for="name"/>
+                        </div>
+                        <h1>
+                            <field name="name" placeholder="e.g., Student Member"/>
+                        </h1>
+                        <div class="oe_edit_only">
+                            <label for="code"/>
+                        </div>
+                        <h3>
+                            <field name="code" placeholder="e.g., STUDENT"/>
+                        </h3>
+                    </div>
+
+                    <group>
+                        <group string="Basic Information">
+                            <field name="active"/>
+                            <field name="sequence"/>
+                            <field name="description"/>
+                        </group>
+                        <group string="Member Classification">
+                            <field name="is_individual"/>
+                            <field name="is_organization"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Eligibility Rules" name="eligibility">
+                            <group>
+                                <group string="Age Requirements">
+                                    <field name="min_age"/>
+                                    <field name="max_age"/>
+                                </group>
+                                <group string="Approval Process">
+                                    <field name="requires_verification"/>
+                                    <field name="auto_approve"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Summary" name="summary">
+                            <div class="oe_form_box_info oe_text_center">
+                                <div class="oe_form_field">
+                                    <strong>Eligibility Summary:</strong>
+                                    <p class="oe_grey">
+                                        <field name="description" readonly="1" nolabel="1"/>
+                                    </p>
+                                </div>
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Member Type Tree View -->
+    <record id="view_member_type_tree" model="ir.ui.view">
+        <field name="name">ams.member.type.tree</field>
+        <field name="model">ams.member.type</field>
+        <field name="arch" type="xml">
+            <tree string="Member Types" sample="1">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="is_individual" widget="boolean_toggle"/>
+                <field name="is_organization" widget="boolean_toggle"/>
+                <field name="member_count"/>
+                <field name="requires_verification" widget="boolean_toggle"/>
+                <field name="auto_approve" widget="boolean_toggle"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Member Type Kanban View -->
+    <record id="view_member_type_kanban" model="ir.ui.view">
+        <field name="name">ams.member.type.kanban</field>
+        <field name="model">ams.member.type</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="is_individual"/>
+                <field name="is_organization"/>
+                <field name="member_count"/>
+                <field name="active"/>
+                <field name="description"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click #{!record.active.raw_value ? 'o_kanban_color_10' : ''}">
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary">
+                                        <field name="name"/>
+                                        <t t-if="record.code.raw_value">
+                                            <small class="text-muted"> [<field name="code"/>]</small>
+                                        </t>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_manage_button_section">
+                                    <a class="o_kanban_manage_toggle_button" href="#">
+                                        <i class="fa fa-ellipsis-v" role="img" aria-label="Manage" title="Manage"/>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="o_kanban_card_content">
+                                <div class="o_kanban_card_manage_pane dropdown-menu" role="menu">
+                                    <a role="menuitem" type="edit" class="dropdown-item">Edit</a>
+                                    <a role="menuitem" type="delete" class="dropdown-item">Delete</a>
+                                </div>
+                                <div class="container o_kanban_card_content o_visible">
+                                    <div class="row">
+                                        <div class="col-6 o_kanban_primary_left">
+                                            <button class="btn btn-primary" name="action_view_members" type="object">
+                                                <field name="member_count"/> Members
+                                            </button>
+                                        </div>
+                                        <div class="col-6 o_kanban_primary_right">
+                                            <div class="mb4">
+                                                <t t-if="record.is_individual.raw_value">
+                                                    <span class="badge badge-pill badge-info">Individual</span>
+                                                </t>
+                                                <t t-if="record.is_organization.raw_value">
+                                                    <span class="badge badge-pill badge-success">Organization</span>
+                                                </t>
+                                            </div>
+                                            <t t-if="!record.active.raw_value">
+                                                <span class="badge badge-pill badge-warning">Archived</span>
+                                            </t>
+                                        </div>
+                                    </div>
+                                    <div class="row" t-if="record.description.raw_value">
+                                        <div class="col-12">
+                                            <field name="description"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Member Type Search View -->
+    <record id="view_member_type_search" model="ir.ui.view">
+        <field name="name">ams.member.type.search</field>
+        <field name="model">ams.member.type</field>
+        <field name="arch" type="xml">
+            <search string="Member Types">
+                <field name="name" string="Type Name" filter_domain="[('name', 'ilike', self)]"/>
+                <field name="code" string="Code" filter_domain="[('code', 'ilike', self)]"/>
+                <field name="description"/>
+                
+                <filter string="Individual Types" name="individual" domain="[('is_individual', '=', True)]"/>
+                <filter string="Organization Types" name="organization" domain="[('is_organization', '=', True)]"/>
+                <separator/>
+                <filter string="Auto-Approve" name="auto_approve" domain="[('auto_approve', '=', True)]"/>
+                <filter string="Requires Verification" name="requires_verification" domain="[('requires_verification', '=', True)]"/>
+                <separator/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter string="Individual/Organization" name="group_classification" 
+                            context="{'group_by': 'is_individual'}"/>
+                    <filter string="Verification Required" name="group_verification" 
+                            context="{'group_by': 'requires_verification'}"/>
+                    <filter string="Auto-Approve" name="group_auto_approve" 
+                            context="{'group_by': 'auto_approve'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Member Type Action -->
+    <record id="action_member_type" model="ir.actions.act_window">
+        <field name="name">Member Types</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">ams.member.type</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first member type!
+            </p>
+            <p>
+                Member types define classifications for your association members.
+                You can set up different types for students, professionals, organizations,
+                and other categories with specific eligibility rules and requirements.
+            </p>
+        </field>
+    </record>
+
+    <!-- Member Type Menu -->
+    <menuitem id="menu_member_type"
+              name="Member Types"
+              parent="base.menu_administration"
+              action="action_member_type"
+              sequence="10"
+              groups="base.group_system"/>
+</odoo>
