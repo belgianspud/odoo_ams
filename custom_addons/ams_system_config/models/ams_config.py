@@ -2,7 +2,8 @@
 
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
-
+import logging
+_logger = logging.getLogger(__name__)
 
 class AMSConfigSettings(models.TransientModel):
     """Global AMS configuration settings."""
@@ -10,6 +11,7 @@ class AMSConfigSettings(models.TransientModel):
     _name = 'ams.config.settings'
     _inherit = 'res.config.settings'
     _description = 'AMS System Configuration'
+
 
     # ========================================================================
     # MEMBERSHIP CONFIGURATION FIELDS
@@ -33,6 +35,7 @@ class AMSConfigSettings(models.TransientModel):
         'ir.sequence',
         string='Member ID Sequence',
         config_parameter='ams_system_config.member_id_sequence_id',
+        default_model='ams.config.settings',
         help="Sequence used for member ID generation"
     )
     
@@ -105,7 +108,8 @@ class AMSConfigSettings(models.TransientModel):
         'res.currency',
         string='Default Currency',
         config_parameter='ams_system_config.default_currency_id',
-        help="Primary currency for membership dues and transactions"
+        help="Primary currency for membership dues and transactions",
+        default_model = 'ams.config.settings'
     )
     
     fiscal_year_start = fields.Selection([
@@ -128,7 +132,8 @@ class AMSConfigSettings(models.TransientModel):
         string='Default Chapter Revenue Share %',
         default=30.0,
         config_parameter='ams_system_config.default_chapter_percentage',
-        help="Default percentage of revenue shared with chapters"
+        help="Default percentage of revenue shared with chapters",
+        default_model = 'ams.config.settings.default_chapter_percentage'
     )
 
     # ========================================================================
@@ -349,8 +354,10 @@ class AMSConfigSettings(models.TransientModel):
     
     def set_values(self):
         """Override to handle special configuration actions."""
+        _logger.info("Setting values - currency: %s", self.default_currency_id)
+
         super().set_values()
-        
+        _logger.info("Values set successfully")        
         # Create member ID sequence if auto generation is enabled and no sequence exists
         if self.auto_member_id and not self.member_id_sequence:
             sequence = self._create_member_id_sequence()
