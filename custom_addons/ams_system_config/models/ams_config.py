@@ -31,7 +31,6 @@ class AMSConfigSettings(models.TransientModel):
     member_id_sequence_id = fields.Many2one(
         'ir.sequence',
         string="Member ID Sequence",
-        config_parameter='ams.member_id_sequence_id',
         help="Sequence used for generating member IDs"
     )
 
@@ -111,7 +110,6 @@ class AMSConfigSettings(models.TransientModel):
     default_currency_id = fields.Many2one(
         'res.currency',
         string="Default Currency",
-        config_parameter='ams.default_currency_id',
         help="Default currency for membership fees and transactions"
     )
     multi_currency_enabled = fields.Boolean(
@@ -179,12 +177,12 @@ class AMSConfigSettings(models.TransientModel):
         help="Track changes to member records and important data"
     )
 
-    # Communication Settings
+    # Communication Settings - Many2one handled manually
     default_email_template_id = fields.Many2one(
         'mail.template',
         string="Default Email Template",
-        config_parameter='ams.default_email_template_id',
-        help="Default email template for member communications"
+        help="Default email template for member communications",
+        config_parameter='ams.default_email_template_id'
     )
     communication_tracking_enabled = fields.Boolean(
         string="Enable Communication Tracking",
@@ -244,18 +242,45 @@ class AMSConfigSettings(models.TransientModel):
 
     @api.model
     def get_values(self):
-        """Override to set default currency if not set"""
+        """Override to handle Many2one fields manually"""
         res = super().get_values()
-        if not res.get('default_currency_id'):
+        ICP = self.env['ir.config_parameter'].sudo()
+
+        # Handle Many2one fields manually
+        seq_id = ICP.get_param('ams.member_id_sequence_id')
+        if seq_id:
+            res['member_id_sequence_id'] = int(seq_id)
+
+        currency_id = ICP.get_param('ams.default_currency_id')
+        if currency_id:
+            res['default_currency_id'] = int(currency_id)
+        else:
+            # Set default to company currency
             company_currency = self.env.company.currency_id
             if company_currency:
                 res['default_currency_id'] = company_currency.id
+
+        template_id = ICP.get_param('ams.default_email_template_id')
+        if template_id:
+            res['default_email_template_id'] = int(template_id)
+
         return res
 
     def set_values(self):
-        """Override to update member ID sequence when settings change"""
+        """Override to handle Many2one fields manually"""
         super().set_values()
-        
+        ICP = self.env['ir.config_parameter'].sudo()
+
+        # Handle Many2one fields manually
+        if self.member_id_sequence_id:
+            ICP.set_param('ams.member_id_sequence_id', self.member_id_sequence_id.id)
+
+        if self.default_currency_id:
+            ICP.set_param('ams.default_currency_id', self.default_currency_id.id)
+
+        if self.default_email_template_id:
+            ICP.set_param('ams.default_email_template_id', self.default_email_template_id.id)
+
         # Update member ID sequence if settings changed
         if self.member_id_sequence_id and (self.member_id_prefix or self.member_id_padding):
             sequence_vals = {}
@@ -263,7 +288,6 @@ class AMSConfigSettings(models.TransientModel):
                 sequence_vals['prefix'] = self.member_id_prefix
             if self.member_id_padding:
                 sequence_vals['padding'] = self.member_id_padding
-            
             if sequence_vals:
                 self.member_id_sequence_id.write(sequence_vals)
 
