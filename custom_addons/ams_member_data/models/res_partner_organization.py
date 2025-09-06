@@ -14,6 +14,7 @@ class ResPartnerOrganization(models.Model):
     )
     website_url = fields.Char(
         string="Website URL",
+        store=True,
         help="Organization's primary website"
     )
     tin_number = fields.Char(
@@ -80,6 +81,7 @@ class ResPartnerOrganization(models.Model):
     employee_count_computed = fields.Integer(
         string="Employee Count",
         compute='_compute_employee_count',
+        store=True,
         help="Count of linked employee records"
     )
     

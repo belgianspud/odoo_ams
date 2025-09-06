@@ -10,12 +10,12 @@
             
             <!-- Add Member ID after name -->
             <field name="name" position="after">
-                <field name="member_id" readonly="1" attrs="{'invisible': [('is_company', '=', False)]}"/>
+                <field name="member_id" readonly="1" invisible="not is_company"/>
             </field>
 
             <!-- Add organization identity section -->
             <field name="category_id" position="after">
-                <group string="Organization Identity" attrs="{'invisible': [('is_company', '=', False)]}">
+                <group string="Organization Identity" invisible="not is_company">
                     <group>
                         <field name="acronym"/>
                         <field name="website_url" widget="url"/>
@@ -31,7 +31,7 @@
 
             <!-- Add business details section -->
             <xpath expr="//group[@name='sale']" position="after">
-                <group string="Business Details" attrs="{'invisible': [('is_company', '=', False)]}">
+                <group string="Business Details" invisible="not is_company">
                     <group>
                         <field name="employee_count"/>
                         <field name="employee_count_computed" readonly="1"/>
@@ -46,7 +46,7 @@
 
             <!-- Add portal management section -->
             <xpath expr="//page[@name='contact_addresses']" position="after">
-                <page string="Portal &amp; Access" attrs="{'invisible': [('is_company', '=', False)]}">
+                <page string="Portal &amp; Access" invisible="not is_company">
                     <group>
                         <group string="Portal Management">
                             <field name="portal_primary_contact_id" options="{'no_create': True}"/>
@@ -56,28 +56,28 @@
                                     type="object" 
                                     string="View Employees" 
                                     class="btn-primary"
-                                    attrs="{'invisible': [('employee_count_computed', '=', 0)]}"/>
+                                    invisible="employee_count_computed == 0"/>
                             <field name="employee_count_computed" readonly="1"/>
                         </group>
                     </group>
                     
                     <!-- Employee list within the form -->
                     <separator string="Organization Employees"/>
-                    <field name="employee_ids" mode="tree" readonly="1">
-                        <tree>
+                    <field name="employee_ids" mode="list" readonly="1">
+                        <list>
                             <field name="member_id"/>
                             <field name="display_name"/>
                             <field name="email"/>
                             <field name="phone"/>
                             <field name="mobile_phone"/>
-                        </tree>
+                        </list>
                     </field>
                 </page>
             </xpath>
 
             <!-- System information tab -->
             <xpath expr="//notebook" position="inside">
-                <page string="System Information" groups="base.group_system" attrs="{'invisible': [('is_company', '=', False)]}">
+                <page string="System Information" groups="base.group_system" invisible="not is_company">
                     <group>
                         <group string="Integration">
                             <field name="legacy_organization_id"/>
@@ -96,12 +96,12 @@
         </field>
     </record>
 
-    <!-- Organization Members Tree View -->
+    <!-- Organization Members List View -->
     <record id="view_partner_organization_tree" model="ir.ui.view">
-        <field name="name">res.partner.organization.tree</field>
+        <field name="name">res.partner.organization.list</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
-            <tree string="Organization Members">
+            <list string="Organization Members">
                 <field name="member_id"/>
                 <field name="display_name"/>
                 <field name="acronym"/>
@@ -113,7 +113,7 @@
                 <field name="city"/>
                 <field name="state_id"/>
                 <field name="country_id"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -182,7 +182,7 @@
                 <field name="acronym"/>
                 <field name="email"/>
                 <field name="phone"/>
-                <field name="website_url"/>
+                <field name="website"/> <!-- ✅ replaced website_url with website -->
                 <field name="organization_type"/>
                 <field name="industry_sector"/>
                 <field name="naics_code"/>
@@ -193,7 +193,7 @@
                 <filter string="Has Member ID" name="has_member_id" domain="[('member_id', '!=', False)]"/>
                 <filter string="Missing Member ID" name="no_member_id" domain="[('member_id', '=', False)]"/>
                 <filter string="Has Email" name="has_email" domain="[('email', '!=', False)]"/>
-                <filter string="Has Website" name="has_website" domain="[('website_url', '!=', False)]"/>
+                <filter string="Has Website" name="has_website" domain="[('website', '!=', False)]"/> <!-- ✅ fixed -->
                 <filter string="Has Employees" name="has_employees" domain="[('employee_count_computed', '>', 0)]"/>
                 
                 <separator/>
@@ -220,7 +220,7 @@
     <record id="action_partner_organization" model="ir.actions.act_window">
         <field name="name">Organization Members</field>
         <field name="res_model">res.partner</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="domain">[('is_company', '=', True)]</field>
         <field name="context">{
             'default_is_company': True,
@@ -228,7 +228,7 @@
         }</field>
         <field name="view_ids" eval="[(5, 0, 0),
             (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_partner_organization_kanban')}),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_partner_organization_tree')}),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_partner_organization_tree')}),
             (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_organization_form')})]"/>
         <field name="search_view_id" ref="view_partner_organization_search"/>
         <field name="help" type="html">
@@ -247,7 +247,7 @@
     <record id="action_partner_all_members" model="ir.actions.act_window">
         <field name="name">All Members</field>
         <field name="res_model">res.partner</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="domain">[('member_id', '!=', False)]</field>
         <field name="context">{
             'default_customer_rank': 1,

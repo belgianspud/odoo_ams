@@ -10,19 +10,19 @@
             
             <!-- Add Member ID after name -->
             <field name="name" position="after">
-                <field name="member_id" readonly="1" attrs="{'invisible': [('is_company', '=', True)]}"/>
+                <field name="member_id" readonly="1" invisible="is_company"/>
             </field>
 
             <!-- Replace name field with name components for individuals -->
             <field name="name" position="attributes">
-                <attribute name="attrs">{'invisible': [('is_company', '=', False)]}</attribute>
+                <attribute name="invisible">not is_company</attribute>
             </field>
             
             <field name="name" position="before">
-                <group string="Name" attrs="{'invisible': [('is_company', '=', True)]}">
+                <group string="Name" invisible="is_company">
                     <group>
-                        <field name="first_name" attrs="{'required': [('is_company', '=', False)]}"/>
-                        <field name="last_name" attrs="{'required': [('is_company', '=', False)]}"/>
+                        <field name="first_name" required="not is_company"/>
+                        <field name="last_name" required="not is_company"/>
                     </group>
                     <group>
                         <field name="middle_name"/>
@@ -34,7 +34,7 @@
 
             <!-- Add demographics section -->
             <field name="category_id" position="after">
-                <group string="Demographics" attrs="{'invisible': [('is_company', '=', True)]}">
+                <group string="Demographics" invisible="is_company">
                     <group>
                         <field name="gender"/>
                         <field name="date_of_birth"/>
@@ -44,22 +44,22 @@
 
             <!-- Enhanced contact information -->
             <field name="phone" position="after">
-                <field name="business_phone" attrs="{'invisible': [('is_company', '=', True)]}"/>
-                <field name="mobile_phone" attrs="{'invisible': [('is_company', '=', True)]}"/>
+                <field name="business_phone" invisible="is_company"/>
+                <field name="mobile_phone" invisible="is_company"/>
             </field>
 
             <field name="email" position="after">
-                <field name="secondary_email" attrs="{'invisible': [('is_company', '=', True)]}"/>
+                <field name="secondary_email" invisible="is_company"/>
             </field>
 
             <!-- Address type for primary address -->
             <field name="street" position="before">
-                <field name="primary_address_type" attrs="{'invisible': [('is_company', '=', True)]}"/>
+                <field name="primary_address_type" invisible="is_company"/>
             </field>
 
             <!-- Secondary address section -->
             <xpath expr="//page[@name='contact_addresses']" position="after">
-                <page string="Secondary Address" attrs="{'invisible': [('is_company', '=', True)]}">
+                <page string="Secondary Address" invisible="is_company">
                     <group>
                         <group string="Secondary Address Details">
                             <field name="secondary_address_type"/>
@@ -97,12 +97,12 @@
         </field>
     </record>
 
-    <!-- Individual Members Tree View -->
+    <!-- Individual Members List View -->
     <record id="view_partner_individual_tree" model="ir.ui.view">
-        <field name="name">res.partner.individual.tree</field>
+        <field name="name">res.partner.individual.list</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
-            <tree string="Individual Members">
+            <list string="Individual Members">
                 <field name="member_id"/>
                 <field name="display_name"/>
                 <field name="email"/>
@@ -111,7 +111,7 @@
                 <field name="city"/>
                 <field name="state_id"/>
                 <field name="country_id"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -197,7 +197,7 @@
     <record id="action_partner_individual" model="ir.actions.act_window">
         <field name="name">Individual Members</field>
         <field name="res_model">res.partner</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="domain">[('is_company', '=', False)]</field>
         <field name="context">{
             'default_is_company': False,
@@ -205,7 +205,7 @@
         }</field>
         <field name="view_ids" eval="[(5, 0, 0),
             (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_partner_individual_kanban')}),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_partner_individual_tree')}),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_partner_individual_tree')}),
             (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_individual_form')})]"/>
         <field name="search_view_id" ref="view_partner_individual_search"/>
         <field name="help" type="html">
