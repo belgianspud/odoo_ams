@@ -1,364 +1,392 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, api
+from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 
 
 class AMSConfigSettings(models.TransientModel):
+    """Global AMS configuration settings."""
+    
     _name = 'ams.config.settings'
     _inherit = 'res.config.settings'
-    _description = 'AMS Configuration Settings'
+    _description = 'AMS System Configuration'
 
-    # Member ID Configuration
+    # ========================================================================
+    # MEMBERSHIP CONFIGURATION FIELDS
+    # ========================================================================
+    
     auto_member_id = fields.Boolean(
-        string="Auto-generate Member IDs",
+        string='Auto-Generate Member IDs',
         default=True,
-        config_parameter='ams.auto_member_id',
-        help="Automatically generate unique member IDs for new members"
+        config_parameter='ams_system_config.auto_member_id',
+        help="Automatically assign unique member IDs to new members"
     )
+    
     member_id_prefix = fields.Char(
-        string="Member ID Prefix",
-        default="M",
-        config_parameter='ams.member_id_prefix',
-        help="Prefix for auto-generated member IDs (e.g., 'M' for M000001)"
+        string='Member ID Prefix',
+        default='M',
+        config_parameter='ams_system_config.member_id_prefix',
+        help="Prefix for auto-generated member IDs"
     )
-    member_id_padding = fields.Integer(
-        string="Member ID Padding",
-        default=6,
-        config_parameter='ams.member_id_padding',
-        help="Number of digits for member ID sequence (e.g., 6 for 000001)"
-    )
-    member_id_sequence_id = fields.Many2one(
+    
+    member_id_sequence = fields.Many2one(
         'ir.sequence',
-        string="Member ID Sequence",
-        help="Sequence used for generating member IDs"
+        string='Member ID Sequence',
+        config_parameter='ams_system_config.member_id_sequence_id',
+        help="Sequence used for member ID generation"
     )
-
-    # Membership Lifecycle Rules
+    
     grace_period_days = fields.Integer(
-        string="Default Grace Period (Days)",
+        string='Grace Period (Days)',
         default=30,
-        config_parameter='ams.grace_period_days',
-        help="Default number of days for membership grace period after expiration"
+        config_parameter='ams_system_config.grace_period_days',
+        help="Default grace period for expired memberships"
     )
+    
     renewal_window_days = fields.Integer(
-        string="Renewal Notice Period (Days)",
+        string='Renewal Notice Window (Days)',
         default=90,
-        config_parameter='ams.renewal_window_days',
-        help="How many days before expiration to start sending renewal notices"
+        config_parameter='ams_system_config.renewal_window_days',
+        help="Days before expiration to send renewal notices"
     )
-    auto_renewal_enabled = fields.Boolean(
-        string="Enable Auto-renewal",
-        default=True,
-        config_parameter='ams.auto_renewal_enabled',
-        help="Allow members to set up automatic membership renewals"
+    
+    allow_multiple_memberships = fields.Boolean(
+        string='Allow Multiple Active Memberships',
+        default=False,
+        config_parameter='ams_system_config.allow_multiple_memberships',
+        help="Whether members can hold multiple active memberships"
     )
-    renewal_reminder_frequency = fields.Selection([
-        ('weekly', 'Weekly'),
-        ('biweekly', 'Bi-weekly'),
-        ('monthly', 'Monthly'),
-    ], string="Renewal Reminder Frequency",
-       default='monthly',
-       config_parameter='ams.renewal_reminder_frequency',
-       help="How often to send renewal reminders during the renewal window")
 
-    # Portal and Communication
+    # ========================================================================
+    # COMMUNICATION & PORTAL CONFIGURATION FIELDS
+    # ========================================================================
+    
     portal_enabled = fields.Boolean(
-        string="Enable Member Portal",
+        string='Enable Member Portal',
         default=True,
-        config_parameter='ams.portal_enabled',
-        help="Enable self-service member portal functionality"
+        config_parameter='ams_system_config.portal_enabled',
+        help="Enable member self-service portal"
     )
+    
+    portal_self_registration = fields.Boolean(
+        string='Allow Portal Self-Registration',
+        default=False,
+        config_parameter='ams_system_config.portal_self_registration',
+        help="Allow new members to register through portal"
+    )
+    
     communication_opt_out_default = fields.Boolean(
-        string="Default Communication Opt-out",
+        string='Default Communication Opt-Out',
         default=False,
-        config_parameter='ams.communication_opt_out_default',
-        help="Default setting for new member communication preferences"
+        config_parameter='ams_system_config.communication_opt_out_default',
+        help="Default opt-out status for new member communications"
     )
-    portal_registration_enabled = fields.Boolean(
-        string="Allow Portal Self-Registration",
-        default=False,
-        config_parameter='ams.portal_registration_enabled',
-        help="Allow prospects to register through the portal"
-    )
-    email_verification_required = fields.Boolean(
-        string="Require Email Verification",
+    
+    emergency_communications_override = fields.Boolean(
+        string='Emergency Communications Override',
         default=True,
-        config_parameter='ams.email_verification_required',
-        help="Require email verification for new portal users"
+        config_parameter='ams_system_config.emergency_communications_override',
+        help="Allow emergency communications regardless of preferences"
     )
+    
+    notification_digest_frequency = fields.Selection([
+        ('immediate', 'Immediate'),
+        ('daily', 'Daily Digest'),
+        ('weekly', 'Weekly Digest')
+    ], string='Default Notification Frequency', 
+       default='immediate',
+       config_parameter='ams_system_config.notification_digest_frequency')
 
-    # Financial Configuration
-    fiscal_year_start = fields.Selection([
-        ('january', 'January'),
-        ('february', 'February'),
-        ('march', 'March'),
-        ('april', 'April'),
-        ('may', 'May'),
-        ('june', 'June'),
-        ('july', 'July'),
-        ('august', 'August'),
-        ('september', 'September'),
-        ('october', 'October'),
-        ('november', 'November'),
-        ('december', 'December')
-    ], string="Fiscal Year Start",
-       default='january',
-       config_parameter='ams.fiscal_year_start',
-       help="Month when your association's fiscal year begins")
+    # ========================================================================
+    # FINANCIAL SYSTEM CONFIGURATION FIELDS
+    # ========================================================================
     
     default_currency_id = fields.Many2one(
         'res.currency',
-        string="Default Currency",
-        help="Default currency for membership fees and transactions"
+        string='Default Currency',
+        config_parameter='ams_system_config.default_currency_id',
+        help="Primary currency for membership dues and transactions"
     )
-    multi_currency_enabled = fields.Boolean(
-        string="Enable Multi-Currency",
-        default=False,
-        config_parameter='ams.multi_currency_enabled',
-        help="Allow different currencies for international members"
-    )
-
-    # Feature Toggles
+    
+    fiscal_year_start = fields.Selection([
+        ('january', 'January'),
+        ('july', 'July'),
+        ('october', 'October'),
+        ('april', 'April')
+    ], string='Fiscal Year Start', 
+       default='january',
+       config_parameter='ams_system_config.fiscal_year_start')
+    
     chapter_revenue_sharing = fields.Boolean(
-        string="Enable Chapter Revenue Sharing",
+        string='Enable Chapter Revenue Sharing',
         default=False,
-        config_parameter='ams.chapter_revenue_sharing',
+        config_parameter='ams_system_config.chapter_revenue_sharing',
         help="Enable revenue sharing with local chapters"
     )
+    
     default_chapter_percentage = fields.Float(
-        string="Default Chapter Share %",
+        string='Default Chapter Revenue Share %',
         default=30.0,
-        config_parameter='ams.default_chapter_percentage',
+        config_parameter='ams_system_config.default_chapter_percentage',
         help="Default percentage of revenue shared with chapters"
     )
+
+    # ========================================================================
+    # FEATURE TOGGLE FIELDS
+    # ========================================================================
+    
     enterprise_subscriptions_enabled = fields.Boolean(
-        string="Enable Enterprise Features",
+        string='Enable Enterprise Subscriptions',
         default=True,
-        config_parameter='ams.enterprise_subscriptions_enabled',
-        help="Enable enterprise subscription and seat management features"
+        config_parameter='ams_system_config.enterprise_subscriptions_enabled',
+        help="Enable enterprise seat management features"
     )
+    
     continuing_education_required = fields.Boolean(
-        string="CE Requirements Active",
+        string='Continuing Education Required',
         default=False,
-        config_parameter='ams.continuing_education_required',
-        help="Enable continuing education requirements and tracking"
+        config_parameter='ams_system_config.continuing_education_required',
+        help="Require CE credits for membership maintenance"
     )
+    
     fundraising_enabled = fields.Boolean(
-        string="Enable Fundraising Features",
+        string='Enable Fundraising Features',
         default=True,
-        config_parameter='ams.fundraising_enabled',
-        help="Enable donation and fundraising campaign features"
+        config_parameter='ams_system_config.fundraising_enabled',
+        help="Enable donation and campaign management"
     )
+    
     event_member_pricing = fields.Boolean(
-        string="Enable Member Event Pricing",
+        string='Enable Member Event Pricing',
         default=True,
-        config_parameter='ams.event_member_pricing',
-        help="Enable special pricing for members on events"
+        config_parameter='ams_system_config.event_member_pricing',
+        help="Enable special pricing for members at events"
     )
 
-    # Data Management
-    duplicate_detection_enabled = fields.Boolean(
-        string="Enable Duplicate Detection",
-        default=True,
-        config_parameter='ams.duplicate_detection_enabled',
-        help="Automatically detect potential duplicate member records"
-    )
-    data_retention_years = fields.Integer(
-        string="Data Retention Period (Years)",
-        default=7,
-        config_parameter='ams.data_retention_years',
-        help="How many years to retain inactive member data"
-    )
-    audit_trail_enabled = fields.Boolean(
-        string="Enable Audit Trail",
-        default=True,
-        config_parameter='ams.audit_trail_enabled',
-        help="Track changes to member records and important data"
-    )
-
-    # Communication Settings - Many2one handled manually
-    default_email_template_id = fields.Many2one(
-        'mail.template',
-        string="Default Email Template",
-        help="Default email template for member communications",
-        config_parameter='ams.default_email_template_id'
-    )
-    communication_tracking_enabled = fields.Boolean(
-        string="Enable Communication Tracking",
-        default=True,
-        config_parameter='ams.communication_tracking_enabled',
-        help="Track email opens, clicks, and communication history"
-    )
-
-    # System Performance
-    batch_processing_size = fields.Integer(
-        string="Batch Processing Size",
-        default=100,
-        config_parameter='ams.batch_processing_size',
-        help="Number of records to process in batch operations"
-    )
-    cache_timeout_minutes = fields.Integer(
-        string="Cache Timeout (Minutes)",
-        default=30,
-        config_parameter='ams.cache_timeout_minutes',
-        help="How long to cache computed member data"
-    )
-
-    @api.constrains('member_id_padding')
-    def _check_member_id_padding(self):
-        """Validate member ID padding is reasonable"""
-        for record in self:
-            if record.member_id_padding and (record.member_id_padding < 3 or record.member_id_padding > 10):
-                raise ValidationError("Member ID padding must be between 3 and 10 digits")
-
+    # ========================================================================
+    # CONSTRAINT METHODS
+    # ========================================================================
+    
     @api.constrains('grace_period_days')
     def _check_grace_period_days(self):
-        """Validate grace period is reasonable"""
+        """Validate grace period is within acceptable limits."""
         for record in self:
             if record.grace_period_days and (record.grace_period_days < 0 or record.grace_period_days > 365):
-                raise ValidationError("Grace period must be between 0 and 365 days")
+                raise ValidationError(_("Grace period must be between 0 and 365 days"))
 
     @api.constrains('renewal_window_days')
     def _check_renewal_window_days(self):
-        """Validate renewal window is reasonable"""
+        """Validate renewal window is within acceptable limits."""
         for record in self:
-            if record.renewal_window_days and (record.renewal_window_days < 7 or record.renewal_window_days > 365):
-                raise ValidationError("Renewal window must be between 7 and 365 days")
+            if record.renewal_window_days and (record.renewal_window_days < 0 or record.renewal_window_days > 365):
+                raise ValidationError(_("Renewal window must be between 0 and 365 days"))
 
     @api.constrains('default_chapter_percentage')
     def _check_chapter_percentage(self):
-        """Validate chapter percentage is reasonable"""
+        """Validate chapter revenue percentage is valid."""
         for record in self:
             if record.default_chapter_percentage and (record.default_chapter_percentage < 0 or record.default_chapter_percentage > 100):
-                raise ValidationError("Chapter percentage must be between 0 and 100")
+                raise ValidationError(_("Chapter revenue percentage must be between 0 and 100"))
 
-    @api.constrains('data_retention_years')
-    def _check_data_retention_years(self):
-        """Validate data retention period"""
+    @api.constrains('member_id_prefix')
+    def _check_member_id_prefix(self):
+        """Validate member ID prefix format."""
         for record in self:
-            if record.data_retention_years and (record.data_retention_years < 1 or record.data_retention_years > 50):
-                raise ValidationError("Data retention period must be between 1 and 50 years")
+            if record.auto_member_id and record.member_id_prefix:
+                if len(record.member_id_prefix) > 10:
+                    raise ValidationError(_("Member ID prefix cannot be longer than 10 characters"))
+                if not record.member_id_prefix.isalnum():
+                    raise ValidationError(_("Member ID prefix must contain only letters and numbers"))
+
+    @api.constrains('continuing_education_required')
+    def _check_ce_requirements(self):
+        """Check if CE module is available when CE is required."""
+        for record in self:
+            if record.continuing_education_required:
+                ce_module = self.env['ir.module.module'].search([
+                    ('name', '=', 'ams_education_credits'),
+                    ('state', '=', 'installed')
+                ])
+                if not ce_module:
+                    raise ValidationError(_(
+                        "Continuing Education requires the 'ams_education_credits' module to be installed. "
+                        "Please install the module first or disable this requirement."
+                    ))
+
+    # ========================================================================
+    # ONCHANGE METHODS
+    # ========================================================================
+    
+    @api.onchange('auto_member_id')
+    def _onchange_auto_member_id(self):
+        """Handle member ID generation toggle changes."""
+        if not self.auto_member_id:
+            self.member_id_prefix = False
+            self.member_id_sequence = False
+
+    @api.onchange('chapter_revenue_sharing')
+    def _onchange_chapter_revenue_sharing(self):
+        """Handle chapter revenue sharing toggle changes."""
+        if not self.chapter_revenue_sharing:
+            self.default_chapter_percentage = 0.0
+
+    @api.onchange('portal_enabled')
+    def _onchange_portal_enabled(self):
+        """Handle portal enablement changes."""
+        if not self.portal_enabled:
+            self.portal_self_registration = False
+
+    # ========================================================================
+    # UTILITY METHODS
+    # ========================================================================
+    
+    @api.model
+    def get_global_setting(self, setting_name, default=None):
+        """Retrieve global AMS setting value.
+        
+        Args:
+            setting_name (str): Name of the configuration parameter
+            default: Default value if setting not found
+            
+        Returns:
+            The setting value or default
+        """
+        param_name = f'ams_system_config.{setting_name}'
+        return self.env['ir.config_parameter'].sudo().get_param(param_name, default)
 
     @api.model
-    def get_values(self):
-        """Override to handle Many2one fields manually"""
-        res = super().get_values()
-        ICP = self.env['ir.config_parameter'].sudo()
-
-        # Handle Many2one fields manually
-        seq_id = ICP.get_param('ams.member_id_sequence_id')
-        if seq_id:
-            res['member_id_sequence_id'] = int(seq_id)
-
-        currency_id = ICP.get_param('ams.default_currency_id')
-        if currency_id:
-            res['default_currency_id'] = int(currency_id)
-        else:
-            # Set default to company currency
-            company_currency = self.env.company.currency_id
-            if company_currency:
-                res['default_currency_id'] = company_currency.id
-
-        template_id = ICP.get_param('ams.default_email_template_id')
-        if template_id:
-            res['default_email_template_id'] = int(template_id)
-
-        return res
-
-    def set_values(self):
-        """Override to handle Many2one fields manually"""
-        super().set_values()
-        ICP = self.env['ir.config_parameter'].sudo()
-
-        # Handle Many2one fields manually
-        if self.member_id_sequence_id:
-            ICP.set_param('ams.member_id_sequence_id', self.member_id_sequence_id.id)
-
-        if self.default_currency_id:
-            ICP.set_param('ams.default_currency_id', self.default_currency_id.id)
-
-        if self.default_email_template_id:
-            ICP.set_param('ams.default_email_template_id', self.default_email_template_id.id)
-
-        # Update member ID sequence if settings changed
-        if self.member_id_sequence_id and (self.member_id_prefix or self.member_id_padding):
-            sequence_vals = {}
-            if self.member_id_prefix:
-                sequence_vals['prefix'] = self.member_id_prefix
-            if self.member_id_padding:
-                sequence_vals['padding'] = self.member_id_padding
-            if sequence_vals:
-                self.member_id_sequence_id.write(sequence_vals)
-
-    def action_reset_member_sequence(self):
-        """Action to reset member ID sequence"""
-        if self.member_id_sequence_id:
-            self.member_id_sequence_id.write({'number_next': 1})
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'message': 'Member ID sequence has been reset to 1',
-                    'type': 'success',
-                    'sticky': False,
-                }
-            }
-
-    def action_test_member_id_generation(self):
-        """Test member ID generation with current settings"""
-        if not self.member_id_sequence_id:
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'message': 'No member ID sequence configured',
-                    'type': 'warning',
-                    'sticky': False,
-                }
-            }
+    def set_global_setting(self, setting_name, value):
+        """Set global AMS setting value.
         
-        # Generate a test ID
-        test_id = self.member_id_sequence_id.next_by_id()
+        Args:
+            setting_name (str): Name of the configuration parameter
+            value: Value to set
+        """
+        param_name = f'ams_system_config.{setting_name}'
+        self.env['ir.config_parameter'].sudo().set_param(param_name, value)
+
+    @api.model
+    def get_member_id_format(self):
+        """Get the complete member ID format configuration.
         
+        Returns:
+            dict: Configuration for member ID generation
+        """
         return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'message': f'Test Member ID generated: {test_id}',
-                'type': 'info',
-                'sticky': True,
-            }
+            'auto_generate': self.get_global_setting('auto_member_id', True),
+            'prefix': self.get_global_setting('member_id_prefix', 'M'),
+            'sequence_id': self.get_global_setting('member_id_sequence_id', False),
         }
 
     @api.model
-    def get_fiscal_year_dates(self, date=None):
-        """Get fiscal year start and end dates for a given date"""
-        if date is None:
-            date = fields.Date.today()
+    def get_membership_policies(self):
+        """Get membership lifecycle policy configuration.
         
-        fiscal_start_month = self.env['ir.config_parameter'].sudo().get_param(
-            'ams.fiscal_year_start', 'january'
-        )
+        Returns:
+            dict: Membership policy settings
+        """
+        return {
+            'grace_period_days': int(self.get_global_setting('grace_period_days', 30)),
+            'renewal_window_days': int(self.get_global_setting('renewal_window_days', 90)),
+            'allow_multiple': self.get_global_setting('allow_multiple_memberships', False),
+        }
+
+    @api.model
+    def get_portal_configuration(self):
+        """Get portal access configuration.
         
-        month_mapping = {
-            'january': 1, 'february': 2, 'march': 3, 'april': 4,
-            'may': 5, 'june': 6, 'july': 7, 'august': 8,
-            'september': 9, 'october': 10, 'november': 11, 'december': 12
+        Returns:
+            dict: Portal configuration settings
+        """
+        return {
+            'enabled': self.get_global_setting('portal_enabled', True),
+            'self_registration': self.get_global_setting('portal_self_registration', False),
+        }
+
+    @api.model
+    def get_feature_flags(self):
+        """Get all feature toggle states.
+        
+        Returns:
+            dict: Feature enablement flags
+        """
+        return {
+            'enterprise_subscriptions': self.get_global_setting('enterprise_subscriptions_enabled', True),
+            'continuing_education': self.get_global_setting('continuing_education_required', False),
+            'fundraising': self.get_global_setting('fundraising_enabled', True),
+            'event_member_pricing': self.get_global_setting('event_member_pricing', True),
+            'chapter_revenue_sharing': self.get_global_setting('chapter_revenue_sharing', False),
+        }
+
+    @api.model
+    def validate_system_configuration(self):
+        """Validate critical system configuration.
+        
+        Returns:
+            list: List of validation errors, empty if all valid
+        """
+        errors = []
+        
+        # Check currency configuration
+        if not self.get_global_setting('default_currency_id'):
+            errors.append(_("Default currency must be configured"))
+        
+        # Validate member ID settings
+        if self.get_global_setting('auto_member_id', True):
+            if not self.get_global_setting('member_id_prefix'):
+                errors.append(_("Member ID prefix required when auto-generation enabled"))
+        
+        # Check feature dependencies
+        if self.get_global_setting('continuing_education_required', False):
+            if not self.get_global_setting('portal_enabled', True):
+                errors.append(_("Portal must be enabled for CE management"))
+        
+        return errors
+
+    # ========================================================================
+    # MODEL CREATION HOOKS
+    # ========================================================================
+    
+    def set_values(self):
+        """Override to handle special configuration actions."""
+        super().set_values()
+        
+        # Create member ID sequence if auto generation is enabled and no sequence exists
+        if self.auto_member_id and not self.member_id_sequence:
+            sequence = self._create_member_id_sequence()
+            if sequence:
+                self.env['ir.config_parameter'].sudo().set_param(
+                    'ams_system_config.member_id_sequence_id', 
+                    sequence.id
+                )
+
+    def _create_member_id_sequence(self):
+        """Create the member ID sequence if it doesn't exist.
+        
+        Returns:
+            ir.sequence: Created sequence record
+        """
+        sequence_vals = {
+            'name': 'AMS Member ID',
+            'code': 'ams.member.id',
+            'prefix': self.member_id_prefix or 'M',
+            'suffix': '',
+            'padding': 6,
+            'number_increment': 1,
+            'number_next_actual': 1,
+            'use_date_range': False,
+            'company_id': False,  # Global sequence
         }
         
-        start_month = month_mapping.get(fiscal_start_month, 1)
+        # Check if sequence already exists
+        existing_sequence = self.env['ir.sequence'].search([
+            ('code', '=', 'ams.member.id')
+        ], limit=1)
         
-        if date.month >= start_month:
-            # Current fiscal year
-            start_date = date.replace(month=start_month, day=1)
-            if start_month == 1:
-                end_date = date.replace(year=date.year + 1, month=1, day=1) - fields.timedelta(days=1)
-            else:
-                end_date = date.replace(year=date.year + 1, month=start_month, day=1) - fields.timedelta(days=1)
-        else:
-            # Previous fiscal year
-            start_date = date.replace(year=date.year - 1, month=start_month, day=1)
-            end_date = date.replace(month=start_month, day=1) - fields.timedelta(days=1)
+        if existing_sequence:
+            # Update existing sequence with new prefix if needed
+            if existing_sequence.prefix != sequence_vals['prefix']:
+                existing_sequence.write({'prefix': sequence_vals['prefix']})
+            return existing_sequence
         
-        return start_date, end_date
+        return self.env['ir.sequence'].create(sequence_vals)
