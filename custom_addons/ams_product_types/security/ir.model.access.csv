@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ams_product_type_system_admin,ams.product.type system admin,model_ams_product_type,base.group_system,1,1,1,1
+access_ams_product_type_admin,ams.product.type admin,model_ams_product_type,base.group_erp_manager,1,1,1,0
+access_ams_product_type_user,ams.product.type user,model_ams_product_type,base.group_user,1,0,0,0
+access_ams_product_type_sales_user,ams.product.type sales user,model_ams_product_type,sales_team.group_sale_salesman,1,0,0,0

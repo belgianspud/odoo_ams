@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Product Type Form View -->
+    <record id="view_product_type_form" model="ir.ui.view">
+        <field name="name">ams.product.type.form</field>
+        <field name="model">ams.product.type</field>
+        <field name="arch" type="xml">
+            <form string="Product Type">
+                <header>
+                    <button name="action_view_products" type="object" string="View Products" class="oe_highlight" 
+                            invisible="product_count == 0"/>
+                    <button name="toggle_active" type="object" string="Archive" class="btn-secondary"
+                            invisible="not active"/>
+                    <button name="toggle_active" type="object" string="Unarchive" class="btn-secondary"
+                            invisible="active"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_products" type="object" class="oe_stat_button" icon="fa-cube">
+                            <field name="product_count" widget="statinfo" string="Products"/>
+                        </button>
+                    </div>
+                    
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="active"/>
+                    
+                    <div class="oe_title">
+                        <div class="oe_edit_only">
+                            <label for="name"/>
+                        </div>
+                        <h1>
+                            <field name="name" placeholder="e.g., Annual Membership"/>
+                        </h1>
+                        <div class="oe_edit_only">
+                            <label for="code"/>
+                        </div>
+                        <h3>
+                            <field name="code" placeholder="e.g., ANNUAL_MEMBERSHIP"/>
+                        </h3>
+                    </div>
+
+                    <group>
+                        <group string="Basic Information">
+                            <field name="active"/>
+                            <field name="category" widget="radio" options="{'horizontal': true}"/>
+                            <field name="category_display" invisible="1"/>
+                            <field name="description"/>
+                        </group>
+                        <group string="Product Attributes">
+                            <field name="requires_member_pricing"/>
+                            <field name="is_subscription"/>
+                            <field name="is_digital"/>
+                            <field name="requires_inventory" invisible="is_digital"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Summary" name="summary">
+                            <div class="oe_form_box_info oe_text_center">
+                                <div class="oe_form_field">
+                                    <strong>Product Type Summary:</strong>
+                                    <p class="oe_grey">
+                                        <field name="get_type_summary" readonly="1" nolabel="1"/>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <group string="Attributes Overview">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fa fa-tag mr-2 text-primary"></i>
+                                            <span><strong>Category:</strong> <field name="category_display" readonly="1" nolabel="1"/></span>
+                                        </div>
+                                        <div class="d-flex align-items-center mb-2" invisible="not requires_member_pricing">
+                                            <i class="fa fa-users mr-2 text-success"></i>
+                                            <span>Supports Member Pricing</span>
+                                        </div>
+                                        <div class="d-flex align-items-center mb-2" invisible="not is_subscription">
+                                            <i class="fa fa-refresh mr-2 text-info"></i>
+                                            <span>Subscription Product</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center mb-2" invisible="not is_digital">
+                                            <i class="fa fa-download mr-2 text-warning"></i>
+                                            <span>Digital Product</span>
+                                        </div>
+                                        <div class="d-flex align-items-center mb-2" invisible="not requires_inventory">
+                                            <i class="fa fa-cubes mr-2 text-secondary"></i>
+                                            <span>Requires Inventory Tracking</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </group>
+                        </page>
+                        <page string="Configuration Tips" name="tips">
+                            <div class="alert alert-info">
+                                <h5><i class="fa fa-info-circle"></i> Configuration Guidelines</h5>
+                                <ul class="mb-0">
+                                    <li><strong>Member Pricing:</strong> Enable for products where members receive discounts</li>
+                                    <li><strong>Subscription:</strong> For recurring products like memberships or publications</li>
+                                    <li><strong>Digital:</strong> For downloadable content or online access products</li>
+                                    <li><strong>Inventory:</strong> Enable for physical products that need stock tracking</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="alert alert-warning" invisible="category != 'digital' or requires_inventory">
+                                <strong>Note:</strong> Digital products typically don't require inventory tracking.
+                            </div>
+                            
+                            <div class="alert alert-success" invisible="category != 'membership' or requires_member_pricing">
+                                <strong>Tip:</strong> Membership products usually don't need separate member pricing since they're inherently for members.
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Product Type List View -->
+    <record id="view_product_type_list" model="ir.ui.view">
+        <field name="name">ams.product.type.list</field>
+        <field name="model">ams.product.type</field>
+        <field name="arch" type="xml">
+            <list string="Product Types" sample="1">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="category"/>
+                <field name="requires_member_pricing" widget="boolean_toggle"/>
+                <field name="is_subscription" widget="boolean_toggle"/>
+                <field name="is_digital" widget="boolean_toggle"/>
+                <field name="requires_inventory" widget="boolean_toggle"/>
+                <field name="product_count"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Product Type Kanban View -->
+    <record id="view_product_type_kanban" model="ir.ui.view">
+        <field name="name">ams.product.type.kanban</field>
+        <field name="model">ams.product.type</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1" default_group_by="category">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="category"/>
+                <field name="category_display"/>
+                <field name="requires_member_pricing"/>
+                <field name="is_subscription"/>
+                <field name="is_digital"/>
+                <field name="requires_inventory"/>
+                <field name="product_count"/>
+                <field name="active"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click #{!record.active.raw_value ? 'o_kanban_color_10' : ''}">
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary">
+                                        <field name="name"/>
+                                        <t t-if="record.code.raw_value">
+                                            <small class="text-muted"> [<field name="code"/>]</small>
+                                        </t>
+                                    </div>
+                                    <div class="o_secondary">
+                                        <field name="category_display"/>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_manage_button_section">
+                                    <a class="o_kanban_manage_toggle_button" href="#">
+                                        <i class="fa fa-ellipsis-v" role="img" aria-label="Manage" title="Manage"/>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="o_kanban_card_content">
+                                <div class="o_kanban_card_manage_pane dropdown-menu" role="menu">
+                                    <a role="menuitem" type="edit" class="dropdown-item">Edit</a>
+                                    <a role="menuitem" type="delete" class="dropdown-item">Delete</a>
+                                </div>
+                                <div class="container o_kanban_card_content o_visible">
+                                    <div class="row">
+                                        <div class="col-6 o_kanban_primary_left">
+                                            <button class="btn btn-primary" name="action_view_products" type="object">
+                                                <field name="product_count"/> Products
+                                            </button>
+                                        </div>
+                                        <div class="col-6 o_kanban_primary_right">
+                                            <div class="mb4">
+                                                <t t-if="record.requires_member_pricing.raw_value">
+                                                    <span class="badge badge-pill badge-info">Member Pricing</span><br/>
+                                                </t>
+                                                <t t-if="record.is_subscription.raw_value">
+                                                    <span class="badge badge-pill badge-success">Subscription</span><br/>
+                                                </t>
+                                                <t t-if="record.is_digital.raw_value">
+                                                    <span class="badge badge-pill badge-warning">Digital</span><br/>
+                                                </t>
+                                                <t t-if="record.requires_inventory.raw_value">
+                                                    <span class="badge badge-pill badge-secondary">Inventory</span>
+                                                </t>
+                                            </div>
+                                            <t t-if="!record.active.raw_value">
+                                                <span class="badge badge-pill badge-danger">Archived</span>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Product Type Search View -->
+    <record id="view_product_type_search" model="ir.ui.view">
+        <field name="name">ams.product.type.search</field>
+        <field name="model">ams.product.type</field>
+        <field name="arch" type="xml">
+            <search string="Product Types">
+                <field name="name" string="Type Name" filter_domain="[('name', 'ilike', self)]"/>
+                <field name="code" string="Code" filter_domain="[('code', 'ilike', self)]"/>
+                <field name="category" string="Category"/>
+                <field name="description"/>
+                
+                <!-- Category Filters -->
+                <filter string="Membership" name="membership" domain="[('category', '=', 'membership')]"/>
+                <filter string="Event" name="event" domain="[('category', '=', 'event')]"/>
+                <filter string="Education" name="education" domain="[('category', '=', 'education')]"/>
+                <filter string="Publication" name="publication" domain="[('category', '=', 'publication')]"/>
+                <filter string="Merchandise" name="merchandise" domain="[('category', '=', 'merchandise')]"/>
+                <filter string="Certification" name="certification" domain="[('category', '=', 'certification')]"/>
+                <filter string="Digital Download" name="digital" domain="[('category', '=', 'digital')]"/>
+                
+                <separator/>
+                
+                <!-- Attribute Filters -->
+                <filter string="Member Pricing" name="member_pricing" domain="[('requires_member_pricing', '=', True)]"/>
+                <filter string="Subscription" name="subscription" domain="[('is_subscription', '=', True)]"/>
+                <filter string="Digital Products" name="digital_products" domain="[('is_digital', '=', True)]"/>
+                <filter string="Physical Products" name="physical_products" domain="[('is_digital', '=', False)]"/>
+                <filter string="Inventory Tracked" name="inventory" domain="[('requires_inventory', '=', True)]"/>
+                
+                <separator/>
+                
+                <!-- Status Filters -->
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter string="Category" name="group_category" 
+                            context="{'group_by': 'category'}"/>
+                    <filter string="Member Pricing" name="group_member_pricing" 
+                            context="{'group_by': 'requires_member_pricing'}"/>
+                    <filter string="Subscription Type" name="group_subscription" 
+                            context="{'group_by': 'is_subscription'}"/>
+                    <filter string="Digital/Physical" name="group_digital" 
+                            context="{'group_by': 'is_digital'}"/>
+                    <filter string="Status" name="group_active" 
+                            context="{'group_by': 'active'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Product Type Action -->
+    <record id="action_product_type" model="ir.actions.act_window">
+        <field name="name">Product Types</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">ams.product.type</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first product type!
+            </p>
+            <p>
+                Product types define classifications for your association's products and services.
+                Set up different categories like memberships, events, publications, and merchandise
+                with specific attributes for pricing, inventory, and delivery methods.
+            </p>
+        </field>
+    </record>
+
+    <!-- Product Type Menu -->
+    <menuitem id="menu_product_type"
+              name="Product Types"
+              parent="base.menu_administration"
+              action="action_product_type"
+              sequence="12"
+              groups="base.group_system"/>
+
+    <!-- ========================================================================== -->
+    <!-- PRODUCT TEMPLATE EXTENSIONS -->
+    <!-- ========================================================================== -->
+
+    <!-- Product Template Form View Extension -->
+    <record id="product_template_form_view_inherit" model="ir.ui.view">
+        <field name="name">product.template.form.ams</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <!-- Add AMS fields to the main product information -->
+            <xpath expr="//field[@name='categ_id']" position="after">
+                <field name="ams_product_type_id" 
+                       options="{'no_create': True, 'no_edit': True}"/>
+            </xpath>
+            
+            <!-- Add AMS tab for association-specific settings -->
+            <xpath expr="//notebook" position="inside">
+                <page string="AMS Settings" name="ams_settings">
+                    <group>
+                        <group string="AMS Classification">
+                            <field name="ams_category" readonly="1"/>
+                            <field name="is_digital" readonly="1"/>
+                            <field name="is_subscription" readonly="1"/>
+                            <field name="requires_member_pricing" readonly="1"/>
+                        </group>
+                        <group string="Member Pricing" invisible="not requires_member_pricing">
+                            <field name="member_list_price"/>
+                            <field name="member_standard_price"/>
+                        </group>
+                    </group>
+                    
+                    <div class="oe_clear"/>
+                    
+                    <group string="AMS Product Type Details" invisible="not ams_product_type_id">
+                        <button name="action_view_ams_product_type" type="object" 
+                                string="View AMS Product Type" class="oe_link"
+                                icon="fa-external-link"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Product Template Tree View Extension -->
+    <record id="product_template_tree_view_inherit" model="ir.ui.view">
+        <field name="name">product.template.tree.ams</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='categ_id']" position="after">
+                <field name="ams_category" optional="hide"/>
+                <field name="requires_member_pricing" widget="boolean_toggle" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Product Template Search View Extension -->
+    <record id="product_template_search_view_inherit" model="ir.ui.view">
+        <field name="name">product.template.search.ams</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='filter_to_sell']" position="after">
+                <separator/>
+                <filter string="Member Pricing" name="member_pricing" 
+                        domain="[('requires_member_pricing', '=', True)]"/>
+                <filter string="Digital Products" name="digital_products" 
+                        domain="[('is_digital', '=', True)]"/>
+                <filter string="Subscription Products" name="subscription_products" 
+                        domain="[('is_subscription', '=', True)]"/>
+            </xpath>
+            
+            <xpath expr="//group" position="inside">
+                <filter string="AMS Category" name="group_ams_category" 
+                        context="{'group_by': 'ams_category'}"/>
+                <filter string="AMS Product Type" name="group_ams_product_type" 
+                        context="{'group_by': 'ams_product_type_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- AMS Products Action (filtered view of products) -->
+    <record id="action_ams_products" model="ir.actions.act_window">
+        <field name="name">AMS Products</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('ams_product_type_id', '!=', False)]</field>
+        <field name="context">{'search_default_filter_to_sell': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first AMS product!
+            </p>
+            <p>
+                Products created with AMS product types will appear here.
+                They integrate with Odoo's standard product features while
+                providing AMS-specific functionality.
+            </p>
+        </field>
+    </record>
+
+    <!-- AMS Products Menu -->
+    <menuitem id="menu_ams_products"
+              name="AMS Products"
+              parent="base.menu_administration"
+              action="action_ams_products"
+              sequence="13"
+              groups="base.group_system"/>
+</odoo>
