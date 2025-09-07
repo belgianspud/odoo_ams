@@ -95,12 +95,12 @@
         </field>
     </record>
 
-    <!-- Member Status Tree View -->
-    <record id="view_member_status_tree" model="ir.ui.view">
-        <field name="name">ams.member.status.tree</field>
+    <!-- Member Status List View (Fixed: changed from tree to list) -->
+    <record id="view_member_status_list" model="ir.ui.view">
+        <field name="name">ams.member.status.list</field>
         <field name="model">ams.member.status</field>
         <field name="arch" type="xml">
-            <tree string="Member Statuses" sample="1">
+            <list string="Member Statuses" sample="1">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="code"/>
@@ -113,7 +113,7 @@
                 <field name="auto_transition_days"/>
                 <field name="next_status_id"/>
                 <field name="color" widget="color_picker"/>
-            </tree>
+            </list>
         </field>
     </record>
 
