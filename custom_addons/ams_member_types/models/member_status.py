@@ -144,6 +144,10 @@ class AMSMemberStatus(models.Model):
     def _check_auto_transition(self):
         """Validate auto-transition configuration."""
         for record in self:
+            # Skip validation during module installation/update
+            if self.env.context.get('install_mode') or self.env.context.get('module'):
+                continue
+                
             if record.auto_transition_days > 0 and not record.next_status_id:
                 raise ValidationError(_("Next status is required when auto-transition days is set"))
             if record.next_status_id and record.auto_transition_days <= 0:

@@ -2,6 +2,7 @@
 <odoo>
     <data noupdate="1">
         <!-- Core Member Statuses - Standard Lifecycle -->
+        <!-- Define all statuses first without transitions to avoid forward references -->
         
         <!-- Pending Status -->
         <record id="member_status_pending" model="ams.member.status">
@@ -19,7 +20,6 @@
             <field name="allows_portal_access">False</field>
             <field name="requires_approval">True</field>
             <field name="auto_transition_days">30</field>
-            <field name="next_status_id" ref="member_status_expired"/>
         </record>
 
         <!-- Active Status -->
@@ -56,7 +56,6 @@
             <field name="allows_portal_access">True</field>
             <field name="requires_approval">False</field>
             <field name="auto_transition_days">30</field>
-            <field name="next_status_id" ref="member_status_lapsed"/>
         </record>
 
         <!-- Lapsed Status -->
@@ -75,7 +74,6 @@
             <field name="allows_portal_access">False</field>
             <field name="requires_approval">False</field>
             <field name="auto_transition_days">365</field>
-            <field name="next_status_id" ref="member_status_expired"/>
         </record>
 
         <!-- Expired Status -->
@@ -171,7 +169,6 @@
             <field name="allows_portal_access">True</field>
             <field name="requires_approval">False</field>
             <field name="auto_transition_days">30</field>
-            <field name="next_status_id" ref="member_status_expired"/>
         </record>
 
         <!-- Provisional Status -->
@@ -190,7 +187,6 @@
             <field name="allows_portal_access">True</field>
             <field name="requires_approval">True</field>
             <field name="auto_transition_days">90</field>
-            <field name="next_status_id" ref="member_status_active"/>
         </record>
 
         <!-- Honorary Status -->
@@ -244,8 +240,7 @@
             <field name="is_terminated">False</field>
             <field name="allows_portal_access">True</field>
             <field name="requires_approval">True</field>
-            <field name="auto_transition_days">365</field>
-            <field name="next_status_id" ref="member_status_active"/>
+            <field name="auto_transition_days">0</field>
         </record>
 
         <!-- Emeritus Status -->
@@ -264,6 +259,34 @@
             <field name="allows_portal_access">True</field>
             <field name="requires_approval">True</field>
             <field name="auto_transition_days">0</field>
+        </record>
+    </data>
+
+    <!-- Auto-transition configurations - set after all statuses are created -->
+    <data noupdate="1">
+        <!-- Configure auto-transitions now that all statuses exist -->
+        <record id="member_status_pending" model="ams.member.status">
+            <field name="next_status_id" ref="member_status_expired"/>
+        </record>
+
+        <record id="member_status_grace" model="ams.member.status">
+            <field name="next_status_id" ref="member_status_lapsed"/>
+        </record>
+
+        <record id="member_status_lapsed" model="ams.member.status">
+            <field name="next_status_id" ref="member_status_expired"/>
+        </record>
+
+        <record id="member_status_trial" model="ams.member.status">
+            <field name="next_status_id" ref="member_status_expired"/>
+        </record>
+
+        <record id="member_status_provisional" model="ams.member.status">
+            <field name="next_status_id" ref="member_status_active"/>
+        </record>
+
+        <record id="member_status_leave" model="ams.member.status">
+            <field name="next_status_id" ref="member_status_active"/>
         </record>
     </data>
 </odoo>
