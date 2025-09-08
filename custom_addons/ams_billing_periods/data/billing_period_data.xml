@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Standard Billing Periods -->
+        
+        <!-- Daily -->
+        <record id="billing_period_daily" model="ams.billing.period">
+            <field name="name">Daily</field>
+            <field name="code">DAILY</field>
+            <field name="duration_value">1</field>
+            <field name="duration_unit">days</field>
+            <field name="sequence">10</field>
+            <field name="is_default">False</field>
+            <field name="description">Daily billing cycle for short-term services or testing.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Weekly -->
+        <record id="billing_period_weekly" model="ams.billing.period">
+            <field name="name">Weekly</field>
+            <field name="code">WEEKLY</field>
+            <field name="duration_value">1</field>
+            <field name="duration_unit">weeks</field>
+            <field name="sequence">20</field>
+            <field name="is_default">False</field>
+            <field name="description">Weekly billing cycle for frequent subscription services.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Bi-Weekly -->
+        <record id="billing_period_biweekly" model="ams.billing.period">
+            <field name="name">Bi-Weekly</field>
+            <field name="code">BIWEEKLY</field>
+            <field name="duration_value">2</field>
+            <field name="duration_unit">weeks</field>
+            <field name="sequence">30</field>
+            <field name="is_default">False</field>
+            <field name="description">Bi-weekly billing cycle for payroll-aligned services.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Monthly -->
+        <record id="billing_period_monthly" model="ams.billing.period">
+            <field name="name">Monthly</field>
+            <field name="code">MONTHLY</field>
+            <field name="duration_value">1</field>
+            <field name="duration_unit">months</field>
+            <field name="sequence">40</field>
+            <field name="is_default">False</field>
+            <field name="description">Monthly billing cycle for subscription services and recurring memberships.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Quarterly -->
+        <record id="billing_period_quarterly" model="ams.billing.period">
+            <field name="name">Quarterly</field>
+            <field name="code">QUARTERLY</field>
+            <field name="duration_value">3</field>
+            <field name="duration_unit">months</field>
+            <field name="sequence">50</field>
+            <field name="is_default">False</field>
+            <field name="description">Quarterly billing cycle for business memberships and seasonal services.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Semi-Annual -->
+        <record id="billing_period_semiannual" model="ams.billing.period">
+            <field name="name">Semi-Annual</field>
+            <field name="code">SEMIANNUAL</field>
+            <field name="duration_value">6</field>
+            <field name="duration_unit">months</field>
+            <field name="sequence">60</field>
+            <field name="is_default">False</field>
+            <field name="description">Semi-annual billing cycle for moderate commitment memberships.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Annual (Most Common - Set as Default) -->
+        <record id="billing_period_annual" model="ams.billing.period">
+            <field name="name">Annual</field>
+            <field name="code">ANNUAL</field>
+            <field name="duration_value">12</field>
+            <field name="duration_unit">months</field>
+            <field name="sequence">70</field>
+            <field name="is_default">True</field>
+            <field name="description">Annual billing cycle - the most common billing period for association memberships.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Biennial -->
+        <record id="billing_period_biennial" model="ams.billing.period">
+            <field name="name">Biennial</field>
+            <field name="code">BIENNIAL</field>
+            <field name="duration_value">24</field>
+            <field name="duration_unit">months</field>
+            <field name="sequence">80</field>
+            <field name="is_default">False</field>
+            <field name="description">Two-year billing cycle for long-term membership commitments with discounts.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Triennial -->
+        <record id="billing_period_triennial" model="ams.billing.period">
+            <field name="name">Triennial</field>
+            <field name="code">TRIENNIAL</field>
+            <field name="duration_value">36</field>
+            <field name="duration_unit">months</field>
+            <field name="sequence">90</field>
+            <field name="is_default">False</field>
+            <field name="description">Three-year billing cycle for premium long-term memberships.</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Custom Periods for Special Cases -->
+        
+        <!-- 30 Days (Alternative to Monthly) -->
+        <record id="billing_period_30days" model="ams.billing.period">
+            <field name="name">30 Days</field>
+            <field name="code">THIRTY_DAYS</field>
+            <field name="duration_value">30</field>
+            <field name="duration_unit">days</field>
+            <field name="sequence">35</field>
+            <field name="is_default">False</field>
+            <field name="description">Fixed 30-day billing cycle for consistent monthly periods.</field>
+            <field name="active">False</field>
+        </record>
+
+        <!-- 90 Days (Alternative to Quarterly) -->
+        <record id="billing_period_90days" model="ams.billing.period">
+            <field name="name">90 Days</field>
+            <field name="code">NINETY_DAYS</field>
+            <field name="duration_value">90</field>
+            <field name="duration_unit">days</field>
+            <field name="sequence">45</field>
+            <field name="is_default">False</field>
+            <field name="description">Fixed 90-day billing cycle for consistent quarterly periods.</field>
+            <field name="active">False</field>
+        </record>
+
+        <!-- 365 Days (Alternative to Annual) -->
+        <record id="billing_period_365days" model="ams.billing.period">
+            <field name="name">365 Days</field>
+            <field name="code">THREE_SIXTY_FIVE_DAYS</field>
+            <field name="duration_value">365</field>
+            <field name="duration_unit">days</field>
+            <field name="sequence">65</field>
+            <field name="is_default">False</field>
+            <field name="description">Fixed 365-day billing cycle for exact annual periods.</field>
+            <field name="active">False</field>
+        </record>
+
+        <!-- Trial Periods -->
+        
+        <!-- 7-Day Trial -->
+        <record id="billing_period_trial_7days" model="ams.billing.period">
+            <field name="name">7-Day Trial</field>
+            <field name="code">TRIAL_7DAYS</field>
+            <field name="duration_value">7</field>
+            <field name="duration_unit">days</field>
+            <field name="sequence">5</field>
+            <field name="is_default">False</field>
+            <field name="description">7-day trial period for new member evaluation.</field>
+            <field name="active">False</field>
+        </record>
+
+        <!-- 30-Day Trial -->
+        <record id="billing_period_trial_30days" model="ams.billing.period">
+            <field name="name">30-Day Trial</field>
+            <field name="code">TRIAL_30DAYS</field>
+            <field name="duration_value">30</field>
+            <field name="duration_unit">days</field>
+            <field name="sequence">8</field>
+            <field name="is_default">False</field>
+            <field name="description">30-day trial period for extended member evaluation.</field>
+            <field name="active">False</field>
+        </record>
+
+    </data>
+
+    <!-- Billing periods that can be modified -->
+    <data noupdate="0">
+        
+        <!-- Custom Organization-Specific Periods -->
+        
+        <!-- Academic Year (Common for Educational Associations) -->
+        <record id="billing_period_academic_year" model="ams.billing.period">
+            <field name="name">Academic Year</field>
+            <field name="code">ACADEMIC_YEAR</field>
+            <field name="duration_value">10</field>
+            <field name="duration_unit">months</field>
+            <field name="sequence">75</field>
+            <field name="is_default">False</field>
+            <field name="description">10-month academic year billing cycle for educational associations.</field>
+            <field name="active">False</field>
+        </record>
+
+        <!-- Fiscal Year (Common for Government Associations) -->
+        <record id="billing_period_fiscal_year" model="ams.billing.period">
+            <field name="name">Fiscal Year</field>
+            <field name="code">FISCAL_YEAR</field>
+            <field name="duration_value">12</field>
+            <field name="duration_unit">months</field>
+            <field name="sequence">72</field>
+            <field name="is_default">False</field>
+            <field name="description">12-month fiscal year billing cycle aligned with government fiscal periods.</field>
+            <field name="active">False</field>
+        </record>
+
+        <!-- Conference Season (Event-based) -->
+        <record id="billing_period_conference_season" model="ams.billing.period">
+            <field name="name">Conference Season</field>
+            <field name="code">CONFERENCE_SEASON</field>
+            <field name="duration_value">18</field>
+            <field name="duration_unit">months</field>
+            <field name="sequence">85</field>
+            <field name="is_default">False</field>
+            <field name="description">18-month conference season membership spanning multiple events.</field>
+            <field name="active">False</field>
+        </record>
+
+    </data>
+</odoo>

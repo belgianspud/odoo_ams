@@ -237,7 +237,6 @@
             <field name="is_subscription">False</field>
             <field name="is_digital">False</field>
             <field name="requires_inventory">False</field>
-            <field name="product_category_id" ref="product_category_events"/>
             <field name="active">True</field>
         </record>
 
@@ -251,7 +250,6 @@
             <field name="is_subscription">True</field>
             <field name="is_digital">True</field>
             <field name="requires_inventory">False</field>
-            <field name="product_category_id" ref="product_category_digital"/>
             <field name="active">True</field>
         </record>
 
@@ -265,7 +263,6 @@
             <field name="is_subscription">False</field>
             <field name="is_digital">False</field>
             <field name="requires_inventory">False</field>
-            <field name="product_category_id" ref="product_category_education"/>
             <field name="active">True</field>
         </record>
     </data>
