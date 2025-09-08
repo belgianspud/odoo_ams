@@ -34,7 +34,7 @@ class IrModuleModule(models.Model):
         'ams_member_data',      # AMS base module for member data structures - Layer 1
         'ams_system_config',    # AMS base module for managing and configuring ams configurations - Layer 1
         'ams_member_types',     # AMS base module for defining member status and types - layer 1
-
+        'ams_product_types',    # AMS base module for setting up product types 
 
         """
         #commenting out this section to provide clean list of modules to use for ams. 
