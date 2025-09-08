@@ -110,6 +110,10 @@ class AMSBillingPeriod(models.Model):
     @api.constrains('is_default')
     def _check_single_default(self):
         """Ensure only one billing period is marked as default."""
+        # Skip constraint during module installation
+        if self.env.context.get('install_mode'):
+            return
+            
         if self.is_default:
             # Check if there's already a default period (excluding current record)
             existing_default = self.search([
@@ -228,11 +232,13 @@ class AMSBillingPeriod(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         """Override create to handle default period logic."""
-        # If creating the first period and no default is set, make it default
-        for vals in vals_list:
-            if not self.search_count([]) and not vals.get('is_default'):
-                vals['is_default'] = True
-        
+        # Skip auto-default logic during module installation/update
+        if not self.env.context.get('install_mode'):
+            # If creating the first period and no default is set, make it default
+            for vals in vals_list:
+                if not self.search_count([]) and not vals.get('is_default'):
+                    vals['is_default'] = True
+                    
         return super().create(vals_list)
     
     def write(self, vals):
