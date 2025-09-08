@@ -35,6 +35,8 @@ class IrModuleModule(models.Model):
         'ams_system_config',    # AMS base module for managing and configuring ams configurations - Layer 1
         'ams_member_types',     # AMS base module for defining member status and types - layer 1
         'ams_product_types',    # AMS base module for setting up product types 
+        'ams_billing_periods',  # AMS base module for managing different billing periods for products
+
 
         """
         #commenting out this section to provide clean list of modules to use for ams. 

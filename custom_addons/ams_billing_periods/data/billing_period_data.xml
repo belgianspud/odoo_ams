@@ -219,4 +219,9 @@
         </record>
 
     </data>
+
+    <!-- Set default period after all records are created -->
+    <!--<data noupdate="0">
+        <function model="ams.billing.period" name="write" eval="[ref('billing_period_annual')], {'is_default': True}"/>
+    </data>-->
 </odoo>

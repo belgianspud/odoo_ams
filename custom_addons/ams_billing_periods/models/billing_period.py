@@ -104,8 +104,8 @@ class AMSBillingPeriod(models.Model):
             if record.code:
                 if not record.code.replace('_', '').replace('-', '').isalnum():
                     raise ValidationError(_("Code can only contain letters, numbers, underscores, and hyphens"))
-                if len(record.code) > 20:
-                    raise ValidationError(_("Code cannot be longer than 20 characters"))
+                if len(record.code) > 25:
+                    raise ValidationError(_("Code cannot be longer than 25 characters"))
     
     @api.constrains('is_default')
     def _check_single_default(self):
@@ -237,8 +237,17 @@ class AMSBillingPeriod(models.Model):
     
     def write(self, vals):
         """Override write to handle default period changes."""
-        # If unsetting default, ensure at least one remains default
-        if 'is_default' in vals and not vals['is_default']:
+        # If setting as default, unset other defaults first
+        if vals.get('is_default'):
+            other_defaults = self.search([
+                ('is_default', '=', True),
+                ('id', 'not in', self.ids)
+            ])
+            if other_defaults:
+                other_defaults.write({'is_default': False})
+        
+        # If unsetting default, ensure at least one remains default (but only check this outside of data loading)
+        if 'is_default' in vals and not vals['is_default'] and not self.env.context.get('install_mode'):
             if self.filtered('is_default'):
                 # Check if this would leave no default periods
                 other_defaults = self.search([
