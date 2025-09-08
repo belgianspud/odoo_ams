@@ -158,6 +158,11 @@ class AMSProductType(models.Model):
         for record in self:
             record.category_display = category_dict.get(record.category, record.category)
     
+    def _compute_type_summary(self):
+        """Compute type summary for display."""
+        for record in self:
+            record.type_summary = record.get_type_summary()
+    
     # ========================================================================
     # ONCHANGE METHODS
     # ========================================================================
@@ -401,8 +406,6 @@ class AMSProductType(models.Model):
                 'default_ams_product_type_id': self.id,
                 'default_categ_id': self.product_category_id.id if self.product_category_id else False,
                 'default_type': 'service' if not self.requires_inventory else 'product',
-                'default_is_digital': self.is_digital,
-                'default_recurring_rule_type': 'yearly' if self.is_subscription else False,
             },
         }
     

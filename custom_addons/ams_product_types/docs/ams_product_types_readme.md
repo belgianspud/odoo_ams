@@ -335,6 +335,7 @@ summary = product_type.get_type_summary()
 **Computed**
 - `product_count` (Integer): Number of products using this type
 - `category_display` (Char): Human-readable category name
+- `type_summary` (Char): Summary of product type attributes
 
 ### product.template (Extended)
 

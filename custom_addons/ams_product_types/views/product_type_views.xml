@@ -9,6 +9,7 @@
                 <header>
                     <button name="action_view_products" type="object" string="View Products" class="oe_highlight" 
                             invisible="product_count == 0"/>
+                    <button name="action_create_product" type="object" string="Create Product" class="oe_highlight"/>
                     <button name="toggle_active" type="object" string="Archive" class="btn-secondary"
                             invisible="not active"/>
                     <button name="toggle_active" type="object" string="Unarchive" class="btn-secondary"
@@ -52,6 +53,16 @@
                             <field name="requires_inventory" invisible="is_digital"/>
                         </group>
                     </group>
+                    
+                    <group>
+                        <group string="Odoo Integration">
+                            <field name="product_category_id"/>
+                            <field name="default_uom_id"/>
+                        </group>
+                        <group string="Statistics">
+                            <field name="product_count" readonly="1"/>
+                        </group>
+                    </group>
 
                     <notebook>
                         <page string="Summary" name="summary">
@@ -59,7 +70,13 @@
                                 <div class="oe_form_field">
                                     <strong>Product Type Summary:</strong>
                                     <p class="oe_grey">
-                                        <field name="get_type_summary" readonly="1" nolabel="1"/>
+                                        Category: <field name="category_display" readonly="1" nolabel="1"/>
+                                        <br/>
+                                        <span invisible="not requires_member_pricing">• Member Pricing</span>
+                                        <span invisible="not is_subscription">• Subscription</span>
+                                        <span invisible="not is_digital">• Digital</span>
+                                        <span invisible="is_digital">• Physical</span>
+                                        <span invisible="not requires_inventory">• Inventory Tracked</span>
                                     </p>
                                 </div>
                             </div>
