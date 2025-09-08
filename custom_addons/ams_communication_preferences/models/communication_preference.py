@@ -9,6 +9,7 @@ class AMSCommunicationPreference(models.Model):
     """Communication preferences for association members"""
     
     _name = 'ams.communication.preference'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'AMS Communication Preference'
     _order = 'partner_id, category, communication_type'
     _rec_name = 'preference_summary'
@@ -17,11 +18,18 @@ class AMSCommunicationPreference(models.Model):
     # CORE FIELDS
     # ========================================================================
 
+    active = fields.Boolean(
+        string="Active",
+        default=True,
+        help="Uncheck to archive this preference record"
+    )
+
     partner_id = fields.Many2one(
         'res.partner', 
         string="Member", 
         required=True,
         ondelete='cascade',
+        tracking=True,
         help="Member for whom this preference applies"
     )
 
@@ -31,6 +39,7 @@ class AMSCommunicationPreference(models.Model):
         ('mail', 'Physical Mail'),
         ('phone', 'Phone')
     ], string="Communication Type", required=True,
+       tracking=True,
        help="Type of communication channel")
 
     category = fields.Selection([
@@ -41,11 +50,13 @@ class AMSCommunicationPreference(models.Model):
         ('fundraising', 'Fundraising'),
         ('governance', 'Governance')
     ], string="Category", required=True,
+       tracking=True,
        help="Category of communications")
 
     opted_in = fields.Boolean(
         string="Opted In", 
         default=True,
+        tracking=True,
         help="Whether member has opted in to receive this type of communication"
     )
 
@@ -67,6 +78,7 @@ class AMSCommunicationPreference(models.Model):
 
     consent_source = fields.Char(
         string="Consent Source",
+        tracking=True,
         help="How/where the consent was obtained (e.g., 'website signup', 'phone call', 'event registration')"
     )
 
@@ -94,6 +106,7 @@ class AMSCommunicationPreference(models.Model):
     double_opt_in = fields.Boolean(
         string="Double Opt-in Confirmed",
         default=False,
+        tracking=True,
         help="Whether double opt-in confirmation was completed"
     )
 
@@ -109,6 +122,7 @@ class AMSCommunicationPreference(models.Model):
     gdpr_consent = fields.Boolean(
         string="GDPR Consent",
         default=False,
+        tracking=True,
         help="Explicit GDPR consent obtained"
     )
 
@@ -224,14 +238,15 @@ class AMSCommunicationPreference(models.Model):
     # CRUD METHODS
     # ========================================================================
 
-    @api.model
-    def create(self, vals):
+    @api.model_create_multi
+    def create(self, vals_list):
         """Override create to set initial tracking fields"""
-        # Set original opt-in date if opted in
-        if vals.get('opted_in') and not vals.get('original_opt_in_date'):
-            vals['original_opt_in_date'] = fields.Datetime.now()
+        for vals in vals_list:
+            # Set original opt-in date if opted in
+            if vals.get('opted_in') and not vals.get('original_opt_in_date'):
+                vals['original_opt_in_date'] = fields.Datetime.now()
         
-        return super().create(vals)
+        return super().create(vals_list)
 
     def write(self, vals):
         """Override write to track preference changes"""
