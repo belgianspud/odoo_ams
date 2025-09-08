@@ -2,19 +2,16 @@
 <odoo>
     <data noupdate="1">
 
-        <!-- Default Communication Preferences for Demo/Testing -->
-        <!-- These can be used as examples or for demo data -->
-
-        <!-- Communication Type Categories Data -->
-        <!-- This data helps establish the standard categories and types used in the system -->
+        <!-- Minimal Demo Data for Communication Preferences -->
+        <!-- Avoid automatic preference creation during module installation -->
 
         <!-- Demo Member for Testing Communication Preferences -->
+        <!-- Create without member_id first to avoid auto-preference creation -->
         <record id="demo_member_comm_prefs" model="res.partner">
             <field name="name">Demo Member Communications</field>
             <field name="email">demo.communications@example.com</field>
             <field name="phone">555-0123</field>
             <field name="is_company">False</field>
-            <field name="member_id">M000001</field>
             <field name="first_name">Demo</field>
             <field name="last_name">Communications</field>
             <field name="preferred_communication_method">email</field>
@@ -23,6 +20,14 @@
             <field name="privacy_policy_accepted">True</field>
         </record>
 
+        <!-- Now add member_id separately (this won't trigger auto-creation if member already exists) -->
+        <record id="demo_member_comm_prefs_update" model="res.partner">
+            <field name="id" ref="demo_member_comm_prefs"/>
+            <field name="member_id">M000001</field>
+        </record>
+
+        <!-- Create specific demo preferences manually (only valid combinations) -->
+        
         <!-- Demo Communication Preferences - Email Marketing Opted In -->
         <record id="demo_pref_email_marketing" model="ams.communication.preference">
             <field name="partner_id" ref="demo_member_comm_prefs"/>
@@ -56,25 +61,6 @@
             <field name="double_opt_in">True</field>
         </record>
 
-        <!-- Demo Communication Preferences - Email Education Opted In -->
-        <record id="demo_pref_email_education" model="ams.communication.preference">
-            <field name="partner_id" ref="demo_member_comm_prefs"/>
-            <field name="communication_type">email</field>
-            <field name="category">education</field>
-            <field name="opted_in">True</field>
-            <field name="consent_source">demo_data</field>
-            <field name="gdpr_consent">True</field>
-        </record>
-
-        <!-- Demo Communication Preferences - SMS Marketing Opted Out -->
-        <record id="demo_pref_sms_marketing" model="ams.communication.preference">
-            <field name="partner_id" ref="demo_member_comm_prefs"/>
-            <field name="communication_type">sms</field>
-            <field name="category">marketing</field>
-            <field name="opted_in">False</field>
-            <field name="consent_source">demo_data</field>
-        </record>
-
         <!-- Demo Communication Preferences - SMS Events Opted In -->
         <record id="demo_pref_sms_events" model="ams.communication.preference">
             <field name="partner_id" ref="demo_member_comm_prefs"/>
@@ -85,43 +71,27 @@
             <field name="gdpr_consent">True</field>
         </record>
 
-        <!-- Demo Communication Preferences - Physical Mail Fundraising Opted Out -->
-        <record id="demo_pref_mail_fundraising" model="ams.communication.preference">
+        <!-- Demo Communication Preferences - Physical Mail Membership Opted In -->
+        <record id="demo_pref_mail_membership" model="ams.communication.preference">
             <field name="partner_id" ref="demo_member_comm_prefs"/>
             <field name="communication_type">mail</field>
-            <field name="category">fundraising</field>
-            <field name="opted_in">False</field>
+            <field name="category">membership</field>
+            <field name="opted_in">True</field>
             <field name="consent_source">demo_data</field>
         </record>
 
-        <!-- Demo Communication Preferences - Phone Governance Opted In -->
-        <record id="demo_pref_phone_governance" model="ams.communication.preference">
+        <!-- Demo Communication Preferences - Phone Membership Opted In -->
+        <record id="demo_pref_phone_membership" model="ams.communication.preference">
             <field name="partner_id" ref="demo_member_comm_prefs"/>
             <field name="communication_type">phone</field>
-            <field name="category">governance</field>
+            <field name="category">membership</field>
             <field name="opted_in">True</field>
             <field name="consent_source">demo_data</field>
             <field name="gdpr_consent">True</field>
         </record>
 
-        <!-- Default Settings for System Configuration -->
-        <!-- These could be used by other modules for default behavior -->
-
-        <!-- Communication Type Mappings for Reference -->
-        <!-- This section provides reference data for the communication types and categories -->
-        <!-- that are used throughout the system -->
-
-        <!-- Communication Channel Priority Settings -->
-        <!-- Default priority order: Email > SMS > Mail > Phone -->
-
-        <!-- GDPR Compliance Templates -->
-        <!-- Default consent text templates for GDPR compliance -->
-
-        <!-- Communication Frequency Settings -->
-        <!-- Default frequency options for member communications -->
-
-        <!-- Opt-out/Opt-in Text Templates -->
-        <!-- Standard text used in opt-in and opt-out communications -->
+        <!-- Note: Intentionally NOT creating SMS + governance combination as it's invalid -->
+        <!-- Users can test the validation by trying to create this combination manually -->
 
     </data>
 </odoo>

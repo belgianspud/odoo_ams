@@ -379,16 +379,22 @@ class ResPartnerCommunication(models.Model):
     # OVERRIDE METHODS
     # ========================================================================
 
-    @api.model
-    def create(self, vals):
+    @api.model_create_multi
+    def create(self, vals_list):
         """Override create to set up communication preferences for new members"""
-        partner = super().create(vals)
+        partners = super().create(vals_list)
+        
+        # Skip auto-creation during data loading/installation to avoid constraint issues
+        if self.env.context.get('install_mode') or self.env.context.get('module_loading') or \
+           self.env.context.get('no_auto_preferences'):
+            return partners
         
         # Auto-create communication preferences for members with member_id
-        if partner.member_id and not partner.communication_preference_ids:
-            partner.create_communication_preferences()
+        for partner in partners:
+            if partner.member_id and not partner.communication_preference_ids:
+                partner.create_communication_preferences()
         
-        return partner
+        return partners
 
     def write(self, vals):
         """Override write to handle email changes"""
