@@ -159,7 +159,9 @@ class AMSCommunicationPreference(models.Model):
         ('needs_confirmation', 'Needs Confirmation'),
         ('expired', 'Consent Expired'),
         ('non_compliant', 'Non-compliant')
-    ], string="Compliance Status", compute='_compute_compliance_status',
+    ], string="Compliance Status", 
+       compute='_compute_compliance_status',
+       store=True,  # Make it stored so it can be searched
        help="Compliance status of this preference")
 
     # ========================================================================
@@ -337,6 +339,10 @@ class AMSCommunicationPreference(models.Model):
         
         for comm_type in communication_types:
             for category in categories:
+                # Skip invalid combinations
+                if self._is_invalid_combination(comm_type, category):
+                    continue
+                    
                 # Check if preference already exists
                 existing = self.search([
                     ('partner_id', '=', partner_id),

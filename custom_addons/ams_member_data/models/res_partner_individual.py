@@ -104,6 +104,14 @@ class ResPartnerIndividual(models.Model):
         help="Date when member first joined the association"
     )
 
+    # REMOVED FIELDS THAT REFERENCE NON-EXISTENT MODELS
+    # These will be added by higher layer modules:
+    # - is_member (computed field referencing ams.participation)
+    # - member_type_id (references ams.member.type)  
+    # - member_status_id (references ams.member.status)
+    # - paid_through_date (computed field referencing ams.participation)
+    # - primary_membership_id (references ams.participation)
+
     # Computed Fields
     display_name = fields.Char(
         string="Display Name",
@@ -195,8 +203,12 @@ class ResPartnerIndividual(models.Model):
     def create(self, vals):
         """Override create to auto-generate member ID"""
         if not vals.get('member_id') and not vals.get('is_company'):
-            # Generate member ID for individuals only
-            vals['member_id'] = self.env['ir.sequence'].next_by_code('ams.member.id')
+            # Only generate member ID for individuals, and only if sequence exists
+            try:
+                vals['member_id'] = self.env['ir.sequence'].next_by_code('ams.member.id')
+            except:
+                # If sequence doesn't exist yet, skip for now
+                pass
         return super().create(vals)
 
     def _format_phone_number(self, phone):

@@ -14,8 +14,8 @@ class ResPartnerOrganization(models.Model):
     )
     website_url = fields.Char(
         string="Website URL",
-        store=True,
-        help="Organization's primary website"
+        help="Organization's primary website",
+        index=True
     )
     tin_number = fields.Char(
         string="TIN Number",
@@ -71,6 +71,13 @@ class ResPartnerOrganization(models.Model):
         help="Primary contact person for portal access and communications"
     )
     
+    # REMOVED FIELDS THAT REFERENCE NON-EXISTENT MODELS
+    # These will be added by higher layer modules:
+    # - available_seats (computed field referencing ams.enterprise.subscription)
+    # - assigned_seats (computed field referencing ams.enterprise.subscription)
+    # - total_seats (computed field referencing ams.enterprise.subscription)
+    # - exhibitor_points (computed field referencing ams.event models)
+    
     # Computed Fields
     employee_ids = fields.One2many(
         'res.partner', 
@@ -86,9 +93,9 @@ class ResPartnerOrganization(models.Model):
     )
     
     # Legacy Integration
-    legacy_organization_id = fields.Char(
-        string="Legacy Organization ID",
-        help="Original organization ID from legacy system"
+    legacy_contact_id = fields.Char(
+        string="Legacy Contact ID",
+        help="Original contact ID from legacy system for data migration"
     )
     
     # Display name computation for organizations
@@ -108,7 +115,7 @@ class ResPartnerOrganization(models.Model):
                 else:
                     partner.display_name = partner.name or ''
             else:
-                # For individuals, use the individual computation
+                # For individuals, use the standard computation
                 partner.display_name = partner.name or ''
 
     @api.depends('employee_ids')
@@ -124,8 +131,12 @@ class ResPartnerOrganization(models.Model):
     def create(self, vals):
         """Override create to handle organization-specific logic"""
         if vals.get('is_company') and not vals.get('member_id'):
-            # Generate member ID for organizations too
-            vals['member_id'] = self.env['ir.sequence'].next_by_code('ams.member.id')
+            # Generate member ID for organizations too, if sequence exists
+            try:
+                vals['member_id'] = self.env['ir.sequence'].next_by_code('ams.member.id')
+            except:
+                # If sequence doesn't exist yet, skip for now
+                pass
         return super().create(vals)
 
     @api.constrains('website_url')

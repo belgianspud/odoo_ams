@@ -1,379 +1,183 @@
 # -*- coding: utf-8 -*-
 
-from odoo import api, fields, models, _
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
+import re
 
 
-class ResPartnerCommunication(models.Model):
-    """Extend res.partner with communication preference functionality"""
-    
+class ResPartnerOrganization(models.Model):
     _inherit = 'res.partner'
 
-    # ========================================================================
-    # COMMUNICATION PREFERENCE FIELDS
-    # ========================================================================
-
-    communication_preference_ids = fields.One2many(
-        'ams.communication.preference',
-        'partner_id',
-        string="Communication Preferences",
-        help="Member's communication preferences by type and category"
+    # Corporate Identity
+    acronym = fields.Char(
+        string="Acronym",
+        help="Common abbreviation or acronym for the organization"
     )
-
-    # ========================================================================
-    # GLOBAL COMMUNICATION SETTINGS
-    # ========================================================================
-
-    communication_opt_out = fields.Boolean(
-        string="Global Communication Opt-out",
-        default=False,
-        help="Member has opted out of ALL communications"
+    website_url = fields.Char(
+        string="Website URL",
+        store=True,
+        help="Organization's primary website"
     )
-
-    do_not_email = fields.Boolean(
-        string="Do Not Email",
-        default=False,
-        help="Never send emails to this member"
+    tin_number = fields.Char(
+        string="TIN Number",
+        help="Tax Identification Number"
     )
-
-    do_not_sms = fields.Boolean(
-        string="Do Not SMS",
-        default=False,
-        help="Never send SMS messages to this member"
+    ein_number = fields.Char(
+        string="EIN Number", 
+        help="Employer Identification Number"
     )
-
-    do_not_mail = fields.Boolean(
-        string="Do Not Mail",
-        default=False,
-        help="Never send physical mail to this member"
+    
+    # Organization Type
+    organization_type = fields.Selection([
+        ('corporation', 'Corporation'),
+        ('nonprofit', 'Non-profit'),
+        ('government', 'Government'),
+        ('educational', 'Educational Institution'),
+        ('healthcare', 'Healthcare Organization'),
+        ('association', 'Professional Association'),
+        ('partnership', 'Partnership'),
+        ('sole_proprietorship', 'Sole Proprietorship'),
+        ('other', 'Other')
+    ], string="Organization Type")
+    
+    # Industry Classification
+    industry_sector = fields.Char(
+        string="Industry Sector",
+        help="Primary industry or sector"
     )
-
-    do_not_call = fields.Boolean(
-        string="Do Not Call",
-        default=False,
-        help="Never call this member"
+    naics_code = fields.Char(
+        string="NAICS Code",
+        help="North American Industry Classification System code"
     )
-
-    # ========================================================================
-    # COMPLIANCE AND TRACKING
-    # ========================================================================
-
-    gdpr_consent_given = fields.Boolean(
-        string="GDPR Consent Given",
-        default=False,
-        help="Member has given explicit GDPR consent"
+    
+    # Business Details
+    year_established = fields.Integer(
+        string="Year Established",
+        help="Year the organization was founded"
     )
-
-    gdpr_consent_date = fields.Datetime(
-        string="GDPR Consent Date",
-        help="When GDPR consent was given"
+    employee_count = fields.Integer(
+        string="Number of Employees",
+        help="Total number of employees"
     )
-
-    privacy_policy_accepted = fields.Boolean(
-        string="Privacy Policy Accepted",
-        default=False,
-        help="Member has accepted the privacy policy"
+    annual_revenue = fields.Monetary(
+        string="Annual Revenue",
+        help="Approximate annual revenue"
     )
-
-    privacy_policy_date = fields.Datetime(
-        string="Privacy Policy Acceptance Date",
-        help="When privacy policy was accepted"
+    
+    # Portal and Access Management
+    portal_primary_contact_id = fields.Many2one(
+        'res.partner', 
+        string="Portal Primary Contact",
+        domain="[('parent_id', '=', id), ('is_company', '=', False)]",
+        help="Primary contact person for portal access and communications"
     )
-
-    email_bounce_count = fields.Integer(
-        string="Email Bounce Count",
-        default=0,
-        help="Number of email bounces for this member"
+    
+    # Computed Fields
+    employee_ids = fields.One2many(
+        'res.partner', 
+        'parent_id', 
+        string="Employees",
+        domain="[('is_company', '=', False)]"
     )
-
-    last_email_bounce_date = fields.Datetime(
-        string="Last Email Bounce",
-        help="Date of last email bounce"
+    employee_count_computed = fields.Integer(
+        string="Employee Count",
+        compute='_compute_employee_count',
+        store=True,
+        help="Count of linked employee records"
     )
-
-    # ========================================================================
-    # PREFERRED COMMUNICATION SETTINGS
-    # ========================================================================
-
-    preferred_communication_method = fields.Selection([
-        ('email', 'Email'),
-        ('sms', 'SMS'),
-        ('mail', 'Physical Mail'),
-        ('phone', 'Phone')
-    ], string="Preferred Communication Method",
-       help="Member's preferred way to be contacted")
-
-    preferred_language = fields.Many2one(
-        'res.lang',
-        string="Preferred Language",
-        help="Member's preferred language for communications"
+    
+    # Legacy Integration
+    legacy_organization_id = fields.Char(
+        string="Legacy Organization ID",
+        help="Original organization ID from legacy system"
     )
-
-    communication_frequency = fields.Selection([
-        ('immediate', 'Immediate'),
-        ('daily', 'Daily Digest'),
-        ('weekly', 'Weekly Summary'),
-        ('monthly', 'Monthly Newsletter'),
-        ('quarterly', 'Quarterly Updates'),
-        ('minimal', 'Minimal Communications')
-    ], string="Communication Frequency",
-       default='weekly',
-       help="How frequently member wants to receive communications")
-
-    # ========================================================================
-    # COMPUTED FIELDS
-    # ========================================================================
-
-    email_opt_in_count = fields.Integer(
-        string="Email Opt-ins",
-        compute='_compute_communication_stats',
-        help="Number of email categories opted in to"
-    )
-
-    sms_opt_in_count = fields.Integer(
-        string="SMS Opt-ins", 
-        compute='_compute_communication_stats',
-        help="Number of SMS categories opted in to"
-    )
-
-    total_opt_ins = fields.Integer(
-        string="Total Opt-ins",
-        compute='_compute_communication_stats',
-        help="Total number of communication preferences opted in to"
-    )
-
-    communication_compliance_status = fields.Selection([
-        ('compliant', 'Compliant'),
-        ('needs_attention', 'Needs Attention'),
-        ('non_compliant', 'Non-compliant')
-    ], string="Compliance Status",
-       compute='_compute_compliance_status',
-       help="Overall communication compliance status")
-
-    can_email = fields.Boolean(
-        string="Can Email",
-        compute='_compute_communication_permissions',
-        help="Whether this member can be emailed"
-    )
-
-    can_sms = fields.Boolean(
-        string="Can SMS",
-        compute='_compute_communication_permissions',
-        help="Whether this member can receive SMS"
-    )
-
-    can_mail = fields.Boolean(
-        string="Can Mail",
-        compute='_compute_communication_permissions', 
-        help="Whether this member can receive physical mail"
-    )
-
-    can_call = fields.Boolean(
-        string="Can Call",
-        compute='_compute_communication_permissions',
-        help="Whether this member can be called"
+    
+    # Display name computation for organizations
+    display_name = fields.Char(
+        string="Display Name",
+        compute='_compute_display_name_org',
+        store=True
     )
 
     # ========================================================================
     # COMPUTE METHODS
     # ========================================================================
 
-    @api.depends('communication_preference_ids.opted_in', 'communication_preference_ids.communication_type')
-    def _compute_communication_stats(self):
-        """Compute communication statistics"""
+    @api.depends('name', 'acronym', 'is_company')
+    def _compute_display_name_org(self):
+        """Compute display name for organizations"""
         for partner in self:
-            email_count = len(partner.communication_preference_ids.filtered(
-                lambda p: p.communication_type == 'email' and p.opted_in
-            ))
-            sms_count = len(partner.communication_preference_ids.filtered(
-                lambda p: p.communication_type == 'sms' and p.opted_in
-            ))
-            total_count = len(partner.communication_preference_ids.filtered('opted_in'))
-            
-            partner.email_opt_in_count = email_count
-            partner.sms_opt_in_count = sms_count
-            partner.total_opt_ins = total_count
-
-    @api.depends('communication_preference_ids.compliance_status', 'gdpr_consent_given', 'privacy_policy_accepted')
-    def _compute_compliance_status(self):
-        """Compute overall compliance status"""
-        for partner in self:
-            preferences = partner.communication_preference_ids
-            
-            if not preferences:
-                partner.communication_compliance_status = 'compliant'
-                continue
-                
-            non_compliant = preferences.filtered(lambda p: p.compliance_status == 'non_compliant')
-            needs_attention = preferences.filtered(lambda p: p.compliance_status == 'needs_confirmation')
-            
-            if non_compliant:
-                partner.communication_compliance_status = 'non_compliant'
-            elif needs_attention:
-                partner.communication_compliance_status = 'needs_attention'
+            if partner.is_company:
+                if partner.acronym and partner.name:
+                    partner.display_name = f"{partner.name} ({partner.acronym})"
+                else:
+                    partner.display_name = partner.name or ''
             else:
-                partner.communication_compliance_status = 'compliant'
+                # For individuals, keep the original display name computation
+                partner.display_name = partner.name or ''
 
-    @api.depends('communication_opt_out', 'do_not_email', 'do_not_sms', 'do_not_mail', 'do_not_call',
-                 'communication_preference_ids.opted_in', 'communication_preference_ids.communication_type')
-    def _compute_communication_permissions(self):
-        """Compute what communication types are allowed"""
+    @api.depends('employee_ids')
+    def _compute_employee_count(self):
+        """Compute number of linked employees"""
         for partner in self:
-            # Global opt-out overrides everything
-            if partner.communication_opt_out:
-                partner.can_email = False
-                partner.can_sms = False
-                partner.can_mail = False
-                partner.can_call = False
-                continue
-
-            # Check specific do-not flags
-            partner.can_email = not partner.do_not_email
-            partner.can_sms = not partner.do_not_sms
-            partner.can_mail = not partner.do_not_mail
-            partner.can_call = not partner.do_not_call
-
-            # Additional checks based on bounce count
-            if partner.email_bounce_count >= 5:  # Configurable threshold
-                partner.can_email = False
+            if partner.is_company:
+                partner.employee_count_computed = len(partner.employee_ids)
+            else:
+                partner.employee_count_computed = 0
 
     # ========================================================================
-    # BUSINESS METHODS
+    # CONSTRAINT METHODS
     # ========================================================================
 
-    def check_communication_allowed(self, communication_type, category):
-        """Check if a specific communication is allowed"""
-        self.ensure_one()
-        
-        # Check global opt-out
-        if self.communication_opt_out:
-            return False
-        
-        # Check specific do-not flags
-        if communication_type == 'email' and self.do_not_email:
-            return False
-        elif communication_type == 'sms' and self.do_not_sms:
-            return False
-        elif communication_type == 'mail' and self.do_not_mail:
-            return False
-        elif communication_type == 'phone' and self.do_not_call:
-            return False
-        
-        # Check specific preference
-        preference = self.env['ams.communication.preference'].search([
-            ('partner_id', '=', self.id),
-            ('communication_type', '=', communication_type),
-            ('category', '=', category)
-        ], limit=1)
-        
-        if preference:
-            return preference.opted_in
-        else:
-            # Default policy - can be configured
-            return True
+    @api.constrains('website_url')
+    def _check_website_url(self):
+        """Validate website URL format"""
+        for partner in self:
+            if partner.website_url:
+                url_pattern = r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$'
+                if not re.match(url_pattern, partner.website_url):
+                    raise ValidationError(
+                        _("Please enter a valid website URL (including http:// or https://)")
+                    )
 
-    def create_communication_preferences(self):
-        """Create default communication preferences for this member"""
-        self.ensure_one()
-        return self.env['ams.communication.preference'].create_default_preferences(self.id)
+    @api.constrains('ein_number')
+    def _check_ein_format(self):
+        """Validate EIN number format (US format: XX-XXXXXXX)"""
+        for partner in self:
+            if partner.ein_number:
+                ein_pattern = r'^\d{2}-\d{7}$'
+                if not re.match(ein_pattern, partner.ein_number):
+                    raise ValidationError(
+                        _("EIN number must be in format XX-XXXXXXX (e.g., 12-3456789)")
+                    )
 
-    def action_global_opt_out(self):
-        """Opt out of all communications"""
-        self.ensure_one()
-        self.write({
-            'communication_opt_out': True,
-            'do_not_email': True,
-            'do_not_sms': True,
-            'do_not_mail': True,
-            'do_not_call': True,
-        })
-        # Also opt out of all specific preferences
-        self.communication_preference_ids.write({'opted_in': False})
+    @api.constrains('year_established')
+    def _check_year_established(self):
+        """Validate year established is reasonable"""
+        for partner in self:
+            if partner.year_established:
+                current_year = fields.Date.today().year
+                if partner.year_established < 1800 or partner.year_established > current_year:
+                    raise ValidationError(
+                        _("Year established must be between 1800 and %s") % current_year
+                    )
 
-    def action_global_opt_in(self):
-        """Opt back in to communications (with defaults)"""
-        self.ensure_one()
-        self.write({
-            'communication_opt_out': False,
-            'do_not_email': False,
-            'do_not_sms': False,
-            'do_not_mail': False,
-            'do_not_call': False,
-        })
-        # Create default preferences if none exist
-        if not self.communication_preference_ids:
-            self.create_communication_preferences()
+    @api.constrains('name', 'is_company')
+    def _check_organization_name_required(self):
+        """Ensure organization name is required for companies"""
+        for partner in self:
+            if partner.is_company and not partner.name:
+                raise ValidationError(_("Organization name is required for companies."))
 
-    def record_email_bounce(self):
-        """Record an email bounce for this member"""
-        self.ensure_one()
-        self.write({
-            'email_bounce_count': self.email_bounce_count + 1,
-            'last_email_bounce_date': fields.Datetime.now(),
-        })
-        
-        # Auto-disable email if too many bounces
-        if self.email_bounce_count >= 5:
-            self.write({'do_not_email': True})
+    # ========================================================================
+    # ONCHANGE METHODS
+    # ========================================================================
 
-    def reset_email_bounces(self):
-        """Reset email bounce count (e.g., when email is updated)"""
-        self.ensure_one()
-        self.write({
-            'email_bounce_count': 0,
-            'last_email_bounce_date': False,
-            'do_not_email': False,
-        })
-
-    def action_gdpr_consent(self):
-        """Record GDPR consent"""
-        self.ensure_one()
-        self.write({
-            'gdpr_consent_given': True,
-            'gdpr_consent_date': fields.Datetime.now(),
-        })
-        # Also update all communication preferences
-        self.communication_preference_ids.action_confirm_gdpr_consent()
-
-    def action_accept_privacy_policy(self):
-        """Record privacy policy acceptance"""
-        self.ensure_one()
-        self.write({
-            'privacy_policy_accepted': True,
-            'privacy_policy_date': fields.Datetime.now(),
-        })
-
-    def get_communication_summary(self):
-        """Get a summary of communication preferences"""
-        self.ensure_one()
-        
-        summary = {
-            'total_preferences': len(self.communication_preference_ids),
-            'opted_in': len(self.communication_preference_ids.filtered('opted_in')),
-            'opted_out': len(self.communication_preference_ids.filtered(lambda p: not p.opted_in)),
-            'by_type': {},
-            'by_category': {},
-            'compliance_issues': len(self.communication_preference_ids.filtered(
-                lambda p: p.compliance_status in ['needs_confirmation', 'non_compliant']
-            )),
-        }
-        
-        # Break down by communication type
-        for comm_type in ['email', 'sms', 'mail', 'phone']:
-            prefs = self.communication_preference_ids.filtered(lambda p: p.communication_type == comm_type)
-            summary['by_type'][comm_type] = {
-                'total': len(prefs),
-                'opted_in': len(prefs.filtered('opted_in')),
-            }
-        
-        # Break down by category
-        for category in ['marketing', 'membership', 'events', 'education', 'fundraising', 'governance']:
-            prefs = self.communication_preference_ids.filtered(lambda p: p.category == category)
-            summary['by_category'][category] = {
-                'total': len(prefs),
-                'opted_in': len(prefs.filtered('opted_in')),
-            }
-        
-        return summary
+    @api.onchange('website_url')
+    def _onchange_website_url(self):
+        """Auto-format website URL"""
+        if self.website_url and not self.website_url.startswith(('http://', 'https://')):
+            self.website_url = 'https://' + self.website_url
 
     # ========================================================================
     # OVERRIDE METHODS
@@ -381,29 +185,49 @@ class ResPartnerCommunication(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        """Override create to set up communication preferences for new members"""
-        partners = super().create(vals_list)
+        """Override create to handle organization-specific logic"""
+        for vals in vals_list:
+            if vals.get('is_company') and not vals.get('member_id'):
+                # Generate member ID for organizations too
+                vals['member_id'] = self.env['ir.sequence'].next_by_code('ams.member.id')
+            
+            # Ensure name is set for organizations
+            if vals.get('is_company') and not vals.get('name'):
+                if vals.get('member_id'):
+                    vals['name'] = f"Organization {vals['member_id']}"
+                else:
+                    vals['name'] = "Unnamed Organization"
         
-        # Skip auto-creation during data loading/installation to avoid constraint issues
-        if self.env.context.get('install_mode') or self.env.context.get('module_loading') or \
-           self.env.context.get('no_auto_preferences'):
-            return partners
-        
-        # Auto-create communication preferences for members with member_id
-        for partner in partners:
-            if partner.member_id and not partner.communication_preference_ids:
-                partner.create_communication_preferences()
-        
-        return partners
+        return super().create(vals_list)
 
     def write(self, vals):
-        """Override write to handle email changes"""
-        result = super().write(vals)
-        
-        # Reset email bounces when email is updated
-        if 'email' in vals:
+        """Override write to handle organization-specific updates"""
+        # Ensure name is maintained for organizations
+        if vals.get('is_company') is not False:  # If it's a company or not specified
             for partner in self:
-                if partner.email and partner.email_bounce_count > 0:
-                    partner.reset_email_bounces()
+                if partner.is_company and not vals.get('name') and not partner.name:
+                    if partner.member_id:
+                        vals['name'] = f"Organization {partner.member_id}"
+                    else:
+                        vals['name'] = "Unnamed Organization"
         
-        return result
+        return super().write(vals)
+
+    # ========================================================================
+    # BUSINESS METHODS
+    # ========================================================================
+
+    def action_view_employees(self):
+        """Action to view organization employees"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _("Employees - %s") % self.name,
+            'res_model': 'res.partner',
+            'view_mode': 'tree,form',
+            'domain': [('parent_id', '=', self.id), ('is_company', '=', False)],
+            'context': {
+                'default_parent_id': self.id,
+                'default_is_company': False,
+            }
+        }

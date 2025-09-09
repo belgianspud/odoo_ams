@@ -6,9 +6,10 @@
         <!-- Avoid automatic preference creation during module installation -->
 
         <!-- Demo Member for Testing Communication Preferences -->
-        <!-- Create without member_id first to avoid auto-preference creation -->
+        <!-- Create with all fields in one record to avoid constraint issues -->
         <record id="demo_member_comm_prefs" model="res.partner">
-            <field name="name">Demo Member Communications</field>
+            <field name="name">Demo Communications</field>
+            <field name="member_id">M000001</field>
             <field name="email">demo.communications@example.com</field>
             <field name="phone">555-0123</field>
             <field name="is_company">False</field>
@@ -18,12 +19,6 @@
             <field name="communication_frequency">weekly</field>
             <field name="gdpr_consent_given">True</field>
             <field name="privacy_policy_accepted">True</field>
-        </record>
-
-        <!-- Now add member_id separately (this won't trigger auto-creation if member already exists) -->
-        <record id="demo_member_comm_prefs_update" model="res.partner">
-            <field name="id" ref="demo_member_comm_prefs"/>
-            <field name="member_id">M000001</field>
         </record>
 
         <!-- Create specific demo preferences manually (only valid combinations) -->

@@ -80,7 +80,6 @@
                 <page string="System Information" groups="base.group_system" invisible="not is_company">
                     <group>
                         <group string="Integration">
-                            <field name="legacy_organization_id"/>
                             <field name="legacy_contact_id"/>
                             <field name="portal_id"/>
                             <field name="original_join_date"/>
@@ -182,7 +181,7 @@
                 <field name="acronym"/>
                 <field name="email"/>
                 <field name="phone"/>
-                <field name="website"/> <!-- ✅ replaced website_url with website -->
+                <field name="website_url"/>
                 <field name="organization_type"/>
                 <field name="industry_sector"/>
                 <field name="naics_code"/>
@@ -193,7 +192,7 @@
                 <filter string="Has Member ID" name="has_member_id" domain="[('member_id', '!=', False)]"/>
                 <filter string="Missing Member ID" name="no_member_id" domain="[('member_id', '=', False)]"/>
                 <filter string="Has Email" name="has_email" domain="[('email', '!=', False)]"/>
-                <filter string="Has Website" name="has_website" domain="[('website', '!=', False)]"/> <!-- ✅ fixed -->
+                <filter string="Has Website" name="has_website" domain="[('website_url', '!=', False)]"/>
                 <filter string="Has Employees" name="has_employees" domain="[('employee_count_computed', '>', 0)]"/>
                 
                 <separator/>

@@ -1,4 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_res_partner_ams_manager,res.partner.ams.manager,base.model_res_partner,base.group_user,1,1,1,1
+access_res_partner_ams_user,res.partner.ams.user,base.model_res_partner,base.group_user,1,1,1,1
 access_res_partner_ams_public,res.partner.ams.public,base.model_res_partner,base.group_public,1,0,0,0
-access_res_partner_ams_portal,res.partner.ams.portal,base.model_res_partner,base.group_portal,1,0,0,0
+access_res_partner_ams_portal,res.partner.ams.portal,base.model_res_partner,base.group_portal,1,1,0,0
