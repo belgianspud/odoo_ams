@@ -87,12 +87,12 @@
         </field>
     </record>
 
-    <!-- Individual Members Tree View -->
-    <record id="view_partner_individual_tree" model="ir.ui.view">
-        <field name="name">res.partner.individual.tree</field>
+    <!-- Individual Members List View (was Tree View) -->
+    <record id="view_partner_individual_list" model="ir.ui.view">
+        <field name="name">res.partner.individual.list</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
-            <tree string="Individual Members">
+            <list string="Individual Members">
                 <field name="member_id"/>
                 <field name="name"/>
                 <field name="membership_status"/>
@@ -103,7 +103,7 @@
                 <field name="state_id"/>
                 <field name="renewal_date"/>
                 <field name="is_renewal_due" widget="boolean"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -202,12 +202,12 @@
     <record id="action_partner_individual_members" model="ir.actions.act_window">
         <field name="name">Individual Members</field>
         <field name="res_model">res.partner</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="domain">[('is_member', '=', True), ('is_company', '=', False)]</field>
         <field name="context">{'default_is_company': False}</field>
         <field name="view_ids" eval="[(5, 0, 0),
             (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_partner_individual_kanban')}),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_partner_individual_tree')}),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_partner_individual_list')}),
             (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_individual_form')})]"/>
         <field name="search_view_id" ref="view_partner_individual_search"/>
         <field name="help" type="html">
