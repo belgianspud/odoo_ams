@@ -2,30 +2,24 @@
 
 from odoo import models, fields, api
 from datetime import date, timedelta
+import re
 
 
-class ResPartnerMember(models.Model):
+class ResPartnerIndividual(models.Model):
     """
-    AMS-specific extensions to res.partner for membership management.
-    Focuses only on association-specific fields, leveraging Odoo's existing contact features.
+    AMS extensions to res.partner - ONLY adds association-specific fields.
+    Leverages existing Odoo fields: name, email, phone, mobile, website, vat, 
+    industry_id, category_id, parent_id, child_ids, function, title, etc.
     """
     _inherit = 'res.partner'
 
-    # === CORE AMS MEMBERSHIP FIELDS (Universal for Individuals & Organizations) ===
-    
-    member_id = fields.Char(
-        string="Member ID", 
-        readonly=True,
-        copy=False,
-        index=True,
-        help="Unique member identifier auto-generated upon first save"
-    )
+    # === CORE AMS MEMBERSHIP FIELDS (Universal - applies to both individuals & orgs) ===
     
     is_member = fields.Boolean(
         string="Is Member",
         default=False,
         index=True,
-        help="Quick filter: is this contact a current or past member?"
+        help="Is this contact a current or past member?"
     )
     
     membership_status = fields.Selection([
@@ -61,22 +55,17 @@ class ResPartnerMember(models.Model):
         help="Membership coverage end date"
     )
     
-    # === MEMBER CLASSIFICATION ===
-    
-    # Note: member_type_id will be added by ams_member_types module
-    # This shows the pattern - we only add what doesn't exist in base Odoo
-    
-    # === ENGAGEMENT & CONTRIBUTIONS ===
+    # === ENGAGEMENT & CONTRIBUTIONS (Universal) ===
     
     engagement_score = fields.Float(
         string="Engagement Score",
         default=0.0,
-        help="Calculated engagement metric based on events, committees, etc."
+        help="Calculated engagement metric"
     )
     
     last_payment_date = fields.Date(
         string="Last Payment Date",
-        help="Date of most recent dues or contribution payment"
+        help="Most recent dues/contribution payment"
     )
     
     last_payment_amount = fields.Monetary(
@@ -87,7 +76,7 @@ class ResPartnerMember(models.Model):
     total_contributions = fields.Monetary(
         string="Total Contributions",
         default=0.0,
-        help="Lifetime total of all contributions/donations"
+        help="Lifetime total contributions/donations"
     )
     
     donor_level = fields.Selection([
@@ -98,94 +87,80 @@ class ResPartnerMember(models.Model):
         ('platinum', 'Platinum'),
     ], string="Donor Level", default='none')
     
-    # === ORGANIZATION-SPECIFIC FIELDS ===
+    # === INDIVIDUAL-SPECIFIC ONLY ===
     
-    # Corporate identity (only relevant for organizations)
-    acronym = fields.Char(
-        string="Acronym",
-        help="Common abbreviation for the organization"
+    date_of_birth = fields.Date(
+        string="Date of Birth",
+        help="Individual's birth date"
     )
     
-    organization_type = fields.Selection([
-        ('corporation', 'Corporation'),
-        ('nonprofit', 'Non-profit'),
-        ('government', 'Government Agency'),
-        ('educational', 'Educational Institution'),
-        ('healthcare', 'Healthcare Organization'),
-        ('association', 'Professional Association'),
-        ('partnership', 'Partnership'),
-        ('other', 'Other')
-    ], string="Organization Type")
+    gender = fields.Selection([
+        ('male', 'Male'),
+        ('female', 'Female'),
+        ('other', 'Other'),
+        ('prefer_not_to_say', 'Prefer not to say')
+    ], string="Gender")
     
-    industry_sector = fields.Char(
-        string="Industry Sector",
-        help="Primary industry or sector"
-    )
-    
-    year_established = fields.Integer(
-        string="Year Established",
-        help="Year the organization was founded"
-    )
-    
-    employee_count = fields.Integer(
-        string="Number of Employees",
-        help="Total number of employees"
-    )
-    
-    annual_revenue = fields.Monetary(
-        string="Annual Revenue",
-        help="Approximate annual revenue"
-    )
-    
-    # === INDIVIDUAL-SPECIFIC FIELDS ===
-    
-    # Professional credentials (only relevant for individuals)
     credentials = fields.Text(
         string="Professional Credentials",
-        help="Professional licenses, certifications, degrees"
+        help="Licenses, certifications, degrees"
     )
     
-    specialties = fields.Text(
-        string="Areas of Specialty",
-        help="Professional areas of expertise or interest"
-    )
-    
-    # === SYSTEM & INTEGRATION FIELDS ===
+    # === SYSTEM INTEGRATION ===
     
     legacy_contact_id = fields.Char(
         string="Legacy Contact ID",
-        help="Original contact ID from legacy system for data migration"
-    )
-    
-    portal_access = fields.Boolean(
-        string="Portal Access",
-        default=False,
-        help="Has access to member portal"
+        help="ID from previous system"
     )
     
     # === COMPUTED FIELDS ===
     
+    member_id = fields.Char(
+        string="Member ID",
+        compute='_compute_member_id',
+        inverse='_inverse_member_id',
+        store=True,
+        help="Formatted member ID using ref field"
+    )
+    
     membership_duration_days = fields.Integer(
         string="Membership Duration (Days)",
-        compute='_compute_membership_duration',
-        help="Days since first became a member"
+        compute='_compute_membership_duration'
     )
     
     days_until_renewal = fields.Integer(
         string="Days Until Renewal",
-        compute='_compute_days_until_renewal',
-        help="Days until membership renewal is due"
+        compute='_compute_days_until_renewal'
     )
     
     is_renewal_due = fields.Boolean(
         string="Renewal Due",
         compute='_compute_is_renewal_due',
+        store=True,
         help="Is membership renewal currently due?"
     )
 
+    # === COMPUTE METHODS ===
+
+    @api.depends('ref')
+    def _compute_member_id(self):
+        """Format ref field as member ID"""
+        for partner in self:
+            if partner.ref and partner.is_member:
+                partner.member_id = f"M{partner.ref.zfill(6)}"
+            else:
+                partner.member_id = False
+    
+    def _inverse_member_id(self):
+        """Store member ID back to ref field"""
+        for partner in self:
+            if partner.member_id and partner.member_id.startswith('M'):
+                ref_value = partner.member_id[1:].lstrip('0') or '0'
+                partner.ref = ref_value
+
     @api.depends('member_since')
     def _compute_membership_duration(self):
-        """Calculate how long someone has been a member"""
+        """Calculate membership duration"""
         today = date.today()
         for partner in self:
             if partner.member_since:
@@ -196,7 +171,7 @@ class ResPartnerMember(models.Model):
 
     @api.depends('renewal_date')
     def _compute_days_until_renewal(self):
-        """Calculate days until renewal is due"""
+        """Calculate days until renewal"""
         today = date.today()
         for partner in self:
             if partner.renewal_date:
@@ -207,7 +182,7 @@ class ResPartnerMember(models.Model):
 
     @api.depends('renewal_date', 'membership_status')
     def _compute_is_renewal_due(self):
-        """Determine if renewal is currently due"""
+        """Determine if renewal is due"""
         today = date.today()
         for partner in self:
             if (partner.renewal_date and 
@@ -217,48 +192,50 @@ class ResPartnerMember(models.Model):
             else:
                 partner.is_renewal_due = False
 
+    # === LIFECYCLE METHODS ===
+
     @api.model
     def create(self, vals):
-        """Override create to auto-generate member ID and set member_since"""
-        # Auto-generate member ID if this will be a member
-        if not vals.get('member_id') and vals.get('is_member'):
+        """Auto-generate member ID using sequence"""
+        if vals.get('is_member') and not vals.get('ref'):
             try:
-                vals['member_id'] = self.env['ir.sequence'].next_by_code('ams.member.id')
-                # Set member_since if not provided but is_member is True
+                sequence = self.env['ir.sequence'].next_by_code('ams.member.id')
+                if sequence:
+                    # Store sequence number in ref field (without M prefix)
+                    vals['ref'] = sequence.replace('M', '').lstrip('0') or '1'
                 if not vals.get('member_since'):
                     vals['member_since'] = fields.Date.today()
             except:
-                # If sequence doesn't exist yet, skip for now
                 pass
         return super().create(vals)
 
     def write(self, vals):
-        """Override write to handle membership status changes"""
-        # If becoming a member for the first time, set member_since and generate ID
+        """Handle membership status changes"""
         for partner in self:
             if (vals.get('is_member') and not partner.is_member and 
                 not partner.member_since):
                 vals['member_since'] = fields.Date.today()
-                if not partner.member_id:
+                if not partner.ref:
                     try:
-                        vals['member_id'] = self.env['ir.sequence'].next_by_code('ams.member.id')
+                        sequence = self.env['ir.sequence'].next_by_code('ams.member.id')
+                        if sequence:
+                            vals['ref'] = sequence.replace('M', '').lstrip('0') or '1'
                     except:
                         pass
         return super().write(vals)
 
-    @api.constrains('year_established')
-    def _check_year_established(self):
-        """Validate year established is reasonable"""
-        current_year = date.today().year
-        for partner in self:
-            if (partner.year_established and 
-                (partner.year_established < 1800 or partner.year_established > current_year)):
-                raise models.ValidationError(
-                    f"Year established must be between 1800 and {current_year}"
-                )
+    # === VALIDATION ===
+
+    @api.constrains('email')
+    def _check_email_format(self):
+        """Validate email format using existing Odoo validation"""
+        # Odoo already handles email validation, just ensure it's called
+        super()._check_email_format() if hasattr(super(), '_check_email_format') else None
+
+    # === ACTIONS ===
 
     def action_make_member(self):
-        """Action to convert a prospect to a member"""
+        """Convert prospect to member"""
         self.ensure_one()
         if not self.is_member:
             self.write({
@@ -268,10 +245,9 @@ class ResPartnerMember(models.Model):
             })
 
     def action_renew_membership(self):
-        """Action to renew membership"""
+        """Renew membership"""
         self.ensure_one()
         if self.membership_status in ['active', 'grace', 'lapsed']:
-            # Basic renewal logic - can be enhanced by other modules
             new_renewal_date = fields.Date.today() + timedelta(days=365)
             self.write({
                 'membership_status': 'active',

@@ -2,6 +2,7 @@
 
 from odoo.tests.common import TransactionCase
 from odoo.exceptions import ValidationError
+from datetime import date, timedelta
 
 
 class TestMemberData(TransactionCase):
@@ -9,158 +10,159 @@ class TestMemberData(TransactionCase):
     def setUp(self):
         super().setUp()
         
-        # Create test country and state
+        # Get test country and state
         self.country_us = self.env.ref('base.us')
         self.state_ca = self.env.ref('base.state_us_5')  # California
         
-        # Create test data
+        # Create test individual data using existing Odoo fields where possible
         self.individual_data = {
-            'first_name': 'John',
-            'last_name': 'Doe',
-            'middle_name': 'James',
-            'suffix': 'Jr.',
-            'nickname': 'Johnny',
+            'name': 'John Doe',
             'email': 'john.doe@example.com',
-            'secondary_email': 'johnny@personal.com',
             'phone': '555-1234',
-            'business_phone': '555-5678',
-            'mobile_phone': '555-9999',
-            'gender': 'male',
+            'mobile': '555-9999',
             'date_of_birth': '1985-05-15',
+            'gender': 'male',
+            'credentials': 'CPA, MBA',
             'is_company': False,
             'street': '123 Main St',
             'city': 'Los Angeles',
             'state_id': self.state_ca.id,
             'zip': '90210',
             'country_id': self.country_us.id,
-            'primary_address_type': 'residential',
-            'secondary_address_line1': '456 Business Ave',
-            'secondary_address_city': 'Beverly Hills',
-            'secondary_address_state_id': self.state_ca.id,
-            'secondary_address_zip': '90211',
-            'secondary_address_country_id': self.country_us.id,
-            'secondary_address_type': 'business',
+            'is_member': True,
+            'membership_status': 'active',
         }
         
+        # Create test organization data using existing Odoo fields
         self.organization_data = {
             'name': 'Acme Corporation',
             'acronym': 'ACME',
-            'website': 'https://www.acme.com',  # Changed from website_url to website
+            'website': 'https://www.acme.com',
             'email': 'info@acme.com',
             'phone': '555-0000',
             'organization_type': 'corporation',
-            'industry_sector': 'Technology',
             'year_established': 2000,
             'employee_count': 500,
             'annual_revenue': 10000000,
-            'tin_number': '12-3456789',
+            'vat': '12-3456789',  # Using existing vat field
             'ein_number': '12-3456789',
             'is_company': True,
+            'is_member': True,
+            'membership_status': 'active',
         }
 
     def test_individual_member_creation(self):
-        """Test creating an individual member"""
+        """Test creating an individual member with AMS extensions"""
         partner = self.env['res.partner'].create(self.individual_data)
         
         # Test basic fields
-        self.assertEqual(partner.first_name, 'John')
-        self.assertEqual(partner.last_name, 'Doe')
-        self.assertEqual(partner.middle_name, 'James')
-        self.assertEqual(partner.suffix, 'Jr.')
-        self.assertEqual(partner.nickname, 'Johnny')
+        self.assertEqual(partner.name, 'John Doe')
+        self.assertEqual(partner.email, 'john.doe@example.com')
+        self.assertEqual(partner.date_of_birth, date(1985, 5, 15))
+        self.assertEqual(partner.gender, 'male')
+        self.assertEqual(partner.credentials, 'CPA, MBA')
+        self.assertFalse(partner.is_company)
         
-        # Test member ID generation (may not work if sequence doesn't exist)
-        # self.assertTrue(partner.member_id)
-        # self.assertTrue(partner.member_id.startswith('M'))
+        # Test membership fields
+        self.assertTrue(partner.is_member)
+        self.assertEqual(partner.membership_status, 'active')
         
-        # Test computed display name
-        expected_name = 'John James Doe Jr.'
-        self.assertEqual(partner.display_name, expected_name)
-        self.assertEqual(partner.name, expected_name)
+        # Test member ID generation
+        self.assertTrue(partner.member_id)
+        self.assertTrue(partner.member_id.startswith('M'))
 
     def test_organization_member_creation(self):
-        """Test creating an organization member"""
+        """Test creating an organization member with AMS extensions"""
         partner = self.env['res.partner'].create(self.organization_data)
         
         # Test basic fields
         self.assertEqual(partner.name, 'Acme Corporation')
         self.assertEqual(partner.acronym, 'ACME')
-        self.assertEqual(partner.website, 'https://www.acme.com')  # Changed from website_url to website
+        self.assertEqual(partner.website, 'https://www.acme.com')
         self.assertEqual(partner.organization_type, 'corporation')
+        self.assertTrue(partner.is_company)
         
-        # Test member ID generation (may not work if sequence doesn't exist)
-        # self.assertTrue(partner.member_id)
-        # self.assertTrue(partner.member_id.startswith('M'))
+        # Test membership fields
+        self.assertTrue(partner.is_member)
+        self.assertEqual(partner.membership_status, 'active')
         
-        # Test computed display name
+        # Test member ID generation
+        self.assertTrue(partner.member_id)
+        self.assertTrue(partner.member_id.startswith('M'))
+        
+        # Test computed display name with acronym
         expected_name = 'Acme Corporation (ACME)'
-        self.assertEqual(partner.display_name, expected_name)
+        self.assertEqual(partner.display_name_org, expected_name)
 
-    def test_member_id_uniqueness(self):
-        """Test that member IDs are unique when they exist"""
-        partner1 = self.env['res.partner'].create(self.individual_data)
-        partner2 = self.env['res.partner'].create({
-            'first_name': 'Jane',
-            'last_name': 'Smith',
-            'is_company': False,
-        })
-        
-        # Skip test if sequence doesn't exist yet
-        if partner1.member_id and partner2.member_id:
-            self.assertNotEqual(partner1.member_id, partner2.member_id)
-            self.assertTrue(partner1.member_id)
-            self.assertTrue(partner2.member_id)
-
-    def test_name_components_sync(self):
-        """Test that name field syncs with name components"""
+    def test_member_id_computation(self):
+        """Test member ID computation using ref field"""
+        # Create member without setting ref
         partner = self.env['res.partner'].create({
-            'first_name': 'Test',
-            'last_name': 'User',
+            'name': 'Test Member',
+            'is_member': True,
             'is_company': False,
         })
         
-        # Test initial sync
-        self.assertEqual(partner.name, 'Test User')
+        # Should have generated member_id
+        self.assertTrue(partner.member_id)
+        self.assertTrue(partner.member_id.startswith('M'))
         
-        # Test update
-        partner.write({
-            'first_name': 'Updated',
-            'middle_name': 'Middle',
-        })
-        self.assertEqual(partner.display_name, 'Updated Middle User')
+        # Test that ref field is populated
+        self.assertTrue(partner.ref)
+        
+        # Test inverse computation
+        partner.member_id = 'M000999'
+        self.assertEqual(partner.ref, '999')
 
-    def test_phone_number_formatting(self):
-        """Test phone number formatting"""
+    def test_membership_duration_computation(self):
+        """Test membership duration calculation"""
         partner = self.env['res.partner'].create({
-            'first_name': 'Test',
-            'last_name': 'User',
-            'business_phone': '5551234567',
-            'mobile_phone': '15551234567',
+            'name': 'Duration Test',
+            'is_member': True,
+            'member_since': date.today() - timedelta(days=365),
             'is_company': False,
         })
         
-        # Check that formatting was applied
-        self.assertIn('(555)', partner.business_phone)
-        self.assertIn('+1', partner.mobile_phone)
+        # Should be approximately 365 days
+        self.assertAlmostEqual(partner.membership_duration_days, 365, delta=1)
 
-    def test_secondary_email_validation(self):
-        """Test secondary email validation"""
-        with self.assertRaises(ValidationError):
-            self.env['res.partner'].create({
-                'first_name': 'Test',
-                'last_name': 'User',
-                'secondary_email': 'invalid-email',
-                'is_company': False,
-            })
+    def test_renewal_due_computation(self):
+        """Test renewal due calculation"""
+        # Create member with renewal due soon
+        partner = self.env['res.partner'].create({
+            'name': 'Renewal Test',
+            'is_member': True,
+            'membership_status': 'active',
+            'renewal_date': date.today() + timedelta(days=15),
+            'is_company': False,
+        })
+        
+        # Should be renewal due (within 30 days)
+        self.assertTrue(partner.is_renewal_due)
+        
+        # Test with renewal far in future
+        partner.renewal_date = date.today() + timedelta(days=60)
+        self.assertFalse(partner.is_renewal_due)
 
     def test_website_url_validation(self):
         """Test website URL validation for organizations"""
         with self.assertRaises(ValidationError):
             self.env['res.partner'].create({
                 'name': 'Test Org',
-                'website': 'not-a-url',  # Changed from website_url to website
+                'website': 'not-a-url',
                 'is_company': True,
             })
+
+    def test_website_url_auto_format(self):
+        """Test automatic website URL formatting"""
+        partner = self.env['res.partner'].create({
+            'name': 'Test Org',
+            'website': 'www.test.com',  # Missing protocol
+            'is_company': True,
+        })
+        
+        # Should auto-add https://
+        self.assertEqual(partner.website, 'https://www.test.com')
 
     def test_ein_format_validation(self):
         """Test EIN number format validation"""
@@ -179,8 +181,22 @@ class TestMemberData(TransactionCase):
         })
         self.assertEqual(partner.ein_number, '12-3456789')
 
+    def test_ein_auto_format(self):
+        """Test EIN auto-formatting"""
+        partner = self.env['res.partner'].create({
+            'name': 'Test Org',
+            'is_company': True,
+        })
+        
+        # Test auto-formatting on change
+        partner.ein_number = '123456789'
+        partner._onchange_ein_number()
+        self.assertEqual(partner.ein_number, '12-3456789')
+
     def test_year_established_validation(self):
         """Test year established validation"""
+        current_year = date.today().year
+        
         with self.assertRaises(ValidationError):
             self.env['res.partner'].create({
                 'name': 'Test Org',
@@ -191,48 +207,60 @@ class TestMemberData(TransactionCase):
         with self.assertRaises(ValidationError):
             self.env['res.partner'].create({
                 'name': 'Test Org',
-                'year_established': 2030,  # Future date
+                'year_established': current_year + 1,  # Future date
                 'is_company': True,
             })
 
-    def test_formatted_address_computation(self):
-        """Test formatted address computation"""
-        partner = self.env['res.partner'].create(self.individual_data)
-        
-        self.assertIn("123 Main St", partner.formatted_address)
-        self.assertIn("Los Angeles", partner.formatted_address)
-        
-        self.assertIn("456 Business Ave", partner.formatted_secondary_address)
-        self.assertIn("Beverly Hills", partner.formatted_secondary_address)
-
-    def test_organization_employee_relationship(self):
-        """Test organization-employee relationship"""
+    def test_employee_count_computation(self):
+        """Test employee count computation using child_ids"""
         # Create organization
         organization = self.env['res.partner'].create(self.organization_data)
         
         # Create employee
-        employee_data = self.individual_data.copy()
-        employee_data['parent_id'] = organization.id
-        employee = self.env['res.partner'].create(employee_data)
-        
-        # Test relationship
-        self.assertIn(employee, organization.employee_ids)
-        self.assertEqual(organization.employee_count_computed, 1)
-        self.assertEqual(employee.parent_id, organization)
-
-    def test_website_url_auto_format(self):
-        """Test automatic website URL formatting"""
-        partner = self.env['res.partner'].create({
-            'name': 'Test Org',
-            'website': 'www.test.com',  # Changed from website_url to website, Missing protocol
-            'is_company': True,
+        employee = self.env['res.partner'].create({
+            'name': 'John Employee',
+            'parent_id': organization.id,
+            'is_company': False,
         })
         
-        # Should auto-add https://
-        self.assertEqual(partner.website, 'https://www.test.com')  # Changed from website_url to website
+        # Test computed employee count
+        self.assertEqual(organization.employee_count_computed, 1)
+        self.assertIn(employee, organization.child_ids)
+
+    def test_action_make_member(self):
+        """Test converting prospect to member"""
+        partner = self.env['res.partner'].create({
+            'name': 'Prospect Test',
+            'is_member': False,
+            'is_company': False,
+        })
+        
+        # Convert to member
+        partner.action_make_member()
+        
+        self.assertTrue(partner.is_member)
+        self.assertEqual(partner.membership_status, 'active')
+        self.assertEqual(partner.join_date, date.today())
+
+    def test_action_renew_membership(self):
+        """Test membership renewal"""
+        partner = self.env['res.partner'].create({
+            'name': 'Renewal Test',
+            'is_member': True,
+            'membership_status': 'active',
+            'is_company': False,
+        })
+        
+        # Renew membership
+        partner.action_renew_membership()
+        
+        self.assertEqual(partner.membership_status, 'active')
+        self.assertEqual(partner.join_date, date.today())
+        expected_renewal = date.today() + timedelta(days=365)
+        self.assertEqual(partner.renewal_date, expected_renewal)
 
     def test_action_view_employees(self):
-        """Test the action to view employees"""
+        """Test view employees action for organizations"""
         organization = self.env['res.partner'].create(self.organization_data)
         
         action = organization.action_view_employees()
@@ -241,44 +269,60 @@ class TestMemberData(TransactionCase):
         self.assertEqual(action['res_model'], 'res.partner')
         self.assertIn(('parent_id', '=', organization.id), action['domain'])
 
-    def test_legacy_field_preservation(self):
+    def test_get_organization_summary(self):
+        """Test organization summary method"""
+        organization = self.env['res.partner'].create(self.organization_data)
+        
+        summary = organization.get_organization_summary()
+        
+        self.assertEqual(summary['name'], 'Acme Corporation')
+        self.assertEqual(summary['acronym'], 'ACME')
+        self.assertEqual(summary['type'], 'corporation')
+        self.assertEqual(summary['employees'], 500)
+        self.assertEqual(summary['revenue'], 10000000)
+        self.assertEqual(summary['established'], 2000)
+
+    def test_member_since_auto_set(self):
+        """Test that member_since is automatically set when becoming a member"""
+        partner = self.env['res.partner'].create({
+            'name': 'Auto Member Since Test',
+            'is_member': True,
+            'is_company': False,
+        })
+        
+        # member_since should be set automatically
+        self.assertEqual(partner.member_since, date.today())
+
+    def test_legacy_contact_id_preservation(self):
         """Test that legacy fields are preserved"""
         partner = self.env['res.partner'].create({
-            'first_name': 'Legacy',
-            'last_name': 'User',
+            'name': 'Legacy User',
             'legacy_contact_id': 'OLD123',
             'is_company': False,
         })
         
         self.assertEqual(partner.legacy_contact_id, 'OLD123')
 
-    def test_portal_id_readonly(self):
-        """Test that portal_id is readonly"""
+    def test_engagement_score_tracking(self):
+        """Test engagement score functionality"""
         partner = self.env['res.partner'].create({
-            'first_name': 'Portal',
-            'last_name': 'User',
+            'name': 'Engagement Test',
+            'is_member': True,
+            'engagement_score': 85.5,
             'is_company': False,
         })
         
-        # portal_id should remain empty unless set by system
-        self.assertFalse(partner.portal_id)
-        
-        # Test that it can be set programmatically
-        partner.portal_id = 'PORTAL123'
-        self.assertEqual(partner.portal_id, 'PORTAL123')
+        self.assertEqual(partner.engagement_score, 85.5)
 
-    def test_display_name_without_components(self):
-        """Test display name when only standard name field is used"""
+    def test_donor_level_classification(self):
+        """Test donor level classification"""
         partner = self.env['res.partner'].create({
-            'name': 'Standard Name',
+            'name': 'Donor Test',
+            'is_member': True,
+            'donor_level': 'gold',
+            'total_contributions': 5000.00,
             'is_company': False,
         })
-        self.assertEqual(partner.display_name, 'Standard Name')
-
-    def test_organization_display_name_without_acronym(self):
-        """Test organization display name without acronym"""
-        partner = self.env['res.partner'].create({
-            'name': 'Test Organization',
-            'is_company': True,
-        })
-        self.assertEqual(partner.display_name, 'Test Organization')
+        
+        self.assertEqual(partner.donor_level, 'gold')
+        self.assertEqual(partner.total_contributions, 5000.00)

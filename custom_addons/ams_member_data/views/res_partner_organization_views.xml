@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Organization Member Form View -->
+    <!-- Enhanced Organization Member Form View -->
     <record id="view_partner_organization_form" model="ir.ui.view">
         <field name="name">res.partner.organization.form</field>
         <field name="model">res.partner</field>
@@ -10,7 +10,9 @@
             
             <!-- Add Member ID after name -->
             <field name="name" position="after">
-                <field name="member_id" readonly="1" invisible="not is_company"/>
+                <field name="member_id" readonly="1" invisible="not is_company or not is_member"/>
+                <field name="is_member" invisible="not is_company"/>
+                <field name="membership_status" invisible="not is_company or not is_member"/>
             </field>
 
             <!-- Add organization identity section -->
@@ -18,13 +20,30 @@
                 <group string="Organization Identity" invisible="not is_company">
                     <group>
                         <field name="acronym"/>
-                        <field name="website" widget="url"/>
                         <field name="organization_type"/>
+                        <field name="display_name_org" readonly="1"/>
                     </group>
                     <group>
                         <field name="year_established"/>
-                        <field name="industry_sector"/>
-                        <field name="naics_code"/>
+                        <!-- Use existing industry_id field -->
+                        <field name="industry_id"/>
+                    </group>
+                </group>
+            </xpath>
+
+            <!-- Add membership information for organizations -->
+            <field name="category_id" position="after">
+                <group string="Membership Information" invisible="not is_company or not is_member">
+                    <group>
+                        <field name="join_date"/>
+                        <field name="member_since" readonly="1"/>
+                        <field name="renewal_date"/>
+                        <field name="paid_through_date"/>
+                    </group>
+                    <group>
+                        <field name="membership_duration_days" readonly="1"/>
+                        <field name="days_until_renewal" readonly="1"/>
+                        <field name="is_renewal_due" readonly="1"/>
                     </group>
                 </group>
             </field>
@@ -38,20 +57,36 @@
                         <field name="annual_revenue"/>
                     </group>
                     <group>
-                        <field name="tin_number"/>
+                        <!-- Use existing vat field for primary tax ID -->
+                        <field name="vat"/>
                         <field name="ein_number"/>
                     </group>
                 </group>
             </xpath>
 
-            <!-- Add portal management section -->
+            <!-- Add engagement and contributions section for organizations -->
+            <xpath expr="//group[@name='sale']" position="after">
+                <group string="Engagement &amp; Contributions" invisible="not is_company or not is_member">
+                    <group>
+                        <field name="engagement_score"/>
+                        <field name="last_payment_date"/>
+                        <field name="last_payment_amount"/>
+                    </group>
+                    <group>
+                        <field name="total_contributions"/>
+                        <field name="donor_level"/>
+                    </group>
+                </group>
+            </xpath>
+
+            <!-- Add portal management tab for organizations -->
             <xpath expr="//page[@name='contact_addresses']" position="after">
                 <page string="Portal &amp; Access" invisible="not is_company">
                     <group>
                         <group string="Portal Management">
                             <field name="portal_primary_contact_id" options="{'no_create': True}"/>
                         </group>
-                        <group string="Employee Access">
+                        <group string="Employee Management">
                             <button name="action_view_employees" 
                                     type="object" 
                                     string="View Employees" 
@@ -61,32 +96,43 @@
                         </group>
                     </group>
                     
-                    <!-- Employee list within the form -->
+                    <!-- Employee list using existing child_ids -->
                     <separator string="Organization Employees"/>
-                    <field name="employee_ids" mode="list" readonly="1">
-                        <list>
+                    <field name="child_ids" mode="tree" readonly="1" 
+                           context="{'default_parent_id': active_id, 'default_is_company': False}"
+                           domain="[('is_company', '=', False)]">
+                        <tree>
                             <field name="member_id"/>
-                            <field name="display_name"/>
+                            <field name="name"/>
                             <field name="email"/>
                             <field name="phone"/>
-                            <field name="mobile_phone"/>
-                        </list>
+                            <field name="mobile"/>
+                            <field name="function"/>
+                            <field name="is_member"/>
+                        </tree>
                     </field>
                 </page>
             </xpath>
 
-            <!-- System information tab -->
+            <!-- System information tab for organizations -->
             <xpath expr="//notebook" position="inside">
                 <page string="System Information" groups="base.group_system" invisible="not is_company">
                     <group>
                         <group string="Integration">
                             <field name="legacy_contact_id"/>
-                            <field name="portal_id"/>
-                            <field name="original_join_date"/>
+                            <field name="ref" readonly="1"/>
                         </group>
-                        <group string="Computed Information">
-                            <field name="display_name"/>
-                            <field name="formatted_address"/>
+                        <group string="Actions">
+                            <button name="action_make_member" 
+                                    string="Make Member" 
+                                    type="object" 
+                                    class="btn-primary"
+                                    invisible="is_member"/>
+                            <button name="action_renew_membership" 
+                                    string="Renew Membership" 
+                                    type="object" 
+                                    class="btn-success"
+                                    invisible="not is_member or membership_status not in ['active', 'grace', 'lapsed']"/>
                         </group>
                     </group>
                 </page>
@@ -95,15 +141,16 @@
         </field>
     </record>
 
-    <!-- Organization Members List View -->
+    <!-- Organization Members Tree View -->
     <record id="view_partner_organization_tree" model="ir.ui.view">
-        <field name="name">res.partner.organization.list</field>
+        <field name="name">res.partner.organization.tree</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
-            <list string="Organization Members">
+            <tree string="Organization Members">
                 <field name="member_id"/>
-                <field name="display_name"/>
+                <field name="name"/>
                 <field name="acronym"/>
+                <field name="membership_status"/>
                 <field name="email"/>
                 <field name="phone"/>
                 <field name="website" widget="url"/>
@@ -111,8 +158,9 @@
                 <field name="employee_count_computed"/>
                 <field name="city"/>
                 <field name="state_id"/>
-                <field name="country_id"/>
-            </list>
+                <field name="renewal_date"/>
+                <field name="is_renewal_due" widget="boolean"/>
+            </tree>
         </field>
     </record>
 
@@ -123,14 +171,16 @@
         <field name="arch" type="xml">
             <kanban string="Organization Members">
                 <field name="member_id"/>
-                <field name="display_name"/>
+                <field name="name"/>
                 <field name="acronym"/>
+                <field name="membership_status"/>
                 <field name="email"/>
                 <field name="phone"/>
                 <field name="website"/>
                 <field name="organization_type"/>
                 <field name="employee_count_computed"/>
                 <field name="image_128"/>
+                <field name="is_renewal_due"/>
                 <templates>
                     <t t-name="kanban-box">
                         <div class="oe_kanban_card oe_kanban_global_click">
@@ -139,11 +189,19 @@
                             </div>
                             <div class="oe_kanban_details">
                                 <strong class="o_kanban_record_title">
-                                    <field name="display_name"/>
+                                    <field name="name"/>
                                 </strong>
                                 <div t-if="record.member_id.value">
                                     <i class="fa fa-id-card" title="Member ID"/>
                                     <field name="member_id"/>
+                                </div>
+                                <div t-if="record.acronym.value">
+                                    <i class="fa fa-tag" title="Acronym"/>
+                                    <field name="acronym"/>
+                                </div>
+                                <div t-if="record.membership_status.value">
+                                    <i class="fa fa-user" title="Status"/>
+                                    <field name="membership_status"/>
                                 </div>
                                 <div t-if="record.organization_type.value">
                                     <i class="fa fa-building" title="Organization Type"/>
@@ -161,6 +219,10 @@
                                     <i class="fa fa-users" title="Employees"/>
                                     <field name="employee_count_computed"/> employees
                                 </div>
+                                <div t-if="record.is_renewal_due.value" class="text-danger">
+                                    <i class="fa fa-exclamation-triangle" title="Renewal Due"/>
+                                    Renewal Due
+                                </div>
                             </div>
                         </div>
                     </t>
@@ -175,25 +237,26 @@
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <search string="Search Organization Members">
-                <field name="display_name" string="Name" 
-                       filter_domain="['|', ('display_name', 'ilike', self), ('acronym', 'ilike', self)]"/>
+                <field name="name" string="Name" 
+                       filter_domain="['|', ('name', 'ilike', self), ('acronym', 'ilike', self)]"/>
                 <field name="member_id"/>
                 <field name="acronym"/>
                 <field name="email"/>
                 <field name="phone"/>
                 <field name="website"/>
                 <field name="organization_type"/>
-                <field name="industry_sector"/>
-                <field name="naics_code"/>
                 <field name="city"/>
                 <field name="state_id"/>
                 <field name="country_id"/>
                 
-                <filter string="Has Member ID" name="has_member_id" domain="[('member_id', '!=', False)]"/>
-                <filter string="Missing Member ID" name="no_member_id" domain="[('member_id', '=', False)]"/>
-                <filter string="Has Email" name="has_email" domain="[('email', '!=', False)]"/>
-                <filter string="Has Website" name="has_website" domain="[('website', '!=', False)]"/>
-                <filter string="Has Employees" name="has_employees" domain="[('employee_count_computed', '>', 0)]"/>
+                <filter string="Members Only" name="members_only" domain="[('is_member', '=', True)]"/>
+                <filter string="Organizations Only" name="organizations_only" domain="[('is_company', '=', True)]"/>
+                
+                <separator/>
+                <filter string="Active" name="active_members" domain="[('membership_status', '=', 'active')]"/>
+                <filter string="Grace Period" name="grace_members" domain="[('membership_status', '=', 'grace')]"/>
+                <filter string="Lapsed" name="lapsed_members" domain="[('membership_status', '=', 'lapsed')]"/>
+                <filter string="Renewal Due" name="renewal_due" domain="[('is_renewal_due', '=', True)]"/>
                 
                 <separator/>
                 <filter string="Corporation" name="corporation" domain="[('organization_type', '=', 'corporation')]"/>
@@ -202,11 +265,15 @@
                 <filter string="Educational" name="educational" domain="[('organization_type', '=', 'educational')]"/>
                 
                 <separator/>
-                <filter string="Organizations Only" name="organizations_only" domain="[('is_company', '=', True)]"/>
+                <filter string="Has Email" name="has_email" domain="[('email', '!=', False)]"/>
+                <filter string="Has Website" name="has_website" domain="[('website', '!=', False)]"/>
+                <filter string="Has Employees" name="has_employees" domain="[('employee_count_computed', '>', 0)]"/>
                 
                 <group expand="0" string="Group By">
+                    <filter string="Membership Status" name="group_status" context="{'group_by': 'membership_status'}"/>
                     <filter string="Organization Type" name="group_org_type" context="{'group_by': 'organization_type'}"/>
-                    <filter string="Industry Sector" name="group_industry" context="{'group_by': 'industry_sector'}"/>
+                    <filter string="Industry" name="group_industry" context="{'group_by': 'industry_id'}"/>
+                    <filter string="Donor Level" name="group_donor" context="{'group_by': 'donor_level'}"/>
                     <filter string="State" name="group_state" context="{'group_by': 'state_id'}"/>
                     <filter string="Country" name="group_country" context="{'group_by': 'country_id'}"/>
                     <filter string="Year Established" name="group_year" context="{'group_by': 'year_established'}"/>
@@ -216,18 +283,15 @@
     </record>
 
     <!-- Organization Members Action -->
-    <record id="action_partner_organization" model="ir.actions.act_window">
+    <record id="action_partner_organization_members" model="ir.actions.act_window">
         <field name="name">Organization Members</field>
         <field name="res_model">res.partner</field>
-        <field name="view_mode">kanban,list,form</field>
-        <field name="domain">[('is_company', '=', True)]</field>
-        <field name="context">{
-            'default_is_company': True,
-            'default_customer_rank': 1,
-        }</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('is_member', '=', True), ('is_company', '=', True)]</field>
+        <field name="context">{'default_is_company': True}</field>
         <field name="view_ids" eval="[(5, 0, 0),
             (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_partner_organization_kanban')}),
-            (0, 0, {'view_mode': 'list', 'view_id': ref('view_partner_organization_tree')}),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_partner_organization_tree')}),
             (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_organization_form')})]"/>
         <field name="search_view_id" ref="view_partner_organization_search"/>
         <field name="help" type="html">
@@ -242,22 +306,29 @@
         </field>
     </record>
 
-    <!-- All Members Combined Action -->
-    <record id="action_partner_all_members" model="ir.actions.act_window">
-        <field name="name">All Members</field>
+    <!-- All Organizations Action (Members and Non-Members) -->
+    <record id="action_partner_all_organizations" model="ir.actions.act_window">
+        <field name="name">All Organizations</field>
         <field name="res_model">res.partner</field>
-        <field name="view_mode">kanban,list,form</field>
-        <field name="domain">[('member_id', '!=', False)]</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('is_company', '=', True)]</field>
         <field name="context">{
+            'default_is_company': True,
             'default_customer_rank': 1,
         }</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_partner_organization_kanban')}),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_partner_organization_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_organization_form')})]"/>
+        <field name="search_view_id" ref="view_partner_organization_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Create your first member!
+                Create your first organization!
             </p>
             <p>
-                This view shows all members (both individuals and organizations) who have been
-                assigned member IDs. Use the filters to narrow down to specific member types.
+                Manage all organizations including both members and prospects.
+                Organizations can be companies, institutions, government agencies,
+                or any other corporate entities.
             </p>
         </field>
     </record>
