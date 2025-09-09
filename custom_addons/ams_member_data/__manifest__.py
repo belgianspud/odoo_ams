@@ -32,7 +32,7 @@
         'data/ir_sequence_data.xml',
         # View files
         'views/res_partner_individual_views.xml',
-        'views/res_partner_organization_views.xml'
+        'views/res_partner_organization_views.xml',
         # Menu files last
         'views/ams_member_menus.xml',
     ],

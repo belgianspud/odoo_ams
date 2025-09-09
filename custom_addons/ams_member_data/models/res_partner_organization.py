@@ -180,7 +180,7 @@ class ResPartnerOrganization(models.Model):
             'type': 'ir.actions.act_window',
             'name': f"Employees - {self.name}",
             'res_model': 'res.partner',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',  # Changed from 'tree,form' to 'list,form'
             'domain': [('parent_id', '=', self.id), ('is_company', '=', False)],
             'context': {
                 'default_parent_id': self.id,

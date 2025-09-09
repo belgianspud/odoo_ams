@@ -87,7 +87,7 @@
         </field>
     </record>
 
-    <!-- Individual Members List View (was Tree View) -->
+    <!-- Individual Members List View -->
     <record id="view_partner_individual_list" model="ir.ui.view">
         <field name="name">res.partner.individual.list</field>
         <field name="model">res.partner</field>
