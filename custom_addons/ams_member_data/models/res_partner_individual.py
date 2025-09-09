@@ -1,263 +1,280 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
-import re
+from datetime import date, timedelta
 
 
-class ResPartnerIndividual(models.Model):
+class ResPartnerMember(models.Model):
+    """
+    AMS-specific extensions to res.partner for membership management.
+    Focuses only on association-specific fields, leveraging Odoo's existing contact features.
+    """
     _inherit = 'res.partner'
 
-    # Identity & Demographics
+    # === CORE AMS MEMBERSHIP FIELDS (Universal for Individuals & Organizations) ===
+    
     member_id = fields.Char(
         string="Member ID", 
         readonly=True,
         copy=False,
+        index=True,
         help="Unique member identifier auto-generated upon first save"
     )
-    first_name = fields.Char(
-        string="First Name",
-        help="Individual's first/given name"
-    )
-    middle_name = fields.Char(
-        string="Middle Name",
-        help="Individual's middle name or initial"
-    )
-    last_name = fields.Char(
-        string="Last Name",
-        help="Individual's last/family name"
-    )
-    suffix = fields.Char(
-        string="Suffix",
-        help="Name suffix (Jr., Sr., III, etc.)"
-    )
-    nickname = fields.Char(
-        string="Nickname",
-        help="Preferred name for informal communications"
-    )
-    gender = fields.Selection([
-        ('male', 'Male'),
-        ('female', 'Female'),
-        ('other', 'Other'),
-        ('prefer_not_to_say', 'Prefer not to say')
-    ], string="Gender")
-    date_of_birth = fields.Date(
-        string="Date of Birth",
-        help="Individual's birth date for demographics and age verification"
-    )
-
-    # Contact Information Extensions
-    business_phone = fields.Char(
-        string="Business Phone",
-        help="Primary business phone number"
-    )
-    mobile_phone = fields.Char(
-        string="Mobile Phone", 
-        help="Mobile/cell phone number"
-    )
-    secondary_email = fields.Char(
-        string="Secondary Email",
-        help="Backup email address"
-    )
-
-    # Address Extensions
-    primary_address_type = fields.Selection([
-        ('residential', 'Residential'),
-        ('business', 'Business'),
-        ('billing', 'Billing'),
-        ('shipping', 'Shipping')
-    ], string="Primary Address Type", default='residential')
     
-    secondary_address_line1 = fields.Char(string="Secondary Address Line 1")
-    secondary_address_line2 = fields.Char(string="Secondary Address Line 2")
-    secondary_address_city = fields.Char(string="Secondary City")
-    secondary_address_state_id = fields.Many2one(
-        'res.country.state', 
-        string="Secondary State"
+    is_member = fields.Boolean(
+        string="Is Member",
+        default=False,
+        index=True,
+        help="Quick filter: is this contact a current or past member?"
     )
-    secondary_address_zip = fields.Char(string="Secondary ZIP")
-    secondary_address_country_id = fields.Many2one(
-        'res.country', 
-        string="Secondary Country"
+    
+    membership_status = fields.Selection([
+        ('prospect', 'Prospect'),
+        ('active', 'Active'),
+        ('grace', 'Grace Period'),
+        ('lapsed', 'Lapsed'),
+        ('former', 'Former Member'),
+        ('honorary', 'Honorary'),
+        ('suspended', 'Suspended'),
+    ], string="Membership Status", default='prospect', index=True)
+    
+    # === MEMBERSHIP DATES ===
+    
+    join_date = fields.Date(
+        string="Current Join Date",
+        help="Start date of current membership term"
     )
-    secondary_address_type = fields.Selection([
-        ('residential', 'Residential'),
-        ('business', 'Business'),
-        ('billing', 'Billing'),
-        ('shipping', 'Shipping')
-    ], string="Secondary Address Type", default='residential')
-
-    # System Fields
+    
+    member_since = fields.Date(
+        string="Member Since", 
+        readonly=True,
+        help="Original date when first became a member"
+    )
+    
+    renewal_date = fields.Date(
+        string="Renewal Date",
+        help="Expected membership renewal date"
+    )
+    
+    paid_through_date = fields.Date(
+        string="Paid Through",
+        help="Membership coverage end date"
+    )
+    
+    # === MEMBER CLASSIFICATION ===
+    
+    # Note: member_type_id will be added by ams_member_types module
+    # This shows the pattern - we only add what doesn't exist in base Odoo
+    
+    # === ENGAGEMENT & CONTRIBUTIONS ===
+    
+    engagement_score = fields.Float(
+        string="Engagement Score",
+        default=0.0,
+        help="Calculated engagement metric based on events, committees, etc."
+    )
+    
+    last_payment_date = fields.Date(
+        string="Last Payment Date",
+        help="Date of most recent dues or contribution payment"
+    )
+    
+    last_payment_amount = fields.Monetary(
+        string="Last Payment Amount",
+        help="Amount of most recent payment"
+    )
+    
+    total_contributions = fields.Monetary(
+        string="Total Contributions",
+        default=0.0,
+        help="Lifetime total of all contributions/donations"
+    )
+    
+    donor_level = fields.Selection([
+        ('none', 'Non-Donor'),
+        ('bronze', 'Bronze'),
+        ('silver', 'Silver'), 
+        ('gold', 'Gold'),
+        ('platinum', 'Platinum'),
+    ], string="Donor Level", default='none')
+    
+    # === ORGANIZATION-SPECIFIC FIELDS ===
+    
+    # Corporate identity (only relevant for organizations)
+    acronym = fields.Char(
+        string="Acronym",
+        help="Common abbreviation for the organization"
+    )
+    
+    organization_type = fields.Selection([
+        ('corporation', 'Corporation'),
+        ('nonprofit', 'Non-profit'),
+        ('government', 'Government Agency'),
+        ('educational', 'Educational Institution'),
+        ('healthcare', 'Healthcare Organization'),
+        ('association', 'Professional Association'),
+        ('partnership', 'Partnership'),
+        ('other', 'Other')
+    ], string="Organization Type")
+    
+    industry_sector = fields.Char(
+        string="Industry Sector",
+        help="Primary industry or sector"
+    )
+    
+    year_established = fields.Integer(
+        string="Year Established",
+        help="Year the organization was founded"
+    )
+    
+    employee_count = fields.Integer(
+        string="Number of Employees",
+        help="Total number of employees"
+    )
+    
+    annual_revenue = fields.Monetary(
+        string="Annual Revenue",
+        help="Approximate annual revenue"
+    )
+    
+    # === INDIVIDUAL-SPECIFIC FIELDS ===
+    
+    # Professional credentials (only relevant for individuals)
+    credentials = fields.Text(
+        string="Professional Credentials",
+        help="Professional licenses, certifications, degrees"
+    )
+    
+    specialties = fields.Text(
+        string="Areas of Specialty",
+        help="Professional areas of expertise or interest"
+    )
+    
+    # === SYSTEM & INTEGRATION FIELDS ===
+    
     legacy_contact_id = fields.Char(
         string="Legacy Contact ID",
         help="Original contact ID from legacy system for data migration"
     )
-    portal_id = fields.Char(
-        string="Portal ID", 
-        readonly=True,
-        help="Portal user identifier"
+    
+    portal_access = fields.Boolean(
+        string="Portal Access",
+        default=False,
+        help="Has access to member portal"
     )
     
-    # Original join date - will be set by membership modules
-    original_join_date = fields.Date(
-        string="Original Join Date", 
-        readonly=True,
-        help="Date when member first joined the association"
-    )
-
-    # REMOVED FIELDS THAT REFERENCE NON-EXISTENT MODELS
-    # These will be added by higher layer modules:
-    # - is_member (computed field referencing ams.participation)
-    # - member_type_id (references ams.member.type)  
-    # - member_status_id (references ams.member.status)
-    # - paid_through_date (computed field referencing ams.participation)
-    # - primary_membership_id (references ams.participation)
-
-    # Computed Fields
-    display_name = fields.Char(
-        string="Display Name",
-        compute='_compute_display_name',
-        store=True
+    # === COMPUTED FIELDS ===
+    
+    membership_duration_days = fields.Integer(
+        string="Membership Duration (Days)",
+        compute='_compute_membership_duration',
+        help="Days since first became a member"
     )
     
-    formatted_address = fields.Text(
-        string="Formatted Address",
-        compute='_compute_formatted_address'
+    days_until_renewal = fields.Integer(
+        string="Days Until Renewal",
+        compute='_compute_days_until_renewal',
+        help="Days until membership renewal is due"
     )
     
-    formatted_secondary_address = fields.Text(
-        string="Formatted Secondary Address", 
-        compute='_compute_formatted_secondary_address'
+    is_renewal_due = fields.Boolean(
+        string="Renewal Due",
+        compute='_compute_is_renewal_due',
+        help="Is membership renewal currently due?"
     )
 
-    @api.depends('first_name', 'last_name', 'middle_name', 'suffix', 'name')
-    def _compute_display_name(self):
-        """Compute display name from name components or fall back to name field"""
+    @api.depends('member_since')
+    def _compute_membership_duration(self):
+        """Calculate how long someone has been a member"""
+        today = date.today()
         for partner in self:
-            if partner.first_name or partner.last_name:
-                name_parts = []
-                if partner.first_name:
-                    name_parts.append(partner.first_name)
-                if partner.middle_name:
-                    name_parts.append(partner.middle_name)
-                if partner.last_name:
-                    name_parts.append(partner.last_name)
-                if partner.suffix:
-                    name_parts.append(partner.suffix)
-                partner.display_name = ' '.join(name_parts)
+            if partner.member_since:
+                delta = today - partner.member_since
+                partner.membership_duration_days = delta.days
             else:
-                partner.display_name = partner.name or ''
+                partner.membership_duration_days = 0
 
-    @api.depends('street', 'street2', 'city', 'state_id', 'zip', 'country_id')
-    def _compute_formatted_address(self):
-        """Format primary address for display"""
+    @api.depends('renewal_date')
+    def _compute_days_until_renewal(self):
+        """Calculate days until renewal is due"""
+        today = date.today()
         for partner in self:
-            address_parts = []
-            if partner.street:
-                address_parts.append(partner.street)
-            if partner.street2:
-                address_parts.append(partner.street2)
-            
-            city_line = []
-            if partner.city:
-                city_line.append(partner.city)
-            if partner.state_id:
-                city_line.append(partner.state_id.name)
-            if partner.zip:
-                city_line.append(partner.zip)
-            if city_line:
-                address_parts.append(', '.join(city_line))
-                
-            if partner.country_id:
-                address_parts.append(partner.country_id.name)
-                
-            partner.formatted_address = '\n'.join(address_parts)
+            if partner.renewal_date:
+                delta = partner.renewal_date - today
+                partner.days_until_renewal = delta.days
+            else:
+                partner.days_until_renewal = 0
 
-    @api.depends('secondary_address_line1', 'secondary_address_line2', 
-                 'secondary_address_city', 'secondary_address_state_id', 
-                 'secondary_address_zip', 'secondary_address_country_id')
-    def _compute_formatted_secondary_address(self):
-        """Format secondary address for display"""
+    @api.depends('renewal_date', 'membership_status')
+    def _compute_is_renewal_due(self):
+        """Determine if renewal is currently due"""
+        today = date.today()
         for partner in self:
-            address_parts = []
-            if partner.secondary_address_line1:
-                address_parts.append(partner.secondary_address_line1)
-            if partner.secondary_address_line2:
-                address_parts.append(partner.secondary_address_line2)
-            
-            city_line = []
-            if partner.secondary_address_city:
-                city_line.append(partner.secondary_address_city)
-            if partner.secondary_address_state_id:
-                city_line.append(partner.secondary_address_state_id.name)
-            if partner.secondary_address_zip:
-                city_line.append(partner.secondary_address_zip)
-            if city_line:
-                address_parts.append(', '.join(city_line))
-                
-            if partner.secondary_address_country_id:
-                address_parts.append(partner.secondary_address_country_id.name)
-                
-            partner.formatted_secondary_address = '\n'.join(address_parts)
+            if (partner.renewal_date and 
+                partner.membership_status in ['active', 'grace'] and
+                partner.renewal_date <= today + timedelta(days=30)):
+                partner.is_renewal_due = True
+            else:
+                partner.is_renewal_due = False
 
     @api.model
     def create(self, vals):
-        """Override create to auto-generate member ID"""
-        if not vals.get('member_id') and not vals.get('is_company'):
-            # Only generate member ID for individuals, and only if sequence exists
+        """Override create to auto-generate member ID and set member_since"""
+        # Auto-generate member ID if this will be a member
+        if not vals.get('member_id') and vals.get('is_member'):
             try:
                 vals['member_id'] = self.env['ir.sequence'].next_by_code('ams.member.id')
+                # Set member_since if not provided but is_member is True
+                if not vals.get('member_since'):
+                    vals['member_since'] = fields.Date.today()
             except:
                 # If sequence doesn't exist yet, skip for now
                 pass
         return super().create(vals)
 
-    def _format_phone_number(self, phone):
-        """Basic phone number formatting - can be enhanced by other modules"""
-        if not phone:
-            return phone
-        # Remove all non-digit characters
-        digits = re.sub(r'\D', '', phone)
-        # Basic US formatting
-        if len(digits) == 10:
-            return f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"
-        elif len(digits) == 11 and digits[0] == '1':
-            return f"+1 ({digits[1:4]}) {digits[4:7]}-{digits[7:]}"
-        return phone
-
-    @api.onchange('business_phone')
-    def _onchange_business_phone(self):
-        """Format business phone on change"""
-        if self.business_phone:
-            self.business_phone = self._format_phone_number(self.business_phone)
-
-    @api.onchange('mobile_phone')
-    def _onchange_mobile_phone(self):
-        """Format mobile phone on change"""
-        if self.mobile_phone:
-            self.mobile_phone = self._format_phone_number(self.mobile_phone)
-
-    @api.onchange('first_name', 'last_name', 'middle_name', 'suffix')
-    def _onchange_name_components(self):
-        """Update name field when components change"""
-        if self.first_name or self.last_name:
-            name_parts = []
-            if self.first_name:
-                name_parts.append(self.first_name)
-            if self.middle_name:
-                name_parts.append(self.middle_name)
-            if self.last_name:
-                name_parts.append(self.last_name)
-            if self.suffix:
-                name_parts.append(self.suffix)
-            self.name = ' '.join(name_parts)
-
-    @api.constrains('secondary_email')
-    def _check_secondary_email(self):
-        """Validate secondary email format"""
+    def write(self, vals):
+        """Override write to handle membership status changes"""
+        # If becoming a member for the first time, set member_since and generate ID
         for partner in self:
-            if partner.secondary_email:
-                email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-                if not re.match(email_pattern, partner.secondary_email):
-                    raise models.ValidationError(
-                        "Please enter a valid secondary email address."
-                    )
+            if (vals.get('is_member') and not partner.is_member and 
+                not partner.member_since):
+                vals['member_since'] = fields.Date.today()
+                if not partner.member_id:
+                    try:
+                        vals['member_id'] = self.env['ir.sequence'].next_by_code('ams.member.id')
+                    except:
+                        pass
+        return super().write(vals)
+
+    @api.constrains('year_established')
+    def _check_year_established(self):
+        """Validate year established is reasonable"""
+        current_year = date.today().year
+        for partner in self:
+            if (partner.year_established and 
+                (partner.year_established < 1800 or partner.year_established > current_year)):
+                raise models.ValidationError(
+                    f"Year established must be between 1800 and {current_year}"
+                )
+
+    def action_make_member(self):
+        """Action to convert a prospect to a member"""
+        self.ensure_one()
+        if not self.is_member:
+            self.write({
+                'is_member': True,
+                'membership_status': 'active',
+                'join_date': fields.Date.today(),
+            })
+
+    def action_renew_membership(self):
+        """Action to renew membership"""
+        self.ensure_one()
+        if self.membership_status in ['active', 'grace', 'lapsed']:
+            # Basic renewal logic - can be enhanced by other modules
+            new_renewal_date = fields.Date.today() + timedelta(days=365)
+            self.write({
+                'membership_status': 'active',
+                'join_date': fields.Date.today(),
+                'renewal_date': new_renewal_date,
+            })

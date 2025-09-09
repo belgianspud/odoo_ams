@@ -45,7 +45,7 @@ class TestMemberData(TransactionCase):
         self.organization_data = {
             'name': 'Acme Corporation',
             'acronym': 'ACME',
-            'website_url': 'https://www.acme.com',
+            'website': 'https://www.acme.com',  # Changed from website_url to website
             'email': 'info@acme.com',
             'phone': '555-0000',
             'organization_type': 'corporation',
@@ -85,7 +85,7 @@ class TestMemberData(TransactionCase):
         # Test basic fields
         self.assertEqual(partner.name, 'Acme Corporation')
         self.assertEqual(partner.acronym, 'ACME')
-        self.assertEqual(partner.website_url, 'https://www.acme.com')
+        self.assertEqual(partner.website, 'https://www.acme.com')  # Changed from website_url to website
         self.assertEqual(partner.organization_type, 'corporation')
         
         # Test member ID generation (may not work if sequence doesn't exist)
@@ -158,7 +158,7 @@ class TestMemberData(TransactionCase):
         with self.assertRaises(ValidationError):
             self.env['res.partner'].create({
                 'name': 'Test Org',
-                'website_url': 'not-a-url',
+                'website': 'not-a-url',  # Changed from website_url to website
                 'is_company': True,
             })
 
@@ -224,12 +224,12 @@ class TestMemberData(TransactionCase):
         """Test automatic website URL formatting"""
         partner = self.env['res.partner'].create({
             'name': 'Test Org',
-            'website_url': 'www.test.com',  # Missing protocol
+            'website': 'www.test.com',  # Changed from website_url to website, Missing protocol
             'is_company': True,
         })
         
         # Should auto-add https://
-        self.assertEqual(partner.website_url, 'https://www.test.com')
+        self.assertEqual(partner.website, 'https://www.test.com')  # Changed from website_url to website
 
     def test_action_view_employees(self):
         """Test the action to view employees"""

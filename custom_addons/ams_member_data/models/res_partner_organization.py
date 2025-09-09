@@ -12,11 +12,7 @@ class ResPartnerOrganization(models.Model):
         string="Acronym",
         help="Common abbreviation or acronym for the organization"
     )
-    website_url = fields.Char(
-        string="Website URL",
-        help="Organization's primary website",
-        index=True
-    )
+    # REMOVED: website_url field - now using built-in 'website' field
     tin_number = fields.Char(
         string="TIN Number",
         help="Tax Identification Number"
@@ -139,13 +135,13 @@ class ResPartnerOrganization(models.Model):
                 pass
         return super().create(vals)
 
-    @api.constrains('website_url')
+    @api.constrains('website')
     def _check_website_url(self):
         """Validate website URL format"""
         for partner in self:
-            if partner.website_url:
+            if partner.website:
                 url_pattern = r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$'
-                if not re.match(url_pattern, partner.website_url):
+                if not re.match(url_pattern, partner.website):
                     raise models.ValidationError(
                         "Please enter a valid website URL (including http:// or https://)"
                     )
@@ -172,11 +168,11 @@ class ResPartnerOrganization(models.Model):
                         f"Year established must be between 1800 and {current_year}"
                     )
 
-    @api.onchange('website_url')
+    @api.onchange('website')
     def _onchange_website_url(self):
         """Auto-format website URL"""
-        if self.website_url and not self.website_url.startswith(('http://', 'https://')):
-            self.website_url = 'https://' + self.website_url
+        if self.website and not self.website.startswith(('http://', 'https://')):
+            self.website = 'https://' + self.website
 
     def action_view_employees(self):
         """Action to view organization employees"""

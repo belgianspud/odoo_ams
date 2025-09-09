@@ -33,9 +33,9 @@
         # Menu files last
         'views/ams_member_menus.xml',
     ],
-    'demo': [
-        'demo/demo_member_data.xml',
-    ],
+    #'demo': [
+    #    'demo/demo_member_data.xml',
+    #],
     'images': ['static/description/icon.png'],
     'installable': True,
     'auto_install': False,

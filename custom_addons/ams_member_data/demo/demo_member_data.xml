@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Demo Individual Members -->
+        <record id="demo_member_john_smith" model="res.partner">
+            <field name="first_name">John</field>
+            <field name="last_name">Smith</field>
+            <field name="middle_name">William</field>
+            <field name="email">john.smith@example.com</field>
+            <field name="phone">+1 (555) 123-4567</field>
+            <field name="mobile_phone">+1 (555) 987-6543</field>
+            <field name="business_phone">+1 (555) 234-5678</field>
+            <field name="gender">male</field>
+            <field name="date_of_birth">1985-03-15</field>
+            <field name="is_company">False</field>
+            <field name="customer_rank">1</field>
+            <field name="street">123 Oak Street</field>
+            <field name="city">Los Angeles</field>
+            <field name="state_id" ref="base.state_us_5"/>
+            <field name="zip">90210</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="primary_address_type">residential</field>
+        </record>
+
+        <record id="demo_member_jane_doe" model="res.partner">
+            <field name="first_name">Jane</field>
+            <field name="last_name">Doe</field>
+            <field name="email">jane.doe@example.com</field>
+            <field name="phone">+1 (555) 456-7890</field>
+            <field name="mobile_phone">+1 (555) 654-3210</field>
+            <field name="gender">female</field>
+            <field name="date_of_birth">1990-07-22</field>
+            <field name="is_company">False</field>
+            <field name="customer_rank">1</field>
+            <field name="street">456 Pine Avenue</field>
+            <field name="city">San Francisco</field>
+            <field name="state_id" ref="base.state_us_5"/>
+            <field name="zip">94102</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="primary_address_type">residential</field>
+        </record>
+
+        <record id="demo_member_robert_johnson" model="res.partner">
+            <field name="first_name">Robert</field>
+            <field name="last_name">Johnson</field>
+            <field name="suffix">Jr.</field>
+            <field name="nickname">Bob</field>
+            <field name="email">bob.johnson@example.com</field>
+            <field name="secondary_email">robert.johnson.jr@personal.com</field>
+            <field name="phone">+1 (555) 789-0123</field>
+            <field name="mobile_phone">+1 (555) 321-0987</field>
+            <field name="gender">male</field>
+            <field name="date_of_birth">1978-11-08</field>
+            <field name="is_company">False</field>
+            <field name="customer_rank">1</field>
+            <field name="street">789 Maple Drive</field>
+            <field name="city">Chicago</field>
+            <field name="state_id" ref="base.state_us_14"/>
+            <field name="zip">60601</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="primary_address_type">residential</field>
+        </record>
+
+        <!-- Demo Organization Members -->
+        <record id="demo_org_tech_solutions" model="res.partner">
+            <field name="name">Tech Solutions Inc.</field>
+            <field name="acronym">TSI</field>
+            <field name="website">https://www.techsolutions.com</field>
+            <field name="email">info@techsolutions.com</field>
+            <field name="phone">+1 (555) 111-2222</field>
+            <field name="organization_type">corporation</field>
+            <field name="industry_sector">Information Technology</field>
+            <field name="year_established">2010</field>
+            <field name="employee_count">150</field>
+            <field name="annual_revenue">5000000</field>
+            <field name="ein_number">12-3456789</field>
+            <field name="is_company">True</field>
+            <field name="customer_rank">1</field>
+            <field name="street">100 Technology Blvd</field>
+            <field name="city">Austin</field>
+            <field name="state_id" ref="base.state_us_44"/>
+            <field name="zip">78701</field>
+            <field name="country_id" ref="base.us"/>
+        </record>
+
+        <record id="demo_org_green_nonprofit" model="res.partner">
+            <field name="name">Green Earth Foundation</field>
+            <field name="acronym">GEF</field>
+            <field name="website">https://www.greenearth.org</field>
+            <field name="email">contact@greenearth.org</field>
+            <field name="phone">+1 (555) 333-4444</field>
+            <field name="organization_type">nonprofit</field>
+            <field name="industry_sector">Environmental Conservation</field>
+            <field name="year_established">1995</field>
+            <field name="employee_count">75</field>
+            <field name="annual_revenue">2500000</field>
+            <field name="ein_number">98-7654321</field>
+            <field name="is_company">True</field>
+            <field name="customer_rank">1</field>
+            <field name="street">200 Green Street</field>
+            <field name="city">Portland</field>
+            <field name="state_id" ref="base.state_us_38"/>
+            <field name="zip">97201</field>
+            <field name="country_id" ref="base.us"/>
+        </record>
+
+        <record id="demo_org_university" model="res.partner">
+            <field name="name">Metropolitan University</field>
+            <field name="acronym">MU</field>
+            <field name="website">https://www.metrou.edu</field>
+            <field name="email">admissions@metrou.edu</field>
+            <field name="phone">+1 (555) 555-6666</field>
+            <field name="organization_type">educational</field>
+            <field name="industry_sector">Higher Education</field>
+            <field name="year_established">1875</field>
+            <field name="employee_count">2500</field>
+            <field name="annual_revenue">150000000</field>
+            <field name="ein_number">11-2233445</field>
+            <field name="is_company">True</field>
+            <field name="customer_rank">1</field>
+            <field name="street">300 University Avenue</field>
+            <field name="city">Boston</field>
+            <field name="state_id" ref="base.state_us_22"/>
+            <field name="zip">02101</field>
+            <field name="country_id" ref="base.us"/>
+        </record>
+
+        <!-- Employee Relationships -->
+        <record id="demo_employee_sarah_tech" model="res.partner">
+            <field name="first_name">Sarah</field>
+            <field name="last_name">Wilson</field>
+            <field name="email">sarah.wilson@techsolutions.com</field>
+            <field name="phone">+1 (555) 111-2223</field>
+            <field name="business_phone">+1 (555) 111-2223</field>
+            <field name="mobile_phone">+1 (555) 777-8888</field>
+            <field name="gender">female</field>
+            <field name="date_of_birth">1988-05-12</field>
+            <field name="is_company">False</field>
+            <field name="parent_id" ref="demo_org_tech_solutions"/>
+            <field name="street">100 Technology Blvd</field>
+            <field name="city">Austin</field>
+            <field name="state_id" ref="base.state_us_44"/>
+            <field name="zip">78701</field>
+            <field name="country_id" ref="base.us"/>
+        </record>
+
+        <record id="demo_employee_mike_tech" model="res.partner">
+            <field name="first_name">Michael</field>
+            <field name="last_name">Brown</field>
+            <field name="nickname">Mike</field>
+            <field name="email">mike.brown@techsolutions.com</field>
+            <field name="phone">+1 (555) 111-2224</field>
+            <field name="business_phone">+1 (555) 111-2224</field>
+            <field name="mobile_phone">+1 (555) 999-0000</field>
+            <field name="gender">male</field>
+            <field name="date_of_birth">1982-09-30</field>
+            <field name="is_company">False</field>
+            <field name="customer_rank">1</field>
+            <field name="parent_id" ref="demo_org_tech_solutions"/>
+            <field name="street">100 Technology Blvd</field>
+            <field name="city">Austin</field>
+            <field name="state_id" ref="base.state_us_44"/>
+            <field name="zip">78701</field>
+            <field name="country_id" ref="base.us"/>
+        </record>
+
+        <!-- Set Portal Primary Contact for Tech Solutions -->
+        <record id="demo_org_tech_solutions" model="res.partner">
+            <field name="portal_primary_contact_id" ref="demo_employee_sarah_tech"/>
+        </record>
+
+    </data>
+</odoo>

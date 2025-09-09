@@ -18,7 +18,7 @@
                 <group string="Organization Identity" invisible="not is_company">
                     <group>
                         <field name="acronym"/>
-                        <field name="website_url" widget="url"/>
+                        <field name="website" widget="url"/>
                         <field name="organization_type"/>
                     </group>
                     <group>
@@ -106,7 +106,7 @@
                 <field name="acronym"/>
                 <field name="email"/>
                 <field name="phone"/>
-                <field name="website_url" widget="url"/>
+                <field name="website" widget="url"/>
                 <field name="organization_type"/>
                 <field name="employee_count_computed"/>
                 <field name="city"/>
@@ -127,7 +127,7 @@
                 <field name="acronym"/>
                 <field name="email"/>
                 <field name="phone"/>
-                <field name="website_url"/>
+                <field name="website"/>
                 <field name="organization_type"/>
                 <field name="employee_count_computed"/>
                 <field name="image_128"/>
@@ -153,9 +153,9 @@
                                     <i class="fa fa-envelope" title="Email"/>
                                     <field name="email"/>
                                 </div>
-                                <div t-if="record.website_url.value">
+                                <div t-if="record.website.value">
                                     <i class="fa fa-globe" title="Website"/>
-                                    <field name="website_url" widget="url"/>
+                                    <field name="website" widget="url"/>
                                 </div>
                                 <div t-if="record.employee_count_computed.value">
                                     <i class="fa fa-users" title="Employees"/>
@@ -181,7 +181,7 @@
                 <field name="acronym"/>
                 <field name="email"/>
                 <field name="phone"/>
-                <field name="website_url"/>
+                <field name="website"/>
                 <field name="organization_type"/>
                 <field name="industry_sector"/>
                 <field name="naics_code"/>
@@ -192,7 +192,7 @@
                 <filter string="Has Member ID" name="has_member_id" domain="[('member_id', '!=', False)]"/>
                 <filter string="Missing Member ID" name="no_member_id" domain="[('member_id', '=', False)]"/>
                 <filter string="Has Email" name="has_email" domain="[('email', '!=', False)]"/>
-                <filter string="Has Website" name="has_website" domain="[('website_url', '!=', False)]"/>
+                <filter string="Has Website" name="has_website" domain="[('website', '!=', False)]"/>
                 <filter string="Has Employees" name="has_employees" domain="[('employee_count_computed', '>', 0)]"/>
                 
                 <separator/>
@@ -261,38 +261,5 @@
             </p>
         </field>
     </record>
-
-    <!-- Menu Items -->
-    <menuitem id="menu_ams_root" 
-              name="AMS" 
-              sequence="10"/>
-
-    <menuitem id="menu_ams_members" 
-              name="Members" 
-              parent="menu_ams_root" 
-              sequence="10"/>
-
-    <menuitem id="menu_individual_members" 
-              name="Individual Members" 
-              parent="menu_ams_members" 
-              action="action_partner_individual" 
-              sequence="10"/>
-
-    <menuitem id="menu_organization_members" 
-              name="Organization Members" 
-              parent="menu_ams_members" 
-              action="action_partner_organization" 
-              sequence="20"/>
-
-    <menuitem id="menu_all_members" 
-              name="All Members" 
-              parent="menu_ams_members" 
-              action="action_partner_all_members" 
-              sequence="30"/>
-
-    <menuitem id="menu_ams_configuration" 
-              name="Configuration" 
-              parent="menu_ams_root" 
-              sequence="90"/>
 
 </odoo>

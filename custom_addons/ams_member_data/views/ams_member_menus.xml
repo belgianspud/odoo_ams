@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Root AMS Menu -->
+    <menuitem id="menu_ams_root" 
+              name="AMS" 
+              sequence="10"/>
+
+    <!-- Members Menu Section -->
+    <menuitem id="menu_ams_members" 
+              name="Members" 
+              parent="menu_ams_root" 
+              sequence="10"/>
+
+    <menuitem id="menu_all_members" 
+              name="All Members" 
+              parent="menu_ams_members" 
+              action="action_partner_all_members" 
+              sequence="10"/>
+
+    <menuitem id="menu_individual_members" 
+              name="Individual Members" 
+              parent="menu_ams_members" 
+              action="action_partner_individual_members" 
+              sequence="20"/>
+
+    <menuitem id="menu_organization_members" 
+              name="Organization Members" 
+              parent="menu_ams_members" 
+              action="action_partner_organization_members" 
+              sequence="30"/>
+
+    <menuitem id="menu_prospects" 
+              name="Prospects" 
+              parent="menu_ams_members" 
+              action="action_partner_prospects" 
+              sequence="40"/>
+
+    <!-- Configuration Menu Section -->
+    <menuitem id="menu_ams_configuration" 
+              name="Configuration" 
+              parent="menu_ams_root" 
+              sequence="90"/>
+
+</odoo>
