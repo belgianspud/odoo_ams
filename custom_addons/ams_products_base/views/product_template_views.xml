@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ========================================================================== -->
+    <!-- PRODUCT TEMPLATE FORM VIEW EXTENSIONS -->
+    <!-- ========================================================================== -->
+
+    <!-- Enhanced Product Template Form View with AMS Features -->
+    <record id="product_template_form_view_ams" model="ir.ui.view">
+        <field name="name">product.template.form.ams</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add AMS Product flag and type after name -->
+            <xpath expr="//field[@name='categ_id']" position="before">
+                <field name="is_ams_product" widget="boolean_toggle"/>
+                <field name="ams_product_type_id" 
+                       invisible="not is_ams_product"
+                       options="{'no_create': True, 'no_edit': True}"/>
+            </xpath>
+
+            <!-- Add SKU field after categ_id -->
+            <xpath expr="//field[@name='categ_id']" position="after">
+                <field name="sku" invisible="not is_ams_product"/>
+                <field name="legacy_product_id" invisible="not is_ams_product" groups="base.group_system"/>
+            </xpath>
+
+            <!-- Add AMS-specific tabs -->
+            <xpath expr="//notebook" position="inside">
+                
+                <!-- Member Pricing Tab -->
+                <page string="Member Pricing" name="member_pricing" 
+                      invisible="not is_ams_product or not has_member_pricing">
+                    <group>
+                        <group string="Pricing Configuration">
+                            <field name="has_member_pricing" readonly="1"/>
+                            <field name="requires_membership"/>
+                        </group>
+                        <group string="Price Summary">
+                            <field name="pricing_summary" readonly="1"/>
+                            <field name="member_discount_percentage" readonly="1" widget="percentage"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="Member Pricing">
+                            <field name="member_price" 
+                                   widget="monetary" 
+                                   options="{'currency_field': 'currency_id'}"/>
+                            <field name="effective_member_price" readonly="1" 
+                                   widget="monetary" 
+                                   options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                        <group string="Non-Member Pricing">
+                            <field name="non_member_price" 
+                                   widget="monetary" 
+                                   options="{'currency_field': 'currency_id'}"/>
+                            <field name="effective_non_member_price" readonly="1" 
+                                   widget="monetary" 
+                                   options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-info" role="alert">
+                        <h5><i class="fa fa-info-circle"></i> Member Pricing Guidelines</h5>
+                        <ul class="mb-0">
+                            <li><strong>Member Price:</strong> Special discounted price for association members</li>
+                            <li><strong>Non-Member Price:</strong> Standard price for non-members (defaults to List Price)</li>
+                            <li><strong>Requires Membership:</strong> Only active members can purchase this product</li>
+                        </ul>
+                    </div>
+                </page>
+
+                <!-- Digital Content Tab -->
+                <page string="Digital Content" name="digital_content" 
+                      invisible="not is_ams_product or not is_digital_product">
+                    <group>
+                        <group string="Digital Product Settings">
+                            <field name="is_digital_product" readonly="1"/>
+                            <field name="auto_fulfill_digital"/>
+                            <field name="is_digital_available" readonly="1" widget="boolean"/>
+                        </group>
+                        <group string="Inventory Settings">
+                            <field name="stock_controlled"/>
+                            <field name="type" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Digital Content Delivery">
+                        <field name="digital_download_url" widget="url" placeholder="https://example.com/download"/>
+                        <field name="digital_attachment_id"/>
+                    </group>
+
+                    <div class="alert alert-warning" role="alert" invisible="is_digital_available">
+                        <strong>Warning:</strong> Digital product must have either a download URL or attached file to be available for delivery.
+                    </div>
+                    
+                    <div class="alert alert-success" role="alert" invisible="not is_digital_available">
+                        <strong>Ready:</strong> Digital content is properly configured and available for delivery.
+                    </div>
+                </page>
+
+                <!-- AMS Configuration Tab -->
+                <page string="AMS Settings" name="ams_settings" invisible="not is_ams_product">
+                    <group>
+                        <group string="Product Classification">
+                            <field name="ams_product_type_id" options="{'no_create': True}"/>
+                            <field name="is_ams_product"/>
+                        </group>
+                        <group string="Access Control">
+                            <field name="requires_membership"/>
+                            <field name="chapter_specific"/>
+                            <!-- TODO: Uncomment when ams.chapter model is available -->
+                            <!-- <field name="allowed_chapter_ids" widget="many2many_tags" 
+                                   invisible="not chapter_specific"/> -->
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="Product Features">
+                            <field name="has_member_pricing"/>
+                            <field name="is_digital_product"/>
+                        </group>
+                        <group string="Inventory &amp; Fulfillment">
+                            <field name="stock_controlled"/>
+                            <field name="auto_fulfill_digital" invisible="not is_digital_product"/>
+                        </group>
+                    </group>
+
+                    <group string="Legacy &amp; Integration" groups="base.group_system">
+                        <field name="sku"/>
+                        <field name="legacy_product_id"/>
+                    </group>
+
+                    <div class="mt16">
+                        <button name="action_configure_digital_content" 
+                                type="object" 
+                                string="Configure Digital Content" 
+                                class="btn-primary"
+                                invisible="not is_digital_product"/>
+                        <button name="action_view_member_pricing" 
+                                type="object" 
+                                string="View Member Pricing Details" 
+                                class="btn-secondary"
+                                invisible="not has_member_pricing"/>
+                    </div>
+                </page>
+
+            </xpath>
+
+            <!-- Add pricing information to the main form -->
+            <xpath expr="//field[@name='list_price']" position="after">
+                <field name="pricing_summary" readonly="1" 
+                       invisible="not is_ams_product or not has_member_pricing"
+                       string="Member Pricing"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- PRODUCT TEMPLATE LIST VIEW EXTENSIONS -->
+    <!-- ========================================================================== -->
+
+    <!-- Enhanced Product Template List View -->
+    <record id="product_template_tree_view_ams" model="ir.ui.view">
+        <field name="name">product.template.tree.ams</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add AMS fields to tree view -->
+            <xpath expr="//field[@name='categ_id']" position="after">
+                <field name="sku" optional="show"/>
+                <field name="ams_product_type_id" optional="hide"/>
+                <field name="has_member_pricing" widget="boolean_toggle" optional="hide"/>
+                <field name="is_digital_product" widget="boolean_toggle" optional="hide"/>
+                <field name="requires_membership" widget="boolean_toggle" optional="hide"/>
+            </xpath>
+
+            <!-- Add pricing columns -->
+            <xpath expr="//field[@name='list_price']" position="after">
+                <field name="effective_member_price" optional="hide" 
+                       invisible="not has_member_pricing"
+                       widget="monetary"/>
+                <field name="member_discount_percentage" optional="hide" 
+                       invisible="not has_member_pricing"
+                       widget="percentage"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- PRODUCT TEMPLATE SEARCH VIEW EXTENSIONS -->
+    <!-- ========================================================================== -->
+
+    <!-- Enhanced Product Template Search View -->
+    <record id="product_template_search_view_ams" model="ir.ui.view">
+        <field name="name">product.template.search.ams</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add AMS search fields -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="sku" string="SKU" filter_domain="[('sku', 'ilike', self)]"/>
+                <field name="ams_product_type_id" string="AMS Product Type"/>
+                <field name="legacy_product_id" string="Legacy ID" filter_domain="[('legacy_product_id', 'ilike', self)]"/>
+            </xpath>
+
+            <!-- Add AMS filters -->
+            <xpath expr="//filter[@name='filter_to_sell']" position="after">
+                <separator/>
+                <filter string="AMS Products" name="ams_products" 
+                        domain="[('is_ams_product', '=', True)]"/>
+                <filter string="Member Pricing" name="member_pricing" 
+                        domain="[('has_member_pricing', '=', True)]"/>
+                <filter string="Digital Products" name="digital_products" 
+                        domain="[('is_digital_product', '=', True)]"/>
+                <filter string="Physical Products" name="physical_products" 
+                        domain="[('is_digital_product', '=', False), ('is_ams_product', '=', True)]"/>
+                <filter string="Requires Membership" name="requires_membership" 
+                        domain="[('requires_membership', '=', True)]"/>
+                <filter string="Chapter Restricted" name="chapter_restricted" 
+                        domain="[('chapter_specific', '=', True)]"/>
+            </xpath>
+
+            <!-- Add AMS group by options -->
+            <xpath expr="//group" position="inside">
+                <filter string="AMS Product Type" name="group_ams_product_type" 
+                        context="{'group_by': 'ams_product_type_id'}"/>
+                <filter string="Member Pricing" name="group_member_pricing" 
+                        context="{'group_by': 'has_member_pricing'}"/>
+                <filter string="Digital/Physical" name="group_digital" 
+                        context="{'group_by': 'is_digital_product'}"/>
+                <filter string="Membership Required" name="group_membership_required" 
+                        context="{'group_by': 'requires_membership'}"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- PRODUCT TEMPLATE KANBAN VIEW EXTENSIONS -->
+    <!-- ========================================================================== -->
+
+    <!-- Enhanced Product Template Kanban View -->
+    <record id="product_template_kanban_view_ams" model="ir.ui.view">
+        <field name="name">product.template.kanban.ams</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_kanban_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add AMS fields to kanban -->
+            <xpath expr="//kanban" position="attributes">
+                <attribute name="sample">1</attribute>
+            </xpath>
+            
+            <xpath expr="//field[@name='lst_price']" position="after">
+                <field name="sku"/>
+                <field name="is_ams_product"/>
+                <field name="ams_product_type_id"/>
+                <field name="has_member_pricing"/>
+                <field name="is_digital_product"/>
+                <field name="requires_membership"/>
+                <field name="effective_member_price"/>
+                <field name="member_discount_percentage"/>
+                <field name="pricing_summary"/>
+            </xpath>
+
+            <!-- Enhance kanban card content -->
+            <xpath expr="//div[hasclass('product_lst_price')]" position="after">
+                <!-- AMS Product Badges -->
+                <div t-if="record.is_ams_product.raw_value" class="mt-2">
+                    <t t-if="record.ams_product_type_id.raw_value">
+                        <span class="badge badge-info"><field name="ams_product_type_id"/></span>
+                    </t>
+                    <t t-if="record.is_digital_product.raw_value">
+                        <span class="badge badge-success">Digital</span>
+                    </t>
+                    <t t-if="record.has_member_pricing.raw_value">
+                        <span class="badge badge-warning">Member Pricing</span>
+                    </t>
+                    <t t-if="record.requires_membership.raw_value">
+                        <span class="badge badge-danger">Members Only</span>
+                    </t>
+                </div>
+                
+                <!-- SKU Display -->
+                <div t-if="record.sku.raw_value" class="text-muted small">
+                    SKU: <field name="sku"/>
+                </div>
+                
+                <!-- Member Pricing Display -->
+                <div t-if="record.has_member_pricing.raw_value and record.pricing_summary.raw_value" 
+                     class="text-info small">
+                    <field name="pricing_summary"/>
+                </div>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- SPECIALIZED AMS PRODUCT VIEWS -->
+    <!-- ========================================================================== -->
+
+    <!-- AMS Products Action -->
+    <record id="action_ams_products" model="ir.actions.act_window">
+        <field name="name">AMS Products</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('is_ams_product', '=', True)]</field>
+        <field name="context">{
+            'default_is_ams_product': True,
+            'search_default_ams_products': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first AMS product!
+            </p>
+            <p>
+                AMS products are specially configured for association management with features like
+                member pricing, digital content delivery, and membership requirements.
+            </p>
+        </field>
+    </record>
+
+    <!-- Member Pricing Products Action -->
+    <record id="action_member_pricing_products" model="ir.actions.act_window">
+        <field name="name">Member Pricing Products</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('is_ams_product', '=', True), ('has_member_pricing', '=', True)]</field>
+        <field name="context">{
+            'default_is_ams_product': True,
+            'default_has_member_pricing': True,
+            'search_default_member_pricing': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first member pricing product!
+            </p>
+            <p>
+                These products offer different pricing for association members versus non-members,
+                helping you provide member benefits and incentives.
+            </p>
+        </field>
+    </record>
+
+    <!-- Digital Products Action -->
+    <record id="action_digital_products" model="ir.actions.act_window">
+        <field name="name">Digital Products</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('is_ams_product', '=', True), ('is_digital_product', '=', True)]</field>
+        <field name="context">{
+            'default_is_ams_product': True,
+            'default_is_digital_product': True,
+            'search_default_digital_products': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first digital product!
+            </p>
+            <p>
+                Digital products are delivered electronically through downloads or online access.
+                Configure download URLs or attach files for automatic delivery.
+            </p>
+        </field>
+    </record>
+
+    <!-- Membership Required Products Action -->
+    <record id="action_membership_required_products" model="ir.actions.act_window">
+        <field name="name">Members-Only Products</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('is_ams_product', '=', True), ('requires_membership', '=', True)]</field>
+        <field name="context">{
+            'default_is_ams_product': True,
+            'default_requires_membership': True,
+            'search_default_requires_membership': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first members-only product!
+            </p>
+            <p>
+                These products can only be purchased by active association members,
+                providing exclusive member benefits and access.
+            </p>
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- SIMPLIFIED FORMS FOR SPECIFIC USE CASES -->
+    <!-- ========================================================================== -->
+
+    <!-- Digital Content Configuration Form -->
+    <record id="product_digital_content_form" model="ir.ui.view">
+        <field name="name">product.template.digital.content.form</field>
+        <field name="model">product.template</field>
+        <field name="arch" type="xml">
+            <form string="Digital Content Configuration">
+                <header>
+                    <button string="Save &amp; Close" special="save" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    
+                    <group>
+                        <group string="Digital Settings">
+                            <field name="is_digital_product" readonly="1"/>
+                            <field name="auto_fulfill_digital"/>
+                            <field name="is_digital_available" readonly="1" widget="boolean"/>
+                        </group>
+                        <group string="Delivery Method">
+                            <field name="digital_download_url" widget="url"/>
+                            <field name="digital_attachment_id"/>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-info">
+                        <strong>Configuration Guide:</strong>
+                        <ul class="mb-0">
+                            <li>Choose either a download URL or upload a file (or both)</li>
+                            <li>Auto-fulfill will provide access immediately upon payment</li>
+                            <li>Digital products don't require inventory tracking</li>
+                        </ul>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Member Pricing Configuration Form -->
+    <record id="product_member_pricing_form" model="ir.ui.view">
+        <field name="name">product.template.member.pricing.form</field>
+        <field name="model">product.template</field>
+        <field name="arch" type="xml">
+            <form string="Member Pricing Configuration">
+                <header>
+                    <button string="Save &amp; Close" special="save" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    
+                    <group>
+                        <group string="Current Pricing">
+                            <field name="has_member_pricing" readonly="1"/>
+                            <field name="pricing_summary" readonly="1"/>
+                            <field name="member_discount_percentage" readonly="1" widget="percentage"/>
+                        </group>
+                        <group string="Access Control">
+                            <field name="requires_membership"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="Member Pricing">
+                            <field name="member_price" widget="monetary"/>
+                            <field name="effective_member_price" readonly="1" widget="monetary"/>
+                        </group>
+                        <group string="Non-Member Pricing">
+                            <field name="non_member_price" widget="monetary"/>
+                            <field name="effective_non_member_price" readonly="1" widget="monetary"/>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-success" invisible="member_discount_percentage &lt;= 0">
+                        <strong>Member Savings:</strong> 
+                        Members save <field name="member_discount_percentage" widget="percentage" readonly="1"/> 
+                        on this product!
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

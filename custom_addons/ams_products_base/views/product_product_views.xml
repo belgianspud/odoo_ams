@@ -1,0 +1,508 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ========================================================================== -->
+    <!-- PRODUCT VARIANT FORM VIEW EXTENSIONS -->
+    <!-- ========================================================================== -->
+
+    <!-- Enhanced Product Variant Form View with AMS Features -->
+    <record id="product_variant_form_view_ams" model="ir.ui.view">
+        <field name="name">product.product.form.ams</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add variant SKU after default_code -->
+            <xpath expr="//field[@name='default_code']" position="after">
+                <field name="variant_sku" 
+                       invisible="not product_tmpl_id.is_ams_product"/>
+                <field name="effective_sku" readonly="1" 
+                       invisible="not product_tmpl_id.is_ams_product"/>
+                <field name="variant_legacy_id" groups="base.group_system" 
+                       invisible="not product_tmpl_id.is_ams_product"/>
+            </xpath>
+
+            <!-- Add AMS-specific tabs for variants -->
+            <xpath expr="//notebook" position="inside">
+                
+                <!-- Variant Pricing Tab -->
+                <page string="Variant Pricing" name="variant_pricing" 
+                      invisible="not product_tmpl_id.is_ams_product or not product_tmpl_id.has_member_pricing">
+                    <group>
+                        <group string="Pricing Configuration">
+                            <field name="has_variant_pricing" widget="boolean_toggle"/>
+                            <field name="variant_member_discount" readonly="1" widget="percentage"/>
+                        </group>
+                        <group string="Template Settings">
+                            <field name="product_tmpl_id.has_member_pricing" readonly="1" string="Template Has Member Pricing"/>
+                            <field name="product_tmpl_id.requires_membership" readonly="1" string="Template Requires Membership"/>
+                        </group>
+                    </group>
+                    
+                    <group invisible="not has_variant_pricing">
+                        <group string="Variant Member Pricing">
+                            <field name="variant_member_price" 
+                                   widget="monetary" 
+                                   options="{'currency_field': 'currency_id'}"/>
+                            <field name="final_member_price" readonly="1" 
+                                   widget="monetary" 
+                                   options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                        <group string="Variant Non-Member Pricing">
+                            <field name="variant_non_member_price" 
+                                   widget="monetary" 
+                                   options="{'currency_field': 'currency_id'}"/>
+                            <field name="final_non_member_price" readonly="1" 
+                                   widget="monetary" 
+                                   options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                    </group>
+
+                    <group invisible="has_variant_pricing">
+                        <group string="Template Member Pricing (Used by Variant)">
+                            <field name="product_tmpl_id.member_price" readonly="1" 
+                                   widget="monetary" 
+                                   options="{'currency_field': 'currency_id'}"/>
+                            <field name="final_member_price" readonly="1" 
+                                   widget="monetary" 
+                                   options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                        <group string="Template Non-Member Pricing (Used by Variant)">
+                            <field name="product_tmpl_id.non_member_price" readonly="1" 
+                                   widget="monetary" 
+                                   options="{'currency_field': 'currency_id'}"/>
+                            <field name="final_non_member_price" readonly="1" 
+                                   widget="monetary" 
+                                   options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                    </group>
+
+                    <div class="mt16">
+                        <button name="copy_template_pricing_to_variant" 
+                                type="object" 
+                                string="Copy Template Pricing to Variant" 
+                                class="btn-primary"
+                                invisible="has_variant_pricing"/>
+                        <button name="sync_with_template_pricing" 
+                                type="object" 
+                                string="Reset to Template Pricing" 
+                                class="btn-secondary"
+                                invisible="not has_variant_pricing"/>
+                        <button name="action_configure_variant_pricing" 
+                                type="object" 
+                                string="Configure Variant Pricing" 
+                                class="btn-info"/>
+                    </div>
+
+                    <div class="alert alert-info" role="alert">
+                        <h5><i class="fa fa-info-circle"></i> Variant Pricing</h5>
+                        <ul class="mb-0">
+                            <li><strong>Template Pricing:</strong> Use the same pricing as the product template</li>
+                            <li><strong>Variant Pricing:</strong> Override template pricing for this specific variant</li>
+                            <li><strong>Member Discount:</strong> Automatic calculation based on member vs non-member prices</li>
+                        </ul>
+                    </div>
+                </page>
+
+                <!-- Variant Digital Content Tab -->
+                <page string="Variant Digital Content" name="variant_digital" 
+                      invisible="not product_tmpl_id.is_ams_product or not product_tmpl_id.is_digital_product">
+                    <group>
+                        <group string="Digital Content Configuration">
+                            <field name="has_variant_digital_content" widget="boolean_toggle"/>
+                            <field name="is_digital_content_available" readonly="1" widget="boolean"/>
+                        </group>
+                        <group string="Template Settings">
+                            <field name="product_tmpl_id.is_digital_product" readonly="1" string="Template Is Digital"/>
+                            <field name="product_tmpl_id.auto_fulfill_digital" readonly="1" string="Template Auto-fulfill"/>
+                        </group>
+                    </group>
+                    
+                    <group invisible="not has_variant_digital_content">
+                        <group string="Variant Digital Content">
+                            <field name="variant_digital_url" widget="url" 
+                                   placeholder="https://example.com/variant-download"/>
+                            <field name="variant_digital_attachment_id"/>
+                        </group>
+                        <group string="Effective Digital Content">
+                            <field name="final_digital_url" readonly="1" widget="url"/>
+                            <field name="final_digital_attachment_id" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group invisible="has_variant_digital_content">
+                        <group string="Template Digital Content (Used by Variant)">
+                            <field name="product_tmpl_id.digital_download_url" readonly="1" widget="url"/>
+                            <field name="product_tmpl_id.digital_attachment_id" readonly="1"/>
+                        </group>
+                        <group string="Effective Digital Content">
+                            <field name="final_digital_url" readonly="1" widget="url"/>
+                            <field name="final_digital_attachment_id" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <div class="mt16">
+                        <button name="action_configure_variant_digital_content" 
+                                type="object" 
+                                string="Configure Variant Digital Content" 
+                                class="btn-primary"/>
+                    </div>
+
+                    <div class="alert alert-warning" role="alert" invisible="is_digital_content_available">
+                        <strong>Warning:</strong> No digital content available for this variant. 
+                        Configure variant-specific content or ensure template has digital content.
+                    </div>
+                    
+                    <div class="alert alert-success" role="alert" invisible="not is_digital_content_available">
+                        <strong>Ready:</strong> Digital content is available for this variant.
+                    </div>
+                </page>
+
+                <!-- Variant AMS Settings Tab -->
+                <page string="Variant AMS Info" name="variant_ams" invisible="not product_tmpl_id.is_ams_product">
+                    <group>
+                        <group string="Variant Identification">
+                            <field name="variant_sku"/>
+                            <field name="effective_sku" readonly="1"/>
+                            <field name="variant_legacy_id" groups="base.group_system"/>
+                        </group>
+                        <group string="Template Classification">
+                            <field name="product_tmpl_id.ams_product_type_id" readonly="1" string="AMS Product Type"/>
+                            <field name="product_tmpl_id.is_ams_product" readonly="1" string="Is AMS Product"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="Variant Overrides">
+                            <field name="has_variant_pricing" readonly="1"/>
+                            <field name="has_variant_digital_content" readonly="1"/>
+                        </group>
+                        <group string="Template Features">
+                            <field name="product_tmpl_id.has_member_pricing" readonly="1" string="Template Member Pricing"/>
+                            <field name="product_tmpl_id.is_digital_product" readonly="1" string="Template Digital Product"/>
+                            <field name="product_tmpl_id.requires_membership" readonly="1" string="Template Requires Membership"/>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-info" role="alert">
+                        <h5><i class="fa fa-info-circle"></i> Variant Information</h5>
+                        <p>This variant inherits most settings from its product template. 
+                           You can override pricing and digital content for specific variants when needed.</p>
+                    </div>
+                </page>
+
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- PRODUCT VARIANT LIST VIEW EXTENSIONS -->
+    <!-- ========================================================================== -->
+
+    <!-- Enhanced Product Variant List View -->
+    <record id="product_variant_tree_view_ams" model="ir.ui.view">
+        <field name="name">product.product.tree.ams</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_product_tree_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add AMS fields to tree view -->
+            <xpath expr="//field[@name='default_code']" position="after">
+                <field name="effective_sku" optional="show"/>
+                <field name="has_variant_pricing" widget="boolean_toggle" optional="hide"/>
+                <field name="has_variant_digital_content" widget="boolean_toggle" optional="hide"/>
+            </xpath>
+
+            <!-- Add pricing columns -->
+            <xpath expr="//field[@name='lst_price']" position="after">
+                <field name="final_member_price" optional="hide" 
+                       widget="monetary" 
+                       invisible="not product_tmpl_id.has_member_pricing"/>
+                <field name="variant_member_discount" optional="hide" 
+                       widget="percentage"
+                       invisible="not product_tmpl_id.has_member_pricing"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- PRODUCT VARIANT SEARCH VIEW EXTENSIONS -->
+    <!-- ========================================================================== -->
+
+    <!-- Enhanced Product Variant Search View -->
+    <record id="product_variant_search_view_ams" model="ir.ui.view">
+        <field name="name">product.product.search.ams</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_search_form_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add AMS search fields -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="effective_sku" string="Effective SKU" 
+                       filter_domain="[('effective_sku', 'ilike', self)]"/>
+                <field name="variant_sku" string="Variant SKU" 
+                       filter_domain="[('variant_sku', 'ilike', self)]"/>
+                <field name="variant_legacy_id" string="Variant Legacy ID" 
+                       filter_domain="[('variant_legacy_id', 'ilike', self)]"/>
+            </xpath>
+
+            <!-- Add AMS filters -->
+            <xpath expr="//filter[@name='filter_to_sell']" position="after">
+                <separator/>
+                <filter string="AMS Product Variants" name="ams_variants" 
+                        domain="[('product_tmpl_id.is_ams_product', '=', True)]"/>
+                <filter string="Variant Pricing" name="variant_pricing" 
+                        domain="[('has_variant_pricing', '=', True)]"/>
+                <filter string="Variant Digital Content" name="variant_digital" 
+                        domain="[('has_variant_digital_content', '=', True)]"/>
+                <filter string="Digital Variants" name="digital_variants" 
+                        domain="[('product_tmpl_id.is_digital_product', '=', True)]"/>
+                <filter string="Member Pricing Variants" name="member_pricing_variants" 
+                        domain="[('product_tmpl_id.has_member_pricing', '=', True)]"/>
+            </xpath>
+
+            <!-- Add AMS group by options -->
+            <xpath expr="//group" position="inside">
+                <filter string="AMS Product Type" name="group_ams_product_type" 
+                        context="{'group_by': 'product_tmpl_id.ams_product_type_id'}"/>
+                <filter string="Has Variant Pricing" name="group_variant_pricing" 
+                        context="{'group_by': 'has_variant_pricing'}"/>
+                <filter string="Has Variant Digital Content" name="group_variant_digital" 
+                        context="{'group_by': 'has_variant_digital_content'}"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- PRODUCT VARIANT KANBAN VIEW EXTENSIONS -->
+    <!-- ========================================================================== -->
+
+    <!-- Enhanced Product Variant Kanban View -->
+    <record id="product_variant_kanban_view_ams" model="ir.ui.view">
+        <field name="name">product.product.kanban.ams</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_kanban_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add AMS fields to kanban -->
+            <xpath expr="//field[@name='lst_price']" position="after">
+                <field name="effective_sku"/>
+                <field name="has_variant_pricing"/>
+                <field name="has_variant_digital_content"/>
+                <field name="final_member_price"/>
+                <field name="variant_member_discount"/>
+                <field name="is_digital_content_available"/>
+                <field name="template_is_ams_product"/>
+                <field name="template_is_digital_product"/>
+                <field name="template_has_member_pricing"/>
+            </xpath>
+
+            <!-- Enhance kanban card content -->
+            <xpath expr="//div[hasclass('product_lst_price')]" position="after">
+                <!-- AMS Variant Badges -->
+                <div t-if="record.product_tmpl_id.is_ams_product" class="mt-2">
+                    <t t-if="record.has_variant_pricing.raw_value">
+                        <span class="badge badge-primary">Variant Pricing</span>
+                    </t>
+                    <t t-if="record.has_variant_digital_content.raw_value">
+                        <span class="badge badge-info">Variant Digital</span>
+                    </t>
+                    <t t-if="record.product_tmpl_id.is_digital_product and record.is_digital_content_available.raw_value">
+                        <span class="badge badge-success">Digital Ready</span>
+                    </t>
+                    <t t-if="record.product_tmpl_id.is_digital_product and not record.is_digital_content_available.raw_value">
+                        <span class="badge badge-warning">Digital Missing</span>
+                    </t>
+                </div>
+                
+                <!-- Effective SKU Display -->
+                <div t-if="record.effective_sku.raw_value" class="text-muted small">
+                    SKU: <field name="effective_sku"/>
+                </div>
+                
+                <!-- Member Pricing Display for Variants -->
+                <div t-if="record.product_tmpl_id.has_member_pricing and record.final_member_price.raw_value != record.lst_price.raw_value" 
+                     class="text-info small">
+                    Member: <field name="final_member_price" widget="monetary"/>
+                    <t t-if="record.variant_member_discount.raw_value > 0">
+                        (<field name="variant_member_discount" widget="percentage"/> off)
+                    </t>
+                </div>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- SPECIALIZED AMS VARIANT ACTIONS -->
+    <!-- ========================================================================== -->
+
+    <!-- AMS Product Variants Action -->
+    <record id="action_ams_product_variants" model="ir.actions.act_window">
+        <field name="name">AMS Product Variants</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">product.product</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('product_tmpl_id.is_ams_product', '=', True)]</field>
+        <field name="context">{
+            'search_default_ams_variants': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first AMS product variant!
+            </p>
+            <p>
+                AMS product variants extend standard Odoo variants with association-specific features
+                like variant pricing, digital content overrides, and enhanced SKU management.
+            </p>
+        </field>
+    </record>
+
+    <!-- Variant Pricing Products Action -->
+    <record id="action_variant_pricing_products" model="ir.actions.act_window">
+        <field name="name">Variant Pricing Products</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">product.product</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('has_variant_pricing', '=', True)]</field>
+        <field name="context">{
+            'search_default_variant_pricing': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No variant-specific pricing configured yet!
+            </p>
+            <p>
+                These are product variants that have their own pricing different from the template,
+                allowing for fine-grained control over member and non-member pricing.
+            </p>
+        </field>
+    </record>
+
+    <!-- Variant Digital Content Products Action -->
+    <record id="action_variant_digital_products" model="ir.actions.act_window">
+        <field name="name">Variant Digital Content</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">product.product</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('has_variant_digital_content', '=', True)]</field>
+        <field name="context">{
+            'search_default_variant_digital': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No variant-specific digital content configured yet!
+            </p>
+            <p>
+                These are product variants that have their own digital content (files or URLs)
+                different from the template, enabling variant-specific digital delivery.
+            </p>
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- SIMPLIFIED FORMS FOR VARIANT CONFIGURATION -->
+    <!-- ========================================================================== -->
+
+    <!-- Variant Pricing Configuration Form -->
+    <record id="product_variant_pricing_form" model="ir.ui.view">
+        <field name="name">product.product.variant.pricing.form</field>
+        <field name="model">product.product</field>
+        <field name="arch" type="xml">
+            <form string="Variant Pricing Configuration">
+                <header>
+                    <button string="Save &amp; Close" special="save" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="display_name" readonly="1"/></h1>
+                        <h3>Variant Pricing Configuration</h3>
+                    </div>
+                    
+                    <group>
+                        <group string="Template Pricing (Reference)">
+                            <field name="product_tmpl_id.member_price" readonly="1" widget="monetary"/>
+                            <field name="product_tmpl_id.non_member_price" readonly="1" widget="monetary"/>
+                            <field name="product_tmpl_id.member_discount_percentage" readonly="1" widget="percentage"/>
+                        </group>
+                        <group string="Variant Configuration">
+                            <field name="has_variant_pricing" widget="boolean_toggle"/>
+                            <field name="variant_member_discount" readonly="1" widget="percentage"/>
+                        </group>
+                    </group>
+                    
+                    <group invisible="not has_variant_pricing">
+                        <group string="Variant Member Pricing">
+                            <field name="variant_member_price" widget="monetary"/>
+                            <field name="final_member_price" readonly="1" widget="monetary"/>
+                        </group>
+                        <group string="Variant Non-Member Pricing">
+                            <field name="variant_non_member_price" widget="monetary"/>
+                            <field name="final_non_member_price" readonly="1" widget="monetary"/>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-info">
+                        <strong>Variant Pricing:</strong>
+                        Enable variant pricing to set different member/non-member prices for this specific variant,
+                        overriding the template pricing.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Variant Digital Content Configuration Form -->
+    <record id="product_variant_digital_form" model="ir.ui.view">
+        <field name="name">product.product.variant.digital.form</field>
+        <field name="model">product.product</field>
+        <field name="arch" type="xml">
+            <form string="Variant Digital Content Configuration">
+                <header>
+                    <button string="Save &amp; Close" special="save" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="display_name" readonly="1"/></h1>
+                        <h3>Variant Digital Content Configuration</h3>
+                    </div>
+                    
+                    <group>
+                        <group string="Template Digital Content (Reference)">
+                            <field name="product_tmpl_id.digital_download_url" readonly="1" widget="url"/>
+                            <field name="product_tmpl_id.digital_attachment_id" readonly="1"/>
+                            <field name="product_tmpl_id.auto_fulfill_digital" readonly="1"/>
+                        </group>
+                        <group string="Variant Configuration">
+                            <field name="has_variant_digital_content" widget="boolean_toggle"/>
+                            <field name="is_digital_content_available" readonly="1" widget="boolean"/>
+                        </group>
+                    </group>
+                    
+                    <group invisible="not has_variant_digital_content">
+                        <group string="Variant Digital Content">
+                            <field name="variant_digital_url" widget="url"/>
+                            <field name="variant_digital_attachment_id"/>
+                        </group>
+                        <group string="Effective Content">
+                            <field name="final_digital_url" readonly="1" widget="url"/>
+                            <field name="final_digital_attachment_id" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-info">
+                        <strong>Variant Digital Content:</strong>
+                        Enable variant digital content to provide different files or URLs for this specific variant,
+                        overriding the template digital content.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>
