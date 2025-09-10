@@ -37,6 +37,8 @@ class IrModuleModule(models.Model):
         'ams_product_types',    # AMS base module for setting up product types 
         'ams_billing_periods',  # AMS base module for managing different billing periods for products
         'ams_communication_preferences', # AMS base module for managing communication preferences per contact or account
+        'ams_participation',    # AMS base module for defining what a participation record is for a member
+
 
         """
         #commenting out this section to provide clean list of modules to use for ams. 

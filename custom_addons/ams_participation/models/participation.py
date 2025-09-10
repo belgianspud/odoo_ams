@@ -210,6 +210,7 @@ class AMSParticipation(models.Model):
     days_until_expiry = fields.Integer(
         string="Days Until Expiry",
         compute='_compute_days_until_expiry',
+        store=True,
         help="Days remaining until paid_through_date"
     )
 
