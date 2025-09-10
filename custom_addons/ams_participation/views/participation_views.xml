@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Participation Form View -->
+    <record id="view_participation_form" model="ir.ui.view">
+        <field name="name">ams.participation.form</field>
+        <field name="model">ams.participation</field>
+        <field name="arch" type="xml">
+            <form string="Participation">
+                <header>
+                    <button name="action_activate" string="Activate" type="object" 
+                            class="btn-primary" invisible="status == 'active'"/>
+                    <button name="action_suspend" string="Suspend" type="object" 
+                            class="btn-warning" invisible="status in ['suspended', 'terminated', 'cancelled']"/>
+                    <button name="action_terminate" string="Terminate" type="object" 
+                            class="btn-danger" invisible="status == 'terminated'"/>
+                    <button name="action_cancel" string="Cancel" type="object" 
+                            class="btn-secondary" invisible="status in ['terminated', 'cancelled']"/>
+                    <button name="action_renew" string="Renew" type="object" 
+                            class="btn-success" invisible="not can_auto_renew"/>
+                    <field name="status" widget="statusbar" statusbar_visible="prospect,active,grace,suspended,terminated"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_history" type="object" class="oe_stat_button" icon="fa-history">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">History</span>
+                            </div>
+                        </button>
+                        <button name="action_create_invoice" type="object" class="oe_stat_button" icon="fa-file-text-o">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Invoice</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="active"/>
+                    
+                    <div class="oe_title">
+                        <div class="oe_edit_only">
+                            <label for="partner_id"/>
+                        </div>
+                        <h1>
+                            <field name="partner_id" placeholder="Select member..." options="{'no_create': True}"/>
+                        </h1>
+                        <div class="oe_edit_only">
+                            <label for="participation_type"/>
+                        </div>
+                        <h2>
+                            <field name="participation_type" placeholder="Select participation type..."/>
+                        </h2>
+                    </div>
+
+                    <group>
+                        <group string="Basic Information">
+                            <field name="active"/>
+                            <field name="company_id" invisible="not company_id and not is_company_participation"/>
+                            <field name="relationship_context" readonly="1"/>
+                            <field name="is_company_participation" invisible="1"/>
+                        </group>
+                        <group string="Status Information">
+                            <field name="member_status" readonly="1"/>
+                            <field name="days_until_expiry" readonly="1"/>
+                            <field name="is_overdue" readonly="1"/>
+                            <field name="is_in_grace_period" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Dates &amp; Terms" name="dates">
+                            <group>
+                                <group string="Core Dates">
+                                    <field name="join_date"/>
+                                    <field name="begin_date"/>
+                                    <field name="end_date"/>
+                                </group>
+                                <group string="Payment &amp; Grace">
+                                    <field name="paid_through_date"/>
+                                    <field name="bill_through_date"/>
+                                    <field name="grace_period_end_date" readonly="1"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Special Dates">
+                                    <field name="suspend_end_date" invisible="status != 'suspended'"/>
+                                    <field name="terminated_date" invisible="status != 'terminated'"/>
+                                </group>
+                                <group string="Auto-Renewal">
+                                    <field name="auto_pay"/>
+                                    <field name="can_auto_renew" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Products &amp; References" name="references">
+                            <group>
+                                <group string="Product Information">
+                                    <field name="subscription_product_id"/>
+                                    <field name="renew_to_product_id"/>
+                                </group>
+                                <group string="Committee Information" invisible="participation_type != 'committee_position'">
+                                    <field name="committee_position_id" 
+                                           invisible="participation_type != 'committee_position'"
+                                           required="participation_type == 'committee_position'"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Financial References">
+                                    <field name="related_invoice_id" options="{'no_create': True}"/>
+                                </group>
+                                <group string="Cancellation">
+                                    <field name="cancellation_reason_id" 
+                                           invisible="status not in ['cancelled', 'terminated']"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Notes" name="notes">
+                            <field name="notes" placeholder="Additional notes about this participation..."/>
+                        </page>
+
+                        <page string="Computed Info" name="computed" groups="base.group_no_one">
+                            <group>
+                                <group string="Display">
+                                    <field name="display_name" readonly="1"/>
+                                </group>
+                                <group string="Flags">
+                                    <field name="is_overdue" readonly="1"/>
+                                    <field name="is_in_grace_period" readonly="1"/>
+                                    <field name="can_auto_renew" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Participation List View -->
+    <record id="view_participation_list" model="ir.ui.view">
+        <field name="name">ams.participation.list</field>
+        <field name="model">ams.participation</field>
+        <field name="arch" type="xml">
+            <list string="Participations" sample="1" 
+                  decoration-success="status == 'active'" 
+                  decoration-info="status == 'prospect'"
+                  decoration-warning="status == 'grace' or is_overdue"
+                  decoration-danger="status in ['suspended', 'terminated']"
+                  decoration-muted="status == 'cancelled'">
+                <field name="partner_id"/>
+                <field name="participation_type"/>
+                <field name="status" decoration-success="status == 'active'" 
+                       decoration-warning="status == 'grace'" 
+                       decoration-danger="status in ['suspended', 'terminated']"/>
+                <field name="begin_date"/>
+                <field name="end_date"/>
+                <field name="paid_through_date"/>
+                <field name="days_until_expiry"/>
+                <field name="is_overdue" widget="boolean"/>
+                <field name="is_in_grace_period" widget="boolean"/>
+                <field name="company_id" optional="hide"/>
+                <field name="subscription_product_id" optional="hide"/>
+                <field name="auto_pay" widget="boolean" optional="hide"/>
+                <field name="active" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Participation Kanban View -->
+    <record id="view_participation_kanban" model="ir.ui.view">
+        <field name="name">ams.participation.kanban</field>
+        <field name="model">ams.participation</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1" default_group_by="status">
+                <field name="partner_id"/>
+                <field name="participation_type"/>
+                <field name="status"/>
+                <field name="begin_date"/>
+                <field name="end_date"/>
+                <field name="paid_through_date"/>
+                <field name="days_until_expiry"/>
+                <field name="is_overdue"/>
+                <field name="is_in_grace_period"/>
+                <field name="can_auto_renew"/>
+                <field name="company_id"/>
+                <field name="display_name"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click 
+                                         #{record.status.raw_value == 'active' ? 'oe_kanban_color_5' : ''}
+                                         #{record.status.raw_value == 'grace' ? 'oe_kanban_color_2' : ''}
+                                         #{record.status.raw_value == 'suspended' ? 'oe_kanban_color_1' : ''}
+                                         #{record.status.raw_value == 'terminated' ? 'oe_kanban_color_0' : ''}
+                                         #{record.is_overdue.raw_value ? 'oe_kanban_color_4' : ''}">
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary">
+                                        <field name="partner_id"/>
+                                        <t t-if="record.company_id.raw_value">
+                                            <br/><small class="text-muted">via <field name="company_id"/></small>
+                                        </t>
+                                    </div>
+                                    <div class="o_secondary">
+                                        <field name="participation_type"/>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_manage_button_section">
+                                    <a class="o_kanban_manage_toggle_button" href="#">
+                                        <i class="fa fa-ellipsis-v" role="img" aria-label="Manage" title="Manage"/>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="o_kanban_card_content">
+                                <div class="o_kanban_card_manage_pane dropdown-menu" role="menu">
+                                    <a role="menuitem" type="edit" class="dropdown-item">Edit</a>
+                                    <a role="menuitem" name="action_view_history" type="object" class="dropdown-item">View History</a>
+                                    <a role="menuitem" type="delete" class="dropdown-item">Delete</a>
+                                </div>
+                                <div class="container o_kanban_card_content o_visible">
+                                    <div class="row">
+                                        <div class="col-6 o_kanban_primary_left">
+                                            <strong><field name="status"/></strong>
+                                            <t t-if="record.is_overdue.raw_value">
+                                                <br/><span class="badge badge-danger">Overdue</span>
+                                            </t>
+                                            <t t-if="record.is_in_grace_period.raw_value">
+                                                <br/><span class="badge badge-warning">Grace Period</span>
+                                            </t>
+                                        </div>
+                                        <div class="col-6 o_kanban_primary_right">
+                                            <div class="mb4">
+                                                <field name="begin_date"/> - <field name="end_date"/>
+                                            </div>
+                                            <t t-if="record.paid_through_date.raw_value">
+                                                <div class="text-muted small">
+                                                    Paid through: <field name="paid_through_date"/>
+                                                </div>
+                                            </t>
+                                            <t t-if="record.days_until_expiry.raw_value != 0">
+                                                <div class="text-info small">
+                                                    <field name="days_until_expiry"/> days until expiry
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </div>
+                                    <div class="row" t-if="record.can_auto_renew.raw_value">
+                                        <div class="col-12">
+                                            <span class="badge badge-success">Auto-Renewal Enabled</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Participation Calendar View -->
+    <record id="view_participation_calendar" model="ir.ui.view">
+        <field name="name">ams.participation.calendar</field>
+        <field name="model">ams.participation</field>
+        <field name="arch" type="xml">
+            <calendar string="Participation Timeline" 
+                      date_start="begin_date" 
+                      date_stop="end_date"
+                      color="status"
+                      event_open_popup="true"
+                      quick_add="false">
+                <field name="partner_id"/>
+                <field name="participation_type"/>
+                <field name="status"/>
+                <field name="display_name"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Participation Pivot View -->
+    <record id="view_participation_pivot" model="ir.ui.view">
+        <field name="name">ams.participation.pivot</field>
+        <field name="model">ams.participation</field>
+        <field name="arch" type="xml">
+            <pivot string="Participation Analysis" sample="1">
+                <field name="participation_type" type="row"/>
+                <field name="status" type="col"/>
+                <field name="partner_id" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Participation Graph View -->
+    <record id="view_participation_graph" model="ir.ui.view">
+        <field name="name">ams.participation.graph</field>
+        <field name="model">ams.participation</field>
+        <field name="arch" type="xml">
+            <graph string="Participation Trends" sample="1" type="line">
+                <field name="begin_date" interval="month"/>
+                <field name="partner_id" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Participation Search View -->
+    <record id="view_participation_search" model="ir.ui.view">
+        <field name="name">ams.participation.search</field>
+        <field name="model">ams.participation</field>
+        <field name="arch" type="xml">
+            <search string="Search Participations">
+                <field name="partner_id" string="Member" 
+                       filter_domain="[('partner_id.display_name', 'ilike', self)]"/>
+                <field name="participation_type"/>
+                <field name="status"/>
+                <field name="company_id" string="Organization"/>
+                <field name="subscription_product_id"/>
+                <field name="committee_position_id"/>
+                <field name="display_name"/>
+                
+                <!-- Status Filters -->
+                <filter string="Active" name="active" domain="[('status', '=', 'active')]"/>
+                <filter string="Prospect" name="prospect" domain="[('status', '=', 'prospect')]"/>
+                <filter string="Grace Period" name="grace" domain="[('status', '=', 'grace')]"/>
+                <filter string="Suspended" name="suspended" domain="[('status', '=', 'suspended')]"/>
+                <filter string="Terminated" name="terminated" domain="[('status', '=', 'terminated')]"/>
+                <filter string="Cancelled" name="cancelled" domain="[('status', '=', 'cancelled')]"/>
+                
+                <separator/>
+                <!-- Type Filters -->
+                <filter string="Membership" name="membership" domain="[('participation_type', '=', 'membership')]"/>
+                <filter string="Chapter" name="chapter" domain="[('participation_type', '=', 'chapter')]"/>
+                <filter string="Committee" name="committee" domain="[('participation_type', '=', 'committee_position')]"/>
+                <filter string="Event" name="event" domain="[('participation_type', '=', 'event_attendance')]"/>
+                <filter string="Course" name="course" domain="[('participation_type', '=', 'course_enrollment')]"/>
+                
+                <separator/>
+                <!-- Date Filters -->
+                <filter string="Expiring Soon" name="expiring_soon" 
+                        domain="[('days_until_expiry', '&lt;=', 30), ('days_until_expiry', '&gt;', 0)]"/>
+                <filter string="Overdue" name="overdue" domain="[('is_overdue', '=', True)]"/>
+                <filter string="In Grace Period" name="in_grace" domain="[('is_in_grace_period', '=', True)]"/>
+                <filter string="Auto-Renew Enabled" name="auto_renew" domain="[('auto_pay', '=', True)]"/>
+                
+                <separator/>
+                <!-- Company Filters -->
+                <filter string="Individual Participation" name="individual" domain="[('company_id', '=', False)]"/>
+                <filter string="Company Participation" name="company_related" domain="[('company_id', '!=', False)]"/>
+                <filter string="Employee Participation" name="employee" domain="[('relationship_context', '=', 'employee')]"/>
+                <filter string="Sponsored Participation" name="sponsored" domain="[('relationship_context', '=', 'sponsored')]"/>
+                
+                <separator/>
+                <!-- Archive Filter -->
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter string="Member" name="group_member" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Participation Type" name="group_type" context="{'group_by': 'participation_type'}"/>
+                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
+                    <filter string="Organization" name="group_company" context="{'group_by': 'company_id'}"/>
+                    <filter string="Product" name="group_product" context="{'group_by': 'subscription_product_id'}"/>
+                    <filter string="Begin Date" name="group_begin_date" context="{'group_by': 'begin_date:month'}"/>
+                    <filter string="End Date" name="group_end_date" context="{'group_by': 'end_date:month'}"/>
+                    <filter string="Relationship Context" name="group_relationship" context="{'group_by': 'relationship_context'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Participation Action -->
+    <record id="action_participation" model="ir.actions.act_window">
+        <field name="name">Participations</field>
+        <field name="res_model">ams.participation</field>
+        <field name="view_mode">kanban,list,form,calendar,pivot,graph</field>
+        <field name="context">{
+            'search_default_active': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first participation record!
+            </p>
+            <p>
+                Participation records track member engagement in memberships, chapters,
+                committees, events, and courses. They provide complete lifecycle management
+                from prospect through termination with automated status transitions.
+            </p>
+        </field>
+    </record>
+
+    <!-- Membership Participations Action -->
+    <record id="action_participation_membership" model="ir.actions.act_window">
+        <field name="name">Membership Participations</field>
+        <field name="res_model">ams.participation</field>
+        <field name="view_mode">kanban,list,form,calendar,pivot,graph</field>
+        <field name="domain">[('participation_type', '=', 'membership')]</field>
+        <field name="context">{
+            'default_participation_type': 'membership',
+            'search_default_active': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first membership participation!
+            </p>
+            <p>
+                Track core membership participations with automatic status management,
+                renewal processing, and comprehensive member lifecycle tracking.
+            </p>
+        </field>
+    </record>
+
+    <!-- Chapter Participations Action -->
+    <record id="action_participation_chapter" model="ir.actions.act_window">
+        <field name="name">Chapter Participations</field>
+        <field name="res_model">ams.participation</field>
+        <field name="view_mode">kanban,list,form,calendar,pivot,graph</field>
+        <field name="domain">[('participation_type', '=', 'chapter')]</field>
+        <field name="context">{
+            'default_participation_type': 'chapter',
+            'search_default_active': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first chapter participation!
+            </p>
+            <p>
+                Manage chapter memberships and local affiliate participations
+                with flexible status tracking and renewal management.
+            </p>
+        </field>
+    </record>
+
+    <!-- Committee Participations Action -->
+    <record id="action_participation_committee" model="ir.actions.act_window">
+        <field name="name">Committee Participations</field>
+        <field name="res_model">ams.participation</field>
+        <field name="view_mode">kanban,list,form,calendar,pivot,graph</field>
+        <field name="domain">[('participation_type', '=', 'committee_position')]</field>
+        <field name="context">{
+            'default_participation_type': 'committee_position',
+            'search_default_active': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first committee participation!
+            </p>
+            <p>
+                Track committee positions and leadership roles with term management,
+                election tracking, and position-specific requirements.
+            </p>
+        </field>
+    </record>
+
+    <!-- Expiring Participations Action -->
+    <record id="action_participation_expiring" model="ir.actions.act_window">
+        <field name="name">Expiring Participations</field>
+        <field name="res_model">ams.participation</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('days_until_expiry', '&lt;=', 60), ('days_until_expiry', '&gt;', 0), ('status', 'in', ['active', 'grace'])]</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No participations expiring soon!
+            </p>
+            <p>
+                This view shows participations that will expire within 60 days.
+                Use this to proactively manage renewals and prevent lapses.
+            </p>
+        </field>
+    </record>
+
+    <!-- Overdue Participations Action -->
+    <record id="action_participation_overdue" model="ir.actions.act_window">
+        <field name="name">Overdue Participations</field>
+        <field name="res_model">ams.participation</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('is_overdue', '=', True)]</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No overdue participations!
+            </p>
+            <p>
+                This view shows participations that have passed their paid_through_date
+                and need immediate attention for renewal or status changes.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_participation_root" 
+              name="Participations" 
+              parent="ams_member_data.menu_ams_root" 
+              sequence="20"/>
+
+    <menuitem id="menu_participation_all" 
+              name="All Participations" 
+              parent="menu_participation_root" 
+              action="action_participation" 
+              sequence="10"/>
+
+    <menuitem id="menu_participation_membership" 
+              name="Memberships" 
+              parent="menu_participation_root" 
+              action="action_participation_membership" 
+              sequence="20"/>
+
+    <menuitem id="menu_participation_chapter" 
+              name="Chapters" 
+              parent="menu_participation_root" 
+              action="action_participation_chapter" 
+              sequence="30"/>
+
+    <menuitem id="menu_participation_committee" 
+              name="Committees" 
+              parent="menu_participation_root" 
+              action="action_participation_committee" 
+              sequence="40"/>
+
+    <menuitem id="menu_participation_expiring" 
+              name="Expiring Soon" 
+              parent="menu_participation_root" 
+              action="action_participation_expiring" 
+              sequence="80"/>
+
+    <menuitem id="menu_participation_overdue" 
+              name="Overdue" 
+              parent="menu_participation_root" 
+              action="action_participation_overdue" 
+              sequence="90"/>
+
+</odoo>

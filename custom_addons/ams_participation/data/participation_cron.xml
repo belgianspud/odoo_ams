@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Scheduled Action: Process Automatic Participation Status Transitions -->
+        <record id="ir_cron_participation_status_transitions" model="ir.cron">
+            <field name="name">AMS: Process Participation Status Transitions</field>
+            <field name="model_id" ref="model_ams_participation"/>
+            <field name="state">code</field>
+            <field name="code">model.process_automatic_status_transitions()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active">True</field>
+            <field name="priority">5</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- Scheduled Action: Send Expiration Warnings -->
+        <record id="ir_cron_participation_expiration_warnings" model="ir.cron">
+            <field name="name">AMS: Send Participation Expiration Warnings</field>
+            <field name="model_id" ref="model_ams_participation"/>
+            <field name="state">code</field>
+            <field name="code">model.send_expiration_warnings()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active">True</field>
+            <field name="priority">10</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- Scheduled Action: Process Auto-Renewals -->
+        <record id="ir_cron_participation_auto_renewals" model="ir.cron">
+            <field name="name">AMS: Process Participation Auto-Renewals</field>
+            <field name="model_id" ref="model_ams_participation"/>
+            <field name="state">code</field>
+            <field name="code">model.process_auto_renewals()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active">True</field>
+            <field name="priority">15</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- Scheduled Action: Clean Up Old History Records -->
+        <record id="ir_cron_participation_history_cleanup" model="ir.cron">
+            <field name="name">AMS: Clean Up Old Participation History</field>
+            <field name="model_id" ref="model_ams_participation_history"/>
+            <field name="state">code</field>
+            <field name="code">model.cleanup_old_history_records()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">weeks</field>
+            <field name="active">False</field>
+            <field name="priority">20</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- Scheduled Action: Update Participation Statistics -->
+        <record id="ir_cron_participation_statistics" model="ir.cron">
+            <field name="name">AMS: Update Participation Statistics</field>
+            <field name="model_id" ref="model_ams_participation"/>
+            <field name="state">code</field>
+            <field name="code">model.update_participation_statistics()</field>
+            <field name="interval_number">6</field>
+            <field name="interval_type">hours</field>
+            <field name="active">True</field>
+            <field name="priority">25</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- Scheduled Action: Send Renewal Reminders -->
+        <record id="ir_cron_participation_renewal_reminders" model="ir.cron">
+            <field name="name">AMS: Send Participation Renewal Reminders</field>
+            <field name="model_id" ref="model_ams_participation"/>
+            <field name="state">code</field>
+            <field name="code">model.send_renewal_reminders()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active">True</field>
+            <field name="priority">12</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- Scheduled Action: Sync Member Status -->
+        <record id="ir_cron_sync_member_status" model="ir.cron">
+            <field name="name">AMS: Sync Member and Participation Status</field>
+            <field name="model_id" ref="model_ams_participation"/>
+            <field name="state">code</field>
+            <field name="code">model.sync_all_member_statuses()</field>
+            <field name="interval_number">2</field>
+            <field name="interval_type">hours</field>
+            <field name="active">False</field>
+            <field name="priority">30</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+    </data>
+
+    <!-- Additional scheduled actions that can be activated as needed -->
+    <data noupdate="0">
+
+        <!-- Scheduled Action: Generate Participation Reports -->
+        <record id="ir_cron_participation_reports" model="ir.cron">
+            <field name="name">AMS: Generate Daily Participation Reports</field>
+            <field name="model_id" ref="model_ams_participation"/>
+            <field name="state">code</field>
+            <field name="code">model.generate_daily_reports()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active">False</field>
+            <field name="priority">40</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- Scheduled Action: Archive Terminated Participations -->
+        <record id="ir_cron_archive_terminated_participations" model="ir.cron">
+            <field name="name">AMS: Archive Old Terminated Participations</field>
+            <field name="model_id" ref="model_ams_participation"/>
+            <field name="state">code</field>
+            <field name="code">model.archive_old_terminated_participations()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">months</field>
+            <field name="active">False</field>
+            <field name="priority">50</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+    </data>
+</odoo>
