@@ -44,6 +44,10 @@
 						<field name="days_until_expiry" readonly="1"/>
 						<field name="is_overdue" readonly="1"/>
 					</group>
+					
+					<!-- Hidden fields -->
+					<field name="is_company_participation" invisible="1"/>
+					
 					<!-- Notebook -->
 					<notebook>
 						<page string="Dates &amp; Terms">
@@ -74,9 +78,20 @@
 							</group>
 						</page>
 						<page string="History">
-							<button name="action_view_history" type="object"
-                                class="oe_stat_button" icon="fa-history"
-                                string="View Full History"/>
+							<div class="oe_form_box_info oe_text_center">
+								<button name="action_view_history" type="object"
+                                    class="oe_highlight" icon="fa-history"
+                                    string="View Full History"/>
+								<p>View complete participation status change history and audit trail.</p>
+							</div>
+						</page>
+						<page string="Communications">
+							<!-- Chatter moved to this tab -->
+							<div class="oe_chatter">
+								<field name="message_follower_ids"/>
+								<field name="activity_ids"/>
+								<field name="message_ids"/>
+							</div>
 						</page>
 						<page string="Notes">
 							<field name="notes" placeholder="Additional notes about this participation..."/>
@@ -91,11 +106,7 @@
 						</page>
 					</notebook>
 				</sheet>
-				<!--<div class="oe_chatter">
-					<field name="message_follower_ids"/>
-					<field name="activity_ids"/>
-					<field name="message_ids"/>
-				</div>-->
+				<!-- NO CHATTER HERE ANYMORE - Moved to Communications tab -->
 			</form>
 		</field>
 	</record>
@@ -161,7 +172,6 @@
 										<t t-if="record.company_id.raw_value">
 											<br/>
 											<small class="text-muted">via 
-												
 												<field name="company_id"/>
 											</small>
 										</t>
@@ -200,21 +210,17 @@
 										<div class="col-6 o_kanban_primary_right">
 											<div class="mb4">
 												<field name="begin_date"/> - 
-												
 												<field name="end_date"/>
 											</div>
 											<t t-if="record.paid_through_date.raw_value">
 												<div class="text-muted small">
                                                     Paid through: 
-													
 													<field name="paid_through_date"/>
 												</div>
 											</t>
 											<t t-if="record.days_until_expiry.raw_value != 0">
 												<div class="text-info small">
 													<field name="days_until_expiry"/> days until expiry
-                                                
-												
 												</div>
 											</t>
 										</div>
