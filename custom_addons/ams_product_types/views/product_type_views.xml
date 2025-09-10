@@ -311,7 +311,7 @@
               name="Product Types"
               parent="base.menu_administration"
               action="action_product_type"
-              sequence="12"
+              sequence="30"
               groups="base.group_system"/>
 
     <!-- ========================================================================== -->
@@ -416,11 +416,4 @@
         </field>
     </record>
 
-    <!-- AMS Products Menu -->
-    <menuitem id="menu_ams_products"
-              name="AMS Products"
-              parent="base.menu_administration"
-              action="action_ams_products"
-              sequence="13"
-              groups="base.group_system"/>
 </odoo>

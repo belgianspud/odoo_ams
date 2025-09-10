@@ -12,11 +12,11 @@
               parent="menu_ams_root" 
               sequence="10"/>
 
-    <!-- All Members Combined Action -->
+    <!-- All Members Combined Action - FIXED: tree -> list -->
     <record id="action_partner_all_members" model="ir.actions.act_window">
         <field name="name">All Members</field>
         <field name="res_model">res.partner</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="domain">[('is_member', '=', True)]</field>
         <field name="context">{}</field>
         <field name="help" type="html">
@@ -30,11 +30,11 @@
         </field>
     </record>
 
-    <!-- Prospects Action (Non-Members) -->
+    <!-- Prospects Action (Non-Members) - FIXED: tree -> list -->
     <record id="action_partner_prospects" model="ir.actions.act_window">
         <field name="name">Prospects</field>
         <field name="res_model">res.partner</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="domain">[('is_member', '=', False)]</field>
         <field name="context">{}</field>
         <field name="help" type="html">
@@ -77,14 +77,5 @@
               parent="menu_ams_members" 
               action="action_partner_prospects" 
               sequence="40"/>
-
-    <!-- Configuration Menu Section -->
-    <menuitem id="menu_ams_configuration" 
-              name="Configuration" 
-              parent="menu_ams_root" 
-              sequence="90"/>
-
-    <!-- Note: Configuration items will be added by higher-layer modules -->
-    <!-- This keeps the foundation module simple and avoids external ID issues -->
 
 </odoo>

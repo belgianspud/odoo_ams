@@ -145,7 +145,7 @@ class AMSCancellationReason(models.Model):
             'name': f'Participations Cancelled: {self.name}',
             'type': 'ir.actions.act_window',
             'res_model': 'ams.participation',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('cancellation_reason_id', '=', self.id)],
             'context': {'search_default_cancelled': 1},
         }

@@ -199,7 +199,7 @@ class ResPartnerIndividual(models.Model):
         """Auto-generate member ID using sequence"""
         if vals.get('is_member') and not vals.get('ref'):
             try:
-                sequence = self.env['ir.sequence'].next_by_code('ams.member.id')
+                sequence = self.env['ir.sequence'].next_by_code('ams.system.member.id')
                 if sequence:
                     # Store sequence number in ref field (without M prefix)
                     vals['ref'] = sequence.replace('M', '').lstrip('0') or '1'
@@ -217,7 +217,7 @@ class ResPartnerIndividual(models.Model):
                 vals['member_since'] = fields.Date.today()
                 if not partner.ref:
                     try:
-                        sequence = self.env['ir.sequence'].next_by_code('ams.member.id')
+                        sequence = self.env['ir.sequence'].next_by_code('ams.system.member.id')
                         if sequence:
                             vals['ref'] = sequence.replace('M', '').lstrip('0') or '1'
                     except:

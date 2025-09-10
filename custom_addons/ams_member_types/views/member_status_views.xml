@@ -267,6 +267,6 @@
               name="Member Statuses"
               parent="base.menu_administration"
               action="action_member_status"
-              sequence="11"
+              sequence="20"
               groups="base.group_system"/>
 </odoo>

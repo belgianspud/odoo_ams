@@ -291,7 +291,7 @@ class ProductTemplateSubscription(models.Model):
             'name': f'Pricing Tiers - {self.name}',
             'type': 'ir.actions.act_window',
             'res_model': 'ams.subscription.pricing.tier',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('subscription_product_id', '=', self.subscription_product_id.id)],
             'context': {
                 'default_subscription_product_id': self.subscription_product_id.id,

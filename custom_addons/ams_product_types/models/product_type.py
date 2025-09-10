@@ -300,6 +300,16 @@ class AMSProductType(models.Model):
             
             if not self.product_category_id:
                 self.product_category_id = product_category.id
+        if not product_category:
+            try:
+                product_category = self.env['product.category'].create({
+                    'name': category_name,
+                })
+            except Exception:
+                # Category might already exist, search again
+                product_category = self.env['product.category'].search([
+                    ('name', '=', category_name)
+                ], limit=1)
     
     def copy(self, default=None):
         """Override copy to ensure unique names and codes."""
@@ -383,7 +393,7 @@ class AMSProductType(models.Model):
             'type': 'ir.actions.act_window',
             'name': _('Products - %s') % self.name,
             'res_model': 'product.template',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('ams_product_type_id', '=', self.id)],
             'context': {
                 'default_ams_product_type_id': self.id,

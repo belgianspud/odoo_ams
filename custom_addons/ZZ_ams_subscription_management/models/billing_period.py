@@ -564,7 +564,7 @@ class AMSBillingPeriod(models.Model):
             'name': f'Subscriptions - {self.name}',
             'type': 'ir.actions.act_window',
             'res_model': 'ams.subscription.product',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [
                 ('default_duration', '=', self.period_value),
                 ('duration_unit', '=', self.period_unit)

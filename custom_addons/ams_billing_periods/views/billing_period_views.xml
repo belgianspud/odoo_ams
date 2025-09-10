@@ -292,6 +292,6 @@
               name="Billing Periods"
               parent="base.menu_administration"
               action="action_billing_period"
-              sequence="15"
+              sequence="50"
               groups="base.group_system"/>
 </odoo>

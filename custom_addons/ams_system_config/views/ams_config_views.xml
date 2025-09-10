@@ -259,27 +259,13 @@
         <field name="context">{}</field>
     </record>
 
-    <!-- Menu Items 
-    <menuitem id="menu_ams_root" 
-              name="AMS Settings" 
-              parent="base.menu_administration" 
-              sequence="90"/>
-    
-    <menuitem id="menu_ams_configuration" 
-              name="Configuration" 
-              parent="menu_ams_root" 
-              sequence="100"/>
-    
-    <menuitem id="menu_ams_system_configuration" 
-              name="AMS Configuration" 
-              parent="menu_ams_configuration"
-              action="action_ams_config_settings" 
-              sequence="1"/>
-    -->
-    <menuitem id="menu_ams_config_settings" 
+    <!-- Menu Items - Reference existing AMS menu from ams_member_data -->
+              
+    <!-- Also add to Administration for system admins -->
+    <menuitem id="menu_ams_config_settings_admin" 
               name="AMS Configuration" 
               parent="base.menu_administration"
               action="action_ams_config_settings" 
-              sequence="50"
+              sequence="60"
               groups="base.group_system"/>
 </odoo>

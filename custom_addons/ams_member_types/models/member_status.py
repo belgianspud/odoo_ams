@@ -362,7 +362,7 @@ class AMSMemberStatus(models.Model):
             'type': 'ir.actions.act_window',
             'name': _('Members - %s') % self.name,
             'res_model': 'ams.member',  # Will be available in future module
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('status_id', '=', self.id)],
             'context': {'default_status_id': self.id},
         }

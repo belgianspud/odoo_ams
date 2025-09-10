@@ -34,6 +34,7 @@ Key Features:
     'depends': [
         'base',
         'base_setup',
+        'ams_member_data',  # Add dependency to use existing AMS menu
     ],
     'data': [
         # Security
@@ -48,5 +49,5 @@ Key Features:
     'installable': True,
     'auto_install': False,
     'application': True,
-    'sequence': 2,
+    'sequence': 3,  # After ams_member_data
 }

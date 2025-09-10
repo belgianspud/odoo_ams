@@ -275,7 +275,7 @@ class ResConfigSettings(models.TransientModel):
             'name': _('Overdue Subscription Invoices'),
             'type': 'ir.actions.act_window',
             'res_model': 'account.move',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [
                 ('is_subscription_invoice', '=', True),
                 ('is_overdue', '=', True),
@@ -289,7 +289,7 @@ class ResConfigSettings(models.TransientModel):
             'name': _('Pending Billing Events'),
             'type': 'ir.actions.act_window',
             'res_model': 'ams.billing.event',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [
                 ('state', '=', 'pending'),
                 ('event_date', '<=', fields.Date.today())

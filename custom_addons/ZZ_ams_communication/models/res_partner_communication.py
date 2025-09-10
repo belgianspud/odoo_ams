@@ -445,7 +445,7 @@ class ResPartnerCommunication(models.Model):
             'name': f'Communication Preferences - {self.name}',
             'type': 'ir.actions.act_window',
             'res_model': 'ams.communication.preference',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('partner_id', '=', self.id)],
             'context': {
                 'default_partner_id': self.id,
@@ -461,7 +461,7 @@ class ResPartnerCommunication(models.Model):
             'name': f'Communication History - {self.name}',
             'type': 'ir.actions.act_window',
             'res_model': 'ams.communication.log',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('partner_id', '=', self.id)],
             'context': {
                 'default_partner_id': self.id,

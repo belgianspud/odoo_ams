@@ -303,7 +303,7 @@ class AMSMemberType(models.Model):
             'type': 'ir.actions.act_window',
             'name': _('Members - %s') % self.name,
             'res_model': 'ams.member',  # Will be available in future module
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('member_type_id', '=', self.id)],
             'context': {'default_member_type_id': self.id},
         }
