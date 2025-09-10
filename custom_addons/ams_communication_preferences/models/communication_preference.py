@@ -231,20 +231,18 @@ class AMSCommunicationPreference(models.Model):
     @api.constrains('communication_type', 'category')
     def _check_valid_combination(self):
         """Validate communication type and category combination"""
-        # Skip validation during data loading/installation
-        if self.env.context.get('install_mode') or self.env.context.get('module_loading') or self.env.context.get('skip_constraint_validation'):
-            return
-            
         for record in self:
             if self._is_invalid_combination(record.communication_type, record.category):
-                invalid_combinations_text = {
-                    ('sms', 'governance'): _("SMS is not appropriate for governance communications"),
-                }
-                error_msg = invalid_combinations_text.get(
-                    (record.communication_type, record.category),
-                    _("Invalid communication type and category combination")
-                )
-                raise ValidationError(error_msg)
+                if record.communication_type == 'sms' and record.category == 'governance':
+                    raise ValidationError(
+                        _("SMS is not suitable for governance communications which require formal documentation and detailed records.")
+                    )
+                else:
+                    raise ValidationError(
+                        _("The combination of %s and %s is not allowed.") % (
+                            record.communication_type, record.category
+                        )
+                    )
 
     # ========================================================================
     # CRUD METHODS
@@ -294,7 +292,7 @@ class AMSCommunicationPreference(models.Model):
 
     def _is_invalid_combination(self, communication_type, category):
         """Check if a communication type and category combination is invalid"""
-        # Add validation rules here
+        # Define invalid combinations here
         invalid_combinations = [
             ('sms', 'governance'),  # SMS not appropriate for governance
             # Add more invalid combinations as needed
@@ -343,12 +341,12 @@ class AMSCommunicationPreference(models.Model):
                 if self._is_invalid_combination(comm_type, category):
                     continue
                     
-                # Check if preference already exists
+                # Check if preference already exists (important for avoiding conflicts)
                 existing = self.search([
                     ('partner_id', '=', partner_id),
                     ('communication_type', '=', comm_type),
                     ('category', '=', category)
-                ])
+                ], limit=1)
                 
                 if not existing:
                     # Default opt-in rules - can be customized
@@ -365,7 +363,14 @@ class AMSCommunicationPreference(models.Model):
                     })
         
         if preferences_to_create:
-            return self.create(preferences_to_create)
+            try:
+                return self.create(preferences_to_create)
+            except Exception as e:
+                # Log error but return empty recordset to avoid blocking
+                import logging
+                _logger = logging.getLogger(__name__)
+                _logger.warning(f"Error creating default preferences for partner {partner_id}: {str(e)}")
+                return self.browse()
         else:
             return self.browse()
 

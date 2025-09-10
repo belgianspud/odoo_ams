@@ -2,91 +2,82 @@
 <odoo>
     <data noupdate="1">
 
-        <!-- Minimal Demo Data for Communication Preferences -->
-        <!-- Avoid automatic preference creation during module installation -->
+        <!-- Simple Demo Data for Communication Preferences -->
+        <!-- Rely entirely on auto-creation of preferences -->
 
-        <!-- Demo Member for Testing Communication Preferences -->
-        <!-- Create with all fields in one record to avoid constraint issues -->
+        <!-- Demo Member 1: Standard member with auto-created preferences -->
         <record id="demo_member_comm_prefs" model="res.partner">
-            <field name="name">Demo Communications</field>
-            <field name="member_id">M000001</field>
+            <field name="name">Demo Communications User</field>
             <field name="email">demo.communications@example.com</field>
             <field name="phone">555-0123</field>
             <field name="is_company">False</field>
-            <field name="first_name">Demo</field>
-            <field name="last_name">Communications</field>
+            <field name="is_member">True</field>
+            <field name="membership_status">active</field>
             <field name="preferred_communication_method">email</field>
             <field name="communication_frequency">weekly</field>
             <field name="gdpr_consent_given">True</field>
             <field name="privacy_policy_accepted">True</field>
         </record>
 
-        <!-- Create specific demo preferences manually (only valid combinations) -->
-        
-        <!-- Demo Communication Preferences - Email Marketing Opted In -->
-        <record id="demo_pref_email_marketing" model="ams.communication.preference">
-            <field name="partner_id" ref="demo_member_comm_prefs"/>
-            <field name="communication_type">email</field>
-            <field name="category">marketing</field>
-            <field name="opted_in">True</field>
-            <field name="consent_source">demo_data</field>
-            <field name="gdpr_consent">True</field>
-            <field name="double_opt_in">True</field>
+        <!-- Demo Member 2: Organization member -->
+        <record id="demo_org_comm_prefs" model="res.partner">
+            <field name="name">Demo Communications Corp</field>
+            <field name="email">contact@democomm.com</field>
+            <field name="phone">555-0456</field>
+            <field name="is_company">True</field>
+            <field name="is_member">True</field>
+            <field name="membership_status">active</field>
+            <field name="preferred_communication_method">email</field>
+            <field name="communication_frequency">monthly</field>
+            <field name="gdpr_consent_given">True</field>
+            <field name="privacy_policy_accepted">True</field>
         </record>
 
-        <!-- Demo Communication Preferences - Email Membership Opted In -->
-        <record id="demo_pref_email_membership" model="ams.communication.preference">
-            <field name="partner_id" ref="demo_member_comm_prefs"/>
-            <field name="communication_type">email</field>
-            <field name="category">membership</field>
-            <field name="opted_in">True</field>
-            <field name="consent_source">demo_data</field>
-            <field name="gdpr_consent">True</field>
-            <field name="double_opt_in">True</field>
+        <!-- Demo Member 3: Member with communication restrictions -->
+        <record id="demo_member_restricted" model="res.partner">
+            <field name="name">Restricted Communication User</field>
+            <field name="email">restricted@example.com</field>
+            <field name="phone">555-0789</field>
+            <field name="is_company">False</field>
+            <field name="is_member">True</field>
+            <field name="membership_status">active</field>
+            <field name="do_not_sms">True</field>
+            <field name="do_not_call">True</field>
+            <field name="preferred_communication_method">email</field>
+            <field name="communication_frequency">monthly</field>
+            <field name="gdpr_consent_given">True</field>
         </record>
 
-        <!-- Demo Communication Preferences - Email Events Opted In -->
-        <record id="demo_pref_email_events" model="ams.communication.preference">
-            <field name="partner_id" ref="demo_member_comm_prefs"/>
-            <field name="communication_type">email</field>
-            <field name="category">events</field>
-            <field name="opted_in">True</field>
-            <field name="consent_source">demo_data</field>
-            <field name="gdpr_consent">True</field>
-            <field name="double_opt_in">True</field>
+        <!-- Demo Member 4: Non-member prospect (no auto-preferences created) -->
+        <record id="demo_prospect_user" model="res.partner">
+            <field name="name">Demo Prospect User</field>
+            <field name="email">prospect@example.com</field>
+            <field name="phone">555-0999</field>
+            <field name="is_company">False</field>
+            <field name="is_member">False</field>
+            <field name="membership_status">prospect</field>
+            <field name="preferred_communication_method">email</field>
         </record>
 
-        <!-- Demo Communication Preferences - SMS Events Opted In -->
-        <record id="demo_pref_sms_events" model="ams.communication.preference">
-            <field name="partner_id" ref="demo_member_comm_prefs"/>
-            <field name="communication_type">sms</field>
-            <field name="category">events</field>
-            <field name="opted_in">True</field>
-            <field name="consent_source">demo_data</field>
-            <field name="gdpr_consent">True</field>
+        <!-- Demo Member 5: Member with global opt-out -->
+        <record id="demo_member_opted_out" model="res.partner">
+            <field name="name">Globally Opted Out User</field>
+            <field name="email">optedout@example.com</field>
+            <field name="phone">555-0000</field>
+            <field name="is_company">False</field>
+            <field name="is_member">True</field>
+            <field name="membership_status">active</field>
+            <field name="communication_opt_out">True</field>
+            <field name="do_not_email">True</field>
+            <field name="do_not_sms">True</field>
+            <field name="do_not_mail">True</field>
+            <field name="do_not_call">True</field>
+            <field name="preferred_communication_method">email</field>
         </record>
 
-        <!-- Demo Communication Preferences - Physical Mail Membership Opted In -->
-        <record id="demo_pref_mail_membership" model="ams.communication.preference">
-            <field name="partner_id" ref="demo_member_comm_prefs"/>
-            <field name="communication_type">mail</field>
-            <field name="category">membership</field>
-            <field name="opted_in">True</field>
-            <field name="consent_source">demo_data</field>
-        </record>
-
-        <!-- Demo Communication Preferences - Phone Membership Opted In -->
-        <record id="demo_pref_phone_membership" model="ams.communication.preference">
-            <field name="partner_id" ref="demo_member_comm_prefs"/>
-            <field name="communication_type">phone</field>
-            <field name="category">membership</field>
-            <field name="opted_in">True</field>
-            <field name="consent_source">demo_data</field>
-            <field name="gdpr_consent">True</field>
-        </record>
-
-        <!-- Note: Intentionally NOT creating SMS + governance combination as it's invalid -->
-        <!-- Users can test the validation by trying to create this combination manually -->
+        <!-- Note: All communication preferences will be auto-created by the 
+             res.partner create method. This avoids unique constraint conflicts
+             while still providing diverse demo data to test with. -->
 
     </data>
 </odoo>
