@@ -1,646 +1,626 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import ValidationError
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class ProductProduct(models.Model):
-    """
-    Extend product.product (product variants) with AMS-specific functionality.
-    
-    This extension adds variant-specific features for association products,
-    including individual SKU management, variant-specific pricing, and
-    digital content delivery per variant.
-    """
     _inherit = 'product.product'
 
     # ========================================================================
-    # TEMPLATE RELATED FIELDS (for easier view access)
+    # VARIANT-SPECIFIC AMS FIELDS
     # ========================================================================
-    
-    template_is_ams_product = fields.Boolean(
-        string="Template is AMS Product",
-        related='product_tmpl_id.is_ams_product',
-        store=True,
-        help="Is the template an AMS product?"
-    )
 
-    template_is_digital_product = fields.Boolean(
-        string="Template is Digital",
-        related='product_tmpl_id.is_digital_product', 
-        store=True,
-        help="Is the template a digital product?"
-    )
-
-    template_has_member_pricing = fields.Boolean(
-        string="Template has Member Pricing",
-        related='product_tmpl_id.has_member_pricing',
-        store=True,
-        help="Does the template have member pricing?"
-    )
-
-    template_requires_membership = fields.Boolean(
-        string="Template Requires Membership",
-        related='product_tmpl_id.requires_membership',
-        store=True,
-        help="Does the template require membership?"
-    )
-
-    template_auto_fulfill_digital = fields.Boolean(
-        string="Template Auto-fulfill Digital",
-        related='product_tmpl_id.auto_fulfill_digital',
-        store=True,
-        help="Does the template auto-fulfill digital products?"
-    )
-
-    # ========================================================================
-    # TEMPLATE PRICING RELATED FIELDS (for view access)
-    # ========================================================================
-    
-    template_member_price = fields.Monetary(
-        string="Template Member Price",
-        related='product_tmpl_id.member_price',
-        store=True,
-        help="Template member price"
-    )
-
-    template_non_member_price = fields.Monetary(
-        string="Template Non-member Price",
-        related='product_tmpl_id.non_member_price',
-        store=True,
-        help="Template non-member price"
-    )
-
-    template_member_discount_percentage = fields.Float(
-        string="Template Member Discount %",
-        related='product_tmpl_id.member_discount_percentage',
-        store=True,
-        help="Template member discount percentage"
-    )
-
-    # ========================================================================
-    # TEMPLATE DIGITAL CONTENT RELATED FIELDS (for view access)
-    # ========================================================================
-    
-    template_digital_download_url = fields.Char(
-        string="Template Download URL",
-        related='product_tmpl_id.digital_download_url',
-        store=True,
-        help="Template digital download URL"
-    )
-
-    template_digital_attachment_id = fields.Many2one(
-        'ir.attachment',
-        string="Template Digital File",
-        related='product_tmpl_id.digital_attachment_id',
-        store=True,
-        help="Template digital attachment"
-    )
-
-    # ========================================================================
-    # TEMPLATE CLASSIFICATION RELATED FIELDS (for view access)
-    # ========================================================================
-    
-    template_ams_product_type_id = fields.Many2one(
-        'ams.product.type',
-        string="Template AMS Product Type",
-        related='product_tmpl_id.ams_product_type_id',
-        store=True,
-        help="Template AMS product type"
-    )
-
-    # ========================================================================
-    # VARIANT-SPECIFIC FIELDS
-    # ========================================================================
-    
     variant_sku = fields.Char(
         string="Variant SKU",
-        help="SKU specific to this product variant"
+        size=64,
+        help="Variant-specific SKU override. Leave blank to use template SKU."
     )
-    
+
     variant_legacy_id = fields.Char(
         string="Variant Legacy ID",
-        help="Legacy system ID for this specific variant"
+        size=32,
+        help="Variant ID from legacy/external systems"
     )
-    
+
     # ========================================================================
-    # VARIANT MEMBER PRICING
+    # VARIANT PRICING FIELDS
     # ========================================================================
-    
-    variant_member_price = fields.Monetary(
-        string="Variant Member Price",
-        help="Member price override for this specific variant",
-        currency_field='currency_id'
-    )
-    
-    variant_non_member_price = fields.Monetary(
-        string="Variant Non-member Price",
-        help="Non-member price override for this specific variant", 
-        currency_field='currency_id'
-    )
-    
+
     has_variant_pricing = fields.Boolean(
-        string="Has Variant-Specific Pricing",
-        help="Does this variant have different pricing from the template?"
+        string="Variant Pricing",
+        default=False,
+        help="Use variant-specific pricing instead of template pricing"
     )
-    
+
+    variant_member_price = fields.Float(
+        string="Variant Member Price",
+        digits='Product Price',
+        help="Variant-specific member price"
+    )
+
+    variant_non_member_price = fields.Float(
+        string="Variant Non-Member Price",
+        digits='Product Price', 
+        help="Variant-specific non-member price"
+    )
+
     # ========================================================================
-    # VARIANT DIGITAL CONTENT
+    # VARIANT DIGITAL CONTENT FIELDS
     # ========================================================================
-    
+
+    has_variant_digital_content = fields.Boolean(
+        string="Variant Digital Content",
+        default=False,
+        help="Use variant-specific digital content"
+    )
+
     variant_digital_url = fields.Char(
-        string="Variant Download URL",
-        help="Download URL specific to this variant"
+        string="Variant Digital URL",
+        size=255,
+        help="Variant-specific download URL"
     )
-    
+
     variant_digital_attachment_id = fields.Many2one(
         'ir.attachment',
         string="Variant Digital File",
-        help="Digital file specific to this variant"
+        help="Variant-specific digital file"
     )
-    
-    has_variant_digital_content = fields.Boolean(
-        string="Has Variant Digital Content",
-        help="Does this variant have specific digital content?"
+
+    # ========================================================================
+    # VARIANT INVENTORY FIELDS
+    # ========================================================================
+
+    has_variant_inventory_config = fields.Boolean(
+        string="Variant Inventory Config",
+        default=False,
+        help="Use variant-specific inventory configuration"
     )
-    
+
+    variant_stock_controlled = fields.Boolean(
+        string="Variant Stock Controlled",
+        default=False,
+        help="Variant-specific stock control override"
+    )
+
+    variant_reorder_point = fields.Float(
+        string="Variant Reorder Point",
+        help="Minimum stock level before reordering"
+    )
+
+    variant_max_stock = fields.Float(
+        string="Variant Max Stock",
+        help="Maximum stock level"
+    )
+
+    variant_fulfillment_route_id = fields.Many2one(
+        'stock.route',
+        string="Variant Fulfillment Route",
+        help="Variant-specific fulfillment route"
+    )
+
+    variant_lead_time = fields.Integer(
+        string="Variant Lead Time",
+        help="Lead time in days for this variant"
+    )
+
+    # ========================================================================
+    # TEMPLATE FIELD REFERENCES (for easier access)
+    # ========================================================================
+
+    template_is_ams_product = fields.Boolean(
+        related='product_tmpl_id.is_ams_product',
+        string="Template AMS Product",
+        readonly=True
+    )
+
+    template_ams_product_type_id = fields.Many2one(
+        related='product_tmpl_id.ams_product_type_id',
+        string="Template AMS Product Type",
+        readonly=True
+    )
+
+    template_has_member_pricing = fields.Boolean(
+        related='product_tmpl_id.has_member_pricing',
+        string="Template Member Pricing",
+        readonly=True
+    )
+
+    template_is_digital_product = fields.Boolean(
+        related='product_tmpl_id.is_digital_product',
+        string="Template Digital Product",
+        readonly=True
+    )
+
+    template_requires_membership = fields.Boolean(
+        related='product_tmpl_id.requires_membership',
+        string="Template Requires Membership",
+        readonly=True
+    )
+
+    template_stock_controlled = fields.Boolean(
+        related='product_tmpl_id.stock_controlled',
+        string="Template Stock Controlled",
+        readonly=True
+    )
+
+    template_member_price = fields.Float(
+        related='product_tmpl_id.member_price',
+        string="Template Member Price",
+        readonly=True
+    )
+
+    template_non_member_price = fields.Float(
+        related='product_tmpl_id.non_member_price',
+        string="Template Non-Member Price",
+        readonly=True
+    )
+
+    template_digital_download_url = fields.Char(
+        related='product_tmpl_id.digital_download_url',
+        string="Template Digital URL",
+        readonly=True
+    )
+
+    template_digital_attachment_id = fields.Many2one(
+        related='product_tmpl_id.digital_attachment_id',
+        string="Template Digital File",
+        readonly=True
+    )
+
+    template_auto_fulfill_digital = fields.Boolean(
+        related='product_tmpl_id.auto_fulfill_digital',
+        string="Template Auto Fulfill",
+        readonly=True
+    )
+
     # ========================================================================
     # COMPUTED FIELDS
     # ========================================================================
-    
-    effective_sku = fields.Char(
-        string="Effective SKU",
-        compute='_compute_effective_sku',
-        store=True,
-        help="The SKU to use (variant SKU or template SKU)"
-    )
-    
-    final_member_price = fields.Monetary(
-        string="Final Member Price",
-        compute='_compute_final_pricing',
-        help="Final member price considering variant overrides"
-    )
-    
-    final_non_member_price = fields.Monetary(
-        string="Final Non-member Price",
-        compute='_compute_final_pricing',
-        help="Final non-member price considering variant overrides"
-    )
-    
-    variant_member_discount = fields.Float(
-        string="Variant Member Discount %",
-        compute='_compute_variant_discount',
-        help="Member discount percentage for this variant"
-    )
-    
-    final_digital_url = fields.Char(
-        string="Final Download URL",
-        compute='_compute_final_digital_content',
-        help="Effective download URL (variant or template)"
-    )
-    
-    final_digital_attachment_id = fields.Many2one(
-        'ir.attachment',
-        string="Final Digital File",
-        compute='_compute_final_digital_content',
-        help="Effective digital file (variant or template)"
-    )
-    
-    is_digital_content_available = fields.Boolean(
-        string="Digital Content Available",
-        compute='_compute_final_digital_content',
-        help="Is digital content available for this variant?"
-    )
 
-    # ========================================================================
-    # SQL CONSTRAINTS
-    # ========================================================================
-    
-    _sql_constraints = [
-        ('variant_sku_unique', 'UNIQUE(variant_sku)', 'Variant SKU must be unique!'),
-        ('variant_member_price_positive', 'CHECK(variant_member_price >= 0)', 'Variant member price must be positive!'),
-        ('variant_non_member_price_positive', 'CHECK(variant_non_member_price >= 0)', 'Variant non-member price must be positive!'),
-    ]
-
-    # ========================================================================
-    # COMPUTE METHODS
-    # ========================================================================
-    
     @api.depends('variant_sku', 'product_tmpl_id.sku', 'default_code')
     def _compute_effective_sku(self):
-        """Compute the effective SKU to use for this variant."""
+        """Calculate effective SKU (variant or template)."""
         for variant in self:
             if variant.variant_sku:
                 variant.effective_sku = variant.variant_sku
             elif variant.product_tmpl_id.sku:
-                # If template has SKU but variant doesn't, create variant-specific SKU
-                if variant.product_template_attribute_value_ids:
-                    # Add attribute values to template SKU
-                    attribute_suffix = '-'.join([
-                        pav.product_attribute_value_id.name.upper()[:3] 
-                        for pav in variant.product_template_attribute_value_ids
-                    ])
-                    variant.effective_sku = f"{variant.product_tmpl_id.sku}-{attribute_suffix}"
+                # Generate variant SKU from template
+                base_sku = variant.product_tmpl_id.sku
+                if len(variant.product_tmpl_id.product_variant_ids) > 1:
+                    variant.effective_sku = f"{base_sku}-V{variant.id}"
                 else:
-                    variant.effective_sku = variant.product_tmpl_id.sku
+                    variant.effective_sku = base_sku
             else:
-                variant.effective_sku = variant.default_code or ''
-    
-    @api.depends('has_variant_pricing', 'variant_member_price', 'variant_non_member_price', 
-                 'template_member_price', 'template_non_member_price', 'lst_price')
-    def _compute_final_pricing(self):
-        """Compute final pricing considering variant overrides."""
+                variant.effective_sku = variant.default_code or ""
+
+    effective_sku = fields.Char(
+        string="Effective SKU",
+        compute='_compute_effective_sku',
+        store=True
+    )
+
+    @api.depends('has_variant_pricing', 'variant_member_price', 'template_member_price')
+    def _compute_final_member_price(self):
+        """Calculate final member price (variant or template)."""
         for variant in self:
-            if variant.has_variant_pricing:
-                # Use variant-specific pricing
-                variant.final_member_price = variant.variant_member_price or 0.0
-                variant.final_non_member_price = variant.variant_non_member_price or variant.lst_price
+            if variant.has_variant_pricing and variant.variant_member_price:
+                variant.final_member_price = variant.variant_member_price
             else:
-                # Use template pricing
-                variant.final_member_price = variant.template_member_price or variant.lst_price
-                variant.final_non_member_price = variant.template_non_member_price or variant.lst_price
-    
+                variant.final_member_price = variant.template_member_price or variant.list_price
+
+    final_member_price = fields.Monetary(
+        string="Final Member Price",
+        compute='_compute_final_member_price',
+        store=True
+    )
+
+    @api.depends('has_variant_pricing', 'variant_non_member_price', 'template_non_member_price')
+    def _compute_final_non_member_price(self):
+        """Calculate final non-member price (variant or template)."""
+        for variant in self:
+            if variant.has_variant_pricing and variant.variant_non_member_price:
+                variant.final_non_member_price = variant.variant_non_member_price
+            else:
+                variant.final_non_member_price = variant.template_non_member_price or variant.list_price
+
+    final_non_member_price = fields.Monetary(
+        string="Final Non-Member Price",
+        compute='_compute_final_non_member_price',
+        store=True
+    )
+
     @api.depends('final_member_price', 'final_non_member_price')
-    def _compute_variant_discount(self):
-        """Calculate member discount percentage for this variant."""
+    def _compute_variant_member_discount(self):
+        """Calculate variant member discount percentage."""
         for variant in self:
-            if variant.final_non_member_price > 0:
+            if variant.final_non_member_price and variant.final_member_price:
                 discount = (variant.final_non_member_price - variant.final_member_price) / variant.final_non_member_price * 100
                 variant.variant_member_discount = max(0, discount)
             else:
                 variant.variant_member_discount = 0.0
-    
-    @api.depends('has_variant_digital_content', 'variant_digital_url', 'variant_digital_attachment_id',
-                 'template_digital_download_url', 'template_digital_attachment_id',
-                 'template_is_digital_product')
+
+    variant_member_discount = fields.Float(
+        string="Variant Member Discount %",
+        compute='_compute_variant_member_discount',
+        store=True
+    )
+
+    @api.depends('has_variant_digital_content', 'variant_digital_url', 'variant_digital_attachment_id', 'template_digital_download_url', 'template_digital_attachment_id')
     def _compute_final_digital_content(self):
-        """Compute final digital content considering variant overrides."""
+        """Calculate final digital content (variant or template)."""
         for variant in self:
-            # Check if template is digital first
-            if not variant.template_is_digital_product:
-                variant.final_digital_url = False
-                variant.final_digital_attachment_id = False
-                variant.is_digital_content_available = False
-                continue
-                
             if variant.has_variant_digital_content:
-                # Use variant-specific digital content
                 variant.final_digital_url = variant.variant_digital_url
                 variant.final_digital_attachment_id = variant.variant_digital_attachment_id
             else:
-                # Use template digital content
                 variant.final_digital_url = variant.template_digital_download_url
                 variant.final_digital_attachment_id = variant.template_digital_attachment_id
-            
-            # Check if digital content is available
-            variant.is_digital_content_available = bool(
-                variant.final_digital_url or variant.final_digital_attachment_id
-            )
 
-    # ========================================================================
-    # CONSTRAINT METHODS
-    # ========================================================================
-    
-    @api.constrains('variant_sku')
-    def _check_variant_sku_format(self):
-        """Validate variant SKU format."""
-        for variant in self:
-            if variant.variant_sku:
-                import re
-                if not re.match(r'^[A-Za-z0-9_-]+$', variant.variant_sku):
-                    raise ValidationError(_("Variant SKU can only contain letters, numbers, hyphens, and underscores"))
-                if len(variant.variant_sku) > 50:
-                    raise ValidationError(_("Variant SKU cannot be longer than 50 characters"))
-    
-    @api.constrains('variant_digital_url')
-    def _check_variant_digital_url(self):
-        """Validate variant digital download URL format."""
-        for variant in self:
-            if variant.variant_digital_url:
-                import re
-                url_pattern = r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$'
-                if not re.match(url_pattern, variant.variant_digital_url):
-                    raise ValidationError(_("Please enter a valid download URL (must start with http:// or https://)"))
-    
-    @api.constrains('variant_member_price', 'variant_non_member_price', 'has_variant_pricing')
-    def _check_variant_pricing_logic(self):
-        """Validate variant pricing configuration."""
-        for variant in self:
-            if variant.has_variant_pricing:
-                if not variant.variant_member_price and not variant.variant_non_member_price:
-                    raise ValidationError(_("Variants with specific pricing must have at least one price set"))
-                
-                if variant.variant_member_price and variant.variant_non_member_price:
-                    if variant.variant_member_price > variant.variant_non_member_price:
-                        raise ValidationError(_("Variant member price should not be higher than non-member price"))
+    final_digital_url = fields.Char(
+        string="Final Digital URL",
+        compute='_compute_final_digital_content',
+        store=True
+    )
 
-    # ========================================================================
-    # ONCHANGE METHODS
-    # ========================================================================
-    
-    @api.onchange('has_variant_pricing')
-    def _onchange_has_variant_pricing(self):
-        """Handle variant pricing flag changes."""
-        if not self.has_variant_pricing:
-            # Clear variant-specific prices
-            self.variant_member_price = 0.0
-            self.variant_non_member_price = 0.0
-        else:
-            # Set defaults from template if available
-            if not self.variant_member_price and self.template_member_price:
-                self.variant_member_price = self.template_member_price
-            if not self.variant_non_member_price and self.template_non_member_price:
-                self.variant_non_member_price = self.template_non_member_price
-    
-    @api.onchange('has_variant_digital_content')
-    def _onchange_has_variant_digital_content(self):
-        """Handle variant digital content flag changes."""
-        if not self.has_variant_digital_content:
-            # Clear variant-specific digital content
-            self.variant_digital_url = False
-            self.variant_digital_attachment_id = False
-    
-    @api.onchange('variant_non_member_price')
-    def _onchange_variant_non_member_price(self):
-        """Auto-set list price when variant non-member price changes."""
-        if self.has_variant_pricing and self.variant_non_member_price:
-            self.lst_price = self.variant_non_member_price
+    final_digital_attachment_id = fields.Many2one(
+        'ir.attachment',
+        string="Final Digital File",
+        compute='_compute_final_digital_content',
+        store=True
+    )
+
+    @api.depends('template_is_digital_product', 'final_digital_url', 'final_digital_attachment_id')
+    def _compute_is_digital_content_available(self):
+        """Check if digital content is available for this variant."""
+        for variant in self:
+            if variant.template_is_digital_product:
+                variant.is_digital_content_available = bool(variant.final_digital_url or variant.final_digital_attachment_id)
+            else:
+                variant.is_digital_content_available = False
+
+    is_digital_content_available = fields.Boolean(
+        string="Digital Content Available",
+        compute='_compute_is_digital_content_available',
+        store=True
+    )
+
+    @api.depends('has_variant_inventory_config', 'variant_stock_controlled', 'template_stock_controlled')
+    def _compute_effective_stock_controlled(self):
+        """Calculate effective stock control setting."""
+        for variant in self:
+            if variant.has_variant_inventory_config:
+                variant.effective_stock_controlled = variant.variant_stock_controlled
+            else:
+                variant.effective_stock_controlled = variant.template_stock_controlled
+
+    effective_stock_controlled = fields.Boolean(
+        string="Effective Stock Controlled",
+        compute='_compute_effective_stock_controlled',
+        store=True
+    )
+
+    @api.depends('effective_stock_controlled', 'qty_available', 'variant_reorder_point')
+    def _compute_current_stock_level(self):
+        """Calculate current stock level for variants."""
+        for variant in self:
+            if variant.effective_stock_controlled:
+                variant.current_stock_level = variant.qty_available
+            else:
+                variant.current_stock_level = 0.0
+
+    current_stock_level = fields.Float(
+        string="Current Stock Level",
+        compute='_compute_current_stock_level',
+        store=True
+    )
+
+    @api.depends('current_stock_level', 'variant_reorder_point', 'effective_stock_controlled')
+    def _compute_variant_needs_reorder(self):
+        """Check if variant needs reordering."""
+        for variant in self:
+            if variant.effective_stock_controlled and variant.variant_reorder_point:
+                variant.variant_needs_reorder = variant.current_stock_level <= variant.variant_reorder_point
+            else:
+                variant.variant_needs_reorder = False
+
+    variant_needs_reorder = fields.Boolean(
+        string="Needs Reorder",
+        compute='_compute_variant_needs_reorder',
+        store=True
+    )
+
+    @api.depends('template_is_digital_product', 'effective_stock_controlled', 'is_digital_content_available', 'variant_needs_reorder')
+    def _compute_inventory_status_display(self):
+        """Calculate inventory status display."""
+        for variant in self:
+            if variant.template_is_digital_product:
+                if variant.is_digital_content_available:
+                    variant.inventory_status_display = 'Digital Available'
+                else:
+                    variant.inventory_status_display = 'Digital Missing'
+            elif variant.effective_stock_controlled:
+                if variant.variant_needs_reorder:
+                    variant.inventory_status_display = 'Low Stock'
+                else:
+                    variant.inventory_status_display = 'In Stock'
+            else:
+                variant.inventory_status_display = 'Service'
+
+    inventory_status_display = fields.Char(
+        string="Inventory Status",
+        compute='_compute_inventory_status_display',
+        store=True
+    )
 
     # ========================================================================
     # CRUD METHODS
     # ========================================================================
-    
+
     @api.model_create_multi
     def create(self, vals_list):
-        """Override create to handle AMS variant-specific logic."""
+        """Override create to handle variant SKU generation."""
         for vals in vals_list:
-            # Auto-generate variant SKU if not provided
-            if not vals.get('variant_sku') and not vals.get('default_code'):
-                template_id = vals.get('product_tmpl_id')
-                if template_id:
-                    template = self.env['product.template'].browse(template_id)
-                    if template.sku:
-                        vals['variant_sku'] = self._generate_variant_sku(template, vals)
+            # Generate variant SKU if needed
+            if vals.get('template_is_ams_product') and not vals.get('variant_sku'):
+                template = self.env['product.template'].browse(vals.get('product_tmpl_id'))
+                if template.sku:
+                    vals['variant_sku'] = self._generate_variant_sku(template.sku)
+
+        variants = super().create(vals_list)
         
-        return super().create(vals_list)
+        for variant in variants:
+            variant._sync_variant_fields()
+        
+        return variants
+
+    def write(self, vals):
+        """Override write to maintain synchronization."""
+        result = super().write(vals)
+        
+        # Sync variant fields if relevant fields changed
+        if any(field in vals for field in ['has_variant_pricing', 'has_variant_digital_content', 'has_variant_inventory_config']):
+            for variant in self:
+                variant._sync_variant_fields()
+                
+        return result
+
+    def _sync_variant_fields(self):
+        """Synchronize variant fields."""
+        for variant in self:
+            # Sync effective SKU with default_code
+            if variant.effective_sku and variant.default_code != variant.effective_sku:
+                super(ProductProduct, variant).write({'default_code': variant.effective_sku})
+
+    def _generate_variant_sku(self, template_sku):
+        """Generate unique variant SKU."""
+        base_sku = template_sku
+        counter = 1
+        variant_sku = f"{base_sku}-V{counter:03d}"
+        
+        while self.search([('variant_sku', '=', variant_sku), ('id', '!=', self.id)], limit=1):
+            counter += 1
+            variant_sku = f"{base_sku}-V{counter:03d}"
+            
+        return variant_sku
+
+    # ========================================================================
+    # VALIDATION METHODS
+    # ========================================================================
+
+    @api.constrains('variant_sku')
+    def _check_variant_sku_format(self):
+        """Validate variant SKU format."""
+        for variant in self:
+            if variant.variant_sku and variant.template_is_ams_product:
+                import re
+                if not re.match(r'^[A-Z0-9\-_]+$', variant.variant_sku):
+                    raise ValidationError(_("Variant SKU must contain only uppercase letters, numbers, hyphens, and underscores."))
+
+    @api.constrains('variant_member_price', 'variant_non_member_price')
+    def _check_variant_pricing(self):
+        """Validate variant pricing logic."""
+        for variant in self:
+            if variant.has_variant_pricing:
+                if variant.variant_member_price < 0 or variant.variant_non_member_price < 0:
+                    raise ValidationError(_("Variant prices cannot be negative."))
+                if variant.variant_member_price > variant.variant_non_member_price:
+                    raise ValidationError(_("Variant member price should not be higher than non-member price."))
+
+    @api.constrains('variant_reorder_point', 'variant_max_stock')
+    def _check_variant_inventory(self):
+        """Validate variant inventory logic."""
+        for variant in self:
+            if variant.has_variant_inventory_config:
+                if variant.variant_reorder_point < 0 or variant.variant_max_stock < 0:
+                    raise ValidationError(_("Inventory levels cannot be negative."))
+                if variant.variant_reorder_point > variant.variant_max_stock:
+                    raise ValidationError(_("Reorder point cannot be higher than maximum stock."))
 
     # ========================================================================
     # BUSINESS METHODS
     # ========================================================================
-    
-    def get_variant_price_for_member_status(self, is_member=False):
-        """
-        Get the appropriate variant price based on member status.
-        
-        Args:
-            is_member (bool): Whether the customer is a member
-            
-        Returns:
-            float: Appropriate price for the member status
-        """
+
+    def get_variant_price_for_member_status(self, is_member):
+        """Get appropriate variant price based on member status."""
         self.ensure_one()
-        
         if self.template_has_member_pricing:
-            if is_member:
-                return self.final_member_price
-            else:
-                return self.final_non_member_price
-        else:
-            return self.lst_price
-    
+            return self.final_member_price if is_member else self.final_non_member_price
+        return self.list_price
+
     def get_variant_member_savings(self):
-        """
-        Calculate absolute savings for members on this variant.
-        
-        Returns:
-            float: Amount saved by being a member
-        """
+        """Calculate variant member savings amount."""
         self.ensure_one()
-        
         if self.template_has_member_pricing:
             return self.final_non_member_price - self.final_member_price
         return 0.0
-    
+
     def get_variant_digital_content_access(self):
-        """
-        Get digital content access information for this variant.
-        
-        Returns:
-            dict: Digital content access details
-        """
+        """Get variant digital content access information."""
         self.ensure_one()
-        
-        if not self.template_is_digital_product:
-            return {}
-        
         return {
-            'is_digital': True,
+            'is_digital': self.template_is_digital_product,
             'download_url': self.final_digital_url,
             'attachment_id': self.final_digital_attachment_id.id if self.final_digital_attachment_id else False,
             'auto_fulfill': self.template_auto_fulfill_digital,
             'is_available': self.is_digital_content_available,
             'has_variant_content': self.has_variant_digital_content,
         }
-    
-    def get_variant_display_name(self):
-        """
-        Get display name including variant attributes and AMS info.
-        
-        Returns:
-            str: Enhanced display name
-        """
+
+    def get_variant_inventory_status(self):
+        """Get variant inventory status information."""
         self.ensure_one()
-        
-        name = self.display_name
-        
-        # Add effective SKU
-        if self.effective_sku:
-            name = f"[{self.effective_sku}] {name}"
-        
-        # Add digital indicator
-        if self.template_is_digital_product:
-            name = f"{name} (Digital)"
-        
-        # Add member pricing indicator
-        if self.template_has_member_pricing:
-            if self.has_variant_pricing:
-                name = f"{name} (Variant Pricing)"
-            else:
-                name = f"{name} (Member Pricing)"
-        
-        return name
-    
-    @api.model
-    def get_variants_by_ams_criteria(self, is_digital=None, has_member_pricing=None, 
-                                   requires_membership=None, product_type_code=None):
-        """
-        Get product variants filtered by AMS criteria.
-        
-        Args:
-            is_digital (bool, optional): Filter by digital products
-            has_member_pricing (bool, optional): Filter by member pricing
-            requires_membership (bool, optional): Filter by membership requirement
-            product_type_code (str, optional): Filter by product type code
-            
-        Returns:
-            recordset: Filtered product variants
-        """
-        domain = []
-        
-        if is_digital is not None:
-            domain.append(('template_is_digital_product', '=', is_digital))
-        
-        if has_member_pricing is not None:
-            domain.append(('template_has_member_pricing', '=', has_member_pricing))
-        
-        if requires_membership is not None:
-            domain.append(('template_requires_membership', '=', requires_membership))
-        
-        if product_type_code:
-            domain.append(('template_ams_product_type_id.code', '=', product_type_code))
-        
-        return self.search(domain)
-    
+        return {
+            'stock_controlled': self.effective_stock_controlled,
+            'current_level': self.current_stock_level,
+            'reorder_point': self.variant_reorder_point,
+            'max_stock': self.variant_max_stock,
+            'needs_reorder': self.variant_needs_reorder,
+            'has_variant_config': self.has_variant_inventory_config,
+        }
+
+    # ========================================================================
+    # VARIANT MANAGEMENT METHODS
+    # ========================================================================
+
     def copy_template_pricing_to_variant(self):
         """Copy template pricing to variant-specific pricing."""
-        for variant in self:
-            variant.write({
+        self.ensure_one()
+        if self.template_has_member_pricing:
+            self.write({
                 'has_variant_pricing': True,
-                'variant_member_price': variant.template_member_price,
-                'variant_non_member_price': variant.template_non_member_price,
+                'variant_member_price': self.template_member_price,
+                'variant_non_member_price': self.template_non_member_price,
             })
-    
+
     def sync_with_template_pricing(self):
-        """Sync variant pricing with template pricing."""
-        for variant in self:
-            if not variant.has_variant_pricing:
-                # Reset to use template pricing
-                variant.write({
-                    'variant_member_price': 0.0,
-                    'variant_non_member_price': 0.0,
-                })
+        """Reset to template pricing (remove variant overrides)."""
+        self.ensure_one()
+        self.write({
+            'has_variant_pricing': False,
+            'variant_member_price': 0.0,
+            'variant_non_member_price': 0.0,
+        })
+
+    def copy_template_inventory_to_variant(self):
+        """Copy template inventory settings to variant."""
+        self.ensure_one()
+        self.write({
+            'has_variant_inventory_config': True,
+            'variant_stock_controlled': self.template_stock_controlled,
+        })
 
     # ========================================================================
-    # ACTION METHODS
+    # ACTION METHODS (for buttons)
     # ========================================================================
-    
+
     def action_configure_variant_pricing(self):
-        """Open variant pricing configuration."""
+        """Open variant pricing configuration form."""
         self.ensure_one()
-        
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Configure Variant Pricing'),
+            'name': 'Configure Variant Pricing',
             'res_model': 'product.product',
-            'view_mode': 'form',
             'res_id': self.id,
+            'view_mode': 'form',
+            'view_id': self.env.ref('ams_products_base.product_variant_pricing_form').id,
             'target': 'new',
-            'context': {'form_view_ref': 'ams_products_base.product_variant_pricing_form'},
         }
-    
+
     def action_configure_variant_digital_content(self):
-        """Open variant digital content configuration."""
+        """Open variant digital content configuration form."""
         self.ensure_one()
-        
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Configure Variant Digital Content'),
-            'res_model': 'product.product', 
-            'view_mode': 'form',
+            'name': 'Configure Variant Digital Content',
+            'res_model': 'product.product',
             'res_id': self.id,
+            'view_mode': 'form',
+            'view_id': self.env.ref('ams_products_base.product_variant_digital_form').id,
             'target': 'new',
-            'context': {'form_view_ref': 'ams_products_base.product_variant_digital_form'},
+        }
+
+    def action_configure_variant_inventory(self):
+        """Open variant inventory configuration form."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Configure Variant Inventory',
+            'res_model': 'product.product',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'view_id': self.env.ref('ams_products_base.product_variant_inventory_form').id,
+            'target': 'new',
+        }
+
+    def action_view_stock_moves(self):
+        """View stock moves for this variant."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Stock Moves',
+            'res_model': 'stock.move',
+            'view_mode': 'tree,form',
+            'domain': [('product_id', '=', self.id)],
+            'context': {'default_product_id': self.id},
+        }
+
+    def action_update_stock(self):
+        """Update stock levels for this variant."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Update Stock',
+            'res_model': 'stock.quant',
+            'view_mode': 'tree,form',
+            'domain': [('product_id', '=', self.id)],
+            'context': {'default_product_id': self.id},
         }
 
     # ========================================================================
-    # UTILITY METHODS
+    # SEARCH AND DISPLAY METHODS
     # ========================================================================
-    
-    @api.model
-    def _generate_variant_sku(self, template, vals):
-        """
-        Generate SKU for a product variant.
-        
-        Args:
-            template (product.template): Product template
-            vals (dict): Values being created
-            
-        Returns:
-            str: Generated variant SKU
-        """
-        if not template.sku:
-            return ''
-        
-        base_sku = template.sku
-        
-        counter = 1
-        variant_sku = f"{base_sku}-V{counter:02d}"
-        
-        # Ensure uniqueness
-        while self.search([('variant_sku', '=', variant_sku)], limit=1):
-            counter += 1
-            variant_sku = f"{base_sku}-V{counter:02d}"
-            if counter > 999:  # Prevent infinite loop
-                break
-        
-        return variant_sku
-    
-    def _get_variant_pricing_context(self, partner_id=None):
-        """
-        Get pricing context for this variant based on partner.
-        
-        Args:
-            partner_id (int, optional): Partner ID to check member status
-            
-        Returns:
-            dict: Variant pricing context information
-        """
-        self.ensure_one()
-        
-        context = {
-            'product_id': self.id,
-            'template_id': self.product_tmpl_id.id,
-            'has_member_pricing': self.template_has_member_pricing,
-            'has_variant_pricing': self.has_variant_pricing,
-            'requires_membership': self.template_requires_membership,
-            'effective_sku': self.effective_sku,
-        }
-        
-        if partner_id:
-            partner = self.env['res.partner'].browse(partner_id)
-            is_member = getattr(partner, 'is_member', False)
-            
-            context.update({
-                'partner_id': partner_id,
-                'is_member': is_member,
-                'can_purchase': self.product_tmpl_id.can_be_purchased_by_member_status(is_member),
-                'effective_price': self.get_variant_price_for_member_status(is_member),
-                'member_savings': self.get_variant_member_savings() if is_member else 0.0,
-                'digital_access': self.get_variant_digital_content_access() if self.template_is_digital_product else {},
-            })
-        
-        return context
-    
+
     def name_get(self):
-        """Custom name display for AMS product variants."""
+        """Enhanced name display for AMS variants."""
         result = []
         for variant in self:
             name = super(ProductProduct, variant).name_get()[0][1]
-            
-            # Add effective SKU if different from what's already shown
-            if variant.effective_sku and f"[{variant.effective_sku}]" not in name:
+            if variant.template_is_ams_product and variant.effective_sku:
                 name = f"[{variant.effective_sku}] {name}"
-            
-            # Add variant-specific indicators
-            indicators = []
-            if variant.has_variant_pricing:
-                indicators.append("Variant Pricing")
-            if variant.has_variant_digital_content:
-                indicators.append("Variant Digital")
-            
-            if indicators:
-                name = f"{name} ({', '.join(indicators)})"
-            
             result.append((variant.id, name))
-        
         return result
+
+    # ========================================================================
+    # BUSINESS QUERY METHODS
+    # ========================================================================
+
+    @api.model
+    def get_variants_by_ams_criteria(self, is_digital=None, stock_controlled=None, has_member_pricing=None):
+        """Get variants by AMS criteria."""
+        domain = [('template_is_ams_product', '=', True)]
+        
+        if is_digital is not None:
+            domain.append(('template_is_digital_product', '=', is_digital))
+        if stock_controlled is not None:
+            domain.append(('effective_stock_controlled', '=', stock_controlled))
+        if has_member_pricing is not None:
+            domain.append(('template_has_member_pricing', '=', has_member_pricing))
+            
+        return self.search(domain)
+
+    @api.model
+    def get_low_stock_variants(self):
+        """Get variants that need reordering."""
+        return self.search([('variant_needs_reorder', '=', True)])
+
+    @api.model 
+    def get_digital_content_issues(self):
+        """Get digital variants missing content."""
+        return self.search([
+            ('template_is_digital_product', '=', True),
+            ('is_digital_content_available', '=', False)
+        ])

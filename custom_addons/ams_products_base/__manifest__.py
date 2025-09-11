@@ -13,60 +13,54 @@ for the Association Management System:
 
 * **AMS Product Classification**
   - Products identified as AMS-specific with type classification
-  - Integration with AMS product types for filtering and organization
+  - Integration with AMS product types and Odoo product categories
 
-* **Member Pricing and Discounts** 
-  - Member-specific pricing vs non-member pricing
-  - Automatic calculation of member discount percentages
-  - Support for membership-based pricing strategies
+* **Member Pricing System** 
+  - Member vs non-member pricing with automatic calculations
+  - Template-level pricing with variant-level overrides
+  - Member discount percentage computation
 
 * **Digital Product Management**
   - Digital product identification and delivery
   - Download URLs and file attachments
   - Automatic fulfillment for digital items
-  - Integration with digital content systems
 
-* **Advanced Product Features**
+* **Inventory Integration**
+  - Smart product type configuration (service vs stockable)
+  - Integration with Odoo's inventory and stock management
+  - Variant-specific inventory overrides
+
+* **Enhanced SKU Management**
+  - Automatic SKU generation with intelligent formatting
+  - Template and variant-level SKU management
+  - Legacy system integration support
+
+* **Business Features**
   - Membership requirement flags for restricted products
-  - Inventory and fulfillment control separation
-  - Chapter-specific product access restrictions
-  - Regional and chapter-based product offerings
+  - Rich business methods for pricing and access control
 
-* **Integration and Legacy Support**
-  - SKU management and legacy system integration
-  - Seamless transition from previous AMS data
-  - Compatibility with existing product workflows
-
-* **Foundation for Higher-Level Modules**
-  - Core data structures for billing and e-commerce
-  - Integration points for event registration
-  - Support for membership renewal products
-  - Digital content delivery infrastructure
-
-This module extends Odoo's standard product management with association-specific
-functionality while maintaining full compatibility with Odoo Community 18.
+Foundation module for all AMS product-related functionality.
     """,
     'author': 'Your Organization',
     'website': 'https://your-website.com',
     'license': 'LGPL-3',
     'depends': [
-        'base',                    # Core Odoo functionality
-        'product',                 # Standard product management
-        'mail',                    # Messaging and activities
-        'ams_member_data',         # Member data structures
-        'ams_product_types',       # Product type classification
+        'base',
+        'product',
+        'sale',
+        'stock',
+        'mail',
+        'ams_member_data',
+        'ams_product_types',
     ],
     'data': [
-        # Security files first
         'security/ir.model.access.csv',
-        # View files
         'views/product_template_views.xml',
         'views/product_product_views.xml',
     ],
     'demo': [],
-    'images': ['static/description/icon.png'],
     'installable': True,
     'auto_install': False,
-    'application': True, 
-    'sequence': 8,  # Layer 1 foundation module
+    'application': True,
+    'sequence': 8,
 }
