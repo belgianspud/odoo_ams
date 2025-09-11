@@ -258,7 +258,7 @@
                 <attribute name="sample">1</attribute>
             </xpath>
             
-            <xpath expr="//field[@name='lst_price']" position="after">
+            <xpath expr="//field[@name='list_price']" position="after">
                 <field name="sku"/>
                 <field name="is_ams_product"/>
                 <field name="ams_product_type_id"/>

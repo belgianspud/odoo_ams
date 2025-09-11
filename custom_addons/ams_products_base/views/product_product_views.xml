@@ -15,11 +15,11 @@
             <!-- Add variant SKU after default_code -->
             <xpath expr="//field[@name='default_code']" position="after">
                 <field name="variant_sku" 
-                       invisible="not product_tmpl_id.is_ams_product"/>
+                       invisible="not template_is_ams_product"/>
                 <field name="effective_sku" readonly="1" 
-                       invisible="not product_tmpl_id.is_ams_product"/>
+                       invisible="not template_is_ams_product"/>
                 <field name="variant_legacy_id" groups="base.group_system" 
-                       invisible="not product_tmpl_id.is_ams_product"/>
+                       invisible="not template_is_ams_product"/>
             </xpath>
 
             <!-- Add AMS-specific tabs for variants -->
@@ -27,15 +27,15 @@
                 
                 <!-- Variant Pricing Tab -->
                 <page string="Variant Pricing" name="variant_pricing" 
-                      invisible="not product_tmpl_id.is_ams_product or not product_tmpl_id.has_member_pricing">
+                      invisible="not template_is_ams_product or not template_has_member_pricing">
                     <group>
                         <group string="Pricing Configuration">
                             <field name="has_variant_pricing" widget="boolean_toggle"/>
                             <field name="variant_member_discount" readonly="1" widget="percentage"/>
                         </group>
                         <group string="Template Settings">
-                            <field name="product_tmpl_id.has_member_pricing" readonly="1" string="Template Has Member Pricing"/>
-                            <field name="product_tmpl_id.requires_membership" readonly="1" string="Template Requires Membership"/>
+                            <field name="template_has_member_pricing" readonly="1" string="Template Has Member Pricing"/>
+                            <field name="template_requires_membership" readonly="1" string="Template Requires Membership"/>
                         </group>
                     </group>
                     
@@ -60,7 +60,7 @@
 
                     <group invisible="has_variant_pricing">
                         <group string="Template Member Pricing (Used by Variant)">
-                            <field name="product_tmpl_id.member_price" readonly="1" 
+                            <field name="template_member_price" readonly="1" 
                                    widget="monetary" 
                                    options="{'currency_field': 'currency_id'}"/>
                             <field name="final_member_price" readonly="1" 
@@ -68,7 +68,7 @@
                                    options="{'currency_field': 'currency_id'}"/>
                         </group>
                         <group string="Template Non-Member Pricing (Used by Variant)">
-                            <field name="product_tmpl_id.non_member_price" readonly="1" 
+                            <field name="template_non_member_price" readonly="1" 
                                    widget="monetary" 
                                    options="{'currency_field': 'currency_id'}"/>
                             <field name="final_non_member_price" readonly="1" 
@@ -106,15 +106,15 @@
 
                 <!-- Variant Digital Content Tab -->
                 <page string="Variant Digital Content" name="variant_digital" 
-                      invisible="not product_tmpl_id.is_ams_product or not product_tmpl_id.is_digital_product">
+                      invisible="not template_is_ams_product or not template_is_digital_product">
                     <group>
                         <group string="Digital Content Configuration">
                             <field name="has_variant_digital_content" widget="boolean_toggle"/>
                             <field name="is_digital_content_available" readonly="1" widget="boolean"/>
                         </group>
                         <group string="Template Settings">
-                            <field name="product_tmpl_id.is_digital_product" readonly="1" string="Template Is Digital"/>
-                            <field name="product_tmpl_id.auto_fulfill_digital" readonly="1" string="Template Auto-fulfill"/>
+                            <field name="template_is_digital_product" readonly="1" string="Template Is Digital"/>
+                            <field name="template_auto_fulfill_digital" readonly="1" string="Template Auto-fulfill"/>
                         </group>
                     </group>
                     
@@ -132,8 +132,8 @@
 
                     <group invisible="has_variant_digital_content">
                         <group string="Template Digital Content (Used by Variant)">
-                            <field name="product_tmpl_id.digital_download_url" readonly="1" widget="url"/>
-                            <field name="product_tmpl_id.digital_attachment_id" readonly="1"/>
+                            <field name="template_digital_download_url" readonly="1" widget="url"/>
+                            <field name="template_digital_attachment_id" readonly="1"/>
                         </group>
                         <group string="Effective Digital Content">
                             <field name="final_digital_url" readonly="1" widget="url"/>
@@ -159,7 +159,7 @@
                 </page>
 
                 <!-- Variant AMS Settings Tab -->
-                <page string="Variant AMS Info" name="variant_ams" invisible="not product_tmpl_id.is_ams_product">
+                <page string="Variant AMS Info" name="variant_ams" invisible="not template_is_ams_product">
                     <group>
                         <group string="Variant Identification">
                             <field name="variant_sku"/>
@@ -167,8 +167,8 @@
                             <field name="variant_legacy_id" groups="base.group_system"/>
                         </group>
                         <group string="Template Classification">
-                            <field name="product_tmpl_id.ams_product_type_id" readonly="1" string="AMS Product Type"/>
-                            <field name="product_tmpl_id.is_ams_product" readonly="1" string="Is AMS Product"/>
+                            <field name="template_ams_product_type_id" readonly="1" string="AMS Product Type"/>
+                            <field name="template_is_ams_product" readonly="1" string="Is AMS Product"/>
                         </group>
                     </group>
                     
@@ -178,9 +178,9 @@
                             <field name="has_variant_digital_content" readonly="1"/>
                         </group>
                         <group string="Template Features">
-                            <field name="product_tmpl_id.has_member_pricing" readonly="1" string="Template Member Pricing"/>
-                            <field name="product_tmpl_id.is_digital_product" readonly="1" string="Template Digital Product"/>
-                            <field name="product_tmpl_id.requires_membership" readonly="1" string="Template Requires Membership"/>
+                            <field name="template_has_member_pricing" readonly="1" string="Template Member Pricing"/>
+                            <field name="template_is_digital_product" readonly="1" string="Template Digital Product"/>
+                            <field name="template_requires_membership" readonly="1" string="Template Requires Membership"/>
                         </group>
                     </group>
 
@@ -218,10 +218,10 @@
             <xpath expr="//field[@name='lst_price']" position="after">
                 <field name="final_member_price" optional="hide" 
                        widget="monetary" 
-                       invisible="not product_tmpl_id.has_member_pricing"/>
+                       invisible="not template_has_member_pricing"/>
                 <field name="variant_member_discount" optional="hide" 
                        widget="percentage"
-                       invisible="not product_tmpl_id.has_member_pricing"/>
+                       invisible="not template_has_member_pricing"/>
             </xpath>
 
         </field>
@@ -252,21 +252,21 @@
             <xpath expr="//filter[@name='filter_to_sell']" position="after">
                 <separator/>
                 <filter string="AMS Product Variants" name="ams_variants" 
-                        domain="[('product_tmpl_id.is_ams_product', '=', True)]"/>
+                        domain="[('template_is_ams_product', '=', True)]"/>
                 <filter string="Variant Pricing" name="variant_pricing" 
                         domain="[('has_variant_pricing', '=', True)]"/>
                 <filter string="Variant Digital Content" name="variant_digital" 
                         domain="[('has_variant_digital_content', '=', True)]"/>
                 <filter string="Digital Variants" name="digital_variants" 
-                        domain="[('product_tmpl_id.is_digital_product', '=', True)]"/>
+                        domain="[('template_is_digital_product', '=', True)]"/>
                 <filter string="Member Pricing Variants" name="member_pricing_variants" 
-                        domain="[('product_tmpl_id.has_member_pricing', '=', True)]"/>
+                        domain="[('template_has_member_pricing', '=', True)]"/>
             </xpath>
 
             <!-- Add AMS group by options -->
             <xpath expr="//group" position="inside">
                 <filter string="AMS Product Type" name="group_ams_product_type" 
-                        context="{'group_by': 'product_tmpl_id.ams_product_type_id'}"/>
+                        context="{'group_by': 'template_ams_product_type_id'}"/>
                 <filter string="Has Variant Pricing" name="group_variant_pricing" 
                         context="{'group_by': 'has_variant_pricing'}"/>
                 <filter string="Has Variant Digital Content" name="group_variant_digital" 
@@ -303,17 +303,17 @@
             <!-- Enhance kanban card content -->
             <xpath expr="//div[hasclass('product_lst_price')]" position="after">
                 <!-- AMS Variant Badges -->
-                <div t-if="record.product_tmpl_id.is_ams_product" class="mt-2">
+                <div t-if="record.template_is_ams_product.raw_value" class="mt-2">
                     <t t-if="record.has_variant_pricing.raw_value">
                         <span class="badge badge-primary">Variant Pricing</span>
                     </t>
                     <t t-if="record.has_variant_digital_content.raw_value">
                         <span class="badge badge-info">Variant Digital</span>
                     </t>
-                    <t t-if="record.product_tmpl_id.is_digital_product and record.is_digital_content_available.raw_value">
+                    <t t-if="record.template_is_digital_product.raw_value and record.is_digital_content_available.raw_value">
                         <span class="badge badge-success">Digital Ready</span>
                     </t>
-                    <t t-if="record.product_tmpl_id.is_digital_product and not record.is_digital_content_available.raw_value">
+                    <t t-if="record.template_is_digital_product.raw_value and not record.is_digital_content_available.raw_value">
                         <span class="badge badge-warning">Digital Missing</span>
                     </t>
                 </div>
@@ -324,7 +324,7 @@
                 </div>
                 
                 <!-- Member Pricing Display for Variants -->
-                <div t-if="record.product_tmpl_id.has_member_pricing and record.final_member_price.raw_value != record.lst_price.raw_value" 
+                <div t-if="record.template_has_member_pricing.raw_value and record.final_member_price.raw_value != record.lst_price.raw_value" 
                      class="text-info small">
                     Member: <field name="final_member_price" widget="monetary"/>
                     <t t-if="record.variant_member_discount.raw_value > 0">
@@ -346,7 +346,7 @@
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">product.product</field>
         <field name="view_mode">kanban,tree,form</field>
-        <field name="domain">[('product_tmpl_id.is_ams_product', '=', True)]</field>
+        <field name="domain">[('template_is_ams_product', '=', True)]</field>
         <field name="context">{
             'search_default_ams_variants': 1,
         }</field>
@@ -425,9 +425,9 @@
                     
                     <group>
                         <group string="Template Pricing (Reference)">
-                            <field name="product_tmpl_id.member_price" readonly="1" widget="monetary"/>
-                            <field name="product_tmpl_id.non_member_price" readonly="1" widget="monetary"/>
-                            <field name="product_tmpl_id.member_discount_percentage" readonly="1" widget="percentage"/>
+                            <field name="template_member_price" readonly="1" widget="monetary"/>
+                            <field name="template_non_member_price" readonly="1" widget="monetary"/>
+                            <field name="template_member_discount_percentage" readonly="1" widget="percentage"/>
                         </group>
                         <group string="Variant Configuration">
                             <field name="has_variant_pricing" widget="boolean_toggle"/>
@@ -474,9 +474,9 @@
                     
                     <group>
                         <group string="Template Digital Content (Reference)">
-                            <field name="product_tmpl_id.digital_download_url" readonly="1" widget="url"/>
-                            <field name="product_tmpl_id.digital_attachment_id" readonly="1"/>
-                            <field name="product_tmpl_id.auto_fulfill_digital" readonly="1"/>
+                            <field name="template_digital_download_url" readonly="1" widget="url"/>
+                            <field name="template_digital_attachment_id" readonly="1"/>
+                            <field name="template_auto_fulfill_digital" readonly="1"/>
                         </group>
                         <group string="Variant Configuration">
                             <field name="has_variant_digital_content" widget="boolean_toggle"/>

@@ -475,6 +475,10 @@ class ProductTemplate(models.Model):
             ('is_ams_product', '=', True),
             ('requires_membership', '=', True)
         ])
+
+    # ========================================================================
+    # ACTION METHODS (for view buttons)
+    # ========================================================================
     
     def action_configure_digital_content(self):
         """Open digital content configuration wizard."""
@@ -555,6 +559,9 @@ class ProductTemplate(models.Model):
             'product_id': self.id,
             'has_member_pricing': self.has_member_pricing,
             'requires_membership': self.requires_membership,
+            'is_digital_product': self.is_digital_product,
+            'auto_fulfill_digital': self.auto_fulfill_digital,
+            'sku': self.sku,
         }
         
         if partner_id:
@@ -567,9 +574,32 @@ class ProductTemplate(models.Model):
                 'can_purchase': self.can_be_purchased_by_member_status(is_member),
                 'effective_price': self.get_price_for_member_status(is_member),
                 'member_savings': self.get_member_savings() if is_member else 0.0,
+                'digital_access': self.get_digital_content_access() if self.is_digital_product else {},
             })
         
         return context
+    
+    def validate_ams_configuration(self):
+        """Validate AMS product configuration and return issues."""
+        self.ensure_one()
+        issues = []
+        
+        if self.is_ams_product:
+            if not self.ams_product_type_id:
+                issues.append("AMS products should have a product type assigned")
+            
+            if self.has_member_pricing:
+                if not self.member_price and not self.non_member_price:
+                    issues.append("Products with member pricing should have prices configured")
+            
+            if self.is_digital_product:
+                if not self.is_digital_available:
+                    issues.append("Digital products need either a download URL or attached file")
+            
+            if self.requires_membership and not self.has_member_pricing:
+                issues.append("Products requiring membership typically should have member pricing")
+        
+        return issues
     
     def name_get(self):
         """Custom name display for AMS products."""

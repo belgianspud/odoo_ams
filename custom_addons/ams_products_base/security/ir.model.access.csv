@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_product_template_ams_system,product.template.ams.system,product.model_product_template,base.group_system,1,1,1,1
+access_product_template_ams_user,product.template.ams.user,product.model_product_template,base.group_user,1,1,1,0
+access_product_template_ams_portal,product.template.ams.portal,product.model_product_template,base.group_portal,1,0,0,0
+access_product_template_ams_public,product.template.ams.public,product.model_product_template,base.group_public,1,0,0,0
+access_product_product_ams_system,product.product.ams.system,product.model_product_product,base.group_system,1,1,1,1
+access_product_product_ams_user,product.product.ams.user,product.model_product_product,base.group_user,1,1,1,0
+access_product_product_ams_portal,product.product.ams.portal,product.model_product_product,base.group_portal,1,0,0,0
+access_product_product_ams_public,product.product.ams.public,product.model_product_product,base.group_public,1,0,0,0

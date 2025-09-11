@@ -15,6 +15,101 @@ class ProductProduct(models.Model):
     _inherit = 'product.product'
 
     # ========================================================================
+    # TEMPLATE RELATED FIELDS (for easier view access)
+    # ========================================================================
+    
+    template_is_ams_product = fields.Boolean(
+        string="Template is AMS Product",
+        related='product_tmpl_id.is_ams_product',
+        store=True,
+        help="Is the template an AMS product?"
+    )
+
+    template_is_digital_product = fields.Boolean(
+        string="Template is Digital",
+        related='product_tmpl_id.is_digital_product', 
+        store=True,
+        help="Is the template a digital product?"
+    )
+
+    template_has_member_pricing = fields.Boolean(
+        string="Template has Member Pricing",
+        related='product_tmpl_id.has_member_pricing',
+        store=True,
+        help="Does the template have member pricing?"
+    )
+
+    template_requires_membership = fields.Boolean(
+        string="Template Requires Membership",
+        related='product_tmpl_id.requires_membership',
+        store=True,
+        help="Does the template require membership?"
+    )
+
+    template_auto_fulfill_digital = fields.Boolean(
+        string="Template Auto-fulfill Digital",
+        related='product_tmpl_id.auto_fulfill_digital',
+        store=True,
+        help="Does the template auto-fulfill digital products?"
+    )
+
+    # ========================================================================
+    # TEMPLATE PRICING RELATED FIELDS (for view access)
+    # ========================================================================
+    
+    template_member_price = fields.Monetary(
+        string="Template Member Price",
+        related='product_tmpl_id.member_price',
+        store=True,
+        help="Template member price"
+    )
+
+    template_non_member_price = fields.Monetary(
+        string="Template Non-member Price",
+        related='product_tmpl_id.non_member_price',
+        store=True,
+        help="Template non-member price"
+    )
+
+    template_member_discount_percentage = fields.Float(
+        string="Template Member Discount %",
+        related='product_tmpl_id.member_discount_percentage',
+        store=True,
+        help="Template member discount percentage"
+    )
+
+    # ========================================================================
+    # TEMPLATE DIGITAL CONTENT RELATED FIELDS (for view access)
+    # ========================================================================
+    
+    template_digital_download_url = fields.Char(
+        string="Template Download URL",
+        related='product_tmpl_id.digital_download_url',
+        store=True,
+        help="Template digital download URL"
+    )
+
+    template_digital_attachment_id = fields.Many2one(
+        'ir.attachment',
+        string="Template Digital File",
+        related='product_tmpl_id.digital_attachment_id',
+        store=True,
+        help="Template digital attachment"
+    )
+
+    # ========================================================================
+    # TEMPLATE CLASSIFICATION RELATED FIELDS (for view access)
+    # ========================================================================
+    
+    template_ams_product_type_id = fields.Many2one(
+        'ams.product.type',
+        string="Template AMS Product Type",
+        related='product_tmpl_id.ams_product_type_id',
+        store=True,
+        help="Template AMS product type"
+    )
+
+    # ========================================================================
     # VARIANT-SPECIFIC FIELDS
     # ========================================================================
     
@@ -152,7 +247,7 @@ class ProductProduct(models.Model):
                 variant.effective_sku = variant.default_code or ''
     
     @api.depends('has_variant_pricing', 'variant_member_price', 'variant_non_member_price', 
-                 'product_tmpl_id.member_price', 'product_tmpl_id.non_member_price', 'lst_price')
+                 'template_member_price', 'template_non_member_price', 'lst_price')
     def _compute_final_pricing(self):
         """Compute final pricing considering variant overrides."""
         for variant in self:
@@ -162,8 +257,8 @@ class ProductProduct(models.Model):
                 variant.final_non_member_price = variant.variant_non_member_price or variant.lst_price
             else:
                 # Use template pricing
-                variant.final_member_price = variant.product_tmpl_id.effective_member_price
-                variant.final_non_member_price = variant.product_tmpl_id.effective_non_member_price
+                variant.final_member_price = variant.template_member_price or variant.lst_price
+                variant.final_non_member_price = variant.template_non_member_price or variant.lst_price
     
     @api.depends('final_member_price', 'final_non_member_price')
     def _compute_variant_discount(self):
@@ -176,18 +271,26 @@ class ProductProduct(models.Model):
                 variant.variant_member_discount = 0.0
     
     @api.depends('has_variant_digital_content', 'variant_digital_url', 'variant_digital_attachment_id',
-                 'product_tmpl_id.digital_download_url', 'product_tmpl_id.digital_attachment_id')
+                 'template_digital_download_url', 'template_digital_attachment_id',
+                 'template_is_digital_product')
     def _compute_final_digital_content(self):
         """Compute final digital content considering variant overrides."""
         for variant in self:
+            # Check if template is digital first
+            if not variant.template_is_digital_product:
+                variant.final_digital_url = False
+                variant.final_digital_attachment_id = False
+                variant.is_digital_content_available = False
+                continue
+                
             if variant.has_variant_digital_content:
                 # Use variant-specific digital content
                 variant.final_digital_url = variant.variant_digital_url
                 variant.final_digital_attachment_id = variant.variant_digital_attachment_id
             else:
                 # Use template digital content
-                variant.final_digital_url = variant.product_tmpl_id.digital_download_url
-                variant.final_digital_attachment_id = variant.product_tmpl_id.digital_attachment_id
+                variant.final_digital_url = variant.template_digital_download_url
+                variant.final_digital_attachment_id = variant.template_digital_attachment_id
             
             # Check if digital content is available
             variant.is_digital_content_available = bool(
@@ -244,10 +347,10 @@ class ProductProduct(models.Model):
             self.variant_non_member_price = 0.0
         else:
             # Set defaults from template if available
-            if not self.variant_member_price and self.product_tmpl_id.member_price:
-                self.variant_member_price = self.product_tmpl_id.member_price
-            if not self.variant_non_member_price and self.product_tmpl_id.non_member_price:
-                self.variant_non_member_price = self.product_tmpl_id.non_member_price
+            if not self.variant_member_price and self.template_member_price:
+                self.variant_member_price = self.template_member_price
+            if not self.variant_non_member_price and self.template_non_member_price:
+                self.variant_non_member_price = self.template_non_member_price
     
     @api.onchange('has_variant_digital_content')
     def _onchange_has_variant_digital_content(self):
@@ -297,7 +400,7 @@ class ProductProduct(models.Model):
         """
         self.ensure_one()
         
-        if self.product_tmpl_id.has_member_pricing:
+        if self.template_has_member_pricing:
             if is_member:
                 return self.final_member_price
             else:
@@ -314,7 +417,7 @@ class ProductProduct(models.Model):
         """
         self.ensure_one()
         
-        if self.product_tmpl_id.has_member_pricing:
+        if self.template_has_member_pricing:
             return self.final_non_member_price - self.final_member_price
         return 0.0
     
@@ -327,14 +430,14 @@ class ProductProduct(models.Model):
         """
         self.ensure_one()
         
-        if not self.product_tmpl_id.is_digital_product:
+        if not self.template_is_digital_product:
             return {}
         
         return {
             'is_digital': True,
             'download_url': self.final_digital_url,
             'attachment_id': self.final_digital_attachment_id.id if self.final_digital_attachment_id else False,
-            'auto_fulfill': self.product_tmpl_id.auto_fulfill_digital,
+            'auto_fulfill': self.template_auto_fulfill_digital,
             'is_available': self.is_digital_content_available,
             'has_variant_content': self.has_variant_digital_content,
         }
@@ -355,11 +458,11 @@ class ProductProduct(models.Model):
             name = f"[{self.effective_sku}] {name}"
         
         # Add digital indicator
-        if self.product_tmpl_id.is_digital_product:
+        if self.template_is_digital_product:
             name = f"{name} (Digital)"
         
         # Add member pricing indicator
-        if self.product_tmpl_id.has_member_pricing:
+        if self.template_has_member_pricing:
             if self.has_variant_pricing:
                 name = f"{name} (Variant Pricing)"
             else:
@@ -385,18 +488,41 @@ class ProductProduct(models.Model):
         domain = []
         
         if is_digital is not None:
-            domain.append(('product_tmpl_id.is_digital_product', '=', is_digital))
+            domain.append(('template_is_digital_product', '=', is_digital))
         
         if has_member_pricing is not None:
-            domain.append(('product_tmpl_id.has_member_pricing', '=', has_member_pricing))
+            domain.append(('template_has_member_pricing', '=', has_member_pricing))
         
         if requires_membership is not None:
-            domain.append(('product_tmpl_id.requires_membership', '=', requires_membership))
+            domain.append(('template_requires_membership', '=', requires_membership))
         
         if product_type_code:
-            domain.append(('product_tmpl_id.ams_product_type_id.code', '=', product_type_code))
+            domain.append(('template_ams_product_type_id.code', '=', product_type_code))
         
         return self.search(domain)
+    
+    def copy_template_pricing_to_variant(self):
+        """Copy template pricing to variant-specific pricing."""
+        for variant in self:
+            variant.write({
+                'has_variant_pricing': True,
+                'variant_member_price': variant.template_member_price,
+                'variant_non_member_price': variant.template_non_member_price,
+            })
+    
+    def sync_with_template_pricing(self):
+        """Sync variant pricing with template pricing."""
+        for variant in self:
+            if not variant.has_variant_pricing:
+                # Reset to use template pricing
+                variant.write({
+                    'variant_member_price': 0.0,
+                    'variant_non_member_price': 0.0,
+                })
+
+    # ========================================================================
+    # ACTION METHODS
+    # ========================================================================
     
     def action_configure_variant_pricing(self):
         """Open variant pricing configuration."""
@@ -447,10 +573,6 @@ class ProductProduct(models.Model):
         
         base_sku = template.sku
         
-        # Add attribute values if this is a variant with attributes
-        # Note: This is simplified - in practice you'd need to look up the actual attributes
-        # based on product_template_attribute_value_ids in vals
-        
         counter = 1
         variant_sku = f"{base_sku}-V{counter:02d}"
         
@@ -478,9 +600,9 @@ class ProductProduct(models.Model):
         context = {
             'product_id': self.id,
             'template_id': self.product_tmpl_id.id,
-            'has_member_pricing': self.product_tmpl_id.has_member_pricing,
+            'has_member_pricing': self.template_has_member_pricing,
             'has_variant_pricing': self.has_variant_pricing,
-            'requires_membership': self.product_tmpl_id.requires_membership,
+            'requires_membership': self.template_requires_membership,
             'effective_sku': self.effective_sku,
         }
         
@@ -494,29 +616,10 @@ class ProductProduct(models.Model):
                 'can_purchase': self.product_tmpl_id.can_be_purchased_by_member_status(is_member),
                 'effective_price': self.get_variant_price_for_member_status(is_member),
                 'member_savings': self.get_variant_member_savings() if is_member else 0.0,
-                'digital_access': self.get_variant_digital_content_access() if self.product_tmpl_id.is_digital_product else {},
+                'digital_access': self.get_variant_digital_content_access() if self.template_is_digital_product else {},
             })
         
         return context
-    
-    def sync_with_template_pricing(self):
-        """Sync variant pricing with template pricing."""
-        for variant in self:
-            if not variant.has_variant_pricing:
-                # Reset to use template pricing
-                variant.write({
-                    'variant_member_price': 0.0,
-                    'variant_non_member_price': 0.0,
-                })
-    
-    def copy_template_pricing_to_variant(self):
-        """Copy template pricing to variant-specific pricing."""
-        for variant in self:
-            variant.write({
-                'has_variant_pricing': True,
-                'variant_member_price': variant.product_tmpl_id.member_price,
-                'variant_non_member_price': variant.product_tmpl_id.non_member_price,
-            })
     
     def name_get(self):
         """Custom name display for AMS product variants."""
