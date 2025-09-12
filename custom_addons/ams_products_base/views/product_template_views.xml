@@ -11,21 +11,30 @@
             
             <!-- Add AMS Product checkbox to General Information tab -->
             <xpath expr="//field[@name='categ_id']" position="after">
-                <field name="is_ams_product"/>
-                <label for="is_ams_product" string="Association Management System Product">
-                    Enable AMS-specific features including member pricing, digital delivery, and inventory integration
-                </label>
-                <field name="ams_product_type_id" invisible="not is_ams_product" 
-                       placeholder="Select product type to configure defaults"/>
+                <field name="inventory_status" readonly="1" invisible="not is_ams_product"/>
+                <field name="is_ams_product" string="Enable AMS Features"/>
+                <div class="text-muted" invisible="not is_ams_product" style="margin-left: 20px; font-style: italic;">
+                    Enables member pricing, digital delivery, and inventory integration
+                </div>
                 <field name="sku" invisible="not is_ams_product" 
                        placeholder="Leave blank for auto-generation"/>
             </xpath>
             
-            <!-- Add Member Pricing after list price -->
+            <!-- Make the existing AMS Product Type field conditional -->
+            <xpath expr="//field[@name='ams_product_type_id']" position="attributes">
+                <attribute name="invisible">not is_ams_product</attribute>
+            </xpath>
+            
+            <!-- Add Member Pricing after list price with proper group structure -->
             <xpath expr="//field[@name='list_price']" position="after">
-                <field name="has_member_pricing" invisible="not is_ams_product" widget="boolean_toggle"/>
-                <field name="member_price" invisible="not has_member_pricing or not is_ams_product" widget="monetary"/>
-                <field name="non_member_price" invisible="not has_member_pricing or not is_ams_product" widget="monetary"/>
+                <group string="Member Pricing" invisible="not is_ams_product" col="2" class="oe_inline">
+                    <field name="has_member_pricing" string="Enable Member Pricing" widget="boolean_toggle" 
+                           help="Allow different prices for association members vs non-members" colspan="2"/>
+                    <field name="member_price" string="Member Price" widget="monetary"
+                           invisible="not has_member_pricing" placeholder="Price for association members"/>
+                    <field name="non_member_price" string="Non-Member Price" widget="monetary"
+                           invisible="not has_member_pricing" placeholder="Price for non-members"/>
+                </group>
             </xpath>
             
             <!-- Add a simple AMS tab -->
