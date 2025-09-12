@@ -9,11 +9,16 @@
         <field name="inherit_id" ref="product.product_template_form_view"/>
         <field name="arch" type="xml">
             
-            <!-- Add AMS fields after product name -->
-            <xpath expr="//field[@name='name']" position="after">
-                <field name="is_ams_product" widget="boolean_toggle"/>
-                <field name="ams_product_type_id" invisible="not is_ams_product"/>
-                <field name="sku" invisible="not is_ams_product" placeholder="Auto-generated if left blank"/>
+            <!-- Add AMS Product checkbox to General Information tab -->
+            <xpath expr="//field[@name='categ_id']" position="after">
+                <field name="is_ams_product"/>
+                <label for="is_ams_product" string="Association Management System Product">
+                    Enable AMS-specific features including member pricing, digital delivery, and inventory integration
+                </label>
+                <field name="ams_product_type_id" invisible="not is_ams_product" 
+                       placeholder="Select product type to configure defaults"/>
+                <field name="sku" invisible="not is_ams_product" 
+                       placeholder="Leave blank for auto-generation"/>
             </xpath>
             
             <!-- Add Member Pricing after list price -->
