@@ -1,16 +1,22 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'AMS Product Types',
-    'version': '18.0.1.0.0',
+    'version': '18.0.2.0.0',
     'category': 'Association Management',
-    'summary': 'Product classification and categorization system',
+    'summary': 'Enhanced product categories with AMS-specific functionality',
     'description': """
-AMS Product Types
-=================
+AMS Product Types - Enhanced Product Category System
+===================================================
 
-This module provides foundational product classification and categorization:
+This module enhances Odoo's standard product categories with AMS-specific functionality:
 
-* Product Type Management
+* **Enhanced Product Categories**
+  - AMS-specific category types (membership, event, education, etc.)
+  - Category-driven product attributes and defaults
+  - Automatic product configuration based on category selection
+  - Smart business rules for digital, subscription, and inventory products
+
+* **Category-Based Product Classification**
   - Membership products (renewals, upgrades)
   - Event products (registrations, tickets)
   - Educational products (courses, training)
@@ -19,28 +25,38 @@ This module provides foundational product classification and categorization:
   - Certifications (exams, credentials)
   - Digital downloads (e-books, resources)
 
-* Product Classification Features
-  - Category-based organization
+* **Automatic Product Configuration**
   - Member vs. non-member pricing support
   - Subscription product identification
   - Digital product handling
   - Inventory tracking requirements
+  - Service vs stockable product type setting
 
-* Foundation Features
-  - Extensible classification system
-  - Configurable product attributes
-  - Integration with pricing systems
-  - Audit trail support
+* **Enhanced Category Management**
+  - Category-specific product counts and statistics
+  - Bulk product creation from categories
+  - Category-based product filtering and search
+  - Rich category summary and attribute display
 
-This is a Layer 1 foundation module that provides core product classification
-infrastructure for all other AMS modules dealing with products and services.
+* **Foundation Features**
+  - Extensible category attribute system
+  - Configurable product defaults per category
+  - Integration with Odoo's native category features
+  - Audit trail and tracking support
 
-Key Features:
-* Comprehensive product categorization
-* Flexible pricing model support
-* Digital and physical product handling
-* Built-in validation and business rules
-* User-friendly administrative interface
+Key Benefits:
+* Single classification system using enhanced product categories
+* No separate product type model to maintain
+* Leverages Odoo's native category hierarchy and features
+* Simplified architecture with category-driven defaults
+* Better performance through native Odoo category indexing
+
+Version 2.0 Changes:
+* Removed separate ams.product.type model
+* Enhanced product.category with AMS-specific fields
+* Simplified architecture using native Odoo categories
+* Better integration with Odoo's existing category features
+* Improved performance through native category relationships
     """,
     'author': 'Your Organization',
     'website': 'https://your-website.com',
@@ -49,14 +65,15 @@ Key Features:
         'base',
         'product',
         'mail',
+        'stock',  # For route and fulfillment features
     ],
     'data': [
         # Security
         'security/ir.model.access.csv',
-        # Data
-        'data/product_type_data.xml',
-        # Views
-        'views/product_type_views.xml',
+        # Data - Create enhanced categories
+        'data/enhanced_category_data.xml',
+        # Views - Enhanced category management
+        'views/product_category_enhanced_views.xml',
     ],
     'demo': [],
     'images': ['static/description/icon.png'],

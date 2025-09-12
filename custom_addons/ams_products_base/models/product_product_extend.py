@@ -108,7 +108,7 @@ class ProductProduct(models.Model):
     )
 
     # ========================================================================
-    # TEMPLATE FIELD REFERENCES (for easier access)
+    # TEMPLATE FIELD REFERENCES (for easier access) - Updated for categories
     # ========================================================================
 
     template_is_ams_product = fields.Boolean(
@@ -117,9 +117,9 @@ class ProductProduct(models.Model):
         readonly=True
     )
 
-    template_ams_product_type_id = fields.Many2one(
-        related='product_tmpl_id.ams_product_type_id',
-        string="Template AMS Product Type",
+    template_ams_category_type = fields.Selection(
+        related='product_tmpl_id.ams_category_type',
+        string="Template AMS Category Type",
         readonly=True
     )
 
@@ -178,8 +178,27 @@ class ProductProduct(models.Model):
     )
 
     template_member_discount_percentage = fields.Float(
-        related='product_tmpl_id.member_discount_percentage',  # This works in variants
+        related='product_tmpl_id.member_discount_percentage',
         string="Template Member Discount %",
+        readonly=True
+    )
+
+    # Category-related fields for variants
+    template_category_requires_member_pricing = fields.Boolean(
+        related='product_tmpl_id.category_requires_member_pricing',
+        string="Category Requires Member Pricing",
+        readonly=True
+    )
+
+    template_category_is_digital = fields.Boolean(
+        related='product_tmpl_id.category_is_digital',
+        string="Category is Digital",
+        readonly=True
+    )
+
+    template_category_requires_inventory = fields.Boolean(
+        related='product_tmpl_id.category_requires_inventory',
+        string="Category Requires Inventory",
         readonly=True
     )
 
@@ -586,6 +605,21 @@ class ProductProduct(models.Model):
             'context': {'default_product_id': self.id},
         }
 
+    def action_view_category(self):
+        """Open the product category form."""
+        self.ensure_one()
+        if not self.product_tmpl_id.categ_id:
+            return False
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Product Category'),
+            'res_model': 'product.category',
+            'view_mode': 'form',
+            'res_id': self.product_tmpl_id.categ_id.id,
+            'target': 'current',
+        }
+
     # ========================================================================
     # SEARCH AND DISPLAY METHODS
     # ========================================================================
@@ -605,7 +639,7 @@ class ProductProduct(models.Model):
     # ========================================================================
 
     @api.model
-    def get_variants_by_ams_criteria(self, is_digital=None, stock_controlled=None, has_member_pricing=None):
+    def get_variants_by_ams_criteria(self, is_digital=None, stock_controlled=None, has_member_pricing=None, ams_category_type=None):
         """Get variants by AMS criteria."""
         domain = [('template_is_ams_product', '=', True)]
         
@@ -615,6 +649,8 @@ class ProductProduct(models.Model):
             domain.append(('effective_stock_controlled', '=', stock_controlled))
         if has_member_pricing is not None:
             domain.append(('template_has_member_pricing', '=', has_member_pricing))
+        if ams_category_type is not None:
+            domain.append(('template_ams_category_type', '=', ams_category_type))
             
         return self.search(domain)
 

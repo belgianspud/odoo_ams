@@ -11,9 +11,10 @@ AMS Products Base - Foundation Product Module
 This module provides the core product data structures and AMS-specific extensions
 for the Association Management System:
 
-* **AMS Product Classification**
-  - Products identified as AMS-specific with type classification
-  - Integration with AMS product types and Odoo product categories
+* **Category-Based AMS Classification**
+  - Products classified using enhanced Odoo product categories
+  - AMS-specific category types (membership, event, education, etc.)
+  - Automatic product configuration based on category attributes
 
 * **Member Pricing System** 
   - Member vs non-member pricing with automatic calculations
@@ -38,8 +39,15 @@ for the Association Management System:
 * **Business Features**
   - Membership requirement flags for restricted products
   - Rich business methods for pricing and access control
+  - Category-driven product defaults and validation
 
 Foundation module for all AMS product-related functionality.
+
+Key Changes in v18:
+* Removed separate ams.product.type model
+* Enhanced product.category with AMS-specific fields
+* Simplified architecture with single classification system
+* Better integration with Odoo's native category features
     """,
     'author': 'Your Organization',
     'website': 'https://your-website.com',
@@ -51,10 +59,12 @@ Foundation module for all AMS product-related functionality.
         'stock',
         'mail',
         'ams_member_data',
-        'ams_product_types',
+        # Removed 'ams_product_types' - now using enhanced product.category
     ],
     'data': [
         'security/ir.model.access.csv',
+        'data/product_category_data.xml',  # Renamed from pricelists_data.xml
+        'views/product_category_views.xml',  # New - for enhanced categories
         'views/product_template_views.xml',
         'views/product_product_views.xml',
     ],

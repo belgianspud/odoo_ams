@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ========================================================================== -->
+    <!-- ENHANCED PRODUCT CATEGORY FORM VIEW -->
+    <!-- ========================================================================== -->
+    <record id="product_category_form_view_enhanced" model="ir.ui.view">
+        <field name="name">product.category.form.enhanced</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add stat buttons for AMS categories -->
+            <xpath expr="//div[@class='oe_button_box']" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_ams_products" 
+                        icon="fa-cube" invisible="not is_ams_category or ams_product_count == 0">
+                    <field name="ams_product_count" widget="statinfo" string="AMS Products"/>
+                </button>
+                <button class="oe_stat_button" type="object" name="action_view_all_products" 
+                        icon="fa-cubes" invisible="total_product_count == 0">
+                    <field name="total_product_count" widget="statinfo" string="Total Products"/>
+                </button>
+                <button class="oe_stat_button" type="object" name="action_create_ams_product" 
+                        icon="fa-plus-circle" invisible="not is_ams_category"
+                        string="Create Product"/>
+            </xpath>
+
+            <!-- Add AMS fields after the name field -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="is_ams_category" string="Enable AMS Features" widget="boolean_toggle"/>
+                <div class="text-muted" invisible="not is_ams_category" style="margin-left: 20px; font-style: italic;">
+                    Enhanced category with AMS-specific attributes and automatic product defaults
+                </div>
+                <field name="ams_category_type" invisible="not is_ams_category"/>
+            </xpath>
+
+            <!-- Replace the basic group with enhanced AMS configuration -->
+            <xpath expr="//group" position="after">
+                <!-- AMS Configuration Section -->
+                <group string="AMS Configuration" invisible="not is_ams_category">
+                    <group string="Category Attributes">
+                        <field name="requires_member_pricing" string="Member Pricing" widget="boolean_toggle"
+                               help="Products in this category offer different prices for members vs non-members"/>
+                        <field name="is_subscription_category" string="Subscription Products" widget="boolean_toggle"
+                               help="Products in this category are recurring subscriptions"/>
+                    </group>
+                    <group string="Product Type">
+                        <field name="is_digital_category" string="Digital Products" widget="boolean_toggle"
+                               help="Products in this category are delivered digitally"/>
+                        <field name="requires_inventory" string="Inventory Tracking" widget="boolean_toggle" 
+                               invisible="is_digital_category"
+                               help="Products in this category require physical inventory management"/>
+                    </group>
+                </group>
+                
+                <!-- Category Defaults Section -->
+                <group string="Product Defaults" invisible="not is_ams_category">
+                    <group>
+                        <field name="default_uom_id" string="Default Unit of Measure"/>
+                        <field name="category_type_display" string="Category Type" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="default_route_ids" widget="many2many_tags" 
+                               invisible="not requires_inventory"
+                               string="Default Routes"/>
+                        <field name="category_summary" string="Summary" readonly="1"/>
+                    </group>
+                </group>
+
+                <!-- Category Information Display -->
+                <group string="Category Information">
+                    <div class="alert alert-info" role="alert" invisible="not is_ams_category">
+                        <h5><i class="fa fa-info-circle"></i> AMS Category Configuration</h5>
+                        <p class="mb-2">
+                            <strong>Products created in this category will automatically inherit:</strong>
+                        </p>
+                        <ul class="mb-2">
+                            <li invisible="not requires_member_pricing">Member pricing functionality</li>
+                            <li invisible="not is_digital_category">Digital product delivery settings</li>
+                            <li invisible="not requires_inventory">Inventory tracking and stock management</li>
+                            <li invisible="not is_subscription_category">Subscription billing configuration</li>
+                            <li>AMS product features and enhanced functionality</li>
+                        </ul>
+                        <div class="mt-3">
+                            <button name="action_create_ams_product" type="object" 
+                                    string="Create Product Now" class="btn btn-primary btn-sm"/>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning" role="alert" 
+                         invisible="is_ams_category or not total_product_count">
+                        <strong>Standard Odoo Category:</strong> This is a regular product category. 
+                        Enable "AMS Features" to add enhanced functionality for association products.
+                    </div>
+                </group>
+            </xpath>
+
+            <!-- Add action buttons at bottom -->
+            <xpath expr="//sheet" position="inside">
+                <div class="oe_clear"/>
+                <group string="Category Actions" invisible="not is_ams_category" col="4">
+                    <button name="action_view_ams_products" type="object" string="View AMS Products" 
+                            class="oe_link" icon="fa-eye" invisible="ams_product_count == 0"/>
+                    <button name="action_create_ams_product" type="object" string="Create Product" 
+                            class="oe_link" icon="fa-plus"/>
+                    <button name="toggle_ams_category" type="object" string="Toggle AMS" 
+                            class="oe_link" icon="fa-toggle-on"/>
+                    <button name="action_configure_category" type="object" string="Configure" 
+                            class="oe_link" icon="fa-cog"/>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- ENHANCED PRODUCT CATEGORY LIST VIEW -->
+    <!-- ========================================================================== -->
+    <record id="product_category_list_view_enhanced" model="ir.ui.view">
+        <field name="name">product.category.list.enhanced</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_list_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add AMS fields after the tree tag - safer approach -->
+            <xpath expr="//tree" position="inside">
+                <field name="is_ams_category" string="AMS" widget="boolean_toggle" optional="hide"/>
+                <field name="ams_category_type" string="AMS Type" optional="hide"/>
+                <field name="category_type_display" string="Type Display" optional="hide"/>
+                <field name="requires_member_pricing" string="Member Pricing" widget="boolean_toggle" optional="hide"/>
+                <field name="is_digital_category" string="Digital" widget="boolean_toggle" optional="hide"/>
+                <field name="is_subscription_category" string="Subscription" widget="boolean_toggle" optional="hide"/>
+                <field name="requires_inventory" string="Inventory" widget="boolean_toggle" optional="hide"/>
+                <field name="ams_product_count" string="AMS Products" optional="show"/>
+                <field name="total_product_count" string="Total Products" optional="show"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- ENHANCED PRODUCT CATEGORY SEARCH VIEW -->
+    <!-- ========================================================================== -->
+    <record id="product_category_search_view_enhanced" model="ir.ui.view">
+        <field name="name">product.category.search.enhanced</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_search_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add AMS-specific search fields -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="ams_category_type" string="AMS Type"/>
+                <field name="category_summary" string="AMS Summary"/>
+                <field name="category_type_display" string="Category Type"/>
+            </xpath>
+
+            <!-- Add AMS filters -->
+            <xpath expr="//filter[@name='inactive']" position="after">
+                <separator/>
+                <filter string="AMS Categories" name="ams_categories" domain="[('is_ams_category', '=', True)]"/>
+                <filter string="Standard Categories" name="standard_categories" domain="[('is_ams_category', '=', False)]"/>
+                
+                <separator/>
+                <filter string="Member Pricing" name="member_pricing" domain="[('requires_member_pricing', '=', True)]"/>
+                <filter string="Digital Categories" name="digital_categories" domain="[('is_digital_category', '=', True)]"/>
+                <filter string="Physical Categories" name="physical_categories" domain="[('is_digital_category', '=', False), ('is_ams_category', '=', True)]"/>
+                <filter string="Subscription Categories" name="subscription_categories" domain="[('is_subscription_category', '=', True)]"/>
+                <filter string="Inventory Tracked" name="inventory_tracked" domain="[('requires_inventory', '=', True)]"/>
+                
+                <separator/>
+                <filter string="Membership" name="membership" domain="[('ams_category_type', '=', 'membership')]"/>
+                <filter string="Events" name="events" domain="[('ams_category_type', '=', 'event')]"/>
+                <filter string="Education" name="education" domain="[('ams_category_type', '=', 'education')]"/>
+                <filter string="Publications" name="publications" domain="[('ams_category_type', '=', 'publication')]"/>
+                <filter string="Merchandise" name="merchandise" domain="[('ams_category_type', '=', 'merchandise')]"/>
+                <filter string="Certifications" name="certifications" domain="[('ams_category_type', '=', 'certification')]"/>
+                <filter string="Digital Downloads" name="digital_downloads" domain="[('ams_category_type', '=', 'digital')]"/>
+                
+                <separator/>
+                <filter string="Categories with Products" name="has_products" domain="[('total_product_count', '>', 0)]"/>
+                <filter string="Empty Categories" name="empty_categories" domain="[('total_product_count', '=', 0)]"/>
+            </xpath>
+
+            <!-- Add AMS grouping options -->
+            <xpath expr="//group[@expand='0']" position="inside">
+                <filter string="AMS Category Type" name="group_ams_type" 
+                        context="{'group_by': 'ams_category_type'}"/>
+                <filter string="AMS Status" name="group_ams_status" 
+                        context="{'group_by': 'is_ams_category'}"/>
+                <filter string="Member Pricing" name="group_member_pricing" 
+                        context="{'group_by': 'requires_member_pricing'}"/>
+                <filter string="Digital/Physical" name="group_digital" 
+                        context="{'group_by': 'is_digital_category'}"/>
+                <filter string="Subscription Type" name="group_subscription" 
+                        context="{'group_by': 'is_subscription_category'}"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- AMS CATEGORY KANBAN VIEW -->
+    <!-- ========================================================================== -->
+    <record id="product_category_kanban_view_enhanced" model="ir.ui.view">
+        <field name="name">product.category.kanban.enhanced</field>
+        <field name="model">product.category</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1" default_group_by="ams_category_type">
+                <field name="name"/>
+                <field name="is_ams_category"/>
+                <field name="ams_category_type"/>
+                <field name="category_type_display"/>
+                <field name="requires_member_pricing"/>
+                <field name="is_subscription_category"/>
+                <field name="is_digital_category"/>
+                <field name="requires_inventory"/>
+                <field name="ams_product_count"/>
+                <field name="total_product_count"/>
+                <field name="category_summary"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click #{!record.is_ams_category.raw_value ? 'o_kanban_color_10' : ''}">
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary">
+                                        <field name="name"/>
+                                        <t t-if="record.is_ams_category.raw_value">
+                                            <span class="badge badge-pill badge-primary ml-2">AMS</span>
+                                        </t>
+                                    </div>
+                                    <div class="o_secondary" t-if="record.category_type_display.raw_value">
+                                        <t t-esc="record.category_type_display.value"/>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_manage_button_section">
+                                    <a class="o_kanban_manage_toggle_button" href="#">
+                                        <i class="fa fa-ellipsis-v" role="img" aria-label="Manage" title="Manage"/>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="o_kanban_card_content">
+                                <div class="o_kanban_card_manage_pane dropdown-menu" role="menu">
+                                    <a role="menuitem" type="edit" class="dropdown-item">Edit</a>
+                                    <a role="menuitem" name="action_view_ams_products" type="object" class="dropdown-item" 
+                                       t-if="record.is_ams_category.raw_value and record.ams_product_count.raw_value > 0">
+                                        View AMS Products
+                                    </a>
+                                    <a role="menuitem" name="action_view_all_products" type="object" class="dropdown-item"
+                                       t-if="record.total_product_count.raw_value > 0">
+                                        View All Products
+                                    </a>
+                                    <a role="menuitem" name="action_create_ams_product" type="object" class="dropdown-item"
+                                       t-if="record.is_ams_category.raw_value">
+                                        Create Product
+                                    </a>
+                                    <a role="menuitem" name="toggle_ams_category" type="object" class="dropdown-item">
+                                        Toggle AMS Features
+                                    </a>
+                                    <a role="menuitem" type="delete" class="dropdown-item">Delete</a>
+                                </div>
+                                <div class="container o_kanban_card_content o_visible">
+                                    <div class="row" t-if="record.is_ams_category.raw_value">
+                                        <div class="col-6 o_kanban_primary_left">
+                                            <button class="btn btn-primary btn-sm" name="action_view_ams_products" type="object"
+                                                    t-if="record.ams_product_count.raw_value > 0">
+                                                <field name="ams_product_count"/> AMS
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-sm" name="action_view_all_products" type="object"
+                                                    t-if="record.total_product_count.raw_value > record.ams_product_count.raw_value">
+                                                <field name="total_product_count"/> Total
+                                            </button>
+                                            <button class="btn btn-success btn-sm" name="action_create_ams_product" type="object"
+                                                    t-if="record.ams_product_count.raw_value == 0">
+                                                Create Product
+                                            </button>
+                                        </div>
+                                        <div class="col-6 o_kanban_primary_right">
+                                            <div class="mb-2">
+                                                <t t-if="record.requires_member_pricing.raw_value">
+                                                    <span class="badge badge-pill badge-info">Member Pricing</span><br/>
+                                                </t>
+                                                <t t-if="record.is_subscription_category.raw_value">
+                                                    <span class="badge badge-pill badge-success">Subscription</span><br/>
+                                                </t>
+                                                <t t-if="record.is_digital_category.raw_value">
+                                                    <span class="badge badge-pill badge-warning">Digital</span><br/>
+                                                </t>
+                                                <t t-if="record.requires_inventory.raw_value and not record.is_digital_category.raw_value">
+                                                    <span class="badge badge-pill badge-secondary">Inventory</span>
+                                                </t>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="container o_kanban_card_content" t-if="not record.is_ams_category.raw_value">
+                                        <div class="text-center">
+                                            <p class="text-muted mb-2">
+                                                <small>Standard Odoo Category</small>
+                                            </p>
+                                            <button class="btn btn-outline-primary btn-sm" name="toggle_ams_category" type="object">
+                                                Enable AMS Features
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- AMS CATEGORIES ACTIONS -->
+    <!-- ========================================================================== -->
+    
+    <!-- Main AMS Categories Action -->
+    <record id="action_ams_product_categories" model="ir.actions.act_window">
+        <field name="name">AMS Product Categories</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('is_ams_category', '=', True)]</field>
+        <field name="context">{'search_default_ams_categories': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first AMS product category!
+            </p>
+            <p>
+                AMS product categories provide enhanced classification for association products.
+                Set up categories with specific attributes for pricing, inventory, and delivery methods.
+            </p>
+        </field>
+    </record>
+
+    <!-- All Categories with AMS Enhancements -->
+    <record id="action_all_product_categories_enhanced" model="ir.actions.act_window">
+        <field name="name">Product Categories (Enhanced)</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first product category!
+            </p>
+            <p>
+                Product categories help organize your products. Enable "AMS Features" 
+                to add enhanced functionality for association products including 
+                member pricing, digital delivery, and subscription management.
+            </p>
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- SPECIFIC AMS CATEGORY TYPE ACTIONS -->
+    <!-- ========================================================================== -->
+    
+    <record id="action_membership_categories" model="ir.actions.act_window">
+        <field name="name">Membership Categories</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('ams_category_type', '=', 'membership')]</field>
+        <field name="context">{
+            'default_ams_category_type': 'membership', 
+            'default_is_ams_category': True,
+            'search_default_membership': 1
+        }</field>
+    </record>
+
+    <record id="action_event_categories" model="ir.actions.act_window">
+        <field name="name">Event Categories</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('ams_category_type', '=', 'event')]</field>
+        <field name="context">{
+            'default_ams_category_type': 'event', 
+            'default_is_ams_category': True,
+            'search_default_events': 1
+        }</field>
+    </record>
+
+    <record id="action_education_categories" model="ir.actions.act_window">
+        <field name="name">Education Categories</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('ams_category_type', '=', 'education')]</field>
+        <field name="context">{
+            'default_ams_category_type': 'education', 
+            'default_is_ams_category': True,
+            'search_default_education': 1
+        }</field>
+    </record>
+
+    <record id="action_publication_categories" model="ir.actions.act_window">
+        <field name="name">Publication Categories</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('ams_category_type', '=', 'publication')]</field>
+        <field name="context">{
+            'default_ams_category_type': 'publication', 
+            'default_is_ams_category': True,
+            'search_default_publications': 1
+        }</field>
+    </record>
+
+    <record id="action_merchandise_categories" model="ir.actions.act_window">
+        <field name="name">Merchandise Categories</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('ams_category_type', '=', 'merchandise')]</field>
+        <field name="context">{
+            'default_ams_category_type': 'merchandise', 
+            'default_is_ams_category': True,
+            'search_default_merchandise': 1
+        }</field>
+    </record>
+
+    <record id="action_certification_categories" model="ir.actions.act_window">
+        <field name="name">Certification Categories</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('ams_category_type', '=', 'certification')]</field>
+        <field name="context">{
+            'default_ams_category_type': 'certification', 
+            'default_is_ams_category': True,
+            'search_default_certifications': 1
+        }</field>
+    </record>
+
+    <record id="action_digital_categories" model="ir.actions.act_window">
+        <field name="name">Digital Product Categories</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('ams_category_type', '=', 'digital')]</field>
+        <field name="context">{
+            'default_ams_category_type': 'digital', 
+            'default_is_ams_category': True,
+            'search_default_digital_downloads': 1
+        }</field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- MENU ITEMS -->
+    <!-- ========================================================================== -->
+    
+    <!-- Main Menu for AMS Product Categories -->
+    <menuitem id="menu_ams_product_categories"
+              name="AMS Categories"
+              parent="base.menu_administration"
+              action="action_ams_product_categories"
+              sequence="25"
+              groups="base.group_system"/>
+
+</odoo>

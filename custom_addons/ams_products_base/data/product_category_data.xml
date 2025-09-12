@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- ========================================================================== -->
+        <!-- AMS ENHANCED PRODUCT CATEGORIES -->
+        <!-- ========================================================================== -->
+        
+        <!-- Membership Categories -->
+        <record id="category_annual_membership" model="product.category">
+            <field name="name">Annual Membership</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">membership</field>
+            <field name="requires_member_pricing">False</field>
+            <field name="is_subscription_category">True</field>
+            <field name="is_digital_category">False</field>
+            <field name="requires_inventory">False</field>
+        </record>
+
+        <record id="category_lifetime_membership" model="product.category">
+            <field name="name">Lifetime Membership</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">membership</field>
+            <field name="requires_member_pricing">False</field>
+            <field name="is_subscription_category">False</field>
+            <field name="is_digital_category">False</field>
+            <field name="requires_inventory">False</field>
+        </record>
+
+        <record id="category_student_membership" model="product.category">
+            <field name="name">Student Membership</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">membership</field>
+            <field name="requires_member_pricing">False</field>
+            <field name="is_subscription_category">True</field>
+            <field name="is_digital_category">False</field>
+            <field name="requires_inventory">False</field>
+        </record>
+
+        <!-- Event Categories -->
+        <record id="category_conference_registration" model="product.category">
+            <field name="name">Conference Registration</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">event</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">False</field>
+            <field name="is_digital_category">False</field>
+            <field name="requires_inventory">False</field>
+        </record>
+
+        <record id="category_workshop_registration" model="product.category">
+            <field name="name">Workshop Registration</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">event</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">False</field>
+            <field name="is_digital_category">False</field>
+            <field name="requires_inventory">False</field>
+        </record>
+
+        <record id="category_webinar_access" model="product.category">
+            <field name="name">Webinar Access</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">event</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">False</field>
+            <field name="is_digital_category">True</field>
+            <field name="requires_inventory">False</field>
+        </record>
+
+        <record id="category_gala_ticket" model="product.category">
+            <field name="name">Gala Ticket</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">event</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">False</field>
+            <field name="is_digital_category">False</field>
+            <field name="requires_inventory">False</field>
+        </record>
+
+        <!-- Education Categories -->
+        <record id="category_continuing_education" model="product.category">
+            <field name="name">Continuing Education Course</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">education</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">False</field>
+            <field name="is_digital_category">False</field>
+            <field name="requires_inventory">True</field>
+        </record>
+
+        <record id="category_online_course" model="product.category">
+            <field name="name">Online Course</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">education</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">False</field>
+            <field name="is_digital_category">True</field>
+            <field name="requires_inventory">False</field>
+        </record>
+
+        <record id="category_consulting" model="product.category">
+            <field name="name">Consulting Services</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">education</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">False</field>
+            <field name="is_digital_category">False</field>
+            <field name="requires_inventory">False</field>
+        </record>
+
+        <!-- Publication Categories -->
+        <record id="category_magazine_subscription" model="product.category">
+            <field name="name">Magazine Subscription</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">publication</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">True</field>
+            <field name="is_digital_category">False</field>
+            <field name="requires_inventory">True</field>
+        </record>
+
+        <record id="category_digital_publication" model="product.category">
+            <field name="name">Digital Publication</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">publication</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">True</field>
+            <field name="is_digital_category">True</field>
+            <field name="requires_inventory">False</field>
+        </record>
+
+        <record id="category_technical_manual" model="product.category">
+            <field name="name">Technical Manual</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">publication</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">False</field>
+            <field name="is_digital_category">False</field>
+            <field name="requires_inventory">True</field>
+        </record>
+
+        <!-- Merchandise Categories -->
+        <record id="category_apparel" model="product.category">
+            <field name="name">Apparel</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">merchandise</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">False</field>
+            <field name="is_digital_category">False</field>
+            <field name="requires_inventory">True</field>
+        </record>
+
+        <record id="category_promotional_items" model="product.category">
+            <field name="name">Promotional Items</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">merchandise</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">False</field>
+            <field name="is_digital_category">False</field>
+            <field name="requires_inventory">True</field>
+        </record>
+
+        <!-- Certification Categories -->
+        <record id="category_professional_certification" model="product.category">
+            <field name="name">Professional Certification</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">certification</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">False</field>
+            <field name="is_digital_category">True</field>
+            <field name="requires_inventory">False</field>
+        </record>
+
+        <record id="category_cert_renewal" model="product.category">
+            <field name="name">Certification Renewal</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">certification</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">True</field>
+            <field name="is_digital_category">True</field>
+            <field name="requires_inventory">False</field>
+        </record>
+
+        <!-- Digital Download Categories -->
+        <record id="category_digital_resource" model="product.category">
+            <field name="name">Digital Resource</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">digital</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">False</field>
+            <field name="is_digital_category">True</field>
+            <field name="requires_inventory">False</field>
+        </record>
+
+        <record id="category_software_license" model="product.category">
+            <field name="name">Software License</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">digital</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">True</field>
+            <field name="is_digital_category">True</field>
+            <field name="requires_inventory">False</field>
+        </record>
+
+        <record id="category_ebook" model="product.category">
+            <field name="name">E-Book</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">digital</field>
+            <field name="requires_member_pricing">True</field>
+            <field name="is_subscription_category">False</field>
+            <field name="is_digital_category">True</field>
+            <field name="requires_inventory">False</field>
+        </record>
+
+        <record id="category_member_directory" model="product.category">
+            <field name="name">Member Directory Access</field>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">digital</field>
+            <field name="requires_member_pricing">False</field>
+            <field name="is_subscription_category">True</field>
+            <field name="is_digital_category">True</field>
+            <field name="requires_inventory">False</field>
+        </record>
+
+        <!-- ========================================================================== -->
+        <!-- HIERARCHICAL CATEGORY STRUCTURE (Optional) -->
+        <!-- ========================================================================== -->
+        
+        <!-- Root AMS Category -->
+        <record id="category_ams_root" model="product.category">
+            <field name="name">AMS Products</field>
+            <field name="is_ams_category">True</field>
+        </record>
+
+        <!-- Main Category Groups -->
+        <record id="category_membership_root" model="product.category">
+            <field name="name">Memberships</field>
+            <field name="parent_id" ref="category_ams_root"/>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">membership</field>
+        </record>
+
+        <record id="category_events_root" model="product.category">
+            <field name="name">Events</field>
+            <field name="parent_id" ref="category_ams_root"/>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">event</field>
+        </record>
+
+        <record id="category_education_root" model="product.category">
+            <field name="name">Education</field>
+            <field name="parent_id" ref="category_ams_root"/>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">education</field>
+        </record>
+
+        <record id="category_publications_root" model="product.category">
+            <field name="name">Publications</field>
+            <field name="parent_id" ref="category_ams_root"/>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">publication</field>
+        </record>
+
+        <record id="category_merchandise_root" model="product.category">
+            <field name="name">Merchandise</field>
+            <field name="parent_id" ref="category_ams_root"/>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">merchandise</field>
+        </record>
+
+        <record id="category_certifications_root" model="product.category">
+            <field name="name">Certifications</field>
+            <field name="parent_id" ref="category_ams_root"/>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">certification</field>
+        </record>
+
+        <record id="category_digital_root" model="product.category">
+            <field name="name">Digital Products</field>
+            <field name="parent_id" ref="category_ams_root"/>
+            <field name="is_ams_category">True</field>
+            <field name="ams_category_type">digital</field>
+        </record>
+
+        <!-- Update specific categories to be under parent groups -->
+        <record id="category_annual_membership" model="product.category">
+            <field name="parent_id" ref="category_membership_root"/>
+        </record>
+
+        <record id="category_lifetime_membership" model="product.category">
+            <field name="parent_id" ref="category_membership_root"/>
+        </record>
+
+        <record id="category_student_membership" model="product.category">
+            <field name="parent_id" ref="category_membership_root"/>
+        </record>
+
+        <record id="category_conference_registration" model="product.category">
+            <field name="parent_id" ref="category_events_root"/>
+        </record>
+
+        <record id="category_workshop_registration" model="product.category">
+            <field name="parent_id" ref="category_events_root"/>
+        </record>
+
+        <record id="category_webinar_access" model="product.category">
+            <field name="parent_id" ref="category_events_root"/>
+        </record>
+
+        <record id="category_gala_ticket" model="product.category">
+            <field name="parent_id" ref="category_events_root"/>
+        </record>
+
+        <record id="category_continuing_education" model="product.category">
+            <field name="parent_id" ref="category_education_root"/>
+        </record>
+
+        <record id="category_online_course" model="product.category">
+            <field name="parent_id" ref="category_education_root"/>
+        </record>
+
+        <record id="category_consulting" model="product.category">
+            <field name="parent_id" ref="category_education_root"/>
+        </record>
+
+        <record id="category_magazine_subscription" model="product.category">
+            <field name="parent_id" ref="category_publications_root"/>
+        </record>
+
+        <record id="category_digital_publication" model="product.category">
+            <field name="parent_id" ref="category_publications_root"/>
+        </record>
+
+        <record id="category_technical_manual" model="product.category">
+            <field name="parent_id" ref="category_publications_root"/>
+        </record>
+
+        <record id="category_apparel" model="product.category">
+            <field name="parent_id" ref="category_merchandise_root"/>
+        </record>
+
+        <record id="category_promotional_items" model="product.category">
+            <field name="parent_id" ref="category_merchandise_root"/>
+        </record>
+
+        <record id="category_professional_certification" model="product.category">
+            <field name="parent_id" ref="category_certifications_root"/>
+        </record>
+
+        <record id="category_cert_renewal" model="product.category">
+            <field name="parent_id" ref="category_certifications_root"/>
+        </record>
+
+        <record id="category_digital_resource" model="product.category">
+            <field name="parent_id" ref="category_digital_root"/>
+        </record>
+
+        <record id="category_software_license" model="product.category">
+            <field name="parent_id" ref="category_digital_root"/>
+        </record>
+
+        <record id="category_ebook" model="product.category">
+            <field name="parent_id" ref="category_digital_root"/>
+        </record>
+
+        <record id="category_member_directory" model="product.category">
+            <field name="parent_id" ref="category_digital_root"/>
+        </record>
+
+    </data>
+
+    <!-- ========================================================================== -->
+    <!-- MEMBER AND NON-MEMBER PRICELISTS -->
+    <!-- ========================================================================== -->
+    <data noupdate="1">
+        
+        <!-- Member Pricelist -->
+        <record id="pricelist_ams_members" model="product.pricelist">
+            <field name="name">AMS Member Pricing</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+        <!-- Standard/Non-Member Pricelist -->
+        <record id="pricelist_ams_standard" model="product.pricelist">
+            <field name="name">AMS Standard Pricing</field>
+            <field name="currency_id" ref="base.USD"/>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+        <!-- Example: 20% member discount on educational products -->
+        <record id="pricelist_members_education_discount" model="product.pricelist.item">
+            <field name="pricelist_id" ref="pricelist_ams_members"/>
+            <field name="applied_on">2_product_category</field>
+            <field name="categ_id" ref="category_education_root"/>
+            <field name="percent_price">80</field>  <!-- 20% discount -->
+            <field name="name">Member Discount - Educational Products</field>
+        </record>
+        
+    </data>
+</odoo>

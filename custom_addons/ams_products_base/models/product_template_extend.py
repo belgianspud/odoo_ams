@@ -21,12 +21,6 @@ class ProductTemplate(models.Model):
         help="Mark this product as an AMS-managed product with enhanced features"
     )
 
-    ams_product_type_id = fields.Many2one(
-        'ams.product.type',
-        string="AMS Product Type",
-        help="AMS-specific product type that drives business rules and defaults"
-    )
-
     sku = fields.Char(
         string="SKU",
         size=64,
@@ -37,6 +31,45 @@ class ProductTemplate(models.Model):
         string="Legacy Product ID",
         size=32,
         help="Product ID from legacy/external systems for data migration"
+    )
+
+    # ========================================================================
+    # AMS CATEGORY INTEGRATION (replaces ams_product_type_id)
+    # ========================================================================
+
+    ams_category_type = fields.Selection(
+        related='categ_id.ams_category_type',
+        string="AMS Category Type",
+        store=True,
+        help="AMS category type from product category"
+    )
+    
+    category_requires_member_pricing = fields.Boolean(
+        related='categ_id.requires_member_pricing',
+        string="Category Supports Member Pricing",
+        store=True,
+        help="Category supports member pricing"
+    )
+    
+    category_is_subscription = fields.Boolean(
+        related='categ_id.is_subscription_category',
+        string="Category is Subscription",
+        store=True,
+        help="Category is for subscription products"
+    )
+    
+    category_is_digital = fields.Boolean(
+        related='categ_id.is_digital_category',
+        string="Category is Digital",
+        store=True,
+        help="Category is for digital products"
+    )
+    
+    category_requires_inventory = fields.Boolean(
+        related='categ_id.requires_inventory',
+        string="Category Requires Inventory",
+        store=True,
+        help="Category requires inventory tracking"
     )
 
     # ========================================================================
@@ -99,7 +132,6 @@ class ProductTemplate(models.Model):
         help="Enable inventory tracking and stock management"
     )
 
-    # FIXED: Changed from 'stock.location.route' to 'stock.route' and removed problematic domain
     ams_fulfillment_route_id = fields.Many2one(
         'stock.route',
         string="AMS Fulfillment Route",
@@ -121,13 +153,6 @@ class ProductTemplate(models.Model):
         default=False,
         help="Product is restricted to specific chapters"
     )
-
-    # Note: Commented out until ams.chapter model is available
-    # allowed_chapter_ids = fields.Many2many(
-    #     'ams.chapter',
-    #     string="Allowed Chapters",
-    #     help="Chapters that can access this product"
-    # )
 
     # ========================================================================
     # COMPUTED FIELDS
@@ -234,44 +259,48 @@ class ProductTemplate(models.Model):
     # ONCHANGE METHODS
     # ========================================================================
 
-    @api.onchange('ams_product_type_id')
-    def _onchange_ams_product_type(self):
-        """Update fields based on selected AMS product type."""
-        if self.ams_product_type_id:
-            # Safe access to product type fields
-            product_type = self.ams_product_type_id
+    @api.onchange('categ_id')
+    def _onchange_categ_id(self):
+        """Set product attributes based on AMS category settings."""
+        if self.categ_id and self.categ_id.is_ams_category:
+            # Auto-enable AMS features when using AMS category
+            self.is_ams_product = True
             
-            # Set member pricing if required by product type
-            if hasattr(product_type, 'requires_member_pricing'):
-                self.has_member_pricing = product_type.requires_member_pricing
+            # Set member pricing based on category
+            if not self.has_member_pricing:  # Only set if not already configured
+                self.has_member_pricing = self.categ_id.requires_member_pricing
             
-            # Set digital product if specified by product type  
-            if hasattr(product_type, 'is_digital'):
-                self.is_digital_product = product_type.is_digital
+            # Set digital product based on category
+            if not self.is_digital_product:  # Only set if not already configured
+                self.is_digital_product = self.categ_id.is_digital_category
             
-            # Set inventory tracking if required by product type
-            if hasattr(product_type, 'requires_inventory'):
-                self.stock_controlled = product_type.requires_inventory
-                
-            # Set product category if specified
-            if hasattr(product_type, 'product_category_id') and product_type.product_category_id:
-                self.categ_id = product_type.product_category_id
+            # Set stock control based on category
+            self.stock_controlled = self.categ_id.requires_inventory
             
-            # Set Odoo product type based on AMS configuration
-            if self.is_digital_product or not self.stock_controlled:
+            # Set product type (service vs storable)
+            if not self.categ_id.requires_inventory:
                 self.type = 'service'
             else:
                 self.type = 'product'
+            
+            # Set default UoM if specified
+            if self.categ_id.default_uom_id:
+                self.uom_id = self.categ_id.default_uom_id
+                self.uom_po_id = self.categ_id.default_uom_id
 
     @api.onchange('is_ams_product')
     def _onchange_is_ams_product(self):
-        """Clear AMS fields when unmarking as AMS product."""
+        """Clear/set AMS fields when toggling AMS product status."""
         if not self.is_ams_product:
-            self.ams_product_type_id = False
+            # Clear AMS-specific fields
             self.has_member_pricing = False
             self.is_digital_product = False
             self.requires_membership = False
             self.chapter_specific = False
+        else:
+            # If category is AMS, sync with category defaults
+            if self.categ_id and self.categ_id.is_ams_category:
+                self._onchange_categ_id()
 
     @api.onchange('is_digital_product')
     def _onchange_is_digital_product(self):
@@ -332,7 +361,7 @@ class ProductTemplate(models.Model):
         result = super().write(vals)
         
         # Sync AMS fields if relevant fields changed
-        if any(field in vals for field in ['ams_product_type_id', 'is_ams_product', 'is_digital_product', 'stock_controlled']):
+        if any(field in vals for field in ['categ_id', 'is_ams_product', 'is_digital_product', 'stock_controlled']):
             for product in self:
                 product._sync_ams_fields()
                 
@@ -457,6 +486,7 @@ class ProductTemplate(models.Model):
             'product_id': self.id,
             'has_member_pricing': self.has_member_pricing,
             'requires_membership': self.requires_membership,
+            'ams_category_type': self.ams_category_type,
         }
         
         if partner_id:
@@ -515,11 +545,11 @@ class ProductTemplate(models.Model):
     # ========================================================================
 
     @api.model
-    def get_ams_products_by_type(self, product_type_category=None):
-        """Get AMS products optionally filtered by type category."""
+    def get_ams_products_by_category_type(self, ams_category_type=None):
+        """Get AMS products optionally filtered by category type."""
         domain = [('is_ams_product', '=', True)]
-        if product_type_category:
-            domain.append(('ams_product_type_id.category', '=', product_type_category))
+        if ams_category_type:
+            domain.append(('ams_category_type', '=', ams_category_type))
         return self.search(domain)
 
     @api.model 
@@ -552,3 +582,18 @@ class ProductTemplate(models.Model):
             action['res_id'] = self.product_variant_ids.id
         
         return action
+
+    def action_view_category(self):
+        """Open the product category form."""
+        self.ensure_one()
+        if not self.categ_id:
+            return False
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Product Category'),
+            'res_model': 'product.category',
+            'view_mode': 'form',
+            'res_id': self.categ_id.id,
+            'target': 'current',
+        }

@@ -2,7 +2,7 @@
 <odoo>
 
     <!-- ========================================================================== -->
-    <!-- MINIMAL SAFE AMS PRODUCT VARIANT FORM VIEW -->
+    <!-- AMS PRODUCT VARIANT FORM VIEW -->
     <!-- ========================================================================== -->
     <record id="product_variant_form_view_ams" model="ir.ui.view">
         <field name="name">product.product.form.ams</field>
@@ -16,19 +16,35 @@
                 <field name="effective_sku" readonly="1" invisible="not template_is_ams_product"/>
             </xpath>
 
-            <!-- Add simple AMS variant tab -->
+            <!-- Add AMS variant tab -->
             <xpath expr="//notebook" position="inside">
                 <page string="AMS Variant Features" name="ams_variant" invisible="not template_is_ams_product">
+                    
+                    <!-- Template Information Display -->
+                    <group>
+                        <group string="Template Configuration">
+                            <field name="template_ams_category_type" string="AMS Category Type" readonly="1"/>
+                            <field name="template_has_member_pricing" string="Template: Member Pricing" readonly="1" widget="boolean"/>
+                            <field name="template_is_digital_product" string="Template: Digital Product" readonly="1" widget="boolean"/>
+                            <field name="template_stock_controlled" string="Template: Stock Controlled" readonly="1" widget="boolean"/>
+                        </group>
+                        <group string="Category Attributes">
+                            <field name="template_category_requires_member_pricing" string="Category: Member Pricing" readonly="1" widget="boolean"/>
+                            <field name="template_category_is_digital" string="Category: Digital" readonly="1" widget="boolean"/>
+                            <field name="template_category_requires_inventory" string="Category: Inventory" readonly="1" widget="boolean"/>
+                        </group>
+                    </group>
+
+                    <!-- Variant Configuration Toggles -->
                     <group>
                         <group string="Variant Configuration">
-                            <field name="has_variant_pricing" widget="boolean_toggle"/>
-                            <field name="has_variant_digital_content" widget="boolean_toggle"/>
-                            <field name="has_variant_inventory_config" widget="boolean_toggle"/>
+                            <field name="has_variant_pricing" string="Override Pricing" widget="boolean_toggle"/>
+                            <field name="has_variant_digital_content" string="Override Digital Content" widget="boolean_toggle"/>
+                            <field name="has_variant_inventory_config" string="Override Inventory" widget="boolean_toggle"/>
                         </group>
-                        <group string="Template Info">
-                            <field name="template_ams_product_type_id" readonly="1"/>
-                            <field name="template_has_member_pricing" readonly="1" widget="boolean"/>
-                            <field name="template_is_digital_product" readonly="1" widget="boolean"/>
+                        <group string="System Information">
+                            <field name="variant_legacy_id"/>
+                            <field name="inventory_status_display" readonly="1"/>
                         </group>
                     </group>
                     
@@ -41,7 +57,15 @@
                         <group>
                             <field name="final_member_price" readonly="1" widget="monetary"/>
                             <field name="final_non_member_price" readonly="1" widget="monetary"/>
+                            <field name="variant_member_discount" string="Variant Discount %" readonly="1"/>
                         </group>
+                        <div class="alert alert-info" role="alert">
+                            <strong>Variant Pricing:</strong> When enabled, this variant will use its own pricing instead of the template pricing.
+                            <div class="mt-2">
+                                <button name="copy_template_pricing_to_variant" type="object" string="Copy from Template" class="btn btn-sm btn-secondary"/>
+                                <button name="sync_with_template_pricing" type="object" string="Reset to Template" class="btn btn-sm btn-outline-secondary ml-2"/>
+                            </div>
+                        </div>
                     </group>
                     
                     <!-- Digital Content Section -->
@@ -54,6 +78,9 @@
                             <field name="final_digital_url" readonly="1" widget="url"/>
                             <field name="is_digital_content_available" readonly="1" widget="boolean"/>
                         </group>
+                        <div class="alert alert-info" role="alert">
+                            <strong>Variant Digital Content:</strong> When enabled, this variant will use its own digital content instead of the template content.
+                        </div>
                     </group>
                     
                     <!-- Inventory Section -->
@@ -61,20 +88,31 @@
                         <group>
                             <field name="variant_stock_controlled" widget="boolean_toggle"/>
                             <field name="variant_reorder_point"/>
+                            <field name="variant_max_stock"/>
                         </group>
                         <group>
                             <field name="current_stock_level" readonly="1"/>
                             <field name="variant_needs_reorder" readonly="1" widget="boolean"/>
+                            <field name="variant_fulfillment_route_id"/>
                         </group>
+                        <div class="alert alert-info" role="alert">
+                            <strong>Variant Inventory:</strong> When enabled, this variant will use its own inventory configuration.
+                            <div class="mt-2">
+                                <button name="copy_template_inventory_to_variant" type="object" string="Copy from Template" class="btn btn-sm btn-secondary"/>
+                            </div>
+                        </div>
+                    </group>
+
+                    <!-- Variant Actions -->
+                    <group string="Actions" col="4">
+                        <button name="action_view_category" type="object" string="View Category" 
+                                class="oe_link" icon="fa-external-link"/>
+                        <button name="action_view_stock_moves" type="object" string="Stock Moves" 
+                                class="oe_link" icon="fa-exchange" invisible="not effective_stock_controlled"/>
+                        <button name="action_update_stock" type="object" string="Update Stock" 
+                                class="oe_link" icon="fa-cubes" invisible="not effective_stock_controlled"/>
                     </group>
                     
-                    <!-- System Information -->
-                    <group string="System Information" groups="base.group_system">
-                        <group>
-                            <field name="variant_legacy_id"/>
-                            <field name="inventory_status_display" readonly="1"/>
-                        </group>
-                    </group>
                 </page>
             </xpath>
             
@@ -91,13 +129,16 @@
         <field name="arch" type="xml">
             
             <xpath expr="//field[@name='default_code']" position="after">
-                <field name="effective_sku" optional="show"/>
-                <field name="template_is_ams_product" widget="boolean_toggle" optional="hide"/>
-                <field name="has_variant_pricing" widget="boolean_toggle" optional="hide"/>
+                <field name="effective_sku" string="Effective SKU" optional="show"/>
+                <field name="template_is_ams_product" string="AMS" widget="boolean_toggle" optional="hide"/>
+                <field name="template_ams_category_type" string="AMS Type" optional="hide"/>
+                <field name="has_variant_pricing" string="Variant Pricing" widget="boolean_toggle" optional="hide"/>
             </xpath>
 
             <xpath expr="//field[@name='lst_price']" position="after">
-                <field name="final_member_price" optional="hide" widget="monetary" 
+                <field name="final_member_price" string="Member Price" optional="hide" widget="monetary" 
+                       invisible="not template_has_member_pricing"/>
+                <field name="final_non_member_price" string="Non-Member Price" optional="hide" widget="monetary" 
                        invisible="not template_has_member_pricing"/>
             </xpath>
 
@@ -116,6 +157,7 @@
             <xpath expr="//field[@name='name']" position="after">
                 <field name="effective_sku" filter_domain="[('effective_sku', 'ilike', self)]"/>
                 <field name="variant_sku" filter_domain="[('variant_sku', 'ilike', self)]"/>
+                <field name="template_ams_category_type"/>
             </xpath>
 
             <xpath expr="//filter[@name='filter_to_sell']" position="after">
@@ -126,13 +168,40 @@
                         domain="[('has_variant_pricing', '=', True)]"/>
                 <filter name="digital_variants" string="Digital Variants" 
                         domain="[('template_is_digital_product', '=', True)]"/>
+                <filter name="member_pricing_variants" string="Member Pricing Variants" 
+                        domain="[('template_has_member_pricing', '=', True)]"/>
+                
+                <separator/>
+                <filter name="membership_variants" string="Membership Variants" 
+                        domain="[('template_ams_category_type', '=', 'membership')]"/>
+                <filter name="event_variants" string="Event Variants" 
+                        domain="[('template_ams_category_type', '=', 'event')]"/>
+                <filter name="education_variants" string="Education Variants" 
+                        domain="[('template_ams_category_type', '=', 'education')]"/>
+                <filter name="publication_variants" string="Publication Variants" 
+                        domain="[('template_ams_category_type', '=', 'publication')]"/>
+                <filter name="merchandise_variants" string="Merchandise Variants" 
+                        domain="[('template_ams_category_type', '=', 'merchandise')]"/>
+                <filter name="certification_variants" string="Certification Variants" 
+                        domain="[('template_ams_category_type', '=', 'certification')]"/>
+                <filter name="digital_download_variants" string="Digital Download Variants" 
+                        domain="[('template_ams_category_type', '=', 'digital')]"/>
+            </xpath>
+
+            <xpath expr="//group[@expand='0']" position="inside">
+                <filter string="AMS Category Type" name="group_ams_category_type" 
+                        context="{'group_by': 'template_ams_category_type'}"/>
+                <filter string="Variant Pricing" name="group_variant_pricing" 
+                        context="{'group_by': 'has_variant_pricing'}"/>
+                <filter string="Template" name="group_template" 
+                        context="{'group_by': 'product_tmpl_id'}"/>
             </xpath>
             
         </field>
     </record>
 
     <!-- ========================================================================== -->
-    <!-- BASIC AMS VARIANT ACTIONS -->
+    <!-- AMS VARIANT ACTIONS -->
     <!-- ========================================================================== -->
     <record id="action_ams_product_variants" model="ir.actions.act_window">
         <field name="name">AMS Product Variants</field>
@@ -140,6 +209,15 @@
         <field name="view_mode">tree,form</field>
         <field name="domain">[('template_is_ams_product', '=', True)]</field>
         <field name="context">{'search_default_ams_variants': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No AMS product variants found!
+            </p>
+            <p>
+                AMS product variants inherit enhanced functionality from their templates
+                and can have variant-specific overrides for pricing, digital content, and inventory.
+            </p>
+        </field>
     </record>
 
     <record id="action_variant_pricing_products" model="ir.actions.act_window">
@@ -147,6 +225,88 @@
         <field name="res_model">product.product</field>
         <field name="view_mode">tree,form</field>
         <field name="domain">[('has_variant_pricing', '=', True)]</field>
+        <field name="context">{'search_default_variant_pricing': 1}</field>
+    </record>
+
+    <record id="action_low_stock_variants" model="ir.actions.act_window">
+        <field name="name">Low Stock Variants</field>
+        <field name="res_model">product.product</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('variant_needs_reorder', '=', True)]</field>
+        <field name="context">{'search_default_ams_variants': 1}</field>
+    </record>
+
+    <record id="action_digital_content_issues" model="ir.actions.act_window">
+        <field name="name">Digital Content Issues</field>
+        <field name="res_model">product.product</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('template_is_digital_product', '=', True), ('is_digital_content_available', '=', False)]</field>
+        <field name="context">{'search_default_digital_variants': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No digital content issues found!
+            </p>
+            <p>
+                This view shows digital product variants that are missing their download URL or file attachment.
+            </p>
+        </field>
+    </record>
+
+    <!-- Category-specific variant actions -->
+    <record id="action_membership_variants" model="ir.actions.act_window">
+        <field name="name">Membership Product Variants</field>
+        <field name="res_model">product.product</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('template_ams_category_type', '=', 'membership')]</field>
+        <field name="context">{'search_default_membership_variants': 1}</field>
+    </record>
+
+    <record id="action_event_variants" model="ir.actions.act_window">
+        <field name="name">Event Product Variants</field>
+        <field name="res_model">product.product</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('template_ams_category_type', '=', 'event')]</field>
+        <field name="context">{'search_default_event_variants': 1}</field>
+    </record>
+
+    <record id="action_education_variants" model="ir.actions.act_window">
+        <field name="name">Education Product Variants</field>
+        <field name="res_model">product.product</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('template_ams_category_type', '=', 'education')]</field>
+        <field name="context">{'search_default_education_variants': 1}</field>
+    </record>
+
+    <record id="action_publication_variants" model="ir.actions.act_window">
+        <field name="name">Publication Product Variants</field>
+        <field name="res_model">product.product</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('template_ams_category_type', '=', 'publication')]</field>
+        <field name="context">{'search_default_publication_variants': 1}</field>
+    </record>
+
+    <record id="action_merchandise_variants" model="ir.actions.act_window">
+        <field name="name">Merchandise Product Variants</field>
+        <field name="res_model">product.product</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('template_ams_category_type', '=', 'merchandise')]</field>
+        <field name="context">{'search_default_merchandise_variants': 1}</field>
+    </record>
+
+    <record id="action_certification_variants" model="ir.actions.act_window">
+        <field name="name">Certification Product Variants</field>
+        <field name="res_model">product.product</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('template_ams_category_type', '=', 'certification')]</field>
+        <field name="context">{'search_default_certification_variants': 1}</field>
+    </record>
+
+    <record id="action_digital_download_variants" model="ir.actions.act_window">
+        <field name="name">Digital Download Product Variants</field>
+        <field name="res_model">product.product</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('template_ams_category_type', '=', 'digital')]</field>
+        <field name="context">{'search_default_digital_download_variants': 1}</field>
     </record>
 
 </odoo>

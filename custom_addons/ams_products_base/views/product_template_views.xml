@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- ========================================================================== -->
-    <!-- MINIMAL SAFE AMS PRODUCT TEMPLATE FORM VIEW -->
+    <!-- AMS PRODUCT TEMPLATE FORM VIEW -->
     <!-- ========================================================================== -->
     <record id="product_template_form_view_ams" model="ir.ui.view">
         <field name="name">product.template.form.ams</field>
@@ -20,11 +20,6 @@
                        placeholder="Leave blank for auto-generation"/>
             </xpath>
             
-            <!-- Make the existing AMS Product Type field conditional -->
-            <xpath expr="//field[@name='ams_product_type_id']" position="attributes">
-                <attribute name="invisible">not is_ams_product</attribute>
-            </xpath>
-            
             <!-- Add Member Pricing after list price with proper group structure -->
             <xpath expr="//field[@name='list_price']" position="after">
                 <group string="Member Pricing" invisible="not is_ams_product" col="2" class="oe_inline">
@@ -37,26 +32,43 @@
                 </group>
             </xpath>
             
-            <!-- Hide the old AMS Settings tab -->
-            <xpath expr="//page[@name='ams_settings']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            
-            <!-- Consolidated AMS Configuration tab with all editable fields -->
+            <!-- Enhanced AMS Configuration tab with category-based fields -->
             <xpath expr="//notebook" position="inside">
                 <page string="AMS Configuration" name="ams_config" invisible="not is_ams_product">
-                    <!-- Core AMS Settings -->
+                    <!-- Category Information Display -->
                     <group>
-                        <group string="Product Classification">
-                            <field name="ams_product_type_id" options="{'no_create': True, 'no_edit': True}"/>
+                        <group string="Category Configuration">
+                            <field name="categ_id" readonly="1"/>
+                            <field name="ams_category_type" string="AMS Category Type" readonly="1"/>
                             <field name="sku" placeholder="Auto-generated if left blank"/>
                             <field name="legacy_product_id" placeholder="Legacy system ID"/>
                         </group>
-                        <group string="Product Type Configuration">
+                        <group string="Category Attributes (from Category)">
+                            <field name="category_requires_member_pricing" string="Category: Member Pricing" readonly="1" widget="boolean"/>
+                            <field name="category_is_digital" string="Category: Digital" readonly="1" widget="boolean"/>
+                            <field name="category_is_subscription" string="Category: Subscription" readonly="1" widget="boolean"/>
+                            <field name="category_requires_inventory" string="Category: Inventory" readonly="1" widget="boolean"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Product-Specific Configuration -->
+                    <group>
+                        <group string="Product Configuration">
                             <field name="is_digital_product" widget="boolean_toggle"/>
                             <field name="stock_controlled" widget="boolean_toggle"/>
                             <field name="requires_membership" widget="boolean_toggle"/>
                             <field name="chapter_specific" widget="boolean_toggle"/>
+                        </group>
+                        <group string="Configuration Notes">
+                            <div class="alert alert-info" invisible="not category_requires_member_pricing or has_member_pricing">
+                                <strong>Note:</strong> This category supports member pricing. Enable "Member Pricing" above to set different prices for members.
+                            </div>
+                            <div class="alert alert-info" invisible="not category_is_digital or is_digital_product">
+                                <strong>Note:</strong> This category is for digital products. Enable "Digital Product" to configure digital delivery.
+                            </div>
+                            <div class="alert alert-warning" invisible="category_requires_inventory or stock_controlled">
+                                <strong>Note:</strong> This category typically requires inventory tracking. Consider enabling "Stock Controlled".
+                            </div>
                         </group>
                     </group>
                     
@@ -106,6 +118,14 @@
                         <!-- <field name="allowed_chapter_ids" widget="many2many_tags" string="Allowed Chapters"/> -->
                         <field name="legacy_product_id" string="Chapter Configuration" placeholder="Configure chapter access when ams.chapter model is available" readonly="1"/>
                     </group>
+
+                    <!-- Action Buttons -->
+                    <group string="Actions" col="4">
+                        <button name="action_view_category" type="object" string="View Category" 
+                                class="oe_link" icon="fa-external-link"/>
+                        <button name="action_view_variants" type="object" string="View Variants" 
+                                class="oe_link" icon="fa-list" invisible="product_variant_count &lt;= 1"/>
+                    </group>
                 </page>
             </xpath>
             
@@ -122,9 +142,14 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='categ_id']" position="after">
                 <field name="sku" optional="show"/>
-                <field name="is_ams_product" widget="boolean_toggle" optional="hide"/>
-                <field name="has_member_pricing" widget="boolean_toggle" optional="hide"/>
-                <field name="is_digital_product" widget="boolean_toggle" optional="hide"/>
+                <field name="is_ams_product" string="AMS" widget="boolean_toggle" optional="hide"/>
+                <field name="ams_category_type" string="AMS Type" optional="hide"/>
+                <field name="has_member_pricing" string="Member Pricing" widget="boolean_toggle" optional="hide"/>
+                <field name="is_digital_product" string="Digital" widget="boolean_toggle" optional="hide"/>
+                <field name="member_price" string="Member Price" optional="hide" widget="monetary" 
+                       invisible="not has_member_pricing"/>
+                <field name="non_member_price" string="Non-Member Price" optional="hide" widget="monetary" 
+                       invisible="not has_member_pricing"/>
             </xpath>
         </field>
     </record>
@@ -139,7 +164,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position="after">
                 <field name="sku" filter_domain="[('sku', 'ilike', self)]"/>
-                <field name="ams_product_type_id"/>
+                <field name="ams_category_type"/>
             </xpath>
             
             <xpath expr="//filter[@name='filter_to_sell']" position="after">
@@ -147,6 +172,24 @@
                 <filter name="ams_products" string="AMS Products" domain="[('is_ams_product', '=', True)]"/>
                 <filter name="member_pricing" string="Member Pricing" domain="[('has_member_pricing', '=', True)]"/>
                 <filter name="digital_products" string="Digital Products" domain="[('is_digital_product', '=', True)]"/>
+                
+                <separator/>
+                <filter name="membership_products" string="Membership" domain="[('ams_category_type', '=', 'membership')]"/>
+                <filter name="event_products" string="Events" domain="[('ams_category_type', '=', 'event')]"/>
+                <filter name="education_products" string="Education" domain="[('ams_category_type', '=', 'education')]"/>
+                <filter name="publication_products" string="Publications" domain="[('ams_category_type', '=', 'publication')]"/>
+                <filter name="merchandise_products" string="Merchandise" domain="[('ams_category_type', '=', 'merchandise')]"/>
+                <filter name="certification_products" string="Certifications" domain="[('ams_category_type', '=', 'certification')]"/>
+                <filter name="digital_download_products" string="Digital Downloads" domain="[('ams_category_type', '=', 'digital')]"/>
+            </xpath>
+
+            <xpath expr="//group[@expand='0']" position="inside">
+                <filter string="AMS Category Type" name="group_ams_category_type" 
+                        context="{'group_by': 'ams_category_type'}"/>
+                <filter string="Product Category" name="group_product_category" 
+                        context="{'group_by': 'categ_id'}"/>
+                <filter string="Member Pricing" name="group_member_pricing" 
+                        context="{'group_by': 'has_member_pricing'}"/>
             </xpath>
         </field>
     </record>
@@ -160,6 +203,15 @@
         <field name="view_mode">kanban,tree,form</field>
         <field name="domain">[('is_ams_product', '=', True)]</field>
         <field name="context">{'default_is_ams_product': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first AMS product!
+            </p>
+            <p>
+                AMS products provide enhanced functionality for associations including
+                member pricing, digital delivery, and inventory integration.
+            </p>
+        </field>
     </record>
 
     <record id="action_member_pricing_products" model="ir.actions.act_window">
@@ -167,6 +219,7 @@
         <field name="res_model">product.template</field>
         <field name="view_mode">tree,form</field>
         <field name="domain">[('has_member_pricing', '=', True)]</field>
+        <field name="context">{'search_default_member_pricing': 1}</field>
     </record>
 
     <record id="action_digital_products" model="ir.actions.act_window">
@@ -174,6 +227,64 @@
         <field name="res_model">product.template</field>
         <field name="view_mode">tree,form</field>
         <field name="domain">[('is_digital_product', '=', True)]</field>
+        <field name="context">{'search_default_digital_products': 1}</field>
+    </record>
+
+    <!-- Category-specific product actions -->
+    <record id="action_membership_products" model="ir.actions.act_window">
+        <field name="name">Membership Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('ams_category_type', '=', 'membership')]</field>
+        <field name="context">{'search_default_membership_products': 1}</field>
+    </record>
+
+    <record id="action_event_products" model="ir.actions.act_window">
+        <field name="name">Event Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('ams_category_type', '=', 'event')]</field>
+        <field name="context">{'search_default_event_products': 1}</field>
+    </record>
+
+    <record id="action_education_products" model="ir.actions.act_window">
+        <field name="name">Education Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('ams_category_type', '=', 'education')]</field>
+        <field name="context">{'search_default_education_products': 1}</field>
+    </record>
+
+    <record id="action_publication_products" model="ir.actions.act_window">
+        <field name="name">Publication Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('ams_category_type', '=', 'publication')]</field>
+        <field name="context">{'search_default_publication_products': 1}</field>
+    </record>
+
+    <record id="action_merchandise_products" model="ir.actions.act_window">
+        <field name="name">Merchandise Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('ams_category_type', '=', 'merchandise')]</field>
+        <field name="context">{'search_default_merchandise_products': 1}</field>
+    </record>
+
+    <record id="action_certification_products" model="ir.actions.act_window">
+        <field name="name">Certification Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('ams_category_type', '=', 'certification')]</field>
+        <field name="context">{'search_default_certification_products': 1}</field>
+    </record>
+
+    <record id="action_digital_download_products" model="ir.actions.act_window">
+        <field name="name">Digital Download Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('ams_category_type', '=', 'digital')]</field>
+        <field name="context">{'search_default_digital_download_products': 1}</field>
     </record>
 
 </odoo>

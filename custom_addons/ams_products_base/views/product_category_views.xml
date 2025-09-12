@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ========================================================================== -->
+    <!-- ENHANCED PRODUCT CATEGORY FORM VIEW -->
+    <!-- ========================================================================== -->
+    <record id="product_category_form_view_ams" model="ir.ui.view">
+        <field name="name">product.category.form.ams</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add AMS fields after the name field -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="is_ams_category" string="Enable AMS Features" widget="boolean_toggle"/>
+                <field name="ams_category_type" invisible="not is_ams_category"/>
+            </xpath>
+
+            <!-- Add AMS configuration section -->
+            <xpath expr="//group" position="after">
+                <group string="AMS Configuration" invisible="not is_ams_category">
+                    <group>
+                        <field name="requires_member_pricing" string="Member Pricing" widget="boolean_toggle"/>
+                        <field name="is_subscription_category" string="Subscription Products" widget="boolean_toggle"/>
+                    </group>
+                    <group>
+                        <field name="is_digital_category" string="Digital Products" widget="boolean_toggle"/>
+                        <field name="requires_inventory" string="Inventory Tracking" widget="boolean_toggle" 
+                               invisible="is_digital_category"/>
+                    </group>
+                </group>
+                
+                <group string="Integration" invisible="not is_ams_category">
+                    <group>
+                        <field name="default_uom_id"/>
+                        <field name="ams_product_count" string="AMS Products" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="category_summary" string="Category Summary" readonly="1"/>
+                    </group>
+                </group>
+            </xpath>
+
+            <!-- Add stat buttons for AMS categories -->
+            <xpath expr="//div[@class='oe_button_box']" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_ams_products" 
+                        icon="fa-cube" invisible="not is_ams_category or ams_product_count == 0">
+                    <field name="ams_product_count" widget="statinfo" string="AMS Products"/>
+                </button>
+                <button class="oe_stat_button" type="object" name="action_create_ams_product" 
+                        icon="fa-plus" invisible="not is_ams_category" 
+                        string="Create Product" attrs="{'invisible': [('is_ams_category', '=', False)]}"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- ENHANCED PRODUCT CATEGORY LIST VIEW -->
+    <!-- ========================================================================== -->
+    <record id="product_category_list_view_ams" model="ir.ui.view">
+        <field name="name">product.category.list.ams</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_list_view"/>
+        <field name="arch" type="xml">
+            
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="is_ams_category" string="AMS" widget="boolean_toggle" optional="hide"/>
+                <field name="ams_category_type" string="AMS Type" optional="hide"/>
+                <field name="requires_member_pricing" string="Member Pricing" widget="boolean_toggle" optional="hide"/>
+                <field name="is_digital_category" string="Digital" widget="boolean_toggle" optional="hide"/>
+                <field name="ams_product_count" string="AMS Products" optional="hide"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- ENHANCED PRODUCT CATEGORY SEARCH VIEW -->
+    <!-- ========================================================================== -->
+    <record id="product_category_search_view_ams" model="ir.ui.view">
+        <field name="name">product.category.search.ams</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_search_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add AMS-specific search fields -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="ams_category_type" string="AMS Type"/>
+                <field name="category_summary" string="AMS Summary"/>
+            </xpath>
+
+            <!-- Add AMS filters -->
+            <xpath expr="//filter[@name='inactive']" position="after">
+                <separator/>
+                <filter string="AMS Categories" name="ams_categories" domain="[('is_ams_category', '=', True)]"/>
+                <filter string="Member Pricing" name="member_pricing" domain="[('requires_member_pricing', '=', True)]"/>
+                <filter string="Digital Categories" name="digital_categories" domain="[('is_digital_category', '=', True)]"/>
+                <filter string="Subscription Categories" name="subscription_categories" domain="[('is_subscription_category', '=', True)]"/>
+                <filter string="Inventory Tracked" name="inventory_tracked" domain="[('requires_inventory', '=', True)]"/>
+                
+                <separator/>
+                <filter string="Membership" name="membership" domain="[('ams_category_type', '=', 'membership')]"/>
+                <filter string="Events" name="events" domain="[('ams_category_type', '=', 'event')]"/>
+                <filter string="Education" name="education" domain="[('ams_category_type', '=', 'education')]"/>
+                <filter string="Publications" name="publications" domain="[('ams_category_type', '=', 'publication')]"/>
+                <filter string="Merchandise" name="merchandise" domain="[('ams_category_type', '=', 'merchandise')]"/>
+                <filter string="Certifications" name="certifications" domain="[('ams_category_type', '=', 'certification')]"/>
+                <filter string="Digital Downloads" name="digital_downloads" domain="[('ams_category_type', '=', 'digital')]"/>
+            </xpath>
+
+            <!-- Add AMS grouping options -->
+            <xpath expr="//group[@expand='0']" position="inside">
+                <filter string="AMS Category Type" name="group_ams_type" 
+                        context="{'group_by': 'ams_category_type'}"/>
+                <filter string="Member Pricing" name="group_member_pricing" 
+                        context="{'group_by': 'requires_member_pricing'}"/>
+                <filter string="Digital/Physical" name="group_digital" 
+                        context="{'group_by': 'is_digital_category'}"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- AMS CATEGORY KANBAN VIEW -->
+    <!-- ========================================================================== -->
+    <record id="product_category_kanban_view_ams" model="ir.ui.view">
+        <field name="name">product.category.kanban.ams</field>
+        <field name="model">product.category</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1" default_group_by="ams_category_type">
+                <field name="name"/>
+                <field name="is_ams_category"/>
+                <field name="ams_category_type"/>
+                <field name="requires_member_pricing"/>
+                <field name="is_subscription_category"/>
+                <field name="is_digital_category"/>
+                <field name="requires_inventory"/>
+                <field name="ams_product_count"/>
+                <field name="category_summary"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click #{!record.is_ams_category.raw_value ? 'o_kanban_color_10' : ''}">
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="o_primary">
+                                        <field name="name"/>
+                                        <t t-if="record.is_ams_category.raw_value">
+                                            <span class="badge badge-pill badge-primary ml-2">AMS</span>
+                                        </t>
+                                    </div>
+                                    <div class="o_secondary" t-if="record.ams_category_type.raw_value">
+                                        <t t-esc="record.ams_category_type.value"/>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_manage_button_section">
+                                    <a class="o_kanban_manage_toggle_button" href="#">
+                                        <i class="fa fa-ellipsis-v" role="img" aria-label="Manage" title="Manage"/>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="o_kanban_card_content">
+                                <div class="o_kanban_card_manage_pane dropdown-menu" role="menu">
+                                    <a role="menuitem" type="edit" class="dropdown-item">Edit</a>
+                                    <a role="menuitem" name="action_view_ams_products" type="object" class="dropdown-item" 
+                                       t-if="record.is_ams_category.raw_value and record.ams_product_count.raw_value > 0">
+                                        View AMS Products
+                                    </a>
+                                    <a role="menuitem" name="action_create_ams_product" type="object" class="dropdown-item"
+                                       t-if="record.is_ams_category.raw_value">
+                                        Create Product
+                                    </a>
+                                    <a role="menuitem" type="delete" class="dropdown-item">Delete</a>
+                                </div>
+                                <div class="container o_kanban_card_content o_visible" t-if="record.is_ams_category.raw_value">
+                                    <div class="row">
+                                        <div class="col-6 o_kanban_primary_left">
+                                            <button class="btn btn-primary btn-sm" name="action_view_ams_products" type="object"
+                                                    t-if="record.ams_product_count.raw_value > 0">
+                                                <field name="ams_product_count"/> Products
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-sm" name="action_create_ams_product" type="object"
+                                                    t-if="record.ams_product_count.raw_value == 0">
+                                                Create Product
+                                            </button>
+                                        </div>
+                                        <div class="col-6 o_kanban_primary_right">
+                                            <div class="mb-2">
+                                                <t t-if="record.requires_member_pricing.raw_value">
+                                                    <span class="badge badge-pill badge-info">Member Pricing</span><br/>
+                                                </t>
+                                                <t t-if="record.is_subscription_category.raw_value">
+                                                    <span class="badge badge-pill badge-success">Subscription</span><br/>
+                                                </t>
+                                                <t t-if="record.is_digital_category.raw_value">
+                                                    <span class="badge badge-pill badge-warning">Digital</span><br/>
+                                                </t>
+                                                <t t-if="record.requires_inventory.raw_value and not record.is_digital_category.raw_value">
+                                                    <span class="badge badge-pill badge-secondary">Inventory</span>
+                                                </t>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="container o_kanban_card_content" t-if="not record.is_ams_category.raw_value">
+                                    <div class="text-muted text-center">
+                                        <small>Standard Odoo Category</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- AMS CATEGORIES ACTION -->
+    <!-- ========================================================================== -->
+    <record id="action_ams_product_categories" model="ir.actions.act_window">
+        <field name="name">AMS Product Categories</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('is_ams_category', '=', True)]</field>
+        <field name="context">{'search_default_ams_categories': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first AMS product category!
+            </p>
+            <p>
+                AMS product categories provide enhanced classification for association products.
+                Set up categories with specific attributes for pricing, inventory, and delivery methods.
+            </p>
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- SPECIFIC AMS CATEGORY ACTIONS -->
+    <!-- ========================================================================== -->
+    <record id="action_membership_categories" model="ir.actions.act_window">
+        <field name="name">Membership Categories</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('ams_category_type', '=', 'membership')]</field>
+        <field name="context">{'default_ams_category_type': 'membership', 'default_is_ams_category': True}</field>
+    </record>
+
+    <record id="action_event_categories" model="ir.actions.act_window">
+        <field name="name">Event Categories</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('ams_category_type', '=', 'event')]</field>
+        <field name="context">{'default_ams_category_type': 'event', 'default_is_ams_category': True}</field>
+    </record>
+
+    <record id="action_education_categories" model="ir.actions.act_window">
+        <field name="name">Education Categories</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('ams_category_type', '=', 'education')]</field>
+        <field name="context">{'default_ams_category_type': 'education', 'default_is_ams_category': True}</field>
+    </record>
+
+    <record id="action_publication_categories" model="ir.actions.act_window">
+        <field name="name">Publication Categories</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('ams_category_type', '=', 'publication')]</field>
+        <field name="context">{'default_ams_category_type': 'publication', 'default_is_ams_category': True}</field>
+    </record>
+
+    <record id="action_merchandise_categories" model="ir.actions.act_window">
+        <field name="name">Merchandise Categories</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('ams_category_type', '=', 'merchandise')]</field>
+        <field name="context">{'default_ams_category_type': 'merchandise', 'default_is_ams_category': True}</field>
+    </record>
+
+    <record id="action_certification_categories" model="ir.actions.act_window">
+        <field name="name">Certification Categories</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('ams_category_type', '=', 'certification')]</field>
+        <field name="context">{'default_ams_category_type': 'certification', 'default_is_ams_category': True}</field>
+    </record>
+
+    <record id="action_digital_categories" model="ir.actions.act_window">
+        <field name="name">Digital Product Categories</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('ams_category_type', '=', 'digital')]</field>
+        <field name="context">{'default_ams_category_type': 'digital', 'default_is_ams_category': True}</field>
+    </record>
+
+</odoo>
