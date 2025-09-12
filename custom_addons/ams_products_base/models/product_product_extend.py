@@ -177,6 +177,12 @@ class ProductProduct(models.Model):
         readonly=True
     )
 
+    template_member_discount_percentage = fields.Float(
+        related='product_tmpl_id.member_discount_percentage',  # This works in variants
+        string="Template Member Discount %",
+        readonly=True
+    )
+
     # ========================================================================
     # COMPUTED FIELDS
     # ========================================================================

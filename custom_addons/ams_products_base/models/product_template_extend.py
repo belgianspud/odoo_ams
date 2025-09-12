@@ -99,11 +99,11 @@ class ProductTemplate(models.Model):
         help="Enable inventory tracking and stock management"
     )
 
+    # FIXED: Changed from 'stock.location.route' to 'stock.route' and removed problematic domain
     ams_fulfillment_route_id = fields.Many2one(
-        'stock.location.route',
+        'stock.route',
         string="AMS Fulfillment Route",
-        help="Specific fulfillment route for this AMS product",
-        domain=lambda self: [('product_selectable', '=', True)],
+        help="Specific fulfillment route for this AMS product"
     )
 
     # ========================================================================
@@ -545,7 +545,7 @@ class ProductTemplate(models.Model):
         # Filter to only show variants for the current template
         action['domain'] = [('product_tmpl_id', '=', self.id)]
         
-        # If there’s only one variant, open the form view directly
+        # If there's only one variant, open the form view directly
         if len(self.product_variant_ids) == 1:
             form_view = [(self.env.ref('product.product_normal_form_view').id, 'form')]
             action['views'] = form_view
