@@ -34,7 +34,7 @@ class ProductTemplate(models.Model):
     )
 
     # ========================================================================
-    # AMS CATEGORY INTEGRATION (replaces ams_product_type_id)
+    # AMS CATEGORY INTEGRATION (uses enhanced product.category from ams_product_types)
     # ========================================================================
 
     ams_category_type = fields.Selection(
@@ -491,9 +491,9 @@ class ProductTemplate(models.Model):
         
         if partner_id:
             partner = self.env['res.partner'].browse(partner_id)
-            # Safe access to partner fields
-            is_member = getattr(partner, 'is_member', False)
-            membership_status = getattr(partner, 'membership_status', 'prospect')
+            # Safe access to partner fields - check if they exist first
+            is_member = self._get_partner_member_status(partner)
+            membership_status = self._get_partner_membership_status(partner)
             
             context.update({
                 'partner_id': partner_id,
@@ -505,6 +505,29 @@ class ProductTemplate(models.Model):
             })
         
         return context
+
+    def _get_partner_member_status(self, partner):
+        """Safely get partner member status."""
+        # Check if partner has is_member field (from ams_member_data module)
+        if hasattr(partner, 'is_member'):
+            return partner.is_member
+        # Check if partner has other member-related fields
+        elif hasattr(partner, 'membership_state'):
+            return partner.membership_state in ['invoiced', 'paid']
+        else:
+            # Default to False if no member data is available
+            return False
+
+    def _get_partner_membership_status(self, partner):
+        """Safely get partner membership status."""
+        # Check if partner has membership_status field (from ams_member_data module)
+        if hasattr(partner, 'membership_status'):
+            return partner.membership_status
+        elif hasattr(partner, 'membership_state'):
+            return partner.membership_state
+        else:
+            # Default to 'prospect' if no member data is available
+            return 'prospect'
 
     # ========================================================================
     # SEARCH AND DISPLAY METHODS

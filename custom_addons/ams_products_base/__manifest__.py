@@ -59,7 +59,7 @@ Key Changes in v18:
         'stock',
         'mail',
         'ams_member_data',
-        # Removed 'ams_product_types' - now using enhanced product.category
+        'ams_product_types' #- now using enhanced product.category
     ],
     'data': [
         'security/ir.model.access.csv',

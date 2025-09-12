@@ -113,18 +113,19 @@
     </record>
 
     <!-- ========================================================================== -->
-    <!-- ENHANCED PRODUCT CATEGORY LIST VIEW -->
+    <!-- ENHANCED PRODUCT CATEGORY LIST VIEW - COMPLETELY NEW APPROACH -->
     <!-- ========================================================================== -->
     <record id="product_category_list_view_enhanced" model="ir.ui.view">
         <field name="name">product.category.list.enhanced</field>
         <field name="model">product.category</field>
-        <field name="inherit_id" ref="product.product_category_list_view"/>
         <field name="arch" type="xml">
-            
-            <!-- Add AMS fields after the tree tag - safer approach -->
-            <xpath expr="//tree" position="inside">
-                <field name="is_ams_category" string="AMS" widget="boolean_toggle" optional="hide"/>
-                <field name="ams_category_type" string="AMS Type" optional="hide"/>
+            <tree string="Product Categories" 
+                  decoration-info="is_ams_category==True"
+                  decoration-muted="is_ams_category==False">
+                <field name="name"/>
+                <field name="parent_id"/>
+                <field name="is_ams_category" string="AMS" widget="boolean_toggle" optional="show"/>
+                <field name="ams_category_type" string="AMS Type" optional="show"/>
                 <field name="category_type_display" string="Type Display" optional="hide"/>
                 <field name="requires_member_pricing" string="Member Pricing" widget="boolean_toggle" optional="hide"/>
                 <field name="is_digital_category" string="Digital" widget="boolean_toggle" optional="hide"/>
@@ -132,8 +133,28 @@
                 <field name="requires_inventory" string="Inventory" widget="boolean_toggle" optional="hide"/>
                 <field name="ams_product_count" string="AMS Products" optional="show"/>
                 <field name="total_product_count" string="Total Products" optional="show"/>
-            </xpath>
+                <field name="category_summary" string="Category Summary" optional="hide"/>
+            </tree>
+        </field>
+    </record>
 
+    <!-- ========================================================================== -->
+    <!-- OVERRIDE THE LIST VIEW ACTION TO USE OUR NEW VIEW -->
+    <!-- ========================================================================== -->
+    <record id="product_category_action_form_enhanced" model="ir.actions.act_window">
+        <field name="name">Product Categories (Enhanced)</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="view_id" ref="product_category_list_view_enhanced"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first product category!
+            </p>
+            <p>
+                Product categories help organize your products. Enable "AMS Features" 
+                to add enhanced functionality for association products including 
+                member pricing, digital delivery, and subscription management.
+            </p>
         </field>
     </record>
 
@@ -336,6 +357,7 @@
         <field name="name">Product Categories (Enhanced)</field>
         <field name="res_model">product.category</field>
         <field name="view_mode">tree,kanban,form</field>
+        <field name="view_id" ref="product_category_list_view_enhanced"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create your first product category!
@@ -356,6 +378,7 @@
         <field name="name">Membership Categories</field>
         <field name="res_model">product.category</field>
         <field name="view_mode">tree,kanban,form</field>
+        <field name="view_id" ref="product_category_list_view_enhanced"/>
         <field name="domain">[('ams_category_type', '=', 'membership')]</field>
         <field name="context">{
             'default_ams_category_type': 'membership', 
@@ -368,6 +391,7 @@
         <field name="name">Event Categories</field>
         <field name="res_model">product.category</field>
         <field name="view_mode">tree,kanban,form</field>
+        <field name="view_id" ref="product_category_list_view_enhanced"/>
         <field name="domain">[('ams_category_type', '=', 'event')]</field>
         <field name="context">{
             'default_ams_category_type': 'event', 
@@ -380,6 +404,7 @@
         <field name="name">Education Categories</field>
         <field name="res_model">product.category</field>
         <field name="view_mode">tree,kanban,form</field>
+        <field name="view_id" ref="product_category_list_view_enhanced"/>
         <field name="domain">[('ams_category_type', '=', 'education')]</field>
         <field name="context">{
             'default_ams_category_type': 'education', 
@@ -392,6 +417,7 @@
         <field name="name">Publication Categories</field>
         <field name="res_model">product.category</field>
         <field name="view_mode">tree,kanban,form</field>
+        <field name="view_id" ref="product_category_list_view_enhanced"/>
         <field name="domain">[('ams_category_type', '=', 'publication')]</field>
         <field name="context">{
             'default_ams_category_type': 'publication', 
@@ -404,6 +430,7 @@
         <field name="name">Merchandise Categories</field>
         <field name="res_model">product.category</field>
         <field name="view_mode">tree,kanban,form</field>
+        <field name="view_id" ref="product_category_list_view_enhanced"/>
         <field name="domain">[('ams_category_type', '=', 'merchandise')]</field>
         <field name="context">{
             'default_ams_category_type': 'merchandise', 
@@ -416,6 +443,7 @@
         <field name="name">Certification Categories</field>
         <field name="res_model">product.category</field>
         <field name="view_mode">tree,kanban,form</field>
+        <field name="view_id" ref="product_category_list_view_enhanced"/>
         <field name="domain">[('ams_category_type', '=', 'certification')]</field>
         <field name="context">{
             'default_ams_category_type': 'certification', 
@@ -428,6 +456,7 @@
         <field name="name">Digital Product Categories</field>
         <field name="res_model">product.category</field>
         <field name="view_mode">tree,kanban,form</field>
+        <field name="view_id" ref="product_category_list_view_enhanced"/>
         <field name="domain">[('ams_category_type', '=', 'digital')]</field>
         <field name="context">{
             'default_ams_category_type': 'digital', 
@@ -447,5 +476,13 @@
               action="action_ams_product_categories"
               sequence="25"
               groups="base.group_system"/>
+
+    <!-- Menu for Enhanced Categories (accessible to more users) -->
+    <menuitem id="menu_enhanced_product_categories"
+              name="Enhanced Categories"
+              parent="product.menu_product_in_config_menu"
+              action="action_all_product_categories_enhanced"
+              sequence="5"
+              groups="base.group_user"/>
 
 </odoo>
