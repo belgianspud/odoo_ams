@@ -66,6 +66,7 @@ Version 2.0 Changes:
         'product',
         'mail',
         'stock',  # For route and fulfillment features
+        'sale',   # For product views and menu integration
     ],
     'data': [
         # Security
@@ -74,6 +75,8 @@ Version 2.0 Changes:
         'data/enhanced_category_data.xml',
         # Views - Enhanced category management
         'views/product_category_enhanced_views.xml',
+        # Views - Product template extensions
+        'views/product_template_ams_views.xml',
     ],
     'demo': [],
     'images': ['static/description/icon.png'],

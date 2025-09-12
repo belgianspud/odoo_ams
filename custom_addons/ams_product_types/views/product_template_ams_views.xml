@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ========================================================================== -->
+    <!-- PRODUCT TEMPLATE FORM VIEW EXTENSION -->
+    <!-- ========================================================================== -->
+    <record id="product_template_form_view_ams" model="ir.ui.view">
+        <field name="name">product.template.form.ams</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add AMS button in stat box -->
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_ams_category" 
+                        icon="fa-tags" invisible="not category_is_ams">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">AMS Category</span>
+                        <span class="o_stat_value">
+                            <field name="ams_category"/>
+                        </span>
+                    </div>
+                </button>
+            </xpath>
+
+            <!-- Add AMS fields in the general information page -->
+            <xpath expr="//field[@name='categ_id']" position="after">
+                <field name="is_ams_product" invisible="1"/>
+                <field name="category_is_ams" invisible="1"/>
+                <field name="ams_category" readonly="1" invisible="not category_is_ams"/>
+            </xpath>
+
+            <!-- Add AMS Configuration after sales info -->
+            <xpath expr="//page[@name='sales']//group" position="after">
+                <group string="AMS Configuration" invisible="not is_ams_product">
+                    <group>
+                        <field name="has_member_pricing" widget="boolean_toggle"/>
+                        <field name="is_digital_product" widget="boolean_toggle"/>
+                    </group>
+                    <group>
+                        <field name="stock_controlled" widget="boolean_toggle"/>
+                    </group>
+                </group>
+                
+                <!-- Member Pricing Section -->
+                <group string="Member Pricing" invisible="not has_member_pricing">
+                    <group>
+                        <label for="list_price"/>
+                        <div>
+                            <field name="list_price" class="oe_inline"/>
+                            <span class="oe_grey"> (Non-member Price)</span>
+                        </div>
+                        <label for="member_list_price"/>
+                        <div>
+                            <field name="member_list_price" class="oe_inline"/>
+                            <span class="oe_grey"> (Member Price)</span>
+                        </div>
+                    </group>
+                    <group>
+                        <label for="standard_price"/>
+                        <div>
+                            <field name="standard_price" class="oe_inline"/>
+                            <span class="oe_grey"> (Standard Cost)</span>
+                        </div>
+                        <label for="member_standard_price"/>
+                        <div>
+                            <field name="member_standard_price" class="oe_inline"/>
+                            <span class="oe_grey"> (Member Cost)</span>
+                        </div>
+                    </group>
+                </group>
+
+                <!-- Category Inherited Attributes (Read-only Info) -->
+                <group string="Category Settings" invisible="not category_is_ams">
+                    <div class="alert alert-info" role="alert">
+                        <h6><i class="fa fa-info-circle"></i> Inherited from Category</h6>
+                        <p>
+                            These settings come from your selected product category and will be automatically applied to new products in this category.
+                        </p>
+                        <ul class="mb-1">
+                            <li invisible="not category_requires_member_pricing">Member pricing available</li>
+                            <li invisible="not category_is_subscription">Subscription/recurring product</li>
+                            <li invisible="not category_is_digital">Digital product delivery</li>
+                            <li invisible="not category_requires_inventory">Inventory tracking required</li>
+                        </ul>
+                    </div>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- PRODUCT TEMPLATE LIST VIEW EXTENSION -->
+    <!-- ========================================================================== -->
+    <record id="product_template_tree_view_ams" model="ir.ui.view">
+        <field name="name">product.template.tree.ams</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add AMS columns -->
+            <xpath expr="//field[@name='categ_id']" position="after">
+                <field name="is_ams_product" string="AMS" widget="boolean_toggle" optional="show"/>
+                <field name="ams_category" string="AMS Category" optional="show"/>
+                <field name="has_member_pricing" string="Member Pricing" widget="boolean_toggle" optional="hide"/>
+                <field name="is_digital_product" string="Digital" widget="boolean_toggle" optional="hide"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- PRODUCT TEMPLATE SEARCH VIEW EXTENSION -->
+    <!-- ========================================================================== -->
+    <record id="product_template_search_view_ams" model="ir.ui.view">
+        <field name="name">product.template.search.ams</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add AMS search fields -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="ams_category" string="AMS Category"/>
+            </xpath>
+
+            <!-- Add AMS filters at the end -->
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter string="AMS Products" name="ams_products" domain="[('is_ams_product', '=', True)]"/>
+                <filter string="Standard Products" name="standard_products" domain="[('is_ams_product', '=', False)]"/>
+                
+                <separator/>
+                <filter string="Member Pricing" name="member_pricing_products" domain="[('has_member_pricing', '=', True)]"/>
+                <filter string="Digital Products" name="digital_products" domain="[('is_digital_product', '=', True)]"/>
+                <filter string="Physical Products" name="physical_products" domain="[('is_digital_product', '=', False)]"/>
+                
+                <separator/>
+                <filter string="Membership Products" name="membership_products" domain="[('ams_category', '=', 'membership')]"/>
+                <filter string="Event Products" name="event_products" domain="[('ams_category', '=', 'event')]"/>
+                <filter string="Education Products" name="education_products" domain="[('ams_category', '=', 'education')]"/>
+                <filter string="Publication Products" name="publication_products" domain="[('ams_category', '=', 'publication')]"/>
+                <filter string="Merchandise Products" name="merchandise_products" domain="[('ams_category', '=', 'merchandise')]"/>
+                <filter string="Certification Products" name="certification_products" domain="[('ams_category', '=', 'certification')]"/>
+                <filter string="Digital Downloads" name="digital_download_products" domain="[('ams_category', '=', 'digital')]"/>
+                
+                <!-- Add AMS grouping options -->
+                <group expand="0" string="Group By">
+                    <filter string="AMS Category" name="group_ams_category" 
+                            context="{'group_by': 'ams_category'}"/>
+                    <filter string="AMS Product" name="group_ams_product" 
+                            context="{'group_by': 'is_ams_product'}"/>
+                    <filter string="Member Pricing" name="group_member_pricing" 
+                            context="{'group_by': 'has_member_pricing'}"/>
+                    <filter string="Digital/Physical" name="group_digital" 
+                            context="{'group_by': 'is_digital_product'}"/>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- AMS PRODUCTS ACTION -->
+    <!-- ========================================================================== -->
+    <record id="action_ams_products" model="ir.actions.act_window">
+        <field name="name">AMS Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('is_ams_product', '=', True)]</field>
+        <field name="context">{'search_default_ams_products': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first AMS product!
+            </p>
+            <p>
+                AMS products have enhanced features for association management including 
+                member pricing, digital delivery, and subscription management.
+            </p>
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- MENU ITEMS -->
+    <!-- ========================================================================== -->
+    
+    <!-- Add AMS Products menu item -->
+    <menuitem id="menu_ams_products"
+              name="AMS Products"
+              parent="sale.sale_menu_root"
+              action="action_ams_products"
+              sequence="15"/>
+
+</odoo>

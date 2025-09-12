@@ -9,8 +9,8 @@
         <field name="inherit_id" ref="stock.product_category_form_view_inherit"/>
         <field name="arch" type="xml">
             
-            <!-- Add AMS stat buttons after stock's Putaway Rules button -->
-            <button string="Putaway Rules" position="after">
+            <!-- Add AMS stat buttons in the button box -->
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
                 <button class="oe_stat_button" type="object" name="action_view_ams_products" 
                         icon="fa-cube" invisible="not is_ams_category or ams_product_count == 0">
                     <field name="ams_product_count" widget="statinfo" string="AMS Products"/>
@@ -22,7 +22,7 @@
                 <button class="oe_stat_button" type="object" name="action_create_ams_product" 
                         icon="fa-plus-circle" invisible="not is_ams_category"
                         string="Create Product"/>
-            </button>
+            </xpath>
 
             <!-- Add AMS fields after the name field -->
             <xpath expr="//field[@name='name']" position="after">
@@ -34,7 +34,7 @@
             </xpath>
 
             <!-- Add AMS configuration after stock's logistics group -->
-            <group name="logistics" position="after">
+            <xpath expr="//group[@name='logistics']" position="after">
                 <!-- AMS Configuration Section -->
                 <group string="AMS Configuration" invisible="not is_ams_category">
                     <group string="Category Attributes">
@@ -92,7 +92,7 @@
                         Enable "AMS Features" to add enhanced functionality for association products.
                     </div>
                 </group>
-            </group>
+            </xpath>
 
             <!-- Add action buttons at bottom -->
             <xpath expr="//sheet" position="inside">
@@ -150,13 +150,10 @@
             <!-- Add AMS-specific search fields -->
             <xpath expr="//field[@name='name']" position="after">
                 <field name="ams_category_type" string="AMS Type"/>
-                <field name="category_summary" string="AMS Summary"/>
-                <field name="category_type_display" string="Category Type"/>
             </xpath>
 
-            <!-- Add AMS filters - note: there might not be an 'inactive' filter in the base search, 
-                 so we'll add after the main search fields -->
-            <xpath expr="//field[@name='parent_id']" position="after">
+            <!-- Add AMS filters at the end of existing filters -->
+            <xpath expr="//search" position="inside">
                 <separator/>
                 <filter string="AMS Categories" name="ams_categories" domain="[('is_ams_category', '=', True)]"/>
                 <filter string="Standard Categories" name="standard_categories" domain="[('is_ams_category', '=', False)]"/>
@@ -177,13 +174,7 @@
                 <filter string="Certifications" name="certifications" domain="[('ams_category_type', '=', 'certification')]"/>
                 <filter string="Digital Downloads" name="digital_downloads" domain="[('ams_category_type', '=', 'digital')]"/>
                 
-                <separator/>
-                <filter string="Categories with Products" name="has_products" domain="[('total_product_count', '>', 0)]"/>
-                <filter string="Empty Categories" name="empty_categories" domain="[('total_product_count', '=', 0)]"/>
-            </xpath>
-
-            <!-- Add AMS grouping options -->
-            <xpath expr="//search" position="inside">
+                <!-- Add AMS grouping options -->
                 <group expand="0" string="Group By">
                     <filter string="AMS Category Type" name="group_ams_type" 
                             context="{'group_by': 'ams_category_type'}"/>
