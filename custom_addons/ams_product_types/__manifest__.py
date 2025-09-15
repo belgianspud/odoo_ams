@@ -65,8 +65,10 @@ Version 2.0 Changes:
         'base',
         'product',
         'mail',
-        'stock',  # For route and fulfillment features
-        'sale',   # For product views and menu integration
+        'stock',      # For route and fulfillment features
+        'sale',       # For product views and menu integration
+        'account',    # For accounting fields
+        'uom',        # For unit of measure
     ],
     'data': [
         # Security
