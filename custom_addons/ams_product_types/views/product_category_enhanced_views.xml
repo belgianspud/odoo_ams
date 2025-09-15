@@ -115,7 +115,8 @@
                 <group string="Reporting &amp; Segmentation" invisible="not is_ams_category">
                     <group>
                         <field name="revenue_recognition_type" string="Revenue Recognition"/>
-                        <field name="analytics_tag_ids" widget="many2many_tags" string="Analytics Tags"/>
+                        <!-- FIXED: Commented out the problematic analytics_tag_ids field -->
+                        <!-- <field name="analytics_tag_ids" widget="many2many_tags" string="Analytics Tags"/> -->
                     </group>
                     <group>
                         <field name="default_uom_id" string="Default Unit of Measure"/>

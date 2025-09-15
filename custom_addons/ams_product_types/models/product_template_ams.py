@@ -106,7 +106,7 @@ class ProductTemplate(models.Model):
     )
     
     # ========================================================================
-    # ONCHANGE METHODS
+    # ONCHANGE METHODS - FIXED
     # ========================================================================
     
     @api.onchange('categ_id')
@@ -128,15 +128,47 @@ class ProductTemplate(models.Model):
         """Digital products don't need inventory tracking."""
         if self.is_digital_product:
             self.stock_controlled = False
+            # Set to service for digital products
             self.type = 'service'
     
     @api.onchange('stock_controlled')
     def _onchange_stock_controlled(self):
-        """Set product type based on stock control."""
-        if self.stock_controlled:
-            self.type = 'product'
-        else:
+        """Set product type based on stock control - FIXED VERSION."""
+        try:
+            if self.stock_controlled:
+                # Try different valid values in order of preference
+                if hasattr(self, '_fields') and 'type' in self._fields:
+                    type_field = self._fields['type']
+                    if hasattr(type_field, 'selection'):
+                        valid_values = [item[0] for item in type_field.selection]
+                        
+                        # Try 'consu' first (most common for stockable in Odoo 18)
+                        if 'consu' in valid_values:
+                            self.type = 'consu'
+                        # Try 'product' if available
+                        elif 'product' in valid_values:
+                            self.type = 'product'
+                        # Find first non-service option
+                        else:
+                            for value in valid_values:
+                                if value != 'service':
+                                    self.type = value
+                                    break
+                    else:
+                        # Fallback if no selection found
+                        self.type = 'consu'
+                else:
+                    # Fallback if no field info available
+                    self.type = 'consu'
+            else:
+                self.type = 'service'
+        except Exception as e:
+            # If anything fails, just use service as safe default
             self.type = 'service'
+            # Log the error for debugging
+            import logging
+            _logger = logging.getLogger(__name__)
+            _logger.warning(f"Error in _onchange_stock_controlled: {e}")
     
     # ========================================================================
     # BUSINESS METHODS

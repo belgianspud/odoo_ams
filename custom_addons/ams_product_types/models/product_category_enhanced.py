@@ -46,13 +46,13 @@ class ProductCategory(models.Model):
     ], string="AMS Category Type", help="AMS-specific category classification")
     
     # ========================================================================
-    # PRODUCT TYPE CONTROLS
+    # PRODUCT TYPE CONTROLS - FIXED
     # ========================================================================
     
     default_product_type = fields.Selection([
-        ('consu', 'Consumable'),
+        ('consu', 'Consumable'),      # FIXED: Changed from 'product' to 'consu'
         ('service', 'Service'),
-        ('product', 'Storable Product')
+        # ('product', 'Storable Product')  # REMOVED: Not valid in this installation
     ], string="Default Product Type", default='service',
         help="Default type for products created in this category")
     
@@ -242,9 +242,9 @@ class ProductCategory(models.Model):
         help="Email template for donation receipts"
     )
     
-# ========================================================================
-# REPORTING & SEGMENTATION  
-# ========================================================================
+    # ========================================================================
+    # REPORTING & SEGMENTATION  
+    # ========================================================================
 
     revenue_recognition_type = fields.Selection([
         ('immediate', 'Immediate Recognition'),
@@ -254,15 +254,15 @@ class ProductCategory(models.Model):
     ], string="Revenue Recognition", default='immediate',
         help="How revenue is recognized for products in this category")
 
-# Remove problematic analytics_tag_ids field for now
-# analytics_tag_ids = fields.Many2many(
-#     'account.analytic.tag',
-#     'category_analytic_tag_rel',
-#     'category_id', 
-#     'tag_id',
-#     string="Analytics Tags",
-#     help="Default analytic tags for cost center or chapter tracking"
-# )
+    # REMOVED problematic analytics_tag_ids field for now
+    # analytics_tag_ids = fields.Many2many(
+    #     'account.analytic.tag',
+    #     'category_analytic_tag_rel',
+    #     'category_id', 
+    #     'tag_id',
+    #     string="Analytics Tags",
+    #     help="Default analytic tags for cost center or chapter tracking"
+    # )
 
     visibility_control = fields.Selection([
         ('internal', 'Internal Only'),
@@ -272,9 +272,9 @@ class ProductCategory(models.Model):
     ], string="Visibility Control", default='internal',
         help="Who can see products in this category")
 
-# ========================================================================
-# INTEGRATION FIELDS
-# ========================================================================
+    # ========================================================================
+    # INTEGRATION FIELDS
+    # ========================================================================
 
     default_uom_id = fields.Many2one(
         'uom.uom',
@@ -431,6 +431,7 @@ class ProductCategory(models.Model):
                     'auto_send_welcome_email': True,
                     'visibility_control': 'members_only',
                     'delivery_mode': 'none',
+                    'default_product_type': 'service',  # FIXED: Use valid value
                 },
                 'event': {
                     'requires_member_pricing': True,
@@ -443,6 +444,7 @@ class ProductCategory(models.Model):
                     'allows_early_bird_pricing': True,
                     'visibility_control': 'public',
                     'delivery_mode': 'none',
+                    'default_product_type': 'service',  # FIXED: Use valid value
                 },
                 'education': {
                     'requires_member_pricing': True,
@@ -453,6 +455,7 @@ class ProductCategory(models.Model):
                     'allows_student_pricing': True,
                     'visibility_control': 'public',
                     'delivery_mode': 'ship',
+                    'default_product_type': 'consu',  # FIXED: Use valid value for physical
                 },
                 'publication': {
                     'requires_member_pricing': True,
@@ -463,6 +466,7 @@ class ProductCategory(models.Model):
                     'revenue_recognition_type': 'subscription',
                     'visibility_control': 'public',
                     'delivery_mode': 'ship',
+                    'default_product_type': 'consu',  # FIXED: Use valid value for physical
                 },
                 'merchandise': {
                     'requires_member_pricing': True,
@@ -472,6 +476,7 @@ class ProductCategory(models.Model):
                     'fulfillment_type': 'shippable',
                     'delivery_mode': 'ship',
                     'visibility_control': 'public',
+                    'default_product_type': 'consu',  # FIXED: Use valid value for physical
                 },
                 'certification': {
                     'requires_member_pricing': True,
@@ -483,6 +488,7 @@ class ProductCategory(models.Model):
                     'auto_send_welcome_email': True,
                     'visibility_control': 'members_only',
                     'delivery_mode': 'digital',
+                    'default_product_type': 'service',  # FIXED: Use valid value for digital
                 },
                 'digital': {
                     'requires_member_pricing': True,
@@ -492,6 +498,7 @@ class ProductCategory(models.Model):
                     'fulfillment_type': 'downloadable',
                     'delivery_mode': 'digital',
                     'visibility_control': 'portal',
+                    'default_product_type': 'service',  # FIXED: Use valid value for digital
                 },
                 'donation': {
                     'requires_member_pricing': False,
@@ -503,6 +510,7 @@ class ProductCategory(models.Model):
                     'auto_create_invoice': True,
                     'visibility_control': 'public',
                     'delivery_mode': 'none',
+                    'default_product_type': 'service',  # FIXED: Use valid value
                 },
             }
             
@@ -528,6 +536,8 @@ class ProductCategory(models.Model):
                 self.fulfillment_type = 'downloadable'
             if not self.delivery_mode or self.delivery_mode == 'none':
                 self.delivery_mode = 'digital'
+            # Set to service for digital products
+            self.default_product_type = 'service'
     
     @api.onchange('fulfillment_type')
     def _onchange_fulfillment_type(self):
@@ -537,25 +547,30 @@ class ProductCategory(models.Model):
                 'requires_inventory': True,
                 'is_digital_category': False,
                 'delivery_mode': 'ship',
+                'default_product_type': 'consu',  # FIXED: Use valid value
             },
             'downloadable': {
                 'requires_inventory': False,
                 'is_digital_category': True,
                 'delivery_mode': 'digital',
+                'default_product_type': 'service',  # FIXED: Use valid value
             },
             'portal_access': {
                 'requires_inventory': False,
                 'grants_portal_access': True,
                 'delivery_mode': 'none',
+                'default_product_type': 'service',  # FIXED: Use valid value
             },
             'donation': {
                 'requires_inventory': False,
                 'is_tax_deductible_donation': True,
                 'delivery_mode': 'none',
+                'default_product_type': 'service',  # FIXED: Use valid value
             },
             'event_based': {
                 'requires_inventory': False,
                 'delivery_mode': 'none',
+                'default_product_type': 'service',  # FIXED: Use valid value
             },
         }
         
@@ -581,6 +596,7 @@ class ProductCategory(models.Model):
             self.is_tax_deductible_donation = False
             self.visibility_control = 'internal'
             self.delivery_mode = 'none'
+            self.default_product_type = 'service'  # FIXED: Use valid value
 
     # ========================================================================
     # CONSTRAINT METHODS
