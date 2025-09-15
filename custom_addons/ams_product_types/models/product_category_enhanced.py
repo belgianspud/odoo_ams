@@ -23,13 +23,6 @@ class ProductCategory(models.Model):
         string="Description",
         help="Detailed description of this category and its purpose"
     )
-
-    company_id = fields.Many2one(
-        'res.company', 
-        string='Company', 
-        default=lambda self: self.env.company,
-        help="Company this category belongs to"
-    )
     
     # ========================================================================
     # AMS CLASSIFICATION FIELDS
@@ -76,17 +69,15 @@ class ProductCategory(models.Model):
     default_income_account_id = fields.Many2one(
         'account.account',
         string="Default Income Account",
-        domain="[('account_type', '=', 'income'), ('company_id', 'in', [company_id, False])]",
-        help="Default income account for products in this category",
-        check_company=True
+        domain=[('account_type', '=', 'income')],
+        help="Default income account for products in this category"
     )
     
     default_expense_account_id = fields.Many2one(
         'account.account',
         string="Default Expense Account", 
-        domain="[('account_type', '=', 'expense'), ('company_id', 'in', [company_id, False])]",
-        help="Default expense account for products in this category",
-        check_company=True
+        domain=[('account_type', '=', 'expense')],
+        help="Default expense account for products in this category"
     )
     
     default_tax_ids = fields.Many2many(
@@ -95,9 +86,7 @@ class ProductCategory(models.Model):
         'category_id',
         'tax_id',
         string="Default Taxes",
-        domain="[('company_id', 'in', [company_id, False])]",
-        help="Default taxes applied to products in this category",
-        check_company=True
+        help="Default taxes applied to products in this category"
     )
     
     tax_exemption_reason = fields.Char(
@@ -253,10 +242,10 @@ class ProductCategory(models.Model):
         help="Email template for donation receipts"
     )
     
-    # ========================================================================
-    # REPORTING & SEGMENTATION  
-    # ========================================================================
-    
+# ========================================================================
+# REPORTING & SEGMENTATION  
+# ========================================================================
+
     revenue_recognition_type = fields.Selection([
         ('immediate', 'Immediate Recognition'),
         ('deferred', 'Deferred Revenue'),
@@ -264,17 +253,16 @@ class ProductCategory(models.Model):
         ('event_date', 'Recognize on Event Date')
     ], string="Revenue Recognition", default='immediate',
         help="How revenue is recognized for products in this category")
-    
-    analytics_tag_ids = fields.Many2many(
-        'account.analytic.tag',
-        'category_analytic_tag_rel',
-        'category_id', 
-        'tag_id',
-        string="Analytics Tags",
-        domain="[('company_id', 'in', [company_id, False])]",
-        help="Default analytic tags for cost center or chapter tracking",
-        check_company=True
-    )
+
+# Remove problematic analytics_tag_ids field for now
+# analytics_tag_ids = fields.Many2many(
+#     'account.analytic.tag',
+#     'category_analytic_tag_rel',
+#     'category_id', 
+#     'tag_id',
+#     string="Analytics Tags",
+#     help="Default analytic tags for cost center or chapter tracking"
+# )
 
     visibility_control = fields.Selection([
         ('internal', 'Internal Only'),
@@ -283,17 +271,18 @@ class ProductCategory(models.Model):
         ('members_only', 'Members Only')
     ], string="Visibility Control", default='internal',
         help="Who can see products in this category")
-    
-    # ========================================================================
-    # INTEGRATION FIELDS
-    # ========================================================================
-    
+
+# ========================================================================
+# INTEGRATION FIELDS
+# ========================================================================
+
     default_uom_id = fields.Many2one(
         'uom.uom',
         string="Default Unit of Measure",
         help="Default unit of measure for products in this category"
     )
-    
+
+    # Simplify route relationship to avoid issues
     default_route_ids = fields.Many2many(
         'stock.route',
         'category_route_rel',

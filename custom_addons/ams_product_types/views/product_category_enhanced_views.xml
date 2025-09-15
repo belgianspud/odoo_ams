@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- ========================================================================== -->
-    <!-- ENHANCED PRODUCT CATEGORY FORM VIEW - COMPREHENSIVE AMS FIELDS -->
+    <!-- ENHANCED PRODUCT CATEGORY FORM VIEW - INHERITING FROM STOCK MODULE -->
     <!-- ========================================================================== -->
     <record id="product_category_form_view_enhanced" model="ir.ui.view">
         <field name="name">product.category.form.enhanced</field>
@@ -12,7 +12,7 @@
             <!-- Add AMS stat buttons in the button box -->
             <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
                 <button class="oe_stat_button" type="object" name="action_view_ams_products" 
-                        icon="fa-cube" invisible="ams_product_count == 0">
+                        icon="fa-cube" invisible="not is_ams_category or ams_product_count == 0">
                     <field name="ams_product_count" widget="statinfo" string="AMS Products"/>
                 </button>
                 <button class="oe_stat_button" type="object" name="action_view_all_products" 
@@ -35,28 +35,28 @@
             </xpath>
 
             <!-- ========================================================================== -->
-            <!-- COMPREHENSIVE AMS CONFIGURATION SECTIONS -->
+            <!-- ADD AMS SECTIONS AFTER THE STOCK LOGISTICS GROUP -->
             <!-- ========================================================================== -->
             <xpath expr="//group[@name='logistics']" position="after">
                 
                 <!-- PRODUCT TYPE CONTROLS -->
-                <group string="Product Type Controls">
+                <group string="Product Type Controls" invisible="not is_ams_category">
                     <group>
                         <field name="default_product_type" string="Default Product Type"/>
                         <field name="fulfillment_type" string="Fulfillment Type"/>
                         <field name="delivery_mode" string="Delivery Mode"/>
                     </group>
                     <group>
-                        <field name="default_income_account_id" string="Income Account"/>
-                        <field name="default_expense_account_id" string="Expense Account"/>
-                        <field name="default_tax_ids" widget="many2many_tags" string="Default Taxes"/>
+                        <field name="default_income_account_id" string="Income Account" optional="hide"/>
+                        <field name="default_expense_account_id" string="Expense Account" optional="hide"/>
+                        <field name="default_tax_ids" widget="many2many_tags" string="Default Taxes" optional="hide"/>
                         <field name="tax_exemption_reason" string="Tax Exemption Reason" 
-                               invisible="default_tax_ids"/>
+                               invisible="default_tax_ids" optional="hide"/>
                     </group>
                 </group>
 
                 <!-- ASSOCIATION-SPECIFIC METADATA -->
-                <group string="Association Metadata">
+                <group string="Association Metadata" invisible="not is_ams_category">
                     <group string="Membership Settings">
                         <field name="is_membership_category" string="Membership Category" widget="boolean_toggle"/>
                         <field name="default_membership_level" string="Default Membership Level"
@@ -76,7 +76,7 @@
                 </group>
 
                 <!-- OPERATIONAL CONTROLS -->
-                <group string="Operational Controls">
+                <group string="Operational Controls" invisible="not is_ams_category">
                     <group string="Product Attributes">
                         <field name="requires_member_pricing" string="Member Pricing" widget="boolean_toggle"/>
                         <field name="is_subscription_category" string="Subscription" widget="boolean_toggle"/>
@@ -95,7 +95,7 @@
                 </group>
 
                 <!-- PRICING & DISCOUNTING -->
-                <group string="Pricing &amp; Discounting">
+                <group string="Pricing &amp; Discounting" invisible="not is_ams_category">
                     <group string="Price Lists &amp; Discounts">
                         <field name="default_pricelist_id" string="Default Price List"/>
                         <field name="member_discount_percent" string="Member Discount %"
@@ -112,7 +112,7 @@
                 </group>
 
                 <!-- REPORTING & SEGMENTATION -->
-                <group string="Reporting &amp; Segmentation">
+                <group string="Reporting &amp; Segmentation" invisible="not is_ams_category">
                     <group>
                         <field name="revenue_recognition_type" string="Revenue Recognition"/>
                         <field name="analytics_tag_ids" widget="many2many_tags" string="Analytics Tags"/>
@@ -125,7 +125,7 @@
                 </group>
 
                 <!-- COMPUTED SUMMARIES -->
-                <group string="Category Summary">
+                <group string="Category Summary" invisible="not is_ams_category">
                     <group>
                         <field name="category_type_display" string="Category Type" readonly="1"/>
                         <field name="category_summary" string="Attributes Summary" readonly="1"/>
@@ -136,8 +136,8 @@
                 </group>
 
                 <!-- CATEGORY INFORMATION DISPLAY -->
-                <group string="Category Information">
-                    <div class="alert alert-info" role="alert" invisible="not is_ams_category">
+                <group string="Category Information" invisible="not is_ams_category">
+                    <div class="alert alert-info" role="alert">
                         <h5><i class="fa fa-info-circle"></i> AMS Category Active</h5>
                         <p class="mb-2">
                             <strong>Products created in this category will automatically inherit:</strong>
@@ -157,33 +157,8 @@
                                     string="Create Product Now" class="btn btn-primary btn-sm"/>
                         </div>
                     </div>
-                    
-                    <div class="alert alert-secondary" role="alert" invisible="is_ams_category">
-                        <h6><i class="fa fa-info-circle"></i> AMS Category Available</h6>
-                        <p class="mb-2">
-                            This category can be enhanced with AMS functionality. Enable "AMS Features" above 
-                            and configure the attributes to add association-specific functionality.
-                        </p>
-                        <p class="mb-0">
-                            <small class="text-muted">Configure individual settings without enabling the main toggle if you only need specific features.</small>
-                        </p>
-                    </div>
                 </group>
-            </xpath>
 
-            <!-- Add action buttons at bottom -->
-            <xpath expr="//sheet" position="inside">
-                <div class="oe_clear"/>
-                <group string="Category Actions" col="4">
-                    <button name="action_view_ams_products" type="object" string="View AMS Products" 
-                            class="oe_link" icon="fa-eye" invisible="ams_product_count == 0"/>
-                    <button name="action_create_ams_product" type="object" string="Create Product" 
-                            class="oe_link" icon="fa-plus"/>
-                    <button name="toggle_ams_category" type="object" string="Toggle AMS" 
-                            class="oe_link" icon="fa-toggle-on"/>
-                    <button name="action_configure_category" type="object" string="Configure" 
-                            class="oe_link" icon="fa-cog"/>
-                </group>
             </xpath>
 
         </field>
@@ -210,33 +185,19 @@
                 <field name="is_ams_category" string="AMS" widget="boolean_toggle"/>
                 <field name="ams_category_type" string="AMS Type"/>
                 
-                <!-- PRODUCT TYPE CONTROLS (from model section) -->
-                <field name="fulfillment_type" string="Fulfillment" optional="show"/>
-                <field name="default_product_type" string="Product Type" optional="hide"/>
-                
-                <!-- ASSOCIATION METADATA (from model section) -->
-                <field name="is_membership_category" string="Membership" widget="boolean_toggle" optional="hide"/>
-                <field name="renewal_behavior" string="Renewal" optional="hide"/>
-                <field name="grants_portal_access" string="Portal Access" widget="boolean_toggle" optional="hide"/>
-                
-                <!-- OPERATIONAL CONTROLS (from model section) -->
+                <!-- OPERATIONAL CONTROLS -->
                 <field name="requires_member_pricing" string="Member Pricing" widget="boolean_toggle"/>
                 <field name="is_subscription_category" string="Subscription" widget="boolean_toggle"/>
                 <field name="is_digital_category" string="Digital" widget="boolean_toggle"/>
                 <field name="requires_inventory" string="Inventory" widget="boolean_toggle" 
                        invisible="is_digital_category"/>
                 
-                <!-- PRICING & DISCOUNTING (from model section) -->
-                <field name="allows_student_pricing" string="Student Pricing" widget="boolean_toggle" optional="hide"/>
-                <field name="is_tax_deductible_donation" string="Tax Deductible" widget="boolean_toggle" optional="hide"/>
-                
-                <!-- REPORTING & SEGMENTATION (from model section) -->
-                <field name="revenue_recognition_type" string="Revenue Recognition" optional="hide"/>
-                <field name="visibility_control" string="Visibility" optional="hide"/>
+                <!-- FULFILLMENT -->
+                <field name="fulfillment_type" string="Fulfillment" optional="show"/>
+                <field name="delivery_mode" string="Delivery" optional="hide"/>
                 
                 <!-- COMPUTED SUMMARIES -->
                 <field name="category_type_display" string="Type Display" optional="show"/>
-                <field name="fulfillment_summary" string="Fulfillment Summary" optional="show"/>
                 <field name="category_summary" string="Summary" optional="hide"/>
                 
                 <!-- PRODUCT COUNTS -->
@@ -261,7 +222,6 @@
                 <field name="code" string="Category Code"/>
                 <field name="ams_category_type" string="AMS Type"/>
                 <field name="fulfillment_type" string="Fulfillment Type"/>
-                <field name="renewal_behavior" string="Renewal Behavior"/>
             </xpath>
 
             <!-- Add comprehensive AMS filters -->
@@ -272,31 +232,10 @@
                 <filter string="Standard Categories" name="standard_categories" domain="[('is_ams_category', '=', False)]"/>
                 
                 <separator/>
-                <!-- PRODUCT TYPE CONTROL FILTERS (from model section) -->
-                <filter string="Shippable Products" name="shippable" domain="[('fulfillment_type', '=', 'shippable')]"/>
-                <filter string="Digital Downloads" name="downloadable" domain="[('fulfillment_type', '=', 'downloadable')]"/>
-                <filter string="Portal Access" name="portal_access_fulfillment" domain="[('fulfillment_type', '=', 'portal_access')]"/>
-                <filter string="Event-based" name="event_based" domain="[('fulfillment_type', '=', 'event_based')]"/>
-                <filter string="Donations" name="donations" domain="[('fulfillment_type', '=', 'donation')]"/>
-                
-                <separator/>
-                <!-- ASSOCIATION METADATA FILTERS (from model section) -->
-                <filter string="Membership Categories" name="membership_categories" domain="[('is_membership_category', '=', True)]"/>
-                <filter string="Recurring Products" name="recurring" domain="[('renewal_behavior', '=', 'recurring')]"/>
-                <filter string="Grants Portal Access" name="grants_portal" domain="[('grants_portal_access', '=', True)]"/>
-                
-                <separator/>
-                <!-- OPERATIONAL CONTROL FILTERS (from model section) -->
+                <!-- OPERATIONAL CONTROL FILTERS -->
                 <filter string="Member Pricing" name="member_pricing" domain="[('requires_member_pricing', '=', True)]"/>
                 <filter string="Digital Categories" name="digital_categories" domain="[('is_digital_category', '=', True)]"/>
-                <filter string="Physical Categories" name="physical_categories" domain="[('is_digital_category', '=', False), ('is_ams_category', '=', True)]"/>
                 <filter string="Subscription Categories" name="subscription_categories" domain="[('is_subscription_category', '=', True)]"/>
-                <filter string="Inventory Tracked" name="inventory_tracked" domain="[('requires_inventory', '=', True)]"/>
-                
-                <separator/>
-                <!-- PRICING & DISCOUNTING FILTERS (from model section) -->
-                <filter string="Student Pricing Available" name="student_pricing" domain="[('allows_student_pricing', '=', True)]"/>
-                <filter string="Tax Deductible Donations" name="tax_deductible" domain="[('is_tax_deductible_donation', '=', True)]"/>
                 
                 <separator/>
                 <!-- AMS CATEGORY TYPE FILTERS -->
@@ -307,24 +246,13 @@
                 <filter string="Merchandise" name="merchandise" domain="[('ams_category_type', '=', 'merchandise')]"/>
                 <filter string="Certifications" name="certifications" domain="[('ams_category_type', '=', 'certification')]"/>
                 <filter string="Digital Products" name="digital_products" domain="[('ams_category_type', '=', 'digital')]"/>
-                <filter string="Donations" name="donation_categories" domain="[('ams_category_type', '=', 'donation')]"/>
                 
                 <!-- Add AMS grouping options -->
                 <group expand="0" string="Group By">
                     <filter string="AMS Category Type" name="group_ams_type" 
                             context="{'group_by': 'ams_category_type'}"/>
-                    <filter string="Fulfillment Type" name="group_fulfillment_type" 
-                            context="{'group_by': 'fulfillment_type'}"/>
-                    <filter string="Renewal Behavior" name="group_renewal_behavior" 
-                            context="{'group_by': 'renewal_behavior'}"/>
-                    <filter string="Revenue Recognition" name="group_revenue_recognition" 
-                            context="{'group_by': 'revenue_recognition_type'}"/>
                     <filter string="AMS Status" name="group_ams_status" 
                             context="{'group_by': 'is_ams_category'}"/>
-                    <filter string="Member Pricing" name="group_member_pricing" 
-                            context="{'group_by': 'requires_member_pricing'}"/>
-                    <filter string="Digital/Physical" name="group_digital" 
-                            context="{'group_by': 'is_digital_category'}"/>
                 </group>
             </xpath>
 
@@ -332,181 +260,28 @@
     </record>
 
     <!-- ========================================================================== -->
-    <!-- REST OF THE VIEWS (KANBAN AND ACTIONS) REMAIN THE SAME -->
+    <!-- AMS CATEGORIES ACTIONS -->
     <!-- ========================================================================== -->
     
-    <!-- AMS CATEGORY KANBAN VIEW -->
-    <record id="product_category_kanban_view_enhanced" model="ir.ui.view">
-        <field name="name">product.category.kanban.enhanced</field>
-        <field name="model">product.category</field>
-        <field name="arch" type="xml">
-            <kanban class="o_kanban_mobile" sample="1" default_group_by="ams_category_type">
-                <field name="name"/>
-                <field name="code"/>
-                <field name="is_ams_category"/>
-                <field name="ams_category_type"/>
-                <field name="category_type_display"/>
-                <field name="fulfillment_type"/>
-                <field name="fulfillment_summary"/>
-                <field name="requires_member_pricing"/>
-                <field name="is_subscription_category"/>
-                <field name="is_digital_category"/>
-                <field name="requires_inventory"/>
-                <field name="ams_product_count"/>
-                <field name="total_product_count"/>
-                <field name="category_summary"/>
-                <templates>
-                    <t t-name="kanban-box">
-                        <div t-attf-class="oe_kanban_card oe_kanban_global_click #{!record.is_ams_category.raw_value ? 'o_kanban_color_10' : ''}">
-                            <div class="o_kanban_card_header">
-                                <div class="o_kanban_card_header_title">
-                                    <div class="o_primary">
-                                        <field name="name"/>
-                                        <t t-if="record.code.raw_value">
-                                            <span class="badge badge-pill badge-secondary ml-1" t-esc="record.code.value"/>
-                                        </t>
-                                        <t t-if="record.is_ams_category.raw_value">
-                                            <span class="badge badge-pill badge-primary ml-2">AMS</span>
-                                        </t>
-                                    </div>
-                                    <div class="o_secondary" t-if="record.category_type_display.raw_value">
-                                        <t t-esc="record.category_type_display.value"/>
-                                    </div>
-                                    <div class="o_secondary" t-if="record.fulfillment_summary.raw_value">
-                                        <small class="text-muted" t-esc="record.fulfillment_summary.value"/>
-                                    </div>
-                                </div>
-                                <div class="o_kanban_manage_button_section">
-                                    <a class="o_kanban_manage_toggle_button" href="#">
-                                        <i class="fa fa-ellipsis-v" role="img" aria-label="Manage" title="Manage"/>
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="o_kanban_card_content">
-                                <div class="o_kanban_card_manage_pane dropdown-menu" role="menu">
-                                    <a role="menuitem" type="edit" class="dropdown-item">Edit</a>
-                                    <a role="menuitem" name="action_view_ams_products" type="object" class="dropdown-item" 
-                                       t-if="record.is_ams_category.raw_value and record.ams_product_count.raw_value > 0">
-                                        View AMS Products
-                                    </a>
-                                    <a role="menuitem" name="action_view_all_products" type="object" class="dropdown-item"
-                                       t-if="record.total_product_count.raw_value > 0">
-                                        View All Products
-                                    </a>
-                                    <a role="menuitem" name="action_create_ams_product" type="object" class="dropdown-item"
-                                       t-if="record.is_ams_category.raw_value">
-                                        Create Product
-                                    </a>
-                                    <a role="menuitem" name="toggle_ams_category" type="object" class="dropdown-item">
-                                        Toggle AMS Features
-                                    </a>
-                                    <a role="menuitem" type="delete" class="dropdown-item">Delete</a>
-                                </div>
-                                <div class="container o_kanban_card_content o_visible">
-                                    <div class="row" t-if="record.is_ams_category.raw_value">
-                                        <div class="col-6 o_kanban_primary_left">
-                                            <button class="btn btn-primary btn-sm" name="action_view_ams_products" type="object"
-                                                    t-if="record.ams_product_count.raw_value > 0">
-                                                <field name="ams_product_count"/> AMS
-                                            </button>
-                                            <button class="btn btn-outline-primary btn-sm" name="action_view_all_products" type="object"
-                                                    t-if="record.total_product_count.raw_value > record.ams_product_count.raw_value">
-                                                <field name="total_product_count"/> Total
-                                            </button>
-                                            <button class="btn btn-success btn-sm" name="action_create_ams_product" type="object"
-                                                    t-if="record.ams_product_count.raw_value == 0">
-                                                Create Product
-                                            </button>
-                                        </div>
-                                        <div class="col-6 o_kanban_primary_right">
-                                            <div class="mb-2">
-                                                <t t-if="record.requires_member_pricing.raw_value">
-                                                    <span class="badge badge-pill badge-info">Member Pricing</span><br/>
-                                                </t>
-                                                <t t-if="record.is_subscription_category.raw_value">
-                                                    <span class="badge badge-pill badge-success">Subscription</span><br/>
-                                                </t>
-                                                <t t-if="record.is_digital_category.raw_value">
-                                                    <span class="badge badge-pill badge-warning">Digital</span><br/>
-                                                </t>
-                                                <t t-if="record.requires_inventory.raw_value and not record.is_digital_category.raw_value">
-                                                    <span class="badge badge-pill badge-secondary">Inventory</span>
-                                                </t>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="container o_kanban_card_content" t-if="not record.is_ams_category.raw_value">
-                                        <div class="text-center">
-                                            <p class="text-muted mb-2">
-                                                <small>Standard Odoo Category</small>
-                                            </p>
-                                            <button class="btn btn-outline-primary btn-sm" name="toggle_ams_category" type="object">
-                                                Enable AMS Features
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </t>
-                </templates>
-            </kanban>
-        </field>
-    </record>
-
-    <!-- ========================================================================== -->
-    <!-- AMS CATEGORIES ACTIONS (SAME AS BEFORE) -->
-    <!-- ========================================================================== -->
-    
-    <!-- Main AMS Categories Action - List View Default -->
+    <!-- Main AMS Categories Action -->
     <record id="action_ams_product_categories" model="ir.actions.act_window">
         <field name="name">AMS Product Categories</field>
         <field name="res_model">product.category</field>
         <field name="view_mode">list,kanban,form</field>
         <field name="domain">[('is_ams_category', '=', True)]</field>
         <field name="context">{'search_default_ams_categories': 1}</field>
+        <field name="view_id" ref="product_category_list_view_enhanced"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create your first AMS product category!
             </p>
             <p>
                 AMS product categories provide enhanced classification for association products.
-                Set up categories with comprehensive behavioral controls including fulfillment, 
-                membership integration, pricing rules, and workflow automation.
-            </p>
-            <p>
-                <strong>Tip:</strong> Use the list view to quickly configure AMS features across multiple categories.
             </p>
         </field>
     </record>
-
-    <!-- All Categories with AMS Enhancements - List View Default -->
-    <record id="action_all_product_categories_enhanced" model="ir.actions.act_window">
-        <field name="name">Product Categories (Enhanced)</field>
-        <field name="res_model">product.category</field>
-        <field name="view_mode">list,kanban,form</field>
-        <field name="view_id" ref="product_category_list_view_enhanced"/>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Create your first product category!
-            </p>
-            <p>
-                Product categories help organize your products and drive their behavior. 
-                Use the comprehensive AMS settings to configure fulfillment, membership integration, 
-                pricing rules, and automation workflows.
-            </p>
-        </field>
-    </record>
-
-    <!-- Menu Items -->
-    <menuitem id="menu_ams_product_categories"
-              name="AMS Categories"
-              parent="base.menu_administration"
-              action="action_ams_product_categories"
-              sequence="25"
-              groups="base.group_system"/>
-<!-- ========================================================================== -->
-    <!-- OVERRIDE STANDARD PRODUCT CATEGORY ACTION TO USE OUR ENHANCED VIEW -->
+    <!-- ========================================================================== -->
+    <!-- OVERRIDE STANDARD PRODUCT CATEGORY ACTION -->
     <!-- ========================================================================== -->
     <record id="product.product_category_action_form" model="ir.actions.act_window">
         <field name="name">Product Categories</field>
@@ -523,14 +298,19 @@
                 Use the AMS settings to configure fulfillment, membership integration, 
                 pricing rules, and automation workflows.
             </p>
-            <p>
-                <strong>Quick Setup Tips:</strong>
-            </p>
-            <ul>
-                <li>Toggle "AMS Enabled" to activate enhanced features</li>
-                <li>Select an "AMS Type" to get smart defaults</li>
-                <li>Use the list view toggles for quick configuration</li>
-            </ul>
         </field>
     </record>
+
+    <!-- Also override the stock module's category menu if it exists -->
+    <record id="stock.menu_product_category_config_stock" model="ir.ui.menu">
+        <field name="action" ref="product.product_category_action_form"/>
+    </record>
+    <!-- Menu Items -->
+    <menuitem id="menu_ams_product_categories"
+              name="AMS Categories"
+              parent="base.menu_administration"
+              action="action_ams_product_categories"
+              sequence="25"
+              groups="base.group_system"/>
+
 </odoo>
