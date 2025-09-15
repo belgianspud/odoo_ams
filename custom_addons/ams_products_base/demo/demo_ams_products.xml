@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ========================================================================== -->
+        <!-- DEMO AMS PRODUCTS - LEVERAGING CATEGORIES FROM AMS_PRODUCT_TYPES -->
+        <!-- ========================================================================== -->
+
+        <!-- Demo Membership Products -->
+        <record id="demo_annual_membership_individual" model="product.template">
+            <field name="name">Individual Annual Membership</field>
+            <field name="categ_id" ref="ams_product_types.category_annual_membership"/>
+            <field name="list_price">150.00</field>
+            <field name="type">service</field>
+            <field name="default_code">MEM-IND-2024</field>
+            <field name="description">Annual membership for individual professionals. Includes access to all association benefits, events, and resources.</field>
+        </record>
+
+        <record id="demo_annual_membership_organization" model="product.template">
+            <field name="name">Organization Annual Membership</field>
+            <field name="categ_id" ref="ams_product_types.category_annual_membership"/>
+            <field name="list_price">500.00</field>
+            <field name="type">service</field>
+            <field name="default_code">MEM-ORG-2024</field>
+            <field name="description">Annual membership for organizations. Includes all individual benefits plus corporate directory listing and bulk member access.</field>
+        </record>
+
+        <record id="demo_student_membership" model="product.template">
+            <field name="name">Student Membership</field>
+            <field name="categ_id" ref="ams_product_types.category_student_membership"/>
+            <field name="list_price">50.00</field>
+            <field name="type">service</field>
+            <field name="default_code">MEM-STU-2024</field>
+            <field name="description">Discounted membership for full-time students. Requires proof of enrollment.</field>
+        </record>
+
+        <!-- Demo Event Products -->
+        <record id="demo_annual_conference" model="product.template">
+            <field name="name">Annual Conference Registration</field>
+            <field name="categ_id" ref="ams_product_types.category_conferences"/>
+            <field name="list_price">399.00</field>
+            <field name="type">service</field>
+            <field name="default_code">CONF-2024</field>
+            <field name="description">Three-day annual conference featuring keynote speakers, breakout sessions, and networking opportunities.</field>
+        </record>
+
+        <record id="demo_workshop_series" model="product.template">
+            <field name="name">Professional Development Workshop</field>
+            <field name="categ_id" ref="ams_product_types.category_workshops"/>
+            <field name="list_price">125.00</field>
+            <field name="type">service</field>
+            <field name="default_code">WORK-PDV-001</field>
+            <field name="description">Half-day professional development workshop covering industry best practices and emerging trends.</field>
+        </record>
+
+        <record id="demo_webinar_access" model="product.template">
+            <field name="name">Monthly Webinar Series Access</field>
+            <field name="categ_id" ref="ams_product_types.category_webinars"/>
+            <field name="list_price">75.00</field>
+            <field name="type">service</field>
+            <field name="default_code">WEB-MONTHLY</field>
+            <field name="description">Access to monthly expert webinars with recorded sessions and downloadable materials.</field>
+            <field name="digital_url">https://example.com/webinar-access</field>
+        </record>
+
+        <!-- Demo Education Products -->
+        <record id="demo_certification_course" model="product.template">
+            <field name="name">Professional Certification Course</field>
+            <field name="categ_id" ref="ams_product_types.category_continuing_education"/>
+            <field name="list_price">299.00</field>
+            <field name="type">service</field>
+            <field name="default_code">EDU-CERT-001</field>
+            <field name="description">Comprehensive certification course including materials, online modules, and certification exam.</field>
+        </record>
+
+        <record id="demo_online_course" model="product.template">
+            <field name="name">Advanced Skills Online Course</field>
+            <field name="categ_id" ref="ams_product_types.category_online_courses"/>
+            <field name="list_price">199.00</field>
+            <field name="type">service</field>
+            <field name="default_code">EDU-ONL-ADV</field>
+            <field name="description">Self-paced online course with video lectures, assignments, and completion certificate.</field>
+            <field name="digital_url">https://example.com/online-course-access</field>
+        </record>
+
+        <!-- Demo Publication Products -->
+        <record id="demo_magazine_subscription" model="product.template">
+            <field name="name">Professional Magazine Annual Subscription</field>
+            <field name="categ_id" ref="ams_product_types.category_magazines"/>
+            <field name="list_price">89.00</field>
+            <field name="type">consu</field>
+            <field name="default_code">MAG-ANN-2024</field>
+            <field name="description">Annual subscription to our monthly professional magazine with industry insights and trends.</field>
+        </record>
+
+        <record id="demo_digital_publication" model="product.template">
+            <field name="name">Digital Industry Report</field>
+            <field name="categ_id" ref="ams_product_types.category_digital_publications"/>
+            <field name="list_price">45.00</field>
+            <field name="type">service</field>
+            <field name="default_code">PUB-REPORT-Q4</field>
+            <field name="description">Quarterly digital report analyzing industry trends and market forecasts.</field>
+            <field name="digital_url">https://example.com/reports/q4-industry-report</field>
+        </record>
+
+        <record id="demo_technical_manual" model="product.template">
+            <field name="name">Best Practices Technical Manual</field>
+            <field name="categ_id" ref="ams_product_types.category_technical_manuals"/>
+            <field name="list_price">125.00</field>
+            <field name="type">consu</field>
+            <field name="default_code">MAN-BEST-PRAC</field>
+            <field name="description">Comprehensive technical manual covering industry best practices and standards. 250+ pages with diagrams and case studies.</field>
+        </record>
+
+        <!-- Demo Merchandise Products -->
+        <record id="demo_branded_polo" model="product.template">
+            <field name="name">Association Polo Shirt</field>
+            <field name="categ_id" ref="ams_product_types.category_apparel"/>
+            <field name="list_price">35.00</field>
+            <field name="type">consu</field>
+            <field name="default_code">POLO-ASSOC</field>
+            <field name="description">High-quality polo shirt with embroidered association logo. Available in multiple colors and sizes.</field>
+        </record>
+
+        <record id="demo_coffee_mug" model="product.template">
+            <field name="name">Association Coffee Mug</field>
+            <field name="categ_id" ref="ams_product_types.category_promotional_items"/>
+            <field name="list_price">12.00</field>
+            <field name="type">consu</field>
+            <field name="default_code">MUG-COFFEE</field>
+            <field name="description">Ceramic coffee mug with association logo and inspirational quote. Microwave and dishwasher safe.</field>
+        </record>
+
+        <!-- Demo Certification Products -->
+        <record id="demo_professional_certification" model="product.template">
+            <field name="name">Advanced Professional Certification</field>
+            <field name="categ_id" ref="ams_product_types.category_professional_certifications"/>
+            <field name="list_price">450.00</field>
+            <field name="type">service</field>
+            <field name="default_code">CERT-ADV-PROF</field>
+            <field name="description">Advanced certification program including study materials, practice exams, and certification fee.</field>
+            <field name="digital_url">https://example.com/certification-portal</field>
+        </record>
+
+        <record id="demo_cert_renewal" model="product.template">
+            <field name="name">Certification Renewal</field>
+            <field name="categ_id" ref="ams_product_types.category_certification_renewals"/>
+            <field name="list_price">150.00</field>
+            <field name="type">service</field>
+            <field name="default_code">CERT-RENEWAL</field>
+            <field name="description">Annual certification renewal including continuing education requirements and updated materials.</field>
+        </record>
+
+        <!-- Demo Digital Download Products -->
+        <record id="demo_ebook_collection" model="product.template">
+            <field name="name">Professional Development E-Book Collection</field>
+            <field name="categ_id" ref="ams_product_types.category_ebooks"/>
+            <field name="list_price">29.99</field>
+            <field name="type">service</field>
+            <field name="default_code">EBOOK-PROF-COL</field>
+            <field name="description">Collection of 5 professional development e-books covering leadership, communication, and career advancement.</field>
+            <field name="digital_url">https://example.com/downloads/ebook-collection</field>
+        </record>
+
+        <record id="demo_resource_library" model="product.template">
+            <field name="name">Digital Resource Library Access</field>
+            <field name="categ_id" ref="ams_product_types.category_digital_resources"/>
+            <field name="list_price">99.00</field>
+            <field name="type">service</field>
+            <field name="default_code">LIB-DIGITAL</field>
+            <field name="description">Annual access to digital resource library with templates, guides, and industry tools.</field>
+            <field name="digital_url">https://example.com/resource-library</field>
+        </record>
+
+        <record id="demo_member_directory" model="product.template">
+            <field name="name">Premium Member Directory Access</field>
+            <field name="categ_id" ref="ams_product_types.category_member_directory"/>
+            <field name="list_price">25.00</field>
+            <field name="type">service</field>
+            <field name="default_code">DIR-PREMIUM</field>
+            <field name="description">Enhanced member directory access with advanced search, networking tools, and contact export.</field>
+            <field name="digital_url">https://example.com/member-directory-premium</field>
+        </record>
+
+        <!-- ========================================================================== -->
+        <!-- DEMO PRODUCT VARIANTS (for products with attributes) -->
+        <!-- ========================================================================== -->
+
+        <!-- Polo Shirt Variants (Size-based) -->
+        <record id="demo_polo_small" model="product.product">
+            <field name="product_tmpl_id" ref="demo_branded_polo"/>
+            <field name="default_code">POLO-ASSOC-S</field>
+        </record>
+
+        <record id="demo_polo_medium" model="product.product">
+            <field name="product_tmpl_id" ref="demo_branded_polo"/>
+            <field name="default_code">POLO-ASSOC-M</field>
+        </record>
+
+        <record id="demo_polo_large" model="product.product">
+            <field name="product_tmpl_id" ref="demo_branded_polo"/>
+            <field name="default_code">POLO-ASSOC-L</field>
+        </record>
+
+        <!-- ========================================================================== -->
+        <!-- DEMO PARTNERS FOR TESTING MEMBER PRICING -->
+        <!-- ========================================================================== -->
+
+        <!-- Active Members -->
+        <record id="demo_member_jane_active" model="res.partner">
+            <field name="name">Jane Smith</field>
+            <field name="email">jane.smith@example.com</field>
+            <field name="is_member">True</field>
+            <field name="membership_status">active</field>
+            <field name="is_company">False</field>
+        </record>
+
+        <record id="demo_member_org_active" model="res.partner">
+            <field name="name">ABC Corporation</field>
+            <field name="email">membership@abc-corp.com</field>
+            <field name="is_member">True</field>
+            <field name="membership_status">active</field>
+            <field name="is_company">True</field>
+        </record>
+
+        <!-- Non-Members -->
+        <record id="demo_non_member_john" model="res.partner">
+            <field name="name">John Prospect</field>
+            <field name="email">john.prospect@example.com</field>
+            <field name="is_member">False</field>
+            <field name="membership_status">prospect</field>
+            <field name="is_company">False</field>
+        </record>
+
+        <record id="demo_non_member_org" model="res.partner">
+            <field name="name">XYZ Industries</field>
+            <field name="email">info@xyz-industries.com</field>
+            <field name="is_member">False</field>
+            <field name="membership_status">prospect</field>
+            <field name="is_company">True</field>
+        </record>
+
+        <!-- ========================================================================== -->
+        <!-- DEMO SALES ORDERS TO SHOW MEMBER PRICING IN ACTION -->
+        <!-- ========================================================================== -->
+
+        <!-- Member Sales Order -->
+        <record id="demo_sale_order_member" model="sale.order">
+            <field name="name">SO-MEMBER-001</field>
+            <field name="partner_id" ref="demo_member_jane_active"/>
+            <field name="state">draft</field>
+        </record>
+
+        <record id="demo_sale_order_line_conference_member" model="sale.order.line">
+            <field name="order_id" ref="demo_sale_order_member"/>
+            <field name="product_id" ref="demo_annual_conference"/>
+            <field name="product_uom_qty">1</field>
+        </record>
+
+        <record id="demo_sale_order_line_workshop_member" model="sale.order.line">
+            <field name="order_id" ref="demo_sale_order_member"/>
+            <field name="product_id" ref="demo_workshop_series"/>
+            <field name="product_uom_qty">2</field>
+        </record>
+
+        <!-- Non-Member Sales Order -->
+        <record id="demo_sale_order_non_member" model="sale.order">
+            <field name="name">SO-NONMEMBER-001</field>
+            <field name="partner_id" ref="demo_non_member_john"/>
+            <field name="state">draft</field>
+        </record>
+
+        <record id="demo_sale_order_line_conference_non_member" model="sale.order.line">
+            <field name="order_id" ref="demo_sale_order_non_member"/>
+            <field name="product_id" ref="demo_annual_conference"/>
+            <field name="product_uom_qty">1</field>
+        </record>
+
+        <record id="demo_sale_order_line_merchandise_non_member" model="sale.order.line">
+            <field name="order_id" ref="demo_sale_order_non_member"/>
+            <field name="product_id" ref="demo_branded_polo"/>
+            <field name="product_uom_qty">1</field>
+        </record>
+
+        <!-- ========================================================================== -->
+        <!-- DEMO NOTES AND DESCRIPTIONS -->
+        <!-- ========================================================================== -->
+
+        <!-- Create some demo data documentation -->
+        <record id="demo_data_note" model="ir.attachment">
+            <field name="name">AMS Products Base Demo Data.txt</field>
+            <field name="type">binary</field>
+            <field name="datas" type="base64">QU1TIFByb2R1Y3RzIEJhc2UgRGVtbyBEYXRhCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09CgpUaGlzIGRlbW8gZGF0YSBzaG93Y2FzZXMgdGhlIGZlYXR1cmVzIG9mIEFNUyBQcm9kdWN0cyBCYXNlOgoKMS4gKipNZW1iZXIgUHJpY2luZyoqOiBQcm9kdWN0cyBhdXRvbWF0aWNhbGx5IGluaGVyaXQgbWVtYmVyIGRpc2NvdW50cyBmcm9tIGNhdGVnb3JpZXMKMi4gKipEaWdpdGFsIERlbGl2ZXJ5Kio6IERpZ2l0YWwgcHJvZHVjdHMgaGF2ZSBkb3dubG9hZCBVUkxzIGFuZCBhdXRvbWF0aWMgZGVsaXZlcnkKMy4gKipNZW1iZXJzaGlwIFJlcXVpcmVtZW50cyoqOiBTb21lIHByb2R1Y3RzIHJlcXVpcmUgYWN0aXZlIG1lbWJlcnNoaXAKNC4gKipDYXRlZ29yeSBJbnRlZ3JhdGlvbioqOiBQcm9kdWN0cyBhdXRvbWF0aWNhbGx5IGluaGVyaXQgc2V0dGluZ3MgZnJvbSBBTVMgY2F0ZWdvcmllcwoKVG8gdGVzdCBtZW1iZXIgcHJpY2luZzoKLSBVc2UgSmFuZSBTbWl0aCAoYWN0aXZlIG1lbWJlcikgdnMgSm9obiBQcm9zcGVjdCAobm9uLW1lbWJlcikKLSBDb21wYXJlIHByaWNlcyBpbiBzYWxlcyBvcmRlcnMgb3IgcHJvZHVjdCB2aWV3cwoKVG8gdGVzdCBkaWdpdGFsIGRlbGl2ZXJ5OgotIENoZWNrIHByb2R1Y3RzIGxpa2UgV2ViaW5hciwgT25saW5lIENvdXJzZSwgRS1ib29rcwotIFZlcmlmeSBkaWdpdGFsIFVSTHMgYW5kIGF2YWlsYWJpbGl0eSBzdGF0dXMKClRvIHRlc3QgbWVtYmVyc2hpcCByZXF1aXJlbWVudHM6Ci0gQ2hlY2sgY2VydGlmaWNhdGlvbiBhbmQgbWVtYmVyIGRpcmVjdG9yeSBwcm9kdWN0cw==</field>
+        </record>
+
+    </data>
+</odoo>

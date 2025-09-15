@@ -1,48 +1,54 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'AMS Products Base',
-    'version': '18.0.2.0.0',
+    'version': '18.0.1.0.0',
     'category': 'Association Management',
-    'summary': 'Enhanced product data structures extending AMS Product Types',
+    'summary': 'Simple AMS product integration layer',
     'description': """
-AMS Products Base - Enhanced Product Module
-==========================================
+AMS Products Base - Simplified Integration Layer
+===============================================
 
-This module extends the AMS Product Types module with advanced association-specific 
-product functionality:
+This module provides a clean integration layer between Odoo's native product 
+system and the AMS modules, focusing on essential functionality:
 
-* **Advanced Member Pricing**
-  - Configurable pricing methods (fixed price, percentage discount, or both)
-  - Automatic price calculations based on membership status  
-  - Member savings tracking and display
-  - Integration with ams_member_data for membership verification
+* **Category-Driven Configuration**
+  - Auto-detect AMS products from enhanced categories (ams_product_types)
+  - Inherit pricing, digital, and inventory settings from categories
+  - Simple onchange behavior to apply category defaults
 
-* **Enhanced SKU Management**
-  - Multiple SKU generation methods (auto from name, category-based, sequence, manual)
-  - Category-specific SKU prefixes (MEM-, EVT-, EDU-, etc.)
-  - Legacy SKU tracking for data migration
-  - Automatic SKU synchronization with Odoo default_code
+* **Member Pricing Integration**
+  - Calculate member pricing from category discount percentages
+  - Integration with ams_member_data for membership status checking
+  - Partner-specific pricing methods for sales integration
 
-* **Digital Product Management**
-  - Download URLs and file attachments
-  - Access duration controls
-  - Auto-fulfillment configuration
-  - Digital content status tracking
+* **Essential Digital Product Support**
+  - Basic digital content fields (URL and file attachment)
+  - Digital content availability checking
+  - Simple validation for digital products
 
-* **Access Control & Restrictions**
-  - Membership requirement enforcement
-  - Membership level requirements
-  - Chapter-specific product restrictions (future)
-  - Public visibility controls
+* **Membership Requirements**
+  - Auto-detect membership requirements from categories
+  - Purchase permission checking based on membership status
+  - Integration hooks for other modules
 
-* **Advanced Fulfillment**
-  - Multiple fulfillment methods (manual, auto-digital, auto-physical, event-based, subscription)
-  - Custom delivery instructions
-  - Fulfillment status tracking
-  - Integration hooks for future fulfillment modules
+* **Simple SKU Management**
+  - Auto-generate SKUs from product names when needed
+  - Use Odoo's native default_code field
+  - Legacy system integration support
 
-This module extends ams_product_types and leverages enhanced product categories
-while adding association-specific business logic and advanced features.
+This simplified approach leverages existing modules rather than duplicating 
+functionality, making it a clean foundation for other AMS modules to build upon.
+
+Key Design Principles:
+- Leverage ams_product_types for category-driven behavior
+- Integrate with ams_member_data for membership logic  
+- Use Odoo native features where possible
+- Provide hooks for specialized modules
+- Keep the UI simple and focused
+
+Dependencies:
+- ams_member_data: For membership status integration
+- ams_product_types: For enhanced category functionality
     """,
     'author': 'Your Organization',
     'website': 'https://your-website.com',
@@ -53,17 +59,19 @@ while adding association-specific business logic and advanced features.
         'sale',
         'stock',
         'mail',
-        'ams_member_data',      # For member status integration
-        'ams_product_types'     # EXTENDS this module (required)
+        'ams_member_data',      # For membership status integration
+        'ams_product_types'     # For enhanced category functionality
     ],
     'data': [
         'security/ir.model.access.csv',
         'views/product_template_views.xml',
         'views/product_product_views.xml',
     ],
-    'demo': [],
+    'demo': [
+        'demo/demo_ams_products.xml',
+    ],
     'installable': True,
     'auto_install': False,
-    'application': True,
-    'sequence': 9,  # After ams_product_types (sequence 4)
+    'application': True, 
+    'sequence': 10,  # After core AMS modules
 }

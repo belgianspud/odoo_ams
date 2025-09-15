@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo.tests.common import TransactionCase
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import ValidationError
 from datetime import date, timedelta
 import logging
 
@@ -9,76 +9,59 @@ _logger = logging.getLogger(__name__)
 
 
 class TestAMSProductsBase(TransactionCase):
-    """Comprehensive test cases for AMS Products Base functionality."""
+    """Test cases for simplified AMS Products Base functionality."""
 
     def setUp(self):
-        """Set up test environment with all necessary data."""
+        """Set up test environment."""
         super().setUp()
         
         # Get models
         self.ProductTemplate = self.env['product.template']
         self.ProductProduct = self.env['product.product']
-        self.ProductType = self.env['ams.product.type']
-        self.Partner = self.env['res.partner']
         self.ProductCategory = self.env['product.category']
-        self.StockRoute = self.env['stock.route']
-        self.StockWarehouse = self.env['stock.warehouse']
+        self.Partner = self.env['res.partner']
         
-        # Create test product categories
-        self.ams_category = self.ProductCategory.create({
-            'name': 'AMS Test Category',
+        # Create test AMS categories (leveraging ams_product_types)
+        self.event_category = self.ProductCategory.create({
+            'name': 'Test Event Category',
+            'is_ams_category': True,
+            'ams_category_type': 'event',
+            'requires_member_pricing': True,
+            'member_discount_percent': 20.0,
+            'is_digital_category': False,
+            'requires_inventory': False,
         })
         
-        # Create test product types
-        self.membership_type = self.ProductType.create({
-            'name': 'Test Membership',
-            'code': 'TEST_MEMBERSHIP',
-            'category': 'membership',
+        self.digital_category = self.ProductCategory.create({
+            'name': 'Test Digital Category',
+            'is_ams_category': True,
+            'ams_category_type': 'digital',
+            'requires_member_pricing': True,
+            'member_discount_percent': 15.0,
+            'is_digital_category': True,
+            'requires_inventory': False,
+        })
+        
+        self.membership_category = self.ProductCategory.create({
+            'name': 'Test Membership Category',
+            'is_ams_category': True,
+            'ams_category_type': 'membership',
             'requires_member_pricing': False,
-            'is_digital': False,
+            'is_membership_category': True,
+            'grants_portal_access': True,
+            'is_digital_category': False,
             'requires_inventory': False,
-            'product_category_id': self.ams_category.id,
-        })
-        
-        self.event_type = self.ProductType.create({
-            'name': 'Test Event Registration',
-            'code': 'TEST_EVENT',
-            'category': 'event',
-            'requires_member_pricing': True,
-            'is_digital': False,
-            'requires_inventory': False,
-            'product_category_id': self.ams_category.id,
-        })
-        
-        self.digital_type = self.ProductType.create({
-            'name': 'Test Digital Product',
-            'code': 'TEST_DIGITAL',
-            'category': 'digital',
-            'requires_member_pricing': True,
-            'is_digital': True,
-            'requires_inventory': False,
-            'product_category_id': self.ams_category.id,
-        })
-        
-        self.merchandise_type = self.ProductType.create({
-            'name': 'Test Merchandise',
-            'code': 'TEST_MERCHANDISE',
-            'category': 'merchandise',
-            'requires_member_pricing': True,
-            'is_digital': False,
-            'requires_inventory': True,
-            'product_category_id': self.ams_category.id,
         })
         
         # Create test partners
-        self.member = self.Partner.create({
-            'name': 'Test Member',
+        self.member_partner = self.Partner.create({
+            'name': 'Test Active Member',
             'email': 'member@test.com',
             'is_member': True,
             'membership_status': 'active',
         })
         
-        self.non_member = self.Partner.create({
+        self.non_member_partner = self.Partner.create({
             'name': 'Test Non-Member',
             'email': 'nonmember@test.com',
             'is_member': False,
@@ -87,7 +70,7 @@ class TestAMSProductsBase(TransactionCase):
         
         # Create test attachment for digital products
         self.test_attachment = self.env['ir.attachment'].create({
-            'name': 'test_digital_file.pdf',
+            'name': 'test_file.pdf',
             'datas': b'VGVzdCBjb250ZW50',  # Base64 encoded "Test content"
             'mimetype': 'application/pdf',
         })
@@ -96,708 +79,559 @@ class TestAMSProductsBase(TransactionCase):
     # PRODUCT TEMPLATE TESTS
     # ========================================================================
 
-    def test_basic_ams_product_creation(self):
-        """Test basic AMS product creation with auto-generated fields."""
+    def test_ams_product_detection_from_category(self):
+        """Test that AMS products are auto-detected from category"""
+        # Create product with AMS category
         product = self.ProductTemplate.create({
             'name': 'Test AMS Product',
-            'is_ams_product': True,
-            'ams_product_type_id': self.event_type.id,
+            'categ_id': self.event_category.id,
             'list_price': 100.0,
         })
         
-        # Test basic fields
+        # Should be detected as AMS product
         self.assertTrue(product.is_ams_product)
-        self.assertEqual(product.ams_product_type_id, self.event_type)
-        self.assertTrue(product.sku)  # Should auto-generate
-        self.assertEqual(product.default_code, product.sku)  # Should sync
+        self.assertEqual(product.ams_category_display, 'event')
         
-        # Test product type inheritance
-        self.assertTrue(product.has_member_pricing)  # From event type
-        self.assertFalse(product.is_digital_product)  # From event type
-        self.assertFalse(product.stock_controlled)  # From event type
+        # Create product with non-AMS category
+        standard_category = self.ProductCategory.create({
+            'name': 'Standard Category',
+            'is_ams_category': False,
+        })
         
-        # Test category assignment
-        self.assertEqual(product.categ_id, self.ams_category)
+        standard_product = self.ProductTemplate.create({
+            'name': 'Standard Product',
+            'categ_id': standard_category.id,
+            'list_price': 50.0,
+        })
+        
+        # Should not be AMS product
+        self.assertFalse(standard_product.is_ams_product)
 
-    def test_member_pricing_configuration(self):
-        """Test member pricing setup and calculations."""
+    def test_member_pricing_calculation(self):
+        """Test member pricing calculation from category discount"""
         product = self.ProductTemplate.create({
             'name': 'Member Pricing Test',
-            'is_ams_product': True,
-            'ams_product_type_id': self.event_type.id,
-            'has_member_pricing': True,
-            'member_price': 80.0,
-            'non_member_price': 100.0,
+            'categ_id': self.event_category.id,  # 20% discount
             'list_price': 100.0,
         })
         
-        # Test pricing fields
-        self.assertTrue(product.has_member_pricing)
-        self.assertEqual(product.member_price, 80.0)
-        self.assertEqual(product.non_member_price, 100.0)
-        
-        # Test computed fields
-        self.assertEqual(product.member_discount_percentage, 20.0)
-        self.assertEqual(product.effective_member_price, 80.0)
-        self.assertEqual(product.effective_non_member_price, 100.0)
+        # Test member pricing calculation
+        self.assertEqual(product.member_price, 80.0)  # 20% discount
+        self.assertEqual(product.member_savings, 20.0)
         
         # Test pricing summary
-        self.assertIn('Members:', product.pricing_summary)
-        self.assertIn('Non-members:', product.pricing_summary)
-        
-        # Test business methods
-        self.assertEqual(product.get_price_for_member_status(True), 80.0)
-        self.assertEqual(product.get_price_for_member_status(False), 100.0)
-        self.assertEqual(product.get_member_savings(), 20.0)
+        self.assertIn('Members: $80.00', product.pricing_summary)
+        self.assertIn('Save $20.00', product.pricing_summary)
+        self.assertIn('Non-members: $100.00', product.pricing_summary)
 
-    def test_digital_product_configuration(self):
-        """Test digital product setup and validation."""
+    def test_get_price_for_partner(self):
+        """Test partner-specific pricing"""
         product = self.ProductTemplate.create({
-            'name': 'Digital Product Test',
-            'is_ams_product': True,
-            'ams_product_type_id': self.digital_type.id,
-            'is_digital_product': True,
-            'digital_download_url': 'https://example.com/download',
-            'digital_attachment_id': self.test_attachment.id,
-            'auto_fulfill_digital': True,
+            'name': 'Partner Pricing Test',
+            'categ_id': self.event_category.id,  # 20% member discount
+            'list_price': 100.0,
         })
         
-        # Test digital product fields
-        self.assertTrue(product.is_digital_product)
-        self.assertTrue(product.auto_fulfill_digital)
-        self.assertEqual(product.digital_download_url, 'https://example.com/download')
-        self.assertEqual(product.digital_attachment_id, self.test_attachment)
+        # Test member gets discounted price
+        member_price = product.get_price_for_partner(self.member_partner)
+        self.assertEqual(member_price, 80.0)
         
-        # Test computed fields
-        self.assertTrue(product.is_digital_available)
-        self.assertEqual(product.inventory_status, 'digital')
+        # Test non-member gets regular price
+        non_member_price = product.get_price_for_partner(self.non_member_partner)
+        self.assertEqual(non_member_price, 100.0)
         
-        # Test Odoo integration
-        self.assertEqual(product.type, 'service')  # Digital products are services
-        self.assertFalse(product.stock_controlled)
-        
-        # Test digital content access
-        access_info = product.get_digital_content_access()
-        self.assertTrue(access_info['is_digital'])
-        self.assertEqual(access_info['download_url'], 'https://example.com/download')
-        self.assertTrue(access_info['auto_fulfill'])
-        self.assertTrue(access_info['is_available'])
+        # Test no partner provided
+        no_partner_price = product.get_price_for_partner(None)
+        self.assertEqual(no_partner_price, 100.0)
 
-    def test_inventory_product_configuration(self):
-        """Test physical product with inventory tracking."""
-        product = self.ProductTemplate.create({
-            'name': 'Inventory Product Test',
-            'is_ams_product': True,
-            'ams_product_type_id': self.merchandise_type.id,
-            'stock_controlled': True,
+    def test_membership_requirement_detection(self):
+        """Test membership requirement detection"""
+        # Membership products require membership
+        membership_product = self.ProductTemplate.create({
+            'name': 'Membership Product',
+            'categ_id': self.membership_category.id,
+            'list_price': 150.0,
+        })
+        
+        self.assertTrue(membership_product.requires_membership)
+        
+        # Regular event products don't require membership
+        event_product = self.ProductTemplate.create({
+            'name': 'Event Product',
+            'categ_id': self.event_category.id,
+            'list_price': 100.0,
+        })
+        
+        self.assertFalse(event_product.requires_membership)
+
+    def test_can_be_purchased_by_partner(self):
+        """Test purchase permission checking"""
+        membership_product = self.ProductTemplate.create({
+            'name': 'Members Only Product',
+            'categ_id': self.membership_category.id,
+            'list_price': 150.0,
+        })
+        
+        # Member can purchase
+        self.assertTrue(
+            membership_product.can_be_purchased_by_partner(self.member_partner)
+        )
+        
+        # Non-member cannot purchase
+        self.assertFalse(
+            membership_product.can_be_purchased_by_partner(self.non_member_partner)
+        )
+        
+        # Regular product can be purchased by anyone
+        event_product = self.ProductTemplate.create({
+            'name': 'Public Event',
+            'categ_id': self.event_category.id,
+            'list_price': 100.0,
+        })
+        
+        self.assertTrue(event_product.can_be_purchased_by_partner(self.member_partner))
+        self.assertTrue(event_product.can_be_purchased_by_partner(self.non_member_partner))
+
+    def test_digital_content_handling(self):
+        """Test digital content detection and validation"""
+        # Digital product with URL
+        digital_product = self.ProductTemplate.create({
+            'name': 'Digital Product with URL',
+            'categ_id': self.digital_category.id,
+            'list_price': 50.0,
+            'digital_url': 'https://example.com/download',
+        })
+        
+        self.assertTrue(digital_product.has_digital_content)
+        
+        # Digital product with attachment
+        digital_product_file = self.ProductTemplate.create({
+            'name': 'Digital Product with File',
+            'categ_id': self.digital_category.id,
+            'list_price': 75.0,
+            'digital_attachment_id': self.test_attachment.id,
+        })
+        
+        self.assertTrue(digital_product_file.has_digital_content)
+        
+        # Digital product with no content
+        digital_product_empty = self.ProductTemplate.create({
+            'name': 'Digital Product Empty',
+            'categ_id': self.digital_category.id,
             'list_price': 25.0,
         })
         
-        # Test inventory fields
-        self.assertTrue(product.stock_controlled)
-        self.assertEqual(product.inventory_status, 'tracked')
-        
-        # Test Odoo integration
-        self.assertEqual(product.type, 'product')  # Physical products are stockable
-        
-        # Test that routes are set (if any exist)
-        # Note: Routes may not exist in test environment
-        if product.route_ids:
-            self.assertTrue(len(product.route_ids) > 0)
+        self.assertFalse(digital_product_empty.has_digital_content)
 
-    def test_sku_generation_and_validation(self):
-        """Test SKU auto-generation and validation."""
-        # Test auto-generation
-        product = self.ProductTemplate.create({
-            'name': 'SKU Generation Test Product',
-            'is_ams_product': True,
+    def test_get_digital_content_access(self):
+        """Test digital content access information"""
+        digital_product = self.ProductTemplate.create({
+            'name': 'Digital Access Test',
+            'categ_id': self.digital_category.id,
+            'list_price': 50.0,
+            'digital_url': 'https://example.com/secure-download',
+            'digital_attachment_id': self.test_attachment.id,
         })
         
-        self.assertTrue(product.sku)
-        self.assertIn('SKU-GENERATION-TEST-PRODUCT', product.sku.upper())
-        self.assertEqual(product.default_code, product.sku)
+        # Test access for member
+        member_access = digital_product.get_digital_content_access(self.member_partner)
+        self.assertTrue(member_access['is_digital'])
+        self.assertTrue(member_access['has_content'])
+        self.assertTrue(member_access['can_access'])
+        self.assertEqual(member_access['download_url'], 'https://example.com/secure-download')
         
-        # Test manual SKU
+        # Test access for non-member
+        non_member_access = digital_product.get_digital_content_access(self.non_member_partner)
+        self.assertTrue(non_member_access['is_digital'])
+        self.assertTrue(non_member_access['has_content'])
+        self.assertTrue(non_member_access['can_access'])  # No membership restriction
+
+    def test_simple_sku_generation(self):
+        """Test simple SKU generation"""
+        product = self.ProductTemplate.create({
+            'name': 'Test SKU Generation Product',
+            'categ_id': self.event_category.id,
+            'list_price': 100.0,
+        })
+        
+        # Should have generated SKU
+        self.assertTrue(product.default_code)
+        self.assertIn('TESTSKU', product.default_code.upper())
+        
+        # Test uniqueness
         product2 = self.ProductTemplate.create({
-            'name': 'Manual SKU Product',
-            'is_ams_product': True,
-            'sku': 'MANUAL-SKU-001',
+            'name': 'Test SKU Generation Product',  # Same name
+            'categ_id': self.event_category.id,
+            'list_price': 100.0,
         })
         
-        self.assertEqual(product2.sku, 'MANUAL-SKU-001')
-        self.assertEqual(product2.default_code, 'MANUAL-SKU-001')
-        
-        # Test SKU uniqueness constraint
-        with self.assertRaises(Exception):  # Should raise IntegrityError
-            self.ProductTemplate.create({
-                'name': 'Duplicate SKU Product',
-                'is_ams_product': True,
-                'sku': 'MANUAL-SKU-001',  # Duplicate
-            })
+        self.assertNotEqual(product.default_code, product2.default_code)
 
-    def test_access_control_and_membership_requirements(self):
-        """Test membership requirement and access control."""
-        product = self.ProductTemplate.create({
-            'name': 'Members Only Product',
-            'is_ams_product': True,
-            'requires_membership': True,
-            'has_member_pricing': True,
-            'member_price': 50.0,
-            'non_member_price': 75.0,
-        })
-        
-        # Test access control
-        self.assertTrue(product.can_be_purchased_by_member_status(True))
-        self.assertFalse(product.can_be_purchased_by_member_status(False))
-        
-        # Test pricing context
-        member_context = product._get_pricing_context(self.member.id)
-        self.assertTrue(member_context['is_member'])
-        self.assertTrue(member_context['can_purchase'])
-        self.assertEqual(member_context['effective_price'], 50.0)
-        
-        non_member_context = product._get_pricing_context(self.non_member.id)
-        self.assertFalse(non_member_context['is_member'])
-        self.assertFalse(non_member_context['can_purchase'])
-
-    def test_product_type_integration(self):
-        """Test integration with AMS product types."""
-        # Test onchange behavior
+    def test_category_onchange(self):
+        """Test category onchange behavior"""
         product = self.ProductTemplate.new({
-            'name': 'Type Integration Test',
-            'is_ams_product': True,
-            'ams_product_type_id': self.digital_type.id,
+            'name': 'Category Change Test',
+            'list_price': 100.0,
         })
         
-        product._onchange_ams_product_type()
+        # Set category and trigger onchange
+        product.categ_id = self.event_category
+        product._onchange_categ_id()
         
-        # Should inherit from product type
-        self.assertTrue(product.is_digital_product)
-        self.assertTrue(product.has_member_pricing)
-        self.assertFalse(product.stock_controlled)
-        self.assertEqual(product.type, 'service')
-        self.assertEqual(product.categ_id, self.ams_category)
+        # Should inherit category properties
+        self.assertTrue(product.is_ams_product)
 
-    def test_validation_constraints(self):
-        """Test various validation constraints."""
-        # Test invalid SKU format
-        with self.assertRaises(ValidationError):
-            self.ProductTemplate.create({
-                'name': 'Invalid SKU Product',
-                'is_ams_product': True,
-                'sku': 'INVALID@SKU!',
-            })
+    # ========================================================================
+    # VALIDATION TESTS
+    # ========================================================================
+
+    def test_digital_url_validation(self):
+        """Test digital URL format validation"""
+        # Valid URL should work
+        valid_product = self.ProductTemplate.create({
+            'name': 'Valid URL Product',
+            'categ_id': self.digital_category.id,
+            'list_price': 50.0,
+            'digital_url': 'https://example.com/download',
+        })
+        self.assertEqual(valid_product.digital_url, 'https://example.com/download')
         
-        # Test invalid digital URL
+        # Invalid URL should raise error
         with self.assertRaises(ValidationError):
             self.ProductTemplate.create({
                 'name': 'Invalid URL Product',
-                'is_ams_product': True,
-                'is_digital_product': True,
-                'digital_download_url': 'not-a-url',
-            })
-        
-        # Test member pricing logic
-        with self.assertRaises(ValidationError):
-            self.ProductTemplate.create({
-                'name': 'Invalid Pricing Product',
-                'is_ams_product': True,
-                'has_member_pricing': True,
-                'member_price': 100.0,
-                'non_member_price': 50.0,  # Member price higher
-            })
-        
-        # Test digital content requirements
-        with self.assertRaises(ValidationError):
-            self.ProductTemplate.create({
-                'name': 'Missing Digital Content',
-                'is_ams_product': True,
-                'is_digital_product': True,
-                # Missing both URL and attachment
+                'categ_id': self.digital_category.id,
+                'list_price': 50.0,
+                'digital_url': 'not-a-valid-url',
             })
 
-    def test_business_query_methods(self):
-        """Test business query methods."""
-        # Create test products
-        membership_product = self.ProductTemplate.create({
-            'name': 'Membership Product',
-            'is_ams_product': True,
-            'ams_product_type_id': self.membership_type.id,
+    def test_digital_content_requirements(self):
+        """Test digital product content requirements"""
+        # Digital product missing content should raise error
+        with self.assertRaises(ValidationError):
+            product = self.ProductTemplate.create({
+                'name': 'Missing Content Product',
+                'categ_id': self.digital_category.id,
+                'list_price': 50.0,
+                # No digital_url or digital_attachment_id
+            })
+            # Trigger validation
+            product._check_digital_content_requirements()
+
+    # ========================================================================
+    # QUERY METHOD TESTS
+    # ========================================================================
+
+    def test_get_ams_products_by_category_type(self):
+        """Test getting products by category type"""
+        # Create products of different types
+        event_product = self.ProductTemplate.create({
+            'name': 'Event Product',
+            'categ_id': self.event_category.id,
+            'list_price': 100.0,
         })
         
         digital_product = self.ProductTemplate.create({
             'name': 'Digital Product',
-            'is_ams_product': True,
-            'ams_product_type_id': self.digital_type.id,
-            'is_digital_product': True,
-            'digital_download_url': 'https://example.com/test',
+            'categ_id': self.digital_category.id,
+            'list_price': 50.0,
         })
         
+        # Test filtering by category type
+        event_products = self.ProductTemplate.get_ams_products_by_category_type('event')
+        self.assertIn(event_product, event_products)
+        self.assertNotIn(digital_product, event_products)
+        
+        # Test getting all AMS products
+        all_ams_products = self.ProductTemplate.get_ams_products_by_category_type()
+        self.assertIn(event_product, all_ams_products)
+        self.assertIn(digital_product, all_ams_products)
+
+    def test_get_member_pricing_products(self):
+        """Test getting products with member pricing"""
         member_pricing_product = self.ProductTemplate.create({
             'name': 'Member Pricing Product',
-            'is_ams_product': True,
-            'ams_product_type_id': self.event_type.id,
-            'has_member_pricing': True,
-            'member_price': 80.0,
-            'non_member_price': 100.0,
+            'categ_id': self.event_category.id,  # Has member pricing
+            'list_price': 100.0,
         })
         
-        # Test query methods
-        ams_products = self.ProductTemplate.get_ams_products_by_type()
-        self.assertIn(membership_product, ams_products)
-        self.assertIn(digital_product, ams_products)
-        self.assertIn(member_pricing_product, ams_products)
-        
-        digital_products = self.ProductTemplate.get_digital_products()
-        self.assertIn(digital_product, digital_products)
-        self.assertNotIn(membership_product, digital_products)
+        no_member_pricing_product = self.ProductTemplate.create({
+            'name': 'No Member Pricing Product',
+            'categ_id': self.membership_category.id,  # No member pricing
+            'list_price': 150.0,
+        })
         
         member_pricing_products = self.ProductTemplate.get_member_pricing_products()
         self.assertIn(member_pricing_product, member_pricing_products)
-        self.assertNotIn(membership_product, member_pricing_products)
+        self.assertNotIn(no_member_pricing_product, member_pricing_products)
+
+    def test_get_digital_products(self):
+        """Test getting digital products"""
+        digital_product = self.ProductTemplate.create({
+            'name': 'Digital Product',
+            'categ_id': self.digital_category.id,
+            'list_price': 50.0,
+        })
+        
+        physical_product = self.ProductTemplate.create({
+            'name': 'Physical Product',
+            'categ_id': self.event_category.id,
+            'list_price': 100.0,
+        })
+        
+        digital_products = self.ProductTemplate.get_digital_products()
+        self.assertIn(digital_product, digital_products)
+        self.assertNotIn(physical_product, digital_products)
 
     # ========================================================================
     # PRODUCT VARIANT TESTS
     # ========================================================================
 
-    def test_variant_creation_and_sku_generation(self):
-        """Test product variant creation with AMS features."""
+    def test_variant_ams_detection(self):
+        """Test variant AMS detection from template"""
         template = self.ProductTemplate.create({
-            'name': 'Variant Test Template',
-            'is_ams_product': True,
-            'ams_product_type_id': self.event_type.id,
-            'sku': 'VARIANT-TEMPLATE',
-            'has_member_pricing': True,
-            'member_price': 100.0,
-            'non_member_price': 150.0,
+            'name': 'Variant Template',
+            'categ_id': self.event_category.id,
+            'list_price': 100.0,
         })
         
-        variant = self.ProductProduct.create({
-            'product_tmpl_id': template.id,
-        })
+        variant = template.product_variant_ids[0]
         
-        # Test basic variant fields
         self.assertTrue(variant.template_is_ams_product)
-        self.assertEqual(variant.template_ams_product_type_id, self.event_type)
-        self.assertTrue(variant.template_has_member_pricing)
-        
-        # Test SKU inheritance
-        self.assertTrue(variant.effective_sku)
-        self.assertIn('VARIANT-TEMPLATE', variant.effective_sku)
-        
-        # Test pricing inheritance
-        self.assertEqual(variant.final_member_price, 100.0)
-        self.assertEqual(variant.final_non_member_price, 150.0)
-        self.assertFalse(variant.has_variant_pricing)
+        self.assertEqual(variant.template_ams_category_display, 'event')
 
-    def test_variant_pricing_override(self):
-        """Test variant-specific pricing."""
-        template = self.ProductTemplate.create({
-            'name': 'Variant Pricing Template',
-            'is_ams_product': True,
-            'ams_product_type_id': self.event_type.id,
-            'has_member_pricing': True,
-            'member_price': 100.0,
-            'non_member_price': 150.0,
-        })
-        
-        variant = self.ProductProduct.create({
-            'product_tmpl_id': template.id,
-            'has_variant_pricing': True,
-            'variant_member_price': 80.0,
-            'variant_non_member_price': 120.0,
-        })
-        
-        # Test variant pricing
-        self.assertTrue(variant.has_variant_pricing)
-        self.assertEqual(variant.final_member_price, 80.0)
-        self.assertEqual(variant.final_non_member_price, 120.0)
-        self.assertAlmostEqual(variant.variant_member_discount, 33.33, places=1)
-        
-        # Test business methods
-        self.assertEqual(variant.get_variant_price_for_member_status(True), 80.0)
-        self.assertEqual(variant.get_variant_price_for_member_status(False), 120.0)
-        self.assertEqual(variant.get_variant_member_savings(), 40.0)
-
-    def test_variant_digital_content_override(self):
-        """Test variant-specific digital content."""
-        template = self.ProductTemplate.create({
-            'name': 'Variant Digital Template',
-            'is_ams_product': True,
-            'ams_product_type_id': self.digital_type.id,
-            'is_digital_product': True,
-            'digital_download_url': 'https://example.com/template',
-        })
-        
-        variant = self.ProductProduct.create({
-            'product_tmpl_id': template.id,
-            'has_variant_digital_content': True,
-            'variant_digital_url': 'https://example.com/variant',
-        })
-        
-        # Test variant digital content
-        self.assertTrue(variant.has_variant_digital_content)
-        self.assertEqual(variant.final_digital_url, 'https://example.com/variant')
-        self.assertTrue(variant.is_digital_content_available)
-        
-        # Test digital content access
-        access_info = variant.get_variant_digital_content_access()
-        self.assertTrue(access_info['is_digital'])
-        self.assertEqual(access_info['download_url'], 'https://example.com/variant')
-        self.assertTrue(access_info['has_variant_content'])
-
-    def test_variant_inventory_configuration(self):
-        """Test variant-specific inventory settings."""
-        template = self.ProductTemplate.create({
-            'name': 'Variant Inventory Template',
-            'is_ams_product': True,
-            'ams_product_type_id': self.merchandise_type.id,
-            'stock_controlled': True,
-        })
-        
-        variant = self.ProductProduct.create({
-            'product_tmpl_id': template.id,
-            'has_variant_inventory_config': True,
-            'variant_stock_controlled': True,
-            'variant_reorder_point': 10.0,
-            'variant_max_stock': 100.0,
-        })
-        
-        # Test variant inventory settings
-        self.assertTrue(variant.has_variant_inventory_config)
-        self.assertTrue(variant.variant_stock_controlled)
-        self.assertTrue(variant.effective_stock_controlled)
-        self.assertEqual(variant.variant_reorder_point, 10.0)
-        self.assertEqual(variant.variant_max_stock, 100.0)
-        
-        # Test inventory status
-        inventory_status = variant.get_variant_inventory_status()
-        self.assertTrue(inventory_status['stock_controlled'])
-        self.assertEqual(inventory_status['reorder_point'], 10.0)
-        self.assertEqual(inventory_status['max_stock'], 100.0)
-
-    def test_variant_sku_management(self):
-        """Test variant SKU generation and management."""
+    def test_variant_effective_sku(self):
+        """Test variant effective SKU computation"""
         template = self.ProductTemplate.create({
             'name': 'SKU Variant Template',
-            'is_ams_product': True,
-            'sku': 'TEMPLATE-SKU',
+            'categ_id': self.event_category.id,
+            'list_price': 100.0,
+            'default_code': 'TEMPLATE-SKU',
         })
         
-        # Test automatic variant SKU generation
-        variant1 = self.ProductProduct.create({
-            'product_tmpl_id': template.id,
-        })
+        variant = template.product_variant_ids[0]
         
-        self.assertTrue(variant1.effective_sku)
-        self.assertIn('TEMPLATE-SKU', variant1.effective_sku)
+        # Single variant should use template SKU
+        self.assertEqual(variant.effective_sku, 'TEMPLATE-SKU')
         
-        # Test manual variant SKU
+        # Create additional variant
         variant2 = self.ProductProduct.create({
             'product_tmpl_id': template.id,
-            'variant_sku': 'MANUAL-VARIANT-SKU',
+            'default_code': 'VARIANT-SKU',
         })
         
-        self.assertEqual(variant2.effective_sku, 'MANUAL-VARIANT-SKU')
-        
-        # Test SKU uniqueness
-        with self.assertRaises(Exception):  # Should raise IntegrityError
-            self.ProductProduct.create({
-                'product_tmpl_id': template.id,
-                'variant_sku': 'MANUAL-VARIANT-SKU',  # Duplicate
-            })
+        # Variant with own SKU should use it
+        self.assertEqual(variant2.effective_sku, 'VARIANT-SKU')
 
-    def test_variant_sync_methods(self):
-        """Test variant synchronization methods."""
+    def test_variant_pricing_delegation(self):
+        """Test that variant pricing delegates to template"""
         template = self.ProductTemplate.create({
-            'name': 'Sync Test Template',
-            'is_ams_product': True,
-            'ams_product_type_id': self.event_type.id,
-            'has_member_pricing': True,
-            'member_price': 100.0,
-            'non_member_price': 150.0,
+            'name': 'Variant Pricing Template',
+            'categ_id': self.event_category.id,  # 20% member discount
+            'list_price': 100.0,
         })
         
-        variant = self.ProductProduct.create({
-            'product_tmpl_id': template.id,
-            'has_variant_pricing': True,
-            'variant_member_price': 80.0,
-            'variant_non_member_price': 120.0,
-        })
+        variant = template.product_variant_ids[0]
         
-        # Test sync with template
-        variant.sync_with_template_pricing()
-        self.assertFalse(variant.has_variant_pricing)
-        self.assertEqual(variant.variant_member_price, 0.0)
-        self.assertEqual(variant.final_member_price, 100.0)  # Back to template
+        # Test variant pricing matches template
+        member_price = variant.get_price_for_partner(self.member_partner)
+        self.assertEqual(member_price, 80.0)  # 20% discount
         
-        # Test copy from template
-        variant.copy_template_pricing_to_variant()
-        self.assertTrue(variant.has_variant_pricing)
-        self.assertEqual(variant.variant_member_price, 100.0)
-        self.assertEqual(variant.variant_non_member_price, 150.0)
+        non_member_price = variant.get_price_for_partner(self.non_member_partner)
+        self.assertEqual(non_member_price, 100.0)
 
-    def test_variant_validation_constraints(self):
-        """Test variant-specific validation constraints."""
-        template = self.ProductTemplate.create({
-            'name': 'Validation Test Template',
-            'is_ams_product': True,
-            'ams_product_type_id': self.event_type.id,
+    def test_variant_availability_status(self):
+        """Test variant availability status computation"""
+        # Digital product variant
+        digital_template = self.ProductTemplate.create({
+            'name': 'Digital Variant Template',
+            'categ_id': self.digital_category.id,
+            'list_price': 50.0,
+            'digital_url': 'https://example.com/download',
         })
         
-        # Test invalid variant SKU format
-        with self.assertRaises(ValidationError):
-            self.ProductProduct.create({
-                'product_tmpl_id': template.id,
-                'variant_sku': 'INVALID@SKU!',
-            })
+        digital_variant = digital_template.product_variant_ids[0]
+        self.assertEqual(digital_variant.availability_status, 'digital_available')
         
-        # Test invalid variant pricing logic
-        with self.assertRaises(ValidationError):
-            self.ProductProduct.create({
-                'product_tmpl_id': template.id,
-                'has_variant_pricing': True,
-                'variant_member_price': 150.0,
-                'variant_non_member_price': 100.0,  # Member price higher
-            })
+        # Service product variant
+        service_template = self.ProductTemplate.create({
+            'name': 'Service Variant Template',
+            'categ_id': self.event_category.id,
+            'list_price': 100.0,
+            'type': 'service',
+        })
         
-        # Test invalid inventory logic
-        with self.assertRaises(ValidationError):
-            self.ProductProduct.create({
-                'product_tmpl_id': template.id,
-                'has_variant_inventory_config': True,
-                'variant_reorder_point': 100.0,
-                'variant_max_stock': 50.0,  # Reorder point higher than max
-            })
+        service_variant = service_template.product_variant_ids[0]
+        self.assertEqual(service_variant.availability_status, 'service_available')
+
+    def test_variant_name_get(self):
+        """Test variant enhanced name display"""
+        template = self.ProductTemplate.create({
+            'name': 'Name Display Template',
+            'categ_id': self.membership_category.id,  # Requires membership
+            'list_price': 150.0,
+            'default_code': 'NAME-DISPLAY',
+        })
+        
+        variant = template.product_variant_ids[0]
+        name_display = variant.name_get()[0][1]
+        
+        # Should include SKU and membership indicator
+        self.assertIn('[NAME-DISPLAY]', name_display)
+        self.assertIn('(Members Only)', name_display)
 
     def test_variant_query_methods(self):
-        """Test variant business query methods."""
-        # Create template with different types
+        """Test variant query methods"""
+        # Create templates of different types
+        event_template = self.ProductTemplate.create({
+            'name': 'Event Variant Query',
+            'categ_id': self.event_category.id,
+            'list_price': 100.0,
+        })
+        
         digital_template = self.ProductTemplate.create({
-            'name': 'Digital Template',
-            'is_ams_product': True,
-            'ams_product_type_id': self.digital_type.id,
-            'is_digital_product': True,
-            'digital_download_url': 'https://example.com/digital',
+            'name': 'Digital Variant Query',
+            'categ_id': self.digital_category.id,
+            'list_price': 50.0,
+            'digital_url': 'https://example.com/test',
         })
         
-        physical_template = self.ProductTemplate.create({
-            'name': 'Physical Template',
-            'is_ams_product': True,
-            'ams_product_type_id': self.merchandise_type.id,
-            'stock_controlled': True,
+        membership_template = self.ProductTemplate.create({
+            'name': 'Membership Variant Query',
+            'categ_id': self.membership_category.id,
+            'list_price': 150.0,
         })
         
-        # Create variants
-        digital_variant = self.ProductProduct.create({
-            'product_tmpl_id': digital_template.id,
-        })
-        
-        physical_variant = self.ProductProduct.create({
-            'product_tmpl_id': physical_template.id,
-            'has_variant_inventory_config': True,
-            'variant_reorder_point': 5.0,
-        })
+        # Get variants
+        event_variant = event_template.product_variant_ids[0]
+        digital_variant = digital_template.product_variant_ids[0]
+        membership_variant = membership_template.product_variant_ids[0]
         
         # Test query methods
-        digital_variants = self.ProductProduct.get_variants_by_ams_criteria(is_digital=True)
-        self.assertIn(digital_variant, digital_variants)
-        self.assertNotIn(physical_variant, digital_variants)
+        event_variants = self.ProductProduct.get_ams_variants_by_category_type('event')
+        self.assertIn(event_variant, event_variants)
+        self.assertNotIn(digital_variant, event_variants)
         
-        stock_controlled_variants = self.ProductProduct.get_variants_by_ams_criteria(stock_controlled=True)
-        self.assertIn(physical_variant, stock_controlled_variants)
-        self.assertNotIn(digital_variant, stock_controlled_variants)
+        membership_required_variants = self.ProductProduct.get_membership_required_variants()
+        self.assertIn(membership_variant, membership_required_variants)
+        self.assertNotIn(event_variant, membership_required_variants)
 
     # ========================================================================
     # INTEGRATION TESTS
     # ========================================================================
 
-    def test_odoo_inventory_integration(self):
-        """Test integration with Odoo's inventory system."""
+    def test_ams_member_data_integration(self):
+        """Test integration with ams_member_data module"""
         product = self.ProductTemplate.create({
-            'name': 'Inventory Integration Test',
-            'is_ams_product': True,
-            'ams_product_type_id': self.merchandise_type.id,
-            'stock_controlled': True,
-        })
-        
-        # Should be configured as stockable product
-        self.assertEqual(product.type, 'product')
-        self.assertTrue(product.stock_controlled)
-        
-        # Test that it can be used in inventory operations
-        variant = product.product_variant_ids[0]
-        self.assertEqual(variant.type, 'product')
-        
-        # Test stock level fields exist and are accessible
-        self.assertTrue(hasattr(variant, 'qty_available'))
-        self.assertTrue(hasattr(variant, 'virtual_available'))
-
-    def test_product_category_integration(self):
-        """Test integration with Odoo product categories."""
-        product = self.ProductTemplate.create({
-            'name': 'Category Integration Test',
-            'is_ams_product': True,
-            'ams_product_type_id': self.event_type.id,
-        })
-        
-        # Should inherit category from product type
-        self.assertEqual(product.categ_id, self.ams_category)
-        
-        # Test that it works with Odoo's category-based features
-        same_category_products = self.ProductTemplate.search([
-            ('categ_id', '=', self.ams_category.id)
-        ])
-        self.assertIn(product, same_category_products)
-
-    def test_pricing_pricelist_integration(self):
-        """Test that AMS pricing works alongside Odoo pricelists."""
-        product = self.ProductTemplate.create({
-            'name': 'Pricelist Integration Test',
-            'is_ams_product': True,
-            'ams_product_type_id': self.event_type.id,
-            'has_member_pricing': True,
-            'member_price': 80.0,
-            'non_member_price': 100.0,
+            'name': 'Integration Test Product',
+            'categ_id': self.event_category.id,
             'list_price': 100.0,
         })
         
-        # Test that basic pricing methods work
-        member_price = product.get_price_for_member_status(True)
-        non_member_price = product.get_price_for_member_status(False)
-        
-        self.assertEqual(member_price, 80.0)
-        self.assertEqual(non_member_price, 100.0)
-        
-        # Test with variants
-        variant = product.product_variant_ids[0]
-        variant_member_price = variant.get_variant_price_for_member_status(True)
-        variant_non_member_price = variant.get_variant_price_for_member_status(False)
-        
-        self.assertEqual(variant_member_price, 80.0)
-        self.assertEqual(variant_non_member_price, 100.0)
+        # Test membership checking uses ams_member_data fields
+        self.assertTrue(product._check_partner_membership(self.member_partner))
+        self.assertFalse(product._check_partner_membership(self.non_member_partner))
 
-    def test_name_search_and_display(self):
-        """Test enhanced name search and display methods."""
+    def test_ams_product_types_integration(self):
+        """Test integration with ams_product_types module"""
+        # Test that category attributes drive product behavior
         product = self.ProductTemplate.create({
-            'name': 'Search Test Product',
-            'is_ams_product': True,
-            'ams_product_type_id': self.digital_type.id,
-            'sku': 'SEARCH-TEST-001',
-            'has_member_pricing': True,
-            'is_digital_product': True,
+            'name': 'Category Integration Test',
+            'categ_id': self.event_category.id,
+            'list_price': 100.0,
         })
         
-        # Test name_get displays AMS information
-        name_result = product.name_get()[0][1]
-        self.assertIn('[SEARCH-TEST-001]', name_result)
-        self.assertIn('Digital', name_result)
-        self.assertIn('Member Pricing', name_result)
-        
-        # Test name search finds by SKU
-        search_results = self.ProductTemplate.name_search('SEARCH-TEST-001')
-        product_ids = [r[0] for r in search_results]
-        self.assertIn(product.id, product_ids)
-        
-        # Test variant name display
-        variant = product.product_variant_ids[0]
-        variant_name = variant.name_get()[0][1]
-        self.assertIn('SEARCH-TEST-001', variant_name)
+        # Should inherit from category
+        self.assertTrue(product.is_ams_product)
+        self.assertEqual(product.ams_category_display, 'event')
+        self.assertEqual(product.member_price, 80.0)  # 20% discount from category
 
-    def test_performance_with_many_products(self):
-        """Test performance with multiple products and variants."""
-        # Create multiple products quickly
+    def test_legacy_system_integration(self):
+        """Test legacy system ID handling"""
+        product = self.ProductTemplate.create({
+            'name': 'Legacy Integration Product',
+            'categ_id': self.event_category.id,
+            'list_price': 100.0,
+            'legacy_product_id': 'OLD_SYSTEM_12345',
+        })
+        
+        variant = product.product_variant_ids[0]
+        variant.variant_legacy_id = 'OLD_VARIANT_67890'
+        
+        self.assertEqual(product.legacy_product_id, 'OLD_SYSTEM_12345')
+        self.assertEqual(variant.variant_legacy_id, 'OLD_VARIANT_67890')
+
+    # ========================================================================
+    # ACTION METHOD TESTS
+    # ========================================================================
+
+    def test_action_view_category(self):
+        """Test action to view product category"""
+        product = self.ProductTemplate.create({
+            'name': 'Action Test Product',
+            'categ_id': self.event_category.id,
+            'list_price': 100.0,
+        })
+        
+        action = product.action_view_category()
+        self.assertEqual(action['res_model'], 'product.category')
+        self.assertEqual(action['res_id'], self.event_category.id)
+
+    def test_action_test_member_pricing(self):
+        """Test member pricing test action"""
+        product = self.ProductTemplate.create({
+            'name': 'Pricing Test Product',
+            'categ_id': self.event_category.id,
+            'list_price': 100.0,
+        })
+        
+        # Should return notification action
+        action = product.action_test_member_pricing()
+        self.assertEqual(action['type'], 'ir.actions.client')
+        self.assertEqual(action['tag'], 'display_notification')
+
+    # ========================================================================
+    # PERFORMANCE AND EDGE CASES
+    # ========================================================================
+
+    def test_performance_with_multiple_products(self):
+        """Test performance with multiple products"""
+        # Create multiple products
         products = []
         for i in range(10):
             product = self.ProductTemplate.create({
                 'name': f'Performance Test Product {i}',
-                'is_ams_product': True,
-                'ams_product_type_id': self.event_type.id,
-                'has_member_pricing': True,
-                'member_price': 80.0 + i,
-                'non_member_price': 100.0 + i,
+                'categ_id': self.event_category.id,
+                'list_price': 100.0 + i,
             })
             products.append(product)
         
-        # Test bulk operations
-        all_ams_products = self.ProductTemplate.get_ams_products_by_type()
-        self.assertTrue(len(all_ams_products) >= 10)
+        # Test bulk query methods
+        ams_products = self.ProductTemplate.get_ams_products_by_category_type('event')
+        self.assertTrue(len(ams_products) >= 10)
         
         member_pricing_products = self.ProductTemplate.get_member_pricing_products()
         for product in products:
             self.assertIn(product, member_pricing_products)
 
-    def test_data_migration_scenarios(self):
-        """Test scenarios common in data migration."""
-        # Test creating product with legacy ID
+    def test_edge_cases(self):
+        """Test edge cases and error handling"""
         product = self.ProductTemplate.create({
-            'name': 'Legacy Product',
-            'is_ams_product': True,
-            'ams_product_type_id': self.membership_type.id,
-            'legacy_product_id': 'OLD_SYSTEM_ID_12345',
-            'sku': 'LEGACY-SKU-001',
+            'name': 'Edge Case Product',
+            'categ_id': self.event_category.id,
+            'list_price': 100.0,
         })
         
-        self.assertEqual(product.legacy_product_id, 'OLD_SYSTEM_ID_12345')
-        self.assertEqual(product.sku, 'LEGACY-SKU-001')
+        # Test with None partner
+        price = product.get_price_for_partner(None)
+        self.assertEqual(price, 100.0)
         
-        # Test variant with legacy ID
-        variant = self.ProductProduct.create({
-            'product_tmpl_id': product.id,
-            'variant_legacy_id': 'OLD_VARIANT_ID_67890',
-            'variant_sku': 'LEGACY-VARIANT-001',
-        })
-        
-        self.assertEqual(variant.variant_legacy_id, 'OLD_VARIANT_ID_67890')
-        self.assertEqual(variant.variant_sku, 'LEGACY-VARIANT-001')
-
-    # ========================================================================
-    # CLEANUP AND UTILITIES
-    # ========================================================================
+        # Test with partner missing membership fields
+        minimal_partner = self.Partner.create({'name': 'Minimal Partner'})
+        can_purchase = product.can_be_purchased_by_partner(minimal_partner)
+        self.assertTrue(can_purchase)  # Non-membership-required product
 
     def tearDown(self):
-        """Clean up after tests."""
+        """Clean up after tests"""
         super().tearDown()
-        
-        # Clean up test data if needed
-        # Note: TransactionCase automatically rolls back, but explicit cleanup
-        # can be useful for debugging
-        _logger.info("AMS Products Base tests completed")
-
-    def _create_test_product_with_variants(self, variant_count=3):
-        """Utility method to create a product with multiple variants."""
-        # This would require product attributes which may not be set up
-        # in the test environment, so keeping it simple
-        template = self.ProductTemplate.create({
-            'name': 'Multi-Variant Test Product',
-            'is_ams_product': True,
-            'ams_product_type_id': self.event_type.id,
-            'has_member_pricing': True,
-            'member_price': 100.0,
-            'non_member_price': 150.0,
-        })
-        
-        variants = []
-        for i in range(variant_count):
-            variant = self.ProductProduct.create({
-                'product_tmpl_id': template.id,
-                'variant_sku': f'VAR-{i+1:03d}',
-            })
-            variants.append(variant)
-        
-        return template, variants
-
-    def _assert_product_properly_configured(self, product):
-        """Utility method to assert a product is properly configured."""
-        self.assertTrue(product.is_ams_product)
-        self.assertTrue(product.ams_product_type_id)
-        self.assertTrue(product.sku)
-        self.assertEqual(product.default_code, product.sku)
-        
-        if product.is_digital_product:
-            self.assertEqual(product.type, 'service')
-            self.assertFalse(product.stock_controlled)
-        elif product.stock_controlled:
-            self.assertEqual(product.type, 'product')
-        else:
-            self.assertEqual(product.type, 'service')
+        _logger.info("AMS Products Base tests completed successfully")
