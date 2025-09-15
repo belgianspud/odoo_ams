@@ -1,10 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_product_template_ams_user,product.template.ams.user,product.model_product_template,base.group_user,1,1,1,0
-access_product_template_ams_manager,product.template.ams.manager,product.model_product_template,base.group_system,1,1,1,1
-access_product_product_ams_user,product.product.ams.user,product.model_product_product,base.group_user,1,1,1,0
-access_product_product_ams_manager,product.product.ams.manager,product.model_product_product,base.group_system,1,1,1,1
-access_product_template_ams_portal,product.template.ams.portal,product.model_product_template,base.group_portal,1,0,0,0
-access_product_product_ams_portal,product.product.ams.portal,product.model_product_product,base.group_portal,1,0,0,0
-access_product_category_ams_user,product.category.ams.user,product.model_product_category,base.group_user,1,1,1,0
-access_product_category_ams_manager,product.category.ams.manager,product.model_product_category,base.group_system,1,1,1,1
-access_product_category_ams_portal,product.category.ams.portal,product.model_product_category,base.group_portal,1,0,0,0
+access_product_template_ams_base_user,product.template.ams.base.user,product.model_product_template,base.group_user,1,1,1,0
+access_product_template_ams_base_manager,product.template.ams.base.manager,product.model_product_template,base.group_system,1,1,1,1
+access_product_product_ams_base_user,product.product.ams.base.user,product.model_product_product,base.group_user,1,1,1,0
+access_product_product_ams_base_manager,product.product.ams.base.manager,product.model_product_product,base.group_system,1,1,1,1
+access_product_template_ams_base_portal,product.template.ams.base.portal,product.model_product_template,base.group_portal,1,0,0,0
+access_product_product_ams_base_portal,product.product.ams.base.portal,product.model_product_product,base.group_portal,1,0,0,0

@@ -9,17 +9,15 @@ _logger = logging.getLogger(__name__)
 
 
 class ProductTemplate(models.Model):
+    """
+    AMS Products Base - extends the product.template features from ams_product_types
+    with additional association-specific functionality.
+    """
     _inherit = 'product.template'
 
     # ========================================================================
-    # AMS CORE FIELDS
+    # SKU MANAGEMENT
     # ========================================================================
-
-    is_ams_product = fields.Boolean(
-        string="AMS Product",
-        default=False,
-        help="Mark this product as an AMS-managed product with enhanced features"
-    )
 
     sku = fields.Char(
         string="SKU",
@@ -27,82 +25,55 @@ class ProductTemplate(models.Model):
         help="Stock Keeping Unit - unique product identifier. Auto-generated if left blank."
     )
 
+    sku_generation_method = fields.Selection([
+        ('auto_name', 'Auto from Name'),
+        ('auto_category', 'Auto from Category + Name'),
+        ('manual', 'Manual Only'),
+        ('sequence', 'Sequence Based'),
+    ], string="SKU Generation Method", default='auto_name',
+        help="How to generate SKUs for this product")
+
+    # ========================================================================
+    # LEGACY SYSTEM INTEGRATION
+    # ========================================================================
+
     legacy_product_id = fields.Char(
         string="Legacy Product ID",
         size=32,
         help="Product ID from legacy/external systems for data migration"
     )
 
-    # ========================================================================
-    # AMS CATEGORY INTEGRATION (uses enhanced product.category from ams_product_types)
-    # ========================================================================
-
-    ams_category_type = fields.Selection(
-        related='categ_id.ams_category_type',
-        string="AMS Category Type",
-        store=True,
-        help="AMS category type from product category"
-    )
-    
-    category_requires_member_pricing = fields.Boolean(
-        related='categ_id.requires_member_pricing',
-        string="Category Supports Member Pricing",
-        store=True,
-        help="Category supports member pricing"
-    )
-    
-    category_is_subscription = fields.Boolean(
-        related='categ_id.is_subscription_category',
-        string="Category is Subscription",
-        store=True,
-        help="Category is for subscription products"
-    )
-    
-    category_is_digital = fields.Boolean(
-        related='categ_id.is_digital_category',
-        string="Category is Digital",
-        store=True,
-        help="Category is for digital products"
-    )
-    
-    category_requires_inventory = fields.Boolean(
-        related='categ_id.requires_inventory',
-        string="Category Requires Inventory",
-        store=True,
-        help="Category requires inventory tracking"
+    legacy_sku = fields.Char(
+        string="Legacy SKU",
+        size=64,
+        help="SKU from legacy system"
     )
 
     # ========================================================================
-    # MEMBER PRICING FIELDS
+    # ENHANCED MEMBER PRICING (extends ams_product_types)
     # ========================================================================
 
-    has_member_pricing = fields.Boolean(
-        string="Member Pricing",
-        default=False,
-        help="Enable different pricing for members vs non-members"
-    )
+    member_pricing_method = fields.Selection([
+        ('fixed', 'Fixed Member Price'),
+        ('percentage', 'Percentage Discount'),
+        ('both', 'Both (Fixed Price Overrides)'),
+    ], string="Member Pricing Method", default='fixed',
+        help="How to calculate member pricing")
 
-    member_price = fields.Float(
-        string="Member Price",
-        digits='Product Price',
-        help="Price for association members"
+    member_discount_percentage = fields.Float(
+        string="Member Discount %",
+        help="Percentage discount for members (when using percentage method)"
     )
 
     non_member_price = fields.Float(
-        string="Non-Member Price", 
+        string="Non-Member Price",
         digits='Product Price',
-        help="Price for non-members"
+        help="Explicit non-member price (uses list_price if blank)"
     )
 
     # ========================================================================
-    # DIGITAL PRODUCT FIELDS
+    # DIGITAL PRODUCT MANAGEMENT
     # ========================================================================
-
-    is_digital_product = fields.Boolean(
-        string="Digital Product",
-        default=False,
-        help="Product delivered digitally (downloads, online access)"
-    )
 
     digital_download_url = fields.Char(
         string="Download URL",
@@ -122,24 +93,13 @@ class ProductTemplate(models.Model):
         help="Automatically provide digital content upon purchase"
     )
 
-    # ========================================================================
-    # INVENTORY & FULFILLMENT FIELDS
-    # ========================================================================
-
-    stock_controlled = fields.Boolean(
-        string="Stock Controlled",
-        default=False,
-        help="Enable inventory tracking and stock management"
-    )
-
-    ams_fulfillment_route_id = fields.Many2one(
-        'stock.route',
-        string="AMS Fulfillment Route",
-        help="Specific fulfillment route for this AMS product"
+    digital_access_duration = fields.Integer(
+        string="Access Duration (Days)",
+        help="Number of days customer has access to digital content (0 = unlimited)"
     )
 
     # ========================================================================
-    # ACCESS CONTROL FIELDS
+    # ACCESS CONTROL & RESTRICTIONS
     # ========================================================================
 
     requires_membership = fields.Boolean(
@@ -148,184 +108,248 @@ class ProductTemplate(models.Model):
         help="Only association members can purchase this product"
     )
 
+    membership_level_required = fields.Selection([
+        ('any', 'Any Membership Level'),
+        ('basic', 'Basic or Higher'),
+        ('premium', 'Premium or Higher'),
+        ('professional', 'Professional Only'),
+    ], string="Membership Level Required", default='any',
+        help="Minimum membership level required to purchase")
+
     chapter_specific = fields.Boolean(
         string="Chapter Specific",
         default=False,
         help="Product is restricted to specific chapters"
     )
 
+    public_visibility = fields.Boolean(
+        string="Public Visibility",
+        default=True,
+        help="Product visible to non-members in catalog"
+    )
+
+    # ========================================================================
+    # FULFILLMENT & DELIVERY
+    # ========================================================================
+
+    fulfillment_method = fields.Selection([
+        ('manual', 'Manual Fulfillment'),
+        ('auto_digital', 'Auto Digital Delivery'),
+        ('auto_physical', 'Auto Physical Shipping'),
+        ('event_based', 'Event-based Fulfillment'),
+        ('subscription', 'Subscription Fulfillment'),
+    ], string="Fulfillment Method", default='manual',
+        help="How this product is fulfilled after purchase")
+
+    delivery_instructions = fields.Text(
+        string="Delivery Instructions",
+        help="Special instructions for fulfilling this product"
+    )
+
     # ========================================================================
     # COMPUTED FIELDS
     # ========================================================================
 
-    @api.depends('member_price', 'non_member_price')
-    def _compute_member_discount_percentage(self):
-        """Calculate member discount percentage."""
-        for record in self:
-            if record.non_member_price and record.member_price:
-                discount = (record.non_member_price - record.member_price) / record.non_member_price * 100
-                record.member_discount_percentage = max(0, discount)
+    @api.depends('sku', 'default_code')
+    def _compute_effective_sku(self):
+        """Calculate the effective SKU to use."""
+        for product in self:
+            if product.sku:
+                product.effective_sku = product.sku
             else:
-                record.member_discount_percentage = 0.0
+                product.effective_sku = product.default_code or ''
 
-    member_discount_percentage = fields.Float(
-        string="Member Discount %",
-        compute='_compute_member_discount_percentage',
+    effective_sku = fields.Char(
+        string="Effective SKU",
+        compute='_compute_effective_sku',
         store=True,
-        help="Percentage discount for members"
+        help="The actual SKU being used (sku or default_code)"
     )
 
-    @api.depends('has_member_pricing', 'member_price', 'non_member_price', 'list_price')
-    def _compute_effective_prices(self):
-        """Calculate effective pricing based on configuration."""
-        for record in self:
-            if record.has_member_pricing and record.member_price:
-                record.effective_member_price = record.member_price
-            else:
-                record.effective_member_price = record.list_price
-
-            if record.has_member_pricing and record.non_member_price:
-                record.effective_non_member_price = record.non_member_price
-            else:
-                record.effective_non_member_price = record.list_price
-
-    effective_member_price = fields.Monetary(
-        string="Effective Member Price",
-        compute='_compute_effective_prices',
-        store=True
-    )
-
-    effective_non_member_price = fields.Monetary(
-        string="Effective Non-Member Price", 
-        compute='_compute_effective_prices',
-        store=True
-    )
-
-    @api.depends('has_member_pricing', 'effective_member_price', 'effective_non_member_price')
-    def _compute_pricing_summary(self):
-        """Generate pricing summary text."""
-        for record in self:
-            if record.has_member_pricing:
-                member_price = record.effective_member_price or 0
-                non_member_price = record.effective_non_member_price or 0
-                currency = record.currency_id.symbol or ''
-                record.pricing_summary = f"Members: {currency}{member_price:.2f} | Non-members: {currency}{non_member_price:.2f}"
-            else:
-                record.pricing_summary = ""
-
-    pricing_summary = fields.Char(
-        string="Pricing Summary",
-        compute='_compute_pricing_summary',
-        store=True
-    )
-
-    @api.depends('digital_download_url', 'digital_attachment_id', 'is_digital_product')
-    def _compute_is_digital_available(self):
-        """Check if digital content is available."""
-        for record in self:
-            if record.is_digital_product:
-                record.is_digital_available = bool(record.digital_download_url or record.digital_attachment_id)
-            else:
-                record.is_digital_available = False
-
-    is_digital_available = fields.Boolean(
-        string="Digital Content Available",
-        compute='_compute_is_digital_available',
-        store=True
-    )
-
-    @api.depends('is_digital_product', 'stock_controlled', 'is_digital_available')
-    def _compute_inventory_status(self):
-        """Calculate inventory status."""
-        for record in self:
-            if record.is_digital_product:
-                if record.is_digital_available:
-                    record.inventory_status = 'digital'
+    @api.depends('is_digital_product', 'digital_download_url', 'digital_attachment_id')
+    def _compute_digital_content_status(self):
+        """Check digital content availability."""
+        for product in self:
+            if product.is_digital_product:
+                product.has_digital_content = bool(product.digital_download_url or product.digital_attachment_id)
+                if product.digital_download_url and product.digital_attachment_id:
+                    product.digital_content_status = 'both'
+                elif product.digital_download_url:
+                    product.digital_content_status = 'url'
+                elif product.digital_attachment_id:
+                    product.digital_content_status = 'file'
                 else:
-                    record.inventory_status = 'digital_missing'
-            elif record.stock_controlled:
-                record.inventory_status = 'tracked'
+                    product.digital_content_status = 'missing'
             else:
-                record.inventory_status = 'service'
+                product.has_digital_content = False
+                product.digital_content_status = 'not_digital'
 
-    inventory_status = fields.Selection([
-        ('service', 'Service'),
-        ('tracked', 'Inventory Tracked'),
-        ('digital', 'Digital Available'),
-        ('digital_missing', 'Digital Content Missing'),
-    ], string="Inventory Status", compute='_compute_inventory_status', store=True)
+    has_digital_content = fields.Boolean(
+        string="Has Digital Content",
+        compute='_compute_digital_content_status',
+        store=True,
+        help="Whether digital content is available"
+    )
+
+    digital_content_status = fields.Selection([
+        ('not_digital', 'Not Digital Product'),
+        ('missing', 'Missing Content'),
+        ('url', 'URL Only'),
+        ('file', 'File Only'),
+        ('both', 'URL and File'),
+    ], string="Digital Content Status",
+        compute='_compute_digital_content_status',
+        store=True,
+        help="Status of digital content availability"
+    )
 
     # ========================================================================
-    # ONCHANGE METHODS
+    # BUSINESS METHODS (extend ams_product_types)
     # ========================================================================
 
-    @api.onchange('categ_id')
-    def _onchange_categ_id(self):
-        """Set product attributes based on AMS category settings."""
-        if self.categ_id and self.categ_id.is_ams_category:
-            # Auto-enable AMS features when using AMS category
-            self.is_ams_product = True
-            
-            # Set member pricing based on category
-            if not self.has_member_pricing:  # Only set if not already configured
-                self.has_member_pricing = self.categ_id.requires_member_pricing
-            
-            # Set digital product based on category
-            if not self.is_digital_product:  # Only set if not already configured
-                self.is_digital_product = self.categ_id.is_digital_category
-            
-            # Set stock control based on category
-            self.stock_controlled = self.categ_id.requires_inventory
-            
-            # Set product type (service vs storable)
-            if not self.categ_id.requires_inventory:
-                self.type = 'service'
-            else:
-                self.type = 'product'
-            
-            # Set default UoM if specified
-            if self.categ_id.default_uom_id:
-                self.uom_id = self.categ_id.default_uom_id
-                self.uom_po_id = self.categ_id.default_uom_id
+    def get_price_for_partner(self, partner):
+        """
+        Get appropriate price for a specific partner based on membership status.
+        Extends the basic method from ams_product_types.
+        """
+        self.ensure_one()
 
-    @api.onchange('is_ams_product')
-    def _onchange_is_ams_product(self):
-        """Clear/set AMS fields when toggling AMS product status."""
-        if not self.is_ams_product:
-            # Clear AMS-specific fields
-            self.has_member_pricing = False
-            self.is_digital_product = False
-            self.requires_membership = False
-            self.chapter_specific = False
+        # Check membership status (integration with ams_member_data)
+        is_member = self._check_partner_membership(partner)
+        
+        # Check membership level requirement
+        if self.requires_membership and not is_member:
+            return False  # Cannot purchase
+
+        # Return appropriate price - delegate to existing method if available
+        if hasattr(super(), 'get_price_for_member_type'):
+            return super().get_price_for_member_type(is_member)
         else:
-            # If category is AMS, sync with category defaults
-            if self.categ_id and self.categ_id.is_ams_category:
-                self._onchange_categ_id()
+            # Fallback implementation
+            if is_member and self.has_member_pricing and self.member_list_price:
+                return self.member_list_price
+            return self.list_price
 
-    @api.onchange('is_digital_product')
-    def _onchange_is_digital_product(self):
-        """Update product type when digital product changes."""
-        if self.is_digital_product:
-            self.type = 'service'
-            self.stock_controlled = False
-        elif self.stock_controlled:
-            self.type = 'product'
+    def _check_partner_membership(self, partner):
+        """Check if partner is a member with required level."""
+        if not partner:
+            return False
 
-    @api.onchange('stock_controlled')
-    def _onchange_stock_controlled(self):
-        """Update product type when stock control changes."""
-        if self.stock_controlled and not self.is_digital_product:
-            self.type = 'product'
-        elif not self.stock_controlled:
-            self.type = 'service'
+        # Basic membership check (from ams_member_data)
+        is_member = False
+        if hasattr(partner, 'is_member'):
+            is_member = partner.is_member
+        elif hasattr(partner, 'membership_state'):
+            is_member = partner.membership_state in ['invoiced', 'paid']
 
-    @api.onchange('has_member_pricing')
-    def _onchange_has_member_pricing(self):
-        """Set default member pricing when enabled."""
-        if self.has_member_pricing and not self.member_price and self.list_price:
-            # Default to 20% member discount
-            self.member_price = self.list_price * 0.8
-            self.non_member_price = self.list_price
+        return is_member
+
+    def can_be_purchased_by_partner(self, partner):
+        """Check if this product can be purchased by the given partner."""
+        self.ensure_one()
+
+        # Basic availability
+        if not self.active:
+            return False
+
+        # Membership requirement
+        if self.requires_membership:
+            return self._check_partner_membership(partner)
+
+        return True
+
+    # ========================================================================
+    # SKU GENERATION
+    # ========================================================================
+
+    def _generate_sku(self, name=None):
+        """Generate SKU based on the configured method."""
+        self.ensure_one()
+        
+        if not name:
+            name = self.name or "PRODUCT"
+
+        if self.sku_generation_method == 'manual':
+            return ''  # Don't auto-generate for manual
+        elif self.sku_generation_method == 'sequence':
+            return self._generate_sequence_sku()
+        elif self.sku_generation_method == 'auto_category':
+            return self._generate_category_sku(name)
+        else:  # auto_name
+            return self._generate_name_sku(name)
+
+    def _generate_name_sku(self, name):
+        """Generate SKU from product name."""
+        # Clean name and create base SKU
+        base_sku = re.sub(r'[^a-zA-Z0-9\s]', '', name)
+        base_sku = re.sub(r'\s+', '-', base_sku.strip().upper())
+        base_sku = base_sku[:20]  # Limit length
+
+        return self._ensure_sku_uniqueness(base_sku)
+
+    def _generate_category_sku(self, name):
+        """Generate SKU from category + name."""
+        category_prefix = ''
+        if hasattr(self, 'ams_category') and self.ams_category:
+            category_map = {
+                'membership': 'MEM',
+                'event': 'EVT',
+                'education': 'EDU',
+                'publication': 'PUB',
+                'merchandise': 'MER',
+                'certification': 'CRT',
+                'digital': 'DIG',
+            }
+            category_prefix = category_map.get(self.ams_category, 'PRD')
+
+        # Clean name part
+        name_part = re.sub(r'[^a-zA-Z0-9\s]', '', name)
+        name_part = re.sub(r'\s+', '-', name_part.strip().upper())
+        name_part = name_part[:15]  # Leave room for prefix
+
+        base_sku = f"{category_prefix}-{name_part}" if category_prefix else name_part
+        return self._ensure_sku_uniqueness(base_sku)
+
+    def _generate_sequence_sku(self):
+        """Generate sequential SKU."""
+        # Get category prefix
+        category_prefix = 'PRD'
+        if hasattr(self, 'ams_category') and self.ams_category:
+            category_map = {
+                'membership': 'MEM',
+                'event': 'EVT', 
+                'education': 'EDU',
+                'publication': 'PUB',
+                'merchandise': 'MER',
+                'certification': 'CRT',
+                'digital': 'DIG',
+            }
+            category_prefix = category_map.get(self.ams_category, 'PRD')
+
+        # Find next sequence number
+        existing_skus = self.search([
+            ('sku', 'like', f'{category_prefix}-%')
+        ]).mapped('sku')
+
+        sequence = 1
+        for sku in existing_skus:
+            try:
+                num = int(sku.split('-')[-1])
+                if num >= sequence:
+                    sequence = num + 1
+            except:
+                continue
+
+        return f"{category_prefix}-{sequence:04d}"
+
+    def _ensure_sku_uniqueness(self, base_sku):
+        """Ensure SKU is unique."""
+        counter = 1
+        sku = base_sku
+        while self.search([('sku', '=', sku), ('id', '!=', self.id)], limit=1):
+            sku = f"{base_sku}-{counter:03d}"
+            counter += 1
+        return sku
 
     # ========================================================================
     # CRUD METHODS
@@ -333,290 +357,50 @@ class ProductTemplate(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        """Override create to generate SKUs and sync fields."""
+        """Generate SKUs and apply defaults."""
         for vals in vals_list:
-            # Generate SKU if not provided for AMS products
+            # Generate SKU if needed for AMS products
             if vals.get('is_ams_product') and not vals.get('sku'):
-                vals['sku'] = self._generate_sku(vals.get('name', ''))
-            
-            # Sync SKU with default_code
-            if vals.get('sku'):
-                vals['default_code'] = vals['sku']
+                # Create temporary record to use generation methods
+                temp_product = self.new(vals)
+                generated_sku = temp_product._generate_sku(vals.get('name'))
+                if generated_sku:
+                    vals['sku'] = generated_sku
+                    vals['default_code'] = generated_sku  # Sync with Odoo SKU
 
         products = super().create(vals_list)
-        
-        for product in products:
-            product._sync_ams_fields()
-        
         return products
 
     def write(self, vals):
-        """Override write to maintain field synchronization."""
-        # Sync SKU with default_code
-        if vals.get('sku'):
+        """Maintain SKU sync and apply updates."""
+        # Sync SKU changes
+        if 'sku' in vals and vals['sku']:
             vals['default_code'] = vals['sku']
-        elif vals.get('default_code') and not vals.get('sku'):
+        elif 'default_code' in vals and not vals.get('sku'):
             vals['sku'] = vals['default_code']
 
-        result = super().write(vals)
-        
-        # Sync AMS fields if relevant fields changed
-        if any(field in vals for field in ['categ_id', 'is_ams_product', 'is_digital_product', 'stock_controlled']):
-            for product in self:
-                product._sync_ams_fields()
-                
-        return result
-
-    def _sync_ams_fields(self):
-        """Synchronize AMS fields with Odoo fields."""
-        for product in self:
-            vals = {}
-            
-            # Sync product type
-            if product.is_digital_product or not product.stock_controlled:
-                vals['type'] = 'service'
-            elif product.stock_controlled:
-                vals['type'] = 'product'
-            
-            # Generate SKU if missing
-            if product.is_ams_product and not product.sku:
-                vals['sku'] = product._generate_sku(product.name)
-                vals['default_code'] = vals['sku']
-            
-            if vals:
-                super(ProductTemplate, product).write(vals)
-
-    def _generate_sku(self, name):
-        """Generate SKU from product name."""
-        if not name:
-            name = "PRODUCT"
-        
-        # Clean name and create base SKU
-        base_sku = re.sub(r'[^a-zA-Z0-9\s]', '', name)
-        base_sku = re.sub(r'\s+', '-', base_sku.strip().upper())
-        base_sku = base_sku[:20]  # Limit length
-        
-        # Ensure uniqueness
-        counter = 1
-        sku = base_sku
-        while self.search([('sku', '=', sku), ('id', '!=', self.id)], limit=1):
-            sku = f"{base_sku}-{counter:03d}"
-            counter += 1
-            
-        return sku
+        return super().write(vals)
 
     # ========================================================================
-    # VALIDATION METHODS
+    # VALIDATION
     # ========================================================================
-
-    @api.constrains('sku')
-    def _check_sku_format(self):
-        """Validate SKU format."""
-        for record in self:
-            if record.sku and record.is_ams_product:
-                if not re.match(r'^[A-Z0-9\-_]+$', record.sku):
-                    raise ValidationError(_("SKU must contain only uppercase letters, numbers, hyphens, and underscores."))
 
     @api.constrains('digital_download_url')
-    def _check_digital_url(self):
+    def _check_digital_url_format(self):
         """Validate digital download URL format."""
-        for record in self:
-            if record.digital_download_url:
-                if not record.digital_download_url.startswith(('http://', 'https://')):
+        for product in self:
+            if product.digital_download_url:
+                if not product.digital_download_url.startswith(('http://', 'https://')):
                     raise ValidationError(_("Digital download URL must start with http:// or https://"))
 
-    @api.constrains('member_price', 'non_member_price')
-    def _check_member_pricing(self):
-        """Validate member pricing logic."""
-        for record in self:
-            if record.has_member_pricing:
-                if record.member_price < 0 or record.non_member_price < 0:
-                    raise ValidationError(_("Prices cannot be negative."))
-                if record.member_price > record.non_member_price:
-                    raise ValidationError(_("Member price should not be higher than non-member price."))
-
-    @api.constrains('is_digital_product', 'digital_download_url', 'digital_attachment_id')
-    def _check_digital_content(self):
-        """Validate digital product content."""
-        for record in self:
-            if record.is_digital_product:
-                if not record.digital_download_url and not record.digital_attachment_id:
-                    raise ValidationError(_("Digital products must have either a download URL or file attachment."))
-
-    # ========================================================================
-    # BUSINESS METHODS
-    # ========================================================================
-
-    def get_price_for_member_status(self, is_member):
-        """Get appropriate price based on member status."""
-        self.ensure_one()
-        if self.has_member_pricing:
-            return self.effective_member_price if is_member else self.effective_non_member_price
-        return self.list_price
-
-    def get_member_savings(self):
-        """Calculate member savings amount."""
-        self.ensure_one()
-        if self.has_member_pricing:
-            return self.effective_non_member_price - self.effective_member_price
-        return 0.0
-
-    def can_be_purchased_by_member_status(self, is_member):
-        """Check if product can be purchased by member status."""
-        self.ensure_one()
-        if self.requires_membership and not is_member:
-            return False
-        return True
-
-    def get_digital_content_access(self):
-        """Get digital content access information."""
-        self.ensure_one()
-        return {
-            'is_digital': self.is_digital_product,
-            'download_url': self.digital_download_url,
-            'attachment_id': self.digital_attachment_id.id if self.digital_attachment_id else False,
-            'auto_fulfill': self.auto_fulfill_digital,
-            'is_available': self.is_digital_available,
-        }
-
-    def _get_pricing_context(self, partner_id=None):
-        """Get pricing context for a partner."""
-        self.ensure_one()
-        context = {
-            'product_id': self.id,
-            'has_member_pricing': self.has_member_pricing,
-            'requires_membership': self.requires_membership,
-            'ams_category_type': self.ams_category_type,
-        }
-        
-        if partner_id:
-            partner = self.env['res.partner'].browse(partner_id)
-            # Safe access to partner fields - check if they exist first
-            is_member = self._get_partner_member_status(partner)
-            membership_status = self._get_partner_membership_status(partner)
-            
-            context.update({
-                'partner_id': partner_id,
-                'is_member': is_member,
-                'membership_status': membership_status,
-                'can_purchase': self.can_be_purchased_by_member_status(is_member),
-                'effective_price': self.get_price_for_member_status(is_member),
-                'member_savings': self.get_member_savings() if is_member else 0.0,
-            })
-        
-        return context
-
-    def _get_partner_member_status(self, partner):
-        """Safely get partner member status."""
-        # Check if partner has is_member field (from ams_member_data module)
-        if hasattr(partner, 'is_member'):
-            return partner.is_member
-        # Check if partner has other member-related fields
-        elif hasattr(partner, 'membership_state'):
-            return partner.membership_state in ['invoiced', 'paid']
-        else:
-            # Default to False if no member data is available
-            return False
-
-    def _get_partner_membership_status(self, partner):
-        """Safely get partner membership status."""
-        # Check if partner has membership_status field (from ams_member_data module)
-        if hasattr(partner, 'membership_status'):
-            return partner.membership_status
-        elif hasattr(partner, 'membership_state'):
-            return partner.membership_state
-        else:
-            # Default to 'prospect' if no member data is available
-            return 'prospect'
-
-    # ========================================================================
-    # SEARCH AND DISPLAY METHODS
-    # ========================================================================
-
-    def name_get(self):
-        """Enhanced name display for AMS products."""
-        result = []
+    @api.constrains('sku')
+    def _check_sku_uniqueness(self):
+        """Ensure SKU uniqueness."""
         for product in self:
-            name = product.name
-            if product.is_ams_product:
-                name_parts = [f"[{product.sku}]" if product.sku else "", product.name]
-                if product.is_digital_product:
-                    name_parts.append("(Digital)")
-                if product.has_member_pricing:
-                    name_parts.append("(Member Pricing)")
-                name = " ".join(filter(None, name_parts))
-            result.append((product.id, name))
-        return result
-
-    @api.model
-    def name_search(self, name='', args=None, operator='ilike', limit=100):
-        """Enhanced name search including SKU."""
-        if args is None:
-            args = []
-        
-        # Search by SKU if it looks like one
-        if name and not operator == '=':
-            sku_domain = [('sku', 'ilike', name)]
-            sku_results = self.search(sku_domain + args, limit=limit)
-            if sku_results:
-                return sku_results.name_get()
-        
-        return super().name_search(name=name, args=args, operator=operator, limit=limit)
-
-    # ========================================================================
-    # BUSINESS QUERY METHODS
-    # ========================================================================
-
-    @api.model
-    def get_ams_products_by_category_type(self, ams_category_type=None):
-        """Get AMS products optionally filtered by category type."""
-        domain = [('is_ams_product', '=', True)]
-        if ams_category_type:
-            domain.append(('ams_category_type', '=', ams_category_type))
-        return self.search(domain)
-
-    @api.model 
-    def get_digital_products(self):
-        """Get all digital products."""
-        return self.search([('is_digital_product', '=', True)])
-
-    @api.model
-    def get_member_pricing_products(self):
-        """Get all products with member pricing."""
-        return self.search([('has_member_pricing', '=', True)])
-
-    @api.model
-    def get_membership_required_products(self):
-        """Get all products that require membership."""
-        return self.search([('requires_membership', '=', True)])
-
-    def action_view_variants(self):
-        """Open product variants for this template."""
-        self.ensure_one()
-        action = self.env.ref('product.product_variant_action').read()[0]
-        
-        # Filter to only show variants for the current template
-        action['domain'] = [('product_tmpl_id', '=', self.id)]
-        
-        # If there's only one variant, open the form view directly
-        if len(self.product_variant_ids) == 1:
-            form_view = [(self.env.ref('product.product_normal_form_view').id, 'form')]
-            action['views'] = form_view
-            action['res_id'] = self.product_variant_ids.id
-        
-        return action
-
-    def action_view_category(self):
-        """Open the product category form."""
-        self.ensure_one()
-        if not self.categ_id:
-            return False
-        
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Product Category'),
-            'res_model': 'product.category',
-            'view_mode': 'form',
-            'res_id': self.categ_id.id,
-            'target': 'current',
-        }
+            if product.sku:
+                duplicate = self.search([
+                    ('sku', '=', product.sku),
+                    ('id', '!=', product.id)
+                ], limit=1)
+                if duplicate:
+                    raise ValidationError(_("SKU '%s' already exists for product '%s'") % (product.sku, duplicate.name))

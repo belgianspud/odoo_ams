@@ -1,53 +1,48 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'AMS Products Base',
-    'version': '18.0.1.0.0',
+    'version': '18.0.2.0.0',
     'category': 'Association Management',
-    'summary': 'Core product data structures and AMS extensions',
+    'summary': 'Enhanced product data structures extending AMS Product Types',
     'description': """
-AMS Products Base - Foundation Product Module
-============================================
+AMS Products Base - Enhanced Product Module
+==========================================
 
-This module provides the core product data structures and AMS-specific extensions
-for the Association Management System:
+This module extends the AMS Product Types module with advanced association-specific 
+product functionality:
 
-* **Category-Based AMS Classification**
-  - Products classified using enhanced Odoo product categories
-  - AMS-specific category types (membership, event, education, etc.)
-  - Automatic product configuration based on category attributes
-
-* **Member Pricing System** 
-  - Member vs non-member pricing with automatic calculations
-  - Template-level pricing with variant-level overrides
-  - Member discount percentage computation
-
-* **Digital Product Management**
-  - Digital product identification and delivery
-  - Download URLs and file attachments
-  - Automatic fulfillment for digital items
-
-* **Inventory Integration**
-  - Smart product type configuration (service vs stockable)
-  - Integration with Odoo's inventory and stock management
-  - Variant-specific inventory overrides
+* **Advanced Member Pricing**
+  - Configurable pricing methods (fixed price, percentage discount, or both)
+  - Automatic price calculations based on membership status  
+  - Member savings tracking and display
+  - Integration with ams_member_data for membership verification
 
 * **Enhanced SKU Management**
-  - Automatic SKU generation with intelligent formatting
-  - Template and variant-level SKU management
-  - Legacy system integration support
+  - Multiple SKU generation methods (auto from name, category-based, sequence, manual)
+  - Category-specific SKU prefixes (MEM-, EVT-, EDU-, etc.)
+  - Legacy SKU tracking for data migration
+  - Automatic SKU synchronization with Odoo default_code
 
-* **Business Features**
-  - Membership requirement flags for restricted products
-  - Rich business methods for pricing and access control
-  - Category-driven product defaults and validation
+* **Digital Product Management**
+  - Download URLs and file attachments
+  - Access duration controls
+  - Auto-fulfillment configuration
+  - Digital content status tracking
 
-Foundation module for all AMS product-related functionality.
+* **Access Control & Restrictions**
+  - Membership requirement enforcement
+  - Membership level requirements
+  - Chapter-specific product restrictions (future)
+  - Public visibility controls
 
-Key Changes in v18:
-* Removed separate ams.product.type model
-* Enhanced product.category with AMS-specific fields
-* Simplified architecture with single classification system
-* Better integration with Odoo's native category features
+* **Advanced Fulfillment**
+  - Multiple fulfillment methods (manual, auto-digital, auto-physical, event-based, subscription)
+  - Custom delivery instructions
+  - Fulfillment status tracking
+  - Integration hooks for future fulfillment modules
+
+This module extends ams_product_types and leverages enhanced product categories
+while adding association-specific business logic and advanced features.
     """,
     'author': 'Your Organization',
     'website': 'https://your-website.com',
@@ -58,13 +53,11 @@ Key Changes in v18:
         'sale',
         'stock',
         'mail',
-        'ams_member_data',
-        'ams_product_types' #- now using enhanced product.category
+        'ams_member_data',      # For member status integration
+        'ams_product_types'     # EXTENDS this module (required)
     ],
     'data': [
         'security/ir.model.access.csv',
-        'data/product_category_data.xml',  # Renamed from pricelists_data.xml
-        'views/product_category_views.xml',  # New - for enhanced categories
         'views/product_template_views.xml',
         'views/product_product_views.xml',
     ],
@@ -72,5 +65,5 @@ Key Changes in v18:
     'installable': True,
     'auto_install': False,
     'application': True,
-    'sequence': 8,
+    'sequence': 9,  # After ams_product_types (sequence 4)
 }
