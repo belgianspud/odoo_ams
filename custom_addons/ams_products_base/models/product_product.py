@@ -14,7 +14,7 @@ class ProductProduct(models.Model):
     _inherit = 'product.product'
 
     # ========================================================================
-    # TEMPLATE FIELD REFERENCES (for easier access)
+    # TEMPLATE FIELD REFERENCES (for easier access) - FIXED
     # ========================================================================
 
     template_is_ams_product = fields.Boolean(
@@ -44,11 +44,19 @@ class ProductProduct(models.Model):
         store=True
     )
 
-    template_ams_category_display = fields.Char(
-        related='product_tmpl_id.ams_category_display',
-        string="Template AMS Category",
-        readonly=True
-    )
+    template_ams_category_display = fields.Selection([
+        ('membership', 'Membership'),
+        ('event', 'Event'),
+        ('education', 'Education'),
+        ('publication', 'Publication'),
+        ('merchandise', 'Merchandise'),
+        ('certification', 'Certification'),
+        ('digital', 'Digital Download'),
+        ('donation', 'Donation')
+    ], string="Template AMS Category",
+       related='product_tmpl_id.ams_category_display',
+       readonly=True,
+       store=True)
 
     # ========================================================================
     # LEGACY SYSTEM INTEGRATION
@@ -322,6 +330,10 @@ class ProductProduct(models.Model):
         """Open the product category form"""
         self.ensure_one()
         return self.product_tmpl_id.action_view_category()
+    
+    def action_view_ams_category(self):
+        """Alias for action_view_category for backward compatibility"""
+        return self.action_view_category()
 
     def action_test_variant_access(self):
         """Test variant access with sample members (for debugging)"""

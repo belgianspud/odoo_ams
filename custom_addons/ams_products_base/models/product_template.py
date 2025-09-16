@@ -16,23 +16,14 @@ class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
     # ========================================================================
-    # AMS PRODUCT IDENTIFICATION
+    # AMS PRODUCT IDENTIFICATION - MANUAL TOGGLE
     # ========================================================================
 
     is_ams_product = fields.Boolean(
         string="AMS Product",
-        compute='_compute_is_ams_product',
-        store=True,
-        help="Auto-detected from AMS category (ams_product_types)"
+        default=False,
+        help="Mark this product as an AMS-managed product with enhanced features"
     )
-
-    @api.depends('categ_id.is_ams_category')
-    def _compute_is_ams_product(self):
-        """Auto-detect AMS products from enhanced categories"""
-        for product in self:
-            product.is_ams_product = bool(
-                product.categ_id and product.categ_id.is_ams_category
-            )
 
     # ========================================================================
     # MEMBER PRICING INTEGRATION
@@ -61,6 +52,7 @@ class ProductTemplate(models.Model):
     member_savings = fields.Monetary(
         string="Member Savings",
         compute='_compute_member_savings',
+        store=True,  # FIXED: Added store=True to make field searchable
         help="Amount saved with member pricing"
     )
 
@@ -104,28 +96,14 @@ class ProductTemplate(models.Model):
                 product.has_digital_content = False
 
     # ========================================================================
-    # MEMBERSHIP REQUIREMENTS
+    # MEMBERSHIP REQUIREMENTS - MANUAL CONTROL
     # ========================================================================
 
     requires_membership = fields.Boolean(
         string="Requires Membership",
-        compute='_compute_requires_membership',
-        store=True,
+        default=False,
         help="Whether membership is required to purchase this product"
     )
-
-    @api.depends('categ_id.is_membership_category', 'categ_id.grants_portal_access')
-    def _compute_requires_membership(self):
-        """Determine if membership is required based on category"""
-        for product in self:
-            if product.categ_id:
-                # Membership products or portal access products require membership
-                product.requires_membership = (
-                    product.categ_id.is_membership_category or
-                    product.categ_id.grants_portal_access
-                )
-            else:
-                product.requires_membership = False
 
     # ========================================================================
     # LEGACY SYSTEM INTEGRATION
@@ -137,15 +115,23 @@ class ProductTemplate(models.Model):
     )
 
     # ========================================================================
-    # COMPUTED DISPLAY FIELDS
+    # COMPUTED DISPLAY FIELDS - FIXED
     # ========================================================================
 
-    ams_category_display = fields.Char(
-        string="AMS Category",
-        related='categ_id.ams_category_type',
-        readonly=True,
-        help="AMS category type from enhanced category"
-    )
+    ams_category_display = fields.Selection([
+        ('membership', 'Membership'),
+        ('event', 'Event'),
+        ('education', 'Education'),
+        ('publication', 'Publication'),
+        ('merchandise', 'Merchandise'),
+        ('certification', 'Certification'),
+        ('digital', 'Digital Download'),
+        ('donation', 'Donation')
+    ], string="AMS Category",
+       related='categ_id.ams_category_type',
+       readonly=True,
+       store=True,
+       help="AMS category type from enhanced category")
 
     pricing_summary = fields.Char(
         string="Pricing Summary",
@@ -330,16 +316,24 @@ class ProductTemplate(models.Model):
 
     @api.onchange('categ_id')
     def _onchange_categ_id(self):
-        """Apply category defaults when category changes"""
+        """Apply category defaults when category changes and suggest settings"""
         if self.categ_id and self.categ_id.is_ams_category:
-            # Let category defaults be applied by ams_product_types
-            super()._onchange_categ_id()
-            
-            # Additional AMS-specific logic if needed
-            if not self._origin.id:  # New record
+            # Suggest AMS product status but allow manual override
+            if not self._origin.id:  # New record only
+                self.is_ams_product = True
+                
+                # Suggest membership requirement based on category
+                if (hasattr(self.categ_id, 'is_membership_category') and self.categ_id.is_membership_category) or \
+                   (hasattr(self.categ_id, 'grants_portal_access') and self.categ_id.grants_portal_access):
+                    self.requires_membership = True
+                    
                 # Auto-generate SKU if needed
                 if not self.default_code and self.name:
                     self.default_code = self._generate_simple_sku(self.name)
+            
+            # Let category defaults be applied by ams_product_types
+            if hasattr(super(), '_onchange_categ_id'):
+                super()._onchange_categ_id()
 
     # ========================================================================
     # VALIDATION

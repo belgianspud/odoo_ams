@@ -10,19 +10,20 @@
         <field name="inherit_id" ref="product.product_template_form_view"/>
         <field name="arch" type="xml">
             
-            <!-- Add AMS indicator and category info after category -->
+            <!-- Add AMS indicator and category info after category - MANUAL TOGGLE -->
             <xpath expr="//field[@name='categ_id']" position="after">
-                <field name="is_ams_product" readonly="1" widget="boolean_toggle"/>
-                <field name="ams_category_display" readonly="1" invisible="not is_ams_product"/>
+                <field name="is_ams_product" widget="boolean_toggle" string="AMS Product"/>
+                <field name="ams_category_display" readonly="1" invisible="not is_ams_product" 
+                       string="AMS Category Type"/>
             </xpath>
             
             <!-- Add member pricing after list price -->
             <xpath expr="//field[@name='list_price']" position="after">
                 <field name="member_price" readonly="1" widget="monetary"
-                       invisible="not is_ams_product or not categ_id.requires_member_pricing"
+                       invisible="not is_ams_product"
                        string="Member Price"/>
                 <field name="member_savings" readonly="1" widget="monetary"
-                       invisible="not is_ams_product or not categ_id.requires_member_pricing or member_savings == 0"
+                       invisible="not is_ams_product or member_savings == 0"
                        string="Member Saves"/>
             </xpath>
             
@@ -35,17 +36,18 @@
                         <group>
                             <field name="categ_id" readonly="1"/>
                             <field name="ams_category_display" readonly="1"/>
-                            <field name="requires_membership" readonly="1" widget="boolean"/>
+                            <field name="requires_membership" widget="boolean_toggle" string="Requires Membership"/>
                         </group>
                         <group>
                             <div class="alert alert-info" role="alert">
                                 <strong><i class="fa fa-info-circle"></i> Configuration inherited from category:</strong>
                                 <ul class="mb-1">
-                                    <li invisible="not categ_id.requires_member_pricing">Member pricing available</li>
-                                    <li invisible="not categ_id.is_digital_category">Digital product delivery</li>
-                                    <li invisible="not categ_id.is_subscription_category">Subscription/recurring billing</li>
-                                    <li invisible="not categ_id.requires_inventory">Inventory tracking required</li>
-                                    <li invisible="not categ_id.grants_portal_access">Grants portal access</li>
+                                    <li>AMS enhanced product features</li>
+                                    <li>Member pricing available</li>
+                                    <li>Digital product delivery</li>
+                                    <li>Subscription/recurring billing</li>
+                                    <li>Inventory tracking required</li>
+                                    <li>Portal access grants</li>
                                 </ul>
                             </div>
                         </group>
@@ -53,7 +55,7 @@
                     
                     <!-- Member Pricing Details -->
                     <group string="Member Pricing" name="member_pricing" 
-                           invisible="not categ_id.requires_member_pricing">
+                           invisible="member_savings == 0">
                         <group>
                             <field name="list_price" readonly="1" string="Regular Price"/>
                             <field name="member_price" readonly="1"/>
@@ -70,7 +72,7 @@
                     
                     <!-- Digital Content -->
                     <group string="Digital Content" name="digital_content"
-                           invisible="not categ_id.is_digital_category">
+                           invisible="not has_digital_content">
                         <group>
                             <field name="digital_url" widget="url" placeholder="https://example.com/download"/>
                             <field name="digital_attachment_id"/>
@@ -124,7 +126,7 @@
                 <field name="is_ams_product" string="AMS" widget="boolean_toggle" optional="show"/>
                 <field name="ams_category_display" string="AMS Type" optional="show"/>
                 <field name="member_price" string="Member Price" optional="hide" widget="monetary"
-                       invisible="not categ_id.requires_member_pricing"/>
+                       invisible="member_savings == 0"/>
                 <field name="requires_membership" string="Membership Required" widget="boolean_toggle" optional="hide"/>
             </xpath>
             
@@ -132,7 +134,7 @@
     </record>
 
     <!-- ========================================================================== -->
-    <!-- ENHANCED PRODUCT TEMPLATE SEARCH VIEW -->
+    <!-- ENHANCED PRODUCT TEMPLATE SEARCH VIEW - FIXED -->
     <!-- ========================================================================== -->
     <record id="product_template_search_view_ams_simple" model="ir.ui.view">
         <field name="name">product.template.search.ams.simple</field>
@@ -147,29 +149,31 @@
                 <field name="legacy_product_id" string="Legacy ID"/>
             </xpath>
             
-            <!-- Add AMS filters -->
+            <!-- Add AMS filters - FIXED -->
             <xpath expr="//filter[@name='filter_to_sell']" position="after">
                 <separator/>
                 <filter name="ams_products" string="AMS Products" 
                         domain="[('is_ams_product', '=', True)]"/>
                 <filter name="member_pricing" string="Member Pricing" 
-                        domain="[('categ_id.requires_member_pricing', '=', True)]"/>
+                        domain="[('member_savings', '>', 0)]"/>
                 <filter name="digital_products" string="Digital Products" 
-                        domain="[('categ_id.is_digital_category', '=', True)]"/>
+                        domain="[('has_digital_content', '=', True)]"/>
                 <filter name="membership_required" string="Membership Required" 
                         domain="[('requires_membership', '=', True)]"/>
                 
                 <separator/>
                 <filter name="missing_digital_content" string="Missing Digital Content" 
-                        domain="[('categ_id.is_digital_category', '=', True), ('has_digital_content', '=', False)]"/>
+                        domain="[('is_ams_product', '=', True), ('has_digital_content', '=', False)]"/>
             </xpath>
 
-            <!-- Add AMS grouping -->
+            <!-- Add AMS grouping - FIXED -->
             <xpath expr="//group[@expand='0']" position="inside">
                 <filter string="AMS Category Type" name="group_ams_category" 
                         context="{'group_by': 'ams_category_display'}"/>
-                <filter string="Member Pricing" name="group_member_pricing" 
-                        context="{'group_by': 'categ_id.requires_member_pricing'}"/>
+                <filter string="AMS Products" name="group_ams_status" 
+                        context="{'group_by': 'is_ams_product'}"/>
+                <filter string="Membership Required" name="group_membership_required" 
+                        context="{'group_by': 'requires_membership'}"/>
             </xpath>
             
         </field>
@@ -203,7 +207,7 @@
         <field name="name">Member Pricing Products</field>
         <field name="res_model">product.template</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('categ_id.requires_member_pricing', '=', True)]</field>
+        <field name="domain">[('member_savings', '>', 0)]</field>
         <field name="context">{'search_default_member_pricing': 1}</field>
     </record>
 
@@ -212,7 +216,7 @@
         <field name="name">Digital Products</field>
         <field name="res_model">product.template</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('categ_id.is_digital_category', '=', True)]</field>
+        <field name="domain">[('has_digital_content', '=', True)]</field>
         <field name="context">{'search_default_digital_products': 1}</field>
     </record>
 
@@ -230,7 +234,7 @@
         <field name="name">Digital Content Issues</field>
         <field name="res_model">product.template</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('categ_id.is_digital_category', '=', True), ('has_digital_content', '=', False)]</field>
+        <field name="domain">[('is_ams_product', '=', True), ('has_digital_content', '=', False)]</field>
         <field name="context">{'search_default_missing_digital_content': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -254,7 +258,7 @@
         <field name="view_mode">form</field>
         <field name="target">current</field>
         <field name="context">{
-            'default_categ_id': %(ams_product_types.category_memberships)d,
+            'default_is_ams_product': True,
             'form_view_ref': 'ams_products_base.product_template_form_view_ams_simple'
         }</field>
     </record>
@@ -265,7 +269,7 @@
         <field name="view_mode">form</field>
         <field name="target">current</field>
         <field name="context">{
-            'default_categ_id': %(ams_product_types.category_events)d,
+            'default_is_ams_product': True,
             'form_view_ref': 'ams_products_base.product_template_form_view_ams_simple'
         }</field>
     </record>
@@ -276,7 +280,7 @@
         <field name="view_mode">form</field>
         <field name="target">current</field>
         <field name="context">{
-            'default_categ_id': %(ams_product_types.category_digital)d,
+            'default_is_ams_product': True,
             'form_view_ref': 'ams_products_base.product_template_form_view_ams_simple'
         }</field>
     </record>
