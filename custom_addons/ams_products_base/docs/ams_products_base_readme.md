@@ -1,518 +1,574 @@
-# AMS Products Base
+# AMS Products Base - Enhanced Product Behavior Management
 
-A simplified integration layer for association product management in Odoo, focusing on essential functionality while leveraging existing AMS modules.
+A comprehensive product behavior management system for Association Management Systems (AMS), providing intuitive employee UX and powerful integration capabilities for downstream modules.
 
-## Overview
+## 🌟 Key Features
 
-The AMS Products Base module serves as a clean integration layer between Odoo's native product system and the Association Management System (AMS) modules. Rather than recreating complex functionality, it focuses on essential integration points that enable powerful association-specific features.
+### Product Behavior Types (Radio Button Selection)
+- **Membership Products**: Recurring memberships with portal access and benefit management
+- **Subscription Products**: Flexible billing cycles with term configuration
+- **Event Products**: Event registration with automatic enrollment and member pricing
+- **Publication Products**: Magazines, newsletters, and reports with subscription options
+- **Merchandise Products**: Physical goods with inventory tracking and member discounts
+- **Certification Products**: Digital certificates with portal access and renewal management
+- **Digital Downloads**: Instant file/URL delivery with access control
+- **Donation Products**: Tax-deductible contributions with automatic receipt generation
 
-### Design Philosophy
+### Enhanced Employee User Experience
+- **Intuitive Product Behavior Tab**: Contextual fields based on product type selection
+- **Smart Defaults**: Behavior-based automatic configuration with override capability
+- **Visual Status Indicators**: Clear configuration status and issue identification
+- **One-Click Testing**: Built-in tools for member pricing and behavior validation
+- **Guided Configuration**: Tooltips and help text eliminate technical complexity
 
-- **Leverage existing modules**: Uses `ams_product_types` for categories and `ams_member_data` for membership
-- **Category-driven behavior**: Products automatically inherit configuration from enhanced categories
-- **Simple integration**: Provides clean hooks for specialized modules to extend
-- **Native Odoo integration**: Works seamlessly with Odoo's product, sales, and inventory systems
+### Category-Driven Configuration
+- Products inherit comprehensive settings from enhanced AMS categories
+- Employee override capability for product-specific requirements
+- Smart onchange behavior applies appropriate defaults automatically
+- Behavior-based SKU generation with meaningful prefixes (MEM-, EVT-, DIG-, etc.)
 
-## Key Features
-
-### 🏷️ **Category-Driven Configuration**
-- Auto-detect AMS products from enhanced categories
-- Inherit pricing, digital, and inventory settings automatically
-- Simple onchange behavior applies category defaults
-
-### 💰 **Member Pricing Integration**
-- Calculate member pricing from category discount percentages
-- Partner-specific pricing based on membership status from `ams_member_data`
-- Automatic pricing summaries and member savings calculations
-
-### 📱 **Digital Product Support**
-- Basic digital content fields (URL and file attachment)
-- Digital content availability checking
-- Simple validation for digital products
-
-### 👥 **Membership Requirements**
-- Auto-detect membership requirements from categories
-- Purchase permission checking based on membership status
-- Integration hooks for access control
-
-### 🔢 **Simple SKU Management**
-- Auto-generate SKUs from product names when needed
-- Use Odoo's native `default_code` field
-- Legacy system integration support
-
-## Installation
+## 📋 Installation & Setup
 
 ### Prerequisites
 - Odoo Community 18.0+
-- `ams_member_data` module (for membership integration)
-- `ams_product_types` module (for enhanced categories)
+- `ams_member_data` module for membership integration
+- `ams_product_types` module for enhanced categories
 
-### Install Steps
+### Installation Steps
 
-1. **Place module in addons path**:
-   ```bash
-   cp -r ams_products_base /path/to/odoo/addons/
-   ```
-
-2. **Update module list**:
-   ```bash
-   # From Odoo interface: Apps → Update Apps List
-   # Or via command line:
-   ./odoo-bin -d your_db --update-list
-   ```
-
-3. **Install module**:
-   ```bash
-   # From Odoo interface: Apps → Search "AMS Products Base" → Install
-   # Or via command line:
-   ./odoo-bin -d your_db -i ams_products_base
-   ```
-
-4. **Verify installation**:
-   - Check that AMS products are auto-detected from categories
-   - Verify member pricing calculations
-   - Test digital content handling
-
-## Quick Start
-
-### 1. Create Enhanced Categories
-First, ensure you have AMS categories set up in `ams_product_types`:
-
-```python
-# Example: Event category with member pricing
-event_category = env['product.category'].create({
-    'name': 'Conference Registrations',
-    'is_ams_category': True,
-    'ams_category_type': 'event',
-    'requires_member_pricing': True,
-    'member_discount_percent': 20.0,  # 20% member discount
-})
-```
-
-### 2. Create AMS Products
-Products automatically inherit from their category:
-
-```python
-# Create product - settings inherited from category
-conference = env['product.template'].create({
-    'name': 'Annual Conference 2024',
-    'categ_id': event_category.id,
-    'list_price': 399.00,
-})
-
-# Automatically has:
-# - is_ams_product = True
-# - member_price = 319.20 (20% discount)
-# - requires_membership = False (from category)
-```
-
-### 3. Test Member Pricing
-```python
-# Get pricing for different partners
-member_price = conference.get_price_for_partner(member_partner)      # $319.20
-regular_price = conference.get_price_for_partner(non_member_partner) # $399.00
-
-# Check purchase permissions
-can_buy = conference.can_be_purchased_by_partner(partner)  # True/False
-```
-
-### 4. Digital Content
-For digital products, simply add content:
-
-```python
-digital_course = env['product.template'].create({
-    'name': 'Online Training Course',
-    'categ_id': digital_category.id,  # is_digital_category = True
-    'list_price': 99.00,
-    'digital_url': 'https://learning.example.com/course-123',
-})
-
-# Check digital access
-access_info = digital_course.get_digital_content_access(partner)
-# Returns: {'is_digital': True, 'has_content': True, 'can_access': True, ...}
-```
-
-## Configuration
-
-### Member Pricing Setup
-Configure member discounts at the category level:
-
-1. **Go to**: Inventory → Configuration → Product Categories
-2. **Find** your AMS category
-3. **Set**: `Member Discount Percent` (e.g., 15%)
-4. **Products** in this category automatically get member pricing
-
-### Digital Content Requirements
-For digital categories, products must have either:
-- `digital_url`: Download link
-- `digital_attachment_id`: File attachment
-
-### Membership Requirements
-Categories with these settings require membership:
-- `is_membership_category = True`
-- `grants_portal_access = True`
-
-## Usage Examples
-
-### Creating Category-Specific Products
-
-```python
-# Membership product (inherits from membership category)
-membership = env['product.template'].create({
-    'name': 'Annual Individual Membership',
-    'categ_id': membership_category.id,
-    'list_price': 150.00,
-    # Automatically: requires_membership = True, is_ams_product = True
-})
-
-# Event product (inherits from event category) 
-workshop = env['product.template'].create({
-    'name': 'Leadership Workshop',
-    'categ_id': workshop_category.id,  # 25% member discount
-    'list_price': 200.00,
-    # Automatically: member_price = 150.00, requires_membership = False
-})
-
-# Digital product (inherits from digital category)
-ebook = env['product.template'].create({
-    'name': 'Industry Best Practices Guide',
-    'categ_id': digital_category.id,
-    'list_price': 29.99,
-    'digital_url': 'https://downloads.example.com/guide.pdf',
-    # Automatically: is_digital_product = True, has_digital_content = True
-})
-```
-
-### Partner-Specific Pricing
-
-```python
-def get_cart_total(products, partner):
-    """Calculate cart total with member pricing"""
-    total = 0
-    for product in products:
-        price = product.get_price_for_partner(partner)
-        total += price
-    return total
-
-# Usage
-member_total = get_cart_total(cart_products, member_partner)    # Gets discounts
-guest_total = get_cart_total(cart_products, non_member_partner) # Regular pricing
-```
-
-### Digital Content Access
-
-```python
-def deliver_digital_content(order_line):
-    """Handle digital content delivery after purchase"""
-    product = order_line.product_id.product_tmpl_id
-    partner = order_line.order_id.partner_id
-    
-    access = product.get_digital_content_access(partner)
-    if access['is_digital'] and access['can_access']:
-        if access['download_url']:
-            # Send download link email
-            send_download_email(partner, access['download_url'])
-        elif access['attachment_id']:
-            # Attach file to email
-            send_attachment_email(partner, access['attachment_id'])
-```
-
-### Query Methods for Reporting
-
-```python
-# Get all AMS products by category type
-event_products = env['product.template'].get_ams_products_by_category_type('event')
-digital_products = env['product.template'].get_digital_products()
-member_pricing_products = env['product.template'].get_member_pricing_products()
-
-# Get product variants with issues
-low_stock_variants = env['product.product'].get_low_stock_ams_variants()
-missing_content = env['product.product'].get_digital_content_missing_variants()
-```
-
-## API Reference
-
-### ProductTemplate Methods
-
-#### Core Integration Methods
-```python
-def get_price_for_partner(self, partner)
-    """Get appropriate price based on partner's membership status"""
-    
-def can_be_purchased_by_partner(self, partner)  
-    """Check if product can be purchased by the partner"""
-    
-def get_digital_content_access(self, partner=None)
-    """Get digital content access information"""
-```
-
-#### Query Methods
-```python
-@api.model
-def get_ams_products_by_category_type(self, category_type=None)
-    """Get AMS products filtered by category type"""
-    
-@api.model  
-def get_member_pricing_products(self)
-    """Get all products that offer member pricing"""
-    
-@api.model
-def get_digital_products(self)
-    """Get all digital products"""
-```
-
-### ProductProduct Methods
-
-#### Variant Methods
-```python
-def get_price_for_partner(self, partner)
-    """Get variant price - delegates to template"""
-    
-def can_be_purchased_by_partner(self, partner)
-    """Check variant purchase permissions"""
-    
-def get_member_savings_amount(self, partner)  
-    """Calculate member savings for this variant"""
-```
-
-#### Query Methods
-```python
-@api.model
-def get_ams_variants_by_category_type(self, category_type=None)
-    """Get AMS variants by category type"""
-    
-@api.model
-def get_low_stock_ams_variants(self, threshold=0)
-    """Get low stock AMS variants"""
-```
-
-### Key Computed Fields
-
-#### ProductTemplate
-- `is_ams_product`: Auto-detected from category
-- `member_price`: Calculated from category discount
-- `member_savings`: Amount saved with member pricing
-- `has_digital_content`: Whether digital content is available
-- `requires_membership`: Whether membership is required
-- `pricing_summary`: Human-readable pricing summary
-
-#### ProductProduct  
-- `effective_sku`: Variant or template SKU
-- `availability_status`: Current availability status
-- `template_*`: Related fields from template for easy access
-
-## Integration Points
-
-### With ams_member_data
-- Uses `partner.is_member` and `partner.membership_status` for pricing
-- Integrates with membership validation logic
-- Respects membership lifecycle states
-
-### With ams_product_types  
-- Inherits all behavior from enhanced categories
-- Uses category discount percentages for member pricing
-- Respects category digital/inventory/subscription settings
-
-### With Odoo Core Modules
-- **Sales**: Provides partner-specific pricing methods
-- **Inventory**: Respects product types and stock management  
-- **Website**: Compatible with eCommerce member pricing
-- **Accounting**: Works with standard invoicing and taxation
-
-### Extension Points for Other Modules
-
-#### ams_membership_products
-```python
-# Extend membership-specific logic
-class ProductTemplate(models.Model):
-    _inherit = 'product.template'
-    
-    membership_duration = fields.Integer()  # Add membership-specific fields
-    
-    def create_membership_record(self, partner):
-        """Create membership from product purchase"""
-        if self.categ_id.is_membership_category:
-            # Create membership record
-            pass
-```
-
-#### ams_event_products
-```python
-# Extend event-specific logic  
-class ProductTemplate(models.Model):
-    _inherit = 'product.template'
-    
-    event_id = fields.Many2one('event.event')  # Link to event
-    
-    def register_for_event(self, partner):
-        """Register partner for event"""
-        if self.categ_id.ams_category_type == 'event':
-            # Create event registration
-            pass
-```
-
-#### ams_subscription_products
-```python
-# Extend subscription-specific logic
-class ProductTemplate(models.Model): 
-    _inherit = 'product.template'
-    
-    subscription_template_id = fields.Many2one('sale.subscription.template')
-    
-    def create_subscription(self, partner):
-        """Create subscription from product"""
-        if self.categ_id.is_subscription_category:
-            # Create subscription
-            pass
-```
-
-## Troubleshooting
-
-### Common Issues
-
-#### Products Not Detected as AMS Products
-**Problem**: `is_ams_product` is False  
-**Solution**: Ensure product category has `is_ams_category = True`
-
-#### Member Pricing Not Calculated
-**Problem**: `member_price` equals `list_price`  
-**Solutions**: 
-- Check category has `requires_member_pricing = True`
-- Verify `member_discount_percent` is set on category
-- Ensure category discount is > 0
-
-#### Digital Content Validation Errors
-**Problem**: ValidationError on digital products  
-**Solution**: Add either `digital_url` or `digital_attachment_id`
-
-#### SKU Not Auto-Generated
-**Problem**: `default_code` is empty  
-**Solutions**:
-- Ensure product name is provided during creation
-- Check category `is_ams_category = True`
-- Verify no existing `default_code` provided
-
-### Performance Considerations
-
-#### Large Product Catalogs
-- Computed fields are stored for search performance
-- Query methods use proper database indexes
-- Category-based filtering is efficient
-
-#### Member Pricing Calculations
-- Member pricing computed on save, not on-demand
-- Uses category-level discounts for consistency
-- Pricing summaries cached for display
-
-## Development
-
-### Running Tests
+1. **Install Dependencies**:
 ```bash
-# Run all AMS Products Base tests
-./odoo-bin -d test_db --test-tags ams_products_base --stop-after-init
+   # Install required AMS modules first
+   ./odoo-bin -d your_db -i ams_member_data,ams_product_types
 
-# Run specific test class
-./odoo-bin -d test_db --test-tags ams_products_base.test_ams_products_base
-```
+Install AMS Products Base:
 
-### Code Structure
-```
-ams_products_base/
-├── models/
-│   ├── product_template.py      # Template extensions (main logic)
-│   └── product_product.py       # Variant extensions (delegation)
-├── views/
-│   ├── product_template_views.xml # Clean template UI
-│   └── product_product_views.xml  # Simple variant UI  
-├── demo/
-│   └── demo_ams_products.xml    # Example products & scenarios
-└── tests/
-    └── test_ams_products_base.py # Comprehensive test coverage
-```
+bash   ./odoo-bin -d your_db -i ams_products_base
 
-### Adding Custom Fields
-Extend the base functionality for association-specific needs:
+Verify Installation:
 
-```python
-# In your custom module
+Navigate to Sales → AMS Products
+Create a test product and verify behavior selection works
+Check demo data is loaded correctly
+
+
+
+🚀 Quick Start Guide
+Creating Your First AMS Product
+
+Navigate to Products: Go to Sales → AMS Products → Create
+Basic Information:
+
+Enter product name (SKU will auto-generate)
+Set price
+Select appropriate AMS category
+Toggle "AMS Product" to enable enhanced features
+
+
+Select Product Behavior:
+
+Choose behavior type from radio buttons
+Watch contextual fields appear automatically
+Smart defaults populate based on selection
+
+
+Configure Behavior-Specific Settings:
+
+Membership: Set subscription term, portal access, benefits
+Event: Configure event registration, member-only access
+Digital: Add download URL or file attachment
+Subscription: Set billing cycle and portal access
+Donation: Configure tax deductibility and receipt template
+
+
+Test Configuration:
+
+Use "Test Product Behavior" button to verify setup
+Test member pricing with "Test Member Pricing" button
+
+
+
+Example: Creating a Conference Registration
+python# Via UI or programmatically
+conference = env['product.template'].create({
+    'name': 'Annual Industry Conference 2024',
+    'list_price': 499.00,
+    'is_ams_product': True,
+    'ams_product_behavior': 'event',
+    # Auto-populated by behavior selection:
+    # creates_event_registration = True
+    # type = 'service'
+    # SKU = 'EVT-ANNUAL...'
+})
+💰 Member Pricing System
+Automatic Discount Calculation
+python# Products inherit member discounts from categories
+event_product = env['product.template'].create({
+    'name': 'Workshop Registration',
+    'categ_id': event_category.id,  # Has 20% member discount
+    'list_price': 200.00,
+    # Automatically computed:
+    # member_price = 160.00
+    # member_savings = 40.00
+})
+
+# Get partner-specific pricing
+member_price = event_product.get_price_for_partner(member_partner)  # $160.00
+regular_price = event_product.get_price_for_partner(guest_partner)  # $200.00
+Pricing Display
+
+List View: Shows both regular and member prices
+Product Form: Displays savings calculation and pricing summary
+Sales Orders: Automatically applies appropriate pricing based on customer membership
+
+🔄 Subscription Management
+Flexible Terms
+pythonsubscription_product = env['product.template'].create({
+    'name': 'Professional Journal',
+    'ams_product_behavior': 'subscription',
+    'subscription_term': 24,
+    'subscription_term_type': 'months',
+    'grants_portal_access': True,
+})
+
+# Get subscription details
+details = subscription_product.get_subscription_details()
+# Returns: {'is_subscription': True, 'term': 24, 'term_type': 'months', 'term_display': '24 Months'}
+Integration Hooks
+
+Subscription Module: Use get_subscription_details() for billing cycle setup
+Portal Access: Automatic permission granting based on grants_portal_access
+Renewal Management: Built-in renewal tracking and notification support
+
+💾 Digital Content Delivery
+Content Configuration
+pythondigital_product = env['product.template'].create({
+    'name': 'Industry Report 2024',
+    'ams_product_behavior': 'digital',
+    'digital_url': 'https://secure.example.com/download/report-2024',
+    # OR
+    'digital_attachment_id': attachment.id,
+})
+Access Management
+python# Check content availability and access permissions
+access_info = digital_product.get_digital_content_access(partner)
+# Returns: {
+#     'is_digital': True,
+#     'has_content': True,
+#     'can_access': True,
+#     'download_url': 'https://...',
+#     'attachment_id': 123
+# }
+Delivery Workflow
+
+Purchase Completion: Product automatically identified as digital
+Access Validation: Membership requirements checked if applicable
+Content Delivery: URL/file provided based on access permissions
+Tracking: Download events logged for analytics
+
+🎫 Event Integration
+Automatic Registration
+pythonevent_product = env['product.template'].create({
+    'name': 'Leadership Workshop',
+    'ams_product_behavior': 'event',
+    'creates_event_registration': True,
+    'default_event_template_id': event_template.id,
+})
+
+# Get event configuration
+event_details = event_product.get_event_integration_details()
+# Returns: {'creates_registration': True, 'default_event': 'Workshop Template', ...}
+Member-Only Events
+
+Set requires_membership = True for exclusive events
+Automatic purchase validation based on membership status
+Integration with event module for seamless registration workflow
+
+🏛️ Portal Access Management
+Automatic Permission Granting
+pythonmembership_product = env['product.template'].create({
+    'name': 'Premium Membership',
+    'ams_product_behavior': 'membership',
+    'grants_portal_access': True,
+    'portal_group_ids': [(4, premium_group.id), (4, member_group.id)],
+})
+Integration Workflow
+
+Product Purchase: Portal access product identified
+Group Assignment: Customer automatically added to specified portal groups
+Access Activation: Portal permissions granted immediately
+Management: Integration hooks for access lifecycle management
+
+💝 Donation & Tax Management
+Tax-Deductible Contributions
+pythondonation_product = env['product.template'].create({
+    'name': 'General Fund Donation',
+    'ams_product_behavior': 'donation',
+    'donation_tax_deductible': True,
+    'donation_receipt_template_id': receipt_template.id,
+})
+Receipt Generation
+
+Automatic receipt creation upon donation processing
+Customizable email templates with donation details
+Tax compliance tracking and reporting
+Integration with accounting for proper categorization
+
+📊 Accounting Integration
+Multiple GL Account Types
+pythonproduct.get_accounting_configuration()
+# Returns: {
+#     'deferred_revenue_account': '2400',
+#     'cash_account': '1100', 
+#     'refund_account': '2500',
+#     'membership_revenue_account': '4100'
+# }
+Revenue Recognition
+
+Immediate: Standard product sales
+Deferred: Subscriptions and prepaid services
+Membership: Specialized membership revenue accounts
+Event-Based: Revenue recognition on event occurrence
+
+🔍 Search & Filtering
+Advanced Search Capabilities
+
+Behavior-Based Filtering: Find products by behavior type
+Feature Filtering: Member pricing, portal access, digital content
+Status Filtering: Available, missing content, configuration issues
+Member Benefits: Products granting specific benefits or access
+
+Issue Tracking
+
+Missing Digital Content: Digital products without URLs/files
+Missing Event Templates: Event products without linked templates
+Configuration Issues: Automatic validation and issue detection
+Out of Stock: Merchandise variants needing replenishment
+
+🔧 API Reference
+Core Product Methods
+Business Logic Methods
+python# Pricing
+product.get_price_for_partner(partner)                    # Get member/regular price
+product.can_be_purchased_by_partner(partner)              # Check purchase permissions
+product.get_member_savings_amount(partner)                # Calculate savings
+
+# Behavior-Specific Details
+product.get_subscription_details()                        # Subscription configuration
+product.get_portal_access_details()                       # Portal access settings
+product.get_donation_details()                            # Tax deductibility info
+product.get_event_integration_details()                   # Event registration config
+product.get_digital_content_access(partner)               # Digital content access
+product.get_accounting_configuration()                    # GL account setup
+Query Methods
+python# Template Queries
+ProductTemplate.get_products_by_behavior_type('membership')
+ProductTemplate.get_subscription_products()
+ProductTemplate.get_digital_products()
+ProductTemplate.get_donation_products()
+ProductTemplate.get_portal_access_products()
+ProductTemplate.get_event_products()
+
+# Variant Queries  
+ProductProduct.get_ams_variants_by_behavior_type('event')
+ProductProduct.get_subscription_variants()
+ProductProduct.get_portal_access_variants()
+ProductProduct.get_variants_with_issues()
+Variant-Specific Methods
+python# Enhanced Variant Information
+variant.get_comprehensive_variant_summary()               # Complete variant details
+variant.get_variant_issues()                             # Configuration problems
+variant.get_member_savings_amount(partner)               # Variant-specific savings
+
+# Testing and Validation
+variant.action_test_variant_behavior()                   # Test configuration
+variant.action_test_variant_access()                     # Test partner access
+🏗️ Extension and Integration
+Extending for Specialized Modules
+Adding Custom Behavior Types
+python# In your custom module
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
     
-    # Add association-specific fields
-    ceu_credits = fields.Float(string="CEU Credits")
-    accreditation_required = fields.Boolean(string="Requires Accreditation")
-    
-    @api.depends('categ_id.ams_category_type', 'ceu_credits')
-    def _compute_grants_ceu(self):
-        """Compute if product grants continuing education credits"""
-        for product in self:
-            product.grants_ceu = (
-                product.categ_id.ams_category_type in ['education', 'certification'] 
-                and product.ceu_credits > 0
-            )
-    
-    grants_ceu = fields.Boolean(
-        string="Grants CEU",
-        compute='_compute_grants_ceu',
-        store=True
+    ams_product_behavior = fields.Selection(
+        selection_add=[
+            ('custom_behavior', 'Custom Product Type'),
+        ]
     )
-```
+    
+    @api.onchange('ams_product_behavior')
+    def _onchange_ams_product_behavior(self):
+        result = super()._onchange_ams_product_behavior()
+        
+        if self.ams_product_behavior == 'custom_behavior':
+            # Set custom defaults
+            self.custom_field = True
+            self.type = 'service'
+            
+        return result
+Integration Hooks
+python# Subscription Module Integration
+def create_subscription_from_product(product, partner):
+    """Create subscription from product purchase"""
+    if product.is_subscription_product:
+        details = product.get_subscription_details()
+        subscription = env['sale.subscription'].create({
+            'partner_id': partner.id,
+            'template_id': product.subscription_template_id.id,
+            'recurring_rule_type': details['term_type'],
+            'recurring_interval': details['term'],
+        })
+        return subscription
 
-### Custom Category Behaviors
-Add new category-driven behaviors:
+# Event Module Integration
+def register_for_event(product, partner):
+    """Register partner for event product"""
+    if product.creates_event_registration:
+        event_details = product.get_event_integration_details()
+        if event_details['default_event_id']:
+            registration = env['event.registration'].create({
+                'event_id': event_details['default_event_id'],
+                'partner_id': partner.id,
+                'state': 'open',
+            })
+            return registration
 
-```python
-# In ams_product_types module extension
+# Portal Access Integration
+def grant_portal_access(product, partner):
+    """Grant portal access from product purchase"""
+    if product.grants_portal_access:
+        portal_details = product.get_portal_access_details()
+        for group_id in portal_details['portal_group_ids']:
+            partner.user_ids.write({'groups_id': [(4, group_id)]})
+Category Enhancement
+python# Extend categories for specialized behavior
 class ProductCategory(models.Model):
     _inherit = 'product.category'
     
-    default_ceu_credits = fields.Float(string="Default CEU Credits")
-    requires_accreditation = fields.Boolean(string="Requires Accreditation")
+    # Add organization-specific category attributes
+    custom_category_field = fields.Boolean('Custom Category Feature')
+    default_benefits = fields.Text('Default Benefits Description')
+    
+    @api.onchange('ams_category_type')
+    def _onchange_ams_category_type(self):
+        result = super()._onchange_ams_category_type()
+        
+        # Add custom defaults based on category type
+        if self.ams_category_type == 'custom_type':
+            self.custom_category_field = True
+            
+        return result
+📈 Reporting and Analytics
+Built-in Reports
 
-# In your product extension  
-@api.onchange('categ_id')
-def _onchange_categ_id_custom(self):
-    """Apply custom category defaults"""
-    super()._onchange_categ_id()
-    if self.categ_id and self.categ_id.is_ams_category:
-        self.ceu_credits = self.categ_id.default_ceu_credits
-        self.accreditation_required = self.categ_id.requires_accreditation
-```
+Product Behavior Analysis: Distribution of products by behavior type
+Member Pricing Impact: Savings analysis and member benefit tracking
+Digital Content Usage: Access patterns and delivery statistics
+Subscription Revenue: Recurring revenue tracking by product
+Configuration Issues: Products needing attention or fixes
 
-## Contributing
+Custom Analytics
+python# Get comprehensive product statistics
+def get_ams_product_analytics():
+    templates = env['product.template'].search([('is_ams_product', '=', True)])
+    
+    analytics = {
+        'total_products': len(templates),
+        'by_behavior': {},
+        'member_pricing_enabled': len(templates.filtered('member_savings')),
+        'subscription_products': len(templates.filtered('is_subscription_product')),
+        'portal_access_products': len(templates.filtered('grants_portal_access')),
+        'digital_products': len(templates.filtered('has_digital_content')),
+    }
+    
+    # Behavior distribution
+    for behavior in ['membership', 'event', 'subscription', 'digital', 'donation']:
+        behavior_products = templates.filtered(lambda p: p.ams_product_behavior == behavior)
+        analytics['by_behavior'][behavior] = len(behavior_products)
+    
+    return analytics
+Performance Monitoring
 
-### Guidelines
-- Follow Odoo development best practices
-- Maintain simplicity - leverage existing modules
-- Add comprehensive tests for new functionality  
-- Keep UI clean and focused on essentials
-- Document integration points for other modules
+Query Performance: Optimized database queries with proper indexing
+Member Pricing Calculation: Cached computations for large product catalogs
+Digital Content Access: Efficient access validation and delivery
+Configuration Validation: Automated issue detection and notification
 
-### Pull Request Process
-1. Create feature branch from main
-2. Add/update tests for changes
-3. Ensure all tests pass
-4. Update documentation if needed
-5. Submit pull request with clear description
+🧪 Testing and Quality Assurance
+Comprehensive Test Suite
+bash# Run all AMS Products Base tests
+./odoo-bin -d test_db --test-tags ams_products_base --stop-after-init
 
-## Changelog
+# Run specific test categories
+./odoo-bin -d test_db --test-tags ams_products_base.test_behavior_management
+./odoo-bin -d test_db --test-tags ams_products_base.test_member_pricing
+./odoo-bin -d test_db --test-tags ams_products_base.test_digital_content
+Test Coverage
 
-### Version 1.0.0 - Initial Release
-- Simplified integration layer design
-- Category-driven product configuration
-- Member pricing integration with ams_member_data
-- Digital content handling with validation
-- Comprehensive test coverage
-- Clean UI focused on essentials
-- Integration hooks for specialized modules
+✅ Product Behavior Selection: All behavior types and defaults
+✅ Member Pricing: Calculation accuracy and partner-specific logic
+✅ Subscription Management: Term configuration and integration hooks
+✅ Digital Content: Access control and delivery validation
+✅ Event Integration: Registration creation and member-only events
+✅ Portal Access: Permission granting and group management
+✅ Donation Processing: Tax deductibility and receipt generation
+✅ Variant Inheritance: Template behavior propagation to variants
+✅ Validation Rules: Data integrity and business logic enforcement
+✅ Query Methods: Search performance and result accuracy
 
-## License
-LGPL-3
+Demo Data Testing
+python# Test with comprehensive demo data
+def test_demo_data_scenarios():
+    """Test real-world scenarios using demo data"""
+    
+    # Member vs non-member pricing
+    member = env.ref('ams_products_base.demo_member_jane_active')
+    non_member = env.ref('ams_products_base.demo_non_member_prospect')
+    conference = env.ref('ams_products_base.demo_event_annual_conference')
+    
+    member_price = conference.get_price_for_partner(member)
+    regular_price = conference.get_price_for_partner(non_member)
+    
+    assert member_price < regular_price, "Member should get discounted price"
+    
+    # Digital content access
+    ebook = env.ref('ams_products_base.demo_digital_ebook_collection')
+    access = ebook.get_digital_content_access(member)
+    
+    assert access['is_digital'], "Should be digital product"
+    assert access['has_content'], "Should have download content"
+    assert access['can_access'], "Member should have access"
+🚨 Troubleshooting
+Common Issues and Solutions
+Issue: Product Behavior Not Applying Defaults
+Symptoms: Selecting behavior type doesn't populate expected fields
+Solutions:
 
-## Support
-- **Documentation**: This README and inline code comments
-- **Tests**: Comprehensive test suite in `tests/` directory
-- **Demo Data**: Example products and scenarios in `demo/` directory
-- **Issues**: Report bugs or feature requests via project issue tracker
+Ensure is_ams_product is set to True
+Check that ams_product_behavior is properly selected
+Verify category has appropriate AMS configuration
+Clear browser cache and refresh form
 
-For technical questions about extending this module or integrating with other AMS modules, refer to the API documentation above or examine the test cases for usage examples.
+Issue: Member Pricing Not Calculating
+Symptoms: Member price equals regular price
+Solutions:
+
+Verify category has requires_member_pricing = True
+Check member_discount_percent is set on category
+Ensure partner has is_member = True and membership_status = 'active'
+Confirm ams_member_data module is installed and configured
+
+Issue: Digital Content Access Denied
+Symptoms: Digital products showing as missing content
+Solutions:
+
+Add either digital_url or digital_attachment_id to product
+Ensure URL starts with http:// or https://
+Verify file attachment is properly uploaded
+Check partner permissions and membership requirements
+
+Issue: SKU Not Auto-Generating
+Symptoms: Products created without default_code
+Solutions:
+
+Ensure product name is provided during creation
+Verify is_ams_product = True
+Check ams_product_behavior is selected
+Confirm uniqueness constraints aren't preventing generation
+
+Performance Optimization
+Large Product Catalogs
+
+Use database indexes on behavior and category fields
+Implement batch processing for bulk product operations
+Cache frequently accessed computed fields
+Optimize member pricing calculations with stored fields
+
+High-Volume Transactions
+
+Pre-compute member pricing for performance
+Use efficient query methods for product filtering
+Implement proper caching for digital content access validation
+Optimize variant inheritance calculations
+
+Data Migration
+From Legacy Systems
+python# Example migration script
+def migrate_legacy_products():
+    """Migrate products from legacy AMS system"""
+    
+    legacy_products = get_legacy_product_data()
+    
+    for legacy_product in legacy_products:
+        # Map legacy type to behavior
+        behavior_mapping = {
+            'MEMBERSHIP': 'membership',
+            'EVENT_REG': 'event', 
+            'PUBLICATION': 'publication',
+            'MERCHANDISE': 'merchandise',
+            'DONATION': 'donation',
+        }
+        
+        behavior = behavior_mapping.get(legacy_product['type'], 'merchandise')
+        
+        # Create with behavior-specific configuration
+        product = env['product.template'].create({
+            'name': legacy_product['name'],
+            'list_price': legacy_product['price'],
+            'is_ams_product': True,
+            'ams_product_behavior': behavior,
+            'legacy_product_id': legacy_product['id'],
+            # Behavior defaults will be applied automatically
+        })
+        
+        # Apply legacy-specific overrides
+        if legacy_product.get('member_discount'):
+            # Override category default if needed
+            product.member_discount_override = legacy_product['member_discount']
+📚 Additional Resources
+Documentation
+
+API Reference: Complete method documentation with examples
+Integration Guide: Step-by-step integration with other modules
+Best Practices: Recommended patterns for AMS product management
+Performance Guide: Optimization strategies for large installations
+
+Training Materials
+
+Employee Training: User guide for product configuration
+Developer Training: Technical guide for module extension
+Video Tutorials: Step-by-step product setup demonstrations
+Webinar Series: Advanced configuration and integration topics
+
+Community Support
+
+GitHub Repository: Source code and issue tracking
+Community Forum: Questions and discussion
+Documentation Wiki: Community-maintained guides and examples
+Bug Reports: Issue submission and resolution tracking
+
+Professional Services
+
+Custom Development: Specialized behavior types and integrations
+Data Migration: Legacy system migration and cleanup
+Performance Optimization: Large-scale deployment optimization
+Training and Support: On-site training and ongoing support
+
+
+📄 License
+This module is licensed under LGPL-3. See LICENSE file for details.
+🤝 Contributing
+We welcome contributions! Please see CONTRIBUTING.md for guidelines on:
+
+Code standards and best practices
+Testing requirements and procedures
+Documentation expectations
+Pull request process and review guidelines
+
+📞 Support
+For technical support, feature requests, or questions:
+
+Documentation: This README and inline code documentation
+Issue Tracker: GitHub issues for bugs and feature requests
+Community Forum: Discussion and community support
+Professional Support: Commercial support and custom development

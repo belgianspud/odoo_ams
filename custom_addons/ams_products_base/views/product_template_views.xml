@@ -2,19 +2,21 @@
 <odoo>
     
     <!-- ========================================================================== -->
-    <!-- SIMPLIFIED AMS PRODUCT TEMPLATE FORM VIEW -->
+    <!-- ENHANCED AMS PRODUCT TEMPLATE FORM VIEW WITH BEHAVIOR MANAGEMENT -->
     <!-- ========================================================================== -->
-    <record id="product_template_form_view_ams_simple" model="ir.ui.view">
-        <field name="name">product.template.form.ams.simple</field>
+    <record id="product_template_form_view_ams_enhanced" model="ir.ui.view">
+        <field name="name">product.template.form.ams.enhanced</field>
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_form_view"/>
         <field name="arch" type="xml">
             
-            <!-- Add AMS indicator and category info after category - MANUAL TOGGLE -->
+            <!-- Add AMS indicator and behavior summary after category -->
             <xpath expr="//field[@name='categ_id']" position="after">
                 <field name="is_ams_product" widget="boolean_toggle" string="AMS Product"/>
                 <field name="ams_category_display" readonly="1" invisible="not is_ams_product" 
-                       string="AMS Category Type"/>
+                       string="Category Type"/>
+                <field name="product_behavior_summary" readonly="1" invisible="not ams_product_behavior"
+                       string="Product Configuration"/>
             </xpath>
             
             <!-- Add member pricing after list price -->
@@ -27,86 +29,263 @@
                        string="Member Saves"/>
             </xpath>
             
-            <!-- Add simplified AMS tab -->
+            <!-- Add comprehensive Product Behavior tab -->
             <xpath expr="//notebook" position="inside">
-                <page string="AMS Integration" name="ams_integration" invisible="not is_ams_product">
+                <page string="Product Behavior" name="product_behavior" invisible="not is_ams_product">
                     
-                    <!-- Category Information (Read-only) -->
-                    <group string="Category Configuration" name="category_config">
+                    <!-- ========================================================================== -->
+                    <!-- PRODUCT BEHAVIOR TYPE SELECTION (RADIO BUTTONS) -->
+                    <!-- ========================================================================== -->
+                    <group string="Product Behavior Type" name="behavior_type">
+                        <div class="alert alert-info" role="alert">
+                            <strong><i class="fa fa-info-circle"></i> Product Behavior</strong><br/>
+                            Select the primary behavior type to automatically configure relevant settings.
+                            You can override any defaults after selection.
+                        </div>
+                        <field name="ams_product_behavior" widget="radio" 
+                               options="{'horizontal': true}"
+                               string="What type of product is this?"/>
+                    </group>
+
+                    <!-- ========================================================================== -->
+                    <!-- MEMBERSHIP PRODUCT SETTINGS -->
+                    <!-- ========================================================================== -->
+                    <group string="Membership Settings" name="membership_settings"
+                           invisible="ams_product_behavior != 'membership'">
                         <group>
-                            <field name="categ_id" readonly="1"/>
-                            <field name="ams_category_display" readonly="1"/>
-                            <field name="requires_membership" widget="boolean_toggle" string="Requires Membership"/>
+                            <field name="is_subscription_product" widget="boolean_toggle" 
+                                   string="Recurring Membership"/>
+                            <field name="subscription_term" invisible="not is_subscription_product"
+                                   string="Membership Duration"/>
+                            <field name="subscription_term_type" invisible="not is_subscription_product"
+                                   string="Duration Type"/>
+                            <field name="grants_portal_access" widget="boolean_toggle"
+                                   string="Grants Member Portal Access"/>
+                        </group>
+                        <group>
+                            <field name="portal_group_ids" widget="many2many_tags"
+                                   invisible="not grants_portal_access"
+                                   string="Portal Access Groups"/>
+                            <field name="benefit_bundle_id" string="Related Benefit Package"/>
+                            <field name="includes_benefits" placeholder="Describe membership benefits..."
+                                   string="Included Benefits"/>
+                        </group>
+                    </group>
+
+                    <!-- ========================================================================== -->
+                    <!-- SUBSCRIPTION PRODUCT SETTINGS -->
+                    <!-- ========================================================================== -->
+                    <group string="Subscription Settings" name="subscription_settings"
+                           invisible="ams_product_behavior != 'subscription'">
+                        <group>
+                            <field name="is_subscription_product" widget="boolean_toggle" readonly="1"/>
+                            <field name="subscription_term" string="Billing Cycle Duration" required="1"/>
+                            <field name="subscription_term_type" string="Cycle Type" required="1"/>
+                        </group>
+                        <group>
+                            <field name="grants_portal_access" widget="boolean_toggle"
+                                   string="Grants Subscriber Portal Access"/>
+                            <field name="portal_group_ids" widget="many2many_tags"
+                                   invisible="not grants_portal_access"
+                                   string="Subscriber Portal Groups"/>
+                        </group>
+                        <separator colspan="2"/>
+                        <field name="includes_benefits" placeholder="Describe what subscribers receive..."
+                               string="Subscription Includes" colspan="2"/>
+                    </group>
+
+                    <!-- ========================================================================== -->
+                    <!-- EVENT PRODUCT SETTINGS -->
+                    <!-- ========================================================================== -->
+                    <group string="Event Registration Settings" name="event_settings"
+                           invisible="ams_product_behavior != 'event'">
+                        <group>
+                            <field name="creates_event_registration" widget="boolean_toggle"
+                                   string="Auto-Register for Event"/>
+                            <field name="default_event_template_id" 
+                                   invisible="not creates_event_registration"
+                                   string="Default Event" required="creates_event_registration"/>
+                        </group>
+                        <group>
+                            <field name="requires_membership" widget="boolean_toggle"
+                                   string="Members Only Event"/>
+                            <div class="text-muted" invisible="not requires_membership">
+                                <small>Only active members can register for this event</small>
+                            </div>
+                        </group>
+                    </group>
+
+                    <!-- ========================================================================== -->
+                    <!-- PUBLICATION PRODUCT SETTINGS -->
+                    <!-- ========================================================================== -->
+                    <group string="Publication Settings" name="publication_settings"
+                           invisible="ams_product_behavior != 'publication'">
+                        <group>
+                            <field name="is_subscription_product" widget="boolean_toggle"
+                                   string="Publication Subscription"/>
+                            <field name="subscription_term" invisible="not is_subscription_product"
+                                   string="Subscription Duration"/>
+                            <field name="subscription_term_type" invisible="not is_subscription_product"
+                                   string="Duration Type"/>
+                        </group>
+                        <group>
+                            <field name="digital_url" widget="url" 
+                                   placeholder="https://example.com/publication-access"
+                                   string="Digital Access URL"/>
+                            <field name="digital_attachment_id" string="Digital Publication File"/>
+                        </group>
+                        <separator colspan="2"/>
+                        <field name="includes_benefits" placeholder="Describe publication benefits..."
+                               string="Publication Includes" colspan="2"/>
+                    </group>
+
+                    <!-- ========================================================================== -->
+                    <!-- MERCHANDISE PRODUCT SETTINGS -->
+                    <!-- ========================================================================== -->
+                    <group string="Merchandise Settings" name="merchandise_settings"
+                           invisible="ams_product_behavior != 'merchandise'">
+                        <div class="alert alert-success" role="alert">
+                            <strong><i class="fa fa-check-circle"></i> Physical Product</strong><br/>
+                            This merchandise product will use standard inventory tracking and shipping.
+                            Member pricing discounts will be applied automatically if configured.
+                        </div>
+                    </group>
+
+                    <!-- ========================================================================== -->
+                    <!-- CERTIFICATION PRODUCT SETTINGS -->
+                    <!-- ========================================================================== -->
+                    <group string="Certification Settings" name="certification_settings"
+                           invisible="ams_product_behavior != 'certification'">
+                        <group>
+                            <field name="grants_portal_access" widget="boolean_toggle"
+                                   string="Grants Certification Portal Access"/>
+                            <field name="portal_group_ids" widget="many2many_tags"
+                                   invisible="not grants_portal_access"
+                                   string="Certification Portal Groups"/>
+                        </group>
+                        <group>
+                            <field name="digital_url" widget="url" 
+                                   placeholder="https://example.com/certification-access"
+                                   string="Digital Certificate URL"/>
+                            <field name="digital_attachment_id" string="Certificate Template"/>
+                        </group>
+                    </group>
+
+                    <!-- ========================================================================== -->
+                    <!-- DIGITAL DOWNLOAD SETTINGS -->
+                    <!-- ========================================================================== -->
+                    <group string="Digital Download Settings" name="digital_settings"
+                           invisible="ams_product_behavior != 'digital'">
+                        <group>
+                            <field name="digital_url" widget="url" required="1"
+                                   placeholder="https://example.com/secure-download"
+                                   string="Download URL"/>
+                            <field name="digital_attachment_id" string="Download File"/>
+                            <field name="has_digital_content" readonly="1" widget="boolean"
+                                   string="Content Ready"/>
+                        </group>
+                        <group>
+                            <div class="alert alert-warning" role="alert" invisible="has_digital_content">
+                                <strong><i class="fa fa-exclamation-triangle"></i> Missing Content</strong><br/>
+                                Please provide either a download URL or file attachment.
+                            </div>
+                            <div class="alert alert-success" role="alert" invisible="not has_digital_content">
+                                <strong><i class="fa fa-check-circle"></i> Ready for Delivery</strong><br/>
+                                Digital content is configured and ready.
+                            </div>
+                        </group>
+                    </group>
+
+                    <!-- ========================================================================== -->
+                    <!-- DONATION PRODUCT SETTINGS -->
+                    <!-- ========================================================================== -->
+                    <group string="Donation Settings" name="donation_settings"
+                           invisible="ams_product_behavior != 'donation'">
+                        <group>
+                            <field name="donation_tax_deductible" widget="boolean_toggle" readonly="1"
+                                   string="Tax Deductible"/>
+                            <field name="donation_receipt_template_id" 
+                                   string="Receipt Email Template"
+                                   help="Template used for donation tax receipts"/>
                         </group>
                         <group>
                             <div class="alert alert-info" role="alert">
-                                <strong><i class="fa fa-info-circle"></i> Configuration inherited from category:</strong>
-                                <ul class="mb-1">
-                                    <li>AMS enhanced product features</li>
-                                    <li>Member pricing available</li>
-                                    <li>Digital product delivery</li>
-                                    <li>Subscription/recurring billing</li>
-                                    <li>Inventory tracking required</li>
-                                    <li>Portal access grants</li>
-                                </ul>
+                                <strong><i class="fa fa-info-circle"></i> Tax Deductible Donation</strong><br/>
+                                This product is configured as a tax-deductible charitable contribution.
+                                Donation receipts will be automatically generated.
                             </div>
                         </group>
                     </group>
-                    
-                    <!-- Member Pricing Details -->
-                    <group string="Member Pricing" name="member_pricing" 
-                           invisible="member_savings == 0">
-                        <group>
-                            <field name="list_price" readonly="1" string="Regular Price"/>
-                            <field name="member_price" readonly="1"/>
-                            <field name="member_savings" readonly="1"/>
+
+                    <!-- ========================================================================== -->
+                    <!-- ACCOUNTING CONFIGURATION -->
+                    <!-- ========================================================================== -->
+                    <group string="Accounting Configuration" name="accounting_config"
+                           groups="account.group_account_manager">
+                        <group string="Revenue Accounts">
+                            <field name="property_account_income_id" string="Standard Revenue Account"/>
+                            <field name="membership_revenue_account_id" 
+                                   invisible="ams_product_behavior != 'membership'"
+                                   string="Membership Revenue Account"/>
+                            <field name="deferred_revenue_account_id" 
+                                   invisible="not is_subscription_product"
+                                   string="Deferred Revenue Account"/>
                         </group>
-                        <group>
-                            <field name="pricing_summary" readonly="1" 
-                                   widget="text" string="Pricing Summary"/>
-                            <div class="text-muted">
-                                <small>Member pricing is calculated from the category's discount percentage.</small>
-                            </div>
-                        </group>
-                    </group>
-                    
-                    <!-- Digital Content -->
-                    <group string="Digital Content" name="digital_content"
-                           invisible="not has_digital_content">
-                        <group>
-                            <field name="digital_url" widget="url" placeholder="https://example.com/download"/>
-                            <field name="digital_attachment_id"/>
-                        </group>
-                        <group>
-                            <field name="has_digital_content" readonly="1" widget="boolean"/>
-                            <div class="alert alert-warning" role="alert" invisible="has_digital_content">
-                                <strong><i class="fa fa-exclamation-triangle"></i> Missing Digital Content</strong><br/>
-                                Please add either a download URL or file attachment for digital delivery.
-                            </div>
-                            <div class="alert alert-success" role="alert" invisible="not has_digital_content">
-                                <strong><i class="fa fa-check-circle"></i> Digital Content Ready</strong><br/>
-                                This product is ready for digital delivery.
-                            </div>
+                        <group string="Other Accounts">
+                            <field name="cash_account_id" string="Cash Receipt Account"/>
+                            <field name="refund_account_id" string="Refund Account"/>
                         </group>
                     </group>
-                    
-                    <!-- System Information -->
-                    <group string="System Information" name="system_info">
-                        <group>
-                            <field name="default_code" string="SKU"/>
-                            <field name="legacy_product_id" placeholder="Legacy system ID"/>
-                        </group>
-                        <group>
+
+                    <!-- ========================================================================== -->
+                    <!-- CATEGORY INHERITANCE INFO -->
+                    <!-- ========================================================================== -->
+                    <group string="Category Configuration" name="category_inheritance">
+                        <div class="alert alert-info" role="alert">
+                            <h6><i class="fa fa-info-circle"></i> Inherited from Product Category</h6>
+                            <p class="mb-2">
+                                <strong>Category:</strong> <field name="ams_category_display" readonly="1" nolabel="1"/>
+                            </p>
+                            <p class="mb-2">
+                                These settings are automatically inherited from your product category.
+                                You can override them above if needed for this specific product.
+                            </p>
                             <button name="action_view_category" type="object" 
-                                    string="View Category" class="btn-link"
+                                    string="View Category Settings" class="btn btn-link btn-sm"
                                     icon="fa-external-link"/>
+                        </div>
+                    </group>
+
+                    <!-- ========================================================================== -->
+                    <!-- SYSTEM INFORMATION AND TESTING -->
+                    <!-- ========================================================================== -->
+                    <group string="System Information" name="system_info" groups="base.group_system">
+                        <group>
+                            <field name="default_code" string="Product SKU"/>
+                            <field name="legacy_product_id" placeholder="Legacy system ID"
+                                   string="Legacy Product ID"/>
+                        </group>
+                        <group>
+                            <button name="action_test_product_behavior" type="object" 
+                                    string="Test Product Behavior" class="btn-link"
+                                    icon="fa-cogs"/>
                             <button name="action_test_member_pricing" type="object" 
                                     string="Test Member Pricing" class="btn-link"
-                                    icon="fa-calculator" groups="base.group_system"/>
+                                    icon="fa-calculator"/>
                         </group>
                     </group>
                     
                 </page>
+            </xpath>
+
+            <!-- ========================================================================== -->
+            <!-- ENHANCED SALES TAB - ADD PRICING SUMMARY -->
+            <!-- ========================================================================== -->
+            <xpath expr="//page[@name='sales']//group" position="after">
+                <group string="AMS Pricing Summary" name="ams_pricing" invisible="not is_ams_product">
+                    <field name="pricing_summary" readonly="1" widget="text" 
+                           string="Pricing Summary" nolabel="1"/>
+                </group>
             </xpath>
             
         </field>
@@ -115,29 +294,32 @@
     <!-- ========================================================================== -->
     <!-- ENHANCED PRODUCT TEMPLATE LIST VIEW -->
     <!-- ========================================================================== -->
-    <record id="product_template_tree_view_ams_simple" model="ir.ui.view">
-        <field name="name">product.template.tree.ams.simple</field>
+    <record id="product_template_tree_view_ams_enhanced" model="ir.ui.view">
+        <field name="name">product.template.tree.ams.enhanced</field>
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_tree_view"/>
         <field name="arch" type="xml">
             
-            <!-- Add AMS columns after category -->
+            <!-- Add enhanced AMS columns -->
             <xpath expr="//field[@name='categ_id']" position="after">
                 <field name="is_ams_product" string="AMS" widget="boolean_toggle" optional="show"/>
-                <field name="ams_category_display" string="AMS Type" optional="show"/>
+                <field name="ams_product_behavior" string="Behavior" optional="show"/>
+                <field name="ams_category_display" string="Category Type" optional="hide"/>
                 <field name="member_price" string="Member Price" optional="hide" widget="monetary"
                        invisible="member_savings == 0"/>
-                <field name="requires_membership" string="Membership Required" widget="boolean_toggle" optional="hide"/>
+                <field name="is_subscription_product" string="Subscription" widget="boolean_toggle" optional="hide"/>
+                <field name="grants_portal_access" string="Portal Access" widget="boolean_toggle" optional="hide"/>
+                <field name="donation_tax_deductible" string="Tax Deductible" widget="boolean_toggle" optional="hide"/>
             </xpath>
             
         </field>
     </record>
 
     <!-- ========================================================================== -->
-    <!-- ENHANCED PRODUCT TEMPLATE SEARCH VIEW - FIXED -->
+    <!-- ENHANCED PRODUCT TEMPLATE SEARCH VIEW -->
     <!-- ========================================================================== -->
-    <record id="product_template_search_view_ams_simple" model="ir.ui.view">
-        <field name="name">product.template.search.ams.simple</field>
+    <record id="product_template_search_view_ams_enhanced" model="ir.ui.view">
+        <field name="name">product.template.search.ams.enhanced</field>
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_search_view"/>
         <field name="arch" type="xml">
@@ -145,143 +327,239 @@
             <!-- Add AMS search fields -->
             <xpath expr="//field[@name='name']" position="after">
                 <field name="default_code" string="SKU" filter_domain="[('default_code', 'ilike', self)]"/>
-                <field name="ams_category_display" string="AMS Category"/>
+                <field name="ams_product_behavior" string="Product Behavior"/>
+                <field name="ams_category_display" string="Category Type"/>
                 <field name="legacy_product_id" string="Legacy ID"/>
             </xpath>
             
-            <!-- Add AMS filters - FIXED -->
+            <!-- Enhanced AMS filters -->
             <xpath expr="//filter[@name='filter_to_sell']" position="after">
                 <separator/>
+                <!-- BASIC AMS FILTERS -->
                 <filter name="ams_products" string="AMS Products" 
                         domain="[('is_ams_product', '=', True)]"/>
                 <filter name="member_pricing" string="Member Pricing" 
                         domain="[('member_savings', '>', 0)]"/>
-                <filter name="digital_products" string="Digital Products" 
+                
+                <separator/>
+                <!-- BEHAVIOR TYPE FILTERS -->
+                <filter name="behavior_membership" string="Membership Products" 
+                        domain="[('ams_product_behavior', '=', 'membership')]"/>
+                <filter name="behavior_subscription" string="Subscription Products" 
+                        domain="[('ams_product_behavior', '=', 'subscription')]"/>
+                <filter name="behavior_event" string="Event Products" 
+                        domain="[('ams_product_behavior', '=', 'event')]"/>
+                <filter name="behavior_publication" string="Publication Products" 
+                        domain="[('ams_product_behavior', '=', 'publication')]"/>
+                <filter name="behavior_merchandise" string="Merchandise Products" 
+                        domain="[('ams_product_behavior', '=', 'merchandise')]"/>
+                <filter name="behavior_certification" string="Certification Products" 
+                        domain="[('ams_product_behavior', '=', 'certification')]"/>
+                <filter name="behavior_digital" string="Digital Downloads" 
+                        domain="[('ams_product_behavior', '=', 'digital')]"/>
+                <filter name="behavior_donation" string="Donation Products" 
+                        domain="[('ams_product_behavior', '=', 'donation')]"/>
+                
+                <separator/>
+                <!-- FEATURE-BASED FILTERS -->
+                <filter name="subscription_products" string="All Subscriptions" 
+                        domain="[('is_subscription_product', '=', True)]"/>
+                <filter name="portal_access_products" string="Grants Portal Access" 
+                        domain="[('grants_portal_access', '=', True)]"/>
+                <filter name="digital_content_products" string="Has Digital Content" 
                         domain="[('has_digital_content', '=', True)]"/>
+                <filter name="tax_deductible_products" string="Tax Deductible" 
+                        domain="[('donation_tax_deductible', '=', True)]"/>
+                <filter name="event_registration_products" string="Creates Event Registration" 
+                        domain="[('creates_event_registration', '=', True)]"/>
                 <filter name="membership_required" string="Membership Required" 
                         domain="[('requires_membership', '=', True)]"/>
                 
                 <separator/>
+                <!-- ISSUE FILTERS -->
                 <filter name="missing_digital_content" string="Missing Digital Content" 
-                        domain="[('is_ams_product', '=', True), ('has_digital_content', '=', False)]"/>
+                        domain="[('ams_product_behavior', '=', 'digital'), ('has_digital_content', '=', False)]"/>
+                <filter name="missing_event_template" string="Missing Event Template" 
+                        domain="[('ams_product_behavior', '=', 'event'), ('creates_event_registration', '=', True), ('default_event_template_id', '=', False)]"/>
             </xpath>
 
-            <!-- Add AMS grouping - FIXED -->
+            <!-- Enhanced AMS grouping -->
             <xpath expr="//group[@expand='0']" position="inside">
-                <filter string="AMS Category Type" name="group_ams_category" 
+                <filter string="Product Behavior" name="group_behavior" 
+                        context="{'group_by': 'ams_product_behavior'}"/>
+                <filter string="Category Type" name="group_category_type" 
                         context="{'group_by': 'ams_category_display'}"/>
                 <filter string="AMS Products" name="group_ams_status" 
                         context="{'group_by': 'is_ams_product'}"/>
-                <filter string="Membership Required" name="group_membership_required" 
-                        context="{'group_by': 'requires_membership'}"/>
+                <filter string="Subscription Status" name="group_subscription" 
+                        context="{'group_by': 'is_subscription_product'}"/>
+                <filter string="Portal Access" name="group_portal_access" 
+                        context="{'group_by': 'grants_portal_access'}"/>
             </xpath>
             
         </field>
     </record>
 
     <!-- ========================================================================== -->
-    <!-- AMS PRODUCT ACTIONS -->
+    <!-- ENHANCED AMS PRODUCT ACTIONS -->
     <!-- ========================================================================== -->
     
     <!-- Main AMS Products Action -->
-    <record id="action_ams_products_simple" model="ir.actions.act_window">
+    <record id="action_ams_products_enhanced" model="ir.actions.act_window">
         <field name="name">AMS Products</field>
         <field name="res_model">product.template</field>
         <field name="view_mode">kanban,tree,form</field>
         <field name="domain">[('is_ams_product', '=', True)]</field>
         <field name="context">{'search_default_ams_products': 1}</field>
+        <field name="view_id" ref="product_template_tree_view_ams_enhanced"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create your first AMS product!
             </p>
             <p>
-                AMS products automatically inherit configuration from their enhanced categories.
-                Simply select an AMS category when creating a product to enable member pricing,
-                digital delivery, and other association-specific features.
+                AMS products provide enhanced functionality for associations including:
             </p>
+            <ul>
+                <li><strong>Member Pricing:</strong> Automatic discounts for members</li>
+                <li><strong>Subscriptions:</strong> Recurring billing and renewals</li>
+                <li><strong>Digital Delivery:</strong> Automatic content delivery</li>
+                <li><strong>Event Integration:</strong> Automatic event registration</li>
+                <li><strong>Portal Access:</strong> Member portal permissions</li>
+                <li><strong>Donation Receipts:</strong> Tax deductible contributions</li>
+            </ul>
         </field>
     </record>
 
-    <!-- Member Pricing Products -->
-    <record id="action_member_pricing_products_simple" model="ir.actions.act_window">
-        <field name="name">Member Pricing Products</field>
+    <!-- Behavior-Specific Actions -->
+    <record id="action_membership_products" model="ir.actions.act_window">
+        <field name="name">Membership Products</field>
         <field name="res_model">product.template</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('member_savings', '>', 0)]</field>
-        <field name="context">{'search_default_member_pricing': 1}</field>
+        <field name="domain">[('ams_product_behavior', '=', 'membership')]</field>
+        <field name="context">{'search_default_behavior_membership': 1}</field>
     </record>
 
-    <!-- Digital Products -->
-    <record id="action_digital_products_simple" model="ir.actions.act_window">
+    <record id="action_subscription_products" model="ir.actions.act_window">
+        <field name="name">Subscription Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('is_subscription_product', '=', True)]</field>
+        <field name="context">{'search_default_subscription_products': 1}</field>
+    </record>
+
+    <record id="action_event_products" model="ir.actions.act_window">
+        <field name="name">Event Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('ams_product_behavior', '=', 'event')]</field>
+        <field name="context">{'search_default_behavior_event': 1}</field>
+    </record>
+
+    <record id="action_digital_products_enhanced" model="ir.actions.act_window">
         <field name="name">Digital Products</field>
         <field name="res_model">product.template</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('has_digital_content', '=', True)]</field>
-        <field name="context">{'search_default_digital_products': 1}</field>
+        <field name="domain">[('ams_product_behavior', 'in', ['digital', 'certification'])]</field>
+        <field name="context">{'search_default_digital_content_products': 1}</field>
     </record>
 
-    <!-- Membership Required Products -->
-    <record id="action_membership_required_products" model="ir.actions.act_window">
-        <field name="name">Membership Required Products</field>
+    <record id="action_donation_products" model="ir.actions.act_window">
+        <field name="name">Donation Products</field>
         <field name="res_model">product.template</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('requires_membership', '=', True)]</field>
-        <field name="context">{'search_default_membership_required': 1}</field>
+        <field name="domain">[('ams_product_behavior', '=', 'donation')]</field>
+        <field name="context">{'search_default_behavior_donation': 1}</field>
     </record>
 
-    <!-- Digital Content Issues -->
-    <record id="action_digital_content_issues" model="ir.actions.act_window">
+    <!-- Issue Tracking Actions -->
+    <record id="action_digital_content_issues_enhanced" model="ir.actions.act_window">
         <field name="name">Digital Content Issues</field>
         <field name="res_model">product.template</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('is_ams_product', '=', True), ('has_digital_content', '=', False)]</field>
+        <field name="domain">[('ams_product_behavior', '=', 'digital'), ('has_digital_content', '=', False)]</field>
         <field name="context">{'search_default_missing_digital_content': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 No digital content issues found!
             </p>
             <p>
-                This view shows digital products that are missing their download URL 
-                or file attachment. All digital products should have content for delivery.
+                This view shows digital products missing download URLs or file attachments.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_event_template_issues" model="ir.actions.act_window">
+        <field name="name">Event Template Issues</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('ams_product_behavior', '=', 'event'), ('creates_event_registration', '=', True), ('default_event_template_id', '=', False)]</field>
+        <field name="context">{'search_default_missing_event_template': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No event template issues found!
+            </p>
+            <p>
+                This view shows event products that create registrations but are missing event templates.
             </p>
         </field>
     </record>
 
     <!-- ========================================================================== -->
-    <!-- SIMPLIFIED PRODUCT CREATION CONTEXT MENUS -->
+    <!-- QUICK CREATE ACTIONS WITH BEHAVIOR PRE-SELECTION -->
     <!-- ========================================================================== -->
     
-    <!-- Quick create actions for different AMS product types -->
-    <record id="action_create_membership_product" model="ir.actions.act_window">
+    <record id="action_create_membership_product_enhanced" model="ir.actions.act_window">
         <field name="name">Create Membership Product</field>
         <field name="res_model">product.template</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>
         <field name="context">{
             'default_is_ams_product': True,
-            'form_view_ref': 'ams_products_base.product_template_form_view_ams_simple'
+            'default_ams_product_behavior': 'membership',
+            'default_is_subscription_product': True,
+            'default_grants_portal_access': True,
+            'form_view_ref': 'ams_products_base.product_template_form_view_ams_enhanced'
         }</field>
     </record>
 
-    <record id="action_create_event_product" model="ir.actions.act_window">
+    <record id="action_create_event_product_enhanced" model="ir.actions.act_window">
         <field name="name">Create Event Product</field>
         <field name="res_model">product.template</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>
         <field name="context">{
             'default_is_ams_product': True,
-            'form_view_ref': 'ams_products_base.product_template_form_view_ams_simple'
+            'default_ams_product_behavior': 'event',
+            'default_creates_event_registration': True,
+            'default_type': 'service',
+            'form_view_ref': 'ams_products_base.product_template_form_view_ams_enhanced'
         }</field>
     </record>
 
-    <record id="action_create_digital_product" model="ir.actions.act_window">
+    <record id="action_create_digital_product_enhanced" model="ir.actions.act_window">
         <field name="name">Create Digital Product</field>
         <field name="res_model">product.template</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>
         <field name="context">{
             'default_is_ams_product': True,
-            'form_view_ref': 'ams_products_base.product_template_form_view_ams_simple'
+            'default_ams_product_behavior': 'digital',
+            'default_type': 'service',
+            'form_view_ref': 'ams_products_base.product_template_form_view_ams_enhanced'
+        }</field>
+    </record>
+
+    <record id="action_create_donation_product" model="ir.actions.act_window">
+        <field name="name">Create Donation Product</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{
+            'default_is_ams_product': True,
+            'default_ams_product_behavior': 'donation',
+            'default_donation_tax_deductible': True,
+            'default_type': 'service',
+            'form_view_ref': 'ams_products_base.product_template_form_view_ams_enhanced'
         }</field>
     </record>
 
