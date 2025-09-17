@@ -206,7 +206,7 @@ class AMSSubscriptionTier(models.Model):
     )
 
     # ========================================================================
-    # BENEFIT MANAGEMENT (Layer 2)
+    # BENEFIT MANAGEMENT (Layer 2 - integrates with ams_products_base)
     # ========================================================================
     
     benefit_product_ids = fields.Many2many(
@@ -229,7 +229,7 @@ class AMSSubscriptionTier(models.Model):
         help='Bullet-point list of features (one per line)'
     )
     
-    # Portal and access controls
+    # Portal and access controls (integrates with ams_products_base portal features)
     grants_portal_access = fields.Boolean(
         string='Grants Portal Access',
         default=True,
@@ -328,26 +328,6 @@ class AMSSubscriptionTier(models.Model):
         string='Internal Notes',
         help='Internal notes for staff about this tier'
     )
-    
-    # Versioning for tier changes
-    version = fields.Char(
-        string='Version',
-        default='1.0',
-        help='Version number for tracking tier configuration changes'
-    )
-    
-    superseded_by_id = fields.Many2one(
-        'ams.subscription.tier',
-        string='Superseded By',
-        help='Tier that replaces this one (for deprecation)'
-    )
-    
-    supersedes_ids = fields.One2many(
-        'ams.subscription.tier',
-        'superseded_by_id',
-        string='Supersedes',
-        help='Older tiers that this tier replaces'
-    )
 
     # ========================================================================
     # COMPUTED FIELDS
@@ -363,7 +343,7 @@ class AMSSubscriptionTier(models.Model):
                 # Map legacy period_length to display names
                 period_names = {
                     'monthly': 'Monthly',
-                    'quarterly': 'Quarterly',
+                    'quarterly': 'Quarterly', 
                     'semi_annual': 'Semi-Annual',
                     'annual': 'Annual',
                 }
@@ -500,10 +480,6 @@ class AMSSubscriptionTier(models.Model):
                 
             if tier.grace_days > 365 or tier.suspend_days > 365 or tier.terminate_days > 365:
                 raise ValidationError(_("Lifecycle periods should not exceed 365 days"))
-                
-            # Logical validation
-            if tier.grace_days == 0 and tier.suspend_days == 0:
-                raise ValidationError(_("At least one of grace period or suspension period must be greater than 0"))
     
     @api.constrains('default_seats', 'max_additional_seats')
     def _check_seat_configuration(self):
@@ -524,9 +500,6 @@ class AMSSubscriptionTier(models.Model):
         for tier in self:
             if tier.renewal_notice_days < 0 or tier.grace_notice_days < 0:
                 raise ValidationError(_("Notice periods cannot be negative"))
-                
-            if tier.renewal_notice_days > 365 or tier.grace_notice_days > 90:
-                raise ValidationError(_("Notice periods are unreasonably long"))
     
     @api.constrains('trial_duration_days')
     def _check_trial_duration(self):
@@ -534,12 +507,9 @@ class AMSSubscriptionTier(models.Model):
         for tier in self:
             if tier.is_trial and tier.trial_duration_days <= 0:
                 raise ValidationError(_("Trial tiers must have a positive trial duration"))
-                
-            if tier.is_trial and tier.trial_duration_days > 365:
-                raise ValidationError(_("Trial duration should not exceed 365 days"))
 
     # ========================================================================
-    # BUSINESS METHODS
+    # BUSINESS METHODS (Layer 2 Integration)
     # ========================================================================
     
     def get_lifecycle_configuration(self):
@@ -557,7 +527,7 @@ class AMSSubscriptionTier(models.Model):
         }
     
     def get_benefit_configuration(self):
-        """Get complete benefit configuration"""
+        """Get complete benefit configuration integrating with ams_products_base"""
         self.ensure_one()
         
         return {
@@ -589,17 +559,26 @@ class AMSSubscriptionTier(models.Model):
             'requires_approval': self.requires_approval,
         }
     
-    def calculate_trial_end_date(self, start_date=None):
-        """Calculate trial end date for trial tiers"""
+    def get_billing_period_info(self):
+        """Get billing period information integrating with ams_billing_periods"""
         self.ensure_one()
         
-        if not self.is_trial:
-            return None
-            
-        if not start_date:
-            start_date = fields.Date.today()
-            
-        return start_date + timedelta(days=self.trial_duration_days)
+        if self.default_billing_period_id:
+            return {
+                'billing_period_id': self.default_billing_period_id.id,
+                'billing_period_name': self.default_billing_period_id.name,
+                'period_value': getattr(self.default_billing_period_id, 'period_value', 1),
+                'period_unit': getattr(self.default_billing_period_id, 'period_unit', 'year'),
+                'display_name': self.billing_period_display,
+            }
+        else:
+            # Fallback to legacy period_length
+            return {
+                'billing_period_id': False,
+                'billing_period_name': self.period_length,
+                'display_name': self.billing_period_display,
+                'legacy_period': self.period_length,
+            }
 
     # ========================================================================
     # ACTION METHODS
@@ -628,7 +607,6 @@ class AMSSubscriptionTier(models.Model):
         
         copy_vals = {
             'name': f"{self.name} (Copy)",
-            'version': '1.0',
             'active': False,  # Start inactive for configuration
         }
         
@@ -643,55 +621,44 @@ class AMSSubscriptionTier(models.Model):
             'target': 'current',
         }
     
-    def action_supersede_tier(self):
-        """Mark this tier as superseded by another tier"""
+    def action_migrate_to_billing_periods(self):
+        """Action to help migrate from period_length to billing periods"""
         self.ensure_one()
         
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Supersede Tier',
-            'res_model': 'ams.tier.supersede.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_old_tier_id': self.id,
+        if not self.period_length or self.default_billing_period_id:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'message': 'This tier is already configured with billing periods.',
+                    'type': 'info',
+                }
             }
-        }
-
-    # ========================================================================
-    # REPORTING AND ANALYTICS
-    # ========================================================================
-    
-    def get_tier_analytics(self):
-        """Get comprehensive analytics for this tier"""
-        self.ensure_one()
         
-        analytics = {
-            'tier_info': {
-                'name': self.name,
-                'type': self.subscription_type,
-                'level': self.tier_level,
-                'billing_period': self.billing_period_display,
-            },
-            'usage_stats': {
-                'total_subscriptions': self.total_subscription_count,
-                'active_subscriptions': self.active_subscription_count,
-                'churn_rate': self.churn_rate,
-                'avg_duration_months': self.average_subscription_duration,
-            },
-            'financial': {
-                'revenue_ytd': self.revenue_ytd,
-                'currency': self.currency_id.name,
-            },
-            'configuration': {
-                'lifecycle': self.get_lifecycle_configuration(),
-                'benefits': self.get_benefit_configuration(),
-                'enterprise': self.get_enterprise_configuration(),
-                'permissions': self.get_customer_permissions(),
+        # Find matching billing period
+        billing_period = self.env['ams.billing.period'].search([
+            ('name', 'ilike', self.period_length.replace('_', ' '))
+        ], limit=1)
+        
+        if billing_period:
+            self.default_billing_period_id = billing_period.id
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'message': f'Successfully migrated to billing period: {billing_period.name}',
+                    'type': 'success',
+                }
             }
-        }
-        
-        return analytics
+        else:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'message': f'No matching billing period found for "{self.period_length}". Please select one manually.',
+                    'type': 'warning',
+                }
+            }
 
     # ========================================================================
     # NAME AND DISPLAY
@@ -740,3 +707,28 @@ class AMSSubscriptionTier(models.Model):
             args = domain + args
             
         return self._search(args, limit=limit, access_rights_uid=name_get_uid)
+
+    # ========================================================================
+    # MIGRATION HELPERS (Layer 2 to Layer 1 Integration)
+    # ========================================================================
+    
+    @api.model
+    def migrate_legacy_periods(self):
+        """Migrate all tiers from period_length to billing_period_id"""
+        legacy_tiers = self.search([
+            ('period_length', '!=', False),
+            ('default_billing_period_id', '=', False)
+        ])
+        
+        migrated_count = 0
+        for tier in legacy_tiers:
+            billing_period = self.env['ams.billing.period'].search([
+                ('name', 'ilike', tier.period_length.replace('_', ' '))
+            ], limit=1)
+            
+            if billing_period:
+                tier.default_billing_period_id = billing_period.id
+                migrated_count += 1
+                
+        _logger.info(f"Migrated {migrated_count} tiers to use ams_billing_periods")
+        return migrated_count
