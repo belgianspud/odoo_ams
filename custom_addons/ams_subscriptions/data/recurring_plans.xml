@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- AMS Billing Periods (Community-compatible subscription periods) -->
+    
+    <!-- Monthly Period -->
+    <record id="billing_period_monthly" model="ams.billing.period">
+        <field name="name">Monthly</field>
+        <field name="period_value">1</field>
+        <field name="period_unit">month</field>
+        <field name="grace_days">30</field>
+        <field name="auto_renew">True</field>
+    </record>
+
+    <!-- Quarterly Period -->
+    <record id="billing_period_quarterly" model="ams.billing.period">
+        <field name="name">Quarterly</field>
+        <field name="period_value">3</field>
+        <field name="period_unit">month</field>
+        <field name="grace_days">30</field>
+        <field name="auto_renew">True</field>
+    </record>
+
+    <!-- Semi-Annual Period -->
+    <record id="billing_period_semi_annual" model="ams.billing.period">
+        <field name="name">Semi-Annual</field>
+        <field name="period_value">6</field>
+        <field name="period_unit">month</field>
+        <field name="grace_days">30</field>
+        <field name="auto_renew">True</field>
+    </record>
+
+    <!-- Annual Period -->
+    <record id="billing_period_annual" model="ams.billing.period">
+        <field name="name">Annual</field>
+        <field name="period_value">1</field>
+        <field name="period_unit">year</field>
+        <field name="grace_days">30</field>
+        <field name="auto_renew">True</field>
+    </record>
+
+    <!-- Lifetime Period (for retired memberships) -->
+    <record id="billing_period_lifetime" model="ams.billing.period">
+        <field name="name">Lifetime</field>
+        <field name="period_value">99</field>
+        <field name="period_unit">year</field>
+        <field name="grace_days">0</field>
+        <field name="auto_renew">False</field>
+    </record>
+    
+</odoo>

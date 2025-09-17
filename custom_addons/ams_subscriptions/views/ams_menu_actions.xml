@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- =========================== -->
+    <!-- SUBSCRIPTION ACTIONS -->
+    <!-- =========================== -->
+    
+    <!-- Active Subscriptions Only -->
+    <record id="action_ams_active_subscriptions" model="ir.actions.act_window">
+        <field name="name">Active Subscriptions</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'active')]</field>
+        <field name="context">{'default_state': 'active'}</field>
+    </record>
+
+    <!-- Individual Memberships -->
+    <record id="action_ams_individual_subscriptions" model="ir.actions.act_window">
+        <field name="name">Individual Memberships</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('subscription_type', '=', 'individual')]</field>
+        <field name="context">{'default_subscription_type': 'individual'}</field>
+    </record>
+
+    <!-- Enterprise Memberships -->
+    <record id="action_ams_enterprise_subscriptions" model="ir.actions.act_window">
+        <field name="name">Enterprise Memberships</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('subscription_type', '=', 'enterprise')]</field>
+        <field name="context">{'default_subscription_type': 'enterprise'}</field>
+    </record>
+
+    <!-- Chapter Subscriptions -->
+    <record id="action_ams_chapter_subscriptions" model="ir.actions.act_window">
+        <field name="name">Chapter Subscriptions</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('subscription_type', '=', 'chapter')]</field>
+        <field name="context">{'default_subscription_type': 'chapter'}</field>
+    </record>
+
+    <!-- Publication Subscriptions -->
+    <record id="action_ams_publication_subscriptions" model="ir.actions.act_window">
+        <field name="name">Publication Subscriptions</field>
+        <field name="res_model">ams.subscription</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('subscription_type', '=', 'publication')]</field>
+        <field name="context">{'default_subscription_type': 'publication'}</field>
+    </record>
+
+    <!-- =========================== -->
+    <!-- PRODUCT ACTIONS -->
+    <!-- =========================== -->
+    
+    <!-- All AMS Products -->
+    <record id="action_ams_all_products" model="ir.actions.act_window">
+        <field name="name">All AMS Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('ams_product_type', '!=', 'none')]</field>
+        <field name="context">{
+            'default_ams_product_type': 'individual',
+            'default_sale_ok': True,
+            'default_website_published': True
+        }</field>
+    </record>
+
+    <!-- Membership Products -->
+    <record id="action_ams_membership_products" model="ir.actions.act_window">
+        <field name="name">Membership Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('ams_product_type', 'in', ['individual', 'enterprise'])]</field>
+        <field name="context">{
+            'default_ams_product_type': 'individual',
+            'default_sale_ok': True
+        }</field>
+    </record>
+
+    <!-- Chapter Products -->
+    <record id="action_ams_chapter_products" model="ir.actions.act_window">
+        <field name="name">Chapter Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('ams_product_type', '=', 'chapter')]</field>
+        <field name="context">{
+            'default_ams_product_type': 'chapter',
+            'default_sale_ok': True
+        }</field>
+    </record>
+
+    <!-- Publication Products -->
+    <record id="action_ams_publication_products" model="ir.actions.act_window">
+        <field name="name">Publication Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('ams_product_type', '=', 'publication')]</field>
+        <field name="context">{
+            'default_ams_product_type': 'publication',
+            'default_sale_ok': True
+        }</field>
+    </record>
+
+    <!-- Create Product Action -->
+    <record id="action_ams_create_product" model="ir.actions.act_window">
+        <field name="name">Create AMS Product</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_ams_product_type': 'individual',
+            'default_sale_ok': True,
+            'default_website_published': True
+        }</field>
+    </record>
+
+    <!-- =========================== -->
+    <!-- CONFIGURATION ACTIONS -->
+    <!-- =========================== -->
+    
+    <!-- Subscription Types (simplified view of tiers grouped by type) -->
+    <record id="action_ams_subscription_types" model="ir.actions.act_window">
+        <field name="name">Subscription Types</field>
+        <field name="res_model">ams.subscription.tier</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'group_by': 'subscription_type'}</field>
+    </record>
+
+    <!-- Lifecycle Settings (wizard for global settings) -->
+    <record id="action_ams_lifecycle_settings" model="ir.actions.act_window">
+        <field name="name">Lifecycle Settings</field>
+        <field name="res_model">ams.lifecycle.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

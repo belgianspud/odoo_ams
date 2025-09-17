@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Main AMS Menu -->
+    <menuitem id="menu_ams_root"
+              name="AMS"
+              sequence="10"
+              groups="ams_subscriptions.group_ams_subscription_user"/>
+
+    <!-- =========================== -->
+    <!-- MEMBERS Section -->
+    <!-- =========================== -->
+    <menuitem id="menu_ams_members"
+              name="Members"
+              parent="menu_ams_root"
+              sequence="10"/>
+
+    <menuitem id="menu_ams_active_subscriptions"
+              name="Active Subscriptions"
+              parent="menu_ams_members"
+              action="action_ams_active_subscriptions"
+              sequence="10"/>
+
+    <menuitem id="menu_ams_all_subscriptions"
+              name="All Subscriptions"
+              parent="menu_ams_members"
+              action="action_ams_subscription"
+              sequence="20"/>
+
+    <menuitem id="menu_ams_subscription_seats"
+              name="Seat Assignments"
+              parent="menu_ams_members"
+              action="action_ams_subscription_seat"
+              sequence="30"/>
+
+    <!-- =========================== -->
+    <!-- MEMBERSHIPS Section -->
+    <!-- =========================== -->
+    <menuitem id="menu_ams_memberships"
+              name="Memberships"
+              parent="menu_ams_root"
+              sequence="20"/>
+
+    <menuitem id="menu_ams_individual_memberships"
+              name="Individual Memberships"
+              parent="menu_ams_memberships"
+              action="action_ams_individual_subscriptions"
+              sequence="10"/>
+
+    <menuitem id="menu_ams_enterprise_memberships"
+              name="Enterprise Memberships"
+              parent="menu_ams_memberships"
+              action="action_ams_enterprise_subscriptions"
+              sequence="20"/>
+
+    <menuitem id="menu_ams_membership_products"
+              name="Membership Products"
+              parent="menu_ams_memberships"
+              action="action_ams_membership_products"
+              sequence="30"/>
+
+    <!-- =========================== -->
+    <!-- CHAPTERS Section -->
+    <!-- =========================== -->
+    <menuitem id="menu_ams_chapters"
+              name="Chapters"
+              parent="menu_ams_root"
+              sequence="30"/>
+
+    <menuitem id="menu_ams_chapter_subscriptions"
+              name="Chapter Subscriptions"
+              parent="menu_ams_chapters"
+              action="action_ams_chapter_subscriptions"
+              sequence="10"/>
+
+    <menuitem id="menu_ams_chapter_products"
+              name="Chapter Products"
+              parent="menu_ams_chapters"
+              action="action_ams_chapter_products"
+              sequence="20"/>
+
+    <!-- =========================== -->
+    <!-- PUBLICATIONS Section -->
+    <!-- =========================== -->
+    <menuitem id="menu_ams_publications"
+              name="Publications"
+              parent="menu_ams_root"
+              sequence="40"/>
+
+    <menuitem id="menu_ams_publication_subscriptions"
+              name="Publication Subscriptions"
+              parent="menu_ams_publications"
+              action="action_ams_publication_subscriptions"
+              sequence="10"/>
+
+    <menuitem id="menu_ams_publication_products"
+              name="Publication Products"
+              parent="menu_ams_publications"
+              action="action_ams_publication_products"
+              sequence="20"/>
+
+    <!-- =========================== -->
+    <!-- PRODUCTS Section -->
+    <!-- =========================== -->
+    <menuitem id="menu_ams_products"
+              name="Products"
+              parent="menu_ams_root"
+              sequence="50"/>
+
+    <menuitem id="menu_ams_all_products"
+              name="All AMS Products"
+              parent="menu_ams_products"
+              action="action_ams_all_products"
+              sequence="10"/>
+
+    <menuitem id="menu_ams_create_product"
+              name="Create Product"
+              parent="menu_ams_products"
+              action="action_ams_create_product"
+              sequence="20"/>
+
+    <!-- =========================== -->
+    <!-- CONFIGURATIONS Section -->
+    <!-- =========================== -->
+    <menuitem id="menu_ams_configurations"
+              name="Configuration"
+              parent="menu_ams_root"
+              sequence="60"/>
+
+    <menuitem id="menu_ams_subscription_tiers"
+              name="Subscription Tiers"
+              parent="menu_ams_configurations"
+              action="action_ams_subscription_tier"
+              sequence="10"/>
+
+    <menuitem id="menu_ams_subscription_types"
+              name="Subscription Types"
+              parent="menu_ams_configurations"
+              action="action_ams_subscription_types"
+              sequence="20"/>
+
+    <menuitem id="menu_ams_lifecycle_settings"
+              name="Lifecycle Settings"
+              parent="menu_ams_configurations"
+              action="action_ams_lifecycle_settings"
+              sequence="30"/>
+</odoo>

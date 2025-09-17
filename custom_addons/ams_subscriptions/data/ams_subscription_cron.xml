@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Daily Subscription Lifecycle Update -->
+    <record id="ir_cron_ams_subscription_lifecycle" model="ir.cron">
+        <field name="name">AMS Subscription Lifecycle Check</field>
+        <field name="model_id" ref="model_ams_subscription"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_process_subscription_lifecycle()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+        <field name="user_id" ref="base.user_root"/>
+    </record>
+
+    <!-- Daily Subscription Renewal Generation -->
+    <record id="ir_cron_ams_subscription_renewal" model="ir.cron">
+        <field name="name">AMS Subscription Renewal Generation</field>
+        <field name="model_id" ref="model_ams_subscription"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_generate_renewal_invoices()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+        <field name="user_id" ref="base.user_root"/>
+    </record>
+</odoo>
