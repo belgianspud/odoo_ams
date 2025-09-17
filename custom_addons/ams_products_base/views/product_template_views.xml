@@ -177,7 +177,7 @@
                     <group string="Digital Download Settings" name="digital_settings"
                            invisible="ams_product_behavior != 'digital'">
                         <group>
-                            <field name="digital_url" widget="url" required="1"
+                            <field name="digital_url" widget="url"
                                    placeholder="https://example.com/secure-download"
                                    string="Download URL"/>
                             <field name="digital_attachment_id" string="Download File"/>
