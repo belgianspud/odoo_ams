@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ========================================================================== -->
+    <!-- PRODUCT TEMPLATE SUBSCRIPTION EXTENSIONS -->
+    <!-- ========================================================================== -->
+    
+    <!-- Enhanced Product Template Form View with Subscription Tab -->
+    <record id="product_template_form_view_subscription" model="ir.ui.view">
+        <field name="name">product.template.form.subscription</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="ams_products_base.product_template_form_view_ams_enhanced"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add subscription toggle and summary after behavior selection -->
+            <xpath expr="//field[@name='ams_product_behavior']" position="after">
+                <field name="is_subscription" widget="boolean_toggle" 
+                       string="Subscription Product"/>
+                <field name="subscription_summary" readonly="1" 
+                       invisible="not is_subscription"
+                       string="Subscription Configuration"/>
+            </xpath>
+
+            <!-- Add comprehensive Subscription Configuration tab -->
+            <xpath expr="//page[@name='product_behavior']" position="after">
+                <page string="Subscription Configuration" name="subscription_config" 
+                      invisible="not is_subscription">
+                    
+                    <!-- ========================================================================== -->
+                    <!-- SUBSCRIPTION STATUS AND SUMMARY -->
+                    <!-- ========================================================================== -->
+                    <group string="Subscription Status" name="subscription_status">
+                        <group>
+                            <field name="subscription_summary" readonly="1" 
+                                   string="Configuration Summary"/>
+                            <field name="has_subscription_issues" readonly="1" widget="boolean"
+                                   string="Has Issues"/>
+                        </group>
+                        <group>
+                            <div class="alert alert-success" role="alert" 
+                                 invisible="has_subscription_issues">
+                                <strong><i class="fa fa-check-circle"></i> Subscription Ready</strong><br/>
+                                This product is properly configured for subscription billing.
+                            </div>
+                            <div class="alert alert-warning" role="alert" 
+                                 invisible="not has_subscription_issues">
+                                <strong><i class="fa fa-exclamation-triangle"></i> Configuration Issues</strong><br/>
+                                <field name="subscription_issue_message" readonly="1" nolabel="1"/>
+                            </div>
+                        </group>
+                    </group>
+
+                    <!-- ========================================================================== -->
+                    <!-- BASIC SUBSCRIPTION CONFIGURATION -->
+                    <!-- ========================================================================== -->
+                    <group string="Basic Configuration" name="basic_config">
+                        <group string="Billing &amp; Duration">
+                            <field name="default_billing_period_id" 
+                                   context="{'tree_view_ref': 'ams_billing_periods.view_billing_period_list'}"
+                                   options="{'no_create': True}"
+                                   string="Default Billing Period"/>
+                            <button name="action_view_billing_periods" type="object" 
+                                    string="View All Billing Periods" class="btn-link btn-sm"
+                                    icon="fa-external-link"/>
+                            <field name="subscription_scope" 
+                                   string="Subscription Scope"/>
+                        </group>
+                        <group string="Subscription Type">
+                            <div class="alert alert-info" role="alert">
+                                <strong><i class="fa fa-info-circle"></i> Subscription Scope</strong><br/>
+                                <ul class="mb-1">
+                                    <li><strong>Individual:</strong> Personal subscriptions for single users</li>
+                                    <li><strong>Enterprise:</strong> Organizational subscriptions with multi-user features</li>
+                                </ul>
+                            </div>
+                        </group>
+                    </group>
+
+                    <!-- ========================================================================== -->
+                    <!-- RENEWAL CONFIGURATION -->
+                    <!-- ========================================================================== -->
+                    <group string="Renewal Configuration" name="renewal_config">
+                        <group string="Renewal Settings">
+                            <field name="is_renewable" widget="boolean_toggle"
+                                   string="Supports Renewal"/>
+                            <field name="auto_renewal_enabled" widget="boolean_toggle"
+                                   invisible="not is_renewable"
+                                   string="Auto-renewal Available"/>
+                            <field name="renewal_window_days" 
+                                   invisible="not is_renewable"
+                                   string="Renewal Notice Period (Days)"/>
+                        </group>
+                        <group string="Renewal Information">
+                            <div class="alert alert-info" role="alert" 
+                                 invisible="not is_renewable">
+                                <strong><i class="fa fa-refresh"></i> Renewal Process</strong><br/>
+                                <ul class="mb-1">
+                                    <li><strong>Notice Period:</strong> Customers receive renewal notices <field name="renewal_window_days" readonly="1" nolabel="1"/> days before expiration</li>
+                                    <li invisible="not auto_renewal_enabled"><strong>Auto-renewal:</strong> Customers can enable automatic subscription renewal</li>
+                                    <li invisible="auto_renewal_enabled"><strong>Manual Renewal:</strong> Customers must manually renew subscriptions</li>
+                                </ul>
+                            </div>
+                            <div class="alert alert-warning" role="alert" 
+                                 invisible="is_renewable">
+                                <strong><i class="fa fa-exclamation-triangle"></i> Non-renewable Subscription</strong><br/>
+                                This subscription cannot be renewed and will end at expiration.
+                            </div>
+                        </group>
+                    </group>
+
+                    <!-- ========================================================================== -->
+                    <!-- APPROVAL REQUIREMENTS -->
+                    <!-- ========================================================================== -->
+                    <group string="Approval Requirements" name="approval_config">
+                        <group string="Approval Settings">
+                            <field name="requires_approval" widget="boolean_toggle"
+                                   string="Requires Staff Approval"/>
+                            <field name="approval_workflow_id" 
+                                   invisible="not requires_approval"
+                                   string="Approval Workflow"
+                                   options="{'no_create': True}"/>
+                        </group>
+                        <group string="Approval Information">
+                            <div class="alert alert-info" role="alert" 
+                                 invisible="not requires_approval">
+                                <strong><i class="fa fa-user-check"></i> Approval Required</strong><br/>
+                                New subscriptions will require staff approval before activation.
+                                <span invisible="not approval_workflow_id">
+                                    <br/>Workflow: <field name="approval_workflow_id" readonly="1" nolabel="1"/>
+                                </span>
+                            </div>
+                            <div class="alert alert-success" role="alert" 
+                                 invisible="requires_approval">
+                                <strong><i class="fa fa-check-circle"></i> Auto-activation</strong><br/>
+                                New subscriptions will be automatically activated upon purchase.
+                            </div>
+                        </group>
+                    </group>
+
+                    <!-- ========================================================================== -->
+                    <!-- ENTERPRISE FEATURES (FOUNDATION) -->
+                    <!-- ========================================================================== -->
+                    <group string="Multi-User Features" name="enterprise_features"
+                           invisible="subscription_scope != 'enterprise'">
+                        <group string="Seat Management">
+                            <field name="supports_seats" widget="boolean_toggle"
+                                   string="Supports Multiple Users"/>
+                            <field name="default_seat_count" 
+                                   invisible="not supports_seats"
+                                   string="Default User Count"/>
+                        </group>
+                        <group string="Enterprise Information">
+                            <div class="alert alert-info" role="alert" 
+                                 invisible="not supports_seats">
+                                <strong><i class="fa fa-users"></i> Multi-User Subscription</strong><br/>
+                                This subscription supports multiple users with <field name="default_seat_count" readonly="1" nolabel="1"/> default seats.
+                                <br/><small>Advanced seat management features are available in the Enterprise Subscription module.</small>
+                            </div>
+                        </group>
+                    </group>
+
+                    <!-- ========================================================================== -->
+                    <!-- BILLING PERIOD INTEGRATION -->
+                    <!-- ========================================================================== -->
+                    <group string="Billing Period Integration" name="billing_integration"
+                           groups="base.group_no_one">
+                        <separator string="Advanced Configuration" colspan="2"/>
+                        <div class="alert alert-info" role="alert" colspan="2">
+                            <h6><i class="fa fa-info-circle"></i> Integration with AMS Billing Periods</h6>
+                            <p>This subscription product integrates with the AMS Billing Periods module for standardized billing cycle management.</p>
+                            <ul>
+                                <li><strong>Default Period:</strong> New subscriptions use the selected default billing period</li>
+                                <li><strong>Period Flexibility:</strong> Customers may choose from available billing periods</li>
+                                <li><strong>Consistent Billing:</strong> All billing calculations use period definitions</li>
+                            </ul>
+                        </div>
+                    </group>
+
+                    <!-- ========================================================================== -->
+                    <!-- TESTING AND VALIDATION -->
+                    <!-- ========================================================================== -->
+                    <group string="Testing &amp; Validation" name="subscription_testing"
+                           groups="base.group_system">
+                        <group>
+                            <button name="action_test_subscription_config" type="object" 
+                                    string="Test Subscription Configuration" class="btn-link"
+                                    icon="fa-cogs"/>
+                            <button name="action_view_billing_periods" type="object" 
+                                    string="Manage Billing Periods" class="btn-link"
+                                    icon="fa-calendar"/>
+                        </group>
+                        <group>
+                            <div class="text-muted">
+                                <small>Use testing tools to validate subscription configuration and troubleshoot issues.</small>
+                            </div>
+                        </group>
+                    </group>
+                    
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- ENHANCED LIST VIEW WITH SUBSCRIPTION COLUMNS -->
+    <!-- ========================================================================== -->
+    <record id="product_template_tree_view_subscription" model="ir.ui.view">
+        <field name="name">product.template.tree.subscription</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="ams_products_base.product_template_tree_view_ams_enhanced"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add subscription columns -->
+            <xpath expr="//field[@name='donation_tax_deductible']" position="after">
+                <field name="is_subscription" string="Subscription" widget="boolean_toggle" optional="show"/>
+                <field name="subscription_scope" string="Scope" optional="hide" 
+                       invisible="not is_subscription"/>
+                <field name="default_billing_period_id" string="Billing Period" optional="hide"
+                       invisible="not is_subscription"/>
+                <field name="is_renewable" string="Renewable" widget="boolean_toggle" optional="hide"
+                       invisible="not is_subscription"/>
+                <field name="auto_renewal_enabled" string="Auto-Renewal" widget="boolean_toggle" optional="hide"
+                       invisible="not is_subscription"/>
+                <field name="has_subscription_issues" string="Issues" widget="boolean_toggle" optional="hide"
+                       invisible="not is_subscription"/>
+            </xpath>
+            
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- ENHANCED SEARCH VIEW WITH SUBSCRIPTION FILTERS -->
+    <!-- ========================================================================== -->
+    <record id="product_template_search_view_subscription" model="ir.ui.view">
+        <field name="name">product.template.search.subscription</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="ams_products_base.product_template_search_view_ams_enhanced"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add subscription search fields -->
+            <xpath expr="//field[@name='legacy_product_id']" position="after">
+                <field name="default_billing_period_id" string="Billing Period"/>
+                <field name="subscription_scope" string="Subscription Scope"/>
+                <field name="subscription_summary" string="Subscription Summary"/>
+            </xpath>
+            
+            <!-- Add subscription filters -->
+            <xpath expr="//filter[@name='missing_event_template']" position="after">
+                <separator/>
+                <!-- SUBSCRIPTION FILTERS -->
+                <filter name="subscription_products" string="Subscription Products" 
+                        domain="[('is_subscription', '=', True)]"/>
+                <filter name="non_subscription_products" string="Non-Subscription Products" 
+                        domain="[('is_subscription', '=', False)]"/>
+                
+                <separator/>
+                <!-- SUBSCRIPTION SCOPE FILTERS -->
+                <filter name="individual_subscriptions" string="Individual Subscriptions" 
+                        domain="[('is_subscription', '=', True), ('subscription_scope', '=', 'individual')]"/>
+                <filter name="enterprise_subscriptions" string="Enterprise Subscriptions" 
+                        domain="[('is_subscription', '=', True), ('subscription_scope', '=', 'enterprise')]"/>
+                
+                <separator/>
+                <!-- RENEWAL FILTERS -->
+                <filter name="renewable_subscriptions" string="Renewable Subscriptions" 
+                        domain="[('is_subscription', '=', True), ('is_renewable', '=', True)]"/>
+                <filter name="auto_renewal_subscriptions" string="Auto-Renewal Subscriptions" 
+                        domain="[('is_subscription', '=', True), ('auto_renewal_enabled', '=', True)]"/>
+                <filter name="approval_required_subscriptions" string="Approval Required" 
+                        domain="[('is_subscription', '=', True), ('requires_approval', '=', True)]"/>
+                
+                <separator/>
+                <!-- MULTI-USER FILTERS -->
+                <filter name="multi_seat_subscriptions" string="Multi-Seat Subscriptions" 
+                        domain="[('is_subscription', '=', True), ('supports_seats', '=', True)]"/>
+                
+                <separator/>
+                <!-- ISSUE FILTERS -->
+                <filter name="subscription_config_issues" string="Subscription Config Issues" 
+                        domain="[('is_subscription', '=', True), ('has_subscription_issues', '=', True)]"/>
+            </xpath>
+
+            <!-- Add subscription grouping -->
+            <xpath expr="//group[@expand='0']" position="inside">
+                <filter string="Subscription Status" name="group_subscription_status" 
+                        context="{'group_by': 'is_subscription'}"/>
+                <filter string="Subscription Scope" name="group_subscription_scope" 
+                        context="{'group_by': 'subscription_scope'}"/>
+                <filter string="Billing Period" name="group_billing_period" 
+                        context="{'group_by': 'default_billing_period_id'}"/>
+                <filter string="Renewable Status" name="group_renewable" 
+                        context="{'group_by': 'is_renewable'}"/>
+            </xpath>
+            
+        </field>
+    </record>
+
+    <!-- ========================================================================== -->
+    <!-- SUBSCRIPTION PRODUCT ACTIONS -->
+    <!-- ========================================================================== -->
+    
+    <!-- Main Subscription Products Action -->
+    <record id="action_subscription_product_templates" model="ir.actions.act_window">
+        <field name="name">Subscription Product Templates</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('is_subscription', '=', True)]</field>
+        <field name="context">{'search_default_subscription_products': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first subscription product template!
+            </p>
+            <p>
+                Subscription product templates provide the foundation for recurring billing products:
+            </p>
+            <ul>
+                <li><strong>Flexible Billing:</strong> Integration with AMS billing periods</li>
+                <li><strong>Renewal Management:</strong> Auto-renewal and manual renewal options</li>
+                <li><strong>Approval Workflows:</strong> Staff approval requirements for enterprise subscriptions</li>
+                <li><strong>Multi-User Support:</strong> Seat allocation for enterprise subscriptions</li>
+                <li><strong>Member Benefits:</strong> Integration with portal access and member pricing</li>
+            </ul>
+        </field>
+    </record>
+
+    <!-- Subscription Scope Specific Actions -->
+    <record id="action_individual_subscription_templates" model="ir.actions.act_window">
+        <field name="name">Individual Subscription Templates</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('is_subscription', '=', True), ('subscription_scope', '=', 'individual')]</field>
+        <field name="context">{'search_default_individual_subscriptions': 1, 'default_subscription_scope': 'individual'}</field>
+    </record>
+
+    <record id="action_enterprise_subscription_templates" model="ir.actions.act_window">
+        <field name="name">Enterprise Subscription Templates</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('is_subscription', '=', True), ('subscription_scope', '=', 'enterprise')]</field>
+        <field name="context">{'search_default_enterprise_subscriptions': 1, 'default_subscription_scope': 'enterprise'}</field>
+    </record>
+
+    <!-- Configuration Issue Action -->
+    <record id="action_subscription_config_issues" model="ir.actions.act_window">
+        <field name="name">Subscription Configuration Issues</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('is_subscription', '=', True), ('has_subscription_issues', '=', True)]</field>
+        <field name="context">{'search_default_subscription_config_issues': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No subscription configuration issues found!
+            </p>
+            <p>
+                This view shows subscription products with configuration problems that need attention.
+            </p>
+        </field>
+    </record>
+
+    <!-- Quick Create Actions -->
+    <record id="action_create_individual_subscription" model="ir.actions.act_window">
+        <field name="name">Create Individual Subscription</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{
+            'default_is_subscription': True,
+            'default_subscription_scope': 'individual',
+            'default_is_renewable': True,
+            'default_type': 'service',
+            'form_view_ref': 'ams_subscription_products.product_template_form_view_subscription'
+        }</field>
+    </record>
+
+    <record id="action_create_enterprise_subscription" model="ir.actions.act_window">
+        <field name="name">Create Enterprise Subscription</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{
+            'default_is_subscription': True,
+            'default_subscription_scope': 'enterprise',
+            'default_supports_seats': True,
+            'default_default_seat_count': 5,
+            'default_requires_approval': True,
+            'default_is_renewable': True,
+            'default_type': 'service',
+            'form_view_ref': 'ams_subscription_products.product_template_form_view_subscription'
+        }</field>
+    </record>
+
+</odoo>

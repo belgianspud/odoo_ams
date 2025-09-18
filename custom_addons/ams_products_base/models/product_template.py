@@ -11,19 +11,9 @@ _logger = logging.getLogger(__name__)
 class ProductTemplate(models.Model):
     """
     Enhanced AMS product template with comprehensive product behavior management.
-    Provides category-driven defaults with employee override capabilities.
+    All products are considered AMS products with behavior-driven configuration.
     """
     _inherit = 'product.template'
-
-    # ========================================================================
-    # AMS PRODUCT IDENTIFICATION
-    # ========================================================================
-
-    is_ams_product = fields.Boolean(
-        string="AMS Product",
-        default=False,
-        help="Mark this product as an AMS-managed product with enhanced features"
-    )
 
     # ========================================================================
     # PRODUCT BEHAVIOR TYPE (RADIO BUTTON SELECTION)
@@ -31,37 +21,15 @@ class ProductTemplate(models.Model):
     
     ams_product_behavior = fields.Selection([
         ('membership', 'Membership Product'),
-        ('subscription', 'Subscription Product'), 
         ('event', 'Event Product'),
         ('publication', 'Publication Product'),
         ('merchandise', 'Merchandise Product'),
         ('certification', 'Certification Product'),
         ('digital', 'Digital Download'),
         ('donation', 'Donation Product'),
+        ('service', 'Service Product'),
     ], string="Product Behavior Type", 
        help="Select the primary behavior and business logic for this product")
-
-    # ========================================================================
-    # SUBSCRIPTION & RECURRING FIELDS
-    # ========================================================================
-    
-    is_subscription_product = fields.Boolean(
-        string="Subscription Product",
-        default=False,
-        help="Product with recurring billing cycles"
-    )
-    
-    subscription_term = fields.Integer(
-        string="Subscription Term (Months)",
-        default=12,
-        help="Default subscription duration in months"
-    )
-    
-    subscription_term_type = fields.Selection([
-        ('months', 'Months'),
-        ('years', 'Years'),
-    ], string="Term Type", default='months',
-       help="Whether the subscription term is in months or years")
 
     # ========================================================================
     # PORTAL & ACCESS CONTROL
@@ -89,7 +57,6 @@ class ProductTemplate(models.Model):
     benefit_bundle_id = fields.Many2one(
         'product.template',
         string="Benefit Bundle",
-        domain=[('is_ams_product', '=', True)],
         help="Related benefit package or bundle product"
     )
     
@@ -163,7 +130,7 @@ class ProductTemplate(models.Model):
     )
 
     # ========================================================================
-    # EXISTING FIELDS FROM CURRENT VERSION
+    # MEMBER PRICING FIELDS  
     # ========================================================================
 
     member_price = fields.Monetary(
@@ -179,6 +146,10 @@ class ProductTemplate(models.Model):
         store=True,
         help="Amount saved with member pricing"
     )
+
+    # ========================================================================
+    # DIGITAL CONTENT FIELDS
+    # ========================================================================
 
     digital_url = fields.Char(
         string="Download URL",
@@ -279,7 +250,7 @@ class ProductTemplate(models.Model):
             else:
                 product.pricing_summary = f"${product.list_price:.2f}"
 
-    @api.depends('ams_product_behavior', 'is_subscription_product', 'grants_portal_access', 'donation_tax_deductible')
+    @api.depends('ams_product_behavior', 'grants_portal_access', 'donation_tax_deductible')
     def _compute_product_behavior_summary(self):
         """Generate a summary of product behavior"""
         for product in self:
@@ -288,11 +259,7 @@ class ProductTemplate(models.Model):
             if product.ams_product_behavior:
                 behavior_dict = dict(product._fields['ams_product_behavior'].selection)
                 parts.append(behavior_dict.get(product.ams_product_behavior))
-            
-            if product.is_subscription_product:
-                term_text = f"{product.subscription_term} {product.subscription_term_type}"
-                parts.append(f"Subscription: {term_text}")
-            
+                
             if product.grants_portal_access:
                 parts.append("Portal Access")
                 
@@ -313,16 +280,7 @@ class ProductTemplate(models.Model):
             
         behavior_defaults = {
             'membership': {
-                'is_subscription_product': True,
                 'grants_portal_access': True,
-                'subscription_term': 12,
-                'subscription_term_type': 'months',
-                'type': 'service',
-            },
-            'subscription': {
-                'is_subscription_product': True,
-                'subscription_term': 12,
-                'subscription_term_type': 'months',
                 'type': 'service',
             },
             'event': {
@@ -330,9 +288,7 @@ class ProductTemplate(models.Model):
                 'type': 'service',
             },
             'publication': {
-                'is_subscription_product': True,
-                'subscription_term': 12,
-                'subscription_term_type': 'months',
+                'type': 'consu',
             },
             'merchandise': {
                 'type': 'consu',
@@ -346,6 +302,9 @@ class ProductTemplate(models.Model):
             },
             'donation': {
                 'donation_tax_deductible': True,
+                'type': 'service',
+            },
+            'service': {
                 'type': 'service',
             },
         }
@@ -368,15 +327,8 @@ class ProductTemplate(models.Model):
         
         return result
 
-    @api.onchange('is_subscription_product')
-    def _onchange_is_subscription_product(self):
-        """Set defaults for subscription products"""
-        if self.is_subscription_product and not self.subscription_term:
-            self.subscription_term = 12
-            self.subscription_term_type = 'months'
-
     # ========================================================================
-    # BUSINESS METHODS - EXISTING FUNCTIONALITY ENHANCED
+    # BUSINESS METHODS
     # ========================================================================
 
     def get_price_for_partner(self, partner):
@@ -473,29 +425,6 @@ class ProductTemplate(models.Model):
             'can_access': can_access,
         }
 
-    # ========================================================================
-    # NEW BUSINESS METHODS FOR ENHANCED FUNCTIONALITY
-    # ========================================================================
-
-    def get_subscription_details(self):
-        """
-        Get subscription details for this product.
-        
-        Returns:
-            dict: Subscription configuration
-        """
-        self.ensure_one()
-        
-        if not self.is_subscription_product:
-            return {'is_subscription': False}
-            
-        return {
-            'is_subscription': True,
-            'term': self.subscription_term,
-            'term_type': self.subscription_term_type,
-            'term_display': f"{self.subscription_term} {dict(self._fields['subscription_term_type'].selection)[self.subscription_term_type]}",
-        }
-
     def get_portal_access_details(self):
         """
         Get portal access configuration.
@@ -558,7 +487,7 @@ class ProductTemplate(models.Model):
         }
 
     # ========================================================================
-    # SKU MANAGEMENT (ENHANCED)
+    # SKU MANAGEMENT
     # ========================================================================
 
     @api.model_create_multi
@@ -592,13 +521,13 @@ class ProductTemplate(models.Model):
         """
         prefixes = {
             'membership': 'MEM',
-            'subscription': 'SUB',
             'event': 'EVT',
             'publication': 'PUB',
             'merchandise': 'MERCH',
             'certification': 'CERT',
             'digital': 'DIG',
             'donation': 'DON',
+            'service': 'SVC',
         }
         
         prefix = prefixes.get(behavior, 'PROD')
@@ -657,13 +586,6 @@ class ProductTemplate(models.Model):
     # VALIDATION
     # ========================================================================
 
-    @api.constrains('subscription_term')
-    def _check_subscription_term(self):
-        """Validate subscription term values"""
-        for product in self:
-            if product.is_subscription_product and product.subscription_term <= 0:
-                raise ValidationError(_("Subscription term must be greater than 0."))
-
     @api.constrains('digital_url')
     def _check_digital_url_format(self):
         """Validate digital download URL format"""
@@ -699,13 +621,13 @@ class ProductTemplate(models.Model):
                 )
 
     # ========================================================================
-    # QUERY METHODS FOR OTHER MODULES (ENHANCED)
+    # QUERY METHODS FOR OTHER MODULES
     # ========================================================================
 
     @api.model
     def get_ams_products_by_category_type(self, category_type=None):
         """Get AMS products filtered by category type"""
-        domain = [('is_ams_product', '=', True)]
+        domain = []
         if category_type:
             domain.append(('categ_id.ams_category_type', '=', category_type))
         return self.search(domain)
@@ -722,7 +644,6 @@ class ProductTemplate(models.Model):
     def get_member_pricing_products(self):
         """Get all products that offer member pricing"""
         return self.search([
-            ('is_ams_product', '=', True),
             ('categ_id.requires_member_pricing', '=', True)
         ])
 
@@ -730,14 +651,8 @@ class ProductTemplate(models.Model):
     def get_digital_products(self):
         """Get all digital products"""
         return self.search([
-            ('is_ams_product', '=', True),
             ('categ_id.is_digital_category', '=', True)
         ])
-
-    @api.model
-    def get_subscription_products(self):
-        """Get all subscription products"""
-        return self.search([('is_subscription_product', '=', True)])
 
     @api.model
     def get_donation_products(self):
@@ -760,7 +675,7 @@ class ProductTemplate(models.Model):
         return self.search([('requires_membership', '=', True)])
 
     # ========================================================================
-    # ACTIONS FOR UI (ENHANCED)
+    # ACTIONS FOR UI
     # ========================================================================
 
     def action_view_category(self):
@@ -786,10 +701,6 @@ class ProductTemplate(models.Model):
         
         if self.ams_product_behavior:
             behavior_info.append(f"Behavior: {dict(self._fields['ams_product_behavior'].selection)[self.ams_product_behavior]}")
-        
-        if self.is_subscription_product:
-            subscription = self.get_subscription_details()
-            behavior_info.append(f"Subscription: {subscription['term_display']}")
         
         if self.grants_portal_access:
             portal = self.get_portal_access_details()

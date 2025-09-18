@@ -16,9 +16,6 @@
             <field name="list_price">150.00</field>
             <field name="is_ams_product">True</field>
             <field name="ams_product_behavior">membership</field>
-            <field name="is_subscription_product">True</field>
-            <field name="subscription_term">12</field>
-            <field name="subscription_term_type">months</field>
             <field name="grants_portal_access">True</field>
             <field name="type">service</field>
             <field name="default_code">MEM-IND-2024</field>
@@ -37,9 +34,6 @@
             <field name="list_price">750.00</field>
             <field name="is_ams_product">True</field>
             <field name="ams_product_behavior">membership</field>
-            <field name="is_subscription_product">True</field>
-            <field name="subscription_term">12</field>
-            <field name="subscription_term_type">months</field>
             <field name="grants_portal_access">True</field>
             <field name="type">service</field>
             <field name="default_code">MEM-CORP-2024</field>
@@ -58,9 +52,6 @@
             <field name="list_price">25.00</field>
             <field name="is_ams_product">True</field>
             <field name="ams_product_behavior">membership</field>
-            <field name="is_subscription_product">True</field>
-            <field name="subscription_term">12</field>
-            <field name="subscription_term_type">months</field>
             <field name="grants_portal_access">True</field>
             <field name="type">service</field>
             <field name="default_code">MEM-STU-2024</field>
@@ -78,7 +69,6 @@
             <field name="list_price">2500.00</field>
             <field name="is_ams_product">True</field>
             <field name="ams_product_behavior">membership</field>
-            <field name="is_subscription_product">False</field>
             <field name="grants_portal_access">True</field>
             <field name="type">service</field>
             <field name="default_code">MEM-LIFE-2024</field>
@@ -99,10 +89,6 @@
             <field name="name">Professional Journal Quarterly</field>
             <field name="list_price">120.00</field>
             <field name="is_ams_product">True</field>
-            <field name="ams_product_behavior">subscription</field>
-            <field name="is_subscription_product">True</field>
-            <field name="subscription_term">12</field>
-            <field name="subscription_term_type">months</field>
             <field name="type">service</field>
             <field name="default_code">SUB-JOURNAL</field>
             <field name="includes_benefits">• 4 quarterly print issues delivered
@@ -118,10 +104,6 @@
             <field name="name">Monthly Research Reports</field>
             <field name="list_price">240.00</field>
             <field name="is_ams_product">True</field>
-            <field name="ams_product_behavior">subscription</field>
-            <field name="is_subscription_product">True</field>
-            <field name="subscription_term">12</field>
-            <field name="subscription_term_type">months</field>
             <field name="digital_url">https://research.example.com/subscriber-access</field>
             <field name="type">service</field>
             <field name="default_code">SUB-RESEARCH</field>
@@ -313,9 +295,6 @@
             <field name="list_price">125.00</field>
             <field name="is_ams_product">True</field>
             <field name="ams_product_behavior">certification</field>
-            <field name="is_subscription_product">True</field>
-            <field name="subscription_term">36</field>
-            <field name="subscription_term_type">months</field>
             <field name="grants_portal_access">True</field>
             <field name="digital_url">https://certification.example.com/cip-renewal</field>
             <field name="type">service</field>
@@ -356,9 +335,6 @@
             <field name="list_price">299.00</field>
             <field name="is_ams_product">True</field>
             <field name="ams_product_behavior">digital</field>
-            <field name="is_subscription_product">True</field>
-            <field name="subscription_term">12</field>
-            <field name="subscription_term_type">months</field>
             <field name="digital_url">https://software.example.com/analysis-tool</field>
             <field name="type">service</field>
             <field name="default_code">DIG-SOFTWARE-ANALYSIS</field>

@@ -39,6 +39,8 @@ class IrModuleModule(models.Model):
         'ams_communication_preferences', # AMS base module for managing communication preferences per contact or account
         'ams_participation',    # AMS base module for defining what a participation record is for a member
         'ams_products_base',    # AMS base module for defining products for AMS
+        'ams_subscription_products',    # AMS subscription product specific customizations
+
 
         """
         #commenting out this section to provide clean list of modules to use for ams. 

@@ -12,20 +12,18 @@
             
             <!-- Add AMS indicator and behavior summary after default_code -->
             <xpath expr="//field[@name='default_code']" position="after">
-                <field name="template_is_ams_product" readonly="1" widget="boolean_toggle" 
-                       string="AMS Product"/>
-                <field name="effective_sku" readonly="1" invisible="not template_is_ams_product" 
-                       string="Effective SKU"/>
                 <field name="template_ams_product_behavior" readonly="1" 
-                       invisible="not template_is_ams_product" string="Product Behavior"/>
+                       invisible="not template_ams_product_behavior" string="Product Behavior"/>
+                <field name="effective_sku" readonly="1" invisible="not template_ams_product_behavior" 
+                       string="Effective SKU"/>
                 <field name="variant_behavior_summary" readonly="1" 
-                       invisible="not template_is_ams_product" string="Configuration"/>
+                       invisible="not template_ams_product_behavior" string="Configuration"/>
             </xpath>
 
             <!-- Add comprehensive AMS Variant Behavior tab -->
             <xpath expr="//notebook" position="inside">
                 <page string="AMS Variant Behavior" name="ams_variant_behavior" 
-                      invisible="not template_is_ams_product">
+                      invisible="not template_ams_product_behavior">
                     
                     <!-- ========================================================================== -->
                     <!-- VARIANT STATUS AND AVAILABILITY -->
@@ -39,7 +37,7 @@
                         </group>
                         <group>
                             <div class="alert alert-success" role="alert" 
-                                 invisible="availability_status not in ['membership_available', 'subscription_available', 'event_available', 'digital_available', 'certification_available', 'donation_available', 'in_stock', 'service_available']">
+                                 invisible="availability_status not in ['membership_available', 'event_available', 'digital_available', 'certification_available', 'donation_available', 'in_stock', 'service_available']">
                                 <strong><i class="fa fa-check-circle"></i> Variant Available</strong><br/>
                                 This variant is properly configured and available for purchase.
                             </div>
@@ -68,8 +66,6 @@
                                    widget="boolean" string="Has Digital Content"/>
                         </group>
                         <group string="Advanced Features">
-                            <field name="template_is_subscription_product" readonly="1" 
-                                   widget="boolean" string="Subscription Product"/>
                             <field name="template_grants_portal_access" readonly="1" 
                                    widget="boolean" string="Grants Portal Access"/>
                             <field name="template_donation_tax_deductible" readonly="1" 
@@ -109,23 +105,8 @@
                             <strong><i class="fa fa-user"></i> Membership Product</strong><br/>
                             This variant represents a membership offering.
                             <ul class="mb-1">
-                                <li invisible="not template_is_subscription_product">Recurring membership with automatic renewal</li>
                                 <li invisible="not template_grants_portal_access">Grants member portal access</li>
                                 <li>Membership benefits and access rights included</li>
-                            </ul>
-                        </div>
-                    </group>
-
-                    <!-- Subscription Product Info -->
-                    <group string="Subscription Product Information" name="subscription_info"
-                           invisible="template_ams_product_behavior != 'subscription'">
-                        <div class="alert alert-info" role="alert">
-                            <strong><i class="fa fa-refresh"></i> Subscription Product</strong><br/>
-                            This variant is a recurring subscription service.
-                            <ul class="mb-1">
-                                <li>Automatic recurring billing</li>
-                                <li>Subscription management and renewals</li>
-                                <li invisible="not template_grants_portal_access">Subscriber portal access</li>
                             </ul>
                         </div>
                     </group>
@@ -155,7 +136,6 @@
                             <strong><i class="fa fa-book"></i> Publication Product</strong><br/>
                             This variant provides access to publications and content.
                             <ul class="mb-1">
-                                <li invisible="not template_is_subscription_product">Recurring publication subscription</li>
                                 <li invisible="not template_has_digital_content">Digital content delivery</li>
                                 <li>Publication access and distribution</li>
                             </ul>
@@ -213,6 +193,20 @@
                                 <strong class="text-warning">⚠️ Missing Digital Content</strong><br/>
                                 <small>Download URL or file attachment must be configured in template.</small>
                             </div>
+                        </div>
+                    </group>
+
+                    <!-- Service Product Info -->
+                    <group string="Service Information" name="service_info"
+                           invisible="template_ams_product_behavior != 'service'">
+                        <div class="alert alert-info" role="alert">
+                            <strong><i class="fa fa-cogs"></i> Service Product</strong><br/>
+                            This variant provides professional services.
+                            <ul class="mb-1">
+                                <li invisible="not template_grants_portal_access">Service portal access</li>
+                                <li invisible="not template_requires_membership">Members-only service access</li>
+                                <li>Professional service delivery</li>
+                            </ul>
                         </div>
                     </group>
 
@@ -287,7 +281,6 @@
             <!-- Add enhanced AMS columns -->
             <xpath expr="//field[@name='default_code']" position="after">
                 <field name="effective_sku" string="Effective SKU" optional="show"/>
-                <field name="template_is_ams_product" string="AMS" widget="boolean_toggle" optional="show"/>
                 <field name="template_ams_product_behavior" string="Behavior" optional="show"/>
                 <field name="template_ams_category_display" string="Category" optional="hide"/>
                 <field name="availability_status" string="Status" optional="show" widget="badge"/>
@@ -304,8 +297,6 @@
 
             <!-- Add behavior-specific indicators -->
             <xpath expr="//field[@name='template_member_savings']" position="after">
-                <field name="template_is_subscription_product" string="Subscription" 
-                       widget="boolean_toggle" optional="hide"/>
                 <field name="template_grants_portal_access" string="Portal" 
                        widget="boolean_toggle" optional="hide"/>
                 <field name="template_donation_tax_deductible" string="Tax Deductible" 
@@ -341,7 +332,7 @@
                 <separator/>
                 <!-- BASIC AMS FILTERS -->
                 <filter name="ams_variants" string="AMS Product Variants" 
-                        domain="[('template_is_ams_product', '=', True)]"/>
+                        domain="[('template_ams_product_behavior', '!=', False)]"/>
                 <filter name="member_pricing_variants" string="Member Pricing Variants" 
                         domain="[('template_member_savings', '>', 0)]"/>
                 
@@ -349,8 +340,6 @@
                 <!-- BEHAVIOR TYPE FILTERS -->
                 <filter name="membership_variants" string="Membership Variants" 
                         domain="[('template_ams_product_behavior', '=', 'membership')]"/>
-                <filter name="subscription_variants" string="Subscription Variants" 
-                        domain="[('template_ams_product_behavior', '=', 'subscription')]"/>
                 <filter name="event_variants" string="Event Variants" 
                         domain="[('template_ams_product_behavior', '=', 'event')]"/>
                 <filter name="publication_variants" string="Publication Variants" 
@@ -361,13 +350,13 @@
                         domain="[('template_ams_product_behavior', '=', 'certification')]"/>
                 <filter name="digital_variants" string="Digital Download Variants" 
                         domain="[('template_ams_product_behavior', '=', 'digital')]"/>
+                <filter name="service_variants" string="Service Variants" 
+                        domain="[('template_ams_product_behavior', '=', 'service')]"/>
                 <filter name="donation_variants" string="Donation Variants" 
                         domain="[('template_ams_product_behavior', '=', 'donation')]"/>
                 
                 <separator/>
                 <!-- FEATURE-BASED FILTERS -->
-                <filter name="all_subscription_variants" string="All Subscription Variants" 
-                        domain="[('template_is_subscription_product', '=', True)]"/>
                 <filter name="portal_access_variants" string="Portal Access Variants" 
                         domain="[('template_grants_portal_access', '=', True)]"/>
                 <filter name="digital_content_variants" string="Digital Content Variants" 
@@ -382,7 +371,7 @@
                 <separator/>
                 <!-- AVAILABILITY STATUS FILTERS -->
                 <filter name="available_variants" string="Available Variants" 
-                        domain="[('availability_status', 'in', ['membership_available', 'subscription_available', 'event_available', 'digital_available', 'certification_available', 'donation_available', 'in_stock', 'service_available'])]"/>
+                        domain="[('availability_status', 'in', ['membership_available', 'event_available', 'digital_available', 'certification_available', 'donation_available', 'in_stock', 'service_available'])]"/>
                 <filter name="unavailable_variants" string="Unavailable Variants" 
                         domain="[('availability_status', 'in', ['digital_missing', 'event_missing_template', 'certification_missing_content', 'out_of_stock'])]"/>
                 
@@ -410,10 +399,6 @@
                         context="{'group_by': 'template_ams_category_display'}"/>
                 <filter string="Template" name="group_template" 
                         context="{'group_by': 'product_tmpl_id'}"/>
-                <filter string="AMS Products" name="group_ams_status" 
-                        context="{'group_by': 'template_is_ams_product'}"/>
-                <filter string="Subscription Status" name="group_subscription" 
-                        context="{'group_by': 'template_is_subscription_product'}"/>
                 <filter string="Portal Access" name="group_portal_access" 
                         context="{'group_by': 'template_grants_portal_access'}"/>
             </xpath>
@@ -430,7 +415,7 @@
         <field name="name">AMS Product Variants</field>
         <field name="res_model">product.product</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('template_is_ams_product', '=', True)]</field>
+        <field name="domain">[('template_ams_product_behavior', '!=', False)]</field>
         <field name="context">{'search_default_ams_variants': 1}</field>
         <field name="view_id" ref="product_variant_tree_view_ams_enhanced"/>
         <field name="help" type="html">
@@ -445,7 +430,7 @@
                 <li><strong>Member Pricing:</strong> Automatic member discounts and savings tracking</li>
                 <li><strong>Digital Delivery:</strong> Content delivery and access management</li>
                 <li><strong>Status Tracking:</strong> Availability and configuration issue detection</li>
-                <li><strong>Integration Ready:</strong> Hooks for subscriptions, events, and portal access</li>
+                <li><strong>Integration Ready:</strong> Hooks for events and portal access</li>
             </ul>
         </field>
     </record>
@@ -457,14 +442,6 @@
         <field name="view_mode">tree,form</field>
         <field name="domain">[('template_ams_product_behavior', '=', 'membership')]</field>
         <field name="context">{'search_default_membership_variants': 1}</field>
-    </record>
-
-    <record id="action_subscription_variants" model="ir.actions.act_window">
-        <field name="name">Subscription Variants</field>
-        <field name="res_model">product.product</field>
-        <field name="view_mode">tree,form</field>
-        <field name="domain">[('template_is_subscription_product', '=', True)]</field>
-        <field name="context">{'search_default_all_subscription_variants': 1}</field>
     </record>
 
     <record id="action_event_variants" model="ir.actions.act_window">
@@ -517,7 +494,7 @@
         <field name="name">Out of Stock AMS Variants</field>
         <field name="res_model">product.product</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('template_is_ams_product', '=', True), ('availability_status', '=', 'out_of_stock')]</field>
+        <field name="domain">[('template_ams_product_behavior', '!=', False), ('availability_status', '=', 'out_of_stock')]</field>
         <field name="context">{'search_default_out_of_stock_variants': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -538,7 +515,6 @@
         <field name="model">product.product</field>
         <field name="arch" type="xml">
             <kanban class="o_kanban_mobile" sample="1">
-                <field name="template_is_ams_product"/>
                 <field name="template_ams_product_behavior"/>
                 <field name="effective_sku"/>
                 <field name="availability_status"/>
@@ -557,8 +533,6 @@
                                     </strong>
                                 </div>
                                 <div class="col-6 text-end">
-                                    <span t-if="record.template_is_ams_product.raw_value" 
-                                          class="badge badge-info">AMS</span>
                                     <span t-if="record.template_ams_product_behavior.raw_value" 
                                           class="badge badge-primary">
                                         <t t-esc="record.template_ams_product_behavior.value"/>

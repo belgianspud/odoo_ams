@@ -17,22 +17,15 @@ class ProductProduct(models.Model):
     # TEMPLATE FIELD REFERENCES (for easier access and performance)
     # ========================================================================
 
-    template_is_ams_product = fields.Boolean(
-        related='product_tmpl_id.is_ams_product',
-        string="Template AMS Product",
-        readonly=True,
-        store=True
-    )
-
     template_ams_product_behavior = fields.Selection([
         ('membership', 'Membership Product'),
-        ('subscription', 'Subscription Product'), 
         ('event', 'Event Product'),
         ('publication', 'Publication Product'),
         ('merchandise', 'Merchandise Product'),
         ('certification', 'Certification Product'),
         ('digital', 'Digital Download'),
         ('donation', 'Donation Product'),
+        ('service', 'Service Product'),
     ], string="Template Product Behavior",
        related='product_tmpl_id.ams_product_behavior',
        readonly=True,
@@ -60,13 +53,6 @@ class ProductProduct(models.Model):
     template_has_digital_content = fields.Boolean(
         related='product_tmpl_id.has_digital_content',
         string="Template Has Digital Content",
-        readonly=True,
-        store=True
-    )
-
-    template_is_subscription_product = fields.Boolean(
-        related='product_tmpl_id.is_subscription_product',
-        string="Template Is Subscription",
         readonly=True,
         store=True
     )
@@ -124,21 +110,16 @@ class ProductProduct(models.Model):
     # COMPUTED VARIANT STATUS AND AVAILABILITY
     # ========================================================================
 
-    @api.depends('template_is_ams_product', 'template_has_digital_content', 'qty_available', 
-                 'template_ams_product_behavior')
+    @api.depends('template_has_digital_content', 'qty_available', 'template_ams_product_behavior')
     def _compute_availability_status(self):
         """Calculate comprehensive availability status for this variant"""
         for variant in self:
-            if not variant.template_is_ams_product:
-                variant.availability_status = 'standard'
-            elif variant.template_ams_product_behavior == 'digital' or variant.template_has_digital_content:
+            if variant.template_ams_product_behavior == 'digital' or variant.template_has_digital_content:
                 variant.availability_status = 'digital_available' if variant.template_has_digital_content else 'digital_missing'
             elif variant.template_ams_product_behavior == 'membership':
                 variant.availability_status = 'membership_available'
             elif variant.template_ams_product_behavior == 'event':
                 variant.availability_status = 'event_available' if variant.template_creates_event_registration else 'event_missing_template'
-            elif variant.template_ams_product_behavior == 'subscription':
-                variant.availability_status = 'subscription_available'
             elif variant.template_ams_product_behavior == 'donation':
                 variant.availability_status = 'donation_available'
             elif variant.template_ams_product_behavior == 'certification':
@@ -154,7 +135,6 @@ class ProductProduct(models.Model):
     availability_status = fields.Selection([
         ('standard', 'Standard Product'),
         ('membership_available', 'Membership Available'),
-        ('subscription_available', 'Subscription Available'),
         ('event_available', 'Event Registration Available'),
         ('event_missing_template', 'Event Missing Template'),
         ('digital_available', 'Digital Available'),
@@ -181,13 +161,13 @@ class ProductProduct(models.Model):
                         # Use behavior-aware suffix
                         behavior_suffixes = {
                             'membership': 'MEM',
-                            'subscription': 'SUB',
                             'event': 'EVT',
                             'publication': 'PUB',
                             'merchandise': 'MERCH',
                             'certification': 'CERT',
                             'digital': 'DIG',
                             'donation': 'DON',
+                            'service': 'SVC',
                         }
                         suffix = behavior_suffixes.get(variant.template_ams_product_behavior, 'VAR')
                         variant.effective_sku = f"{base_sku}-{suffix}{variant.id % 1000:03d}"
@@ -205,23 +185,15 @@ class ProductProduct(models.Model):
         help="The actual SKU being used (variant default_code or template-based)"
     )
 
-    @api.depends('template_ams_product_behavior', 'template_is_subscription_product', 
-                 'template_grants_portal_access', 'template_donation_tax_deductible')
+    @api.depends('template_ams_product_behavior', 'template_grants_portal_access', 'template_donation_tax_deductible')
     def _compute_variant_behavior_summary(self):
         """Generate variant-specific behavior summary"""
         for variant in self:
-            if not variant.template_is_ams_product:
-                variant.variant_behavior_summary = "Standard Product"
-                continue
-                
             parts = []
             
             if variant.template_ams_product_behavior:
                 behavior_dict = dict(variant._fields['template_ams_product_behavior'].selection)
                 parts.append(behavior_dict.get(variant.template_ams_product_behavior))
-            
-            if variant.template_is_subscription_product:
-                parts.append("Subscription")
             
             if variant.template_grants_portal_access:
                 parts.append("Portal Access")
@@ -232,7 +204,7 @@ class ProductProduct(models.Model):
             if variant.template_requires_membership:
                 parts.append("Members Only")
                 
-            variant.variant_behavior_summary = " • ".join(parts) if parts else "AMS Product"
+            variant.variant_behavior_summary = " • ".join(parts) if parts else "Product"
 
     variant_behavior_summary = fields.Char(
         string="Variant Behavior Summary",
@@ -316,7 +288,7 @@ class ProductProduct(models.Model):
         """
         self.ensure_one()
         
-        if not self.template_is_ams_product or not partner:
+        if not partner:
             return 0.0
             
         is_member = self.product_tmpl_id._check_partner_membership(partner)
@@ -331,16 +303,6 @@ class ProductProduct(models.Model):
     # ========================================================================
     # ENHANCED BUSINESS METHODS FOR SPECIFIC BEHAVIORS
     # ========================================================================
-
-    def get_subscription_details(self):
-        """Get subscription details for this variant."""
-        self.ensure_one()
-        details = self.product_tmpl_id.get_subscription_details()
-        details.update({
-            'variant_id': self.id,
-            'variant_sku': self.effective_sku,
-        })
-        return details
 
     def get_portal_access_details(self):
         """Get portal access configuration for this variant."""
@@ -395,7 +357,7 @@ class ProductProduct(models.Model):
                 template_id = vals.get('product_tmpl_id')
                 if template_id:
                     template = self.env['product.template'].browse(template_id)
-                    if template.is_ams_product and template.ams_product_behavior:
+                    if template.ams_product_behavior:
                         # Let the compute method handle behavior-aware SKU generation
                         pass
 
@@ -403,7 +365,7 @@ class ProductProduct(models.Model):
         
         # Log creation of AMS variants with behavior info
         for variant in variants:
-            if variant.template_is_ams_product:
+            if variant.template_ams_product_behavior:
                 behavior = variant.template_ams_product_behavior or 'unspecified'
                 _logger.info(
                     f"Created AMS product variant: {variant.display_name} "
@@ -420,7 +382,7 @@ class ProductProduct(models.Model):
         ams_fields = ['default_code', 'variant_legacy_id', 'variant_notes']
         if any(field in vals for field in ams_fields):
             for variant in self:
-                if variant.template_is_ams_product:
+                if variant.template_ams_product_behavior:
                     _logger.info(f"Updated AMS variant: {variant.display_name}")
         
         return result
@@ -435,21 +397,21 @@ class ProductProduct(models.Model):
         for variant in self:
             name = super(ProductProduct, variant).name_get()[0][1]
             
-            # Add SKU to AMS products
-            if variant.template_is_ams_product and variant.effective_sku:
+            # Add SKU to products
+            if variant.effective_sku:
                 name = f"[{variant.effective_sku}] {name}"
                 
             # Add behavior-specific indicators
             if variant.template_ams_product_behavior:
                 behavior_indicators = {
                     'membership': '👤',
-                    'subscription': '🔄',
                     'event': '📅',
                     'publication': '📖',
                     'merchandise': '🛍️',
                     'certification': '🏆',
                     'digital': '💾',
                     'donation': '💝',
+                    'service': '🔧',
                 }
                 indicator = behavior_indicators.get(variant.template_ams_product_behavior, '')
                 if indicator:
@@ -503,7 +465,7 @@ class ProductProduct(models.Model):
         Returns:
             recordset: AMS variants of the specified behavior type
         """
-        domain = [('template_is_ams_product', '=', True)]
+        domain = [('template_ams_product_behavior', '!=', False)]
         if behavior_type:
             domain.append(('template_ams_product_behavior', '=', behavior_type))
             
@@ -512,15 +474,10 @@ class ProductProduct(models.Model):
     @api.model
     def get_ams_variants_by_category_type(self, category_type=None):
         """Get AMS variants filtered by template category type"""
-        domain = [('template_is_ams_product', '=', True)]
+        domain = [('template_ams_product_behavior', '!=', False)]
         if category_type:
             domain.append(('product_tmpl_id.categ_id.ams_category_type', '=', category_type))
         return self.search(domain)
-
-    @api.model
-    def get_subscription_variants(self):
-        """Get all subscription product variants"""
-        return self.search([('template_is_subscription_product', '=', True)])
 
     @api.model
     def get_portal_access_variants(self):
@@ -541,7 +498,7 @@ class ProductProduct(models.Model):
     def get_low_stock_ams_variants(self, threshold=0):
         """Get AMS variants with low stock levels"""
         return self.search([
-            ('template_is_ams_product', '=', True),
+            ('template_ams_product_behavior', '!=', False),
             ('type', '=', 'product'),
             ('qty_available', '<=', threshold)
         ])
@@ -622,10 +579,6 @@ class ProductProduct(models.Model):
         behavior_info.append(f"Availability: {dict(self._fields['availability_status'].selection)[self.availability_status]}")
         behavior_info.append(f"SKU: {self.effective_sku or 'Not set'}")
         
-        if self.template_is_subscription_product:
-            subscription = self.get_subscription_details()
-            behavior_info.append(f"Subscription: {subscription.get('term_display', 'Not configured')}")
-        
         if self.template_grants_portal_access:
             portal = self.get_portal_access_details()
             behavior_info.append(f"Portal Groups: {', '.join(portal['portal_groups']) or 'Default'}")
@@ -702,7 +655,6 @@ class ProductProduct(models.Model):
         base_summary = {
             'name': self.display_name,
             'sku': self.effective_sku,
-            'is_ams': self.template_is_ams_product,
             'behavior_type': self.template_ams_product_behavior,
             'category_type': self.template_ams_category_display,
             'availability_status': self.availability_status,
@@ -715,9 +667,6 @@ class ProductProduct(models.Model):
         }
         
         # Add behavior-specific details
-        if self.template_is_subscription_product:
-            base_summary['subscription_details'] = self.get_subscription_details()
-            
         if self.template_grants_portal_access:
             base_summary['portal_details'] = self.get_portal_access_details()
             
@@ -758,7 +707,7 @@ class ProductProduct(models.Model):
         if not self.effective_sku:
             issues.append("Missing product SKU")
             
-        if self.template_is_ams_product and not self.template_ams_product_behavior:
-            issues.append("AMS product missing behavior type selection")
+        if not self.template_ams_product_behavior:
+            issues.append("Product missing behavior type selection")
         
         return issues

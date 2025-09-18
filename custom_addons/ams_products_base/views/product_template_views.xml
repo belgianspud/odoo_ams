@@ -10,10 +10,9 @@
         <field name="inherit_id" ref="product.product_template_form_view"/>
         <field name="arch" type="xml">
             
-            <!-- Add AMS indicator and behavior summary after category -->
+            <!-- Add behavior summary after category -->
             <xpath expr="//field[@name='categ_id']" position="after">
-                <field name="is_ams_product" widget="boolean_toggle" string="AMS Product"/>
-                <field name="ams_category_display" readonly="1" invisible="not is_ams_product" 
+                <field name="ams_category_display" readonly="1" 
                        string="Category Type"/>
                 <field name="product_behavior_summary" readonly="1" invisible="not ams_product_behavior"
                        string="Product Configuration"/>
@@ -22,16 +21,15 @@
             <!-- Add member pricing after list price -->
             <xpath expr="//field[@name='list_price']" position="after">
                 <field name="member_price" readonly="1" widget="monetary"
-                       invisible="not is_ams_product"
                        string="Member Price"/>
                 <field name="member_savings" readonly="1" widget="monetary"
-                       invisible="not is_ams_product or member_savings == 0"
+                       invisible="member_savings == 0"
                        string="Member Saves"/>
             </xpath>
             
             <!-- Add comprehensive Product Behavior tab -->
             <xpath expr="//notebook" position="inside">
-                <page string="Product Behavior" name="product_behavior" invisible="not is_ams_product">
+                <page string="Product Behavior" name="product_behavior">
                     
                     <!-- ========================================================================== -->
                     <!-- PRODUCT BEHAVIOR TYPE SELECTION (RADIO BUTTONS) -->
@@ -53,12 +51,6 @@
                     <group string="Membership Settings" name="membership_settings"
                            invisible="ams_product_behavior != 'membership'">
                         <group>
-                            <field name="is_subscription_product" widget="boolean_toggle" 
-                                   string="Recurring Membership"/>
-                            <field name="subscription_term" invisible="not is_subscription_product"
-                                   string="Membership Duration"/>
-                            <field name="subscription_term_type" invisible="not is_subscription_product"
-                                   string="Duration Type"/>
                             <field name="grants_portal_access" widget="boolean_toggle"
                                    string="Grants Member Portal Access"/>
                         </group>
@@ -67,31 +59,10 @@
                                    invisible="not grants_portal_access"
                                    string="Portal Access Groups"/>
                             <field name="benefit_bundle_id" string="Related Benefit Package"/>
-                            <field name="includes_benefits" placeholder="Describe membership benefits..."
-                                   string="Included Benefits"/>
-                        </group>
-                    </group>
-
-                    <!-- ========================================================================== -->
-                    <!-- SUBSCRIPTION PRODUCT SETTINGS -->
-                    <!-- ========================================================================== -->
-                    <group string="Subscription Settings" name="subscription_settings"
-                           invisible="ams_product_behavior != 'subscription'">
-                        <group>
-                            <field name="is_subscription_product" widget="boolean_toggle" readonly="1"/>
-                            <field name="subscription_term" string="Billing Cycle Duration" required="1"/>
-                            <field name="subscription_term_type" string="Cycle Type" required="1"/>
-                        </group>
-                        <group>
-                            <field name="grants_portal_access" widget="boolean_toggle"
-                                   string="Grants Subscriber Portal Access"/>
-                            <field name="portal_group_ids" widget="many2many_tags"
-                                   invisible="not grants_portal_access"
-                                   string="Subscriber Portal Groups"/>
                         </group>
                         <separator colspan="2"/>
-                        <field name="includes_benefits" placeholder="Describe what subscribers receive..."
-                               string="Subscription Includes" colspan="2"/>
+                        <field name="includes_benefits" placeholder="Describe membership benefits..."
+                               string="Included Benefits" colspan="2"/>
                     </group>
 
                     <!-- ========================================================================== -->
@@ -121,18 +92,17 @@
                     <group string="Publication Settings" name="publication_settings"
                            invisible="ams_product_behavior != 'publication'">
                         <group>
-                            <field name="is_subscription_product" widget="boolean_toggle"
-                                   string="Publication Subscription"/>
-                            <field name="subscription_term" invisible="not is_subscription_product"
-                                   string="Subscription Duration"/>
-                            <field name="subscription_term_type" invisible="not is_subscription_product"
-                                   string="Duration Type"/>
-                        </group>
-                        <group>
                             <field name="digital_url" widget="url" 
                                    placeholder="https://example.com/publication-access"
                                    string="Digital Access URL"/>
                             <field name="digital_attachment_id" string="Digital Publication File"/>
+                        </group>
+                        <group>
+                            <field name="has_digital_content" readonly="1" widget="boolean"
+                                   string="Content Ready"/>
+                            <div class="text-muted">
+                                <small>Provide either URL or file attachment for digital access</small>
+                            </div>
                         </group>
                         <separator colspan="2"/>
                         <field name="includes_benefits" placeholder="Describe publication benefits..."
@@ -197,6 +167,30 @@
                     </group>
 
                     <!-- ========================================================================== -->
+                    <!-- SERVICE PRODUCT SETTINGS -->
+                    <!-- ========================================================================== -->
+                    <group string="Service Settings" name="service_settings"
+                           invisible="ams_product_behavior != 'service'">
+                        <group>
+                            <field name="grants_portal_access" widget="boolean_toggle"
+                                   string="Grants Service Portal Access"/>
+                            <field name="portal_group_ids" widget="many2many_tags"
+                                   invisible="not grants_portal_access"
+                                   string="Service Portal Groups"/>
+                        </group>
+                        <group>
+                            <field name="requires_membership" widget="boolean_toggle"
+                                   string="Members Only Service"/>
+                            <div class="text-muted" invisible="not requires_membership">
+                                <small>Only active members can purchase this service</small>
+                            </div>
+                        </group>
+                        <separator colspan="2"/>
+                        <field name="includes_benefits" placeholder="Describe service benefits..."
+                               string="Service Includes" colspan="2"/>
+                    </group>
+
+                    <!-- ========================================================================== -->
                     <!-- DONATION PRODUCT SETTINGS -->
                     <!-- ========================================================================== -->
                     <group string="Donation Settings" name="donation_settings"
@@ -228,7 +222,6 @@
                                    invisible="ams_product_behavior != 'membership'"
                                    string="Membership Revenue Account"/>
                             <field name="deferred_revenue_account_id" 
-                                   invisible="not is_subscription_product"
                                    string="Deferred Revenue Account"/>
                         </group>
                         <group string="Other Accounts">
@@ -282,7 +275,7 @@
             <!-- ENHANCED SALES TAB - ADD PRICING SUMMARY -->
             <!-- ========================================================================== -->
             <xpath expr="//page[@name='sales']//group" position="after">
-                <group string="AMS Pricing Summary" name="ams_pricing" invisible="not is_ams_product">
+                <group string="AMS Pricing Summary" name="ams_pricing">
                     <field name="pricing_summary" readonly="1" widget="text" 
                            string="Pricing Summary" nolabel="1"/>
                 </group>
@@ -302,12 +295,10 @@
             
             <!-- Add enhanced AMS columns -->
             <xpath expr="//field[@name='categ_id']" position="after">
-                <field name="is_ams_product" string="AMS" widget="boolean_toggle" optional="show"/>
                 <field name="ams_product_behavior" string="Behavior" optional="show"/>
                 <field name="ams_category_display" string="Category Type" optional="hide"/>
                 <field name="member_price" string="Member Price" optional="hide" widget="monetary"
                        invisible="member_savings == 0"/>
-                <field name="is_subscription_product" string="Subscription" widget="boolean_toggle" optional="hide"/>
                 <field name="grants_portal_access" string="Portal Access" widget="boolean_toggle" optional="hide"/>
                 <field name="donation_tax_deductible" string="Tax Deductible" widget="boolean_toggle" optional="hide"/>
             </xpath>
@@ -336,8 +327,6 @@
             <xpath expr="//filter[@name='filter_to_sell']" position="after">
                 <separator/>
                 <!-- BASIC AMS FILTERS -->
-                <filter name="ams_products" string="AMS Products" 
-                        domain="[('is_ams_product', '=', True)]"/>
                 <filter name="member_pricing" string="Member Pricing" 
                         domain="[('member_savings', '>', 0)]"/>
                 
@@ -345,8 +334,6 @@
                 <!-- BEHAVIOR TYPE FILTERS -->
                 <filter name="behavior_membership" string="Membership Products" 
                         domain="[('ams_product_behavior', '=', 'membership')]"/>
-                <filter name="behavior_subscription" string="Subscription Products" 
-                        domain="[('ams_product_behavior', '=', 'subscription')]"/>
                 <filter name="behavior_event" string="Event Products" 
                         domain="[('ams_product_behavior', '=', 'event')]"/>
                 <filter name="behavior_publication" string="Publication Products" 
@@ -357,13 +344,13 @@
                         domain="[('ams_product_behavior', '=', 'certification')]"/>
                 <filter name="behavior_digital" string="Digital Downloads" 
                         domain="[('ams_product_behavior', '=', 'digital')]"/>
+                <filter name="behavior_service" string="Service Products" 
+                        domain="[('ams_product_behavior', '=', 'service')]"/>
                 <filter name="behavior_donation" string="Donation Products" 
                         domain="[('ams_product_behavior', '=', 'donation')]"/>
                 
                 <separator/>
                 <!-- FEATURE-BASED FILTERS -->
-                <filter name="subscription_products" string="All Subscriptions" 
-                        domain="[('is_subscription_product', '=', True)]"/>
                 <filter name="portal_access_products" string="Grants Portal Access" 
                         domain="[('grants_portal_access', '=', True)]"/>
                 <filter name="digital_content_products" string="Has Digital Content" 
@@ -389,10 +376,6 @@
                         context="{'group_by': 'ams_product_behavior'}"/>
                 <filter string="Category Type" name="group_category_type" 
                         context="{'group_by': 'ams_category_display'}"/>
-                <filter string="AMS Products" name="group_ams_status" 
-                        context="{'group_by': 'is_ams_product'}"/>
-                <filter string="Subscription Status" name="group_subscription" 
-                        context="{'group_by': 'is_subscription_product'}"/>
                 <filter string="Portal Access" name="group_portal_access" 
                         context="{'group_by': 'grants_portal_access'}"/>
             </xpath>
@@ -409,8 +392,6 @@
         <field name="name">AMS Products</field>
         <field name="res_model">product.template</field>
         <field name="view_mode">kanban,tree,form</field>
-        <field name="domain">[('is_ams_product', '=', True)]</field>
-        <field name="context">{'search_default_ams_products': 1}</field>
         <field name="view_id" ref="product_template_tree_view_ams_enhanced"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -421,7 +402,6 @@
             </p>
             <ul>
                 <li><strong>Member Pricing:</strong> Automatic discounts for members</li>
-                <li><strong>Subscriptions:</strong> Recurring billing and renewals</li>
                 <li><strong>Digital Delivery:</strong> Automatic content delivery</li>
                 <li><strong>Event Integration:</strong> Automatic event registration</li>
                 <li><strong>Portal Access:</strong> Member portal permissions</li>
@@ -437,14 +417,6 @@
         <field name="view_mode">tree,form</field>
         <field name="domain">[('ams_product_behavior', '=', 'membership')]</field>
         <field name="context">{'search_default_behavior_membership': 1}</field>
-    </record>
-
-    <record id="action_subscription_products" model="ir.actions.act_window">
-        <field name="name">Subscription Products</field>
-        <field name="res_model">product.template</field>
-        <field name="view_mode">tree,form</field>
-        <field name="domain">[('is_subscription_product', '=', True)]</field>
-        <field name="context">{'search_default_subscription_products': 1}</field>
     </record>
 
     <record id="action_event_products" model="ir.actions.act_window">
@@ -514,9 +486,7 @@
         <field name="view_mode">form</field>
         <field name="target">current</field>
         <field name="context">{
-            'default_is_ams_product': True,
             'default_ams_product_behavior': 'membership',
-            'default_is_subscription_product': True,
             'default_grants_portal_access': True,
             'form_view_ref': 'ams_products_base.product_template_form_view_ams_enhanced'
         }</field>
@@ -528,7 +498,6 @@
         <field name="view_mode">form</field>
         <field name="target">current</field>
         <field name="context">{
-            'default_is_ams_product': True,
             'default_ams_product_behavior': 'event',
             'default_creates_event_registration': True,
             'default_type': 'service',
@@ -542,7 +511,6 @@
         <field name="view_mode">form</field>
         <field name="target">current</field>
         <field name="context">{
-            'default_is_ams_product': True,
             'default_ams_product_behavior': 'digital',
             'default_type': 'service',
             'form_view_ref': 'ams_products_base.product_template_form_view_ams_enhanced'
@@ -555,7 +523,6 @@
         <field name="view_mode">form</field>
         <field name="target">current</field>
         <field name="context">{
-            'default_is_ams_product': True,
             'default_ams_product_behavior': 'donation',
             'default_donation_tax_deductible': True,
             'default_type': 'service',
