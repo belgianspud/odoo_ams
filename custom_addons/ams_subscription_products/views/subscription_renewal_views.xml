@@ -1,0 +1,737 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ================================================================ -->
+        <!-- SUBSCRIPTION RENEWAL VIEWS -->
+        <!-- ================================================================ -->
+
+        <!-- Subscription Renewal Tree View -->
+        <record id="view_ams_subscription_renewal_tree" model="ir.ui.view">
+            <field name="name">ams.subscription.renewal.tree</field>
+            <field name="model">ams.subscription.renewal</field>
+            <field name="arch" type="xml">
+                <tree string="Subscription Renewals" default_order="renewal_due_date asc,id desc"
+                      decoration-success="state=='renewed'" 
+                      decoration-info="state=='reminded'" 
+                      decoration-warning="state=='pending'" 
+                      decoration-danger="state in ('expired', 'grace_period')"
+                      decoration-muted="state=='cancelled'">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="product_id"/>
+                    <field name="renewal_due_date"/>
+                    <field name="days_until_renewal"/>
+                    <field name="renewal_price" sum="Total Renewal Value"/>
+                    <field name="current_price" optional="hide"/>
+                    <field name="price_increase_amount" optional="show" sum="Total Increase"/>
+                    <field name="price_increase_percent" optional="show" widget="percentage"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="state" widget="badge" 
+                           decoration-success="state=='renewed'"
+                           decoration-warning="state in ('pending', 'reminded')"
+                           decoration-danger="state in ('expired', 'grace_period')"
+                           decoration-muted="state=='cancelled'"/>
+                    <field name="is_member_renewal" widget="boolean_toggle"/>
+                    <field name="is_overdue" widget="boolean_toggle"/>
+                    <field name="auto_renewal_enabled" optional="hide" widget="boolean_toggle"/>
+                    <field name="renewal_count" optional="hide"/>
+                    <button name="process_renewal" 
+                            string="Process" 
+                            type="object" 
+                            icon="fa-play" 
+                            class="btn-link"
+                            attrs="{'invisible': [('state', 'not in', ['pending', 'reminded', 'grace_period'])]}"
+                            groups="ams_subscriptions_products.group_ams_subscription_manager"/>
+                    <button name="send_renewal_reminder" 
+                            string="Send Reminder" 
+                            type="object" 
+                            icon="fa-envelope" 
+                            class="btn-link"
+                            attrs="{'invisible': [('state', 'not in', ['pending', 'reminded'])]}"
+                            groups="ams_subscriptions_products.group_ams_subscription_user"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Subscription Renewal Form View -->
+        <record id="view_ams_subscription_renewal_form" model="ir.ui.view">
+            <field name="name">ams.subscription.renewal.form</field>
+            <field name="model">ams.subscription.renewal</field>
+            <field name="arch" type="xml">
+                <form string="Subscription Renewal">
+                    <header>
+                        <button name="process_renewal" 
+                                string="Process Renewal" 
+                                type="object" 
+                                class="btn-primary"
+                                attrs="{'invisible': [('state', 'not in', ['pending', 'reminded', 'grace_period'])]}"
+                                groups="ams_subscriptions_products.group_ams_subscription_manager"/>
+                        <button name="send_renewal_reminder" 
+                                string="Send Reminder" 
+                                type="object" 
+                                class="btn-secondary"
+                                attrs="{'invisible': [('state', 'not in', ['pending', 'reminded'])]}"
+                                groups="ams_subscriptions_products.group_ams_subscription_user"/>
+                        <button name="cancel_renewal" 
+                                string="Cancel Renewal" 
+                                type="object" 
+                                class="btn-secondary"
+                                attrs="{'invisible': [('state', 'in', ['renewed', 'cancelled'])]}"
+                                groups="ams_subscriptions_products.group_ams_subscription_manager"/>
+                        <button name="action_offer_retention" 
+                                string="Offer Retention" 
+                                type="object" 
+                                class="btn-secondary"
+                                attrs="{'invisible': [('state', 'not in', ['expired', 'grace_period'])]}"
+                                groups="ams_subscriptions_products.group_ams_subscription_manager"/>
+                        <field name="state" widget="statusbar" statusbar_visible="pending,reminded,renewed"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_subscription" 
+                                    type="object" 
+                                    class="oe_stat_button" 
+                                    icon="fa-refresh">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_text">Subscription</span>
+                                </div>
+                            </button>
+                            <button name="action_view_previous_renewal" 
+                                    type="object" 
+                                    class="oe_stat_button" 
+                                    icon="fa-history"
+                                    attrs="{'invisible': [('previous_renewal_id', '=', False)]}">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_text">Previous</span>
+                                </div>
+                            </button>
+                            <button name="action_view_customer_renewals" 
+                                    type="object" 
+                                    class="oe_stat_button" 
+                                    icon="fa-users">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_text">Customer Renewals</span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <div class="oe_title">
+                            <label for="name" class="oe_edit_only"/>
+                            <h1><field name="name"/></h1>
+                            <div class="o_row" name="renewal_info_row">
+                                <field name="is_member_renewal" readonly="1" widget="boolean_toggle" string="Member"/>
+                                <field name="is_overdue" readonly="1" widget="boolean_toggle" string="Overdue"/>
+                                <field name="auto_renewal_enabled" readonly="1" widget="boolean_toggle" string="Auto Renewal"/>
+                            </div>
+                        </div>
+
+                        <group>
+                            <group name="renewal_info" string="Renewal Information">
+                                <field name="subscription_id" options="{'no_create': True}"/>
+                                <field name="partner_id" readonly="1"/>
+                                <field name="product_id" readonly="1"/>
+                                <field name="billing_period_id" readonly="1"/>
+                                <field name="currency_id" readonly="1" groups="base.group_multi_currency"/>
+                            </group>
+                            <group name="dates" string="Important Dates">
+                                <field name="current_period_end"/>
+                                <field name="renewal_due_date"/>
+                                <field name="grace_period_end" readonly="1"/>
+                                <field name="next_renewal_due" readonly="1"/>
+                                <field name="days_until_renewal" readonly="1"/>
+                            </group>
+                        </group>
+
+                        <notebook>
+                            <page string="Pricing &amp; Terms" name="pricing">
+                                <group>
+                                    <group name="current_pricing" string="Current Pricing">
+                                        <field name="current_price"/>
+                                        <field name="renewal_price"/>
+                                        <field name="price_increase_amount" 
+                                               attrs="{'invisible': [('price_increase_amount', '=', 0)]}"/>
+                                        <field name="price_increase_percent" 
+                                               attrs="{'invisible': [('price_increase_amount', '=', 0)]}"
+                                               widget="percentage"/>
+                                    </group>
+                                    <group name="member_pricing" string="Member Benefits">
+                                        <field name="member_discount_amount"/>
+                                        <field name="member_status" readonly="1"/>
+                                        <field name="membership_expiry_date" readonly="1"/>
+                                    </group>
+                                </group>
+
+                                <separator string="Renewal Terms"/>
+                                <field name="renewal_terms_notes" 
+                                       placeholder="Special terms and conditions for this renewal..."/>
+                                
+                                <group name="terms_acceptance" string="Terms Acceptance">
+                                    <field name="renewal_terms_accepted"/>
+                                    <field name="renewal_terms_date" readonly="1"/>
+                                </group>
+                            </page>
+
+                            <page string="Communication &amp; Reminders" name="communication">
+                                <group>
+                                    <group name="reminders" string="Renewal Reminders">
+                                        <field name="reminder_count" readonly="1"/>
+                                        <field name="last_reminder_date" readonly="1"/>
+                                        <field name="next_reminder_date" readonly="1"/>
+                                        <field name="reminder_schedule" readonly="1"/>
+                                    </group>
+                                    <group name="notifications" string="Notifications">
+                                        <field name="renewal_welcome_sent" readonly="1"/>
+                                        <field name="renewal_processed_date" readonly="1"/>
+                                    </group>
+                                </group>
+
+                                <separator string="Customer Communication"/>
+                                <field name="customer_renewal_message" 
+                                       placeholder="Message from customer regarding renewal..."
+                                       groups="ams_subscriptions_products.group_ams_subscription_manager"/>
+                            </page>
+
+                            <page string="Renewal History &amp; Analytics" name="history">
+                                <group>
+                                    <group name="renewal_history" string="Renewal History">
+                                        <field name="renewal_count" readonly="1"/>
+                                        <field name="previous_renewal_id" readonly="1"/>
+                                        <field name="first_subscription_date" readonly="1"/>
+                                        <field name="customer_lifetime_value" readonly="1"/>
+                                    </group>
+                                    <group name="renewal_method" string="Processing Method">
+                                        <field name="renewal_method" readonly="1"/>
+                                        <field name="renewal_processed_date" readonly="1"/>
+                                    </group>
+                                </group>
+
+                                <separator string="Customer Analytics" 
+                                           groups="ams_subscriptions_products.group_ams_subscription_manager"/>
+                                <div name="customer_analytics" groups="ams_subscriptions_products.group_ams_subscription_manager">
+                                    <button name="get_renewal_summary" 
+                                            string="Get Renewal Summary" 
+                                            type="object" 
+                                            class="btn-secondary"/>
+                                    <button name="%(action_subscription_renewal_wizard)d" 
+                                            string="Launch Renewal Wizard" 
+                                            type="action" 
+                                            class="btn-secondary"
+                                            context="{'default_renewal_id': active_id, 'default_renewal_mode': 'single'}"/>
+                                </div>
+                            </page>
+
+                            <page string="Internal Notes" name="notes" 
+                                  groups="ams_subscriptions_products.group_ams_subscription_user">
+                                <field name="renewal_notes" 
+                                       placeholder="Internal notes about this renewal..."/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!-- Subscription Renewal Kanban View -->
+        <record id="view_ams_subscription_renewal_kanban" model="ir.ui.view">
+            <field name="name">ams.subscription.renewal.kanban</field>
+            <field name="model">ams.subscription.renewal</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_mobile" default_order="renewal_due_date asc" 
+                        on_create="quick_create">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="product_id"/>
+                    <field name="renewal_due_date"/>
+                    <field name="days_until_renewal"/>
+                    <field name="renewal_price"/>
+                    <field name="current_price"/>
+                    <field name="price_increase_amount"/>
+                    <field name="currency_id"/>
+                    <field name="state"/>
+                    <field name="is_member_renewal"/>
+                    <field name="is_overdue"/>
+                    <field name="auto_renewal_enabled"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div t-attf-class="oe_kanban_card oe_kanban_global_click #{record.is_overdue.raw_value ? 'border-danger' : ''}">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="partner_id"/>
+                                        </strong>
+                                        <br/>
+                                        <span class="o_kanban_record_subtitle">
+                                            <field name="product_id"/>
+                                        </span>
+                                    </div>
+                                    <div class="o_kanban_record_top_right">
+                                        <field name="state" widget="label_selection" 
+                                               options="{'classes': {
+                                                   'pending': 'warning', 
+                                                   'reminded': 'info', 
+                                                   'processing': 'info',
+                                                   'renewed': 'success', 
+                                                   'expired': 'danger',
+                                                   'cancelled': 'secondary',
+                                                   'grace_period': 'danger'
+                                               }}"/>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div class="row">
+                                        <div class="col-8">
+                                            <div class="o_kanban_record_subtitle">
+                                                <i class="fa fa-calendar"/> Due: <field name="renewal_due_date"/>
+                                            </div>
+                                            <div t-if="record.days_until_renewal.raw_value >= 0" class="text-info">
+                                                <i class="fa fa-clock-o"/> <field name="days_until_renewal"/> days
+                                            </div>
+                                            <div t-if="record.days_until_renewal.raw_value &lt; 0" class="text-danger">
+                                                <i class="fa fa-exclamation-triangle"/> <field name="days_until_renewal"/> days overdue
+                                            </div>
+                                        </div>
+                                        <div class="col-4 text-right">
+                                            <div class="h5 mb0">
+                                                <field name="renewal_price" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                            </div>
+                                            <div t-if="record.price_increase_amount.raw_value > 0" class="text-warning">
+                                                +<field name="price_increase_amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <span t-if="record.is_member_renewal.raw_value" class="badge badge-info">Member</span>
+                                        <span t-if="record.auto_renewal_enabled.raw_value" class="badge badge-success">Auto</span>
+                                        <span t-if="record.is_overdue.raw_value" class="badge badge-danger">Overdue</span>
+                                    </div>
+                                    <div class="oe_kanban_bottom_right">
+                                        <button t-if="record.state.raw_value in ['pending', 'reminded', 'grace_period']" 
+                                                name="process_renewal" 
+                                                type="object" 
+                                                class="btn btn-sm btn-primary">Renew</button>
+                                        <button t-if="record.state.raw_value in ['pending', 'reminded']" 
+                                                name="send_renewal_reminder" 
+                                                type="object" 
+                                                class="btn btn-sm btn-secondary">Remind</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- Subscription Renewal Calendar View -->
+        <record id="view_ams_subscription_renewal_calendar" model="ir.ui.view">
+            <field name="name">ams.subscription.renewal.calendar</field>
+            <field name="model">ams.subscription.renewal</field>
+            <field name="arch" type="xml">
+                <calendar string="Renewal Calendar" 
+                          date_start="renewal_due_date" 
+                          color="state"
+                          quick_add="False"
+                          mode="month">
+                    <field name="partner_id"/>
+                    <field name="product_id"/>
+                    <field name="renewal_price"/>
+                    <field name="state"/>
+                </calendar>
+            </field>
+        </record>
+
+        <!-- Subscription Renewal Search View -->
+        <record id="view_ams_subscription_renewal_search" model="ir.ui.view">
+            <field name="name">ams.subscription.renewal.search</field>
+            <field name="model">ams.subscription.renewal</field>
+            <field name="arch" type="xml">
+                <search string="Search Subscription Renewals">
+                    <field name="name" string="Renewal Reference"/>
+                    <field name="partner_id" string="Customer"/>
+                    <field name="product_id" string="Product"/>
+                    <field name="subscription_id" string="Subscription"/>
+                    <field name="billing_period_id"/>
+
+                    <separator/>
+                    <filter name="due_today" string="Due Today" 
+                            domain="[('renewal_due_date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                    <filter name="due_this_week" string="Due This Week" 
+                            domain="[('renewal_due_date', '&gt;=', context_today().strftime('%Y-%m-%d')), ('renewal_due_date', '&lt;=', (context_today() + datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                    <filter name="due_this_month" string="Due This Month" 
+                            domain="[('renewal_due_date', '&gt;=', context_today().replace(day=1).strftime('%Y-%m-%d')), ('renewal_due_date', '&lt;', (context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1).strftime('%Y-%m-%d'))]"/>
+                    <filter name="due_next_30_days" string="Due Next 30 Days" 
+                            domain="[('renewal_due_date', '&gt;=', context_today().strftime('%Y-%m-%d')), ('renewal_due_date', '&lt;=', (context_today() + datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+
+                    <separator/>
+                    <filter name="pending" string="Pending" domain="[('state', '=', 'pending')]"/>
+                    <filter name="reminded" string="Reminder Sent" domain="[('state', '=', 'reminded')]"/>
+                    <filter name="processing" string="Processing" domain="[('state', '=', 'processing')]"/>
+                    <filter name="renewed" string="Renewed" domain="[('state', '=', 'renewed')]"/>
+                    <filter name="grace_period" string="Grace Period" domain="[('state', '=', 'grace_period')]"/>
+                    <filter name="expired" string="Expired" domain="[('state', '=', 'expired')]"/>
+                    <filter name="overdue" string="Overdue" domain="[('is_overdue', '=', True)]"/>
+
+                    <separator/>
+                    <filter name="member_renewals" string="Member Renewals" domain="[('is_member_renewal', '=', True)]"/>
+                    <filter name="auto_renewal" string="Auto Renewal" domain="[('auto_renewal_enabled', '=', True)]"/>
+                    <filter name="price_increases" string="Price Increases" domain="[('price_increase_amount', '>', 0)]"/>
+                    <filter name="high_value" string="High Value (>$1000)" domain="[('renewal_price', '>', 1000)]"/>
+
+                    <group expand="0" string="Group By">
+                        <filter name="group_by_state" string="Status" context="{'group_by': 'state'}"/>
+                        <filter name="group_by_partner" string="Customer" context="{'group_by': 'partner_id'}"/>
+                        <filter name="group_by_product" string="Product" context="{'group_by': 'product_id'}"/>
+                        <filter name="group_by_billing_period" string="Billing Period" context="{'group_by': 'billing_period_id'}"/>
+                        <filter name="group_by_renewal_due_date" string="Due Date" context="{'group_by': 'renewal_due_date:week'}"/>
+                        <filter name="group_by_member_status" string="Member Status" context="{'group_by': 'is_member_renewal'}"/>
+                        <filter name="group_by_auto_renewal" string="Auto Renewal" context="{'group_by': 'auto_renewal_enabled'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- ================================================================ -->
+        <!-- PIVOT AND GRAPH VIEWS FOR ANALYTICS -->
+        <!-- ================================================================ -->
+
+        <!-- Subscription Renewal Pivot View -->
+        <record id="view_ams_subscription_renewal_pivot" model="ir.ui.view">
+            <field name="name">ams.subscription.renewal.pivot</field>
+            <field name="model">ams.subscription.renewal</field>
+            <field name="arch" type="xml">
+                <pivot string="Renewal Analysis">
+                    <field name="renewal_due_date" type="row" interval="month"/>
+                    <field name="state" type="col"/>
+                    <field name="renewal_price" type="measure"/>
+                    <field name="price_increase_amount" type="measure"/>
+                    <field name="customer_lifetime_value" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <!-- Subscription Renewal Graph View -->
+        <record id="view_ams_subscription_renewal_graph" model="ir.ui.view">
+            <field name="name">ams.subscription.renewal.graph</field>
+            <field name="model">ams.subscription.renewal</field>
+            <field name="arch" type="xml">
+                <graph string="Renewal Trends" type="bar">
+                    <field name="renewal_due_date" type="row" interval="month"/>
+                    <field name="state" type="col"/>
+                </graph>
+            </field>
+        </record>
+
+        <!-- ================================================================ -->
+        <!-- ACTIONS -->
+        <!-- ================================================================ -->
+
+        <!-- Main Subscription Renewals Action -->
+        <record id="action_subscription_renewal_view_all" model="ir.actions.act_window">
+            <field name="name">All Subscription Renewals</field>
+            <field name="res_model">ams.subscription.renewal</field>
+            <field name="view_mode">tree,kanban,calendar,form,pivot,graph</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No subscription renewals found!
+                </p>
+                <p>
+                    Renewal records are automatically created when subscriptions approach their expiration date.
+                    Active subscriptions will generate renewal opportunities here.
+                </p>
+            </field>
+        </record>
+
+        <!-- Due Soon Renewals Action -->
+        <record id="action_subscription_renewal_view_due" model="ir.actions.act_window">
+            <field name="name">Renewals Due Soon</field>
+            <field name="res_model">ams.subscription.renewal</field>
+            <field name="view_mode">kanban,tree,calendar,form</field>
+            <field name="domain">[('state', 'in', ['pending', 'reminded'])]</field>
+            <field name="context">{'search_default_due_next_30_days': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No renewals due soon - excellent!
+                </p>
+                <p>
+                    This view shows subscription renewals that are approaching their due date.
+                    Use this to proactively manage upcoming renewals and ensure customer retention.
+                </p>
+            </field>
+        </record>
+
+        <!-- Overdue Renewals Action -->
+        <record id="action_subscription_renewal_view_overdue" model="ir.actions.act_window">
+            <field name="name">Overdue Renewals</field>
+            <field name="res_model">ams.subscription.renewal</field>
+            <field name="view_mode">tree,kanban,form</field>
+            <field name="domain">[('is_overdue', '=', True), ('state', 'not in', ['renewed', 'cancelled'])]</field>
+            <field name="context">{}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No overdue renewals - great job!
+                </p>
+                <p>
+                    Overdue renewals require immediate attention to prevent service interruption.
+                    Follow up with customers to complete overdue renewals and maintain service continuity.
+                </p>
+            </field>
+        </record>
+
+        <!-- Grace Period Renewals Action -->
+        <record id="action_subscription_renewal_view_grace" model="ir.actions.act_window">
+            <field name="name">Grace Period Renewals</field>
+            <field name="res_model">ams.subscription.renewal</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('state', '=', 'grace_period')]</field>
+            <field name="context">{}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No renewals in grace period!
+                </p>
+                <p>
+                    Grace period renewals are past due but still within the allowed grace period.
+                    These require urgent attention to avoid subscription cancellation.
+                </p>
+            </field>
+        </record>
+
+        <!-- Member Renewals Action -->
+        <record id="action_subscription_renewal_view_member" model="ir.actions.act_window">
+            <field name="name">Member Renewals</field>
+            <field name="res_model">ams.subscription.renewal</field>
+            <field name="view_mode">tree,kanban,form</field>
+            <field name="domain">[('is_member_renewal', '=', True)]</field>
+            <field name="context">{'search_default_due_next_30_days': 1}</field>
+        </record>
+
+        <!-- Auto Renewals Action -->
+        <record id="action_subscription_renewal_view_auto" model="ir.actions.act_window">
+            <field name="name">Auto Renewals</field>
+            <field name="res_model">ams.subscription.renewal</field>
+            <field name="view_mode">tree,kanban,form</field>
+            <field name="domain">[('auto_renewal_enabled', '=', True)]</field>
+            <field name="context">{'search_default_pending': 1}</field>
+        </record>
+
+        <!-- High Value Renewals Action -->
+        <record id="action_subscription_renewal_view_high_value" model="ir.actions.act_window">
+            <field name="name">High Value Renewals</field>
+            <field name="res_model">ams.subscription.renewal</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('renewal_price', '>', 1000)]</field>
+            <field name="context">{'search_default_due_next_30_days': 1}</field>
+        </record>
+
+        <!-- Renewal Analytics Action -->
+        <record id="action_renewal_analytics" model="ir.actions.act_window">
+            <field name="name">Renewal Analytics</field>
+            <field name="res_model">ams.subscription.renewal</field>
+            <field name="view_mode">pivot,graph</field>
+            <field name="domain">[]</field>
+            <field name="context">{
+                'search_default_group_by_renewal_due_date': 1,
+                'search_default_due_this_month': 1
+            }</field>
+        </record>
+
+        <!-- ================================================================ -->
+        <!-- RENEWAL PROCESSING ACTIONS -->
+        <!-- ================================================================ -->
+
+        <!-- Renewal Processing Wizard Action -->
+        <record id="action_subscription_renewal_wizard" model="ir.actions.act_window">
+            <field name="name">Process Subscription Renewals</field>
+            <field name="res_model">ams.subscription.renewal.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context">{}</field>
+        </record>
+
+        <!-- ================================================================ -->
+        <!-- SERVER ACTIONS -->
+        <!-- ================================================================ -->
+
+        <!-- Process Auto Renewals Server Action -->
+        <record id="action_process_auto_renewals" model="ir.actions.server">
+            <field name="name">Process Auto Renewals</field>
+            <field name="model_id" ref="model_ams_subscription_renewal"/>
+            <field name="binding_model_id" ref="model_ams_subscription_renewal"/>
+            <field name="state">code</field>
+            <field name="code">
+                if records:
+                    auto_renewals = records.filtered(lambda r: r.auto_renewal_enabled and r.state in ['pending', 'reminded', 'grace_period'])
+                    results = env['ams.subscription.renewal'].process_automatic_renewals()
+                    
+                    message = f"Auto-renewal processing completed: {results.get('success_count', 0)} successful, {results.get('error_count', 0)} failed"
+                    
+                    return {
+                        'type': 'ir.actions.client',
+                        'tag': 'display_notification',
+                        'params': {
+                            'message': message,
+                            'type': 'success' if results.get('error_count', 0) == 0 else 'warning',
+                            'sticky': True,
+                        }
+                    }
+            </field>
+            <field name="groups_id" eval="[(4, ref('group_ams_subscription_manager'))]"/>
+        </record>
+
+        <!-- Send Renewal Reminders Server Action -->
+        <record id="action_send_renewal_reminders" model="ir.actions.server">
+            <field name="name">Send Renewal Reminders</field>
+            <field name="model_id" ref="model_ams_subscription_renewal"/>
+            <field name="binding_model_id" ref="model_ams_subscription_renewal"/>
+            <field name="state">code</field>
+            <field name="code">
+                if records:
+                    pending_renewals = records.filtered(lambda r: r.state in ['pending', 'reminded'])
+                    sent_count = 0
+                    
+                    for renewal in pending_renewals:
+                        if renewal.send_renewal_reminder(force_send=True):
+                            sent_count += 1
+                    
+                    message = f"Sent {sent_count} renewal reminders out of {len(pending_renewals)} selected renewals"
+                    
+                    return {
+                        'type': 'ir.actions.client',
+                        'tag': 'display_notification',
+                        'params': {
+                            'message': message,
+                            'type': 'success' if sent_count > 0 else 'info',
+                            'sticky': False,
+                        }
+                    }
+            </field>
+            <field name="groups_id" eval="[(4, ref('group_ams_subscription_user'))]"/>
+        </record>
+
+        <!-- Bulk Process Renewals Action -->
+        <record id="action_bulk_process_renewals" model="ir.actions.server">
+            <field name="name">Bulk Process Selected Renewals</field>
+            <field name="model_id" ref="model_ams_subscription_renewal"/>
+            <field name="binding_model_id" ref="model_ams_subscription_renewal"/>
+            <field name="state">code</field>
+            <field name="code">
+                if records:
+                    processable = records.filtered(lambda r: r.state in ['pending', 'reminded', 'grace_period'])
+                    success_count = 0
+                    error_count = 0
+                    
+                    for renewal in processable:
+                        try:
+                            if renewal.process_renewal('manual'):
+                                success_count += 1
+                            else:
+                                error_count += 1
+                        except Exception as e:
+                            error_count += 1
+                    
+                    message = f"Bulk processing completed: {success_count} successful, {error_count} failed"
+                    
+                    return {
+                        'type': 'ir.actions.client',
+                        'tag': 'display_notification',
+                        'params': {
+                            'message': message,
+                            'type': 'success' if error_count == 0 else 'warning',
+                            'sticky': True,
+                        }
+                    }
+            </field>
+            <field name="groups_id" eval="[(4, ref('group_ams_subscription_manager'))]"/>
+        </record>
+
+        <!-- ================================================================ -->
+        <!-- AUTOMATED ACTIONS / CRON JOBS -->
+        <!-- ================================================================ -->
+
+        <!-- Process Auto Renewals Cron -->
+        <record id="ir_cron_process_auto_renewals" model="ir.cron">
+            <field name="name">Process Automatic Subscription Renewals</field>
+            <field name="model_id" ref="model_ams_subscription_renewal"/>
+            <field name="state">code</field>
+            <field name="code">
+                # Process automatic renewals
+                model.process_automatic_renewals()
+            </field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="active">True</field>
+            <field name="priority">5</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- Send Scheduled Reminders Cron -->
+        <record id="ir_cron_send_renewal_reminders" model="ir.cron">
+            <field name="name">Send Scheduled Renewal Reminders</field>
+            <field name="model_id" ref="model_ams_subscription_renewal"/>
+            <field name="state">code</field>
+            <field name="code">
+                # Send all scheduled renewal reminders
+                model.send_scheduled_reminders()
+            </field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="active">True</field>
+            <field name="priority">10</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- Update Overdue Renewals Cron -->
+        <record id="ir_cron_update_overdue_renewals" model="ir.cron">
+            <field name="name">Update Overdue Renewal Status</field>
+            <field name="model_id" ref="model_ams_subscription_renewal"/>
+            <field name="state">code</field>
+            <field name="code">
+                # Update overdue renewal statuses
+                model.update_overdue_renewals()
+            </field>
+            <field name="interval_number">6</field>
+            <field name="interval_type">hours</field>
+            <field name="numbercall">-1</field>
+            <field name="active">True</field>
+            <field name="priority">15</field>
+            <field name="user_id" ref="base.user_root"/>
+        </record>
+
+        <!-- ================================================================ -->
+        <!-- DASHBOARD ACTIONS -->
+        <!-- ================================================================ -->
+
+        <!-- Renewal Dashboard Action -->
+        <record id="action_subscription_renewal_dashboard" model="ir.actions.act_window">
+            <field name="name">Renewal Dashboard</field>
+            <field name="res_model">ams.subscription.renewal</field>
+            <field name="view_mode">kanban,calendar,graph,pivot</field>
+            <field name="domain">[]</field>
+            <field name="context">{
+                'search_default_due_next_30_days': 1,
+                'kanban_dashboard': True
+            }</field>
+        </record>
+
+        <!-- Renewal Pipeline Action -->
+        <record id="action_renewal_pipeline_report" model="ir.actions.act_window">
+            <field name="name">Renewal Pipeline Report</field>
+            <field name="res_model">ams.subscription.renewal</field>
+            <field name="view_mode">graph,pivot,tree</field>
+            <field name="domain">[('state', 'in', ['pending', 'reminded', 'grace_period'])]</field>
+            <field name="context">{'search_default_group_by_renewal_due_date': 1}</field>
+        </record>
+
+    </data>
+</odoo>
