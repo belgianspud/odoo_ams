@@ -3,6 +3,164 @@
     <data noupdate="1">
         
         <!-- ========================================================================== -->
+        <!-- PRODUCT TEMPLATES FOR SUBSCRIPTIONS -->
+        <!-- ========================================================================== -->
+        
+        <!-- Individual Membership Templates -->
+        <record id="product_template_individual_monthly" model="product.template">
+            <field name="name">Individual Monthly Membership</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">25.00</field>
+            <field name="is_subscription">True</field>
+            <field name="subscription_scope">individual</field>
+            <field name="is_renewable">True</field>
+            <field name="auto_renewal_enabled">False</field>
+            <field name="ams_product_behavior">chapter</field>
+            <field name="grants_portal_access">True</field>
+        </record>
+
+        <record id="product_template_individual_quarterly" model="product.template">
+            <field name="name">Individual Quarterly Membership</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">70.00</field>
+            <field name="is_subscription">True</field>
+            <field name="subscription_scope">individual</field>
+            <field name="is_renewable">True</field>
+            <field name="auto_renewal_enabled">False</field>
+            <field name="ams_product_behavior">committee</field>
+            <field name="grants_portal_access">True</field>
+        </record>
+
+        <record id="product_template_individual_annual" model="product.template">
+            <field name="name">Individual Annual Membership</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">250.00</field>
+            <field name="is_subscription">True</field>
+            <field name="subscription_scope">individual</field>
+            <field name="is_renewable">True</field>
+            <field name="auto_renewal_enabled">True</field>
+            <field name="ams_product_behavior">membership</field>
+            <field name="grants_portal_access">True</field>
+        </record>
+
+        <record id="product_template_student_annual" model="product.template">
+            <field name="name">Student Annual Membership</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">50.00</field>
+            <field name="is_subscription">True</field>
+            <field name="subscription_scope">individual</field>
+            <field name="is_renewable">True</field>
+            <field name="requires_approval">True</field>
+            <field name="ams_product_behavior">membership</field>
+            <field name="grants_portal_access">True</field>
+        </record>
+
+        <record id="product_template_corporate_annual" model="product.template">
+            <field name="name">Corporate Annual Membership</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">1500.00</field>
+            <field name="is_subscription">True</field>
+            <field name="subscription_scope">enterprise</field>
+            <field name="is_renewable">True</field>
+            <field name="requires_approval">True</field>
+            <field name="supports_seats">True</field>
+            <field name="default_seat_count">10</field>
+            <field name="ams_product_behavior">membership</field>
+            <field name="grants_portal_access">True</field>
+        </record>
+
+        <record id="product_template_chapter_local" model="product.template">
+            <field name="name">Local Chapter Membership</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">75.00</field>
+            <field name="is_subscription">True</field>
+            <field name="subscription_scope">individual</field>
+            <field name="is_renewable">True</field>
+            <field name="ams_product_behavior">membership</field>
+            <field name="grants_portal_access">True</field>
+        </record>
+
+        <record id="product_template_journal_print" model="product.template">
+            <field name="name">Professional Journal (Print)</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">120.00</field>
+            <field name="is_subscription">True</field>
+            <field name="subscription_scope">individual</field>
+            <field name="is_renewable">True</field>
+            <field name="ams_product_behavior">publication</field>
+        </record>
+
+        <record id="product_template_journal_digital" model="product.template">
+            <field name="name">Professional Journal (Digital)</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">80.00</field>
+            <field name="is_subscription">True</field>
+            <field name="subscription_scope">individual</field>
+            <field name="is_renewable">True</field>
+            <field name="ams_product_behavior">publication</field>
+            <field name="digital_url">https://publications.example.com/journal-digital</field>
+        </record>
+
+        <record id="product_template_premium_support" model="product.template">
+            <field name="name">Premium Support Service</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">300.00</field>
+            <field name="is_subscription">True</field>
+            <field name="subscription_scope">individual</field>
+            <field name="is_renewable">True</field>
+            <field name="ams_product_behavior">training</field>
+            <field name="grants_portal_access">True</field>
+        </record>
+
+        <record id="product_template_certification_program" model="product.template">
+            <field name="name">Certification Program Access</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">800.00</field>
+            <field name="is_subscription">True</field>
+            <field name="subscription_scope">individual</field>
+            <field name="is_renewable">True</field>
+            <field name="requires_approval">True</field>
+            <field name="ams_product_behavior">certification</field>
+            <field name="grants_portal_access">True</field>
+            <field name="digital_url">https://certifications.example.com/access</field>
+        </record>
+
+        <record id="product_template_webinar_series" model="product.template">
+            <field name="name">Monthly Webinar Series</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">150.00</field>
+            <field name="is_subscription">True</field>
+            <field name="subscription_scope">individual</field>
+            <field name="is_renewable">True</field>
+            <field name="ams_product_behavior">service</field>
+            <field name="grants_portal_access">True</field>
+        </record>
+
+        <record id="product_template_committee_access" model="product.template">
+            <field name="name">Professional Committee Access</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">200.00</field>
+            <field name="is_subscription">True</field>
+            <field name="subscription_scope">individual</field>
+            <field name="is_renewable">True</field>
+            <field name="requires_approval">True</field>
+            <field name="ams_product_behavior">membership</field>
+            <field name="grants_portal_access">True</field>
+        </record>
+        
+        <!-- ========================================================================== -->
         <!-- DEFAULT SUBSCRIPTION PRODUCT DEFINITIONS -->
         <!-- ========================================================================== -->
         
@@ -10,6 +168,7 @@
         <record id="subscription_individual_monthly" model="ams.subscription.product">
             <field name="name">Individual Monthly Membership</field>
             <field name="code">INDIV_MONTHLY</field>
+            <field name="product_template_id" ref="product_template_individual_monthly"/>
             <field name="subscription_type">membership</field>
             <field name="subscription_category">core</field>
             <field name="default_duration">1</field>
@@ -29,6 +188,7 @@
         <record id="subscription_individual_quarterly" model="ams.subscription.product">
             <field name="name">Individual Quarterly Membership</field>
             <field name="code">INDIV_QUARTERLY</field>
+            <field name="product_template_id" ref="product_template_individual_quarterly"/>
             <field name="subscription_type">membership</field>
             <field name="subscription_category">core</field>
             <field name="default_duration">3</field>
@@ -48,6 +208,7 @@
         <record id="subscription_individual_annual" model="ams.subscription.product">
             <field name="name">Individual Annual Membership</field>
             <field name="code">INDIV_ANNUAL</field>
+            <field name="product_template_id" ref="product_template_individual_annual"/>
             <field name="subscription_type">membership</field>
             <field name="subscription_category">core</field>
             <field name="default_duration">12</field>
@@ -69,6 +230,7 @@
         <record id="subscription_student_annual" model="ams.subscription.product">
             <field name="name">Student Annual Membership</field>
             <field name="code">STUDENT_ANNUAL</field>
+            <field name="product_template_id" ref="product_template_student_annual"/>
             <field name="subscription_type">membership</field>
             <field name="subscription_category">specialty</field>
             <field name="default_duration">12</field>
@@ -90,6 +252,7 @@
         <record id="subscription_corporate_annual" model="ams.subscription.product">
             <field name="name">Corporate Annual Membership</field>
             <field name="code">CORP_ANNUAL</field>
+            <field name="product_template_id" ref="product_template_corporate_annual"/>
             <field name="subscription_type">membership</field>
             <field name="subscription_category">premium</field>
             <field name="default_duration">12</field>
@@ -112,6 +275,7 @@
         <record id="subscription_chapter_local" model="ams.subscription.product">
             <field name="name">Local Chapter Membership</field>
             <field name="code">CHAPTER_LOCAL</field>
+            <field name="product_template_id" ref="product_template_chapter_local"/>
             <field name="subscription_type">chapter</field>
             <field name="subscription_category">add_on</field>
             <field name="default_duration">12</field>
@@ -132,6 +296,7 @@
         <record id="subscription_journal_print" model="ams.subscription.product">
             <field name="name">Professional Journal (Print)</field>
             <field name="code">JOURNAL_PRINT</field>
+            <field name="product_template_id" ref="product_template_journal_print"/>
             <field name="subscription_type">publication</field>
             <field name="subscription_category">add_on</field>
             <field name="default_duration">12</field>
@@ -151,6 +316,7 @@
         <record id="subscription_journal_digital" model="ams.subscription.product">
             <field name="name">Professional Journal (Digital)</field>
             <field name="code">JOURNAL_DIGITAL</field>
+            <field name="product_template_id" ref="product_template_journal_digital"/>
             <field name="subscription_type">publication</field>
             <field name="subscription_category">add_on</field>
             <field name="default_duration">12</field>
@@ -172,6 +338,7 @@
         <record id="subscription_premium_support" model="ams.subscription.product">
             <field name="name">Premium Support Service</field>
             <field name="code">PREMIUM_SUPPORT</field>
+            <field name="product_template_id" ref="product_template_premium_support"/>
             <field name="subscription_type">service</field>
             <field name="subscription_category">premium</field>
             <field name="default_duration">12</field>
@@ -193,6 +360,7 @@
         <record id="subscription_certification_program" model="ams.subscription.product">
             <field name="name">Certification Program Access</field>
             <field name="code">CERT_PROGRAM</field>
+            <field name="product_template_id" ref="product_template_certification_program"/>
             <field name="subscription_type">certification</field>
             <field name="subscription_category">specialty</field>
             <field name="default_duration">24</field>
@@ -216,6 +384,7 @@
         <record id="subscription_webinar_series" model="ams.subscription.product">
             <field name="name">Monthly Webinar Series</field>
             <field name="code">WEBINAR_MONTHLY</field>
+            <field name="product_template_id" ref="product_template_webinar_series"/>
             <field name="subscription_type">training</field>
             <field name="subscription_category">add_on</field>
             <field name="default_duration">6</field>
@@ -237,6 +406,7 @@
         <record id="subscription_committee_access" model="ams.subscription.product">
             <field name="name">Professional Committee Access</field>
             <field name="code">COMMITTEE_ACCESS</field>
+            <field name="product_template_id" ref="product_template_committee_access"/>
             <field name="subscription_type">committee</field>
             <field name="subscription_category">specialty</field>
             <field name="default_duration">12</field>

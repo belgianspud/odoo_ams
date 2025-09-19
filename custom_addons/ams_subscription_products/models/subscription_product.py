@@ -421,6 +421,13 @@ class AMSSubscriptionProduct(models.Model):
                 if subscription.default_billing_period_id not in subscription.billing_period_ids:
                     raise ValidationError(_("Default billing period must be included in supported billing periods"))
 
+    @api.constrains('product_template_id')
+    def _check_product_template_subscription(self):
+        """Ensure product template is configured for subscriptions"""
+        for subscription in self:
+            if subscription.product_template_id and not subscription.product_template_id.is_subscription:
+                raise ValidationError(_("Selected product template must be configured as a subscription product"))
+
     # ========================================================================
     # BUSINESS METHODS
     # ========================================================================
@@ -542,6 +549,35 @@ class AMSSubscriptionProduct(models.Model):
         
         return 0
 
+    def sync_with_product_template(self):
+        """
+        Synchronize subscription product data with underlying product template.
+        
+        Returns:
+            bool: True if sync was successful
+        """
+        self.ensure_one()
+        
+        if not self.product_template_id:
+            return False
+        
+        template = self.product_template_id
+        
+        # Sync basic pricing
+        if template.list_price != self.base_price:
+            self.base_price = template.list_price
+        
+        # Sync billing period if template has one configured
+        if hasattr(template, 'default_billing_period_id') and template.default_billing_period_id:
+            if template.default_billing_period_id != self.default_billing_period_id:
+                self.default_billing_period_id = template.default_billing_period_id
+            
+            # Ensure template's billing period is in our supported periods
+            if template.default_billing_period_id not in self.billing_period_ids:
+                self.billing_period_ids = [(4, template.default_billing_period_id.id)]
+        
+        return True
+
     # ========================================================================
     # QUERY METHODS
     # ========================================================================
@@ -596,6 +632,20 @@ class AMSSubscriptionProduct(models.Model):
         
         return filtered_subs
 
+    @api.model
+    def get_subscriptions_by_price_range(self, min_price=None, max_price=None, currency_id=None):
+        """Get subscription products within price range"""
+        domain = [('active', '=', True)]
+        
+        if min_price is not None:
+            domain.append(('base_price', '>=', min_price))
+        if max_price is not None:
+            domain.append(('base_price', '<=', max_price))
+        if currency_id:
+            domain.append(('currency_id', '=', currency_id))
+        
+        return self.search(domain)
+
     # ========================================================================
     # UI ACTIONS
     # ========================================================================
@@ -641,6 +691,31 @@ class AMSSubscriptionProduct(models.Model):
             }
         }
 
+    def action_sync_with_template(self):
+        """Synchronize with product template"""
+        self.ensure_one()
+        
+        if self.sync_with_product_template():
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Sync Complete'),
+                    'message': _('Subscription product has been synchronized with product template'),
+                    'type': 'success',
+                }
+            }
+        else:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Sync Failed'),
+                    'message': _('No product template linked or sync failed'),
+                    'type': 'warning',
+                }
+            }
+
     # ========================================================================
     # NAME AND DISPLAY
     # ========================================================================
@@ -673,3 +748,37 @@ class AMSSubscriptionProduct(models.Model):
             args = domain + args
         
         return self._search(args, limit=limit, access_rights_uid=name_get_uid)
+
+    # ========================================================================
+    # LIFECYCLE METHODS
+    # ========================================================================
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Override create to handle auto-sync with product template"""
+        records = super().create(vals_list)
+        
+        # Auto-sync with product template if configured
+        for record in records:
+            if record.product_template_id:
+                try:
+                    record.sync_with_product_template()
+                except Exception as e:
+                    _logger.warning(f"Failed to auto-sync subscription {record.name} with template: {e}")
+        
+        return records
+
+    def write(self, vals):
+        """Override write to handle product template changes"""
+        result = super().write(vals)
+        
+        # If product template changed, sync data
+        if 'product_template_id' in vals:
+            for record in self:
+                if record.product_template_id:
+                    try:
+                        record.sync_with_product_template()
+                    except Exception as e:
+                        _logger.warning(f"Failed to sync subscription {record.name} with new template: {e}")
+        
+        return result

@@ -29,6 +29,9 @@ class IrModuleModule(models.Model):
         'im_livechat',          # Live Chat
         'survey',               # Surveys
         'mass_mailing_sms',     # SMS Marketing
+        'board',                # Dashboards for Reporting
+        'spreadsheet_dashboard',# Dashboard Spreadsheets for Reporting
+
 
         #Custom Modules
         'ams_member_data',      # AMS base module for member data structures - Layer 1
