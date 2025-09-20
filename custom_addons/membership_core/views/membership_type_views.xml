@@ -26,8 +26,8 @@
                                 icon="fa-users">
                             <field name="membership_count" widget="statinfo" string="Active Memberships"/>
                         </button>
-                        <button name="%(action_membership_revenue_report)d"
-                                type="action"
+                        <button name="action_membership_revenue_report"
+                                type="object"
                                 class="oe_stat_button"
                                 icon="fa-money"
                                 attrs="{'invisible': [('total_revenue', '=', 0)]}">
@@ -301,18 +301,6 @@
                 Local Chapter, Student, Honorary Member
             </p>
         </field>
-    </record>
-
-    <!-- Action for viewing membership revenue report -->
-    <record id="action_membership_revenue_report" model="ir.actions.act_window">
-        <field name="name">Membership Revenue Report</field>
-        <field name="res_model">membership.membership</field>
-        <field name="view_mode">pivot,graph,tree</field>
-        <field name="domain">[('membership_type_id', '=', active_id)]</field>
-        <field name="context">{
-            'search_default_group_by_state': 1,
-            'search_default_group_by_start_date': 1,
-        }</field>
     </record>
 
 </odoo>

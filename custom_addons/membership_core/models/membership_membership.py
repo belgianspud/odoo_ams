@@ -357,6 +357,20 @@ class MembershipMembership(models.Model):
                 'target': 'current'
             }
     
+    def action_open_renewal_wizard(self):
+        """Open renewal wizard for this membership"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Renew Membership'),
+            'res_model': 'membership.renewal.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_membership_id': self.id,
+            }
+        }
+    
     # Automated state transition (called by cron)
     @api.model
     def _cron_update_membership_states(self):

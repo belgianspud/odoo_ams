@@ -5,7 +5,6 @@
     <menuitem id="menu_membership_root" 
               name="Membership" 
               sequence="60"/>
-              <!--web_icon="membership_core,static/description/icon.png"/>-->
     
     <!-- Membership Management Section -->
     <menuitem id="menu_membership_management" 
@@ -86,43 +85,14 @@
     <menuitem id="menu_membership_create" 
               name="Create Membership" 
               parent="menu_membership_management" 
-              action="action_create_membership_wizard" 
+              action="action_membership_create_wizard" 
               sequence="40"
               groups="membership_core.group_membership_user"/>
     
-    <!-- Separator for better organization -->
-    <menuitem id="menu_membership_separator_1" 
-              name="──────────" 
-              parent="menu_membership_management" 
-              sequence="35"/>
-    
-    <!-- Dashboard/Overview (placeholder for future dashboard) -->
+    <!-- Dashboard/Overview -->
     <menuitem id="menu_membership_dashboard" 
               name="Dashboard" 
               parent="menu_membership_root" 
-              sequence="5"/>
-    
-    <!-- Add shortcut actions to Apps menu for quick access -->
-    <record id="ir_actions_server_membership_quick_create" model="ir.actions.server">
-        <field name="name">Quick Create Membership</field>
-        <field name="model_id" ref="model_membership_membership"/>
-        <field name="state">code</field>
-        <field name="code">
-            action = {
-                "type": "ir.actions.act_window",
-                "res_model": "membership.create.wizard",
-                "view_mode": "form",
-                "target": "new",
-                "context": {},
-            }
-        </field>
-    </record>
-    
-    <!-- Menu item for quick create -->
-    <menuitem id="menu_membership_quick_create" 
-              name="+ New Membership" 
-              parent="menu_membership_management" 
-              action="ir_actions_server_membership_quick_create" 
               sequence="5"/>
 
 </odoo>

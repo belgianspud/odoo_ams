@@ -75,7 +75,7 @@
                                     <label for="end_date" attrs="{'invisible': [('membership_type_id.is_lifetime', '=', True)]}"/>
                                     <div attrs="{'invisible': [('membership_type_id.is_lifetime', '=', True)]}">
                                         <field name="end_date" class="oe_inline" readonly="1"/> 
-                                        <button name="%(action_membership_renewal_wizard)d" type="action" 
+                                        <button name="action_open_renewal_wizard" type="object" 
                                                 string="Extend" class="btn-link" 
                                                 attrs="{'invisible': [('state', 'not in', ['active', 'grace'])]}"/>
                                     </div>
@@ -230,7 +230,7 @@
                                         <a type="object" name="action_activate" class="btn btn-primary btn-sm">Activate</a>
                                     </t>
                                     <t t-elif="record.state.raw_value in ['active', 'grace']">
-                                        <a type="object" name="action_renew" class="btn btn-success btn-sm">Renew</a>
+                                        <a type="object" name="action_open_renewal_wizard" class="btn btn-success btn-sm">Renew</a>
                                     </t>
                                 </div>
                             </div>
@@ -396,14 +396,6 @@
         <field name="context">{
             'default_membership_id': active_id,
         }</field>
-    </record>
-
-    <!-- Action to view invoices -->
-    <record id="action_view_membership_invoices" model="ir.actions.act_window">
-        <field name="name">Membership Invoices</field>
-        <field name="res_model">account.move</field>
-        <field name="view_mode">tree,form</field>
-        <field name="domain">[('id', 'in', context.get('invoice_ids', []))]</field>
     </record>
 
 </odoo>
