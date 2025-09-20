@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Membership Form View -->
+    <record id="membership_membership_form_view" model="ir.ui.view">
+        <field name="name">membership.membership.form</field>
+        <field name="model">membership.membership</field>
+        <field name="arch" type="xml">
+            <form string="Membership">
+                <header>
+                    <button name="action_activate" type="object" string="Activate" 
+                            class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="action_renew" type="object" string="Renew" 
+                            class="oe_highlight" attrs="{'invisible': [('state', 'not in', ['active', 'grace', 'suspended'])]}"/>
+                    <button name="action_suspend" type="object" string="Suspend" 
+                            attrs="{'invisible': [('state', 'not in', ['active', 'grace'])]}"/>
+                    <button name="action_terminate" type="object" string="Terminate" 
+                            attrs="{'invisible': [('state', 'not in', ['active', 'grace', 'suspended'])]}"/>
+                    <button name="action_cancel" type="object" string="Cancel" 
+                            attrs="{'invisible': [('state', 'in', ['cancelled', 'terminated'])]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,grace,suspended,terminated"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_invoices" type="object" class="oe_stat_button" icon="fa-pencil-square-o"
+                                attrs="{'invisible': [('invoice_ids', '=', [])]}">
+                            <field name="invoice_ids" widget="statinfo" string="Invoices"/>
+                        </button>
+                    </div>
+                    
+                    <widget name="web_ribbon" title="Cancelled" bg_color="bg-danger"
+                            attrs="{'invisible': [('state', '!=', 'cancelled')]}"/>
+                    <widget name="web_ribbon" title="Terminated" bg_color="bg-warning"
+                            attrs="{'invisible': [('state', '!=', 'terminated')]}"/>
+                    
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                        <h3><field name="display_name" readonly="1"/></h3>
+                    </div>
+                    
+                    <group>
+                        <group name="member_info" string="Member Information">
+                            <field name="partner_id" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="membership_type_id" options="{'no_create': True}"/>
+                            <field name="membership_category" readonly="1"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group name="financial_info" string="Financial Information">
+                            <field name="amount_paid"/>
+                            <field name="currency_id" groups="base.group_multi_currency"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group name="dates" string="Important Dates">
+                            <field name="start_date"/>
+                            <field name="end_date" attrs="{'invisible': [('membership_type_id.is_lifetime', '=', True)]}"/>
+                            <field name="renewal_date" attrs="{'invisible': [('membership_type_id.is_lifetime', '=', True)]}"/>
+                            <field name="grace_end_date" attrs="{'invisible': [('state', '!=', 'grace')]}"/>
+                            <field name="suspension_end_date" attrs="{'invisible': [('state', '!=', 'suspended')]}"/>
+                            <field name="termination_date" attrs="{'invisible': [('state', '!=', 'terminated')]}"/>
+                        </group>
+                        <group name="renewal_info" string="Renewal Information">
+                            <field name="auto_renewal" readonly="1"/>
+                            <field name="renewal_reminder_sent" attrs="{'invisible': [('auto_renewal', '=', False)]}"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Membership Details" name="details">
+                            <group>
+                                <group string="Status Information">
+                                    <field name="state" readonly="1"/>
+                                    <label for="end_date" attrs="{'invisible': [('membership_type_id.is_lifetime', '=', True)]}"/>
+                                    <div attrs="{'invisible': [('membership_type_id.is_lifetime', '=', True)]}">
+                                        <field name="end_date" class="oe_inline" readonly="1"/> 
+                                        <button name="%(action_membership_renewal_wizard)d" type="action" 
+                                                string="Extend" class="btn-link" 
+                                                attrs="{'invisible': [('state', 'not in', ['active', 'grace'])]}"/>
+                                    </div>
+                                </group>
+                                <group string="Days Information" attrs="{'invisible': [('membership_type_id.is_lifetime', '=', True)]}">
+                                    <field name="days_until_expiry" readonly="1" string="Days Until Expiry"/>
+                                    <field name="is_expiring_soon" readonly="1"/>
+                                </group>
+                            </group>
+                            
+                            <separator string="Membership Type Description"/>
+                            <field name="membership_type_id.description" readonly="1" nolabel="1"/>
+                        </page>
+                        
+                        <page string="Notes" name="notes">
+                            <field name="notes" placeholder="Internal notes about this membership..."/>
+                        </page>
+                        
+                        <page string="Related Documents" name="documents">
+                            <group>
+                                <field name="invoice_ids" nolabel="1" readonly="1">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="partner_id"/>
+                                        <field name="invoice_date"/>
+                                        <field name="amount_total"/>
+                                        <field name="state"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Membership Tree View -->
+    <record id="membership_membership_tree_view" model="ir.ui.view">
+        <field name="name">membership.membership.tree</field>
+        <field name="model">membership.membership</field>
+        <field name="arch" type="xml">
+            <tree string="Memberships" decoration-success="state=='active'" 
+                  decoration-warning="state=='grace'" decoration-danger="state in ['suspended', 'terminated', 'cancelled']"
+                  decoration-muted="state=='draft'" sample="1">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="membership_type_id"/>
+                <field name="membership_category"/>
+                <field name="state" widget="badge" 
+                       decoration-success="state=='active'"
+                       decoration-warning="state in ['grace', 'suspended']"
+                       decoration-danger="state in ['terminated', 'cancelled']"
+                       decoration-info="state=='draft'"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="amount_paid" widget="monetary"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="auto_renewal" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Membership Kanban View -->
+    <record id="membership_membership_kanban_view" model="ir.ui.view">
+        <field name="name">membership.membership.kanban</field>
+        <field name="model">membership.membership</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="membership_type_id"/>
+                <field name="state"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="amount_paid"/>
+                <field name="currency_id"/>
+                <field name="auto_renewal"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click 
+                             #{record.state.raw_value == 'active' ? 'border-success' : 
+                               record.state.raw_value == 'grace' ? 'border-warning' : 
+                               record.state.raw_value in ['suspended', 'terminated', 'cancelled'] ? 'border-danger' : 'border-secondary'}">
+                            <div class="o_kanban_image">
+                                <img t-att-src="kanban_image('res.partner', 'avatar_128', record.partner_id.raw_value)" 
+                                     t-att-title="record.partner_id.value" t-att-alt="record.partner_id.value" 
+                                     class="o_image_64_contain"/>
+                            </div>
+                            <div class="oe_kanban_details">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="partner_id"/>
+                                        </strong>
+                                        <small class="o_kanban_record_subtitle text-muted">
+                                            <field name="name"/> - <field name="membership_type_id"/>
+                                        </small>
+                                    </div>
+                                    <div class="o_kanban_manage_button_section">
+                                        <a class="o_kanban_manage_toggle_button" href="#">
+                                            <i class="fa fa-ellipsis-v" role="img" aria-label="Manage" title="Manage"/>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <strong>Status:</strong>
+                                            <span t-attf-class="badge #{record.state.raw_value == 'active' ? 'badge-success' : 
+                                                                      record.state.raw_value == 'grace' ? 'badge-warning' : 
+                                                                      record.state.raw_value in ['suspended', 'terminated', 'cancelled'] ? 'badge-danger' : 'badge-secondary'}">
+                                                <field name="state"/>
+                                            </span>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong>Amount:</strong> 
+                                            <field name="amount_paid" widget="monetary"/>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-1">
+                                        <div class="col-6">
+                                            <strong>Start:</strong> 
+                                            <field name="start_date"/>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong>Expires:</strong> 
+                                            <t t-if="record.end_date.raw_value">
+                                                <field name="end_date"/>
+                                            </t>
+                                            <t t-else="">
+                                                Lifetime
+                                            </t>
+                                        </div>
+                                    </div>
+                                    <t t-if="record.auto_renewal.raw_value">
+                                        <div class="row mt-1">
+                                            <div class="col-12">
+                                                <i class="fa fa-refresh text-success"/> Auto-renewal enabled
+                                            </div>
+                                        </div>
+                                    </t>
+                                </div>
+                                <div class="o_kanban_manage_button_section o_kanban_manage_view">
+                                    <t t-if="record.state.raw_value == 'draft'">
+                                        <a type="object" name="action_activate" class="btn btn-primary btn-sm">Activate</a>
+                                    </t>
+                                    <t t-elif="record.state.raw_value in ['active', 'grace']">
+                                        <a type="object" name="action_renew" class="btn btn-success btn-sm">Renew</a>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Membership Search View -->
+    <record id="membership_membership_search_view" model="ir.ui.view">
+        <field name="name">membership.membership.search</field>
+        <field name="model">membership.membership</field>
+        <field name="arch" type="xml">
+            <search string="Memberships">
+                <field name="name" string="Membership Number"/>
+                <field name="partner_id" string="Member"/>
+                <field name="membership_type_id" string="Type"/>
+                <separator/>
+                <filter string="Active" name="active" 
+                        domain="[('state', '=', 'active')]"/>
+                <filter string="Grace Period" name="grace" 
+                        domain="[('state', '=', 'grace')]"/>
+                <filter string="Suspended" name="suspended" 
+                        domain="[('state', '=', 'suspended')]"/>
+                <filter string="Terminated" name="terminated" 
+                        domain="[('state', '=', 'terminated')]"/>
+                <filter string="Cancelled" name="cancelled" 
+                        domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter string="Individual" name="individual" 
+                        domain="[('membership_category', '=', 'individual')]"/>
+                <filter string="Organization" name="organization" 
+                        domain="[('membership_category', '=', 'organization')]"/>
+                <filter string="Chapter" name="chapter" 
+                        domain="[('membership_category', '=', 'chapter')]"/>
+                <separator/>
+                <filter string="Expiring Soon" name="expiring_soon" 
+                        domain="[('end_date', '&lt;=', (context_today() + datetime.timedelta(days=30)).strftime('%Y-%m-%d')), ('end_date', '&gt;=', context_today().strftime('%Y-%m-%d')), ('state', 'in', ['active', 'grace'])]"/>
+                <filter string="Expired" name="expired" 
+                        domain="[('end_date', '&lt;', context_today().strftime('%Y-%m-%d')), ('state', 'in', ['grace', 'suspended'])]"/>
+                <filter string="Auto-Renewal" name="auto_renewal" 
+                        domain="[('auto_renewal', '=', True)]"/>
+                <filter string="Lifetime" name="lifetime" 
+                        domain="[('membership_type_id.is_lifetime', '=', True)]"/>
+                <separator/>
+                <filter string="This Year" name="this_year" 
+                        domain="[('start_date', '&gt;=', context_today().replace(month=1, day=1).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter string="State" name="group_by_state" 
+                            context="{'group_by': 'state'}"/>
+                    <filter string="Member" name="group_by_partner" 
+                            context="{'group_by': 'partner_id'}"/>
+                    <filter string="Membership Type" name="group_by_type" 
+                            context="{'group_by': 'membership_type_id'}"/>
+                    <filter string="Category" name="group_by_category" 
+                            context="{'group_by': 'membership_category'}"/>
+                    <filter string="Start Date" name="group_by_start_date" 
+                            context="{'group_by': 'start_date'}"/>
+                    <filter string="End Date" name="group_by_end_date" 
+                            context="{'group_by': 'end_date'}"/>
+                    <filter string="Company" name="group_by_company" 
+                            context="{'group_by': 'company_id'}" 
+                            groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Membership Pivot View -->
+    <record id="membership_membership_pivot_view" model="ir.ui.view">
+        <field name="name">membership.membership.pivot</field>
+        <field name="model">membership.membership</field>
+        <field name="arch" type="xml">
+            <pivot string="Membership Analysis" sample="1">
+                <field name="membership_category" type="row"/>
+                <field name="state" type="col"/>
+                <field name="amount_paid" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Membership Graph View -->
+    <record id="membership_membership_graph_view" model="ir.ui.view">
+        <field name="name">membership.membership.graph</field>
+        <field name="model">membership.membership</field>
+        <field name="arch" type="xml">
+            <graph string="Membership Analysis" sample="1">
+                <field name="start_date" interval="month"/>
+                <field name="amount_paid" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Membership Calendar View -->
+    <record id="membership_membership_calendar_view" model="ir.ui.view">
+        <field name="name">membership.membership.calendar</field>
+        <field name="model">membership.membership</field>
+        <field name="arch" type="xml">
+            <calendar string="Membership Calendar" date_start="start_date" date_stop="end_date" 
+                      color="state" quick_add="False" event_open_popup="True">
+                <field name="partner_id"/>
+                <field name="membership_type_id"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_membership_membership" model="ir.actions.act_window">
+        <field name="name">Memberships</field>
+        <field name="res_model">membership.membership</field>
+        <field name="view_mode">tree,kanban,form,calendar,pivot,graph</field>
+        <field name="search_view_id" ref="membership_membership_search_view"/>
+        <field name="context">{
+            'search_default_active': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first membership record!
+            </p>
+            <p>
+                Membership records track individual member relationships with your organization.
+                Each record includes the member's details, membership type, status, and important dates.
+            </p>
+            <p>
+                You can create memberships manually here, or they can be automatically created
+                when members purchase membership products through your sales process.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action for Active Memberships -->
+    <record id="action_membership_active" model="ir.actions.act_window">
+        <field name="name">Active Memberships</field>
+        <field name="res_model">membership.membership</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('state', '=', 'active')]</field>
+        <field name="context">{
+            'search_default_group_by_type': 1,
+        }</field>
+    </record>
+
+    <!-- Action for Expiring Memberships -->
+    <record id="action_membership_expiring" model="ir.actions.act_window">
+        <field name="name">Expiring Memberships</field>
+        <field name="res_model">membership.membership</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('state', 'in', ['active', 'grace']), ('end_date', '&lt;=', (context_today() + datetime.timedelta(days=30)).strftime('%Y-%m-%d')), ('end_date', '!=', False)]</field>
+        <field name="context">{
+            'search_default_group_by_end_date': 1,
+        }</field>
+    </record>
+
+    <!-- Action for Membership Renewal Wizard -->
+    <record id="action_membership_renewal_wizard" model="ir.actions.act_window">
+        <field name="name">Renew Membership</field>
+        <field name="res_model">membership.renewal.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_membership_id': active_id,
+        }</field>
+    </record>
+
+    <!-- Action to view invoices -->
+    <record id="action_view_membership_invoices" model="ir.actions.act_window">
+        <field name="name">Membership Invoices</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('id', 'in', context.get('invoice_ids', []))]</field>
+    </record>
+
+</odoo>

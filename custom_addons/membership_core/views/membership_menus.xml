@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Main Membership Menu -->
+    <menuitem id="menu_membership_root" 
+              name="Membership" 
+              sequence="60"/>
+              <!--web_icon="membership_core,static/description/icon.png"/>-->
+    
+    <!-- Membership Management Section -->
+    <menuitem id="menu_membership_management" 
+              name="Management" 
+              parent="menu_membership_root" 
+              sequence="10"/>
+    
+    <!-- Memberships Menu Items -->
+    <menuitem id="menu_membership_memberships" 
+              name="Memberships" 
+              parent="menu_membership_management" 
+              action="action_membership_membership" 
+              sequence="10"/>
+    
+    <menuitem id="menu_membership_active" 
+              name="Active Memberships" 
+              parent="menu_membership_management" 
+              action="action_membership_active" 
+              sequence="20"/>
+    
+    <menuitem id="menu_membership_expiring" 
+              name="Expiring Soon" 
+              parent="menu_membership_management" 
+              action="action_membership_expiring" 
+              sequence="30"/>
+    
+    <!-- Members Section -->
+    <menuitem id="menu_membership_members" 
+              name="Members" 
+              parent="menu_membership_root" 
+              sequence="20"/>
+    
+    <menuitem id="menu_membership_all_members" 
+              name="All Members" 
+              parent="menu_membership_members" 
+              action="action_res_partner_members" 
+              sequence="10"/>
+    
+    <menuitem id="menu_membership_active_members" 
+              name="Active Members" 
+              parent="menu_membership_members" 
+              action="action_res_partner_active_members" 
+              sequence="20"/>
+    
+    <menuitem id="menu_membership_expiring_members" 
+              name="Expiring Members" 
+              parent="menu_membership_members" 
+              action="action_res_partner_expiring_members" 
+              sequence="30"/>
+    
+    <!-- Configuration Section -->
+    <menuitem id="menu_membership_configuration" 
+              name="Configuration" 
+              parent="menu_membership_root" 
+              sequence="90"
+              groups="membership_core.group_membership_manager"/>
+    
+    <menuitem id="menu_membership_types" 
+              name="Membership Types" 
+              parent="menu_membership_configuration" 
+              action="action_membership_type" 
+              sequence="10"
+              groups="membership_core.group_membership_manager"/>
+    
+    <!-- Reports Section -->
+    <menuitem id="menu_membership_reports" 
+              name="Reports" 
+              parent="menu_membership_root" 
+              sequence="80"/>
+    
+    <menuitem id="menu_membership_analytics" 
+              name="Membership Analytics" 
+              parent="menu_membership_reports" 
+              action="action_membership_membership" 
+              sequence="10"/>
+    
+    <!-- Quick Actions in Management -->
+    <menuitem id="menu_membership_create" 
+              name="Create Membership" 
+              parent="menu_membership_management" 
+              action="action_create_membership_wizard" 
+              sequence="40"
+              groups="membership_core.group_membership_user"/>
+    
+    <!-- Separator for better organization -->
+    <menuitem id="menu_membership_separator_1" 
+              name="──────────" 
+              parent="menu_membership_management" 
+              sequence="35"/>
+    
+    <!-- Dashboard/Overview (placeholder for future dashboard) -->
+    <menuitem id="menu_membership_dashboard" 
+              name="Dashboard" 
+              parent="menu_membership_root" 
+              sequence="5"/>
+    
+    <!-- Add shortcut actions to Apps menu for quick access -->
+    <record id="ir_actions_server_membership_quick_create" model="ir.actions.server">
+        <field name="name">Quick Create Membership</field>
+        <field name="model_id" ref="model_membership_membership"/>
+        <field name="state">code</field>
+        <field name="code">
+            action = {
+                "type": "ir.actions.act_window",
+                "res_model": "membership.create.wizard",
+                "view_mode": "form",
+                "target": "new",
+                "context": {},
+            }
+        </field>
+    </record>
+    
+    <!-- Menu item for quick create -->
+    <menuitem id="menu_membership_quick_create" 
+              name="+ New Membership" 
+              parent="menu_membership_management" 
+              action="ir_actions_server_membership_quick_create" 
+              sequence="5"/>
+
+</odoo>

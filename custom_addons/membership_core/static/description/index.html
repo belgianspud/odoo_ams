@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Membership Core - Association Management System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 30px 0;
+        }
+        .feature-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .feature-card h3 {
+            color: #667eea;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+        .feature-card .icon {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+        .stats {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            display: block;
+        }
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        .tech-specs {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 30px 0;
+        }
+        .tech-specs h3 {
+            color: #495057;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .tech-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .installation {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 30px 0;
+        }
+        .installation h3 {
+            color: #155724;
+            margin-top: 0;
+        }
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .screenshots {
+            margin: 30px 0;
+        }
+        .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .screenshot {
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #f8f9fa;
+            text-align: center;
+            padding: 20px;
+        }
+        .screenshot h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        .screenshot p {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin: 0;
+        }
+        .cta {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .cta h3 {
+            margin: 0 0 15px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: white;
+            color: #f5576c;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .footer {
+            background: #2d3748;
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .header {
+                padding: 30px 20px;
+            }
+            .header h1 {
+                font-size: 2em;
+            }
+            .content {
+                padding: 30px 20px;
+            }
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎫 Membership Core</h1>
+            <p>Foundation Module for Association Management System</p>
+        </div>
+        
+        <div class="content">
+            <h2>Complete Membership Management Solution</h2>
+            <p>The Membership Core module provides the foundation for managing memberships in any association, organization, or community. Built with flexibility and scalability in mind, it offers comprehensive tools for membership lifecycle management.</p>
+            
+            <div class="features">
+                <div class="feature-card">
+                    <h3><span class="icon">👥</span>Member Management</h3>
+                    <p>Complete member records with contact information, membership history, and status tracking. Integrated with Odoo's CRM for seamless customer relationship management.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h3><span class="icon">🏷️</span>Membership Types</h3>
+                    <p>Flexible membership type configuration supporting individual, organization, chapter, publication, and custom categories. Each type can have unique pricing, duration, and lifecycle rules.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h3><span class="icon">🔄</span>Lifecycle Management</h3>
+                    <p>Automated membership lifecycle with states including active, grace period, suspended, and terminated. Configurable grace periods and automated state transitions.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h3><span class="icon">📧</span>Email Automation</h3>
+                    <p>Automated email notifications for welcome messages, renewal reminders, expiry notices, and cancellation confirmations. Fully customizable email templates.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h3><span class="icon">💰</span>Financial Integration</h3>
+                    <p>Seamless integration with Odoo's accounting system. Automatic membership creation from invoices and payment tracking.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h3><span class="icon">🔧</span>Extensible Architecture</h3>
+                    <p>Modular design allows for easy extension with additional modules for benefits, organizations, hierarchy, portal access, and reporting.</p>
+                </div>
+            </div>
+            
+            <div class="stats">
+                <h3>Perfect for Organizations of Any Size</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-number">∞</span>
+                        <span class="stat-label">Unlimited Members</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">6</span>
+                        <span class="stat-label">Membership Categories</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">5</span>
+                        <span class="stat-label">Lifecycle States</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">7</span>
+                        <span class="stat-label">Extension Modules</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tech-specs">
+                <h3>Technical Specifications</h3>
+                <div class="tech-list">
+                    <div>
+                        <h4>Core Features</h4>
+                        <ul>
+                            <li>Membership type configuration</li>
+                            <li>Member lifecycle management</li>
+                            <li>Automated state transitions</li>
+                            <li>Email template system</li>
+                            <li>Partner integration</li>
+                            <li>Financial tracking</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>Business Logic</h4>
+                        <ul>
+                            <li>Grace period management</li>
+                            <li>Renewal processing</li>
+                            <li>Conflict detection</li>
+                            <li>Multi-company support</li>
+                            <li>Currency handling</li>
+                            <li>Validation rules</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>User Interface</h4>
+                        <ul>
+                            <li>Modern responsive design</li>
+                            <li>Kanban, tree, and form views</li>
+                            <li>Advanced filtering</li>
+                            <li>Statistics dashboards</li>
+                            <li>Wizard interfaces</li>
+                            <li>Mobile-friendly</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>Integration</h4>
+                        <ul>
+                            <li>Odoo Accounting integration</li>
+                            <li>Contact management</li>
+                            <li>Email system</li>
+                            <li>Website integration ready</li>
+                            <li>Portal support</li>
+                            <li>API endpoints</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="installation">
+                <h3>🚀 Quick Installation</h3>
+                <p>Install the Membership Core module to get started:</p>
+                <div class="code-block">
+                    # Navigate to your Odoo addons directory<br>
+                    cd /path/to/odoo/addons<br><br>
+                    # Copy the membership_core module<br>
+                    cp -r membership_core /path/to/odoo/addons/<br><br>
+                    # Update module list and install<br>
+                    # Go to Apps → Update Apps List → Search "Membership Core" → Install
+                </div>
+                <p><strong>Requirements:</strong> Odoo Community Edition 18.0+</p>
+            </div>
+            
+            <div class="screenshots">
+                <h3>📸 Interface Preview</h3>
+                <div class="screenshot-grid">
+                    <div class="screenshot">
+                        <h4>Membership Dashboard</h4>
+                        <p>Comprehensive overview of all memberships with filtering and statistics</p>
+                    </div>
+                    <div class="screenshot">
+                        <h4>Member Profile</h4>
+                        <p>Detailed member information with membership history and status tracking</p>
+                    </div>
+                    <div class="screenshot">
+                        <h4>Membership Types</h4>
+                        <p>Flexible configuration of membership categories, pricing, and lifecycle rules</p>
+                    </div>
+                    <div class="screenshot">
+                        <h4>Renewal Wizard</h4>
+                        <p>Streamlined renewal process with pricing calculations and payment tracking</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="cta">
+                <h3>Ready to Get Started?</h3>
+                <p>Transform your membership management with the most comprehensive solution for Odoo.</p>
+                <a href="#" class="btn">Download Module</a>
+                <a href="#" class="btn">View Documentation</a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2024 Association Management Software (AMS) | Built for Odoo Community Edition 18.0</p>
+            <p>Part of the complete AMS suite - Scale your membership management with confidence</p>
+        </div>
+    </div>
+</body>
+</html>

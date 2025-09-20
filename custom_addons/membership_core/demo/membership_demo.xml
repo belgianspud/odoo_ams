@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Demo Partners for Membership Testing -->
+        <record id="demo_partner_john_doe" model="res.partner">
+            <field name="name">John Doe</field>
+            <field name="email">john.doe@example.com</field>
+            <field name="phone">+1-555-123-4567</field>
+            <field name="street">123 Main Street</field>
+            <field name="city">New York</field>
+            <field name="state_id" ref="base.state_us_27"/>
+            <field name="zip">10001</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="is_company">False</field>
+            <field name="supplier_rank">0</field>
+            <field name="customer_rank">1</field>
+        </record>
+        
+        <record id="demo_partner_jane_smith" model="res.partner">
+            <field name="name">Jane Smith</field>
+            <field name="email">jane.smith@example.com</field>
+            <field name="phone">+1-555-234-5678</field>
+            <field name="street">456 Oak Avenue</field>
+            <field name="city">Los Angeles</field>
+            <field name="state_id" ref="base.state_us_5"/>
+            <field name="zip">90210</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="is_company">False</field>
+            <field name="supplier_rank">0</field>
+            <field name="customer_rank">1</field>
+        </record>
+        
+        <record id="demo_partner_bob_johnson" model="res.partner">
+            <field name="name">Bob Johnson</field>
+            <field name="email">bob.johnson@example.com</field>
+            <field name="phone">+1-555-345-6789</field>
+            <field name="street">789 Elm Street</field>
+            <field name="city">Chicago</field>
+            <field name="state_id" ref="base.state_us_14"/>
+            <field name="zip">60601</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="is_company">False</field>
+            <field name="supplier_rank">0</field>
+            <field name="customer_rank">1</field>
+        </record>
+        
+        <record id="demo_partner_tech_corp" model="res.partner">
+            <field name="name">Tech Corp Solutions Inc.</field>
+            <field name="email">contact@techcorp.com</field>
+            <field name="phone">+1-555-456-7890</field>
+            <field name="website">https://www.techcorp.com</field>
+            <field name="street">100 Technology Drive</field>
+            <field name="city">San Francisco</field>
+            <field name="state_id" ref="base.state_us_5"/>
+            <field name="zip">94105</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="is_company">True</field>
+            <field name="supplier_rank">0</field>
+            <field name="customer_rank">1</field>
+        </record>
+        
+        <record id="demo_partner_global_enterprises" model="res.partner">
+            <field name="name">Global Enterprises LLC</field>
+            <field name="email">info@globalent.com</field>
+            <field name="phone">+1-555-567-8901</field>
+            <field name="website">https://www.globalent.com</field>
+            <field name="street">200 Business Plaza</field>
+            <field name="city">Miami</field>
+            <field name="state_id" ref="base.state_us_10"/>
+            <field name="zip">33101</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="is_company">True</field>
+            <field name="supplier_rank">0</field>
+            <field name="customer_rank">1</field>
+        </record>
+        
+        <record id="demo_partner_student_alice" model="res.partner">
+            <field name="name">Alice Cooper</field>
+            <field name="email">alice.cooper@university.edu</field>
+            <field name="phone">+1-555-678-9012</field>
+            <field name="street">321 University Way</field>
+            <field name="city">Boston</field>
+            <field name="state_id" ref="base.state_us_22"/>
+            <field name="zip">02101</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="is_company">False</field>
+            <field name="supplier_rank">0</field>
+            <field name="customer_rank">1</field>
+        </record>
+        
+        <!-- Demo Memberships -->
+        <record id="demo_membership_john_premium" model="membership.membership">
+            <field name="name">MEM000001</field>
+            <field name="partner_id" ref="demo_partner_john_doe"/>
+            <field name="membership_type_id" ref="membership_type_individual_premium"/>
+            <field name="state">active</field>
+            <field name="start_date" eval="(datetime.now() - timedelta(days=90)).date()"/>
+            <field name="end_date" eval="(datetime.now() + timedelta(days=275)).date()"/>
+            <field name="amount_paid">250.00</field>
+            <field name="notes">Premium member since 2024. Active participant in community events.</field>
+        </record>
+        
+        <record id="demo_membership_jane_basic" model="membership.membership">
+            <field name="name">MEM000002</field>
+            <field name="partner_id" ref="demo_partner_jane_smith"/>
+            <field name="membership_type_id" ref="membership_type_individual_basic"/>
+            <field name="state">active</field>
+            <field name="start_date" eval="(datetime.now() - timedelta(days=180)).date()"/>
+            <field name="end_date" eval="(datetime.now() + timedelta(days=185)).date()"/>
+            <field name="amount_paid">100.00</field>
+            <field name="notes">Basic member, interested in upgrading to premium.</field>
+        </record>
+        
+        <record id="demo_membership_bob_grace" model="membership.membership">
+            <field name="name">MEM000003</field>
+            <field name="partner_id" ref="demo_partner_bob_johnson"/>
+            <field name="membership_type_id" ref="membership_type_individual_basic"/>
+            <field name="state">grace</field>
+            <field name="start_date" eval="(datetime.now() - timedelta(days=380)).date()"/>
+            <field name="end_date" eval="(datetime.now() - timedelta(days=15)).date()"/>
+            <field name="grace_end_date" eval="(datetime.now() + timedelta(days=15)).date()"/>
+            <field name="amount_paid">100.00</field>
+            <field name="notes">Membership expired recently, in grace period. Renewal reminder sent.</field>
+        </record>
+        
+        <record id="demo_membership_tech_corp_org" model="membership.membership">
+            <field name="name">ORG000001</field>
+            <field name="partner_id" ref="demo_partner_tech_corp"/>
+            <field name="membership_type_id" ref="membership_type_organization_medium"/>
+            <field name="state">active</field>
+            <field name="start_date" eval="(datetime.now() - timedelta(days=120)).date()"/>
+            <field name="end_date" eval="(datetime.now() + timedelta(days=245)).date()"/>
+            <field name="amount_paid">1200.00</field>
+            <field name="notes">Medium organization membership with 15 individual seats. Tech industry.</field>
+        </record>
+        
+        <record id="demo_membership_global_large" model="membership.membership">
+            <field name="name">ORG000002</field>
+            <field name="partner_id" ref="demo_partner_global_enterprises"/>
+            <field name="membership_type_id" ref="membership_type_organization_large"/>
+            <field name="state">active</field>
+            <field name="start_date" eval="(datetime.now() - timedelta(days=200)).date()"/>
+            <field name="end_date" eval="(datetime.now() + timedelta(days=165)).date()"/>
+            <field name="amount_paid">3000.00</field>
+            <field name="notes">Large organization with unlimited seats. Key strategic partner.</field>
+        </record>
+        
+        <record id="demo_membership_alice_student" model="membership.membership">
+            <field name="name">MEM000004</field>
+            <field name="partner_id" ref="demo_partner_student_alice"/>
+            <field name="membership_type_id" ref="membership_type_student"/>
+            <field name="state">active</field>
+            <field name="start_date" eval="(datetime.now() - timedelta(days=60)).date()"/>
+            <field name="end_date" eval="(datetime.now() + timedelta(days=305)).date()"/>
+            <field name="amount_paid">25.00</field>
+            <field name="notes">Student member at University. Active in student chapter activities.</field>
+        </record>
+        
+        <!-- Demo Chapter Membership -->
+        <record id="demo_membership_john_local_chapter" model="membership.membership">
+            <field name="name">CHT000001</field>
+            <field name="partner_id" ref="demo_partner_john_doe"/>
+            <field name="membership_type_id" ref="membership_type_chapter_local"/>
+            <field name="state">active</field>
+            <field name="start_date" eval="(datetime.now() - timedelta(days=60)).date()"/>
+            <field name="end_date" eval="(datetime.now() + timedelta(days=305)).date()"/>
+            <field name="amount_paid">25.00</field>
+            <field name="notes">Local chapter membership in addition to premium individual membership.</field>
+        </record>
+        
+        <!-- Demo Publication Subscription -->
+        <record id="demo_membership_jane_publication" model="membership.membership">
+            <field name="name">PUB000001</field>
+            <field name="partner_id" ref="demo_partner_jane_smith"/>
+            <field name="membership_type_id" ref="membership_type_publication_monthly"/>
+            <field name="state">active</field>
+            <field name="start_date" eval="(datetime.now() - timedelta(days=30)).date()"/>
+            <field name="end_date" eval="(datetime.now() + timedelta(days=335)).date()"/>
+            <field name="amount_paid">60.00</field>
+            <field name="notes">Monthly publication subscription for industry insights.</field>
+        </record>
+        
+        <!-- Demo Terminated Membership -->
+        <record id="demo_membership_terminated" model="membership.membership">
+            <field name="name">MEM000005</field>
+            <field name="partner_id" ref="demo_partner_bob_johnson"/>
+            <field name="membership_type_id" ref="membership_type_individual_premium"/>
+            <field name="state">terminated</field>
+            <field name="start_date" eval="(datetime.now() - timedelta(days=750)).date()"/>
+            <field name="end_date" eval="(datetime.now() - timedelta(days=385)).date()"/>
+            <field name="termination_date" eval="(datetime.now() - timedelta(days=300)).date()"/>
+            <field name="amount_paid">250.00</field>
+            <field name="notes">Previous premium membership, terminated due to non-renewal. Member later rejoined with basic membership.</field>
+        </record>
+        
+        <!-- Demo Draft Membership -->
+        <record id="demo_membership_draft" model="membership.membership">
+            <field name="partner_id" ref="demo_partner_tech_corp"/>
+            <field name="membership_type_id" ref="membership_type_organization_small"/>
+            <field name="state">draft</field>
+            <field name="amount_paid">0.00</field>
+            <field name="notes">New organization membership pending activation.</field>
+        </record>
+        
+        <!-- Additional demo partners for variety -->
+        <record id="demo_partner_mary_wilson" model="res.partner">
+            <field name="name">Mary Wilson</field>
+            <field name="email">mary.wilson@example.com</field>
+            <field name="phone">+1-555-789-0123</field>
+            <field name="street">654 Pine Street</field>
+            <field name="city">Seattle</field>
+            <field name="state_id" ref="base.state_us_48"/>
+            <field name="zip">98101</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="is_company">False</field>
+            <field name="supplier_rank">0</field>
+            <field name="customer_rank">1</field>
+        </record>
+        
+        <record id="demo_membership_mary_lifetime" model="membership.membership">
+            <field name="name">MEM000006</field>
+            <field name="partner_id" ref="demo_partner_mary_wilson"/>
+            <field name="membership_type_id" ref="membership_type_individual_lifetime"/>
+            <field name="state">active</field>
+            <field name="start_date" eval="(datetime.now() - timedelta(days=1095)).date()"/>
+            <field name="amount_paid">2500.00</field>
+            <field name="notes">Lifetime member since 2021. Long-standing supporter and volunteer.</field>
+        </record>
+        
+        <!-- Demo Honorary Member -->
+        <record id="demo_partner_dr_emeritus" model="res.partner">
+            <field name="name">Dr. Robert Emeritus</field>
+            <field name="email">r.emeritus@university.edu</field>
+            <field name="phone">+1-555-890-1234</field>
+            <field name="street">987 Academic Avenue</field>
+            <field name="city">Cambridge</field>
+            <field name="state_id" ref="base.state_us_22"/>
+            <field name="zip">02139</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="is_company">False</field>
+            <field name="supplier_rank">0</field>
+            <field name="customer_rank">1</field>
+        </record>
+        
+        <record id="demo_membership_honorary" model="membership.membership">
+            <field name="name">HON000001</field>
+            <field name="partner_id" ref="demo_partner_dr_emeritus"/>
+            <field name="membership_type_id" ref="membership_type_honorary"/>
+            <field name="state">active</field>
+            <field name="start_date" eval="(datetime.now() - timedelta(days=1825)).date()"/>
+            <field name="amount_paid">0.00</field>
+            <field name="notes">Honorary member in recognition of distinguished service to the field. Professor Emeritus.</field>
+        </record>
+        
+        <!-- Demo Suspended Membership -->
+        <record id="demo_partner_suspended" model="res.partner">
+            <field name="name">Tom Anderson</field>
+            <field name="email">tom.anderson@example.com</field>
+            <field name="phone">+1-555-901-2345</field>
+            <field name="street">111 Maple Drive</field>
+            <field name="city">Denver</field>
+            <field name="state_id" ref="base.state_us_6"/>
+            <field name="zip">80202</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="is_company">False</field>
+            <field name="supplier_rank">0</field>
+            <field name="customer_rank">1</field>
+        </record>
+        
+        <record id="demo_membership_suspended" model="membership.membership">
+            <field name="name">MEM000007</field>
+            <field name="partner_id" ref="demo_partner_suspended"/>
+            <field name="membership_type_id" ref="membership_type_individual_basic"/>
+            <field name="state">suspended</field>
+            <field name="start_date" eval="(datetime.now() - timedelta(days=450)).date()"/>
+            <field name="end_date" eval="(datetime.now() - timedelta(days=85)).date()"/>
+            <field name="grace_end_date" eval="(datetime.now() - timedelta(days=55)).date()"/>
+            <field name="suspension_end_date" eval="(datetime.now() + timedelta(days=5)).date()"/>
+            <field name="amount_paid">100.00</field>
+            <field name="notes">Membership suspended due to non-renewal. Grace period expired.</field>
+        </record>
+        
+    </data>
+</odoo>

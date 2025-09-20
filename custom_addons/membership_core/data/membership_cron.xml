@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Cron Job for Membership State Updates -->
+        <record id="cron_membership_state_update" model="ir.cron">
+            <field name="name">Membership: Update States</field>
+            <field name="model_id" ref="model_membership_membership"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_update_membership_states()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active">True</field>
+            <field name="priority">5</field>
+            <field name="user_id" ref="base.user_admin"/>
+        </record>
+        
+        <!-- Cron Job for Renewal Reminders -->
+        <record id="cron_membership_renewal_reminders" model="ir.cron">
+            <field name="name">Membership: Send Renewal Reminders</field>
+            <field name="model_id" ref="model_membership_membership"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_send_renewal_reminders()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active">True</field>
+            <field name="priority">10</field>
+            <field name="user_id" ref="base.user_admin"/>
+        </record>
+        
+        <!-- Cron Job for Membership Statistics Update -->
+        <record id="cron_membership_statistics_update" model="ir.cron">
+            <field name="name">Membership: Update Statistics</field>
+            <field name="model_id" ref="model_membership_type"/>
+            <field name="state">code</field>
+            <field name="code">
+                # Update membership counts and revenue for all types
+                types = model.search([])
+                for membership_type in types:
+                    membership_type._compute_membership_count()
+                    membership_type._compute_total_revenue()
+            </field>
+            <field name="interval_number">6</field>
+            <field name="interval_type">hours</field>
+            <field name="active">True</field>
+            <field name="priority">15</field>
+            <field name="user_id" ref="base.user_admin"/>
+        </record>
+        
+        <!-- Cron Job for Partner Membership Status Update -->
+        <record id="cron_partner_membership_status_update" model="ir.cron">
+            <field name="name">Partners: Update Membership Status</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="state">code</field>
+            <field name="code">
+                # Update membership status for all partners
+                partners = model.search([('membership_ids', '!=', False)])
+                for partner in partners:
+                    partner._compute_membership_status()
+                    partner._compute_membership_statistics()
+            </field>
+            <field name="interval_number">12</field>
+            <field name="interval_type">hours</field>
+            <field name="active">True</field>
+            <field name="priority">20</field>
+            <field name="user_id" ref="base.user_admin"/>
+        </record>
+        
+        <!-- Cron Job for Membership Data Cleanup -->
+        <record id="cron_membership_data_cleanup" model="ir.cron">
+            <field name="name">Membership: Data Cleanup</field>
+            <field name="model_id" ref="model_membership_membership"/>
+            <field name="state">code</field>
+            <field name="code">
+                # Clean up old terminated memberships (older than 2 years)
+                from datetime import datetime, timedelta
+                cutoff_date = datetime.now().date() - timedelta(days=730)
+                
+                old_terminated = model.search([
+                    ('state', '=', 'terminated'),
+                    ('termination_date', '&lt;', cutoff_date)
+                ])
+                
+                # Archive instead of delete to preserve history
+                old_terminated.write({'active': False})
+                
+                # Log cleanup activity
+                if old_terminated:
+                    model.env['mail.thread'].message_post(
+                        body=f"Archived {len(old_terminated)} old terminated memberships",
+                        message_type='notification'
+                    )
+            </field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">weeks</field>
+            <field name="active">True</field>
+            <field name="priority">25</field>
+            <field name="user_id" ref="base.user_admin"/>
+        </record>
+        
+        <!-- Cron Job for Membership Expiry Notifications (Weekly Summary) -->
+        <record id="cron_membership_expiry_summary" model="ir.cron">
+            <field name="name">Membership: Weekly Expiry Summary</field>
+            <field name="model_id" ref="model_membership_membership"/>
+            <field name="state">code</field>
+            <field name="code">
+                from datetime import datetime, timedelta
+                
+                # Get memberships expiring in next 7 days
+                next_week = datetime.now().date() + timedelta(days=7)
+                expiring_soon = model.search([
+                    ('state', '=', 'active'),
+                    ('end_date', '&lt;=', next_week),
+                    ('end_date', '&gt;=', datetime.now().date())
+                ])
+                
+                # Get memberships in grace period
+                grace_memberships = model.search([('state', '=', 'grace')])
+                
+                # Send summary to membership managers
+                if expiring_soon or grace_memberships:
+                    summary = f"Weekly Membership Summary:\n"
+                    summary += f"- Expiring in next 7 days: {len(expiring_soon)}\n"
+                    summary += f"- Currently in grace period: {len(grace_memberships)}\n"
+                    
+                    # Find membership managers
+                    managers = model.env['res.users'].search([
+                        ('groups_id', 'in', [model.env.ref('membership_core.group_membership_manager').id])
+                    ])
+                    
+                    # Send notification
+                    for manager in managers:
+                        model.env['mail.thread'].message_post(
+                            body=summary,
+                            message_type='notification',
+                            partner_ids=[manager.partner_id.id]
+                        )
+            </field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">weeks</field>
+            <field name="active">True</field>
+            <field name="priority">30</field>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).replace(hour=9, minute=0, second=0)"/>
+        </record>
+        
+        <!-- Cron Job for Membership Validation and Integrity Check -->
+        <record id="cron_membership_integrity_check" model="ir.cron">
+            <field name="name">Membership: Integrity Check</field>
+            <field name="model_id" ref="model_membership_membership"/>
+            <field name="state">code</field>
+            <field name="code">
+                # Check for data integrity issues
+                issues = []
+                
+                # Check for memberships without partners
+                orphaned = model.search([('partner_id', '=', False)])
+                if orphaned:
+                    issues.append(f"Found {len(orphaned)} memberships without partners")
+                
+                # Check for invalid date ranges
+                invalid_dates = model.search([
+                    ('end_date', '!=', False),
+                    ('start_date', '&gt;', 'end_date')
+                ])
+                if invalid_dates:
+                    issues.append(f"Found {len(invalid_dates)} memberships with invalid date ranges")
+                
+                # Check for conflicting parent memberships
+                partners_with_multiple_parent = model.env['res.partner'].search([
+                    ('membership_ids.state', 'in', ['active', 'grace']),
+                    ('membership_ids.membership_type_id.membership_category', 'in', ['individual', 'organization'])
+                ])
+                
+                conflicts = []
+                for partner in partners_with_multiple_parent:
+                    parent_memberships = partner.membership_ids.filtered(
+                        lambda m: m.state in ['active', 'grace'] and 
+                        m.membership_type_id.membership_category in ['individual', 'organization']
+                    )
+                    if len(parent_memberships) > 1:
+                        conflicts.append(partner)
+                
+                if conflicts:
+                    issues.append(f"Found {len(conflicts)} partners with conflicting parent memberships")
+                
+                # Log issues if any found
+                if issues:
+                    issue_summary = "Membership Integrity Issues Found:\n" + "\n".join(f"- {issue}" for issue in issues)
+                    
+                    # Notify membership managers
+                    managers = model.env['res.users'].search([
+                        ('groups_id', 'in', [model.env.ref('membership_core.group_membership_manager').id])
+                    ])
+                    
+                    for manager in managers:
+                        model.env['mail.thread'].message_post(
+                            body=issue_summary,
+                            message_type='notification',
+                            partner_ids=[manager.partner_id.id]
+                        )
+            </field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">months</field>
+            <field name="active">True</field>
+            <field name="priority">35</field>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).replace(day=1, hour=10, minute=0, second=0)"/>
+        </record>
+        
+    </data>
+</odoo>
