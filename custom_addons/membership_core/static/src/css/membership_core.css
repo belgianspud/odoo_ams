@@ -47,6 +47,37 @@
     font-weight: bold;
 }
 
+/* Missing Bootstrap Badge Classes for Compatibility */
+.badge-success {
+    background-color: #28a745 !important;
+    color: white !important;
+}
+
+.badge-warning {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.badge-danger {
+    background-color: #dc3545 !important;
+    color: white !important;
+}
+
+.badge-info {
+    background-color: #17a2b8 !important;
+    color: white !important;
+}
+
+.badge-secondary {
+    background-color: #6c757d !important;
+    color: white !important;
+}
+
+.badge-primary {
+    background-color: #007bff !important;
+    color: white !important;
+}
+
 /* Membership Type Cards */
 .membership_type_card {
     border: 1px solid #e3e6f0;
@@ -247,6 +278,24 @@
 
 .membership_timeline_item.terminated::before {
     background: #6c757d;
+}
+
+/* Tree view decorations */
+.o_list_table .o_data_row.decoration-success {
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.o_list_table .o_data_row.decoration-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+.o_list_table .o_data_row.decoration-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.o_list_table .o_data_row.decoration-muted {
+    background-color: rgba(108, 117, 125, 0.1);
+    opacity: 0.7;
 }
 
 /* Responsive Design */

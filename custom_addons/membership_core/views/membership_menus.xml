@@ -78,8 +78,14 @@
     <menuitem id="menu_membership_analytics" 
               name="Membership Analytics" 
               parent="menu_membership_reports" 
-              action="action_membership_membership" 
+              action="action_membership_analytics_report" 
               sequence="10"/>
+    
+    <menuitem id="menu_membership_revenue_report" 
+              name="Revenue Report" 
+              parent="menu_membership_reports" 
+              action="action_membership_revenue_report" 
+              sequence="20"/>
     
     <!-- Quick Actions in Management -->
     <menuitem id="menu_membership_create" 
@@ -93,6 +99,73 @@
     <menuitem id="menu_membership_dashboard" 
               name="Dashboard" 
               parent="menu_membership_root" 
+              action="action_membership_dashboard"
               sequence="5"/>
+
+    <!-- Missing Action Definitions -->
+    
+    <!-- Dashboard Action -->
+    <record id="action_membership_dashboard" model="ir.actions.act_window">
+        <field name="name">Membership Dashboard</field>
+        <field name="res_model">membership.membership</field>
+        <field name="view_mode">kanban,graph,pivot</field>
+        <field name="context">{
+            'search_default_active': 1,
+            'search_default_group_by_type': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Welcome to the Membership Dashboard!
+            </p>
+            <p>
+                This dashboard provides an overview of your membership data including
+                active memberships, revenue trends, and membership analytics.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Analytics Report Action -->
+    <record id="action_membership_analytics_report" model="ir.actions.act_window">
+        <field name="name">Membership Analytics</field>
+        <field name="res_model">membership.membership</field>
+        <field name="view_mode">pivot,graph,tree</field>
+        <field name="context">{
+            'search_default_group_by_type': 1,
+            'search_default_group_by_state': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No membership data to analyze yet!
+            </p>
+            <p>
+                This view provides analytical insights into your membership data
+                including trends, revenue analysis, and member statistics.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Revenue Report Action -->
+    <record id="action_membership_revenue_report" model="ir.actions.act_window">
+        <field name="name">Membership Revenue Report</field>
+        <field name="res_model">membership.membership</field>
+        <field name="view_mode">pivot,graph,tree</field>
+        <field name="domain">[]</field>
+        <field name="context">{
+            'search_default_group_by_type': 1,
+            'search_default_group_by_start_date': 1,
+            'pivot_measures': ['amount_paid'],
+            'pivot_column_groupby': ['start_date:month'],
+            'pivot_row_groupby': ['membership_type_id'],
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No revenue data to display yet!
+            </p>
+            <p>
+                This report shows membership revenue broken down by type, time period,
+                and other dimensions to help you understand your membership income.
+            </p>
+        </field>
+    </record>
 
 </odoo>

@@ -234,7 +234,7 @@ export class MembershipQuickActions extends Component {
 
     async renewMembership() {
         try {
-            const result = await this.action.doAction({
+            await this.action.doAction({
                 type: 'ir.actions.act_window',
                 name: 'Renew Membership',
                 res_model: 'membership.renewal.wizard',
@@ -289,146 +289,15 @@ export class MembershipQuickActions extends Component {
     }
 }
 
-/**
- * Membership Renewal Calculator
- * Calculates renewal dates and prices
- */
-export class MembershipRenewalCalculator extends Component {
-    static template = "membership_core.MembershipRenewalCalculator";
-    static props = {
-        membershipId: { type: Number },
-        currentEndDate: { type: String, optional: true },
-        membershipTypeId: { type: Number },
-        basePrice: { type: Number },
-    };
-
-    setup() {
-        this.orm = useService("orm");
-        this.state = useState({
-            renewalMonths: 12,
-            customEndDate: '',
-            calculatedPrice: this.props.basePrice,
-            calculatedEndDate: '',
-            loading: false,
-        });
-
-        this.calculateRenewal();
-    }
-
-    async calculateRenewal() {
-        this.state.loading = true;
-        try {
-            // Calculate new end date
-            let baseDate = this.props.currentEndDate ? new Date(this.props.currentEndDate) : new Date();
-            if (baseDate < new Date()) {
-                baseDate = new Date(); // Use today if membership is already expired
-            }
-
-            const newEndDate = new Date(baseDate);
-            newEndDate.setMonth(newEndDate.getMonth() + this.state.renewalMonths);
-            this.state.calculatedEndDate = newEndDate.toISOString().split('T')[0];
-
-            // Get renewal price from server
-            const result = await this.orm.call(
-                "membership.type", 
-                "get_renewal_price", 
-                [this.props.membershipTypeId],
-                { membership_id: this.props.membershipId }
-            );
-            this.state.calculatedPrice = result;
-
-        } catch (error) {
-            console.error('Error calculating renewal:', error);
-        } finally {
-            this.state.loading = false;
-        }
-    }
-
-    onRenewalMonthsChange(event) {
-        this.state.renewalMonths = parseInt(event.target.value);
-        this.calculateRenewal();
-    }
-
-    onCustomEndDateChange(event) {
-        this.state.customEndDate = event.target.value;
-        if (this.state.customEndDate) {
-            this.state.calculatedEndDate = this.state.customEndDate;
-        } else {
-            this.calculateRenewal();
-        }
-    }
-
-    formatCurrency(amount) {
-        return formatCurrency(amount);
-    }
-
-    formatDate(date) {
-        return formatDate(new Date(date));
-    }
-}
-
-/**
- * Membership Timeline Component
- * Shows membership history in timeline format
- */
-export class MembershipTimeline extends Component {
-    static template = "membership_core.MembershipTimeline";
-    static props = {
-        partnerId: { type: Number },
-    };
-
-    setup() {
-        this.orm = useService("orm");
-        this.state = useState({
-            memberships: [],
-            loading: true,
-        });
-
-        onWillStart(async () => {
-            await this.loadMembershipHistory();
-        });
-    }
-
-    async loadMembershipHistory() {
-        try {
-            this.state.memberships = await this.orm.searchRead(
-                "membership.membership",
-                [['partner_id', '=', this.props.partnerId]],
-                ['name', 'membership_type_id', 'state', 'start_date', 'end_date', 'amount_paid'],
-                { order: 'start_date desc' }
-            );
-        } catch (error) {
-            console.error('Error loading membership history:', error);
-        } finally {
-            this.state.loading = false;
-        }
-    }
-
-    getTimelineItemClass(state) {
-        const stateClasses = {
-            'active': 'active',
-            'expired': 'expired',
-            'terminated': 'terminated',
-            'cancelled': 'terminated',
-        };
-        return stateClasses[state] || '';
-    }
-
-    formatDate(date) {
-        return date ? formatDate(new Date(date)) : 'N/A';
-    }
-
-    formatCurrency(amount) {
-        return formatCurrency(amount);
-    }
-}
-
-// Register components
+// Register components with field registry
 registry.category("fields").add("membership_status", MembershipStatusWidget);
 registry.category("fields").add("membership_expiry", MembershipExpiryWidget);
 
+// Define templates as a single template string
+import { xml } from "@odoo/owl";
+
 // Register templates
-const templates = `
+registry.category("web.templates").add("membership_core.templates", xml`
 <templates>
     <t t-name="membership_core.MembershipStatusWidget" owl="1">
         <span t-att-class="statusClass" t-esc="statusText"/>
@@ -516,70 +385,5 @@ const templates = `
             </button>
         </div>
     </t>
-
-    <t t-name="membership_core.MembershipRenewalCalculator" owl="1">
-        <div class="membership_renewal_calculator">
-            <div class="membership_form_section">
-                <h4>Renewal Calculator</h4>
-                <div class="row">
-                    <div class="col-md-6">
-                        <label>Renewal Period (Months):</label>
-                        <select class="form-control" t-model="state.renewalMonths" t-on-change="onRenewalMonthsChange">
-                            <option value="1">1 Month</option>
-                            <option value="3">3 Months</option>
-                            <option value="6">6 Months</option>
-                            <option value="12" selected="">12 Months</option>
-                            <option value="24">24 Months</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label>Custom End Date (Optional):</label>
-                        <input type="date" class="form-control" 
-                               t-model="state.customEndDate" 
-                               t-on-change="onCustomEndDateChange"/>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <div class="membership_info_panel">
-                            <strong>New End Date:</strong> 
-                            <span t-esc="formatDate(state.calculatedEndDate)"/>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="membership_info_panel">
-                            <strong>Renewal Price:</strong> 
-                            <span t-esc="formatCurrency(state.calculatedPrice)"/>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </t>
-
-    <t t-name="membership_core.MembershipTimeline" owl="1">
-        <div class="membership_timeline_container">
-            <div t-if="state.loading" class="membership_loading">
-                <i class="fa fa-spinner fa-spin"/>
-                <p>Loading membership history...</p>
-            </div>
-            <div t-else="" class="membership_timeline">
-                <div t-foreach="state.memberships" t-as="membership" t-key="membership.id"
-                     t-att-class="'membership_timeline_item ' + getTimelineItemClass(membership.state)">
-                    <h5 t-esc="membership.name"/>
-                    <p><strong>Type:</strong> <span t-esc="membership.membership_type_id[1]"/></p>
-                    <p><strong>Period:</strong> 
-                       <span t-esc="formatDate(membership.start_date)"/> - 
-                       <span t-esc="membership.end_date ? formatDate(membership.end_date) : 'Lifetime'"/>
-                    </p>
-                    <p><strong>Status:</strong> <span t-esc="membership.state"/></p>
-                    <p><strong>Amount:</strong> <span t-esc="formatCurrency(membership.amount_paid)"/></p>
-                </div>
-            </div>
-        </div>
-    </t>
 </templates>
-`;
-
-// Add templates to registry
-registry.category("web.templates").add("membership_core.templates", templates);
+`);
