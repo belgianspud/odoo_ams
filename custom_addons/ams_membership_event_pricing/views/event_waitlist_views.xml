@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Waitlist Views -->
+    <record id="view_event_waitlist_tree" model="ir.ui.view">
+        <field name="name">event.waitlist.tree</field>
+        <field name="model">event.waitlist</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state=='registered'" decoration-warning="state=='notified'" decoration-info="state=='waiting'">
+                <field name="position"/>
+                <field name="partner_id"/>
+                <field name="event_id"/>
+                <field name="membership_level_id"/>
+                <field name="join_date"/>
+                <field name="priority"/>
+                <field name="state"/>
+                <field name="preferred_contact_method"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_event_waitlist_form" model="ir.ui.view">
+        <field name="name">event.waitlist.form</field>
+        <field name="model">event.waitlist</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_notify_available_spot" string="Notify Available Spot" type="object" 
+                            attrs="{'invisible': [('state', '!=', 'waiting')]}" 
+                            class="oe_highlight"/>
+                    <button name="action_register_from_waitlist" string="Register from Waitlist" type="object" 
+                            attrs="{'invisible': [('state', '!=', 'notified')]}" 
+                            class="oe_highlight"/>
+                    <button name="action_cancel_waitlist" string="Cancel" type="object" 
+                            attrs="{'invisible': [('state', 'in', ['registered', 'cancelled'])]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="waiting,notified,registered"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            Waitlist Entry - <field name="event_id" class="oe_inline"/>
+                        </h1>
+                        <h2>
+                            <field name="partner_id"/>
+                        </h2>
+                    </div>
+                    <group>
+                        <group name="waitlist_info">
+                            <field name="join_date"/>
+                            <field name="position" attrs="{'invisible': [('state', '!=', 'waiting')]}"/>
+                            <field name="priority"/>
+                            <field name="preferred_contact_method"/>
+                        </group>
+                        <group name="member_info">
+                            <field name="is_member"/>
+                            <field name="membership_level_id"/>
+                            <field name="email"/>
+                            <field name="phone"/>
+                        </group>
+                    </group>
+                    <group name="notification_info" string="Notification Information" 
+                           attrs="{'invisible': [('state', 'not in', ['notified', 'registered', 'expired'])]}">
+                        <group>
+                            <field name="notification_date"/>
+                            <field name="notification_expires"/>
+                            <field name="response_hours"/>
+                        </group>
+                        <group>
+                            <field name="registration_id" attrs="{'invisible': [('state', '!=', 'registered')]}"/>
+                            <field name="promoted_date" attrs="{'invisible': [('state', '!=', 'registered')]}"/>
+                        </group>
+                    </group>
+                    <field name="notes" placeholder="Additional notes about this waitlist entry..."/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_event_waitlist_search" model="ir.ui.view">
+        <field name="name">event.waitlist.search</field>
+        <field name="model">event.waitlist</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="partner_id"/>
+                <field name="event_id"/>
+                <field name="membership_level_id"/>
+                <filter string="Waiting" name="waiting" domain="[('state', '=', 'waiting')]"/>
+                <filter string="Notified" name="notified" domain="[('state', '=', 'notified')]"/>
+                <filter string="Registered" name="registered" domain="[('state', '=', 'registered')]"/>
+                <filter string="Members" name="members" domain="[('is_member', '=', True)]"/>
+                <filter string="Today" name="today" domain="[('join_date', '&gt;=', datetime.datetime.now().replace(hour=0, minute=0, second=0))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Event" name="group_event" context="{'group_by': 'event_id'}"/>
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Membership Level" name="group_level" context="{'group_by': 'membership_level_id'}"/>
+                    <filter string="Join Date" name="group_date" context="{'group_by': 'join_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Enhanced Event Form with Waitlist Features -->
+    <record id="view_event_form_waitlist" model="ir.ui.view">
+        <field name="name">event.event.form.waitlist</field>
+        <field name="model">event.event</field>
+        <field name="inherit_id" ref="event.view_event_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_waitlist" icon="fa-clock-o">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="waiting_count"/>/<field name="waitlist_count"/>
+                        </span>
+                        <span class="o_stat_text">Waitlist</span>
+                    </div>
+                </button>
+            </xpath>
+            
+            <xpath expr="//header" position="inside">
+                <button name="action_process_waitlist" string="Process Waitlist" type="object"/>
+            </xpath>
+            
+            <xpath expr="//notebook" position="inside">
+                <page string="Waitlist Settings">
+                    <group>
+                        <group name="waitlist_config">
+                            <field name="enable_waitlist"/>
+                            <field name="max_waitlist_size"/>
+                            <field name="waitlist_response_hours"/>
+                        </group>
+                        <group name="waitlist_options">
+                            <field name="member_waitlist_priority"/>
+                            <field name="auto_promote_waitlist"/>
+                        </group>
+                    </group>
+                    <group name="waitlist_stats" string="Waitlist Statistics">
+                        <field name="waitlist_count"/>
+                        <field name="waiting_count"/>
+                        <field name="notified_count"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

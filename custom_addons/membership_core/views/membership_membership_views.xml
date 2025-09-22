@@ -10,8 +10,9 @@
                 <header>
                     <button name="action_activate" type="object" string="Activate" 
                             class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                    <button name="action_renew" type="object" string="Renew" 
-                            class="oe_highlight" attrs="{'invisible': [('state', 'not in', ['active', 'grace', 'suspended'])]}"/>
+                    <button name="%(action_membership_renewal_wizard)d" type="action" string="Renew" 
+                            class="oe_highlight" attrs="{'invisible': [('state', 'not in', ['active', 'grace', 'suspended'])]}"
+                            context="{'default_membership_id': active_id}"/>
                     <button name="action_suspend" type="object" string="Suspend" 
                             attrs="{'invisible': [('state', 'not in', ['active', 'grace'])]}"/>
                     <button name="action_terminate" type="object" string="Terminate" 
@@ -75,9 +76,10 @@
                                     <label for="end_date" attrs="{'invisible': [('membership_type_id.is_lifetime', '=', True)]}"/>
                                     <div attrs="{'invisible': [('membership_type_id.is_lifetime', '=', True)]}">
                                         <field name="end_date" class="oe_inline" readonly="1"/> 
-                                        <button name="action_open_renewal_wizard" type="object" 
+                                        <button name="%(action_membership_renewal_wizard)d" type="action" 
                                                 string="Extend" class="btn-link" 
-                                                attrs="{'invisible': [('state', 'not in', ['active', 'grace'])]}"/>
+                                                attrs="{'invisible': [('state', 'not in', ['active', 'grace'])]}"
+                                                context="{'default_membership_id': active_id}"/>
                                     </div>
                                 </group>
                                 <group string="Days Information" attrs="{'invisible': [('membership_type_id.is_lifetime', '=', True)]}">
@@ -230,7 +232,8 @@
                                         <a type="object" name="action_activate" class="btn btn-primary btn-sm">Activate</a>
                                     </t>
                                     <t t-elif="record.state.raw_value in ['active', 'grace']">
-                                        <a type="object" name="action_open_renewal_wizard" class="btn btn-success btn-sm">Renew</a>
+                                        <a type="action" name="%(action_membership_renewal_wizard)d" class="btn btn-success btn-sm"
+                                           context="{'default_membership_id': active_id}">Renew</a>
                                     </t>
                                 </div>
                             </div>
@@ -384,17 +387,6 @@
         <field name="domain">[('state', 'in', ['active', 'grace']), ('end_date', '&lt;=', (context_today() + datetime.timedelta(days=30)).strftime('%Y-%m-%d')), ('end_date', '!=', False)]</field>
         <field name="context">{
             'search_default_group_by_end_date': 1,
-        }</field>
-    </record>
-
-    <!-- Action for Membership Renewal Wizard -->
-    <record id="action_membership_renewal_wizard" model="ir.actions.act_window">
-        <field name="name">Renew Membership</field>
-        <field name="res_model">membership.renewal.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-        <field name="context">{
-            'default_membership_id': active_id,
         }</field>
     </record>
 

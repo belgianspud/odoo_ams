@@ -102,7 +102,7 @@
               action="action_membership_dashboard"
               sequence="5"/>
 
-    <!-- Missing Action Definitions -->
+    <!-- Action Definitions -->
     
     <!-- Dashboard Action -->
     <record id="action_membership_dashboard" model="ir.actions.act_window">
@@ -166,6 +166,59 @@
                 and other dimensions to help you understand your membership income.
             </p>
         </field>
+    </record>
+
+    <!-- Members-only View Action -->
+    <record id="action_res_partner_members" model="ir.actions.act_window">
+        <field name="name">Members</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('is_member', '=', True)]</field>
+        <field name="context">{
+            'search_default_active_members': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No members found!
+            </p>
+            <p>
+                This view shows all partners who have active memberships with your organization.
+                Members are automatically identified when they have active or grace period memberships.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Active Members View Action -->
+    <record id="action_res_partner_active_members" model="ir.actions.act_window">
+        <field name="name">Active Members</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('membership_state', '=', 'active')]</field>
+        <field name="context">{
+            'search_default_group_membership_type': 1,
+        }</field>
+    </record>
+    
+    <!-- Expiring Members View Action -->
+    <record id="action_res_partner_expiring_members" model="ir.actions.act_window">
+        <field name="name">Expiring Members</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="domain">[('membership_expiry_date', '&lt;=', (context_today() + datetime.timedelta(days=30)).strftime('%Y-%m-%d')), ('membership_expiry_date', '&gt;=', context_today().strftime('%Y-%m-%d')), ('membership_state', 'in', ['active', 'grace'])]</field>
+        <field name="context">{
+            'search_default_group_by_membership_expiry_date': 1,
+        }</field>
+    </record>
+    
+    <!-- Action for Create Membership Wizard -->
+    <record id="action_membership_create_wizard" model="ir.actions.act_window">
+        <field name="name">Create Membership</field>
+        <field name="res_model">membership.create.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_partner_id': active_id,
+        }</field>
     </record>
 
 </odoo>

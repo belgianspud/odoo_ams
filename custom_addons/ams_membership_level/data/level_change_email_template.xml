@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Level Change Email Template -->
+        <record id="email_template_level_change" model="mail.template">
+            <field name="name">Membership Level Change Notification</field>
+            <field name="model_id" ref="model_membership_level_change"/>
+            <field name="subject">Membership Level Change Confirmation - {{ object.partner_id.name }}</field>
+            <field name="email_to">{{ object.partner_id.email }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2>🎉 Membership Level Change Confirmation</h2>
+                    </div>
+                    
+                    <p>Dear {{ object.partner_id.name }},</p>
+                    
+                    <p>We're pleased to confirm that your membership level change has been processed successfully!</p>
+                    
+                    <!-- Change Summary -->
+                    <div style="border: 2px solid #007bff; border-radius: 10px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+                        <h3 style="margin-top: 0; color: #007bff;">Change Summary</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">From Level:</td>
+                                <td style="padding: 5px 0;">{{ object.old_level_id.name }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">To Level:</td>
+                                <td style="padding: 5px 0;">{{ object.new_level_id.name }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Effective Date:</td>
+                                <td style="padding: 5px 0;">{{ object.change_date.strftime('%B %d, %Y') }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Change Type:</td>
+                                <td style="padding: 5px 0;">{{ object.change_type.title() }}</td>
+                            </tr>
+                            {% if object.proration_amount != 0 %}
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">
+                                    {% if object.proration_amount > 0 %}
+                                    Additional Charge:
+                                    {% else %}
+                                    Credit Applied:
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 5px 0;">${{ "%.2f"|format(abs(object.proration_amount)) }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                    
+                    {% if object.new_level_id.benefit_ids %}
+                    <h3>Your New Benefits Include:</h3>
+                    <ul>
+                        {% for benefit in object.new_level_id.benefit_ids %}
+                        <li>{{ benefit.name }}
+                            {% if benefit.description %}
+                            - {{ benefit.description[:100] }}{% if benefit.description|length > 100 %}...{% endif %}
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    
+                    {% if object.proration_amount > 0 %}
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                        <h4 style="margin-top: 0; color: #8a6d3b;">Payment Information</h4>
+                        <p>An invoice for ${{ "%.2f"|format(object.proration_amount) }} has been generated for the level upgrade. 
+                        You should receive it shortly via email.</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if object.proration_amount < 0 %}
+                    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                        <h4 style="margin-top: 0; color: #155724;">Credit Information</h4>
+                        <p>A credit of ${{ "%.2f"|format(abs(object.proration_amount)) }} has been applied to your account 
+                        for the level change.</p>
+                    </div>
+                    {% endif %}
+                    
+                    <h3>What's Next?</h3>
+                    <ul>
+                        <li>Your new membership benefits are now active</li>
+                        <li>Update your profile in the member directory if desired</li>
+                        <li>Explore new benefits available at your level</li>
+                        <li>Contact us if you have any questions</li>
+                    </ul>
+                    
+                    <p>Thank you for your continued membership with our organization!</p>
+                    
+                    <p>Best regards,<br/>
+                    The Membership Team</p>
+                </div>
+            </field>
+        </record>
+
+    </data>
+</odoo>

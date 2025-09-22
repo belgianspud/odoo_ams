@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Meeting Invitation Email Template -->
+        <record id="email_template_meeting_invitation" model="mail.template">
+            <field name="name">Chapter Meeting Invitation</field>
+            <field name="model_id" ref="model_membership_chapter_meeting"/>
+            <field name="subject">{{ object.chapter_id.name }} Meeting Invitation - {{ object.name }}</field>
+            <field name="email_to">{{ object.invited_ids.mapped('email') | join(',') }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <h2>📅 You're Invited to a Chapter Meeting!</h2>
+                    
+                    <p>Dear Chapter Member,</p>
+                    
+                    <p>You're cordially invited to attend our upcoming {{ object.meeting_type.replace('_', ' ').title() }}.</p>
+                    
+                    <!-- Meeting Details -->
+                    <div style="border: 2px solid #007bff; border-radius: 10px; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+                        <h3 style="margin-top: 0; color: #007bff;">Meeting Details</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold; width: 30%;">Meeting:</td>
+                                <td style="padding: 5px 0;">{{ object.name }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Date &amp; Time:</td>
+                                <td style="padding: 5px 0;">{{ object.meeting_date.strftime('%A, %B %d, %Y at %I:%M %p') }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Duration:</td>
+                                <td style="padding: 5px 0;">{{ object.duration }} hours</td>
+                            </tr>
+                            {% if object.is_virtual %}
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Meeting Link:</td>
+                                <td style="padding: 5px 0;"><a href="{{ object.meeting_url }}">{{ object.meeting_url }}</a></td>
+                            </tr>
+                            {% if object.access_code %}
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Access Code:</td>
+                                <td style="padding: 5px 0;">{{ object.access_code }}</td>
+                            </tr>
+                            {% endif %}
+                            {% else %}
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Location:</td>
+                                <td style="padding: 5px 0;">{{ object.location }}</td>
+                            </tr>
+                            {% if object.address %}
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Address:</td>
+                                <td style="padding: 5px 0;">{{ object.address }}</td>
+                            </tr>
+                            {% endif %}
+                            {% endif %}
+                        </table>
+                    </div>
+                    
+                    {% if object.agenda %}
+                    <h3>📋 Agenda</h3>
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                        {{ object.agenda | safe }}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- RSVP Section -->
+                    <div style="text-align: center; margin: 30px 0;">
+                        <h3>Please RSVP by {{ (object.meeting_date - timedelta(days=2)).strftime('%B %d') }}</h3>
+                        <div style="margin: 20px 0;">
+                            <a href="/meeting/rsvp/{{ ctx.get('rsvp_id') }}/yes" 
+                               style="background-color: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 0 5px;">
+                                ✓ Yes, I'll attend
+                            </a>
+                            <a href="/meeting/rsvp/{{ ctx.get('rsvp_id') }}/no" 
+                               style="background-color: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 0 5px;">
+                                ✗ Cannot attend
+                            </a>
+                            <a href="/meeting/rsvp/{{ ctx.get('rsvp_id') }}/maybe" 
+                               style="background-color: #ffc107; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 0 5px;">
+                                ? Maybe
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <p>We look forward to seeing you there!</p>
+                    
+                    <p>Best regards,<br/>
+                    {{ object.organizer_id.name or 'Chapter Leadership' }}<br/>
+                    {{ object.chapter_id.name }}</p>
+                </div>
+            </field>
+        </record>
+
+        <!-- Meeting Reminder Email Template -->
+        <record id="email_template_meeting_reminder" model="mail.template">
+            <field name="name">Chapter Meeting Reminder</field>
+            <field name="model_id" ref="model_membership_chapter_meeting"/>
+            <field name="subject">📅 Reminder: {{ object.name }} - Tomorrow!</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <h2>🔔 Meeting Reminder</h2>
+                    
+                    <p>Hi there,</p>
+                    
+                    <p>This is a friendly reminder about our chapter meeting tomorrow:</p>
+                    
+                    <div style="border: 2px solid #ffc107; border-radius: 10px; padding: 20px; margin: 20px 0; background-color: #fff3cd;">
+                        <h3 style="margin-top: 0; color: #8a6d3b;">{{ object.name }}</h3>
+                        <p><strong>When:</strong> {{ object.meeting_date.strftime('%A, %B %d at %I:%M %p') }}</p>
+                        {% if object.is_virtual %}
+                        <p><strong>Join Link:</strong> <a href="{{ object.meeting_url }}">{{ object.meeting_url }}</a></p>
+                        {% else %}
+                        <p><strong>Where:</strong> {{ object.location }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <p>Don't forget to:</p>
+                    <ul>
+                        <li>Review the agenda (attached or in original invitation)</li>
+                        <li>Bring any materials mentioned in the agenda</li>
+                        {% if object.is_virtual %}
+                        <li>Test your audio/video setup beforehand</li>
+                        <li>Join a few minutes early</li>
+                        {% else %}
+                        <li>Allow extra time for parking and check-in</li>
+                        {% endif %}
+                    </ul>
+                    
+                    <p>See you tomorrow!</p>
+                    
+                    <p>Best regards,<br/>
+                    {{ object.chapter_id.name }}</p>
+                </div>
+            </field>
+        </record>
+
+        <!-- Meeting Cancellation Email Template -->
+        <record id="email_template_meeting_cancellation" model="mail.template">
+            <field name="name">Chapter Meeting Cancellation</field>
+            <field name="model_id" ref="model_membership_chapter_meeting"/>
+            <field name="subject">❌ Meeting Cancelled: {{ object.name }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <h2>❌ Meeting Cancellation Notice</h2>
+                    
+                    <p>Dear Chapter Member,</p>
+                    
+                    <p>We regret to inform you that the following meeting has been <strong>cancelled</strong>:</p>
+                    
+                    <div style="border: 2px solid #dc3545; border-radius: 10px; padding: 20px; margin: 20px 0; background-color: #f8d7da;">
+                        <h3 style="margin-top: 0; color: #721c24;">{{ object.name }}</h3>
+                        <p><strong>Originally scheduled:</strong> {{ object.meeting_date.strftime('%A, %B %d at %I:%M %p') }}</p>
+                    </div>
+                    
+                    {% if object.next_meeting_date %}
+                    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                        <h4 style="margin-top: 0; color: #155724;">Next Meeting Scheduled</h4>
+                        <p>Our next meeting is scheduled for {{ object.next_meeting_date.strftime('%A, %B %d at %I:%M %p') }}. 
+                        You'll receive a separate invitation for that meeting.</p>
+                    </div>
+                    {% endif %}
+                    
+                    <p>We apologize for any inconvenience this may cause. If you have any questions, 
+                    please don't hesitate to contact chapter leadership.</p>
+                    
+                    <p>Thank you for your understanding.</p>
+                    
+                    <p>Best regards,<br/>
+                    {{ object.chapter_id.name }}</p>
+                </div>
+            </field>
+        </record>
+
+    </data>
+</odoo>

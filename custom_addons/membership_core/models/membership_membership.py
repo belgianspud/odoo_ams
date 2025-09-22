@@ -74,6 +74,13 @@ class MembershipMembership(models.Model):
         string='Category'
     )
     
+    # Related fields from membership type
+    membership_type_description = fields.Html(
+        related='membership_type_id.description',
+        string='Membership Type Description',
+        readonly=True
+    )
+    
     # State management with full lifecycle
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -356,20 +363,6 @@ class MembershipMembership(models.Model):
                 'domain': [('id', 'in', self.invoice_ids.ids)],
                 'target': 'current'
             }
-    
-    def action_open_renewal_wizard(self):
-        """Open renewal wizard for this membership"""
-        self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Renew Membership'),
-            'res_model': 'membership.renewal.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_membership_id': self.id,
-            }
-        }
     
     # Automated state transition (called by cron)
     @api.model

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Payment Reminder Email Template -->
+        <record id="email_template_installment_reminder" model="mail.template">
+            <field name="name">Payment Reminder - Installment Due</field>
+            <field name="model_id" ref="model_subscription_installment"/>
+            <field name="subject">Payment Reminder: Installment Due in 3 Days - {{ object.subscription_id.display_name }}</field>
+            <field name="email_to">{{ object.subscription_id.partner_id.email }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <h2>🔔 Payment Reminder</h2>
+                    
+                    <p>Dear {{ object.subscription_id.partner_id.name }},</p>
+                    
+                    <p>This is a friendly reminder that your next installment payment is due in <strong>3 days</strong>.</p>
+                    
+                    <!-- Payment Details -->
+                    <div style="border: 2px solid #ffc107; border-radius: 10px; padding: 20px; margin: 20px 0; background-color: #fff3cd;">
+                        <h3 style="margin-top: 0; color: #8a6d3b;">Payment Details</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Subscription:</td>
+                                <td style="padding: 5px 0;">{{ object.subscription_id.display_name }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Installment:</td>
+                                <td style="padding: 5px 0;"># {{ object.installment_number }} of {{ object.payment_plan_id.installments }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Due Date:</td>
+                                <td style="padding: 5px 0;">{{ object.due_date.strftime('%A, %B %d, %Y') }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Amount Due:</td>
+                                <td style="padding: 5px 0; font-size: 18px; font-weight: bold; color: #8a6d3b;">${{ "%.2f"|format(object.total_due) }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="#" style="background-color: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 16px;">
+                            💳 Make Payment Now
+                        </a>
+                    </div>
+                    
+                    <h3>Payment Options:</h3>
+                    <ul>
+                        <li>Online payment through our member portal</li>
+                        <li>Credit card or bank transfer</li>
+                        <li>Call our office to pay by phone</li>
+                        <li>Mail a check to our office address</li>
+                    </ul>
+                    
+                    <div style="background-color: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                        <h4 style="margin-top: 0; color: #0c5460;">Important Notes:</h4>
+                        <ul style="margin-bottom: 0;">
+                            <li>Late payments may incur a ${{ "%.2f"|format(object.payment_plan_id.late_fee) }} late fee</li>
+                            <li>Payments are due by {{ object.due_date.strftime('%B %d, %Y') }}</li>
+                            <li>Contact us if you need assistance with payment arrangements</li>
+                        </ul>
+                    </div>
+                    
+                    <p>Questions? Contact us at [phone] or [email]. We're here to help!</p>
+                    
+                    <p>Thank you for your continued membership!</p>
+                    
+                    <p>Best regards,<br/>
+                    The Membership Team</p>
+                </div>
+            </field>
+        </record>
+
+        <!-- Overdue Notice Email Template -->
+        <record id="email_template_installment_overdue" model="mail.template">
+            <field name="name">Overdue Notice - Payment Past Due</field>
+            <field name="model_id" ref="model_subscription_installment"/>
+            <field name="subject">⚠️ OVERDUE NOTICE: Payment Past Due - {{ object.subscription_id.display_name }}</field>
+            <field name="email_to">{{ object.subscription_id.partner_id.email }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <h2>⚠️ Payment Overdue Notice</h2>
+                    
+                    <p>Dear {{ object.subscription_id.partner_id.name }},</p>
+                    
+                    <p>We notice that your installment payment is now <strong>past due</strong>. Please arrange payment immediately to avoid service interruption.</p>
+                    
+                    <!-- Overdue Details -->
+                    <div style="border: 2px solid #dc3545; border-radius: 10px; padding: 20px; margin: 20px 0; background-color: #f8d7da;">
+                        <h3 style="margin-top: 0; color: #721c24;">⚠️ Overdue Payment</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Subscription:</td>
+                                <td style="padding: 5px 0;">{{ object.subscription_id.display_name }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Installment:</td>
+                                <td style="padding: 5px 0;"># {{ object.installment_number }} of {{ object.payment_plan_id.installments }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Original Due Date:</td>
+                                <td style="padding: 5px 0;">{{ object.due_date.strftime('%A, %B %d, %Y') }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Days Overdue:</td>
+                                <td style="padding: 5px 0; color: #721c24; font-weight: bold;">{{ (datetime.datetime.now().date() - object.due_date).days }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Total Amount Due:</td>
+                                <td style="padding: 5px 0; font-size: 18px; font-weight: bold; color: #721c24;">${{ "%.2f"|format(object.total_due) }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    {% if object.late_fee > 0 %}
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                        <h4 style="margin-top: 0; color: #8a6d3b;">Late Fee Applied</h4>
+                        <p>A late fee of <strong>${{ "%.2f"|format(object.late_fee) }}</strong> has been applied to your account.</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="#" style="background-color: #dc3545; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 16px;">
+                            🚨 Pay Now to Avoid Suspension
+                        </a>
+                    </div>
+                    
+                    <h3>⚠️ Important Actions Required:</h3>
+                    <ol>
+                        <li><strong>Pay immediately</strong> to avoid service suspension</li>
+                        <li>Contact us if you're experiencing financial hardship</li>
+                        <li>Update your payment method if needed</li>
+                        <li>Set up automatic payments to avoid future issues</li>
+                    </ol>
+                    
+                    <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                        <h4 style="margin-top: 0; color: #721c24;">⚠️ Next Steps if Payment Not Received:</h4>
+                        <ul style="margin-bottom: 0;">
+                            <li>Your subscription may be suspended after [X] days</li>
+                            <li>Additional late fees may apply</li>
+                            <li>Your account may be referred for collection</li>
+                            <li>Membership benefits will be suspended</li>
+                        </ul>
+                    </div>
+                    
+                    <h3>Need Help?</h3>
+                    <p>If you're experiencing financial difficulties or have questions about your payment, 
+                    please contact us immediately at [phone] or [email]. We're here to work with you.</p>
+                    
+                    <p><strong>This is an important notice. Please take action immediately.</strong></p>
+                    
+                    <p>Sincerely,<br/>
+                    The Billing Department</p>
+                </div>
+            </field>
+        </record>
+
+    </data>
+</odoo>

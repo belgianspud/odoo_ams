@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Mobile Device Views -->
+    <record id="view_mobile_device_tree" model="ir.ui.view">
+        <field name="name">mobile.device.tree</field>
+        <field name="model">mobile.device</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="is_active" decoration-muted="not is_active">
+                <field name="partner_id"/>
+                <field name="platform"/>
+                <field name="app_version"/>
+                <field name="registration_date"/>
+                <field name="last_seen"/>
+                <field name="notifications_enabled"/>
+                <field name="total_notifications_sent"/>
+                <field name="open_rate"/>
+                <field name="is_active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_mobile_device_form" model="ir.ui.view">
+        <field name="name">mobile.device.form</field>
+        <field name="model">mobile.device</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="update_last_seen" string="Update Last Seen" type="object"/>
+                    <button name="deactivate_device" string="Deactivate" type="object" 
+                            attrs="{'invisible': [('is_active', '=', False)]}"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="partner_id"/>
+                        </h1>
+                        <h2>
+                            <field name="platform"/> Device
+                        </h2>
+                    </div>
+                    <group>
+                        <group name="device_info">
+                            <field name="device_token"/>
+                            <field name="device_id"/>
+                            <field name="device_model"/>
+                            <field name="app_version"/>
+                            <field name="os_version"/>
+                        </group>
+                        <group name="status">
+                            <field name="registration_date"/>
+                            <field name="last_seen"/>
+                            <field name="is_active"/>
+                            <field name="notifications_enabled"/>
+                        </group>
+                    </group>
+                    <group name="statistics" string="Notification Statistics">
+                        <field name="total_notifications_sent"/>
+                        <field name="total_notifications_opened"/>
+                        <field name="open_rate" widget="percentage"/>
+                    </group>
+                    <field name="notification_preferences" widget="ace" options="{'mode': 'json'}" 
+                           string="Notification Preferences (JSON)"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Push Campaign Views -->
+    <record id="view_push_campaign_tree" model="ir.ui.view">
+        <field name="name">push.notification.campaign.tree</field>
+        <field name="model">push.notification.campaign</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state=='sent'" decoration-warning="state=='scheduled'" decoration-info="state=='draft'">
+                <field name="name"/>
+                <field name="message_title"/>
+                <field name="campaign_type"/>
+                <field name="target_type"/>
+                <field name="send_date"/>
+                <field name="total_recipients"/>
+                <field name="notifications_sent"/>
+                <field name="open_rate"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_push_campaign_form" model="ir.ui.view">
+        <field name="name">push.notification.campaign.form</field>
+        <field name="model">push.notification.campaign</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_send_campaign" string="Send Campaign" type="object" 
+                            attrs="{'invisible': [('state', '!=', 'draft')]}" 
+                            class="oe_highlight"/>
+                    <button name="action_cancel_campaign" string="Cancel" type="object" 
+                            attrs="{'invisible': [('state', 'not in', ['draft', 'scheduled'])]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,sent"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" icon="fa-mobile">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="notifications_sent"/>/<field name="total_recipients"/>
+                                </span>
+                                <span class="o_stat_text">Sent</span>
+                            </div>
+                        </button>
+                        <button class="oe_stat_button" type="object" icon="fa-eye">
+                            <field string="Open Rate" name="open_rate" widget="statinfo" options="{'suffix': '%'}"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="Campaign Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group name="campaign_info">
+                            <field name="campaign_type"/>
+                            <field name="send_date" attrs="{'required': [('campaign_type', '=', 'scheduled')]}"/>
+                        </group>
+                        <group name="targeting">
+                            <field name="target_type"/>
+                            <field name="target_platforms"/>
+                        </group>
+                    </group>
+                    
+                    <group name="message_content" string="Message Content">
+                        <field name="message_title"/>
+                        <field name="message_body"/>
+                    </group>
+                    
+                    <group name="targeting_details" string="Targeting">
+                        <field name="membership_level_ids" widget="many2many_tags" 
+                               attrs="{'invisible': [('target_type', '!=', 'membership_level')]}"/>
+                        <field name="chapter_ids" widget="many2many_tags" 
+                               attrs="{'invisible': [('target_type', '!=', 'chapter')]}"/>
+                        <field name="partner_ids" widget="many2many_tags" 
+                               attrs="{'invisible': [('target_type', '!=', 'individual')]}"/>
+                    </group>
+                    
+                    <group name="action_config" string="Action Configuration">
+                        <group>
+                            <field name="action_type"/>
+                            <field name="action_url" attrs="{'invisible': [('action_type', 'not in', ['open_url', 'open_event'])]}"/>
+                        </group>
+                        <group>
+                            <field name="action_data" attrs="{'invisible': [('action_type', '!=', 'custom')]}"/>
+                        </group>
+                    </group>
+                    
+                    <group name="statistics" string="Campaign Statistics" attrs="{'invisible': [('state', '=', 'draft')]}">
+                        <group>
+                            <field name="notifications_sent"/>
+                            <field name="notifications_delivered"/>
+                            <field name="notifications_opened"/>
+                        </group>
+                        <group>
+                            <field name="delivery_rate" widget="percentage"/>
+                            <field name="open_rate" widget="percentage"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Push Notification Template Views -->
+    <record id="view_push_template_tree" model="ir.ui.view">
+        <field name="name">push.notification.template.tree</field>
+        <field name="model">push.notification.template</field>
+        <field name="arch" type="xml">
+            <tree decoration-muted="not active">
+                <field name="name"/>
+                <field name="category"/>
+                <field name="title_template"/>
+                <field name="default_action_type"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_push_template_form" model="ir.ui.view">
+        <field name="name">push.notification.template.form</field>
+        <field name="model">push.notification.template</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="create_campaign_from_template" string="Create Campaign" type="object" class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="Template Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="category"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="default_action_type"/>
+                            <field name="default_action_url"/>
+                        </group>
+                    </group>
+                    <group name="template_content" string="Template Content">
+                        <field name="title_template"/>
+                        <field name="body_template"/>
+                    </group>
+                    <field name="description" placeholder="Description of when to use this template..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Enhanced Partner Form with Mobile Device Info -->
+    <record id="view_partner_form_mobile_devices" model="ir.ui.view">
+        <field name="name">res.partner.form.mobile.devices</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="ams_membership_base.view_partner_form_membership"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_mobile_devices" icon="fa-mobile">
+                    <field string="Mobile Devices" name="active_devices_count" widget="statinfo"/>
+                </button>
+            </xpath>
+            <xpath expr="//group[1]/group[2]" position="inside">
+                <field name="push_notifications_enabled"/>
+                <field name="push_notification_open_rate" widget="percentage"/>
+                <field name="total_push_notifications"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_mobile_device" model="ir.actions.act_window">
+        <field name="name">Mobile Devices</field>
+        <field name="res_model">mobile.device</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No mobile devices registered!
+            </p>
+            <p>
+                Mobile devices are registered when members install and use your mobile app.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_push_campaign" model="ir.actions.act_window">
+        <field name="name">Push Notification Campaigns</field>
+        <field name="res_model">push.notification.campaign</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first push notification campaign!
+            </p>
+            <p>
+                Reach your members instantly with targeted push notifications.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_push_template" model="ir.actions.act_window">
+        <field name="name">Push Notification Templates</field>
+        <field name="res_model">push.notification.template</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first push notification template!
+            </p>
+            <p>
+                Templates help you quickly create consistent push notifications.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_push_notifications" name="Push Notifications" 
+              parent="ams_membership_comms.menu_membership_comms_root" sequence="25"/>
+    <menuitem id="menu_push_campaigns" name="Campaigns" 
+              parent="menu_push_notifications" 
+              action="action_push_campaign" sequence="10"/>
+    <menuitem id="menu_push_templates" name="Templates" 
+              parent="menu_push_notifications" 
+              action="action_push_template" sequence="20"/>
+    <menuitem id="menu_mobile_devices" name="Mobile Devices" 
+              parent="menu_push_notifications" 
+              action="action_mobile_device" sequence="30"/>
+
+</odoo>

@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Level Change Views -->
+    <record id="view_level_change_tree" model="ir.ui.view">
+        <field name="name">membership.level.change.tree</field>
+        <field name="model">membership.level.change</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state=='processed'" decoration-warning="state=='approved'" decoration-info="state=='draft'">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="old_level_id"/>
+                <field name="new_level_id"/>
+                <field name="change_type"/>
+                <field name="change_date"/>
+                <field name="proration_amount"/>
+                <field name="state"/>
+                <field name="currency_id" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_level_change_form" model="ir.ui.view">
+        <field name="name">membership.level.change.form</field>
+        <field name="model">membership.level.change</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_approve" string="Approve" type="object" 
+                            attrs="{'invisible': [('state', '!=', 'draft')]}" 
+                            class="oe_highlight"/>
+                    <button name="action_process" string="Process Change" type="object" 
+                            attrs="{'invisible': [('state', '!=', 'approved')]}" 
+                            class="oe_highlight"/>
+                    <button name="action_cancel" string="Cancel" type="object" 
+                            attrs="{'invisible': [('state', 'in', ['processed', 'cancelled'])]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,approved,processed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group name="member_info">
+                            <field name="membership_id"/>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="change_date"/>
+                            <field name="change_type" readonly="1"/>
+                        </group>
+                        <group name="level_change">
+                            <field name="old_level_id"/>
+                            <field name="new_level_id"/>
+                            <field name="reason"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group name="financial" string="Financial Impact">
+                        <group>
+                            <field name="old_level_price" readonly="1"/>
+                            <field name="new_level_price" readonly="1"/>
+                            <field name="price_difference" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="days_remaining" readonly="1"/>
+                            <field name="proration_amount" readonly="1"/>
+                            <field name="invoice_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <group name="processing" string="Processing Information" attrs="{'invisible': [('state', '=', 'draft')]}">
+                        <field name="processed_date" readonly="1"/>
+                        <field name="processed_by" readonly="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Reason Details">
+                            <field name="reason_notes" nolabel="1" placeholder="Additional details about the reason for this level change..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_level_change_search" model="ir.ui.view">
+        <field name="name">membership.level.change.search</field>
+        <field name="model">membership.level.change</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="old_level_id"/>
+                <field name="new_level_id"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Approved" name="approved" domain="[('state', '=', 'approved')]"/>
+                <filter string="Processed" name="processed" domain="[('state', '=', 'processed')]"/>
+                <filter string="Upgrades" name="upgrades" domain="[('change_type', '=', 'upgrade')]"/>
+                <filter string="Downgrades" name="downgrades" domain="[('change_type', '=', 'downgrade')]"/>
+                <filter string="This Month" name="this_month" 
+                        domain="[('change_date', '&gt;=', (datetime.datetime.now().replace(day=1)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Change Type" name="group_type" context="{'group_by': 'change_type'}"/>
+                    <filter string="Reason" name="group_reason" context="{'group_by': 'reason'}"/>
+                    <filter string="Change Date" name="group_date" context="{'group_by': 'change_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Level Change Wizard -->
+    <record id="view_level_upgrade_wizard" model="ir.ui.view">
+        <field name="name">membership.level.upgrade.wizard.form</field>
+        <field name="model">membership.level.upgrade.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Change Membership Level</h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="membership_id" readonly="1"/>
+                            <field name="current_level_id" readonly="1"/>
+                            <field name="new_level_id"/>
+                            <field name="change_date"/>
+                        </group>
+                        <group>
+                            <field name="reason"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group name="preview" string="Financial Preview">
+                        <group>
+                            <field name="price_difference" readonly="1"/>
+                            <field name="proration_amount" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="reason_notes" placeholder="Additional notes about this level change..."/>
+                </sheet>
+                <footer>
+                    <button string="Create Request" name="action_create_change_request" type="object" class="btn-primary"/>
+                    <button string="Process Immediately" name="action_process_immediately" type="object" class="btn-secondary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_level_change" model="ir.actions.act_window">
+        <field name="name">Level Changes</field>
+        <field name="res_model">membership.level.change</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_level_change_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No level changes found!
+            </p>
+            <p>
+                Level changes allow members to upgrade or downgrade their membership tier with proper proration.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_level_upgrade_wizard" model="ir.actions.act_window">
+        <field name="name">Change Level</field>
+        <field name="res_model">membership.level.upgrade.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Enhanced Membership Form with Level Change Features -->
+    <record id="view_membership_form_level_change" model="ir.ui.view">
+        <field name="name">membership.membership.form.level.change</field>
+        <field name="model">membership.membership</field>
+        <field name="inherit_id" ref="membership_level.view_membership_form_with_level"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_level_changes" icon="fa-exchange">
+                    <field string="Level Changes" name="level_change_count" widget="statinfo"/>
+                </button>
+            </xpath>
+            <xpath expr="//header" position="inside">
+                <button name="action_change_level" string="Change Level" type="object"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_level_changes" name="Level Changes" 
+              parent="membership_base.menu_membership_main" 
+              action="action_level_change" sequence="22"/>
+
+</odoo>

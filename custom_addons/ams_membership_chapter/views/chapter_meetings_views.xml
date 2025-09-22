@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Meeting Views -->
+    <record id="view_chapter_meeting_tree" model="ir.ui.view">
+        <field name="name">membership.chapter.meeting.tree</field>
+        <field name="model">membership.chapter.meeting</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state=='completed'" decoration-warning="state=='confirmed'" decoration-info="state=='published'" decoration-muted="state=='cancelled'">
+                <field name="name"/>
+                <field name="chapter_id"/>
+                <field name="meeting_date"/>
+                <field name="meeting_type"/>
+                <field name="location"/>
+                <field name="invited_count"/>
+                <field name="attended_count"/>
+                <field name="attendance_rate"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_chapter_meeting_form" model="ir.ui.view">
+        <field name="name">membership.chapter.meeting.form</field>
+        <field name="model">membership.chapter.meeting</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_publish" string="Publish &amp; Send Invites" type="object" 
+                            attrs="{'invisible': [('state', '!=', 'draft')]}" 
+                            class="oe_highlight"/>
+                    <button name="action_confirm" string="Confirm Meeting" type="object" 
+                            attrs="{'invisible': [('state', '!=', 'published')]}" 
+                            class="oe_highlight"/>
+                    <button name="action_complete" string="Mark Completed" type="object" 
+                            attrs="{'invisible': [('state', '!=', 'confirmed')]}" 
+                            class="oe_highlight"/>
+                    <button name="action_send_reminder" string="Send Reminder" type="object" 
+                            attrs="{'invisible': [('state', 'not in', ['published', 'confirmed'])]}"/>
+                    <button name="action_cancel" string="Cancel Meeting" type="object" 
+                            attrs="{'invisible': [('state', 'in', ['completed', 'cancelled'])]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,published,confirmed,completed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_view_rsvps" icon="fa-calendar-check-o">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="rsvp_yes_count"/>/<field name="invited_count"/>
+                                </span>
+                                <span class="o_stat_text">RSVPs</span>
+                            </div>
+                        </button>
+                        <button class="oe_stat_button" type="object" name="action_view_rsvps" icon="fa-users">
+                            <field string="Attendance Rate" name="attendance_rate" widget="statinfo" options="{'suffix': '%'}"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="Meeting Title"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group name="basic_info">
+                            <field name="chapter_id"/>
+                            <field name="meeting_type"/>
+                            <field name="meeting_date"/>
+                            <field name="duration"/>
+                        </group>
+                        <group name="organization">
+                            <field name="organizer_id"/>
+                            <field name="secretary_id"/>
+                            <field name="facilitator_id"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group name="location_info" string="Location &amp; Access">
+                        <group>
+                            <field name="is_virtual"/>
+                            <field name="location" attrs="{'invisible': [('is_virtual', '=', True)]}"/>
+                            <field name="meeting_url" attrs="{'invisible': [('is_virtual', '=', False)]}"/>
+                        </group>
+                        <group>
+                            <field name="access_code" attrs="{'invisible': [('is_virtual', '=', False)]}"/>
+                            <field name="address" attrs="{'invisible': [('is_virtual', '=', True)]}"/>
+                        </group>
+                    </group>
+                    <group name="budget" string="Budget">
+                        <field name="estimated_cost"/>
+                        <field name="actual_cost"/>
+                    </group>
+                    <notebook>
+                        <page string="Agenda">
+                            <field name="agenda" widget="html"/>
+                        </page>
+                        <page string="Attendees">
+                            <group>
+                                <button name="action_auto_invite_chapter_members" string="Invite All Chapter Members" type="object" class="oe_link"/>
+                            </group>
+                            <group string="Invited Members">
+                                <field name="invited_ids" nolabel="1">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="email"/>
+                                        <field name="phone"/>
+                                    </tree>
+                                </field>
+                            </group>
+                            <group string="Attendees" attrs="{'invisible': [('state', '!=', 'completed')]}">
+                                <field name="attendee_ids" nolabel="1">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="email"/>
+                                        <field name="chapter_id"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </page>
+                        <page string="Minutes &amp; Actions" attrs="{'invisible': [('state', 'not in', ['completed'])]}">
+                            <group string="Meeting Minutes">
+                                <field name="minutes" widget="html" nolabel="1"/>
+                            </group>
+                            <group string="Action Items">
+                                <field name="action_items" widget="html" nolabel="1"/>
+                            </group>
+                            <group>
+                                <field name="next_meeting_date"/>
+                            </group>
+                        </page>
+                        <page string="Materials">
+                            <group>
+                                <field name="presentation_materials" filename="materials_filename"/>
+                                <field name="materials_filename" invisible="1"/>
+                            </group>
+                        </page>
+                        <page string="Statistics" attrs="{'invisible': [('state', '=', 'draft')]}">
+                            <group>
+                                <group>
+                                    <field name="invited_count"/>
+                                    <field name="rsvp_yes_count"/>
+                                    <field name="rsvp_no_count"/>
+                                    <field name="rsvp_maybe_count"/>
+                                </group>
+                                <group>
+                                    <field name="attended_count"/>
+                                    <field name="attendance_rate"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Meeting Calendar View -->
+    <record id="view_chapter_meeting_calendar" model="ir.ui.view">
+        <field name="name">membership.chapter.meeting.calendar</field>
+        <field name="model">membership.chapter.meeting</field>
+        <field name="arch" type="xml">
+            <calendar string="Chapter Meetings" date_start="meeting_date" color="chapter_id" quick_add="False">
+                <field name="name"/>
+                <field name="chapter_id"/>
+                <field name="meeting_type"/>
+                <field name="location"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- RSVP Views -->
+    <record id="view_meeting_rsvp_tree" model="ir.ui.view">
+        <field name="name">membership.chapter.meeting.rsvp.tree</field>
+        <field name="model">membership.chapter.meeting.rsvp</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="response=='yes'" decoration-danger="response=='no'" decoration-warning="response=='maybe'">
+                <field name="partner_id"/>
+                <field name="meeting_id"/>
+                <field name="response"/>
+                <field name="response_date"/>
+                <field name="notes"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_meeting_rsvp_form" model="ir.ui.view">
+        <field name="name">membership.chapter.meeting.rsvp.form</field>
+        <field name="model">membership.chapter.meeting.rsvp</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_rsvp_yes" string="RSVP Yes" type="object" class="oe_highlight"/>
+                    <button name="action_rsvp_no" string="RSVP No" type="object"/>
+                    <button name="action_rsvp_maybe" string="RSVP Maybe" type="object"/>
+                    <field name="response" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="meeting_id"/>
+                        <field name="partner_id"/>
+                        <field name="response_date"/>
+                    </group>
+                    <field name="notes" placeholder="Additional notes or comments..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Enhanced Chapter Form with Meeting Features -->
+    <record id="view_membership_chapter_form_meetings" model="ir.ui.view">
+        <field name="name">membership.chapter.form.meetings</field>
+        <field name="model">membership.chapter</field>
+        <field name="inherit_id" ref="ams_membership_chapter.view_membership_chapter_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_meetings" icon="fa-calendar">
+                    <field string="Meetings" name="meeting_count" widget="statinfo"/>
+                </button>
+            </xpath>
+            <xpath expr="//group[1]/group[2]" position="inside">
+                <field name="next_meeting_date"/>
+                <field name="last_meeting_date"/>
+                <field name="average_attendance" widget="percentage"/>
+            </xpath>
+            <xpath expr="//header" position="inside">
+                <button name="action_schedule_meeting" string="Schedule Meeting" type="object" class="oe_highlight"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Meeting Settings">
+                    <group>
+                        <group>
+                            <field name="default_meeting_duration"/>
+                            <field name="meeting_day_of_week"/>
+                            <field name="meeting_time" widget="float_time"/>
+                        </group>
+                        <group>
+                            <field name="total_meetings_held"/>
+                            <field name="average_attendance"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_chapter_meeting" model="ir.actions.act_window">
+        <field name="name">Chapter Meetings</field>
+        <field name="res_model">membership.chapter.meeting</field>
+        <field name="view_mode">calendar,tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Schedule your first chapter meeting!
+            </p>
+            <p>
+                Organize and track chapter meetings with attendance, agendas, and minutes.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_meeting_rsvp" model="ir.actions.act_window">
+        <field name="name">Meeting RSVPs</field>
+        <field name="res_model">membership.chapter.meeting.rsvp</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

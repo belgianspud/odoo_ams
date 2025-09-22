@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Communications Tree View -->
+    <record id="view_membership_comms_tree" model="ir.ui.view">
+        <field name="name">membership.comms.tree</field>
+        <field name="model">membership.comms</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state=='sent'" decoration-warning="state=='scheduled'" decoration-danger="state=='failed'" decoration-muted="state=='cancelled'">
+                <field name="sent_date"/>
+                <field name="partner_id"/>
+                <field name="comm_type"/>
+                <field name="subject"/>
+                <field name="scheduled_date"/>
+                <field name="state"/>
+                <field name="membership_id"/>
+                <field name="event_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Communications Form View -->
+    <record id="view_membership_comms_form" model="ir.ui.view">
+        <field name="name">membership.comms.form</field>
+        <field name="model">membership.comms</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_send_now" string="Send Now" type="object" 
+                            attrs="{'invisible': [('state', 'in', ['sent', 'failed', 'cancelled'])]}" 
+                            class="oe_highlight"/>
+                    <button name="action_schedule" string="Schedule" type="object" 
+                            attrs="{'invisible': [('state', '!=', 'draft')]}"
+                            class="oe_highlight"/>
+                    <button name="action_cancel" string="Cancel" type="object" 
+                            attrs="{'invisible': [('state', 'in', ['sent', 'failed', 'cancelled'])]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,sent"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="subject" class="oe_edit_only"/>
+                        <h1>
+                            <field name="subject" placeholder="Email Subject"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group name="recipient_info">
+                            <field name="partner_id" options="{'no_create': True}"/>
+                            <field name="comm_type"/>
+                            <field name="template_id"/>
+                        </group>
+                        <group name="related_records">
+                            <field name="membership_id"/>
+                            <field name="subscription_id"/>
+                            <field name="event_id"/>
+                            <field name="days_before_expiry" attrs="{'invisible': [('comm_type', '!=', 'renewal_reminder')]}"/>
+                        </group>
+                    </group>
+                    <group name="scheduling">
+                        <group>
+                            <field name="scheduled_date"/>
+                            <field name="sent_date" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="mail_message_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Email Content">
+                            <field name="body" widget="html"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Communications Search View -->
+    <record id="view_membership_comms_search" model="ir.ui.view">
+        <field name="name">membership.comms.search</field>
+        <field name="model">membership.comms</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="partner_id"/>
+                <field name="subject"/>
+                <field name="comm_type"/>
+                <field name="membership_id"/>
+                <field name="event_id"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Scheduled" name="scheduled" domain="[('state', '=', 'scheduled')]"/>
+                <filter string="Sent" name="sent" domain="[('state', '=', 'sent')]"/>
+                <filter string="Failed" name="failed" domain="[('state', '=', 'failed')]"/>
+                <separator/>
+                <filter string="Renewal Reminders" name="renewal" domain="[('comm_type', '=', 'renewal_reminder')]"/>
+                <filter string="Welcome Messages" name="welcome" domain="[('comm_type', '=', 'welcome')]"/>
+                <filter string="Event Confirmations" name="event_conf" domain="[('comm_type', '=', 'event_confirmation')]"/>
+                <filter string="Payment Confirmations" name="payment_conf" domain="[('comm_type', '=', 'payment_confirmation')]"/>
+                <separator/>
+                <filter string="Today" name="today" domain="[('sent_date', '&gt;=', datetime.datetime.combine(context_today(), datetime.time(0,0,0))), ('sent_date', '&lt;=', datetime.datetime.combine(context_today(), datetime.time(23,59,59)))]"/>
+                <filter string="This Week" name="this_week" domain="[('sent_date', '&gt;=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Type" name="group_type" context="{'group_by': 'comm_type'}"/>
+                    <filter string="Sent Date" name="group_sent_date" context="{'group_by': 'sent_date'}"/>
+                    <filter string="Recipient" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Communications Action -->
+    <record id="action_membership_comms" model="ir.actions.act_window">
+        <field name="name">Communications</field>
+        <field name="res_model">membership.comms</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_membership_comms_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No communications yet!
+            </p>
+            <p>
+                Communications are automatically generated for renewals, confirmations, and notices.
+            </p>
+        </field>
+    </record>
+
+    <!-- Partner Form View Inherit -->
+    <record id="view_partner_form_comms" model="ir.ui.view">
+        <field name="name">res.partner.form.comms</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="ams_membership_event_pricing.view_partner_form_event_stats"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_communications" icon="fa-envelope">
+                    <field string="Communications" name="communication_count" widget="statinfo"/>
+                </button>
+            </xpath>
+            <xpath expr="//group[1]/group[2]" position="inside">
+                <field name="last_communication_date"/>
+            </xpath>
+            <xpath expr="//page[@string='Event History']" position="after">
+                <page string="Communications">
+                    <field name="communication_ids">
+                        <tree>
+                            <field name="sent_date"/>
+                            <field name="comm_type"/>
+                            <field name="subject"/>
+                            <field name="state"/>
+                            <field name="membership_id"/>
+                            <field name="event_id"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Communications Dashboard -->
+    <record id="view_membership_comms_kanban" model="ir.ui.view">
+        <field name="name">membership.comms.kanban</field>
+        <field name="model">membership.comms</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state">
+                <field name="partner_id"/>
+                <field name="subject"/>
+                <field name="comm_type"/>
+                <field name="scheduled_date"/>
+                <field name="sent_date"/>
+                <field name="state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="subject"/>
+                                        </strong>
+                                    </div>
+                                    <div class="o_kanban_record_top_right">
+                                        <span t-attf-class="badge badge-pill badge-#{record.comm_type.raw_value == 'welcome' and 'success' or record.comm_type.raw_value == 'renewal_reminder' and 'warning' or record.comm_type.raw_value == 'lapsed_notice' and 'danger' or 'info'}">
+                                            <field name="comm_type"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div>
+                                        <i class="fa fa-user"/> <field name="partner_id"/>
+                                    </div>
+                                    <div t-if="record.scheduled_date.value">
+                                        <i class="fa fa-clock-o"/> 
+                                        Scheduled: <field name="scheduled_date"/>
+                                    </div>
+                                    <div t-if="record.sent_date.value">
+                                        <i class="fa fa-check"/> 
+                                        Sent: <field name="sent_date"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_membership_comms" name="Communications" 
+              parent="ams_membership_base.menu_membership_main" 
+              action="action_membership_comms" sequence="30"/>
+
+</odoo>

@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_membership_membership_user,membership.membership.user,model_membership_membership,base.group_user,1,1,1,0
+access_membership_membership_manager,membership.membership.manager,model_membership_membership,base.group_system,1,1,1,1
+access_member_directory_user,membership.directory.user,model_membership_directory,base.group_user,1,1,1,0
+access_member_directory_manager,membership.directory.manager,model_membership_directory,base.group_system,1,1,1,1
+access_directory_category_user,membership.directory.category.user,model_membership_directory_category,base.group_user,1,0,0,0
+access_directory_category_manager,membership.directory.category.manager,model_membership_directory_category,base.group_system,1,1,1,1
+access_card_template_user,membership.card.template.user,model_membership_card_template,base.group_user,1,0,0,0
+access_card_template_manager,membership.card.template.manager,model_membership_card_template,base.group_system,1,1,1,1

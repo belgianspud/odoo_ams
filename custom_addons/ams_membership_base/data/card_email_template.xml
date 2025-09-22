@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Digital Card Email Template -->
+        <record id="email_template_digital_card" model="mail.template">
+            <field name="name">Digital Membership Card</field>
+            <field name="model_id" ref="model_membership_membership"/>
+            <field name="subject">Your Digital Membership Card - {{ object.partner_id.name }}</field>
+            <field name="email_to">{{ object.partner_id.email }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2>Your Digital Membership Card</h2>
+                    </div>
+                    
+                    <p>Dear {{ object.partner_id.name }},</p>
+                    
+                    <p>Attached is your digital membership card. You can also access it online using the link below.</p>
+                    
+                    <!-- Digital Card Display -->
+                    <div style="border: 2px solid #007bff; border-radius: 10px; padding: 20px; margin: 20px 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <div style="text-align: center;">
+                            <h3 style="margin: 0; color: white;">{{ company.name }}</h3>
+                            <hr style="border-color: rgba(255,255,255,0.3);"/>
+                            <h2 style="margin: 10px 0; color: white;">{{ object.partner_id.name }}</h2>
+                            <p style="margin: 5px 0; color: white;">
+                                <strong>{{ object.level_id.name or 'Member' }}</strong>
+                            </p>
+                            <p style="margin: 5px 0; color: white;">
+                                Card #: {{ object.card_number }}
+                            </p>
+                            <p style="margin: 5px 0; color: white;">
+                                Valid Until: {{ object.end_date.strftime('%m/%d/%Y') if object.end_date else 'N/A' }}
+                            </p>
+                            {% if object.chapter_id %}
+                            <p style="margin: 5px 0; color: white;">
+                                Chapter: {{ object.chapter_id.name }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 20px 0;">
+                        <p><strong>QR Code for Quick Verification:</strong></p>
+                        {% if object.qr_code %}
+                        <img src="data:image/png;base64,{{ object.qr_code.decode() }}" style="width: 150px; height: 150px;"/>
+                        {% endif %}
+                    </div>
+                    
+                    <h3>How to Use Your Digital Card:</h3>
+                    <ul>
+                        <li>Save this email or take a screenshot for offline access</li>
+                        <li>Show the QR code for quick verification at events</li>
+                        <li>Access your online card at: <a href="{{ object.digital_card_url }}">{{ object.digital_card_url }}</a></li>
+                        <li>Add to your mobile wallet (where supported)</li>
+                    </ul>
+                    
+                    <p>If you have any questions about your membership card, please contact us.</p>
+                    
+                    <p>Thank you for being a valued member!</p>
+                    
+                    <p>Best regards,<br/>
+                    The Membership Team</p>
+                </div>
+            </field>
+        </record>
+
+    </data>
+</odoo>

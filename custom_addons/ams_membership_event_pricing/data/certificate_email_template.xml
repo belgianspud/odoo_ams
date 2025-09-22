@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Certificate Issued Email Template -->
+        <record id="email_template_certificate_issued" model="mail.template">
+            <field name="name">Certificate Issued</field>
+            <field name="model_id" ref="model_event_certificate"/>
+            <field name="subject">🎓 Your Certificate is Ready - {{ object.event_id.name }}</field>
+            <field name="email_to">{{ object.partner_id.email }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <h2>🎓 Congratulations! Your Certificate is Ready</h2>
+                    
+                    <p>Dear {{ object.partner_id.name }},</p>
+                    
+                    <p>Congratulations on completing <strong>{{ object.event_id.name }}</strong>! 
+                    Your certificate of completion has been generated and is ready for download.</p>
+                    
+                    <!-- Certificate Details -->
+                    <div style="border: 2px solid #6f42c1; border-radius: 10px; padding: 20px; margin: 20px 0; background-color: #f8f9ff;">
+                        <h3 style="margin-top: 0; color: #6f42c1;">📜 Certificate Details</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Event:</td>
+                                <td style="padding: 5px 0;">{{ object.event_id.name }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Completion Date:</td>
+                                <td style="padding: 5px 0;">{{ object.completion_date.strftime('%B %d, %Y') }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Certificate Number:</td>
+                                <td style="padding: 5px 0;">{{ object.name }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">Verification Code:</td>
+                                <td style="padding: 5px 0;">{{ object.verification_code }}</td>
+                            </tr>
+                            {% if object.ceu_credits > 0 %}
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">CEU Credits:</td>
+                                <td style="padding: 5px 0; color: #6f42c1; font-weight: bold;">{{ object.ceu_credits }} CEUs</td>
+                            </tr>
+                            {% endif %}
+                            {% if object.cpe_credits > 0 %}
+                            <tr>
+                                <td style="padding: 5px 0; font-weight: bold;">CPE Credits:</td>
+                                <td style="padding: 5px 0; color: #6f42c1; font-weight: bold;">{{ object.cpe_credits }} CPEs</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                    
+                    <!-- Download Section -->
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="/web/content/event.certificate/{{ object.id }}/certificate_file/{{ object.certificate_filename }}" 
+                           style="background-color: #6f42c1; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 18px;">
+                            📥 Download Your Certificate
+                        </a>
+                    </div>
+                    
+                    {% if object.ceu_credits > 0 or object.cpe_credits > 0 %}
+                    <div style="background-color: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                        <h4 style="margin-top: 0; color: #0c5460;">📚 Continuing Education Credits</h4>
+                        <p>This certificate includes continuing education credits that may be used for professional development requirements:</p>
+                        <ul>
+                            {% if object.ceu_credits > 0 %}
+                            <li><strong>{{ object.ceu_credits }} CEU Credits</strong> - Continuing Education Units</li>
+                            {% endif %}
+                            {% if object.cpe_credits > 0 %}
+                            <li><strong>{{ object.cpe_credits }} CPE Credits</strong> - Continuing Professional Education</li>
+                            {% endif %}
+                            {% if object.credit_category %}
+                            <li><strong>Category:</strong> {{ object.credit_category.title() }}</li>
+                            {% endif %}
+                        </ul>
+                        {% if object.accreditation_body %}
+                        <p><strong>Accredited by:</strong> {{ object.accreditation_body }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <h3>📋 Important Information:</h3>
+                    <ul>
+                        <li><strong>Keep it safe:</strong> Save multiple copies of your certificate in secure locations</li>
+                        <li><strong>Verification:</strong> Use the verification code {{ object.verification_code }} to verify authenticity online</li>
+                        <li><strong>Professional use:</strong> This certificate can be used for professional development documentation</li>
+                        {% if object.valid_until %}
+                        <li><strong>Validity:</strong> This certificate is valid until {{ object.valid_until.strftime('%B %d, %Y') }}</li>
+                        {% endif %}
+                        <li><strong>Questions?</strong> Contact us if you need assistance or have questions about your certificate</li>
+                    </ul>
+                    
+                    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                        <h4 style="margin-top: 0; color: #155724;">🔍 Certificate Verification</h4>
+                        <p>Anyone can verify the authenticity of your certificate online using the verification code: 
+                        <strong>{{ object.verification_code }}</strong></p>
+                        <p>Verification URL: <a href="/certificate/verify">{{ request.httprequest.host_url }}certificate/verify</a></p>
+                    </div>
+                    
+                    <p>Thank you for participating in our educational program. We hope you found the content valuable!</p>
+                    
+                    <p>Best regards,<br/>
+                    The Education Team</p>
+                </div>
+            </field>
+        </record>
+
+    </data>
+</odoo>
