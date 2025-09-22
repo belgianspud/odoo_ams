@@ -215,14 +215,14 @@
     <record id="view_membership_chapter_form_meetings" model="ir.ui.view">
         <field name="name">membership.chapter.form.meetings</field>
         <field name="model">membership.chapter</field>
-        <field name="inherit_id" ref="ams_membership_chapter.view_membership_chapter_form"/>
+        <field name="inherit_id" ref="view_membership_chapter_form"/>
         <field name="arch" type="xml">
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button class="oe_stat_button" type="object" name="action_view_meetings" icon="fa-calendar">
                     <field string="Meetings" name="meeting_count" widget="statinfo"/>
                 </button>
             </xpath>
-            <xpath expr="//group[1]/group[2]" position="inside">
+            <xpath expr="//group[@name='hierarchy']" position="inside">
                 <field name="next_meeting_date"/>
                 <field name="last_meeting_date"/>
                 <field name="average_attendance" widget="percentage"/>
@@ -268,5 +268,10 @@
         <field name="res_model">membership.chapter.meeting.rsvp</field>
         <field name="view_mode">tree,form</field>
     </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_chapter_meetings" name="Chapter Meetings" 
+              parent="ams_membership_base.menu_membership_main" 
+              action="action_chapter_meeting" sequence="26"/>
 
 </odoo>

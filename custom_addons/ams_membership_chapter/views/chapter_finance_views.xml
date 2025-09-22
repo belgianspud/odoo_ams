@@ -196,7 +196,6 @@
                     <group name="related_records" string="Related Records">
                         <field name="partner_id"/>
                         <field name="meeting_id" domain="[('chapter_id', '=', chapter_id)]"/>
-                        <field name="event_id"/>
                     </group>
                     <group name="approval" string="Approval Information" attrs="{'invisible': [('state', 'in', ['draft'])]}">
                         <field name="approved_by" readonly="1"/>
@@ -221,7 +220,7 @@
     <record id="view_membership_chapter_form_finance" model="ir.ui.view">
         <field name="name">membership.chapter.form.finance</field>
         <field name="model">membership.chapter</field>
-        <field name="inherit_id" ref="ams_membership_chapter.view_membership_chapter_form_meetings"/>
+        <field name="inherit_id" ref="view_membership_chapter_form_meetings"/>
         <field name="arch" type="xml">
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button class="oe_stat_button" type="object" name="action_view_budget" icon="fa-calculator">
@@ -234,7 +233,7 @@
             <xpath expr="//header" position="inside">
                 <button name="action_create_budget" string="Create Budget" type="object"/>
             </xpath>
-            <xpath expr="//group[1]/group[2]" position="inside">
+            <xpath expr="//group[@name='hierarchy']" position="inside">
                 <field name="current_year_income"/>
                 <field name="current_year_expenses"/>
             </xpath>
@@ -283,9 +282,6 @@
     </record>
 
     <!-- Menu Items -->
-    <menuitem id="menu_chapter_meetings" name="Chapter Meetings" 
-              parent="ams_membership_base.menu_membership_main" 
-              action="action_chapter_meeting" sequence="26"/>
     <menuitem id="menu_chapter_finance_root" name="Chapter Finance" 
               parent="ams_membership_base.menu_membership_main" sequence="27"/>
     <menuitem id="menu_chapter_budgets" name="Budgets" 

@@ -159,8 +159,9 @@ class MembershipChapter(models.Model):
     def _compute_member_statistics(self):
         for chapter in self:
             chapter.member_count = len(chapter.member_ids)
+            # Check if memberships exist and have state field
             active_memberships = chapter.membership_ids.filtered(
-                lambda m: m.state in ['active', 'grace']
+                lambda m: hasattr(m, 'state') and m.state in ['active', 'grace']
             )
             chapter.active_member_count = len(active_memberships)
 

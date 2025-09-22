@@ -15,7 +15,7 @@
     """,
     'author': 'Your Organization',
     'website': 'https://www.yourorganization.com',
-    'depends': ['membership_base', 'contacts', 'calendar'],
+    'depends': ['ams_membership_base', 'contacts', 'calendar'],
     'data': [
         'security/security.xml',
         'security/ir.model.access.csv',

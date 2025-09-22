@@ -116,7 +116,6 @@
                                     <field name="email"/>
                                     <field name="phone"/>
                                     <field name="chapter_role"/>
-                                    <field name="is_member"/>
                                 </tree>
                             </field>
                         </page>
@@ -124,7 +123,6 @@
                             <field name="membership_ids">
                                 <tree>
                                     <field name="partner_id"/>
-                                    <field name="level_id"/>
                                     <field name="start_date"/>
                                     <field name="end_date"/>
                                     <field name="state"/>
@@ -246,9 +244,9 @@
     <record id="view_partner_form_chapter" model="ir.ui.view">
         <field name="name">res.partner.form.chapter</field>
         <field name="model">res.partner</field>
-        <field name="inherit_id" ref="membership_base.view_partner_form_membership"/>
+        <field name="inherit_id" ref="ams_membership_base.view_partner_form_membership"/>
         <field name="arch" type="xml">
-            <xpath expr="//group[1]/group[1]" position="inside">
+            <xpath expr="//group[@name='membership_status']" position="inside">
                 <field name="chapter_id"/>
                 <field name="chapter_role"/>
             </xpath>
@@ -259,9 +257,9 @@
     <record id="view_membership_form_chapter" model="ir.ui.view">
         <field name="name">membership.membership.form.chapter</field>
         <field name="model">membership.membership</field>
-        <field name="inherit_id" ref="membership_level.view_membership_form_with_level"/>
+        <field name="inherit_id" ref="ams_membership_base.view_membership_form"/>
         <field name="arch" type="xml">
-            <field name="level_id" position="after">
+            <field name="partner_id" position="after">
                 <field name="chapter_id"/>
             </field>
         </field>
@@ -271,9 +269,9 @@
     <record id="view_membership_tree_chapter" model="ir.ui.view">
         <field name="name">membership.membership.tree.chapter</field>
         <field name="model">membership.membership</field>
-        <field name="inherit_id" ref="membership_level.view_membership_tree_with_level"/>
+        <field name="inherit_id" ref="ams_membership_base.view_membership_tree"/>
         <field name="arch" type="xml">
-            <field name="level_id" position="after">
+            <field name="partner_id" position="after">
                 <field name="chapter_id"/>
             </field>
         </field>
@@ -281,7 +279,7 @@
 
     <!-- Menu Items -->
     <menuitem id="menu_membership_chapters" name="Chapters" 
-              parent="membership_base.menu_membership_main" 
+              parent="ams_membership_base.menu_membership_main" 
               action="action_membership_chapter" sequence="25"/>
 
 </odoo>

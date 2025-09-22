@@ -361,11 +361,6 @@ class ChapterTransaction(models.Model):
         string='Related Meeting',
         help="Meeting this transaction is related to"
     )
-    event_id = fields.Many2one(
-        'event.event',
-        string='Related Event',
-        help="Event this transaction is related to"
-    )
     
     # Status and Approval
     state = fields.Selection([
@@ -544,7 +539,7 @@ class MembershipChapter(models.Model):
         current_year = fields.Date.today().year
         for chapter in self:
             year_transactions = chapter.transaction_ids.filtered(
-                lambda t: t.transaction_date.year == current_year and t.state == 'approved'
+                lambda t: t.transaction_date and t.transaction_date.year == current_year and t.state == 'approved'
             )
             
             income_transactions = year_transactions.filtered(lambda t: t.transaction_type == 'income')

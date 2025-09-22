@@ -113,7 +113,6 @@ class ChapterMeeting(models.Model):
         'meeting_id',
         'partner_id',
         string='Attendees',
-        domain=[('is_member', '=', True)],
         help="Members who attended the meeting"
     )
     invited_ids = fields.Many2many(
@@ -122,7 +121,6 @@ class ChapterMeeting(models.Model):
         'meeting_id',
         'partner_id',
         string='Invited Members',
-        domain=[('is_member', '=', True)],
         help="Members invited to the meeting"
     )
     rsvp_ids = fields.One2many(
@@ -249,7 +247,7 @@ class ChapterMeeting(models.Model):
 
     def _send_meeting_invitations(self):
         """Send meeting invitations to invited members"""
-        template = self.env.ref('membership_chapter.email_template_meeting_invitation', False)
+        template = self.env.ref('ams_membership_chapter.email_template_meeting_invitation', False)
         if template:
             for member in self.invited_ids:
                 if member.email:
@@ -260,23 +258,32 @@ class ChapterMeeting(models.Model):
                         'response': 'pending'
                     })
                     # Send invitation with RSVP link
-                    template.with_context(rsvp_id=rsvp.id).send_mail(self.id, force_send=True)
+                    try:
+                        template.with_context(rsvp_id=rsvp.id).send_mail(self.id, force_send=True)
+                    except Exception as e:
+                        _logger.warning(f"Failed to send meeting invitation to {member.email}: {e}")
 
     def _send_cancellation_notice(self):
         """Send cancellation notice to invited members"""
-        template = self.env.ref('membership_chapter.email_template_meeting_cancellation', False)
+        template = self.env.ref('ams_membership_chapter.email_template_meeting_cancellation', False)
         if template:
             for member in self.invited_ids:
                 if member.email:
-                    template.send_mail(self.id, force_send=True)
+                    try:
+                        template.send_mail(self.id, force_send=True)
+                    except Exception as e:
+                        _logger.warning(f"Failed to send cancellation notice to {member.email}: {e}")
 
     def action_send_reminder(self):
         """Send meeting reminder"""
-        template = self.env.ref('membership_chapter.email_template_meeting_reminder', False)
+        template = self.env.ref('ams_membership_chapter.email_template_meeting_reminder', False)
         if template:
             for member in self.invited_ids:
                 if member.email:
-                    template.send_mail(self.id, force_send=True)
+                    try:
+                        template.send_mail(self.id, force_send=True)
+                    except Exception as e:
+                        _logger.warning(f"Failed to send reminder to {member.email}: {e}")
         self.message_post(body=_("Meeting reminders sent."))
 
     def action_view_rsvps(self):
@@ -294,16 +301,20 @@ class ChapterMeeting(models.Model):
     def action_auto_invite_chapter_members(self):
         """Auto-invite all active chapter members"""
         self.ensure_one()
-        active_members = self.chapter_id.member_ids.filtered('is_member')
-        self.invited_ids = [(6, 0, active_members.ids)]
-        self.message_post(body=_("All active chapter members have been invited."))
+        # Get chapter members, filter safely
+        chapter_members = self.chapter_id.member_ids
+        if chapter_members:
+            self.invited_ids = [(6, 0, chapter_members.ids)]
+            self.message_post(body=_("All chapter members have been invited."))
+        else:
+            self.message_post(body=_("No chapter members found to invite."))
 
     @api.model
     def send_meeting_reminders(self):
         """Cron job to send meeting reminders 24 hours before"""
         tomorrow = fields.Datetime.now() + timedelta(hours=24)
-        start_time = tomorrow.replace(hour=0, minute=0, second=0)
-        end_time = tomorrow.replace(hour=23, minute=59, second=59)
+        start_time = tomorrow.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_time = tomorrow.replace(hour=23, minute=59, second=59, microsecond=999999)
         
         meetings = self.search([
             ('meeting_date', '>=', start_time),
@@ -312,7 +323,10 @@ class ChapterMeeting(models.Model):
         ])
         
         for meeting in meetings:
-            meeting.action_send_reminder()
+            try:
+                meeting.action_send_reminder()
+            except Exception as e:
+                _logger.error(f"Failed to send reminder for meeting {meeting.id}: {e}")
         
         _logger.info(f"Sent reminders for {len(meetings)} meetings")
 
