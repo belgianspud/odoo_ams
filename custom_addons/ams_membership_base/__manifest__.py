@@ -15,7 +15,7 @@
     'author': 'Your Organization',
     'website': 'https://www.yourorganization.com',
     'depends': ['base', 'contacts', 'account', 'mail'],
-    'external_dependencies': {'python': ['qrcode']},
+    'external_dependencies': {'python': ['qrcode', 'Pillow']},
     'data': [
         'security/security.xml',
         'security/ir.model.access.csv',
