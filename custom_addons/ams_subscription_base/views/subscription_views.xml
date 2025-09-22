@@ -212,14 +212,23 @@
     <record id="view_partner_form_subscription" model="ir.ui.view">
         <field name="name">res.partner.form.subscription</field>
         <field name="model">res.partner</field>
-        <field name="inherit_id" ref="membership_base.view_partner_form_membership"/>
+        <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//group[1]/group[1]" position="inside">
-                <field name="has_active_subscription"/>
-                <field name="current_subscription_id"/>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="action" icon="fa-refresh"
+                        attrs="{'invisible': [('has_active_subscription', '=', False)]}">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">Active</span>
+                        <span class="o_stat_text">Subscription</span>
+                    </div>
+                </button>
             </xpath>
-            <xpath expr="//page[@string='Membership']" position="after">
-                <page string="Subscriptions">
+            <xpath expr="//page[@name='internal_notes']" position="before">
+                <page string="Subscriptions" name="subscriptions">
+                    <group>
+                        <field name="has_active_subscription"/>
+                        <field name="current_subscription_id"/>
+                    </group>
                     <field name="subscription_ids">
                         <tree>
                             <field name="plan_id"/>
@@ -236,11 +245,13 @@
     </record>
 
     <!-- Menu Items -->
+    <menuitem id="menu_subscription_main" name="Subscriptions" 
+              parent="ams_membership_base.menu_membership_root" sequence="15"/>
     <menuitem id="menu_subscription_plans" name="Subscription Plans" 
-              parent="membership_base.menu_membership_main" 
-              action="action_subscription_plan" sequence="15"/>
-    <menuitem id="menu_subscriptions" name="Subscriptions" 
-              parent="membership_base.menu_membership_main" 
+              parent="menu_subscription_main" 
+              action="action_subscription_plan" sequence="10"/>
+    <menuitem id="menu_subscriptions" name="All Subscriptions" 
+              parent="menu_subscription_main" 
               action="action_subscription" sequence="20"/>
 
 </odoo>

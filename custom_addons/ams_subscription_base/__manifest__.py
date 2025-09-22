@@ -16,7 +16,7 @@
     """,
     'author': 'Your Organization',
     'website': 'https://www.yourorganization.com',
-    'depends': ['membership_level', 'sale', 'account'],
+    'depends': ['ams_membership_level', 'sale', 'account'],
     'data': [
         'security/security.xml',
         'security/ir.model.access.csv',
@@ -24,7 +24,6 @@
         'views/payment_plans_views.xml',
         'views/subscription_changes_views.xml',
         'data/subscription_cron.xml',
-        'data/installment_cron.xml',
         'data/installment_email_templates.xml',
     ],
     'installable': True,

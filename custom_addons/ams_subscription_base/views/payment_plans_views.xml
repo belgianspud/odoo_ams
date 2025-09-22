@@ -213,7 +213,7 @@
     <record id="view_subscription_form_payment_plans" model="ir.ui.view">
         <field name="name">subscription.subscription.form.payment.plans</field>
         <field name="model">subscription.subscription</field>
-        <field name="inherit_id" ref="ams_subscription_base.view_subscription_form"/>
+        <field name="inherit_id" ref="view_subscription_form"/>
         <field name="arch" type="xml">
             <xpath expr="//group[@name='settings']" position="inside">
                 <field name="payment_plan_id"/>
@@ -263,7 +263,7 @@
     <record id="view_partner_form_payment_plans" model="ir.ui.view">
         <field name="name">res.partner.form.payment.plans</field>
         <field name="model">res.partner</field>
-        <field name="inherit_id" ref="ams_subscription_base.view_partner_form_subscription"/>
+        <field name="inherit_id" ref="view_partner_form_subscription"/>
         <field name="arch" type="xml">
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button class="oe_stat_button" type="object" name="action_view_installments" icon="fa-calendar-check-o"
@@ -276,7 +276,7 @@
                     </div>
                 </button>
             </xpath>
-            <xpath expr="//group[1]/group[2]" position="inside">
+            <xpath expr="//group[1]" position="inside">
                 <field name="total_payment_plan_subscriptions"/>
                 <field name="next_installment_due"/>
             </xpath>
@@ -305,5 +305,13 @@
         <field name="search_view_id" ref="view_installment_search"/>
         <field name="context">{'search_default_pending': 1}</field>
     </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_payment_plans" name="Payment Plans" 
+              parent="menu_subscription_main" 
+              action="action_payment_plan" sequence="25"/>
+    <menuitem id="menu_installments" name="Installments" 
+              parent="menu_subscription_main" 
+              action="action_installment" sequence="26"/>
 
 </odoo>

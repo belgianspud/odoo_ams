@@ -193,7 +193,7 @@
     <record id="view_subscription_form_changes" model="ir.ui.view">
         <field name="name">subscription.subscription.form.changes</field>
         <field name="model">subscription.subscription</field>
-        <field name="inherit_id" ref="ams_subscription_base.view_subscription_form_payment_plans"/>
+        <field name="inherit_id" ref="view_subscription_form_payment_plans"/>
         <field name="arch" type="xml">
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button class="oe_stat_button" type="object" name="action_view_changes" icon="fa-exchange">
@@ -228,5 +228,10 @@
         <field name="view_mode">form</field>
         <field name="target">new</field>
     </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_subscription_changes" name="Subscription Changes" 
+              parent="menu_subscription_main" 
+              action="action_subscription_change" sequence="27"/>
 
 </odoo>
