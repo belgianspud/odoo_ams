@@ -266,7 +266,8 @@ class MembershipBenefitUsage(models.Model):
         if current_membership:
             self.membership_id = current_membership.id
             self.membership_level_id = current_membership.level_id.id
-            self.chapter_id = current_membership.chapter_id.id
+            # Note: chapter_id will remain empty in base module since chapters aren't implemented yet
+            # This is acceptable for the MVP
 
     def action_verify_usage(self):
         """Verify benefit usage"""
@@ -364,7 +365,7 @@ class ResPartner(models.Model):
         
         # Get member's level and chapter
         level = self.current_membership_id.level_id
-        chapter = self.current_membership_id.chapter_id
+        # For MVP, we'll ignore chapter filtering since chapters aren't implemented yet
         
         # Find benefits available to this level
         domain = [
@@ -372,12 +373,13 @@ class ResPartner(models.Model):
             '|', ('level_ids', 'in', level.ids), ('level_ids', '=', False)
         ]
         
-        if chapter:
-            domain = ['&'] + domain + [
-                '|', ('chapter_ids', 'in', chapter.ids), ('chapter_ids', '=', False)
-            ]
-        else:
-            domain = ['&'] + domain + [('chapter_ids', '=', False)]
+        # Note: Chapter filtering is commented out for MVP since chapters aren't implemented
+        # if chapter:
+        #     domain = ['&'] + domain + [
+        #         '|', ('chapter_ids', 'in', chapter.ids), ('chapter_ids', '=', False)
+        #     ]
+        # else:
+        #     domain = ['&'] + domain + [('chapter_ids', '=', False)]
         
         return self.env['membership.benefit'].search(domain)
 
@@ -437,3 +439,14 @@ class MembershipLevel(models.Model):
             'domain': [('level_ids', 'in', self.id)],
             'context': {'default_level_ids': [(4, self.id)]},
         }
+
+
+# Add reverse relation for usage statistics
+class MembershipBenefit(models.Model):
+    _inherit = 'membership.benefit'
+    
+    usage_ids = fields.One2many(
+        'membership.benefit.usage',
+        'benefit_id',
+        string='Usage Records'
+    )

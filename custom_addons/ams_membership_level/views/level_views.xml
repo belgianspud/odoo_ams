@@ -184,7 +184,7 @@
     <record id="view_membership_form_with_level" model="ir.ui.view">
         <field name="name">membership.membership.form.level</field>
         <field name="model">membership.membership</field>
-        <field name="inherit_id" ref="membership_base.view_membership_form"/>
+        <field name="inherit_id" ref="ams_membership_base.view_membership_form"/>
         <field name="arch" type="xml">
             <field name="partner_id" position="after">
                 <field name="level_id" options="{'no_create': True}"/>
@@ -196,7 +196,7 @@
     <record id="view_membership_tree_with_level" model="ir.ui.view">
         <field name="name">membership.membership.tree.level</field>
         <field name="model">membership.membership</field>
-        <field name="inherit_id" ref="membership_base.view_membership_tree"/>
+        <field name="inherit_id" ref="ams_membership_base.view_membership_tree"/>
         <field name="arch" type="xml">
             <field name="partner_id" position="after">
                 <field name="level_id"/>
@@ -206,7 +206,7 @@
 
     <!-- Menu Items -->
     <menuitem id="menu_membership_level" name="Membership Levels" 
-              parent="membership_base.menu_membership_main" 
+              parent="ams_membership_base.menu_membership_main" 
               action="action_membership_level" sequence="5"/>
 
 </odoo>

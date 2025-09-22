@@ -225,7 +225,7 @@
     <record id="view_membership_level_form_benefits" model="ir.ui.view">
         <field name="name">membership.level.form.benefits</field>
         <field name="model">membership.level</field>
-        <field name="inherit_id" ref="membership_level.view_membership_level_form"/>
+        <field name="inherit_id" ref="ams_membership_level.view_membership_level_form"/>
         <field name="arch" type="xml">
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button class="oe_stat_button" type="object" name="action_view_benefits" icon="fa-gift">
@@ -252,7 +252,7 @@
     <record id="view_partner_form_benefits" model="ir.ui.view">
         <field name="name">res.partner.form.benefits</field>
         <field name="model">res.partner</field>
-        <field name="inherit_id" ref="membership_base.view_partner_form_membership"/>
+        <field name="inherit_id" ref="ams_membership_base.view_partner_form_membership"/>
         <field name="arch" type="xml">
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button class="oe_stat_button" type="object" name="action_view_benefit_usage" icon="fa-gift">
@@ -289,7 +289,7 @@
 
     <!-- Menu Items -->
     <menuitem id="menu_member_benefits" name="Member Benefits" 
-              parent="membership_base.menu_membership_main" 
+              parent="ams_membership_base.menu_membership_main" 
               action="action_membership_benefit" sequence="23"/>
     <menuitem id="menu_benefit_usage" name="Benefit Usage" 
               parent="menu_member_benefits" 

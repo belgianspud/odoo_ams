@@ -32,13 +32,13 @@
                             </tr>
                             <tr>
                                 <td style="padding: 5px 0; font-weight: bold;">Effective Date:</td>
-                                <td style="padding: 5px 0;">{{ object.change_date.strftime('%B %d, %Y') }}</td>
+                                <td style="padding: 5px 0;">{{ object.change_date.strftime('%B %d, %Y') if object.change_date else 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <td style="padding: 5px 0; font-weight: bold;">Change Type:</td>
-                                <td style="padding: 5px 0;">{{ object.change_type.title() }}</td>
+                                <td style="padding: 5px 0;">{{ object.change_type.title() if object.change_type else 'N/A' }}</td>
                             </tr>
-                            {% if object.proration_amount != 0 %}
+                            {% if object.proration_amount and object.proration_amount != 0 %}
                             <tr>
                                 <td style="padding: 5px 0; font-weight: bold;">
                                     {% if object.proration_amount > 0 %}
@@ -66,7 +66,7 @@
                     </ul>
                     {% endif %}
                     
-                    {% if object.proration_amount > 0 %}
+                    {% if object.proration_amount and object.proration_amount > 0 %}
                     <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 15px 0; border-radius: 5px;">
                         <h4 style="margin-top: 0; color: #8a6d3b;">Payment Information</h4>
                         <p>An invoice for ${{ "%.2f"|format(object.proration_amount) }} has been generated for the level upgrade. 
@@ -74,7 +74,7 @@
                     </div>
                     {% endif %}
                     
-                    {% if object.proration_amount < 0 %}
+                    {% if object.proration_amount and object.proration_amount < 0 %}
                     <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; margin: 15px 0; border-radius: 5px;">
                         <h4 style="margin-top: 0; color: #155724;">Credit Information</h4>
                         <p>A credit of ${{ "%.2f"|format(abs(object.proration_amount)) }} has been applied to your account 

@@ -279,6 +279,26 @@ class MembershipLevelChange(models.Model):
             amount = abs(self.proration_amount)
             description = f"Level downgrade credit: {self.old_level_id.name} to {self.new_level_id.name}"
         
+        # Get default account - try to get from product or use default
+        account_id = False
+        if self.new_level_id.product_id and self.new_level_id.product_id.categ_id:
+            account_id = self.new_level_id.product_id.categ_id.property_account_income_categ_id.id
+        
+        if not account_id:
+            # Fallback to company's default income account
+            account_id = self.env.company.account_default_pos_receivable_account_id.id
+        
+        if not account_id:
+            # Last resort - find any income account
+            account = self.env['account.account'].search([
+                ('account_type', '=', 'income'),
+                ('company_id', '=', self.env.company.id)
+            ], limit=1)
+            account_id = account.id if account else False
+        
+        if not account_id:
+            raise UserError(_("No income account configured. Please set up accounting properly."))
+        
         # Create invoice
         invoice_vals = {
             'partner_id': self.partner_id.id,
@@ -290,7 +310,7 @@ class MembershipLevelChange(models.Model):
                 'name': description,
                 'quantity': 1,
                 'price_unit': amount,
-                'account_id': self.new_level_id.product_id.categ_id.property_account_income_categ_id.id,
+                'account_id': account_id,
             })]
         }
         
@@ -301,9 +321,12 @@ class MembershipLevelChange(models.Model):
 
     def _send_level_change_notification(self):
         """Send email notification about level change"""
-        template = self.env.ref('membership_level.email_template_level_change', False)
+        template = self.env.ref('ams_membership_level.email_template_level_change', False)
         if template and self.partner_id.email:
-            template.send_mail(self.id, force_send=True)
+            try:
+                template.send_mail(self.id, force_send=True)
+            except Exception as e:
+                _logger.warning(f"Failed to send level change notification: {e}")
 
     @api.model
     def create_level_change_request(self, membership_id, new_level_id, reason, reason_notes=None, change_date=None):

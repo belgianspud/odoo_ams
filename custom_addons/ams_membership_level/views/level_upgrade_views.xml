@@ -179,7 +179,7 @@
     <record id="view_membership_form_level_change" model="ir.ui.view">
         <field name="name">membership.membership.form.level.change</field>
         <field name="model">membership.membership</field>
-        <field name="inherit_id" ref="membership_level.view_membership_form_with_level"/>
+        <field name="inherit_id" ref="ams_membership_level.view_membership_form_with_level"/>
         <field name="arch" type="xml">
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button class="oe_stat_button" type="object" name="action_view_level_changes" icon="fa-exchange">
@@ -194,7 +194,7 @@
 
     <!-- Menu Items -->
     <menuitem id="menu_level_changes" name="Level Changes" 
-              parent="membership_base.menu_membership_main" 
+              parent="ams_membership_base.menu_membership_main" 
               action="action_level_change" sequence="22"/>
 
 </odoo>

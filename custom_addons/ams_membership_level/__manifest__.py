@@ -14,7 +14,7 @@
     """,
     'author': 'Your Organization',
     'website': 'https://www.yourorganization.com',
-    'depends': ['membership_base', 'product', 'sale'],
+    'depends': ['ams_membership_base', 'product', 'sale'],
     'data': [
         'security/security.xml',
         'security/ir.model.access.csv',
