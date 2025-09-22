@@ -19,11 +19,11 @@
     'data': [
         'security/security.xml',
         'security/ir.model.access.csv',
+        'data/membership_cron.xml',
+        'data/card_email_template.xml',
         'views/membership_views.xml',
         'views/member_directory_views.xml',
         'views/membership_card_views.xml',
-        'data/membership_cron.xml',
-        'data/card_email_template.xml',
         'reports/membership_card_report.xml',
     ],
     'installable': True,

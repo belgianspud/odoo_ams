@@ -2,16 +2,23 @@
 <odoo>
     <data noupdate="0">
 
+        <!-- Create custom category for Association Management -->
+        <record model="ir.module.category" id="module_category_association_management">
+            <field name="name">Association Management</field>
+            <field name="description">Manage professional associations, memberships, and member services</field>
+            <field name="sequence">16</field>
+        </record>
+
         <!-- Membership Groups -->
         <record model="res.groups" id="group_membership_user">
             <field name="name">Membership User</field>
-            <field name="category_id" ref="base.module_category_association_management"/>
+            <field name="category_id" ref="module_category_association_management"/>
             <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
         </record>
 
         <record model="res.groups" id="group_membership_manager">
             <field name="name">Membership Manager</field>
-            <field name="category_id" ref="base.module_category_association_management"/>
+            <field name="category_id" ref="module_category_association_management"/>
             <field name="implied_ids" eval="[(4, ref('group_membership_user'))]"/>
         </record>
 
@@ -21,6 +28,21 @@
             <field name="model_id" ref="model_membership_membership"/>
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
+        </record>
+
+        <!-- Directory Record Rules -->
+        <record model="ir.rule" id="directory_rule_user">
+            <field name="name">Directory: User can see public entries</field>
+            <field name="model_id" ref="model_membership_directory"/>
+            <field name="domain_force">['|', ('is_public', '=', True), ('partner_id.user_ids', 'in', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
+        </record>
+
+        <record model="ir.rule" id="directory_rule_manager">
+            <field name="name">Directory: Manager can see all entries</field>
+            <field name="model_id" ref="model_membership_directory"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_manager'))]"/>
         </record>
 
     </data>

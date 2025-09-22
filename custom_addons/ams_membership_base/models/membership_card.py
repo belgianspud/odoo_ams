@@ -1,9 +1,15 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
 import base64
-import qrcode
-from io import BytesIO
 import logging
+
+# QR code imports with fallback
+try:
+    import qrcode
+    from io import BytesIO
+    QR_CODE_AVAILABLE = True
+except ImportError:
+    QR_CODE_AVAILABLE = False
 
 _logger = logging.getLogger(__name__)
 
@@ -64,13 +70,14 @@ class Membership(models.Model):
     
     @api.depends('id', 'partner_id.id', 'start_date')
     def _compute_card_number(self):
+        prefix = self.env['ir.config_parameter'].sudo().get_param('membership.card_number_prefix', 'MC')
         for membership in self:
             if membership.id and membership.partner_id and membership.start_date:
-                # Generate card number: YEAR + MEMBER_ID + MEMBERSHIP_ID
+                # Generate card number: PREFIX + YEAR + MEMBER_ID + MEMBERSHIP_ID
                 year = str(membership.start_date.year)
                 member_id = str(membership.partner_id.id).zfill(6)
                 membership_id = str(membership.id).zfill(4)
-                membership.card_number = f"{year}{member_id}{membership_id}"
+                membership.card_number = f"{prefix}{year}{member_id}{membership_id}"
             else:
                 membership.card_number = False
     
@@ -87,7 +94,7 @@ class Membership(models.Model):
     @api.depends('qr_code_data')
     def _compute_qr_code(self):
         for membership in self:
-            if membership.qr_code_data:
+            if membership.qr_code_data and QR_CODE_AVAILABLE:
                 try:
                     # Generate QR code
                     qr = qrcode.QRCode(
@@ -139,6 +146,9 @@ class Membership(models.Model):
     def action_issue_card(self):
         """Issue a new membership card"""
         self.ensure_one()
+        if not QR_CODE_AVAILABLE:
+            raise UserError(_("QR code generation requires 'qrcode' and 'Pillow' Python packages. Please install them."))
+        
         self.card_issued_date = fields.Date.today()
         # Force recomputation of QR code
         self._compute_qr_code()
@@ -207,9 +217,10 @@ class Membership(models.Model):
             return {'valid': False, 'message': 'Card not found'}
         
         if membership.card_status != 'active':
+            status_dict = dict(membership._fields["card_status"].selection)
             return {
                 'valid': False, 
-                'message': f'Card status: {dict(membership._fields["card_status"].selection)[membership.card_status]}'
+                'message': f'Card status: {status_dict.get(membership.card_status, membership.card_status)}'
             }
         
         today = fields.Date.today()
@@ -220,9 +231,9 @@ class Membership(models.Model):
             'valid': True,
             'member_name': membership.partner_id.name,
             'member_id': membership.partner_id.id,
-            'membership_level': getattr(membership, 'level_id', False) and membership.level_id.name or '',
+            'membership_level': 'Standard Member',  # Base module default
             'expiry_date': membership.end_date and membership.end_date.strftime('%Y-%m-%d') or '',
-            'chapter': getattr(membership, 'chapter_id', False) and membership.chapter_id.name or '',
+            'chapter': '',  # Not available in base module
             'status': membership.state
         }
     
@@ -241,7 +252,11 @@ class Membership(models.Model):
             card_number, member_name, expiry_date, state, membership_id = parts[:5]
             
             # Verify membership exists and data matches
-            membership = self.browse(int(membership_id))
+            try:
+                membership = self.browse(int(membership_id))
+            except ValueError:
+                return {'valid': False, 'message': 'Invalid membership ID in QR code'}
+            
             if not membership.exists():
                 return {'valid': False, 'message': 'Membership not found'}
             

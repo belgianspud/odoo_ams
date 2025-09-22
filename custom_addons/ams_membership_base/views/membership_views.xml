@@ -11,21 +11,12 @@
                 <field name="start_date"/>
                 <field name="end_date"/>
                 <field name="days_until_expiry"/>
-                <field name="state" decoration-success="state=='active'" decoration-warning="state=='grace'"/>
+                <field name="state"/>
                 <field name="balance_due" optional="hide"/>
                 <field name="currency_id" invisible="1"/>
                 <field name="is_current" invisible="1"/>
             </tree>
         </field>
-    </record>
-
-    <!-- Invoice Action for Membership (defined before use) -->
-    <record id="action_membership_invoices" model="ir.actions.act_window">
-        <field name="name">Membership Invoices</field>
-        <field name="res_model">account.move</field>
-        <field name="view_mode">tree,form</field>
-        <field name="domain">[('membership_id', '!=', False)]</field>
-        <field name="context">{'search_default_posted': 1}</field>
     </record>
 
     <!-- Membership Form View -->
@@ -224,6 +215,15 @@
         </field>
     </record>
 
+    <!-- Invoice Action for Membership (defined before use) -->
+    <record id="action_membership_invoices" model="ir.actions.act_window">
+        <field name="name">Membership Invoices</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('membership_id', '!=', False)]</field>
+        <field name="context">{'search_default_posted': 1}</field>
+    </record>
+
     <!-- Membership Action -->
     <record id="action_membership" model="ir.actions.act_window">
         <field name="name">Memberships</field>
@@ -263,8 +263,15 @@
                         attrs="{'invisible': [('is_member', '=', False)]}">
                     <div class="o_field_widget o_stat_info">
                         <span class="o_stat_text">Membership</span>
-                        <span class="o_stat_value" field="current_membership_id"/>
+                        <span class="o_stat_value">
+                            <field name="current_membership_id" widget="name"/>
+                        </span>
                     </div>
+                </button>
+                <button class="oe_stat_button" type="object" 
+                        name="action_create_membership" icon="fa-plus"
+                        attrs="{'invisible': [('is_member', '=', True)]}">
+                    <span>Add Membership</span>
                 </button>
             </div>
 

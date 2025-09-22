@@ -2,6 +2,22 @@
 <odoo>
     <data noupdate="1">
 
+        <!-- Configuration Parameters -->
+        <record id="config_membership_grace_period" model="ir.config_parameter">
+            <field name="key">membership.grace_period_days</field>
+            <field name="value">30</field>
+        </record>
+
+        <record id="config_membership_renewal_notice" model="ir.config_parameter">
+            <field name="key">membership.renewal_notice_days</field>
+            <field name="value">30</field>
+        </record>
+
+        <record id="config_membership_card_prefix" model="ir.config_parameter">
+            <field name="key">membership.card_number_prefix</field>
+            <field name="value">MC</field>
+        </record>
+
         <!-- Cron Job for Membership Status Updates -->
         <record id="ir_cron_membership_status_update" model="ir.cron">
             <field name="name">Update Membership Statuses</field>
@@ -15,50 +31,40 @@
             <field name="user_id" ref="base.user_root"/>
         </record>
 
-        <!-- Configuration Parameter for Grace Period -->
-        <record id="config_membership_grace_period" model="ir.config_parameter">
-            <field name="key">membership.grace_period_days</field>
-            <field name="value">30</field>
-        </record>
-
-        <!-- Configuration Parameter for Renewal Notice Period -->
-        <record id="config_membership_renewal_notice" model="ir.config_parameter">
-            <field name="key">membership.renewal_notice_days</field>
-            <field name="value">30</field>
-        </record>
-
-        <!-- Configuration Parameter for Card Number Prefix -->
-        <record id="config_membership_card_prefix" model="ir.config_parameter">
-            <field name="key">membership.card_number_prefix</field>
-            <field name="value">MC</field>
-        </record>
-
         <!-- Cron Job for Membership Renewal Notices -->
         <record id="ir_cron_membership_renewal_notices" model="ir.cron">
             <field name="name">Send Membership Renewal Notices</field>
             <field name="model_id" ref="model_membership_membership"/>
             <field name="state">code</field>
             <field name="code">
-                # Get renewal notice period from config
-                notice_days = int(env['ir.config_parameter'].sudo().get_param('membership.renewal_notice_days', '30'))
-                
-                # Find memberships expiring soon
-                from datetime import datetime, timedelta
-                target_date = datetime.now().date() + timedelta(days=notice_days)
-                
-                expiring_memberships = model.search([
-                    ('state', 'in', ['active', 'grace']),
-                    ('end_date', '=', target_date)
-                ])
-                
-                # Send renewal notices (would need email template)
-                for membership in expiring_memberships:
-                    membership.message_post(
-                        body=f"Membership renewal notice: expires on {membership.end_date}",
-                        subject="Membership Renewal Notice"
-                    )
-                
-                env.cr.commit()
+# Get renewal notice period from config
+notice_days = int(env['ir.config_parameter'].sudo().get_param('membership.renewal_notice_days', '30'))
+
+# Find memberships expiring soon
+from datetime import datetime, timedelta
+target_date = datetime.now().date() + timedelta(days=notice_days)
+
+expiring_memberships = model.search([
+    ('state', 'in', ['active', 'grace']),
+    ('end_date', '=', target_date)
+])
+
+# Send renewal notices using email template
+template = env.ref('ams_membership_base.email_template_membership_renewal', raise_if_not_found=False)
+if template:
+    for membership in expiring_memberships:
+        try:
+            template.send_mail(membership.id, force_send=False)
+            membership.message_post(
+                body=f"Renewal notice sent: expires on {membership.end_date}",
+                subject="Membership Renewal Notice Sent"
+            )
+        except Exception as e:
+            import logging
+            _logger = logging.getLogger(__name__)
+            _logger.error(f"Failed to send renewal notice for membership {membership.id}: {str(e)}")
+
+env.cr.commit()
             </field>
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
@@ -73,22 +79,30 @@
             <field name="model_id" ref="model_membership_membership"/>
             <field name="state">code</field>
             <field name="code">
-                # Update computed fields and statistics
-                # This helps with performance by batch updating stored computed fields
-                memberships = model.search([])
-                memberships._compute_financial_totals()
-                memberships._compute_is_current()
-                
-                # Log statistics
-                active_count = model.search_count([('state', '=', 'active')])
-                grace_count = model.search_count([('state', '=', 'grace')])
-                lapsed_count = model.search_count([('state', '=', 'lapsed')])
-                
-                import logging
-                _logger = logging.getLogger(__name__)
-                _logger.info(f"Membership Statistics - Active: {active_count}, Grace: {grace_count}, Lapsed: {lapsed_count}")
-                
-                env.cr.commit()
+# Update computed fields and statistics
+# This helps with performance by batch updating stored computed fields
+try:
+    memberships = model.search([])
+    if hasattr(model, '_compute_financial_totals'):
+        memberships._compute_financial_totals()
+    if hasattr(model, '_compute_is_current'):
+        memberships._compute_is_current()
+    
+    # Log statistics
+    active_count = model.search_count([('state', '=', 'active')])
+    grace_count = model.search_count([('state', '=', 'grace')])
+    lapsed_count = model.search_count([('state', '=', 'lapsed')])
+    
+    import logging
+    _logger = logging.getLogger(__name__)
+    _logger.info(f"Membership Statistics - Active: {active_count}, Grace: {grace_count}, Lapsed: {lapsed_count}")
+    
+except Exception as e:
+    import logging
+    _logger = logging.getLogger(__name__)
+    _logger.error(f"Error updating membership statistics: {str(e)}")
+
+env.cr.commit()
             </field>
             <field name="interval_number">7</field>
             <field name="interval_type">days</field>

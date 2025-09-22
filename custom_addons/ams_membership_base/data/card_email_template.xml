@@ -21,17 +21,11 @@
                     <!-- Digital Card Display -->
                     <div style="border: 2px solid #007bff; border-radius: 10px; padding: 20px; margin: 20px auto; max-width: 400px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center;">
                         <div>
-                            <h3 style="margin: 0; color: white;">{{ ctx.get('company_name', 'Your Organization') }}</h3>
+                            <h3 style="margin: 0; color: white;">{{ object.partner_id.company_id.name or 'Your Organization' }}</h3>
                             <hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;"/>
                             <h2 style="margin: 10px 0; color: white;">{{ object.partner_id.name }}</h2>
                             <p style="margin: 5px 0; color: white;">
-                                <strong>
-                                    {% if hasattr(object, 'level_id') and object.level_id %}
-                                        {{ object.level_id.name }}
-                                    {% else %}
-                                        Member
-                                    {% endif %}
-                                </strong>
+                                <strong>Member</strong>
                             </p>
                             <p style="margin: 5px 0; color: white;">
                                 Card #: {{ object.card_number or 'Pending' }}
@@ -39,11 +33,6 @@
                             <p style="margin: 5px 0; color: white;">
                                 Valid Until: {{ object.end_date.strftime('%m/%d/%Y') if object.end_date else 'N/A' }}
                             </p>
-                            {% if hasattr(object, 'chapter_id') and object.chapter_id %}
-                            <p style="margin: 5px 0; color: white;">
-                                Chapter: {{ object.chapter_id.name }}
-                            </p>
-                            {% endif %}
                         </div>
                     </div>
                     
@@ -80,8 +69,8 @@
                     <p>If you have any questions about your membership card or need assistance, please contact us:</p>
                     <div style="background-color: #e9ecef; padding: 10px; border-radius: 4px; margin: 15px 0;">
                         <strong>Support Contact:</strong><br/>
-                        Email: support@yourorganization.com<br/>
-                        Phone: (555) 123-4567<br/>
+                        Email: {{ object.partner_id.company_id.email or 'support@yourorganization.com' }}<br/>
+                        Phone: {{ object.partner_id.company_id.phone or '(555) 123-4567' }}<br/>
                         Hours: Monday - Friday, 9 AM - 5 PM
                     </div>
                     
@@ -90,7 +79,7 @@
                     <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;">
                         <p style="margin: 0;">Best regards,<br/>
                         <strong>The Membership Team</strong><br/>
-                        {{ ctx.get('company_name', 'Your Organization') }}</p>
+                        {{ object.partner_id.company_id.name or 'Your Organization' }}</p>
                     </div>
                 </div>
             </field>
@@ -102,12 +91,12 @@
         <record id="email_template_membership_renewal" model="mail.template">
             <field name="name">Membership Renewal Reminder</field>
             <field name="model_id" ref="model_membership_membership"/>
-            <field name="subject">🔔 Membership Renewal Reminder - {{ object.partner_id.name }}</field>
+            <field name="subject">Membership Renewal Reminder - {{ object.partner_id.name }}</field>
             <field name="email_to">{{ object.partner_id.email }}</field>
             <field name="body_html" type="html">
                 <div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
                     <div style="text-align: center; margin-bottom: 30px;">
-                        <h2 style="color: #ffc107;">🔔 Membership Renewal Reminder</h2>
+                        <h2 style="color: #ffc107;">Membership Renewal Reminder</h2>
                     </div>
                     
                     <p>Dear {{ object.partner_id.name }},</p>
@@ -124,13 +113,7 @@
                             </tr>
                             <tr>
                                 <td style="padding: 8px 0; font-weight: bold;">Membership Type:</td>
-                                <td style="padding: 8px 0;">
-                                    {% if hasattr(object, 'level_id') and object.level_id %}
-                                        {{ object.level_id.name }}
-                                    {% else %}
-                                        Standard Membership
-                                    {% endif %}
-                                </td>
+                                <td style="padding: 8px 0;">Standard Membership</td>
                             </tr>
                             <tr>
                                 <td style="padding: 8px 0; font-weight: bold;">Expiration Date:</td>
@@ -148,7 +131,7 @@
                     </div>
                     
                     <div style="text-align: center; margin: 30px 0;">
-                        <a href="#" style="background-color: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
+                        <a href="{{ object.partner_id.company_id.website or '#' }}" style="background-color: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
                             🔄 Renew Your Membership
                         </a>
                     </div>
@@ -170,12 +153,12 @@
                     {% endif %}
                     
                     <div style="background-color: #d4edda; padding: 15px; margin: 20px 0; border-left: 4px solid #28a745; border-radius: 4px;">
-                        <h4 style="margin-top: 0; color: #155724;">📞 Need Assistance?</h4>
+                        <h4 style="margin-top: 0; color: #155724;">Need Assistance?</h4>
                         <p style="margin-bottom: 0;">If you have questions about renewal or need help with your account, please contact our membership team:</p>
                         <ul style="margin: 10px 0 0 20px;">
-                            <li>Email: membership@yourorganization.com</li>
-                            <li>Phone: (555) 123-4567</li>
-                            <li>Online Portal: [Member Portal Link]</li>
+                            <li>Email: {{ object.partner_id.company_id.email or 'membership@yourorganization.com' }}</li>
+                            <li>Phone: {{ object.partner_id.company_id.phone or '(555) 123-4567' }}</li>
+                            <li>Online Portal: {{ object.partner_id.company_id.website or '[Member Portal Link]' }}</li>
                         </ul>
                     </div>
                     
@@ -184,7 +167,7 @@
                     <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;">
                         <p style="margin: 0;">Best regards,<br/>
                         <strong>The Membership Team</strong><br/>
-                        {{ ctx.get('company_name', 'Your Organization') }}</p>
+                        {{ object.partner_id.company_id.name or 'Your Organization' }}</p>
                     </div>
                 </div>
             </field>
@@ -196,12 +179,12 @@
         <record id="email_template_membership_welcome" model="mail.template">
             <field name="name">Welcome New Member</field>
             <field name="model_id" ref="model_membership_membership"/>
-            <field name="subject">🎉 Welcome to {{ ctx.get('company_name', 'Your Organization') }} - {{ object.partner_id.name }}</field>
+            <field name="subject">🎉 Welcome to {{ object.partner_id.company_id.name or 'Your Organization' }} - {{ object.partner_id.name }}</field>
             <field name="email_to">{{ object.partner_id.email }}</field>
             <field name="body_html" type="html">
                 <div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
                     <div style="text-align: center; margin-bottom: 30px;">
-                        <h1 style="color: #28a745;">🎉 Welcome to {{ ctx.get('company_name', 'Your Organization') }}!</h1>
+                        <h1 style="color: #28a745;">Welcome to {{ object.partner_id.company_id.name or 'Your Organization' }}!</h1>
                     </div>
                     
                     <p>Dear {{ object.partner_id.name }},</p>
@@ -218,13 +201,7 @@
                             </tr>
                             <tr>
                                 <td style="padding: 8px 0; font-weight: bold;">Membership Type:</td>
-                                <td style="padding: 8px 0;">
-                                    {% if hasattr(object, 'level_id') and object.level_id %}
-                                        {{ object.level_id.name }}
-                                    {% else %}
-                                        Standard Membership
-                                    {% endif %}
-                                </td>
+                                <td style="padding: 8px 0;">Standard Membership</td>
                             </tr>
                             <tr>
                                 <td style="padding: 8px 0; font-weight: bold;">Start Date:</td>
@@ -237,7 +214,7 @@
                         </table>
                     </div>
                     
-                    <h3 style="color: #007bff;">🌟 Your Member Benefits Include:</h3>
+                    <h3 style="color: #007bff;">Your Member Benefits Include:</h3>
                     <ul style="padding-left: 20px;">
                         <li><strong>Professional Development:</strong> Access to exclusive workshops and seminars</li>
                         <li><strong>Networking Opportunities:</strong> Connect with industry professionals</li>
@@ -247,7 +224,7 @@
                         <li><strong>Professional Recognition:</strong> Certificates and continuing education credits</li>
                     </ul>
                     
-                    <h3 style="color: #007bff;">🚀 Get Started:</h3>
+                    <h3 style="color: #007bff;">Get Started:</h3>
                     <ol style="padding-left: 20px;">
                         <li><strong>Complete Your Profile:</strong> Update your member directory profile</li>
                         <li><strong>Download Your Digital Card:</strong> Access your membership card anytime</li>
@@ -257,20 +234,20 @@
                     </ol>
                     
                     <div style="text-align: center; margin: 30px 0;">
-                        <a href="#" style="background-color: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold; margin: 5px;">
+                        <a href="{{ object.partner_id.company_id.website or '#' }}" style="background-color: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold; margin: 5px;">
                             🔗 Member Portal
                         </a>
-                        <a href="#" style="background-color: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold; margin: 5px;">
+                        <a href="{{ object.partner_id.company_id.website or '#' }}" style="background-color: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold; margin: 5px;">
                             📅 View Events
                         </a>
                     </div>
                     
                     <div style="background-color: #d1ecf1; padding: 15px; margin: 20px 0; border-left: 4px solid #17a2b8; border-radius: 4px;">
-                        <h4 style="margin-top: 0; color: #0c5460;">📞 Questions? We're Here to Help!</h4>
+                        <h4 style="margin-top: 0; color: #0c5460;"> Questions? We're Here to Help!</h4>
                         <p style="margin-bottom: 0;">Our member services team is ready to assist you:</p>
                         <ul style="margin: 10px 0 0 20px;">
-                            <li>Email: support@yourorganization.com</li>
-                            <li>Phone: (555) 123-4567</li>
+                            <li>Email: {{ object.partner_id.company_id.email or 'support@yourorganization.com' }}</li>
+                            <li>Phone: {{ object.partner_id.company_id.phone or '(555) 123-4567' }}</li>
                             <li>Hours: Monday - Friday, 9 AM - 5 PM</li>
                         </ul>
                     </div>
@@ -280,7 +257,7 @@
                     <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;">
                         <p style="margin: 0;">Warm regards,<br/>
                         <strong>The Membership Team</strong><br/>
-                        {{ ctx.get('company_name', 'Your Organization') }}</p>
+                        {{ object.partner_id.company_id.name or 'Your Organization' }}</p>
                     </div>
                 </div>
             </field>

@@ -234,7 +234,7 @@
                                     <div class="o_kanban_record_top_right">
                                         <span t-attf-class="badge badge-pill badge-#{record.membership_status.raw_value == 'active' ? 'success' : 
                                                                                record.membership_status.raw_value == 'grace' ? 'warning' : 
-                                                                               'secondary'}"
+                                                                               'secondary'}" 
                                               t-if="record.membership_status.value">
                                             <field name="membership_status"/>
                                         </span>

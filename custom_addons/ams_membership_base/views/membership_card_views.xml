@@ -186,19 +186,25 @@
                         <field name="verification_result" readonly="1"/>
                         <field name="member_name" readonly="1" attrs="{'invisible': [('member_name', '=', False)]}"/>
                         <field name="membership_status" readonly="1" attrs="{'invisible': [('membership_status', '=', False)]}"/>
+                        <field name="membership_level" readonly="1" attrs="{'invisible': [('membership_level', '=', False)]}"/>
                         <field name="expiry_date" readonly="1" attrs="{'invisible': [('expiry_date', '=', False)]}"/>
+                        <field name="is_valid" invisible="1"/>
                     </group>
                 </sheet>
                 <footer>
                     <button string="Verify Card" name="verify_card" type="object" class="btn-primary"/>
                     <button string="Verify QR Code" name="verify_qr_code" type="object" class="btn-secondary"/>
+                    <button string="View Member" name="action_view_member" type="object" class="btn-info"
+                            attrs="{'invisible': [('is_valid', '=', False)]}"/>
+                    <button string="Clear Results" name="clear_results" type="object" class="btn-secondary"
+                            attrs="{'invisible': [('verification_result', '=', False)]}"/>
                     <button string="Close" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
         </field>
     </record>
 
-    <!-- Card Verification Wizard Model -->
+    <!-- Card Verification Wizard Action -->
     <record id="action_card_verification_wizard" model="ir.actions.act_window">
         <field name="name">Verify Membership Card</field>
         <field name="res_model">membership.card.verification.wizard</field>

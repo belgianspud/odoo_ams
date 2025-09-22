@@ -141,8 +141,9 @@ class MemberDirectory(models.Model):
             if record.partner_id:
                 current_membership = record.partner_id.current_membership_id
                 if current_membership:
-                    record.membership_level = getattr(current_membership, 'level_id', False) and current_membership.level_id.name or ''
-                    record.chapter_name = getattr(current_membership, 'chapter_id', False) and current_membership.chapter_id.name or ''
+                    # For base module, we don't have level_id or chapter_id yet
+                    record.membership_level = 'Standard Member'
+                    record.chapter_name = ''
                     record.membership_status = current_membership.state
                 else:
                     record.membership_level = ''
@@ -152,7 +153,7 @@ class MemberDirectory(models.Model):
                 # Get earliest membership start date
                 all_memberships = record.partner_id.membership_ids
                 if all_memberships:
-                    earliest_membership = min(all_memberships, key=lambda m: m.start_date)
+                    earliest_membership = min(all_memberships, key=lambda m: m.start_date or fields.Date.today())
                     record.member_since = earliest_membership.start_date
                 else:
                     record.member_since = False
@@ -208,7 +209,6 @@ class MemberDirectory(models.Model):
         """Increment view count when profile is viewed"""
         self.ensure_one()
         self.sudo().write({'view_count': self.view_count + 1})
-        # Don't trigger tracking for view count updates
     
     def action_increment_contact_count(self):
         """Increment contact count when member is contacted"""

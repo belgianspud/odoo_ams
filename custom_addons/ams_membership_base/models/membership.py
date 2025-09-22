@@ -172,6 +172,8 @@ class Membership(models.Model):
         if grace_memberships:
             grace_memberships.write({'state': 'grace'})
             updated_count += len(grace_memberships)
+            for membership in grace_memberships:
+                membership.message_post(body=_("Membership moved to grace period"))
         
         # Find memberships that should be lapsed
         lapsed_memberships = self.search([
@@ -182,6 +184,8 @@ class Membership(models.Model):
         if lapsed_memberships:
             lapsed_memberships.write({'state': 'lapsed'})
             updated_count += len(lapsed_memberships)
+            for membership in lapsed_memberships:
+                membership.message_post(body=_("Membership lapsed"))
         
         _logger.info(f"Updated {updated_count} membership statuses - "
                     f"{len(grace_memberships)} to grace, {len(lapsed_memberships)} to lapsed")
@@ -203,8 +207,9 @@ class Membership(models.Model):
     def action_renew(self):
         """Renew membership for another period"""
         for record in self:
-            # Extend end date by one year
-            new_end_date = record.end_date + timedelta(days=365)
+            # Extend end date by one year from current end date or today, whichever is later
+            base_date = max(record.end_date, fields.Date.today()) if record.end_date else fields.Date.today()
+            new_end_date = base_date + timedelta(days=365)
             record.write({
                 'end_date': new_end_date,
                 'state': 'active'
@@ -242,14 +247,26 @@ class ResPartner(models.Model):
     @api.depends('membership_ids.is_current', 'membership_ids.state')
     def _compute_current_membership(self):
         for partner in self:
-            current_membership = partner.membership_ids.filtered('is_current')
-            if current_membership:
+            current_memberships = partner.membership_ids.filtered('is_current')
+            if current_memberships:
                 # Get the most recent one if multiple current memberships
-                partner.current_membership_id = current_membership.sorted('start_date', reverse=True)[0]
+                partner.current_membership_id = current_memberships.sorted('start_date', reverse=True)[0]
                 partner.is_member = True
             else:
                 partner.current_membership_id = False
                 partner.is_member = False
+
+    def action_create_membership(self):
+        """Create a new membership for this partner"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('New Membership'),
+            'res_model': 'membership.membership',
+            'view_mode': 'form',
+            'context': {'default_partner_id': self.id},
+            'target': 'current',
+        }
 
 
 class AccountMove(models.Model):
