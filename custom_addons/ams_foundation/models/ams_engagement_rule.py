@@ -86,7 +86,7 @@ class AMSEngagementRule(models.Model):
 
     # Event-specific Conditions
     event_category_filter = fields.Boolean('Filter by Event Category', default=False)
-    event_categories = fields.Many2many('event.type', string='Event Categories')
+    event_categories = fields.Char('Event Categories', help="Event categories (free text for now)") #fields.Many2many('event.type', string='Event Categories')
     min_event_hours = fields.Float('Minimum Event Hours', default=0.0)
     ce_credit_multiplier = fields.Float('CE Credit Multiplier', default=1.0,
                                       help="Multiply points by CE credits earned")

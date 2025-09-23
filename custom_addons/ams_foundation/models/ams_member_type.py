@@ -22,7 +22,7 @@ class AMSMemberType(models.Model):
 
     # Pricing and Duration
     base_annual_fee = fields.Float('Base Annual Fee', default=0.0, tracking=True)
-    currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self._get_default_currency())
+    currency_id = fields.Many2one('res.currency', 'Currency')
     membership_duration = fields.Integer('Membership Duration (Days)', default=365,
                                        help="Number of days the membership is valid")
 
@@ -55,8 +55,9 @@ class AMSMemberType(models.Model):
     reference_letters_required = fields.Integer('Reference Letters Required', default=0)
     interview_required = fields.Boolean('Interview Required', default=False)
 
-    # Approval Workflow
-    approval_committee_id = fields.Char('Approval Committee', help="Committee responsible for approvals (free text for now)")#fields.Many2one('ams.committee', 'Approval Committee')
+    # Approval Workflow - Changed to Char field to avoid missing model reference
+    approval_committee_id = fields.Char('Approval Committee', 
+                                       help="Committee responsible for approvals (free text for now)")
     approval_voting_required = fields.Boolean('Approval Voting Required', default=False)
     approval_threshold = fields.Float('Approval Threshold (%)', default=50.0,
                                     help="Percentage of votes required for approval")
@@ -85,14 +86,40 @@ class AMSMemberType(models.Model):
     current_members = fields.One2many('res.partner', 'member_type_id', 'Current Members',
                                     domain=[('is_member', '=', True), ('member_status', 'in', ['active', 'grace'])])
 
-    def _get_default_currency(self):
-        """Get default currency safely"""
+    @api.model
+    def default_get(self, fields_list):
+        """Override default_get to set currency safely"""
+        res = super().default_get(fields_list)
+        if 'currency_id' in fields_list and not res.get('currency_id'):
+            res['currency_id'] = self._get_default_currency_id()
+        return res
+
+    def _get_default_currency_id(self):
+        """Get default currency ID safely"""
         try:
-            return self.env.company.currency_id.id if self.env.company.currency_id else False
+            # Try to get company currency first
+            if self.env.company and self.env.company.currency_id:
+                return self.env.company.currency_id.id
         except:
-            # Fallback to USD if company currency not available
-            usd = self.env.ref('base.USD', raise_if_not_found=False)
-            return usd.id if usd else False
+            pass
+        
+        try:
+            # Fallback to USD
+            usd_currency = self.env['res.currency'].search([('name', '=', 'USD')], limit=1)
+            if usd_currency:
+                return usd_currency.id
+        except:
+            pass
+        
+        try:
+            # Last resort - get any currency
+            any_currency = self.env['res.currency'].search([], limit=1)
+            if any_currency:
+                return any_currency.id
+        except:
+            pass
+        
+        return False
 
     @api.depends('current_members')
     def _compute_member_count(self):
@@ -118,6 +145,10 @@ class AMSMemberType(models.Model):
         # Ensure code is uppercase
         if 'code' in vals and vals['code']:
             vals['code'] = vals['code'].upper()
+        
+        # Set currency if not provided
+        if 'currency_id' not in vals or not vals['currency_id']:
+            vals['currency_id'] = self._get_default_currency_id()
         
         return super().create(vals)
 
@@ -242,7 +273,8 @@ class AMSMemberType(models.Model):
         if self.base_annual_fee == 0:
             return _("Free")
         else:
-            return f"{self.currency_id.symbol}{self.base_annual_fee:,.2f}"
+            currency_symbol = self.currency_id.symbol if self.currency_id else "$"
+            return f"{currency_symbol}{self.base_annual_fee:,.2f}"
 
     def toggle_active(self):
         """Toggle active status with validation"""
