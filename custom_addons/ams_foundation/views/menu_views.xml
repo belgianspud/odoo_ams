@@ -5,8 +5,7 @@
         <!-- Main AMS Menu -->
         <menuitem id="menu_ams_main"
             name="Association Management"
-            sequence="5"
-            groups="group_ams_member"/>
+            sequence="5"/>
 
         <!-- Configuration Menu -->
         <menuitem id="menu_ams_configuration"

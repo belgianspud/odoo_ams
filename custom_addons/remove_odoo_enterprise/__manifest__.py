@@ -3,7 +3,7 @@
 {
     "name": "Remove Odoo Enterprise",
     "summary": "Remove enterprise modules and setting items",
-    "version": "19.0.1.0.0",
+    "version": "18.0.1.0.0",
     "category": "Technical",
     "author": "Eska, Onestein, Odoo Community Association (OCA)",
     "contributors": [
