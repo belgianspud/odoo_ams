@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Member Type List View -->
+        <record id="view_ams_member_type_list" model="ir.ui.view">
+            <field name="name">ams.member.type.list</field>
+            <field name="model">ams.member.type</field>
+            <field name="arch" type="xml">
+                <list string="Member Types" default_order="sequence,name">
+                    <field name="sequence" widget="handle"/>
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="base_annual_fee" widget="monetary"/>
+                    <field name="requires_approval"/>
+                    <field name="auto_renewal"/>
+                    <field name="voting_rights"/>
+                    <field name="member_count"/>
+                    <field name="active"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Member Type Form View -->
+        <record id="view_ams_member_type_form" model="ir.ui.view">
+            <field name="name">ams.member.type.form</field>
+            <field name="model">ams.member.type</field>
+            <field name="arch" type="xml">
+                <form string="Member Type">
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_members" type="object" 
+                                    class="oe_stat_button" icon="fa-users">
+                                <field name="member_count" widget="statinfo" string="Members"/>
+                            </button>
+                        </div>
+                        
+                        <widget name="web_ribbon" title="Archived" bg_color="bg-danger" 
+                                invisible="active"/>
+                        
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Member Type Name"/>
+                            </h1>
+                            <div class="o_row">
+                                <field name="code" placeholder="Code"/>
+                            </div>
+                        </div>
+
+                        <group>
+                            <group string="Basic Information">
+                                <field name="description"/>
+                                <field name="sequence"/>
+                                <field name="active"/>
+                            </group>
+                            <group string="Pricing">
+                                <field name="base_annual_fee" widget="monetary"/>
+                                <field name="currency_id" invisible="True"/>
+                                <field name="membership_duration"/>
+                                <field name="grace_period_override"/>
+                                <field name="grace_period_days" 
+                                       invisible="not grace_period_override"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Membership Features">
+                                <field name="requires_approval"/>
+                                <field name="auto_renewal"/>
+                                <field name="voting_rights"/>
+                                <field name="directory_access"/>
+                                <field name="event_discounts"/>
+                            </group>
+                            <group string="Eligibility Requirements">
+                                <field name="requires_license"/>
+                                <field name="min_experience_years"/>
+                                <field name="education_requirements"/>
+                                <field name="age_restrictions"/>
+                            </group>
+                        </group>
+
+                        <notebook>
+                            <page string="Eligibility Criteria" name="eligibility">
+                                <field name="eligibility_criteria" 
+                                       placeholder="Describe the eligibility requirements for this member type..."/>
+                            </page>
+                            
+                            <page string="Benefits" name="benefits">
+                                <field name="benefits_description" 
+                                       placeholder="List the benefits and privileges for this member type..."/>
+                            </page>
+                            
+                            <page string="Applications" name="applications" 
+                                  invisible="not requires_approval">
+                                <group>
+                                    <group string="Application Process">
+                                        <field name="application_fee"/>
+                                        <field name="application_form_required"/>
+                                        <field name="reference_letters_required"/>
+                                        <field name="interview_required"/>
+                                    </group>
+                                    <group string="Approval Workflow">
+                                        <field name="approval_committee_id"/>
+                                        <field name="approval_voting_required"/>
+                                        <field name="approval_threshold"/>
+                                    </group>
+                                </group>
+                            </page>
+                            
+                            <page string="Restrictions" name="restrictions">
+                                <group>
+                                    <group string="Geographic Restrictions">
+                                        <field name="geographic_restrictions"/>
+                                        <field name="allowed_countries" widget="many2many_tags"
+                                               invisible="not geographic_restrictions"/>
+                                        <field name="allowed_states" widget="many2many_tags"
+                                               invisible="not geographic_restrictions"/>
+                                    </group>
+                                    <group string="Other Restrictions">
+                                        <field name="max_members"/>
+                                        <field name="waiting_list_enabled" 
+                                               invisible="not max_members"/>
+                                        <field name="renewal_restrictions"/>
+                                    </group>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!-- Member Type Kanban View -->
+        <record id="view_ams_member_type_kanban" model="ir.ui.view">
+            <field name="name">ams.member.type.kanban</field>
+            <field name="model">ams.member.type</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_mobile">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="base_annual_fee"/>
+                    <field name="member_count"/>
+                    <field name="active"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <strong><span><t t-esc="record.name.value"/></span></strong>
+                                    </div>
+                                    <div class="col-6 text-right">
+                                        <span class="badge badge-pill badge-info">
+                                            <t t-esc="record.code.value"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <span>Annual Fee: $<t t-esc="record.base_annual_fee.value"/></span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <span><t t-esc="record.member_count.value"/> members</span>
+                                    </div>
+                                </div>
+                                <div class="row" t-if="!record.active.raw_value">
+                                    <div class="col-12">
+                                        <span class="badge badge-danger">Archived</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- Member Type Search View -->
+        <record id="view_ams_member_type_search" model="ir.ui.view">
+            <field name="name">ams.member.type.search</field>
+            <field name="model">ams.member.type</field>
+            <field name="arch" type="xml">
+                <search string="Member Types">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="description"/>
+                    <separator/>
+                    <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                    <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                    <separator/>
+                    <filter string="Requires Approval" name="requires_approval" 
+                            domain="[('requires_approval', '=', True)]"/>
+                    <filter string="Auto Renewal" name="auto_renewal" 
+                            domain="[('auto_renewal', '=', True)]"/>
+                    <filter string="Voting Rights" name="voting_rights" 
+                            domain="[('voting_rights', '=', True)]"/>
+                    <filter string="Requires License" name="requires_license" 
+                            domain="[('requires_license', '=', True)]"/>
+                    <separator/>
+                    <filter string="Free Membership" name="free" 
+                            domain="[('base_annual_fee', '=', 0)]"/>
+                    <filter string="Paid Membership" name="paid" 
+                            domain="[('base_annual_fee', '>', 0)]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Requires Approval" name="group_approval" 
+                                domain="[]" context="{'group_by': 'requires_approval'}"/>
+                        <filter string="Voting Rights" name="group_voting" 
+                                domain="[]" context="{'group_by': 'voting_rights'}"/>
+                        <filter string="Auto Renewal" name="group_renewal" 
+                                domain="[]" context="{'group_by': 'auto_renewal'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Member Type Action -->
+        <record id="action_ams_member_type" model="ir.actions.act_window">
+            <field name="name">Member Types</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.member.type</field>
+            <field name="view_mode">list,kanban,form</field>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first member type
+                </p>
+                <p>
+                    Member types define different categories of membership with 
+                    varying benefits, fees, and requirements. Common types include
+                    Regular, Student, Corporate, and Retired memberships.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

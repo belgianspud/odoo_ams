@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- AMS Module Category -->
+        <record id="module_category_ams" model="ir.module.category">
+            <field name="name">Association Management</field>
+            <field name="description">Association Management System modules and permissions</field>
+            <field name="sequence">15</field>
+        </record>
+
+        <!-- Base Member Group -->
+        <record id="group_ams_member" model="res.groups">
+            <field name="name">AMS: Member</field>
+            <field name="category_id" ref="module_category_ams"/>
+            <field name="comment">Basic member access to portal and self-service functions. Members can only view their own data.</field>
+        </record>
+
+        <!-- Staff Group -->
+        <record id="group_ams_staff" model="res.groups">
+            <field name="name">AMS: Staff</field>
+            <field name="category_id" ref="module_category_ams"/>
+            <field name="implied_ids" eval="[(4, ref('group_ams_member'))]"/>
+            <field name="comment">Staff access to member management functions. Can view and edit member data.</field>
+        </record>
+
+        <!-- Manager Group -->
+        <record id="group_ams_manager" model="res.groups">
+            <field name="name">AMS: Manager</field>
+            <field name="category_id" ref="module_category_ams"/>
+            <field name="implied_ids" eval="[(4, ref('group_ams_staff'))]"/>
+            <field name="comment">Manager access to all AMS functions including configuration and reporting.</field>
+        </record>
+
+        <!-- Administrator Group -->
+        <record id="group_ams_admin" model="res.groups">
+            <field name="name">AMS: Administrator</field>
+            <field name="category_id" ref="module_category_ams"/>
+            <field name="implied_ids" eval="[(4, ref('group_ams_manager'))]"/>
+            <field name="comment">Full administrative access to AMS system including settings and system configuration.</field>
+        </record>
+
+        <!-- Record Rules for Member Data Access -->
+        
+        <!-- Members can only see their own partner record when in member context -->
+        <record id="rule_partner_member_own_data" model="ir.rule">
+            <field name="name">Members: Own Data Only</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="groups" eval="[(4, ref('group_ams_member'))]"/>
+            <field name="domain_force">[('id', '=', user.partner_id.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Staff can see all partner records -->
+        <record id="rule_partner_staff_all_data" model="ir.rule">
+            <field name="name">Staff: All Member Data</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="groups" eval="[(4, ref('group_ams_staff'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Managers can do everything including delete -->
+        <record id="rule_partner_manager_all_access" model="ir.rule">
+            <field name="name">Managers: Full Access</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="groups" eval="[(4, ref('group_ams_manager'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Portal User Template for Members -->
+        <record id="portal_user_template_member" model="res.users">
+            <field name="name">Member Portal Template</field>
+            <field name="login">member_portal_template</field>
+            <field name="active" eval="False"/>
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_portal'), ref('group_ams_member')])]"/>
+        </record>
+
+    </data>
+</odoo>

@@ -1,6 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_ams_subscription_product_user,ams.subscription.product.user,model_ams_subscription_product,base.group_user,1,0,0,0
-access_ams_subscription_product_sale_user,ams.subscription.product.sale.user,model_ams_subscription_product,sales_team.group_sale_salesman,1,1,1,0
-access_ams_subscription_product_sale_manager,ams.subscription.product.sale.manager,model_ams_subscription_product,sales_team.group_sale_manager,1,1,1,1
-access_ams_subscription_product_system_admin,ams.subscription.product.system.admin,model_ams_subscription_product,base.group_system,1,1,1,1
-access_ams_subscription_product_portal,ams.subscription.product.portal,model_ams_subscription_product,base.group_portal,1,0,0,0

@@ -1,7 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_ams_member_type_system_admin,ams.member.type system admin,model_ams_member_type,base.group_system,1,1,1,1
-access_ams_member_type_admin,ams.member.type admin,model_ams_member_type,base.group_erp_manager,1,1,1,0
-access_ams_member_type_user,ams.member.type user,model_ams_member_type,base.group_user,1,0,0,0
-access_ams_member_status_system_admin,ams.member.status system admin,model_ams_member_status,base.group_system,1,1,1,1
-access_ams_member_status_admin,ams.member.status admin,model_ams_member_status,base.group_erp_manager,1,1,1,0
-access_ams_member_status_user,ams.member.status user,model_ams_member_status,base.group_user,1,0,0,0

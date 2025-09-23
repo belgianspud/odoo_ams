@@ -1,5 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_product_category_enhanced_system_admin,product.category.enhanced.system.admin,product.model_product_category,base.group_system,1,1,1,1
-access_product_category_enhanced_admin,product.category.enhanced.admin,product.model_product_category,base.group_erp_manager,1,1,1,0
-access_product_category_enhanced_user,product.category.enhanced.user,product.model_product_category,base.group_user,1,1,1,0
-access_product_category_enhanced_portal,product.category.enhanced.portal,product.model_product_category,base.group_portal,1,0,0,0

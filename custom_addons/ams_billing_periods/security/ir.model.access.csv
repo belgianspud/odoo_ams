@@ -1,4 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_ams_billing_period_system_admin,ams.billing.period system admin,model_ams_billing_period,base.group_system,1,1,1,1
-access_ams_billing_period_admin,ams.billing.period admin,model_ams_billing_period,base.group_erp_manager,1,1,1,0
-access_ams_billing_period_user,ams.billing.period user,model_ams_billing_period,base.group_user,1,0,0,0

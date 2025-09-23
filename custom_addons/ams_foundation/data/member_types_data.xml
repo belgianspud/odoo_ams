@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Default Member Types for Professional Associations -->
+        
+        <!-- Regular/Professional Member -->
+        <record id="member_type_regular" model="ams.member.type">
+            <field name="name">Regular Member</field>
+            <field name="code">REG</field>
+            <field name="description">Full professional membership with all benefits and voting rights</field>
+            <field name="active">True</field>
+            <field name="base_annual_fee">250.00</field>
+            <field name="requires_approval">False</field>
+            <field name="auto_renewal">True</field>
+            <field name="voting_rights">True</field>
+            <field name="eligibility_criteria">Must be a licensed professional in the field with minimum 2 years experience</field>
+            <field name="requires_license">True</field>
+            <field name="min_experience_years">2</field>
+            <field name="membership_duration">365</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <!-- Student Member -->
+        <record id="member_type_student" model="ams.member.type">
+            <field name="name">Student Member</field>
+            <field name="code">STU</field>
+            <field name="description">Discounted membership for full-time students</field>
+            <field name="active">True</field>
+            <field name="base_annual_fee">50.00</field>
+            <field name="requires_approval">True</field>
+            <field name="auto_renewal">False</field>
+            <field name="voting_rights">False</field>
+            <field name="eligibility_criteria">Must be enrolled full-time in an accredited program</field>
+            <field name="requires_license">False</field>
+            <field name="min_experience_years">0</field>
+            <field name="membership_duration">365</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- Associate Member -->
+        <record id="member_type_associate" model="ams.member.type">
+            <field name="name">Associate Member</field>
+            <field name="code">ASC</field>
+            <field name="description">Entry-level membership for new professionals</field>
+            <field name="active">True</field>
+            <field name="base_annual_fee">150.00</field>
+            <field name="requires_approval">False</field>
+            <field name="auto_renewal">True</field>
+            <field name="voting_rights">False</field>
+            <field name="eligibility_criteria">Recent graduates or professionals with less than 2 years experience</field>
+            <field name="requires_license">False</field>
+            <field name="min_experience_years">0</field>
+            <field name="membership_duration">365</field>
+            <field name="sequence">30</field>
+        </record>
+
+        <!-- Retired Member -->
+        <record id="member_type_retired" model="ams.member.type">
+            <field name="name">Retired Member</field>
+            <field name="code">RET</field>
+            <field name="description">Reduced-rate membership for retired professionals</field>
+            <field name="active">True</field>
+            <field name="base_annual_fee">75.00</field>
+            <field name="requires_approval">True</field>
+            <field name="auto_renewal">True</field>
+            <field name="voting_rights">True</field>
+            <field name="eligibility_criteria">Must have been a member for minimum 10 years and be retired from active practice</field>
+            <field name="requires_license">False</field>
+            <field name="min_experience_years">10</field>
+            <field name="membership_duration">365</field>
+            <field name="sequence">40</field>
+        </record>
+
+        <!-- Corporate Member -->
+        <record id="member_type_corporate" model="ams.member.type">
+            <field name="name">Corporate Member</field>
+            <field name="code">CORP</field>
+            <field name="description">Organizational membership for companies and institutions</field>
+            <field name="active">True</field>
+            <field name="base_annual_fee">1500.00</field>
+            <field name="requires_approval">True</field>
+            <field name="auto_renewal">True</field>
+            <field name="voting_rights">True</field>
+            <field name="eligibility_criteria">Companies or organizations supporting the profession</field>
+            <field name="requires_license">False</field>
+            <field name="min_experience_years">0</field>
+            <field name="membership_duration">365</field>
+            <field name="sequence">50</field>
+        </record>
+
+        <!-- International Member -->
+        <record id="member_type_international" model="ams.member.type">
+            <field name="name">International Member</field>
+            <field name="code">INTL</field>
+            <field name="description">Membership for professionals outside the primary region</field>
+            <field name="active">True</field>
+            <field name="base_annual_fee">200.00</field>
+            <field name="requires_approval">False</field>
+            <field name="auto_renewal">True</field>
+            <field name="voting_rights">False</field>
+            <field name="eligibility_criteria">Licensed professionals practicing outside the primary geographic region</field>
+            <field name="requires_license">True</field>
+            <field name="min_experience_years">1</field>
+            <field name="membership_duration">365</field>
+            <field name="sequence">60</field>
+        </record>
+
+        <!-- Honorary Member -->
+        <record id="member_type_honorary" model="ams.member.type">
+            <field name="name">Honorary Member</field>
+            <field name="code">HON</field>
+            <field name="description">Complimentary membership for distinguished individuals</field>
+            <field name="active">True</field>
+            <field name="base_annual_fee">0.00</field>
+            <field name="requires_approval">True</field>
+            <field name="auto_renewal">False</field>
+            <field name="voting_rights">True</field>
+            <field name="eligibility_criteria">Distinguished service to the profession, nominated by board</field>
+            <field name="requires_license">False</field>
+            <field name="min_experience_years">0</field>
+            <field name="membership_duration">365</field>
+            <field name="sequence">70</field>
+        </record>
+
+    </data>
+</odoo>

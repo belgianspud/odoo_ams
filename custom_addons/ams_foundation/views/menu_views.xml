@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Main AMS Menu -->
+        <menuitem id="menu_ams_main"
+            name="Association Management"
+            sequence="5"
+            groups="group_ams_member"/>
+
+        <!-- Configuration Menu -->
+        <menuitem id="menu_ams_configuration"
+            name="Configuration"
+            parent="menu_ams_main"
+            sequence="100"
+            groups="group_ams_manager"/>
+
+        <!-- Members Menu -->
+        <menuitem id="menu_ams_members"
+            name="Members"
+            parent="menu_ams_main"
+            sequence="10"
+            groups="group_ams_staff"/>
+
+        <!-- Member Directory -->
+        <menuitem id="menu_ams_member_directory"
+            name="Member Directory"
+            parent="menu_ams_members"
+            action="base.action_partner_form"
+            sequence="10"
+            groups="group_ams_staff"/>
+
+        <!-- Member Types Configuration -->
+        <menuitem id="menu_ams_member_types"
+            name="Member Types"
+            parent="menu_ams_configuration"
+            action="action_ams_member_type"
+            sequence="10"
+            groups="group_ams_manager"/>
+
+        <!-- AMS Settings -->
+        <menuitem id="menu_ams_settings"
+            name="AMS Settings"
+            parent="menu_ams_configuration"
+            action="action_ams_settings"
+            sequence="5"
+            groups="group_ams_admin"/>
+
+        <!-- Engagement Rules -->
+        <menuitem id="menu_ams_engagement_rules"
+            name="Engagement Rules"
+            parent="menu_ams_configuration"
+            action="action_ams_engagement_rule"
+            sequence="20"
+            groups="group_ams_manager"/>
+
+        <!-- Tools Menu -->
+        <menuitem id="menu_ams_tools"
+            name="Tools"
+            parent="menu_ams_main"
+            sequence="90"
+            groups="group_ams_staff"/>
+
+        <!-- Portal User Wizard -->
+        <menuitem id="menu_ams_portal_user_wizard"
+            name="Create Portal Users"
+            parent="menu_ams_tools"
+            action="action_portal_user_wizard"
+            sequence="10"
+            groups="group_ams_staff"/>
+
+    </data>
+</odoo>

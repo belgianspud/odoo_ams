@@ -34,15 +34,7 @@ class IrModuleModule(models.Model):
 
 
         #Custom Modules
-        'ams_member_data',      # AMS base module for member data structures - Layer 1
-        'ams_system_config',    # AMS base module for managing and configuring ams configurations - Layer 1
-        'ams_member_types',     # AMS base module for defining member status and types - layer 1
-        'ams_product_types',    # AMS base module for setting up product types 
-        'ams_billing_periods',  # AMS base module for managing different billing periods for products
-        'ams_communication_preferences', # AMS base module for managing communication preferences per contact or account
-        'ams_participation',    # AMS base module for defining what a participation record is for a member
-        'ams_products_base',    # AMS base module for defining products for AMS
-        'ams_subscription_products',    # AMS subscription product specific customizations
+        'ams_foundation',       # MVP AMS core module
 
 
         """
