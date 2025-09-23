@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Membership Sequence -->
+        <record id="seq_ams_membership" model="ir.sequence">
+            <field name="name">AMS Membership Sequence</field>
+            <field name="code">ams.membership</field>
+            <field name="prefix">MEM</field>
+            <field name="padding">6</field>
+            <field name="number_increment">1</field>
+            <field name="number_next_actual">1</field>
+            <field name="active">True</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Subscription Sequence -->
+        <record id="seq_ams_subscription" model="ir.sequence">
+            <field name="name">AMS Subscription Sequence</field>
+            <field name="code">ams.subscription</field>
+            <field name="prefix">SUB</field>
+            <field name="padding">6</field>
+            <field name="number_increment">1</field>
+            <field name="number_next_actual">1</field>
+            <field name="active">True</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Publication Subscription Sequence -->
+        <record id="seq_ams_subscription_publication" model="ir.sequence">
+            <field name="name">AMS Publication Subscription</field>
+            <field name="code">ams.subscription.publication</field>
+            <field name="prefix">PUB</field>
+            <field name="padding">6</field>
+            <field name="number_increment">1</field>
+            <field name="number_next_actual">1</field>
+            <field name="active">True</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Chapter Subscription Sequence -->
+        <record id="seq_ams_subscription_chapter" model="ir.sequence">
+            <field name="name">AMS Chapter Subscription</field>
+            <field name="code">ams.subscription.chapter</field>
+            <field name="prefix">CHT</field>
+            <field name="padding">6</field>
+            <field name="number_increment">1</field>
+            <field name="number_next_actual">1</field>
+            <field name="active">True</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Renewal Sequence -->
+        <record id="seq_ams_renewal" model="ir.sequence">
+            <field name="name">AMS Renewal Sequence</field>
+            <field name="code">ams.renewal</field>
+            <field name="prefix">REN</field>
+            <field name="padding">6</field>
+            <field name="number_increment">1</field>
+            <field name="number_next_actual">1</field>
+            <field name="active">True</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Benefit Sequence -->
+        <record id="seq_ams_benefit" model="ir.sequence">
+            <field name="name">AMS Benefit Sequence</field>
+            <field name="code">ams.benefit</field>
+            <field name="prefix">BEN</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="number_next_actual">1</field>
+            <field name="active">True</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- Mass Renewal Batch Sequence -->
+        <record id="seq_ams_mass_renewal" model="ir.sequence">
+            <field name="name">AMS Mass Renewal Batch</field>
+            <field name="code">ams.mass.renewal</field>
+            <field name="prefix">MRB</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="number_next_actual">1</field>
+            <field name="active">True</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+    </data>
+</odoo>
