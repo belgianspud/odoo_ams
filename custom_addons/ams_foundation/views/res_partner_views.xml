@@ -1,277 +1,267 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
-
-        <!-- Extend Partner Form View for Member Fields -->
-        <record id="view_partner_form_member" model="ir.ui.view">
-            <field name="name">res.partner.form.member</field>
-            <field name="model">res.partner</field>
-            <field name="inherit_id" ref="base.view_partner_form"/>
-            <field name="arch" type="xml">
-                
-                <!-- Add Member checkbox in header -->
-                <xpath expr="//field[@name='category_id']" position="after">
-                    <field name="is_member" groups="ams_foundation.group_ams_staff"/>
-                </xpath>
-                
-                <!-- Add Member Information after company type -->
-                <xpath expr="//field[@name='company_type']" position="after">
-                    <field name="member_number" readonly="True" 
-                           invisible="not is_member"/>
-                    <field name="member_type_id" 
-                           invisible="not is_member"
-                           required="is_member"/>
-                    <field name="member_status" 
-                           invisible="not is_member"/>
-                </xpath>
-
-                <!-- Add Member Details Tab -->
-                <xpath expr="//notebook" position="inside">
-                    <page string="Membership" name="membership" 
+	<data>
+		<!-- Extend Partner Form View for Member Fields -->
+		<record id="view_partner_form_member" model="ir.ui.view">
+			<field name="name">res.partner.form.member</field>
+			<field name="model">res.partner</field>
+			<field name="inherit_id" ref="base.view_partner_form"/>
+			<field name="arch" type="xml">
+				<!-- Add Member checkbox in header -->
+				<xpath expr="//field[@name='category_id']" position="after">
+					<field name="is_member" groups="ams_foundation.group_ams_staff"/>
+					<!-- Add Member Information right after is_member checkbox -->
+					<field name="member_number" readonly="True" 
+           invisible="not is_member"/>
+					<field name="member_type_id" 
+           invisible="not is_member"
+           required="is_member"/>
+					<field name="member_status" 
+           invisible="not is_member"/>
+				</xpath>
+				<!-- Add Member Details Tab -->
+				<xpath expr="//notebook" position="inside">
+					<page string="Membership" name="membership" 
                           invisible="not is_member">
-                        <group>
-                            <group string="Membership Timeline">
-                                <field name="membership_start_date"/>
-                                <field name="membership_end_date"/>
-                                <field name="last_renewal_date"/>
-                                <field name="grace_period_end" readonly="True"
+						<group>
+							<group string="Membership Timeline">
+								<field name="membership_start_date"/>
+								<field name="membership_end_date"/>
+								<field name="last_renewal_date"/>
+								<field name="grace_period_end" readonly="True"
                                        invisible="member_status not in ['grace']"/>
-                                <field name="suspend_end_date" readonly="True"
+								<field name="suspend_end_date" readonly="True"
                                        invisible="member_status not in ['suspended']"/>
-                                <field name="terminate_date" readonly="True"
+								<field name="terminate_date" readonly="True"
                                        invisible="member_status not in ['terminated']"/>
-                            </group>
-                            <group string="Professional Information">
-                                <field name="professional_designation"/>
-                                <field name="license_number"/>
-                                <field name="specialty_area"/>
-                                <field name="years_experience"/>
-                                <field name="employer_name"/>
-                                <field name="job_title"/>
-                            </group>
-                        </group>
-                        
-                        <group>
-                            <group string="Communication Preferences">
-                                <field name="communication_preferences"/>
-                                <field name="newsletter_subscription"/>
-                                <field name="directory_listing"/>
-                                <field name="preferred_language"/>
-                            </group>
-                            <group string="Engagement &amp; Analytics">
-                                <field name="engagement_score" readonly="True"/>
-                                <field name="last_portal_login" readonly="True"/>
-                                <field name="portal_login_count" readonly="True"/>
-                                <field name="membership_notes"/>
-                            </group>
-                        </group>
-
-                        <group string="Status Management" 
+							</group>
+							<group string="Professional Information">
+								<field name="professional_designation"/>
+								<field name="license_number"/>
+								<field name="specialty_area"/>
+								<field name="years_experience"/>
+								<field name="employer_name"/>
+								<field name="job_title"/>
+							</group>
+						</group>
+						<group>
+							<group string="Communication Preferences">
+								<field name="communication_preferences"/>
+								<field name="newsletter_subscription"/>
+								<field name="directory_listing"/>
+								<field name="preferred_language"/>
+							</group>
+							<group string="Engagement &amp; Analytics">
+								<field name="engagement_score" readonly="True"/>
+								<field name="last_portal_login" readonly="True"/>
+								<field name="portal_login_count" readonly="True"/>
+								<field name="membership_notes"/>
+							</group>
+						</group>
+						<group string="Status Management" 
                                groups="ams_foundation.group_ams_staff">
-                            <group>
-                                <field name="status_change_reason"/>
-                                <field name="last_status_change" readonly="True"/>
-                                <field name="auto_status_enabled"/>
-                            </group>
-                            <group>
-                                <field name="portal_user_id" readonly="True"/>
-                                <field name="portal_user_created" readonly="True"/>
-                                <button name="action_create_portal_user" 
+							<group>
+								<field name="status_change_reason"/>
+								<field name="last_status_change" readonly="True"/>
+								<field name="auto_status_enabled"/>
+							</group>
+							<group>
+								<field name="portal_user_id" readonly="True"/>
+								<field name="portal_user_created" readonly="True"/>
+								<button name="action_create_portal_user" 
                                         string="Create Portal User" 
                                         type="object" 
                                         class="btn-primary"
                                         invisible="portal_user_id"
                                         groups="ams_foundation.group_ams_staff"/>
-                                <button name="action_reset_portal_password" 
+								<button name="action_reset_portal_password" 
                                         string="Reset Portal Password" 
                                         type="object" 
                                         class="btn-secondary"
                                         invisible="not portal_user_id"
                                         groups="ams_foundation.group_ams_staff"/>
-                            </group>
-                        </group>
-                    </page>
-                </xpath>
-
-                <!-- Add Member Status Actions in Button Box -->
-                <xpath expr="//div[@name='button_box']" position="inside">
-                    <button name="action_activate_member" type="object" 
+							</group>
+						</group>
+					</page>
+				</xpath>
+				<!-- Add Member Status Actions in Button Box -->
+				<xpath expr="//div[@name='button_box']" position="inside">
+					<button name="action_activate_member" type="object" 
                             class="oe_stat_button" icon="fa-check-circle"
                             string="Activate"
                             invisible="not is_member or member_status != 'prospective'"
                             groups="ams_foundation.group_ams_staff"/>
-                    <button name="action_suspend_member" type="object" 
+					<button name="action_suspend_member" type="object" 
                             class="oe_stat_button" icon="fa-pause-circle"
                             string="Suspend"
                             invisible="not is_member or member_status not in ['active', 'grace']"
                             groups="ams_foundation.group_ams_manager"/>
-                    <button name="action_terminate_member" type="object" 
+					<button name="action_terminate_member" type="object" 
                             class="oe_stat_button" icon="fa-times-circle"
                             string="Terminate"
                             invisible="not is_member or member_status in ['terminated']"
                             groups="ams_foundation.group_ams_manager"/>
-                    <button name="action_reinstate_member" type="object" 
+					<button name="action_reinstate_member" type="object" 
                             class="oe_stat_button" icon="fa-refresh"
                             string="Reinstate"
                             invisible="not is_member or member_status not in ['suspended', 'terminated']"
                             groups="ams_foundation.group_ams_manager"/>
-                </xpath>
-
-            </field>
-        </record>
-
-        <!-- Member Directory List View -->
-        <record id="view_partner_member_list" model="ir.ui.view">
-            <field name="name">res.partner.member.list</field>
-            <field name="model">res.partner</field>
-            <field name="arch" type="xml">
-                <list string="Member Directory" default_order="name">
-                    <field name="name"/>
-                    <field name="member_number"/>
-                    <field name="member_type_id"/>
-                    <field name="member_status"/>
-                    <field name="email"/>
-                    <field name="phone"/>
-                    <field name="city"/>
-                    <field name="state_id"/>
-                    <field name="membership_end_date"/>
-                    <field name="engagement_score" optional="hide"/>
-                    <field name="is_member" invisible="True"/>
-                </list>
-            </field>
-        </record>
-
-        <!-- Member Directory Kanban View -->
-        <record id="view_partner_member_kanban" model="ir.ui.view">
-            <field name="name">res.partner.member.kanban</field>
-            <field name="model">res.partner</field>
-            <field name="arch" type="xml">
-                <kanban class="o_kanban_mobile">
-                    <field name="name"/>
-                    <field name="member_number"/>
-                    <field name="member_type_id"/>
-                    <field name="member_status"/>
-                    <field name="email"/>
-                    <field name="phone"/>
-                    <field name="image_128"/>
-                    <field name="city"/>
-                    <field name="professional_designation"/>
-                    <templates>
-                        <t t-name="kanban-box">
-                            <div class="oe_kanban_card oe_kanban_global_click">
-                                <div class="o_kanban_image">
-                                    <img t-att-src="kanban_image('res.partner', 'image_128', record.id.raw_value)"
+				</xpath>
+			</field>
+		</record>
+		<!-- Member Directory List View -->
+		<record id="view_partner_member_list" model="ir.ui.view">
+			<field name="name">res.partner.member.list</field>
+			<field name="model">res.partner</field>
+			<field name="arch" type="xml">
+				<list string="Member Directory" default_order="name">
+					<field name="name"/>
+					<field name="member_number"/>
+					<field name="member_type_id"/>
+					<field name="member_status"/>
+					<field name="email"/>
+					<field name="phone"/>
+					<field name="city"/>
+					<field name="state_id"/>
+					<field name="membership_end_date"/>
+					<field name="engagement_score" optional="hide"/>
+					<field name="is_member" invisible="True"/>
+				</list>
+			</field>
+		</record>
+		<!-- Member Directory Kanban View -->
+		<record id="view_partner_member_kanban" model="ir.ui.view">
+			<field name="name">res.partner.member.kanban</field>
+			<field name="model">res.partner</field>
+			<field name="arch" type="xml">
+				<kanban class="o_kanban_mobile">
+					<field name="name"/>
+					<field name="member_number"/>
+					<field name="member_type_id"/>
+					<field name="member_status"/>
+					<field name="email"/>
+					<field name="phone"/>
+					<field name="image_128"/>
+					<field name="city"/>
+					<field name="professional_designation"/>
+					<templates>
+						<t t-name="kanban-box">
+							<div class="oe_kanban_card oe_kanban_global_click">
+								<div class="o_kanban_image">
+									<img t-att-src="kanban_image('res.partner', 'image_128', record.id.raw_value)"
                                          alt="Member Photo" class="o_image_64_contain"/>
-                                </div>
-                                <div class="oe_kanban_details">
-                                    <div class="o_kanban_record_top">
-                                        <div class="o_kanban_record_headings">
-                                            <strong class="o_kanban_record_title">
-                                                <t t-esc="record.name.value"/>
-                                            </strong>
-                                            <div class="o_kanban_record_subtitle">
-                                                <t t-esc="record.member_number.value"/>
-                                                <t t-if="record.professional_designation.value">
-                                                    • <t t-esc="record.professional_designation.value"/>
-                                                </t>
-                                            </div>
-                                        </div>
-                                        <span t-attf-class="badge badge-pill badge-#{record.member_status.raw_value === 'active' ? 'success' : record.member_status.raw_value === 'grace' ? 'warning' : 'secondary'}">
-                                            <t t-esc="record.member_status.value"/>
-                                        </span>
-                                    </div>
-                                    <div class="o_kanban_record_body">
-                                        <div t-if="record.member_type_id.value">
-                                            <i class="fa fa-star-o"/> <t t-esc="record.member_type_id.value"/>
-                                        </div>
-                                        <div t-if="record.email.value">
-                                            <i class="fa fa-envelope-o"/> <t t-esc="record.email.value"/>
-                                        </div>
-                                        <div t-if="record.phone.value">
-                                            <i class="fa fa-phone"/> <t t-esc="record.phone.value"/>
-                                        </div>
-                                        <div t-if="record.city.value">
-                                            <i class="fa fa-map-marker"/> <t t-esc="record.city.value"/>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </t>
-                    </templates>
-                </kanban>
-            </field>
-        </record>
-
-        <!-- Member Search View -->
-        <record id="view_partner_member_search" model="ir.ui.view">
-            <field name="name">res.partner.member.search</field>
-            <field name="model">res.partner</field>
-            <field name="arch" type="xml">
-                <search string="Member Directory">
-                    <field name="name"/>
-                    <field name="member_number"/>
-                    <field name="email"/>
-                    <field name="member_type_id"/>
-                    <field name="professional_designation"/>
-                    <field name="specialty_area"/>
-                    <field name="employer_name"/>
-                    <field name="city"/>
-                    <field name="state_id"/>
-                    <separator/>
-                    <filter string="Active Members" name="active_members" 
+								</div>
+								<div class="oe_kanban_details">
+									<div class="o_kanban_record_top">
+										<div class="o_kanban_record_headings">
+											<strong class="o_kanban_record_title">
+												<t t-esc="record.name.value"/>
+											</strong>
+											<div class="o_kanban_record_subtitle">
+												<t t-esc="record.member_number.value"/>
+												<t t-if="record.professional_designation.value">
+                                                    • 
+													<t t-esc="record.professional_designation.value"/></t>
+											</div>
+										</div>
+										<span t-attf-class="badge badge-pill badge-#{record.member_status.raw_value === 'active' ? 'success' : record.member_status.raw_value === 'grace' ? 'warning' : 'secondary'}">
+											<t t-esc="record.member_status.value"/>
+										</span>
+									</div>
+									<div class="o_kanban_record_body">
+										<div t-if="record.member_type_id.value">
+											<i class="fa fa-star-o"/>
+											<t t-esc="record.member_type_id.value"/>
+										</div>
+										<div t-if="record.email.value">
+											<i class="fa fa-envelope-o"/>
+											<t t-esc="record.email.value"/>
+										</div>
+										<div t-if="record.phone.value">
+											<i class="fa fa-phone"/>
+											<t t-esc="record.phone.value"/>
+										</div>
+										<div t-if="record.city.value">
+											<i class="fa fa-map-marker"/>
+											<t t-esc="record.city.value"/>
+										</div>
+									</div>
+								</div>
+							</div>
+						</t>
+					</templates>
+				</kanban>
+			</field>
+		</record>
+		<!-- Member Search View -->
+		<record id="view_partner_member_search" model="ir.ui.view">
+			<field name="name">res.partner.member.search</field>
+			<field name="model">res.partner</field>
+			<field name="arch" type="xml">
+				<search string="Member Directory">
+					<field name="name"/>
+					<field name="member_number"/>
+					<field name="email"/>
+					<field name="member_type_id"/>
+					<field name="professional_designation"/>
+					<field name="specialty_area"/>
+					<field name="employer_name"/>
+					<field name="city"/>
+					<field name="state_id"/>
+					<separator/>
+					<filter string="Active Members" name="active_members" 
                             domain="[('is_member', '=', True), ('member_status', '=', 'active')]"/>
-                    <filter string="Grace Period" name="grace_members" 
+					<filter string="Grace Period" name="grace_members" 
                             domain="[('is_member', '=', True), ('member_status', '=', 'grace')]"/>
-                    <filter string="Lapsed Members" name="lapsed_members" 
+					<filter string="Lapsed Members" name="lapsed_members" 
                             domain="[('is_member', '=', True), ('member_status', '=', 'lapsed')]"/>
-                    <filter string="Suspended Members" name="suspended_members" 
+					<filter string="Suspended Members" name="suspended_members" 
                             domain="[('is_member', '=', True), ('member_status', '=', 'suspended')]"/>
-                    <separator/>
-                    <filter string="In Directory" name="in_directory" 
+					<separator/>
+					<filter string="In Directory" name="in_directory" 
                             domain="[('directory_listing', '=', True)]"/>
-                    <filter string="Portal Users" name="portal_users" 
+					<filter string="Portal Users" name="portal_users" 
                             domain="[('portal_user_id', '!=', False)]"/>
-                    <filter string="Newsletter Subscribers" name="newsletter" 
+					<filter string="Newsletter Subscribers" name="newsletter" 
                             domain="[('newsletter_subscription', '=', True)]"/>
-                    <separator/>
-                    <filter string="Expiring Soon" name="expiring_soon" 
+					<separator/>
+					<filter string="Expiring Soon" name="expiring_soon" 
                             domain="[('membership_end_date', '&lt;=', (context_today() + datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
-                    <filter string="New Members" name="new_members" 
+					<filter string="New Members" name="new_members" 
                             domain="[('membership_start_date', '&gt;=', (context_today() - datetime.timedelta(days=90)).strftime('%Y-%m-%d'))]"/>
-                    <group expand="0" string="Group By">
-                        <filter string="Member Type" name="group_member_type" 
+					<group expand="0" string="Group By">
+						<filter string="Member Type" name="group_member_type" 
                                 domain="[]" context="{'group_by': 'member_type_id'}"/>
-                        <filter string="Status" name="group_status" 
+						<filter string="Status" name="group_status" 
                                 domain="[]" context="{'group_by': 'member_status'}"/>
-                        <filter string="State/Province" name="group_state" 
+						<filter string="State/Province" name="group_state" 
                                 domain="[]" context="{'group_by': 'state_id'}"/>
-                        <filter string="Specialty" name="group_specialty" 
+						<filter string="Specialty" name="group_specialty" 
                                 domain="[]" context="{'group_by': 'specialty_area'}"/>
-                        <filter string="Join Year" name="group_join_year" 
+						<filter string="Join Year" name="group_join_year" 
                                 domain="[]" context="{'group_by': 'membership_start_date:year'}"/>
-                    </group>
-                </search>
-            </field>
-        </record>
-
-        <!-- Member Directory Action -->
-        <record id="action_partner_member_directory" model="ir.actions.act_window">
-            <field name="name">Member Directory</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">res.partner</field>
-            <field name="view_mode">kanban,list,form</field>
-            <field name="domain">[('is_member', '=', True)]</field>
-            <field name="context">{'search_default_active_members': 1}</field>
-            <field name="search_view_id" ref="view_partner_member_search"/>
-            <field name="help" type="html">
-                <p class="o_view_nocontent_smiling_face">
+					</group>
+				</search>
+			</field>
+		</record>
+		<!-- Member Directory Action -->
+		<record id="action_partner_member_directory" model="ir.actions.act_window">
+			<field name="name">Member Directory</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="res_model">res.partner</field>
+			<field name="view_mode">kanban,list,form</field>
+			<field name="domain">[('is_member', '=', True)]</field>
+			<field name="context">{'search_default_active_members': 1}</field>
+			<field name="search_view_id" ref="view_partner_member_search"/>
+			<field name="help" type="html">
+				<p class="o_view_nocontent_smiling_face">
                     No members found
                 </p>
-                <p>
+				<p>
                     The member directory shows all association members. 
                     Use the filters to find specific members or groups.
                 </p>
-            </field>
-        </record>
-    </data>
+			</field>
+		</record>
+	</data>
 </odoo>

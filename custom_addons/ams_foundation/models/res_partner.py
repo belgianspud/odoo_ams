@@ -75,14 +75,19 @@ class ResPartner(models.Model):
         if partner.is_member and not partner.member_number:
             partner._generate_member_number()
         
-        # Create portal user if auto-creation is enabled
-        if partner.is_member:
-            partner._auto_create_portal_user()
+        # Create portal user if auto-creation is enabled (but avoid recursion)
+        if partner.is_member and not partner.portal_user_id:
+            partner._try_auto_create_portal_user()
         
         return partner
 
     def write(self, vals):
         """Override write to handle member updates"""
+        # Prevent infinite recursion by tracking if we're already processing portal user creation
+        context = self.env.context or {}
+        if context.get('skip_portal_creation'):
+            return super().write(vals)
+
         # Handle is_member status changes
         if 'is_member' in vals:
             for partner in self:
@@ -99,15 +104,16 @@ class ResPartner(models.Model):
 
         result = super().write(vals)
 
-        # Handle post-write actions for members
-        for partner in self:
-            if partner.is_member:
-                if 'member_status' in vals:
-                    partner._handle_status_change(vals['member_status'])
-                
-                # Auto-create portal user if needed
-                if not partner.portal_user_id:
-                    partner._auto_create_portal_user()
+        # Handle post-write actions for members (avoid recursion)
+        if not context.get('skip_portal_creation'):
+            for partner in self:
+                if partner.is_member:
+                    if 'member_status' in vals:
+                        partner._handle_status_change(vals['member_status'])
+                    
+                    # Auto-create portal user if needed (avoid recursion)
+                    if not partner.portal_user_id and partner.email:
+                        partner._try_auto_create_portal_user()
 
         return result
 
@@ -118,21 +124,30 @@ class ResPartner(models.Model):
             sequence = self.env['ir.sequence'].next_by_code('ams.member.number')
             self.member_number = sequence
 
-    def _auto_create_portal_user(self):
-        """Automatically create portal user if settings allow"""
+    def _try_auto_create_portal_user(self):
+        """Try to automatically create portal user with better error handling"""
         self.ensure_one()
-        if not self.portal_user_id and self.email:
-            settings = self._get_ams_settings()
-            if settings and settings.auto_create_portal_users:
-                try:
-                    self.action_create_portal_user()
-                except Exception as e:
-                    _logger.warning(f"Failed to auto-create portal user for {self.name}: {str(e)}")
+        
+        # Skip if already has portal user or no email
+        if self.portal_user_id or not self.email:
+            return
+        
+        # Check settings
+        settings = self._get_ams_settings()
+        if not settings or not settings.auto_create_portal_users:
+            return
+        
+        try:
+            # Use context to prevent recursion
+            self.with_context(skip_portal_creation=True).action_create_portal_user()
+        except Exception as e:
+            # Log the error but don't raise it to prevent blocking other operations
+            _logger.warning(f"Failed to auto-create portal user for {self.name}: {str(e)}")
 
     def _handle_member_deactivation(self):
         """Handle cleanup when member is deactivated"""
         self.ensure_one()
-        self.write({
+        self.with_context(skip_portal_creation=True).write({
             'member_status': 'terminated',
             'membership_end_date': fields.Date.today(),
             'auto_status_enabled': False
@@ -146,13 +161,17 @@ class ResPartner(models.Model):
             return
 
         today = fields.Date.today()
+        update_vals = {}
         
         if new_status == 'grace':
-            self.grace_period_end = today + timedelta(days=settings.grace_period_days)
+            update_vals['grace_period_end'] = today + timedelta(days=settings.grace_period_days)
         elif new_status == 'suspended':
-            self.suspend_end_date = today + timedelta(days=settings.suspend_period_days)
+            update_vals['suspend_end_date'] = today + timedelta(days=settings.suspend_period_days)
         elif new_status == 'terminated':
-            self.terminate_date = today + timedelta(days=settings.terminate_period_days)
+            update_vals['terminate_date'] = today + timedelta(days=settings.terminate_period_days)
+        
+        if update_vals:
+            self.with_context(skip_portal_creation=True).write(update_vals)
 
     def _get_ams_settings(self):
         """Get active AMS settings"""
@@ -174,7 +193,7 @@ class ResPartner(models.Model):
             # Set membership end date based on member type
             if partner.member_type_id and partner.member_type_id.membership_duration:
                 end_date = fields.Date.today() + timedelta(days=partner.member_type_id.membership_duration)
-                partner.membership_end_date = end_date
+                partner.with_context(skip_portal_creation=True).write({'membership_end_date': end_date})
 
     def action_suspend_member(self):
         """Suspend active or grace period member"""
@@ -205,16 +224,18 @@ class ResPartner(models.Model):
             if partner.member_status not in ['suspended', 'terminated']:
                 raise UserError(_("Only suspended or terminated members can be reinstated."))
             
-            partner.write({
+            update_vals = {
                 'member_status': 'active',
                 'status_change_reason': 'Manual reinstatement by staff'
-            })
+            }
             
             # Extend membership if needed
             if not partner.membership_end_date or partner.membership_end_date <= fields.Date.today():
                 if partner.member_type_id and partner.member_type_id.membership_duration:
                     end_date = fields.Date.today() + timedelta(days=partner.member_type_id.membership_duration)
-                    partner.membership_end_date = end_date
+                    update_vals['membership_end_date'] = end_date
+            
+            partner.write(update_vals)
 
     # Portal User Management
     def action_create_portal_user(self):
@@ -231,12 +252,18 @@ class ResPartner(models.Model):
             if existing_user:
                 # Link existing user if they don't have a partner or link to this partner
                 if not existing_user.partner_id or existing_user.partner_id.id == partner.id:
+                    # Update existing user
                     existing_user.partner_id = partner.id
+                    
                     # Add member and portal groups
-                    member_group = self.env.ref('ams_foundation.group_ams_member')
-                    portal_group = self.env.ref('base.group_portal')
-                    existing_user.groups_id = [(4, member_group.id), (4, portal_group.id)]
-                    partner.write({
+                    try:
+                        member_group = self.env.ref('ams_foundation.group_ams_member')
+                        portal_group = self.env.ref('base.group_portal')
+                        existing_user.groups_id = [(4, member_group.id), (4, portal_group.id)]
+                    except Exception as e:
+                        _logger.warning(f"Could not add groups to existing user: {str(e)}")
+                    
+                    partner.with_context(skip_portal_creation=True).write({
                         'portal_user_id': existing_user.id,
                         'portal_user_created': fields.Datetime.now()
                     })
@@ -244,8 +271,11 @@ class ResPartner(models.Model):
                     raise UserError(_("A user with this email already exists and is linked to another partner."))
             else:
                 # Create new portal user
-                member_group = self.env.ref('ams_foundation.group_ams_member')
-                portal_group = self.env.ref('base.group_portal')
+                try:
+                    member_group = self.env.ref('ams_foundation.group_ams_member')
+                    portal_group = self.env.ref('base.group_portal')
+                except Exception as e:
+                    raise UserError(_("Required security groups not found: %s") % str(e))
                 
                 user_vals = {
                     'name': partner.name,
@@ -256,17 +286,21 @@ class ResPartner(models.Model):
                     'active': True
                 }
                 
-                user = self.env['res.users'].create(user_vals)
-                partner.write({
-                    'portal_user_id': user.id,
-                    'portal_user_created': fields.Datetime.now()
-                })
-                
-                # Send invitation email
                 try:
-                    user.action_reset_password()
+                    user = self.env['res.users'].create(user_vals)
+                    partner.with_context(skip_portal_creation=True).write({
+                        'portal_user_id': user.id,
+                        'portal_user_created': fields.Datetime.now()
+                    })
+                    
+                    # Send invitation email
+                    try:
+                        user.action_reset_password()
+                    except Exception as e:
+                        _logger.warning(f"Failed to send portal invitation to {partner.email}: {str(e)}")
+                        
                 except Exception as e:
-                    _logger.warning(f"Failed to send portal invitation to {partner.email}: {str(e)}")
+                    raise UserError(_("Failed to create portal user: %s") % str(e))
 
     def action_reset_portal_password(self):
         """Reset portal user password"""
@@ -303,7 +337,7 @@ class ResPartner(models.Model):
             ])
             
             for member in expired_members:
-                member.write({
+                member.with_context(skip_portal_creation=True).write({
                     'member_status': 'grace',
                     'status_change_reason': 'Automatic transition: membership expired'
                 })
@@ -320,7 +354,7 @@ class ResPartner(models.Model):
             ])
             
             for member in grace_expired:
-                member.write({
+                member.with_context(skip_portal_creation=True).write({
                     'member_status': 'lapsed',
                     'status_change_reason': 'Automatic transition: grace period expired'
                 })
@@ -337,7 +371,7 @@ class ResPartner(models.Model):
             ])
             
             for member in suspend_expired:
-                member.write({
+                member.with_context(skip_portal_creation=True).write({
                     'member_status': 'lapsed',
                     'status_change_reason': 'Automatic transition: suspension period expired'
                 })
@@ -370,7 +404,7 @@ class ResPartner(models.Model):
                 # Placeholder for engagement score calculation
                 # Will be implemented in future modules
                 new_score = settings.default_engagement_score
-                member.engagement_score = new_score
+                member.with_context(skip_portal_creation=True).write({'engagement_score': new_score})
             
             _logger.info(f"Recalculated engagement scores for {len(active_members)} members")
 
