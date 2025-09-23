@@ -2,14 +2,11 @@
 
 from . import models
 from . import wizards
-from odoo import api, SUPERUSER_ID
 
-def post_init_hook(cr, registry):
+def post_init_hook(env):
     """
     Post-installation hook to set up initial data and configurations.
     """
-    env = api.Environment(cr, SUPERUSER_ID, {})
-    
     # Set up default member numbering sequence if not exists
     sequence = env['ir.sequence'].search([('code', '=', 'ams.member.number')], limit=1)
     if not sequence:

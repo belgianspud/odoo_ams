@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Simplified Enterprise Removal Views -->
+        <!-- Author: beneditomonteiro -->
+        <!-- Compatible version for maximum Odoo 19 compatibility -->
+
+        <!-- Primary configuration view for enterprise removal -->
+        <record id="res_config_settings_view_form_inherit_enterprise_removal" model="ir.ui.view">
+            <field name="name">res.config.settings.form.inherit.enterprise.removal</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+            <field name="priority">99</field>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@class='settings']" position="inside">
+                    <div class="app_settings_block" data-string="Enterprise Removal" data-key="remove_odoo_enterprise">
+                        <h2>Remove Enterprise Features</h2>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="auto_remove_enterprise_features"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="auto_remove_enterprise_features"/>
+                                    <div class="text-muted">
+                                        Automatically remove enterprise-specific functionality
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="hide_enterprise_apps"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="hide_enterprise_apps"/>
+                                    <div class="text-muted">
+                                        Hide enterprise applications from app menu
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Hide enterprise elements with safe XPath expressions -->
+        <record id="hide_enterprise_features_safe" model="ir.ui.view">
+            <field name="name">hide.enterprise.features.safe</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+            <field name="priority">100</field>
+            <field name="arch" type="xml">
+                <!-- Safe enterprise hiding strategies -->
+                <xpath expr="//div[@data-string='Mobile Apps']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@widget='upgrade_boolean']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

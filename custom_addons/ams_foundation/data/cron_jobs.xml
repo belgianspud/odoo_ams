@@ -67,5 +67,6 @@
             <field name="user_id" ref="base.user_root"/>
         </record>
 
+        
     </data>
 </odoo>

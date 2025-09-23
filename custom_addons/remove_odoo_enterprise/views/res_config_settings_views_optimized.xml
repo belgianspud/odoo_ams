@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Research-Based Optimized Version -->
+        <!-- Author: beneditomonteiro -->
+        <!-- Based on Odoo 19 structure research - uses ONLY confirmed existing classes -->
+
+        <!-- Primary view using RESEARCH-CONFIRMED class='settings' -->
+        <record id="res_config_settings_view_form_inherit_enterprise_removal" model="ir.ui.view">
+            <field name="name">res.config.settings.form.inherit.enterprise.removal</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+            <field name="priority">99</field>
+            <field name="arch" type="xml">
+
+                <!-- RESEARCH CONFIRMED: class='settings' EXISTS in Odoo 19 -->
+                <xpath expr="//div[@class='settings']" position="inside">
+                    <!-- RESEARCH CONFIRMED: class='app_settings_block' EXISTS in Odoo 19 -->
+                    <div class="app_settings_block" data-string="Enterprise Removal" data-key="remove_odoo_enterprise">
+                        <h2>Remove Enterprise Features</h2>
+
+                        <!-- Using simple div structure - no unconfirmed CSS classes -->
+                        <div class="row mt16">
+
+                            <div class="col-12 col-lg-6">
+                                <div class="d-flex">
+                                    <field name="auto_remove_enterprise_features"/>
+                                    <div class="ms-3">
+                                        <label string="Auto Remove Enterprise Features" for="auto_remove_enterprise_features"/>
+                                        <div class="text-muted">Automatically hide enterprise upgrade prompts and features</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-lg-6">
+                                <div class="d-flex">
+                                    <field name="hide_enterprise_apps"/>
+                                    <div class="ms-3">
+                                        <label string="Hide Enterprise Apps" for="hide_enterprise_apps"/>
+                                        <div class="text-muted">Hide enterprise app suggestions and upgrade notices</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-lg-6">
+                                <div class="d-flex">
+                                    <field name="remove_enterprise_branding"/>
+                                    <div class="ms-3">
+                                        <label string="Remove Enterprise Branding" for="remove_enterprise_branding"/>
+                                        <div class="text-muted">Remove enterprise edition branding and logos</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-lg-6">
+                                <div class="d-flex">
+                                    <field name="clean_enterprise_data"/>
+                                    <div class="ms-3">
+                                        <label string="Clean Enterprise Data" for="clean_enterprise_data"/>
+                                        <div class="text-muted">Remove enterprise-related database entries</div>
+                                        <div class="text-warning mt-1">
+                                            <i class="fa fa-warning"/> This action cannot be undone
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- SIMPLIFIED enterprise hiding using SAFE XPath patterns -->
+        <record id="hide_enterprise_features_research_based" model="ir.ui.view">
+            <field name="name">hide.enterprise.features.research.based</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+            <field name="priority">100</field>
+            <field name="arch" type="xml">
+
+                <!-- SAFE: Hide by data-string attribute (specific and safe) -->
+                <xpath expr="//div[@data-string='Mobile Apps']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+
+                <!-- SAFE: Hide upgrade widgets (simple and effective) -->
+                <xpath expr="//field[@widget='upgrade_boolean']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+
+                <!-- SAFE: Hide enterprise promotional content -->
+                <xpath expr="//div[contains(., 'Enterprise') and contains(., 'upgrade')]" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+
+            </field>
+        </record>
+
+    </data>
+</odoo>

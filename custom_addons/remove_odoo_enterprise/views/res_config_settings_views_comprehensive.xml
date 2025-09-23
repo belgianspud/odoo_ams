@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Migration Enhancement: Comprehensive view with multiple XPath strategies -->
+        <!-- XML Compatibility Enhanced by beneditomonteiro -->
+        <!-- Author: beneditomonteiro -->
+        <!-- Based on lessons from web_responsive migration for maximum compatibility -->
+
+        <!-- Primary view for enterprise removal settings -->
+        <record id="res_config_settings_view_form_inherit_enterprise_removal" model="ir.ui.view">
+            <field name="name">res.config.settings.form.inherit.enterprise.removal</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+            <field name="priority">99</field>
+            <field name="arch" type="xml">
+
+                <!-- Migration Enhancement: Multiple strategies for adding our settings -->
+                <!-- Author: beneditomonteiro -->
+
+                <!-- Strategy 1: Try to add to existing settings div (Odoo 19 structure) -->
+                <xpath expr="//div[@class='settings']" position="inside">
+                    <div class="app_settings_block" data-string="Enterprise Removal" data-key="remove_odoo_enterprise" name="remove_enterprise_settings">
+                        <h2>Remove Enterprise Features</h2>
+                        <div class="row mt16 o_settings_container" name="remove_enterprise_container">
+
+                            <!-- Auto remove enterprise features -->
+                            <div class="col-12 col-lg-6 o_setting_box" id="auto_remove_enterprise_features_setting">
+                                <div class="o_setting_left_pane">
+                                    <field name="auto_remove_enterprise_features" class="o_light_label"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="auto_remove_enterprise_features"/>
+                                    <div class="text-muted">
+                                        Automatically remove enterprise-specific functionality from all views
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hide enterprise apps -->
+                            <div class="col-12 col-lg-6 o_setting_box" id="hide_enterprise_apps_setting">
+                                <div class="o_setting_left_pane">
+                                    <field name="hide_enterprise_apps" class="o_light_label"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="hide_enterprise_apps"/>
+                                    <div class="text-muted">
+                                        Hide enterprise applications from the main app menu
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Remove enterprise branding -->
+                            <div class="col-12 col-lg-6 o_setting_box" id="remove_enterprise_branding_setting">
+                                <div class="o_setting_left_pane">
+                                    <field name="remove_enterprise_branding" class="o_light_label"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="remove_enterprise_branding"/>
+                                    <div class="text-muted">
+                                        Remove enterprise branding elements from the interface
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Clean enterprise data -->
+                            <div class="col-12 col-lg-6 o_setting_box" id="clean_enterprise_data_setting">
+                                <div class="o_setting_left_pane">
+                                    <field name="clean_enterprise_data" class="o_light_label"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="clean_enterprise_data"/>
+                                    <div class="text-muted">
+                                        Remove enterprise-related data from database
+                                        <div class="text-warning mt8">
+                                            <i class="fa fa-warning"/> This action cannot be undone
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- Migration Enhancement: Hide enterprise features with multiple strategies -->
+        <!-- Author: beneditomonteiro -->
+
+        <!-- Hide Enterprise Features Section -->
+        <record id="hide_enterprise_features_view" model="ir.ui.view">
+            <field name="name">hide.enterprise.features</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+            <field name="priority">100</field>
+            <field name="arch" type="xml">
+
+                <!-- Strategy 1: Hide by data-string attribute (most specific) -->
+                <xpath expr="//div[@data-string='Enterprise Features']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                    <attribute name="modifiers">{"invisible": true}</attribute>
+                </xpath>
+
+                <!-- Strategy 2: Hide by class and content (fallback) -->
+                <xpath expr="//div[contains(@class, 'alert-info') and contains(., 'Enterprise')]" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                    <attribute name="modifiers">{"invisible": true}</attribute>
+                </xpath>
+
+                <!-- Strategy 3: Hide mobile app widgets -->
+                <xpath expr="//div[@data-string='Mobile Apps']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                    <attribute name="modifiers">{"invisible": true}</attribute>
+                </xpath>
+
+                <!-- Strategy 4: Alternative mobile app widget selector -->
+                <xpath expr="//widget[@name='mobile_apps_funnel']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                    <attribute name="modifiers">{"invisible": true}</attribute>
+                </xpath>
+
+                <!-- Strategy 5: Hide enterprise upgrade prompts -->
+                <xpath expr="//a[contains(@href, 'odoo.com/trial') or contains(@href, 'upgrade')]/.." position="attributes">
+                    <attribute name="invisible">1</attribute>
+                    <attribute name="modifiers">{"invisible": true}</attribute>
+                </xpath>
+
+                <!-- Strategy 6: Hide upgrade boolean widgets -->
+                <xpath expr="//field[@widget='upgrade_boolean']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                    <attribute name="modifiers">{"invisible": true}</attribute>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- Migration Enhancement: Conditional inheritance for app-specific settings -->
+        <!-- Author: beneditomonteiro -->
+
+        <!-- Hide enterprise features from Sales settings (if module exists) -->
+        <record id="hide_enterprise_sales_settings" model="ir.ui.view">
+            <field name="name">hide.enterprise.sales.settings</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="sale.res_config_settings_view_form"/>
+            <field name="priority">100</field>
+            <field name="arch" type="xml">
+                <!-- Hide enterprise sales features using generic selectors -->
+                <xpath expr="//div[contains(@data-string, 'Enterprise') or contains(@class, 'o_enterprise_feature')]" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+
+                <!-- Hide specific enterprise sales options -->
+                <xpath expr="//field[@name='module_sale_enterprise']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Hide enterprise features from Inventory settings (if module exists) -->
+        <record id="hide_enterprise_inventory_settings" model="ir.ui.view">
+            <field name="name">hide.enterprise.inventory.settings</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="stock.res_config_settings_view_form"/>
+            <field name="priority">100</field>
+            <field name="arch" type="xml">
+                <!-- Hide enterprise inventory features -->
+                <xpath expr="//div[contains(@data-string, 'Enterprise') or contains(@data-string, 'Advanced Features')]" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+
+                <!-- Hide barcode mobile app section -->
+                <xpath expr="//div[contains(@data-string, 'Barcode') and contains(., 'mobile')]" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Hide enterprise features from Accounting settings (if module exists) -->
+        <record id="hide_enterprise_accounting_settings" model="ir.ui.view">
+            <field name="name">hide.enterprise.accounting.settings</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+            <field name="priority">100</field>
+            <field name="arch" type="xml">
+                <!-- Hide enterprise accounting features -->
+                <xpath expr="//div[contains(@data-string, 'Enterprise') or contains(@data-string, 'Advanced Reporting')]" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+
+                <!-- Hide specific enterprise accounting fields -->
+                <xpath expr="//field[@name='module_account_accountant']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Migration Enhancement: Generic fallback for any enterprise elements -->
+        <!-- Author: beneditomonteiro -->
+
+        <record id="hide_enterprise_generic_fallback" model="ir.ui.view">
+            <field name="name">hide.enterprise.generic.fallback</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+            <field name="priority">200</field>
+            <field name="arch" type="xml">
+
+                <!-- Generic fallback: Hide any div containing "Enterprise" in text -->
+                <xpath expr="//div[contains(translate(., 'ENTERPRISE', 'enterprise'), 'enterprise') and not(@name='remove_enterprise_settings')]" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+
+                <!-- Hide app store links -->
+                <xpath expr="//a[contains(@href, 'play.google.com') or contains(@href, 'apps.apple.com')]/.." position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+
+            </field>
+        </record>
+
+    </data>
+</odoo>

@@ -48,23 +48,25 @@ Dependencies:
         'security/security_groups.xml',
         'security/ir.model.access.csv',
     
-        # Data
+        # Data (basic data only)
         'data/sequences.xml',
         'data/settings_data.xml',
         'data/member_types_data.xml',
-        'data/cron_jobs.xml',
     
         # Views (load actions before menus)
         'views/ams_settings_views.xml',
-        'views/ams_member_type_views.xml',  # <- Load this first (contains action_ams_member_type)
+        'views/ams_member_type_views.xml',
         'views/res_partner_views.xml',
-        'views/res_engagement_rule_views.xml', 
+        'views/res_engagement_rule_views.xml',
+    
+        # Data that depends on models being loaded
+        'data/cron_jobs.xml',  # <- Move this after views
     
         # Wizards
         'wizards/portal_user_wizard_views.xml',
     
         # Menus (load after all actions are defined)
-        'views/menu_views.xml',  # <- Load this last
+        'views/menu_views.xml',
     ],
     'demo': [
         # Demo data files would go here
