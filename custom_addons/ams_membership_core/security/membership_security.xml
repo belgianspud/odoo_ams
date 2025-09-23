@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Membership Core Security Groups -->
+        <record id="group_membership_user" model="res.groups">
+            <field name="name">Membership Core: User</field>
+            <field name="category_id" ref="ams_foundation.module_category_ams"/>
+            <field name="implied_ids" eval="[(4, ref('ams_foundation.group_ams_staff'))]"/>
+            <field name="comment">Can view and manage memberships and subscriptions</field>
+        </record>
+
+        <record id="group_membership_manager" model="res.groups">
+            <field name="name">Membership Core: Manager</field>
+            <field name="category_id" ref="ams_foundation.module_category_ams"/>
+            <field name="implied_ids" eval="[(4, ref('group_membership_user'))]"/>
+            <field name="comment">Can configure membership products, benefits, and renewal processes</field>
+        </record>
+
+        <!-- Record Rules -->
+        
+        <!-- Members can view their own memberships and subscriptions -->
+        <record id="rule_membership_member_own" model="ir.rule">
+            <field name="name">Members: Own Memberships</field>
+            <field name="model_id" ref="model_ams_membership"/>
+            <field name="groups" eval="[(4, ref('ams_foundation.group_ams_member'))]"/>
+            <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="rule_subscription_member_own" model="ir.rule">
+            <field name="name">Members: Own Subscriptions</field>
+            <field name="model_id" ref="model_ams_subscription"/>
+            <field name="groups" eval="[(4, ref('ams_foundation.group_ams_member'))]"/>
+            <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Staff can view all memberships and subscriptions -->
+        <record id="rule_membership_staff_all" model="ir.rule">
+            <field name="name">Staff: All Memberships</field>
+            <field name="model_id" ref="model_ams_membership"/>
+            <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="rule_subscription_staff_all" model="ir.rule">
+            <field name="name">Staff: All Subscriptions</field>
+            <field name="model_id" ref="model_ams_subscription"/>
+            <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Managers have full access -->
+        <record id="rule_membership_manager_all" model="ir.rule">
+            <field name="name">Managers: Full Membership Access</field>
+            <field name="model_id" ref="model_ams_membership"/>
+            <field name="groups" eval="[(4, ref('group_membership_manager'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+    </data>
+</odoo>
