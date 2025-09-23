@@ -273,11 +273,5 @@
                 </p>
             </field>
         </record>
-
-        <!-- Update the menu reference -->
-        <record id="menu_ams_member_directory" model="ir.ui.menuitem">
-            <field name="action" ref="action_partner_member_directory"/>
-        </record>
-
     </data>
 </odoo>

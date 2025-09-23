@@ -1,4 +1,3 @@
-
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
@@ -11,11 +10,9 @@
             <field name="code">model.process_member_status_transitions()</field>
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
-            <field name="numbercall">-1</field>
             <field name="active">True</field>
             <field name="priority">5</field>
             <field name="user_id" ref="base.user_root"/>
-            <field name="doall">False</field>
         </record>
 
         <!-- Engagement Score Recalculation Cron Job -->
@@ -26,11 +23,9 @@
             <field name="code">model.recalculate_engagement_scores()</field>
             <field name="interval_number">1</field>
             <field name="interval_type">weeks</field>
-            <field name="numbercall">-1</field>
             <field name="active">False</field>
             <field name="priority">10</field>
             <field name="user_id" ref="base.user_root"/>
-            <field name="doall">False</field>
         </record>
 
         <!-- Portal User Creation Cron Job for New Members -->
@@ -41,11 +36,9 @@
             <field name="code">model.create_missing_portal_users()</field>
             <field name="interval_number">6</field>
             <field name="interval_type">hours</field>
-            <field name="numbercall">-1</field>
             <field name="active">True</field>
             <field name="priority">15</field>
             <field name="user_id" ref="base.user_root"/>
-            <field name="doall">False</field>
         </record>
 
         <!-- Member Number Assignment Cron Job -->
@@ -56,11 +49,9 @@
             <field name="code">model.assign_missing_member_numbers()</field>
             <field name="interval_number">1</field>
             <field name="interval_type">hours</field>
-            <field name="numbercall">-1</field>
             <field name="active">True</field>
             <field name="priority">5</field>
             <field name="user_id" ref="base.user_root"/>
-            <field name="doall">False</field>
         </record>
 
         <!-- Cleanup Old Engagement Rules Cron Job -->
@@ -71,11 +62,9 @@
             <field name="code">model.cleanup_old_engagement_data()</field>
             <field name="interval_number">1</field>
             <field name="interval_type">months</field>
-            <field name="numbercall">-1</field>
             <field name="active">True</field>
             <field name="priority">20</field>
             <field name="user_id" ref="base.user_root"/>
-            <field name="doall">False</field>
         </record>
 
     </data>

@@ -47,21 +47,24 @@ Dependencies:
         # Security
         'security/security_groups.xml',
         'security/ir.model.access.csv',
-        
+    
         # Data
         'data/sequences.xml',
         'data/settings_data.xml',
         'data/member_types_data.xml',
         'data/cron_jobs.xml',
-        
-        # Views
-        'views/menu_views.xml',
+    
+        # Views (load actions before menus)
         'views/ams_settings_views.xml',
-        'views/ams_member_type_views.xml',
+        'views/ams_member_type_views.xml',  # <- Load this first (contains action_ams_member_type)
         'views/res_partner_views.xml',
-        
+        'views/res_engagement_rule_views.xml', 
+    
         # Wizards
         'wizards/portal_user_wizard_views.xml',
+    
+        # Menus (load after all actions are defined)
+        'views/menu_views.xml',  # <- Load this last
     ],
     'demo': [
         # Demo data files would go here
@@ -72,36 +75,3 @@ Dependencies:
     'sequence': 10,
     'post_init_hook': 'post_init_hook',
 }
-
-
-def post_init_hook(cr, registry):
-    """
-    Post-installation hook to set up initial data and configurations.
-    """
-    from odoo import api, SUPERUSER_ID
-    
-    env = api.Environment(cr, SUPERUSER_ID, {})
-    
-    # Set up default member numbering sequence if not exists
-    sequence = env['ir.sequence'].search([('code', '=', 'ams.member.number')], limit=1)
-    if not sequence:
-        env['ir.sequence'].create({
-            'name': 'Member Number Sequence',
-            'code': 'ams.member.number',
-            'prefix': 'M',
-            'padding': 6,
-            'number_increment': 1,
-            'number_next_actual': 1,
-        })
-    
-    # Initialize default AMS settings if not exists
-    settings = env['ams.settings'].search([], limit=1)
-    if not settings:
-        env['ams.settings'].create({
-            'name': 'Default AMS Settings',
-            'member_number_prefix': 'M',
-            'grace_period_days': 30,
-            'suspend_period_days': 60,
-            'terminate_period_days': 90,
-            'auto_create_portal_users': True,
-        })
