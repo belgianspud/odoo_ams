@@ -22,8 +22,7 @@ class AMSMemberType(models.Model):
 
     # Pricing and Duration
     base_annual_fee = fields.Float('Base Annual Fee', default=0.0, tracking=True)
-    currency_id = fields.Many2one('res.currency', 'Currency', 
-                                  default=lambda self: self.env.company.currency_id)
+    currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self._get_default_currency())
     membership_duration = fields.Integer('Membership Duration (Days)', default=365,
                                        help="Number of days the membership is valid")
 
@@ -57,7 +56,7 @@ class AMSMemberType(models.Model):
     interview_required = fields.Boolean('Interview Required', default=False)
 
     # Approval Workflow
-    approval_committee_id = fields.Many2one('ams.committee', 'Approval Committee')
+    approval_committee_id = fields.Char('Approval Committee', help="Committee responsible for approvals (free text for now)")#fields.Many2one('ams.committee', 'Approval Committee')
     approval_voting_required = fields.Boolean('Approval Voting Required', default=False)
     approval_threshold = fields.Float('Approval Threshold (%)', default=50.0,
                                     help="Percentage of votes required for approval")
@@ -85,6 +84,15 @@ class AMSMemberType(models.Model):
     # Related Fields for Convenience
     current_members = fields.One2many('res.partner', 'member_type_id', 'Current Members',
                                     domain=[('is_member', '=', True), ('member_status', 'in', ['active', 'grace'])])
+
+    def _get_default_currency(self):
+        """Get default currency safely"""
+        try:
+            return self.env.company.currency_id.id if self.env.company.currency_id else False
+        except:
+            # Fallback to USD if company currency not available
+            usd = self.env.ref('base.USD', raise_if_not_found=False)
+            return usd.id if usd else False
 
     @api.depends('current_members')
     def _compute_member_count(self):
