@@ -379,7 +379,7 @@ class AMSMembership(models.Model):
     
     @api.model
     def create_from_invoice_payment(self, invoice_line):
-        """Create membership from paid invoice line"""
+        """Create membership from paid invoice line - CORRECTED VERSION"""
         product = invoice_line.product_id.product_tmpl_id
         
         if not product.is_subscription_product or product.subscription_product_type != 'membership':
@@ -392,21 +392,110 @@ class AMSMembership(models.Model):
         
         partner = invoice_line.move_id.partner_id
         
-        # Calculate membership period based on member type or product defaults
+        # CRITICAL FIXES START HERE
+        
+        # 1. ENSURE PARTNER IS MARKED AS MEMBER
+        partner_vals = {}
+        if not partner.is_member:
+            partner_vals['is_member'] = True
+            _logger.info(f"Setting is_member=True for {partner.name}")
+        
+        # 2. SET DEFAULT MEMBER TYPE IF NONE EXISTS
+        if not partner.member_type_id:
+            # Look for default member type (first try "Regular", then "Individual", then first available)
+            default_member_type = self.env['ams.member.type'].search([
+                ('name', 'ilike', 'regular')
+            ], limit=1)
+            
+            if not default_member_type:
+                default_member_type = self.env['ams.member.type'].search([
+                    ('name', 'ilike', 'individual')
+                ], limit=1)
+            
+            if not default_member_type:
+                default_member_type = self.env['ams.member.type'].search([], limit=1)
+            
+            if default_member_type:
+                partner_vals['member_type_id'] = default_member_type.id
+                _logger.info(f"Setting default member type {default_member_type.name} for {partner.name}")
+        
+        # 3. GENERATE MEMBER NUMBER/ID IF NOT EXISTS
+        if not getattr(partner, 'member_number', None):
+            # Try foundation's method first
+            if hasattr(partner, '_generate_member_number'):
+                partner._generate_member_number()
+            else:
+                # Fallback: use sequence or simple generation
+                try:
+                    settings = self.env['ams.settings'].search([('active', '=', True)], limit=1)
+                    if settings:
+                        prefix = getattr(settings, 'member_number_prefix', 'M')
+                        padding = getattr(settings, 'member_number_padding', 6)
+                        sequence = self.env['ir.sequence'].next_by_code('ams.member.number')
+                        if not sequence:
+                            # Create a simple incremental number
+                            last_member = self.env['res.partner'].search([
+                                ('is_member', '=', True),
+                                ('member_number', '!=', False)
+                            ], order='id desc', limit=1)
+                            next_num = 1
+                            if last_member and last_member.member_number:
+                                try:
+                                    # Extract number from existing member number
+                                    import re
+                                    numbers = re.findall(r'\d+', last_member.member_number)
+                                    if numbers:
+                                        next_num = int(numbers[-1]) + 1
+                                except:
+                                    next_num = 1
+                            sequence = str(next_num).zfill(padding)
+                        member_number = f"{prefix}{sequence}"
+                        partner_vals['member_number'] = member_number
+                        _logger.info(f"Generated member number {member_number} for {partner.name}")
+                except Exception as e:
+                    _logger.warning(f"Could not generate member number for {partner.name}: {str(e)}")
+        
+        # 4. SET MEMBER STATUS TO ACTIVE
+        partner_vals['member_status'] = 'active'
+        
+        # Apply all partner updates at once
+        if partner_vals:
+            partner.with_context(skip_portal_creation=True).write(partner_vals)
+        
+        # 5. CALCULATE MEMBERSHIP DATES
         start_date = fields.Date.today()
         
-        # Use member type duration if available, otherwise product defaults
-        if partner.member_type_id and hasattr(partner.member_type_id, 'membership_duration') and partner.member_type_id.membership_duration:
-            end_date = start_date + timedelta(days=partner.member_type_id.membership_duration - 1)
+        # FIXED: Annual memberships should end December 31st
+        if product.subscription_period == 'annual':
+            # Always set to December 31st of the current year
+            # If we're already past December 31st, set to next year's December 31st
+            current_year = start_date.year
+            end_date = date(current_year, 12, 31)
+            
+            # If purchase date is after December 31st (shouldn't happen) or it's December 31st,
+            # extend to next year
+            if start_date > end_date:
+                end_date = date(current_year + 1, 12, 31)
+                
         elif product.subscription_period == 'monthly':
             end_date = start_date + relativedelta(months=1) - timedelta(days=1)
         elif product.subscription_period == 'quarterly':
             end_date = start_date + relativedelta(months=3) - timedelta(days=1)
         elif product.subscription_period == 'semi_annual':
             end_date = start_date + relativedelta(months=6) - timedelta(days=1)
-        else:  # annual or default
-            end_date = start_date + relativedelta(years=1) - timedelta(days=1)
+        else:  # default to annual
+            current_year = start_date.year
+            end_date = date(current_year, 12, 31)
+            if start_date > end_date:
+                end_date = date(current_year + 1, 12, 31)
         
+        # 6. UPDATE FOUNDATION PARTNER DATES
+        partner.with_context(skip_portal_creation=True).write({
+            'membership_start_date': start_date,
+            'membership_end_date': end_date,
+        })
+        
+        # 7. CREATE MEMBERSHIP RECORD
         membership_vals = {
             'partner_id': partner.id,
             'product_id': invoice_line.product_id.id,
@@ -424,7 +513,8 @@ class AMSMembership(models.Model):
         
         membership = self.create(membership_vals)
         
-        _logger.info(f"Created membership {membership.name} for {partner.name}")
+        _logger.info(f"Created membership {membership.name} for {partner.name} "
+                     f"from {start_date} to {end_date}")
         
         return membership
     
@@ -520,7 +610,6 @@ class AMSMembership(models.Model):
                           "Only one active membership is allowed per member.") % 
                         (membership.partner_id.name, existing[0].name)
                     )
-
 
     def action_view_invoice(self):
         """View membership invoice"""

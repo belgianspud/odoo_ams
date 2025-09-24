@@ -13,12 +13,59 @@ _logger = logging.getLogger(__name__)
 class MembershipPortal(CustomerPortal):
     
     def _prepare_home_portal_values(self, counters):
-        """Add membership and subscription counts to portal home - SAFE VERSION"""
+        """Add membership and subscription counts to portal home - ENHANCED VERSION"""
         values = super()._prepare_home_portal_values(counters)
         
-        # Completely remove the automatic counts to avoid template errors
-        # Users can access memberships/subscriptions directly through URLs
+        partner = request.env.user.partner_id
         
+        # Only show membership info if user is a member
+        if partner.is_member:
+            try:
+                # Get membership counts
+                if 'membership_count' in counters:
+                    membership_count = request.env['ams.membership'].search_count([
+                        ('partner_id', '=', partner.id)
+                    ]) if request.env['ams.membership'].check_access_rights('read', raise_exception=False) else 0
+                    values['membership_count'] = membership_count
+
+                if 'subscription_count' in counters:
+                    subscription_count = request.env['ams.subscription'].search_count([
+                        ('partner_id', '=', partner.id)
+                    ]) if request.env['ams.subscription'].check_access_rights('read', raise_exception=False) else 0
+                    values['subscription_count'] = subscription_count
+
+                # Add member info for dashboard
+                values.update({
+                    'is_member': True,
+                    'member_number': partner.member_number or 'Not Assigned',
+                    'member_type': partner.member_type_id.name if partner.member_type_id else 'Not Set',
+                    'member_status': partner.member_status or 'unknown',
+                    'current_membership': partner.current_membership_id,
+                    'membership_end_date': partner.membership_end_date,
+                    'next_renewal_date': partner.next_renewal_date,
+                })
+                
+            except Exception as e:
+                _logger.error(f"Error in portal home values: {e}")
+                # Don't break the portal if there's an error
+                pass
+                
+        return values
+
+    def _prepare_portal_layout_values(self):
+        """Prepare portal layout values with member context"""
+        values = super()._prepare_portal_layout_values()
+        
+        # Add member-specific navigation
+        partner = request.env.user.partner_id
+        if partner.is_member:
+            values.update({
+                'show_membership_nav': True,
+                'member_name': partner.name,
+                'member_number': partner.member_number,
+                'member_status': partner.member_status,
+            })
+            
         return values
 
     def _prepare_memberships_domain(self, partner):
@@ -33,7 +80,7 @@ class MembershipPortal(CustomerPortal):
                 type='http', auth="user", website=True)
     def portal_my_memberships(self, page=1, date_begin=None, date_end=None, 
                              sortby=None, search=None, search_in='name', **kw):
-        """Display member's memberships"""
+        """Display member's memberships - ENHANCED"""
         values = self._prepare_portal_layout_values()
         partner = request.env.user.partner_id
 
@@ -119,10 +166,37 @@ class MembershipPortal(CustomerPortal):
             
         return request.render("ams_membership_core.portal_my_memberships", values)
 
+    @http.route(['/my/member/profile'], type='http', auth="user", website=True)
+    def portal_member_profile(self, **kw):
+        """Member profile dashboard - NEW"""
+        values = self._prepare_portal_layout_values()
+        partner = request.env.user.partner_id
+
+        if not partner or not getattr(partner, 'is_member', False):
+            return request.render("ams_membership_core.portal_no_membership_access", values)
+
+        # Get comprehensive member information
+        values.update({
+            'partner': partner,
+            'member_number': partner.member_number or 'Not Assigned',
+            'member_type': partner.member_type_id,
+            'member_status': partner.member_status,
+            'membership_start_date': partner.membership_start_date,
+            'membership_end_date': partner.membership_end_date,
+            'current_membership': partner.current_membership_id,
+            'active_subscriptions': partner.active_subscription_ids,
+            'active_benefits': partner.active_benefit_ids,
+            'next_renewal_date': partner.next_renewal_date,
+            'pending_renewals_count': partner.pending_renewals_count,
+            'page_name': 'member_profile',
+        })
+
+        return request.render("ams_membership_core.portal_member_profile", values)
+
     @http.route(['/my/memberships/<int:membership_id>'], 
                 type='http', auth="user", website=True)
     def portal_membership_detail(self, membership_id, **kw):
-        """Display membership details"""
+        """Display membership details - ENHANCED"""
         try:
             membership_sudo = self._document_check_access('ams.membership', membership_id)
         except (AccessError, MissingError):
@@ -130,6 +204,8 @@ class MembershipPortal(CustomerPortal):
 
         values = {
             'membership': membership_sudo,
+            'partner': membership_sudo.partner_id,
+            'member_number': membership_sudo.partner_id.member_number or 'Not Assigned',
             'page_name': 'membership',
         }
         return request.render("ams_membership_core.portal_membership_detail", values)
