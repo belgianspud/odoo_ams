@@ -259,9 +259,10 @@
                             domain="[('auto_renew', '=', False)]"/>
                     <separator/>
                     <filter string="Expiring Soon" name="expiring_soon" 
-                            domain="[('days_until_expiry', '&lt;=', 30), ('days_until_expiry', '&gt;', 0)]"/>
+                            domain="[('end_date', '&gt;=', (context_today()).strftime('%Y-%m-%d')), 
+                            ('end_date', '&lt;=', (context_today() + datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
                     <filter string="Expired" name="expired" 
-                            domain="[('is_expired', '=', True)]"/>
+                            domain="[('end_date', '&lt;', (context_today()).strftime('%Y-%m-%d'))]"/>
                     <filter string="Paid" name="paid" 
                             domain="[('payment_status', '=', 'paid')]"/>
                     <filter string="Pending Payment" name="pending_payment" 

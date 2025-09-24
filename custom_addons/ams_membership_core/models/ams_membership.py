@@ -522,6 +522,39 @@ class AMSMembership(models.Model):
                     )
 
 
+    def action_view_invoice(self):
+        """View membership invoice"""
+        self.ensure_one()
+    
+        if not self.invoice_id:
+            raise UserError(_("No invoice exists for this membership."))
+    
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Membership Invoice'),
+            'res_model': 'account.move',
+            'res_id': self.invoice_id.id,
+            'view_mode': 'form',
+            'views': [(False, 'form')],
+        }
+
+    def action_view_sale_order(self):
+        """View membership sale order"""
+        self.ensure_one()
+
+        if not self.sale_order_id:
+            raise UserError(_("No sale order exists for this membership."))
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Membership Sale Order'),
+            'res_model': 'sale.order',
+            'res_id': self.sale_order_id.id,
+            'view_mode': 'form',
+            'views': [(False, 'form')],
+        }
+
+
 class AMSMembershipTag(models.Model):
     _name = 'ams.membership.tag'
     _description = 'Membership Tag'

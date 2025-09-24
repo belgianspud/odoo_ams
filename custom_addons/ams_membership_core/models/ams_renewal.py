@@ -515,3 +515,35 @@ class AMSRenewal(models.Model):
         for renewal in self:
             if renewal.amount < 0:
                 raise ValidationError(_("Renewal amount cannot be negative."))
+
+    def action_view_invoice(self):
+        """View renewal invoice"""
+        self.ensure_one()
+    
+        if not self.invoice_id:
+            raise UserError(_("No invoice exists for this renewal."))
+    
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Renewal Invoice'),
+            'res_model': 'account.move',
+            'res_id': self.invoice_id.id,
+            'view_mode': 'form',
+            'views': [(False, 'form')],
+        }
+
+    def action_view_sale_order(self):
+        """View renewal sale order"""
+        self.ensure_one()
+    
+        if not self.sale_order_id:
+            raise UserError(_("No sale order exists for this renewal."))
+    
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Renewal Sale Order'),
+            'res_model': 'sale.order',
+            'res_id': self.sale_order_id.id,
+            'view_mode': 'form',
+            'views': [(False, 'form')],
+        }

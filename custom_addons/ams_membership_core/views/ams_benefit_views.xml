@@ -24,7 +24,7 @@
             </field>
         </record>
 
-        <!-- AMS Benefit Form View -->
+        <!-- AMS Benefit Form View - CORRECTED -->
         <record id="view_ams_benefit_form" model="ir.ui.view">
             <field name="name">ams.benefit.form</field>
             <field name="model">ams.benefit</field>
@@ -39,9 +39,8 @@
                                 <field name="usage_count" widget="statinfo" string="Usage Count"/>
                             </button>
                             
-                            <button name="%(action_ams_membership)d" type="action" 
+                            <button name="action_view_active_members" type="object" 
                                     class="oe_stat_button" icon="fa-users"
-                                    context="{'search_default_benefit_ids': active_id}"
                                     groups="ams_membership_core.group_membership_user">
                                 <field name="member_count" widget="statinfo" string="Active Members"/>
                             </button>
@@ -306,6 +305,7 @@
             </field>
         </record>
 
+        <!-- Rest of the views remain the same -->
         <!-- AMS Benefit Usage List View -->
         <record id="view_ams_benefit_usage_list" model="ir.ui.view">
             <field name="name">ams.benefit.usage.list</field>

@@ -269,6 +269,23 @@ class AMSBenefit(models.Model):
                 raise ValidationError(_("Quantity limit must be greater than 0 when benefit is quantifiable"))
 
 
+    def record_usage(self):
+        """Record usage of this benefit (wizard/form method)"""
+        self.ensure_one()
+    
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Record Benefit Usage'),
+            'res_model': 'ams.benefit.usage',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_benefit_id': self.id,
+                'default_usage_date': fields.Datetime.now(),
+                'default_quantity': 1,
+            }
+        }
+
 class AMSBenefitUsage(models.Model):
     _name = 'ams.benefit.usage'
     _description = 'Benefit Usage Log'

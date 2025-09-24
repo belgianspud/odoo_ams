@@ -341,3 +341,39 @@ class ResPartner(models.Model):
                     _("Member %s has multiple active memberships. "
                       "Only one active membership is allowed per member.") % partner.name
                 )
+
+    def action_create_portal_user(self):
+        """Create portal user for this partner"""
+        self.ensure_one()
+    
+        if self.portal_user_id:
+            raise UserError(_("Portal user already exists for this partner."))
+    
+        if not self.email:
+            raise UserError(_("Partner must have an email address to create portal user."))
+    
+        # Check if foundation has the method, otherwise use basic implementation
+        if hasattr(super(), 'action_create_portal_user'):
+            return super().action_create_portal_user()
+        else:
+            # Basic portal user creation
+            portal_group = self.env.ref('base.group_portal')
+            user_vals = {
+                'name': self.name,
+                'login': self.email,
+                'email': self.email,
+                'partner_id': self.id,
+                'groups_id': [(6, 0, [portal_group.id])],
+                'active': True,
+            }
+        
+            user = self.env['res.users'].create(user_vals)
+            self.portal_user_id = user.id
+        
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Portal User'),
+                'res_model': 'res.users',
+                'res_id': user.id,
+                'view_mode': 'form',
+            }
