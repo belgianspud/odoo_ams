@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from dateutil.relativedelta import relativedelta
 import logging
 
@@ -85,8 +85,17 @@ class MassRenewalWizard(models.TransientModel):
                  'include_grace', 'include_suspended')
     def _compute_eligible_count(self):
         for wizard in self:
-            eligible_records = wizard._get_eligible_records()
-            wizard.eligible_count = len(eligible_records)
+            try:
+                eligible_records = wizard._get_eligible_records()
+                if isinstance(eligible_records, tuple):
+                    # Both memberships and subscriptions
+                    memberships, subscriptions = eligible_records
+                    wizard.eligible_count = len(memberships) + len(subscriptions)
+                else:
+                    wizard.eligible_count = len(eligible_records)
+            except Exception as e:
+                _logger.warning(f"Error computing eligible count: {str(e)}")
+                wizard.eligible_count = 0
 
     def _get_eligible_records(self):
         """Get records eligible for mass renewal"""
@@ -193,37 +202,42 @@ class MassRenewalWizard(models.TransientModel):
         
         preview_lines = []
         
-        if self.renewal_type in ['membership', 'both']:
-            memberships = self._get_eligible_memberships()
-            for membership in memberships:
-                preview_lines.append({
-                    'wizard_id': self.id,
-                    'record_type': 'membership',
-                    'membership_id': membership.id,
-                    'partner_id': membership.partner_id.id,
-                    'product_id': membership.product_id.id,
-                    'current_end_date': membership.end_date,
-                    'proposed_end_date': self._calculate_new_end_date(membership.end_date),
-                    'current_amount': membership.membership_fee,
-                    'proposed_amount': self._calculate_renewal_amount(membership.membership_fee),
-                })
+        try:
+            if self.renewal_type in ['membership', 'both']:
+                memberships = self._get_eligible_memberships()
+                for membership in memberships:
+                    preview_lines.append({
+                        'wizard_id': self.id,
+                        'record_type': 'membership',
+                        'membership_id': membership.id,
+                        'partner_id': membership.partner_id.id,
+                        'product_id': membership.product_id.id,
+                        'current_end_date': membership.end_date,
+                        'proposed_end_date': self._calculate_new_end_date(membership.end_date),
+                        'current_amount': membership.membership_fee,
+                        'proposed_amount': self._calculate_renewal_amount(membership.membership_fee),
+                    })
+            
+            if self.renewal_type in ['subscription', 'both']:
+                subscriptions = self._get_eligible_subscriptions()
+                for subscription in subscriptions:
+                    preview_lines.append({
+                        'wizard_id': self.id,
+                        'record_type': 'subscription',
+                        'subscription_id': subscription.id,
+                        'partner_id': subscription.partner_id.id,
+                        'product_id': subscription.product_id.id,
+                        'current_end_date': subscription.end_date,
+                        'proposed_end_date': self._calculate_new_end_date(subscription.end_date),
+                        'current_amount': subscription.subscription_fee,
+                        'proposed_amount': self._calculate_renewal_amount(subscription.subscription_fee),
+                    })
+            
+            if preview_lines:
+                self.env['ams.mass.renewal.preview'].create(preview_lines)
         
-        if self.renewal_type in ['subscription', 'both']:
-            subscriptions = self._get_eligible_subscriptions()
-            for subscription in subscriptions:
-                preview_lines.append({
-                    'wizard_id': self.id,
-                    'record_type': 'subscription',
-                    'subscription_id': subscription.id,
-                    'partner_id': subscription.partner_id.id,
-                    'product_id': subscription.product_id.id,
-                    'current_end_date': subscription.end_date,
-                    'proposed_end_date': self._calculate_new_end_date(subscription.end_date),
-                    'current_amount': subscription.subscription_fee,
-                    'proposed_amount': self._calculate_renewal_amount(subscription.subscription_fee),
-                })
-        
-        self.env['ams.mass.renewal.preview'].create(preview_lines)
+        except Exception as e:
+            raise UserError(_("Error creating preview: %s") % str(e))
         
         return {
             'type': 'ir.actions.act_window',
@@ -237,6 +251,9 @@ class MassRenewalWizard(models.TransientModel):
 
     def _calculate_new_end_date(self, current_end_date):
         """Calculate new end date based on renewal period"""
+        if not current_end_date:
+            current_end_date = fields.Date.today()
+            
         base_date = max(current_end_date, fields.Date.today())
         
         if self.new_renewal_period == 'keep_existing':
@@ -253,9 +270,12 @@ class MassRenewalWizard(models.TransientModel):
 
     def _calculate_renewal_amount(self, current_amount):
         """Calculate renewal amount with discounts"""
+        if not current_amount:
+            current_amount = 0.0
+            
         amount = current_amount
         
-        if self.apply_early_bird_discount:
+        if self.apply_early_bird_discount and self.early_bird_discount_percent:
             discount = amount * (self.early_bird_discount_percent / 100.0)
             amount -= discount
         
@@ -341,7 +361,10 @@ class MassRenewalWizard(models.TransientModel):
         renewal = self.env['ams.renewal'].create(renewal_vals)
         
         if self.create_invoices:
-            renewal.action_create_invoice()
+            try:
+                renewal.action_create_invoice()
+            except Exception as e:
+                _logger.warning(f"Failed to create invoice for renewal {renewal.name}: {str(e)}")
         
         log_entries.append(f"SUCCESS - {membership.partner_id.name}: Renewal {renewal.name} created")
 
@@ -362,7 +385,10 @@ class MassRenewalWizard(models.TransientModel):
         renewal = self.env['ams.renewal'].create(renewal_vals)
         
         if self.create_invoices:
-            renewal.action_create_invoice()
+            try:
+                renewal.action_create_invoice()
+            except Exception as e:
+                _logger.warning(f"Failed to create invoice for renewal {renewal.name}: {str(e)}")
         
         log_entries.append(f"SUCCESS - {subscription.partner_id.name}: Renewal {renewal.name} created")
 
@@ -390,8 +416,9 @@ class MassRenewalWizard(models.TransientModel):
     @api.constrains('early_bird_discount_percent')
     def _check_discount_percent(self):
         for wizard in self:
-            if wizard.early_bird_discount_percent < 0 or wizard.early_bird_discount_percent > 100:
-                raise ValidationError(_("Discount percentage must be between 0 and 100."))
+            if wizard.apply_early_bird_discount:
+                if wizard.early_bird_discount_percent < 0 or wizard.early_bird_discount_percent > 100:
+                    raise ValidationError(_("Discount percentage must be between 0 and 100."))
 
     @api.constrains('custom_start_date', 'custom_end_date')
     def _check_custom_dates(self):

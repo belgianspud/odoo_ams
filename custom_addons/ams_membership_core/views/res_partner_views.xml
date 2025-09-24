@@ -134,7 +134,7 @@
                     <filter string="Pending Renewals" name="pending_renewals" 
                             domain="[('pending_renewals_count', '>', 0)]"/>
                     <filter string="Renewing Soon" name="renewing_soon" 
-                            domain="[('next_renewal_date', '<=', (context_today() + datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                            domain="[('next_renewal_date', '&lt;=', (context_today() + datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
                 </xpath>
                 
             </field>

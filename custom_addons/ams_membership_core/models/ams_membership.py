@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from dateutil.relativedelta import relativedelta
 import logging
 
@@ -127,12 +127,12 @@ class AMSMembership(models.Model):
         self.ensure_one()
         
         # First check member type override
-        if self.member_type_id and self.member_type_id.grace_period_override:
-            return self.member_type_id.grace_period_days
+        if self.member_type_id and hasattr(self.member_type_id, 'grace_period_override') and self.member_type_id.grace_period_override:
+            return getattr(self.member_type_id, 'grace_period_days', 30)
         
         # Then check foundation settings
         settings = self._get_ams_settings()
-        if settings:
+        if settings and hasattr(settings, 'grace_period_days'):
             return settings.grace_period_days
         
         # Default fallback
@@ -281,7 +281,7 @@ class AMSMembership(models.Model):
         
         # Check if foundation settings allow auto portal user creation
         settings = self._get_ams_settings()
-        if not settings or not settings.auto_create_portal_users:
+        if not settings or not hasattr(settings, 'auto_create_portal_users') or not settings.auto_create_portal_users:
             return
         
         # Use foundation's portal user creation method
@@ -297,7 +297,7 @@ class AMSMembership(models.Model):
         
         # Check if engagement scoring is enabled in foundation settings
         settings = self._get_ams_settings()
-        if not settings or not settings.engagement_scoring_enabled:
+        if not settings or not hasattr(settings, 'engagement_scoring_enabled') or not settings.engagement_scoring_enabled:
             return
         
         # Find applicable engagement rules
@@ -308,11 +308,12 @@ class AMSMembership(models.Model):
         
         for rule in engagement_rules:
             try:
-                success, message = rule.apply_rule(self.partner_id, context_data)
-                if success:
-                    _logger.info(f"Applied engagement rule {rule.name} to {self.partner_id.name}")
-                else:
-                    _logger.debug(f"Engagement rule {rule.name} not applied: {message}")
+                if hasattr(rule, 'apply_rule'):
+                    success, message = rule.apply_rule(self.partner_id, context_data)
+                    if success:
+                        _logger.info(f"Applied engagement rule {rule.name} to {self.partner_id.name}")
+                    else:
+                        _logger.debug(f"Engagement rule {rule.name} not applied: {message}")
             except Exception as e:
                 _logger.warning(f"Failed to apply engagement rule {rule.name}: {str(e)}")
     
@@ -395,7 +396,7 @@ class AMSMembership(models.Model):
         start_date = fields.Date.today()
         
         # Use member type duration if available, otherwise product defaults
-        if partner.member_type_id and partner.member_type_id.membership_duration:
+        if partner.member_type_id and hasattr(partner.member_type_id, 'membership_duration') and partner.member_type_id.membership_duration:
             end_date = start_date + timedelta(days=partner.member_type_id.membership_duration - 1)
         elif product.subscription_period == 'monthly':
             end_date = start_date + relativedelta(months=1) - timedelta(days=1)
@@ -473,10 +474,10 @@ class AMSMembership(models.Model):
     def send_renewal_reminders(self):
         """Send renewal reminders using foundation settings"""
         settings = self._get_ams_settings()
-        if not settings or not settings.renewal_reminder_enabled:
+        if not settings or not hasattr(settings, 'renewal_reminder_enabled') or not settings.renewal_reminder_enabled:
             return
         
-        reminder_days = settings.renewal_reminder_days
+        reminder_days = getattr(settings, 'renewal_reminder_days', 30)
         reminder_date = fields.Date.today() + timedelta(days=reminder_days)
         
         expiring_memberships = self.search([

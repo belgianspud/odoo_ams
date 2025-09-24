@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from dateutil.relativedelta import relativedelta
 import logging
 
@@ -123,7 +123,7 @@ class AMSSubscription(models.Model):
     @api.depends('product_id.subscription_product_type')
     def _compute_subscription_type(self):
         for subscription in self:
-            if subscription.product_id:
+            if subscription.product_id and hasattr(subscription.product_id, 'subscription_product_type'):
                 subscription.subscription_type = subscription.product_id.subscription_product_type or 'subscription'
             else:
                 subscription.subscription_type = 'subscription'
@@ -176,7 +176,7 @@ class AMSSubscription(models.Model):
         subscription = super().create(vals)
         
         # Set benefits based on product configuration
-        if subscription.product_id and subscription.product_id.benefit_ids:
+        if subscription.product_id and hasattr(subscription.product_id, 'benefit_ids') and subscription.product_id.benefit_ids:
             subscription.benefit_ids = [(6, 0, subscription.product_id.benefit_ids.ids)]
         
         return subscription
@@ -264,6 +264,36 @@ class AMSSubscription(models.Model):
             'target': 'new',
         }
     
+    def action_view_invoice(self):
+        """View subscription invoice"""
+        self.ensure_one()
+        
+        if not self.invoice_id:
+            raise UserError(_("No invoice exists for this subscription."))
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Subscription Invoice'),
+            'res_model': 'account.move',
+            'res_id': self.invoice_id.id,
+            'view_mode': 'form',
+        }
+    
+    def action_view_sale_order(self):
+        """View subscription sale order"""
+        self.ensure_one()
+        
+        if not self.sale_order_id:
+            raise UserError(_("No sale order exists for this subscription."))
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Subscription Sale Order'),
+            'res_model': 'sale.order',
+            'res_id': self.sale_order_id.id,
+            'view_mode': 'form',
+        }
+    
     def _calculate_renewal_end_date(self):
         """Calculate the new end date for renewal"""
         self.ensure_one()
@@ -296,13 +326,17 @@ class AMSSubscription(models.Model):
         
         # Calculate subscription period
         start_date = fields.Date.today()
-        if product.subscription_period == 'monthly':
-            end_date = start_date + relativedelta(months=1) - timedelta(days=1)
-        elif product.subscription_period == 'quarterly':
-            end_date = start_date + relativedelta(months=3) - timedelta(days=1)
-        elif product.subscription_period == 'semi_annual':
-            end_date = start_date + relativedelta(months=6) - timedelta(days=1)
-        else:  # annual or default
+        if hasattr(product, 'subscription_period'):
+            if product.subscription_period == 'monthly':
+                end_date = start_date + relativedelta(months=1) - timedelta(days=1)
+            elif product.subscription_period == 'quarterly':
+                end_date = start_date + relativedelta(months=3) - timedelta(days=1)
+            elif product.subscription_period == 'semi_annual':
+                end_date = start_date + relativedelta(months=6) - timedelta(days=1)
+            else:  # annual or default
+                end_date = start_date + relativedelta(years=1) - timedelta(days=1)
+        else:
+            # Default to annual if no subscription period
             end_date = start_date + relativedelta(years=1) - timedelta(days=1)
         
         subscription_vals = {
@@ -316,15 +350,15 @@ class AMSSubscription(models.Model):
             'subscription_fee': invoice_line.price_subtotal,
             'payment_status': 'paid',
             'state': 'active',
-            'auto_renew': product.auto_renew_default or True,
-            'renewal_interval': product.subscription_period or 'annual',
+            'auto_renew': getattr(product, 'auto_renew_default', True),
+            'renewal_interval': getattr(product, 'subscription_period', 'annual'),
         }
         
         # Set type-specific fields
-        if product.subscription_product_type == 'publication':
+        if hasattr(product, 'subscription_product_type') and product.subscription_product_type == 'publication':
             subscription_vals.update({
-                'digital_access': product.digital_access or True,
-                'print_delivery': product.print_delivery or False,
+                'digital_access': getattr(product, 'publication_digital_access', True),
+                'print_delivery': getattr(product, 'publication_print_delivery', False),
             })
         
         subscription = self.create(subscription_vals)

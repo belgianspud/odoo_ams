@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
-from datetime import date
+from datetime import date, timedelta, datetime
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -187,8 +187,9 @@ class MembershipTransferWizard(models.TransientModel):
                             source_days = (self.source_end_date - self.transfer_date).days
                             target_days = (self.target_end_date - self.target_start_date).days
                             
-                            self.refund_amount = (remaining_value * target_days) / self.remaining_days
-                            self.invoice_amount = self.refund_amount
+                            if self.remaining_days > 0:
+                                self.refund_amount = (remaining_value * target_days) / self.remaining_days
+                                self.invoice_amount = self.refund_amount
 
     def action_transfer_membership(self):
         """Execute the membership transfer"""
@@ -271,7 +272,7 @@ class MembershipTransferWizard(models.TransientModel):
             'product_id': self.product_id.id,
             'start_date': self.target_start_date,
             'end_date': self.target_end_date,
-            'membership_fee': self.invoice_amount,
+            'membership_fee': self.invoice_amount or self.membership_fee,
             'state': 'active',
             'notes': f"Transferred from {self.source_partner_id.name} on {self.transfer_date}"
         }
@@ -293,12 +294,12 @@ class MembershipTransferWizard(models.TransientModel):
         if self.create_refund and self.refund_amount > 0:
             # Create refund for source member
             # This would integrate with accounting module
-            pass
+            _logger.info(f"Refund of {self.refund_amount} should be created for {self.source_partner_id.name}")
         
         if self.create_invoice and self.invoice_amount > 0:
             # Create invoice for target member
             # This would integrate with accounting module
-            pass
+            _logger.info(f"Invoice of {self.invoice_amount} should be created for {self.target_partner_id.name}")
 
     def _update_member_types(self):
         """Update member types as needed"""
@@ -312,7 +313,7 @@ class MembershipTransferWizard(models.TransientModel):
         """Send notification emails"""
         # This would send emails to both members about the transfer
         # Implementation would depend on email template system
-        pass
+        _logger.info(f"Transfer notifications should be sent to both {self.source_partner_id.name} and {self.target_partner_id.name}")
 
     def _log_transfer(self):
         """Log the transfer in both member records"""

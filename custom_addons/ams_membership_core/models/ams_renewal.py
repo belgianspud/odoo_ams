@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from dateutil.relativedelta import relativedelta
 import logging
 
@@ -219,14 +219,17 @@ class AMSRenewal(models.Model):
         
         # Cancel related sale order if exists
         if self.sale_order_id and self.sale_order_id.state not in ['sale', 'done']:
-            self.sale_order_id.action_cancel()
+            try:
+                self.sale_order_id.action_cancel()
+            except Exception as e:
+                _logger.warning(f"Could not cancel sale order {self.sale_order_id.name}: {str(e)}")
         
         # Cancel related invoice if exists and not paid
         if self.invoice_id and self.invoice_id.payment_state == 'not_paid':
             try:
                 self.invoice_id.button_cancel()
-            except:
-                pass  # May not be cancellable
+            except Exception as e:
+                _logger.warning(f"Could not cancel invoice {self.invoice_id.name}: {str(e)}")
     
     def _calculate_renewal_amounts(self):
         """Calculate renewal amounts including discounts and prorations"""
@@ -291,9 +294,9 @@ class AMSRenewal(models.Model):
             self._create_sale_order()
         
         # Create and post invoice
-        invoice = self.sale_order_id._create_invoices()
-        if invoice:
-            self.invoice_id = invoice[0].id
+        invoices = self.sale_order_id._create_invoices()
+        if invoices:
+            self.invoice_id = invoices[0].id
             self.state = 'pending'
         
         return {
