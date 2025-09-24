@@ -11,26 +11,19 @@ Core membership management functionality for Association Management System:
 
 Features:
 ---------
-* Product-based subscription management (Community compatible)
+* Product-based subscription management (Odoo 18 compatible)
 * Membership lifecycle management with automatic renewals
 * Member benefit system with customizable benefits
 * Portal integration for member self-service
 * Upgrade/downgrade membership functionality
 * Mass renewal processing
-* Revenue recognition framework (placeholder)
+* Revenue recognition framework
 * Proration calculations for membership changes
-
-Subscription Product Types:
---------------------------
-* Membership - Individual/Organization memberships (only 1 active at a time)
-* Subscriptions - General recurring subscriptions
-* Publications - Magazine/journal subscriptions  
-* Chapter - Regional chapter memberships (future module)
 
 Integration:
 -----------
 * Extends ams_foundation for member data
-* Community-compatible subscription functionality
+* Compatible with Odoo Community 18
 * Portal access for member self-service
 * Automatic membership creation from paid invoices
     """,
@@ -45,42 +38,55 @@ Integration:
         'portal',
         'mail',
         'website',
+        'payment',  # Added for Odoo 18 payment integration
     ],
+    'external_dependencies': {
+        'python': ['python-dateutil'],
+    },
     'data': [
-        # Security - Use foundation groups where possible
+        # Security
         'security/membership_security.xml',
         'security/ir.model.access.csv',
         
         # Data
         'data/sequences.xml',
         'data/membership_data.xml',
+        'data/cron_data.xml',
         
-        # Views - Models first, then actions
+        # Views
         'views/product_template_views.xml',
         'views/ams_membership_views.xml',
         'views/ams_subscription_views.xml',
         'views/ams_benefit_views.xml',
         'views/ams_renewal_views.xml',
+        'views/res_partner_views.xml',  # Added missing partner views
         
         # Wizards
         'wizards/mass_renewal_wizard_views.xml',
         'wizards/membership_transfer_wizard_views.xml',
         
         # Portal
-        'views/portal_membership_views.xml',
+        'views/portal_membership_templates.xml',  # Renamed for clarity
         
         # Reports
-        'reports/membership_certificate.xml',
+        'reports/membership_reports.xml',
         
-        # Menu (load last to use foundation structure)
+        # Menu (load last)
         'views/membership_menu.xml',
     ],
     'demo': [
         'demo/membership_demo.xml',
     ],
+    'assets': {
+        'web.assets_frontend': [
+            'ams_membership_core/static/src/css/portal_membership.css',
+            'ams_membership_core/static/src/js/portal_membership.js',
+        ],
+    },
     'installable': True,
-    'application': False,  # Changed to False since this extends ams_foundation
+    'application': False,  # Extension module
     'auto_install': False,
-    'sequence': 16,  # After ams_foundation (15)
+    'sequence': 16,
     'post_init_hook': '_post_init_hook',
+    'pre_init_hook': '_pre_init_hook',  # Added for data migration
 }

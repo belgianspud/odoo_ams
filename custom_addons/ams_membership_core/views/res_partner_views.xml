@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Extend Foundation Partner Form View -->
+        <record id="view_partner_form_membership_core" model="ir.ui.view">
+            <field name="name">res.partner.form.membership.core</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="ams_foundation.view_partner_form_member"/>
+            <field name="arch" type="xml">
+
+                <!-- Add Membership Core buttons to button box -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_memberships" type="object"
+                            class="oe_stat_button" icon="fa-id-card"
+                            invisible="not is_member"
+                            groups="ams_membership_core.group_membership_user">
+                        <field name="membership_ids" widget="statinfo" 
+                               string="Memberships" help="All membership records"/>
+                    </button>
+                    
+                    <button name="action_view_subscriptions" type="object"
+                            class="oe_stat_button" icon="fa-refresh"
+                            groups="ams_membership_core.group_membership_user">
+                        <field name="subscription_count" widget="statinfo" 
+                               string="Subscriptions"/>
+                    </button>
+                    
+                    <button name="action_view_renewals" type="object"
+                            class="oe_stat_button" icon="fa-calendar"
+                            invisible="not pending_renewals_count"
+                            groups="ams_membership_core.group_membership_user">
+                        <field name="pending_renewals_count" widget="statinfo" 
+                               string="Pending Renewals"/>
+                    </button>
+                    
+                    <button name="action_view_benefits" type="object"
+                            class="oe_stat_button" icon="fa-gift"
+                            groups="ams_membership_core.group_membership_user">
+                        <field name="active_benefit_ids" widget="statinfo" 
+                               string="Active Benefits"/>
+                    </button>
+                </xpath>
+
+                <!-- Add Current Membership field to Membership tab -->
+                <xpath expr="//page[@name='membership']//group[1]//group[1]" position="inside">
+                    <field name="current_membership_id" readonly="True" 
+                           invisible="not current_membership_id"/>
+                </xpath>
+
+                <!-- Add renewal information to Membership tab -->
+                <xpath expr="//page[@name='membership']//group[2]//group[2]" position="inside">
+                    <field name="next_renewal_date" readonly="True"/>
+                    <field name="total_membership_years" readonly="True" 
+                           widget="float_time"/>
+                </xpath>
+
+                <!-- Add Subscription Management tab -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Subscriptions" name="subscriptions" 
+                          invisible="not subscription_ids">
+                        <field name="subscription_ids" nolabel="1">
+                            <list editable="bottom" create="false" delete="false">
+                                <field name="name"/>
+                                <field name="product_id"/>
+                                <field name="subscription_type"/>
+                                <field name="start_date"/>
+                                <field name="end_date"/>
+                                <field name="state"/>
+                                <field name="auto_renew"/>
+                                <button name="action_renew" type="object" 
+                                        string="Renew" icon="fa-refresh"
+                                        invisible="state not in ['active', 'suspended']"
+                                        groups="ams_membership_core.group_membership_user"/>
+                            </list>
+                        </field>
+                    </page>
+                </xpath>
+
+                <!-- Add Benefits tab -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Benefits" name="benefits" 
+                          invisible="not active_benefit_ids">
+                        <field name="active_benefit_ids" nolabel="1">
+                            <list create="false" delete="false">
+                                <field name="name"/>
+                                <field name="benefit_type"/>
+                                <field name="discount_percentage" 
+                                       invisible="benefit_type != 'discount'"/>
+                                <field name="is_quantifiable"/>
+                                <field name="quantity_limit" 
+                                       invisible="not is_quantifiable"/>
+                                <button name="record_usage" type="object" 
+                                        string="Record Usage" icon="fa-plus"
+                                        invisible="not is_quantifiable"
+                                        groups="ams_membership_core.group_membership_user"/>
+                            </list>
+                        </field>
+                    </page>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- Enhanced Member List View -->
+        <record id="view_partner_member_list_enhanced" model="ir.ui.view">
+            <field name="name">res.partner.member.list.enhanced</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="ams_foundation.view_partner_member_list"/>
+            <field name="arch" type="xml">
+                
+                <!-- Add subscription-related fields -->
+                <xpath expr="//field[@name='engagement_score']" position="after">
+                    <field name="subscription_count" optional="hide"/>
+                    <field name="next_renewal_date" optional="hide"/>
+                    <field name="pending_renewals_count" optional="hide"/>
+                </xpath>
+                
+            </field>
+        </record>
+
+        <!-- Enhanced Member Search View -->
+        <record id="view_partner_member_search_enhanced" model="ir.ui.view">
+            <field name="name">res.partner.member.search.enhanced</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="ams_foundation.view_partner_member_search"/>
+            <field name="arch" type="xml">
+                
+                <!-- Add subscription filters -->
+                <xpath expr="//filter[@name='newsletter']" position="after">
+                    <separator/>
+                    <filter string="Has Subscriptions" name="has_subscriptions" 
+                            domain="[('subscription_count', '>', 0)]"/>
+                    <filter string="Pending Renewals" name="pending_renewals" 
+                            domain="[('pending_renewals_count', '>', 0)]"/>
+                    <filter string="Renewing Soon" name="renewing_soon" 
+                            domain="[('next_renewal_date', '<=', (context_today() + datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                </xpath>
+                
+            </field>
+        </record>
+
+        <!-- Member Actions with Subscription Context -->
+        <record id="action_partner_members_with_subscriptions" model="ir.actions.act_window">
+            <field name="name">Members with Subscriptions</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">list,kanban,form</field>
+            <field name="domain">[('is_member', '=', True), ('subscription_count', '>', 0)]</field>
+            <field name="context">{'search_default_active_members': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No members with subscriptions found
+                </p>
+                <p>
+                    This view shows members who have active subscriptions
+                    in addition to their membership.
+                </p>
+            </field>
+        </record>
+
+        <!-- Members with Pending Renewals -->
+        <record id="action_partner_members_pending_renewals" model="ir.actions.act_window">
+            <field name="name">Members with Pending Renewals</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('is_member', '=', True), ('pending_renewals_count', '>', 0)]</field>
+            <field name="context">{'search_default_pending_renewals': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No pending renewals found
+                </p>
+                <p>
+                    This view shows members who have pending renewal reminders
+                    that need attention.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>
