@@ -39,7 +39,7 @@ Integration:
     'category': 'Association Management',
     'license': 'LGPL-3',
     'depends': [
-        'ams_foundation',
+        'ams_foundation',  # Must be first for proper integration
         'sale_management',
         'account',
         'portal',
@@ -47,7 +47,7 @@ Integration:
         'website',
     ],
     'data': [
-        # Security
+        # Security - Use foundation groups where possible
         'security/membership_security.xml',
         'security/ir.model.access.csv',
         
@@ -72,14 +72,15 @@ Integration:
         # Reports
         'reports/membership_certificate.xml',
         
-        # Menu (load last)
+        # Menu (load last to use foundation structure)
         'views/membership_menu.xml',
     ],
     'demo': [
         'demo/membership_demo.xml',
     ],
     'installable': True,
-    'application': True,
+    'application': False,  # Changed to False since this extends ams_foundation
     'auto_install': False,
-    'sequence': 15,
+    'sequence': 16,  # After ams_foundation (15)
+    'post_init_hook': '_post_init_hook',
 }

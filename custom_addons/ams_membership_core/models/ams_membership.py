@@ -20,7 +20,7 @@ class AMSMembership(models.Model):
                       default=lambda self: _('New'))
     display_name = fields.Char('Display Name', compute='_compute_display_name', store=True)
     
-    # Member Information
+    # Member Information (integrated with ams_foundation)
     partner_id = fields.Many2one('res.partner', 'Member', required=True, tracking=True,
                                 domain=[('is_member', '=', True)])
     member_type_id = fields.Many2one(related='partner_id.member_type_id', store=True, readonly=True)
@@ -73,7 +73,7 @@ class AMSMembership(models.Model):
                                   'membership_id', 'benefit_id', string='Active Benefits')
     has_portal_access = fields.Boolean('Has Portal Access', compute='_compute_portal_access', store=True)
     
-    # Lifecycle Dates (computed based on settings)
+    # Lifecycle Dates (computed using foundation settings)
     grace_end_date = fields.Date('Grace Period End', compute='_compute_lifecycle_dates', store=True)
     suspension_end_date = fields.Date('Suspension End Date', compute='_compute_lifecycle_dates', store=True)
     termination_date = fields.Date('Termination Date', compute='_compute_lifecycle_dates', store=True)
@@ -107,6 +107,7 @@ class AMSMembership(models.Model):
     
     @api.depends('end_date', 'member_type_id')
     def _compute_lifecycle_dates(self):
+        """Compute lifecycle dates using ams_foundation settings"""
         for membership in self:
             if not membership.end_date:
                 membership.grace_end_date = False
@@ -114,16 +115,32 @@ class AMSMembership(models.Model):
                 membership.termination_date = False
                 continue
             
-            # Get grace period from member type or settings
-            if membership.member_type_id and membership.member_type_id.grace_period_override:
-                grace_days = membership.member_type_id.grace_period_days
-            else:
-                settings = self.env['ams.settings'].search([('active', '=', True)], limit=1)
-                grace_days = settings.grace_period_days if settings else 30
+            # Get grace period from member type or foundation settings
+            grace_days = membership._get_effective_grace_period()
             
             membership.grace_end_date = membership.end_date + timedelta(days=grace_days)
             membership.suspension_end_date = membership.grace_end_date + timedelta(days=60)
             membership.termination_date = membership.suspension_end_date + timedelta(days=30)
+    
+    def _get_effective_grace_period(self):
+        """Get effective grace period using foundation settings"""
+        self.ensure_one()
+        
+        # First check member type override
+        if self.member_type_id and self.member_type_id.grace_period_override:
+            return self.member_type_id.grace_period_days
+        
+        # Then check foundation settings
+        settings = self._get_ams_settings()
+        if settings:
+            return settings.grace_period_days
+        
+        # Default fallback
+        return 30
+    
+    def _get_ams_settings(self):
+        """Get active AMS settings from foundation"""
+        return self.env['ams.settings'].search([('active', '=', True)], limit=1)
     
     @api.depends('end_date', 'auto_renew', 'renewal_interval')
     def _compute_next_renewal_date(self):
@@ -163,7 +180,7 @@ class AMSMembership(models.Model):
 
     @api.model
     def create(self, vals):
-        """Override create to handle sequence and validations"""
+        """Override create to handle sequence and integrations"""
         if vals.get('name', _('New')) == _('New'):
             vals['name'] = self.env['ir.sequence'].next_by_code('ams.membership') or _('New')
         
@@ -180,7 +197,7 @@ class AMSMembership(models.Model):
         return membership
     
     def write(self, vals):
-        """Override write to handle state changes"""
+        """Override write to handle state changes and foundation integration"""
         result = super().write(vals)
         
         # Handle state changes
@@ -213,20 +230,28 @@ class AMSMembership(models.Model):
             })
     
     def _handle_state_change(self, new_state):
-        """Handle membership state changes"""
+        """Handle membership state changes and sync with foundation"""
         self.ensure_one()
         
         if new_state == 'active':
-            # Update partner membership status
-            self.partner_id.write({
+            # Update foundation partner membership status
+            partner_vals = {
                 'member_status': 'active',
                 'membership_start_date': self.start_date,
                 'membership_end_date': self.end_date,
-            })
+            }
+            # Use context to prevent recursion
+            self.partner_id.with_context(skip_portal_creation=True).write(partner_vals)
             
             # Ensure single active membership for membership products
             if self.product_id.subscription_product_type == 'membership':
                 self._ensure_single_active_membership()
+            
+            # Grant portal access if product allows and foundation settings enable it
+            self._handle_portal_access_on_activation()
+            
+            # Apply engagement points for membership activation
+            self._apply_engagement_points('membership_activation')
         
         elif new_state == 'terminated':
             # Check if this was the active membership
@@ -242,7 +267,54 @@ class AMSMembership(models.Model):
                 
                 if not other_active:
                     # No other active memberships, update partner status
-                    self.partner_id.write({'member_status': 'terminated'})
+                    self.partner_id.with_context(skip_portal_creation=True).write({
+                        'member_status': 'terminated'
+                    })
+
+    def _handle_portal_access_on_activation(self):
+        """Handle portal access when membership becomes active"""
+        self.ensure_one()
+        
+        # Check if product grants portal access
+        if not self.product_id.grant_portal_access:
+            return
+        
+        # Check if foundation settings allow auto portal user creation
+        settings = self._get_ams_settings()
+        if not settings or not settings.auto_create_portal_users:
+            return
+        
+        # Use foundation's portal user creation method
+        if not self.partner_id.portal_user_id and self.partner_id.email:
+            try:
+                self.partner_id.action_create_portal_user()
+            except Exception as e:
+                _logger.warning(f"Failed to create portal user for {self.partner_id.name}: {str(e)}")
+    
+    def _apply_engagement_points(self, rule_type, context_data=None):
+        """Apply engagement points using foundation's engagement system"""
+        self.ensure_one()
+        
+        # Check if engagement scoring is enabled in foundation settings
+        settings = self._get_ams_settings()
+        if not settings or not settings.engagement_scoring_enabled:
+            return
+        
+        # Find applicable engagement rules
+        engagement_rules = self.env['ams.engagement.rule'].search([
+            ('rule_type', '=', rule_type),
+            ('active', '=', True)
+        ])
+        
+        for rule in engagement_rules:
+            try:
+                success, message = rule.apply_rule(self.partner_id, context_data)
+                if success:
+                    _logger.info(f"Applied engagement rule {rule.name} to {self.partner_id.name}")
+                else:
+                    _logger.debug(f"Engagement rule {rule.name} not applied: {message}")
+            except Exception as e:
+                _logger.warning(f"Failed to apply engagement rule {rule.name}: {str(e)}")
     
     # Action Methods
     def action_activate(self):
@@ -319,9 +391,13 @@ class AMSMembership(models.Model):
         
         partner = invoice_line.move_id.partner_id
         
-        # Calculate membership period
+        # Calculate membership period based on member type or product defaults
         start_date = fields.Date.today()
-        if product.subscription_period == 'monthly':
+        
+        # Use member type duration if available, otherwise product defaults
+        if partner.member_type_id and partner.member_type_id.membership_duration:
+            end_date = start_date + timedelta(days=partner.member_type_id.membership_duration - 1)
+        elif product.subscription_period == 'monthly':
             end_date = start_date + relativedelta(months=1) - timedelta(days=1)
         elif product.subscription_period == 'quarterly':
             end_date = start_date + relativedelta(months=3) - timedelta(days=1)
@@ -353,45 +429,54 @@ class AMSMembership(models.Model):
     
     @api.model
     def process_membership_lifecycle(self):
-        """Cron job to process membership lifecycle transitions"""
+        """Cron job to process membership lifecycle transitions using foundation logic"""
         _logger.info("Processing membership lifecycle transitions...")
         
+        # Let foundation handle the main lifecycle transitions
+        # This method will sync membership records with partner status
         today = fields.Date.today()
         
-        # Active -> Grace (expired memberships)
-        expired_memberships = self.search([
-            ('state', '=', 'active'),
-            ('end_date', '<', today),
+        # Sync active memberships with expired foundation member status
+        expired_partners = self.env['res.partner'].search([
+            ('is_member', '=', True),
+            ('member_status', '=', 'grace'),
+            ('membership_end_date', '<', today)
         ])
         
-        for membership in expired_memberships:
-            membership.write({'state': 'grace'})
-            _logger.info(f"Moved membership {membership.name} to grace period")
+        for partner in expired_partners:
+            active_memberships = self.search([
+                ('partner_id', '=', partner.id),
+                ('state', '=', 'active')
+            ])
+            
+            for membership in active_memberships:
+                membership.write({'state': 'grace'})
+                _logger.info(f"Synced membership {membership.name} to grace period")
         
-        # Grace -> Suspended (grace period ended)
-        grace_expired = self.search([
-            ('state', '=', 'grace'),
-            ('grace_end_date', '<', today),
+        # Sync lapsed members
+        lapsed_partners = self.env['res.partner'].search([
+            ('is_member', '=', True),
+            ('member_status', '=', 'lapsed')
         ])
         
-        for membership in grace_expired:
-            membership.write({'state': 'suspended'})
-            _logger.info(f"Suspended membership {membership.name}")
-        
-        # Suspended -> Terminated (suspension period ended)
-        suspension_expired = self.search([
-            ('state', '=', 'suspended'),
-            ('suspension_end_date', '<', today),
-        ])
-        
-        for membership in suspension_expired:
-            membership.write({'state': 'terminated'})
-            _logger.info(f"Terminated membership {membership.name}")
+        for partner in lapsed_partners:
+            grace_memberships = self.search([
+                ('partner_id', '=', partner.id),
+                ('state', '=', 'grace')
+            ])
+            
+            for membership in grace_memberships:
+                membership.write({'state': 'suspended'})
+                _logger.info(f"Synced membership {membership.name} to suspended")
     
     @api.model
     def send_renewal_reminders(self):
-        """Send renewal reminders for expiring memberships"""
-        reminder_days = 30  # TODO: Make configurable
+        """Send renewal reminders using foundation settings"""
+        settings = self._get_ams_settings()
+        if not settings or not settings.renewal_reminder_enabled:
+            return
+        
+        reminder_days = settings.renewal_reminder_days
         reminder_date = fields.Date.today() + timedelta(days=reminder_days)
         
         expiring_memberships = self.search([

@@ -9,7 +9,7 @@ _logger = logging.getLogger(__name__)
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
-    # Membership Records
+    # Membership Records (real data - stored in membership_core)
     membership_ids = fields.One2many(
         'ams.membership',
         'partner_id',
@@ -24,7 +24,7 @@ class ResPartner(models.Model):
         help='All subscription records for this member'
     )
     
-    # Current Active Records
+    # Current Active Records (computed from real data)
     current_membership_id = fields.Many2one(
         'ams.membership',
         string='Current Membership',
@@ -41,22 +41,22 @@ class ResPartner(models.Model):
         help='All currently active subscriptions'
     )
     
-    # Membership Status (enhanced from ams_foundation)
+    # Enhanced membership status (computed to sync with foundation)
     has_active_membership = fields.Boolean(
         string='Has Active Membership',
-        compute='_compute_membership_status',
+        compute='_compute_membership_status_enhanced',
         store=True,
         help='Has at least one active membership'
     )
     
     has_active_subscriptions = fields.Boolean(
         string='Has Active Subscriptions',
-        compute='_compute_membership_status',
+        compute='_compute_membership_status_enhanced',
         store=True,
         help='Has at least one active subscription'
     )
     
-    # Benefits
+    # Benefits (computed from active memberships/subscriptions)
     active_benefit_ids = fields.Many2many(
         'ams.benefit',
         string='Active Benefits',
@@ -64,7 +64,7 @@ class ResPartner(models.Model):
         help='All benefits currently available to this member'
     )
     
-    # Renewal Information
+    # Renewal Information (computed)
     next_renewal_date = fields.Date(
         string='Next Renewal Date',
         compute='_compute_renewal_info',
@@ -79,7 +79,7 @@ class ResPartner(models.Model):
         help='Number of pending renewal reminders'
     )
     
-    # Statistics
+    # Statistics (computed)
     total_membership_years = fields.Float(
         string='Total Membership Years',
         compute='_compute_membership_stats',
@@ -115,17 +115,21 @@ class ResPartner(models.Model):
             partner.active_subscription_ids = [(6, 0, active_subscriptions.ids)]
     
     @api.depends('current_membership_id', 'active_subscription_ids')
-    def _compute_membership_status(self):
-        """Compute membership status flags"""
+    def _compute_membership_status_enhanced(self):
+        """Compute enhanced membership status flags and sync with foundation"""
         for partner in self:
             partner.has_active_membership = bool(partner.current_membership_id)
             partner.has_active_subscriptions = bool(partner.active_subscription_ids)
             
-            # Update the base member_status from ams_foundation if needed
+            # Sync with ams_foundation member_status field if partner is a member
             if partner.is_member:
                 if partner.has_active_membership:
                     if partner.member_status != 'active':
                         partner.member_status = 'active'
+                        # Update foundation's membership dates
+                        if partner.current_membership_id:
+                            partner.membership_start_date = partner.current_membership_id.start_date
+                            partner.membership_end_date = partner.current_membership_id.end_date
                 elif partner.member_status == 'active':
                     # Check if in grace period or should be lapsed
                     grace_memberships = partner.membership_ids.filtered(
@@ -292,25 +296,6 @@ class ResPartner(models.Model):
         
         return self.current_membership_id.action_renew()
     
-    def action_upgrade_membership(self):
-        """Open membership upgrade wizard"""
-        self.ensure_one()
-        
-        if not self.current_membership_id:
-            raise UserError(_("No active membership to upgrade."))
-        
-        return {
-            'name': _('Upgrade Membership'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'ams.membership.upgrade.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_membership_id': self.current_membership_id.id,
-                'default_partner_id': self.id,
-            }
-        }
-    
     # Benefit Management
     def has_benefit(self, benefit_code):
         """Check if member has a specific benefit"""
@@ -346,9 +331,11 @@ class ResPartner(models.Model):
         
         return benefit[0].record_usage(self.id, quantity, notes)
     
-    # Portal Integration
+    # Integration with ams_foundation portal access
+    @api.depends('has_active_membership', 'has_active_subscriptions')
     def _compute_portal_access(self):
-        """Override from ams_foundation to include subscription-based access"""
+        """Enhanced portal access computation integrating with foundation"""
+        # Call parent method from ams_foundation first
         super()._compute_portal_access()
         
         for partner in self:
@@ -367,18 +354,18 @@ class ResPartner(models.Model):
                             products_with_portal.add(subscription.product_id.id)
                     
                     if products_with_portal:
-                        # Should have portal access - try to create it
+                        # Should have portal access - try to create it using foundation method
                         try:
                             partner.action_create_portal_user()
                         except Exception as e:
                             _logger.warning(f"Failed to auto-create portal user for {partner.name}: {str(e)}")
     
-    # Override member status transitions to handle membership/subscription integration
+    # Override write to sync membership status changes with foundation
     def write(self, vals):
         """Override write to sync membership status changes"""
         result = super().write(vals)
         
-        # Handle member status changes
+        # Handle member status changes from foundation
         if 'member_status' in vals:
             for partner in self:
                 partner._sync_membership_status_change(vals['member_status'])
@@ -408,6 +395,11 @@ class ResPartner(models.Model):
             )
             if grace_membership:
                 grace_membership[0].write({'state': 'active'})
+    
+    # Use ams_foundation settings for grace periods
+    def _get_ams_settings(self):
+        """Get AMS settings using foundation method"""
+        return self.env['ams.settings'].search([('active', '=', True)], limit=1)
     
     # Constraints
     @api.constrains('membership_ids')

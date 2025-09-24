@@ -2,12 +2,12 @@
 <odoo>
     <data>
         
-        <!-- Memberships Menu -->
+        <!-- Memberships Menu - Use existing foundation parent -->
         <menuitem id="menu_ams_memberships"
             name="Memberships"
             parent="ams_foundation.menu_ams_members"
             action="action_ams_membership"
-            sequence="10"/>
+            sequence="15"/>
 
         <!-- Active Memberships -->
         <menuitem id="menu_ams_memberships_active"
@@ -23,7 +23,7 @@
             action="action_ams_membership_expiring"
             sequence="20"/>
 
-        <!-- Subscriptions Menu -->
+        <!-- Subscriptions Menu - Use existing foundation parent -->
         <menuitem id="menu_ams_subscriptions"
             name="Subscriptions"
             parent="ams_foundation.menu_ams_members"
@@ -51,11 +51,11 @@
             action="action_ams_subscription_chapters"
             sequence="30"/>
 
-        <!-- Renewals Menu -->
+        <!-- Renewals Menu - Use foundation main menu as parent -->
         <menuitem id="menu_ams_renewals"
             name="Renewals"
             parent="ams_foundation.menu_ams_main"
-            sequence="30"/>
+            sequence="25"/>
 
         <!-- All Renewals -->
         <menuitem id="menu_ams_renewals_all"
@@ -92,36 +92,36 @@
             action="action_ams_renewal_subscription"
             sequence="50"/>
 
-        <!-- Products Menu -->
+        <!-- Products Menu - Use foundation configuration parent -->
         <menuitem id="menu_ams_products"
-            name="Products"
+            name="Subscription Products"
             parent="ams_foundation.menu_ams_configuration"
             sequence="30"/>
 
-        <!-- Subscription Products -->
-        <menuitem id="menu_ams_products_subscription"
-            name="Subscription Products"
+        <!-- All Subscription Products -->
+        <menuitem id="menu_ams_products_all"
+            name="All Products"
             parent="menu_ams_products"
-            action="action_product_subscription_products"
-            sequence="10"/>
+            action="action_subscription_products"
+            sequence="5"/>
 
         <!-- Membership Products -->
         <menuitem id="menu_ams_products_membership"
             name="Membership Products"
             parent="menu_ams_products"
-            action="action_product_membership_products"
-            sequence="20"/>
+            action="action_membership_products"
+            sequence="10"/>
 
         <!-- Publication Products -->
         <menuitem id="menu_ams_products_publication"
             name="Publication Products"
             parent="menu_ams_products"
-            action="action_product_publication_products"
-            sequence="30"/>
+            action="action_publication_products"
+            sequence="20"/>
 
-        <!-- Benefits Menu -->
+        <!-- Benefits Menu - Use foundation configuration parent -->
         <menuitem id="menu_ams_benefits"
-            name="Benefits"
+            name="Member Benefits"
             parent="ams_foundation.menu_ams_configuration"
             action="action_ams_benefit"
             sequence="40"/>
@@ -142,12 +142,12 @@
 
         <!-- Benefit Usage -->
         <menuitem id="menu_ams_benefits_usage"
-            name="Benefit Usage"
+            name="Benefit Usage Log"
             parent="menu_ams_benefits"
             action="action_ams_benefit_usage"
             sequence="30"/>
 
-        <!-- Tools Menu -->
+        <!-- Tools Menu - Use foundation tools parent -->
         <menuitem id="menu_ams_membership_tools"
             name="Membership Tools"
             parent="ams_foundation.menu_ams_tools"
@@ -155,21 +155,21 @@
 
         <!-- Mass Renewal -->
         <menuitem id="menu_ams_mass_renewal"
-            name="Mass Renewal"
+            name="Mass Renewal Wizard"
             parent="menu_ams_membership_tools"
             action="action_mass_renewal_wizard"
             sequence="10"/>
 
-        <!-- Reports Menu -->
-        <menuitem id="menu_ams_reports"
-            name="Reports"
+        <!-- Reports Menu - Use foundation main menu -->
+        <menuitem id="menu_ams_membership_reports"
+            name="Membership Reports"
             parent="ams_foundation.menu_ams_main"
-            sequence="80"/>
+            sequence="20"/>
 
         <!-- Renewal Reports -->
         <menuitem id="menu_ams_reports_renewals"
-            name="Renewal Reports"
-            parent="menu_ams_reports"
+            name="Renewal Analysis"
+            parent="menu_ams_membership_reports"
             sequence="10"/>
 
         <!-- Early Renewals Report -->
