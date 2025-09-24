@@ -2,326 +2,477 @@
 <odoo>
     <data>
 
-        <!-- Add Membership section to portal home -->
+        <!-- Very safe portal home extension - just append content -->
         <template id="portal_my_home_membership" name="Portal My Home: Membership" inherit_id="portal.portal_my_home" priority="30">
-            <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
-                <t t-set="membership_count" t-value="len(request.env.user.partner_id.membership_ids) if request.env.user.partner_id.is_member else 0"/>
-                <t t-set="subscription_count" t-value="len(request.env.user.partner_id.subscription_ids)"/>
+            <!-- Use the most generic possible selector -->
+            <xpath expr="//div" position="after">
+                <t t-set="membership_count" t-value="0"/>
+                <t t-set="subscription_count" t-value="0"/>
                 
-                <div class="col-lg-6 col-xl-4 col-xxl-3 o_portal_docs" t-if="membership_count or subscription_count">
-                    <div class="row">
-                        <div class="col-12 mb16" t-if="membership_count">
-                            <a href="/my/memberships" class="btn btn-outline-primary btn-block">
-                                <span class="fa fa-id-card fa-fw me-1" aria-label="Memberships" role="img" title="Memberships"/>
-                                <span class="fw-bold">Memberships</span>
-                                <t t-if="membership_count" t-esc="membership_count" class="badge rounded-pill text-bg-secondary ms-2"/>
-                            </a>
-                        </div>
-                        <div class="col-12 mb16" t-if="subscription_count">
-                            <a href="/my/subscriptions" class="btn btn-outline-primary btn-block">
-                                <span class="fa fa-refresh fa-fw me-1" aria-label="Subscriptions" role="img" title="Subscriptions"/>
-                                <span class="fw-bold">Subscriptions</span>
-                                <t t-if="subscription_count" t-esc="subscription_count" class="badge rounded-pill text-bg-secondary ms-2"/>
-                            </a>
+                <!-- Try to safely get counts -->
+                <t t-try="">
+                    <t t-set="membership_count" t-value="len(request.env.user.partner_id.membership_ids) if hasattr(request.env.user.partner_id, 'membership_ids') else 0"/>
+                    <t t-set="subscription_count" t-value="len(request.env.user.partner_id.subscription_ids) if hasattr(request.env.user.partner_id, 'subscription_ids') else 0"/>
+                </t>
+                
+                <!-- Simple membership section -->
+                <div class="col-lg-6 col-xl-4 col-12 mb-3" t-if="membership_count or True">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">
+                                <i class="fa fa-users"/> Membership
+                            </h5>
+                            <div class="d-grid gap-2">
+                                <a href="/my/memberships" class="btn btn-primary">
+                                    <i class="fa fa-id-card"/> My Memberships
+                                    <span class="badge bg-light text-dark ms-1" t-if="membership_count" t-esc="membership_count"/>
+                                </a>
+                                <a href="/my/subscriptions" class="btn btn-outline-primary">
+                                    <i class="fa fa-refresh"/> My Subscriptions
+                                    <span class="badge bg-secondary ms-1" t-if="subscription_count" t-esc="subscription_count"/>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </xpath>
         </template>
 
-        <!-- Portal Layout Menu Extension -->
-        <template id="portal_layout_membership" name="Portal Layout: Membership Menu" inherit_id="portal.portal_layout" priority="50">
-            <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
-                <li t-if="page_name == 'membership'" t-attf-class="breadcrumb-item #{'active ' if not membership else ''}">
-                    <a t-if="membership" href="/my/memberships">Memberships</a>
-                    <t t-else="">Memberships</t>
-                </li>
-                <li t-if="membership" class="breadcrumb-item active">
-                    <t t-esc="membership.display_name"/>
-                </li>
-                <li t-if="page_name == 'subscription'" t-attf-class="breadcrumb-item #{'active ' if not subscription else ''}">
-                    <a t-if="subscription" href="/my/subscriptions">Subscriptions</a>
-                    <t t-else="">Subscriptions</t>
-                </li>
-                <li t-if="subscription" class="breadcrumb-item active">
-                    <t t-esc="subscription.display_name"/>
-                </li>
+        <!-- Alternative minimal portal home extension -->
+        <template id="portal_my_home_membership_minimal" name="Portal My Home: Membership (Minimal)" inherit_id="portal.portal_my_home" priority="31" active="False">
+            <!-- Even safer - just add to the end of the template -->
+            <xpath expr="//*" position="after">
+                <div class="container-fluid mt-4">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h5><i class="fa fa-users"/> Membership Portal</h5>
+                                <p>Access your membership and subscription information:</p>
+                                <a href="/my/memberships" class="btn btn-primary me-2">
+                                    <i class="fa fa-id-card"/> Memberships
+                                </a>
+                                <a href="/my/subscriptions" class="btn btn-outline-primary">
+                                    <i class="fa fa-refresh"/> Subscriptions
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </xpath>
         </template>
 
-        <!-- My Memberships List -->
+        <!-- My Memberships List - Community 18 safe version -->
         <template id="portal_my_memberships" name="My Memberships">
             <t t-call="portal.portal_layout">
-                <t t-set="breadcrumbs_searchbar" t-value="True"/>
-                <t t-call="portal.portal_searchbar">
-                    <t t-set="title">My Memberships</t>
-                </t>
+                <t t-set="page_name" t-value="'membership'"/>
                 
-                <div class="o_portal_wrap">
-                    <div class="o_portal_my_doc_table">
-                        <t t-if="not memberships">
-                            <div class="alert alert-info mt-3" role="alert">
-                                <p><strong>No memberships found.</strong></p>
-                                <p>You don't have any memberships yet. Contact us to learn about membership options.</p>
+                <div class="container mt-4">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h2><i class="fa fa-id-card"/> My Memberships</h2>
                             </div>
-                        </t>
-                        
-                        <t t-if="memberships">
-                            <div class="table-responsive">
-                                <table class="table table-hover o_portal_my_doc_table">
-                                    <thead>
-                                        <tr class="active">
-                                            <th class="text-start">Membership</th>
-                                            <th class="text-center">Status</th>
-                                            <th class="text-center">Start Date</th>
-                                            <th class="text-center">End Date</th>
-                                            <th class="text-end">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <t t-foreach="memberships" t-as="membership">
-                                            <tr>
-                                                <td class="text-start">
-                                                    <a t-attf-href="/my/memberships/#{membership.id}" class="fw-bold">
-                                                        <t t-esc="membership.product_id.name"/>
-                                                    </a>
-                                                    <br/>
-                                                    <small class="text-muted">
-                                                        <t t-esc="membership.name"/>
-                                                    </small>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span t-attf-class="badge rounded-pill text-bg-#{membership.state == 'active' and 'success' or membership.state == 'grace' and 'warning' or 'secondary'}">
-                                                        <t t-esc="membership.state.title()"/>
-                                                    </span>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span t-field="membership.start_date" t-options="{'widget': 'date'}"/>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span t-field="membership.end_date" t-options="{'widget': 'date'}"/>
+                            
+                            <t t-if="not memberships">
+                                <div class="alert alert-info">
+                                    <h4>No memberships found</h4>
+                                    <p>You don't have any memberships yet. Contact us to learn about membership options.</p>
+                                    <a href="/contactus" class="btn btn-primary">Contact Us</a>
+                                </div>
+                            </t>
+                            
+                            <t t-if="memberships">
+                                <div class="row">
+                                    <t t-foreach="memberships" t-as="membership">
+                                        <div class="col-lg-6 col-12 mb-4">
+                                            <div class="card h-100">
+                                                <div class="card-header d-flex justify-content-between align-items-center">
+                                                    <h6 class="mb-0" t-esc="membership.product_id.name"/>
+                                                    <span t-attf-class="badge bg-#{membership.state == 'active' and 'success' or membership.state == 'grace' and 'warning' or 'secondary'}" t-esc="membership.state.title()"/>
+                                                </div>
+                                                <div class="card-body">
+                                                    <p class="text-muted mb-2">
+                                                        <small>ID: <span t-esc="membership.name"/></small>
+                                                    </p>
+                                                    <div class="row text-sm">
+                                                        <div class="col-6">
+                                                            <strong>Start:</strong><br/>
+                                                            <span t-field="membership.start_date"/>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <strong>End:</strong><br/>
+                                                            <span t-field="membership.end_date"/>
+                                                        </div>
+                                                    </div>
                                                     <t t-if="membership.days_until_expiry &lt; 30 and membership.days_until_expiry &gt; 0">
-                                                        <br/><small class="text-warning">
-                                                            Expires in <t t-esc="membership.days_until_expiry"/> days
-                                                        </small>
+                                                        <div class="alert alert-warning mt-2 py-1">
+                                                            <small><i class="fa fa-clock-o"/> Expires in <strong t-esc="membership.days_until_expiry"/> days</strong></small>
+                                                        </div>
                                                     </t>
-                                                </td>
-                                                <td class="text-end">
-                                                    <a t-attf-href="/my/memberships/#{membership.id}" 
-                                                       class="btn btn-sm btn-outline-primary">
-                                                        <i class="fa fa-eye"/> View
-                                                    </a>
-                                                    <t t-if="membership.state == 'active' and not membership.auto_renew">
-                                                        <a t-attf-href="/my/memberships/#{membership.id}/renew" 
-                                                           class="btn btn-sm btn-primary ms-1">
-                                                            <i class="fa fa-refresh"/> Renew
+                                                </div>
+                                                <div class="card-footer">
+                                                    <div class="d-flex gap-2">
+                                                        <a t-attf-href="/my/memberships/#{membership.id}" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fa fa-eye"/> View Details
                                                         </a>
-                                                    </t>
-                                                </td>
-                                            </tr>
-                                        </t>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </t>
+                                                        <t t-if="membership.state == 'active' and not membership.auto_renew">
+                                                            <a t-attf-href="/my/memberships/#{membership.id}/renew" class="btn btn-sm btn-success">
+                                                                <i class="fa fa-refresh"/> Renew
+                                                            </a>
+                                                        </t>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </div>
+                            </t>
+                        </div>
                     </div>
                 </div>
             </t>
         </template>
 
-        <!-- Membership Detail -->
+        <!-- Membership Detail - Community 18 safe version -->
         <template id="portal_membership_detail" name="Membership Details">
             <t t-call="portal.portal_layout">
-                <t t-set="o_portal_fullwidth_alert" groups="ams_membership_core.group_membership_user">
-                    <t t-call="portal.portal_back_in_edit_mode">
-                        <t t-set="backend_url" t-value="'/web#model=ams.membership&amp;id=%s&amp;view_type=form' % (membership.id)"/>
-                    </t>
-                </t>
+                <t t-set="page_name" t-value="'membership'"/>
+                
+                <div class="container mt-4">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-8">
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item">
+                                        <a href="/my">My Account</a>
+                                    </li>
+                                    <li class="breadcrumb-item">
+                                        <a href="/my/memberships">Memberships</a>
+                                    </li>
+                                    <li class="breadcrumb-item active" t-esc="membership.product_id.name"/>
+                                </ol>
+                            </nav>
 
-                <t t-call="portal.portal_record_layout">
-                    <t t-set="card_header">
-                        <div class="row g-0">
-                            <div class="col-12">
-                                <h5 class="d-flex mb-1 mb-md-0">
-                                    <span t-field="membership.product_id.name"/>
-                                    <span t-attf-class="badge rounded-pill ms-2 text-bg-#{membership.state == 'active' and 'success' or membership.state == 'grace' and 'warning' or 'secondary'}">
-                                        <t t-esc="membership.state.title()"/>
-                                    </span>
-                                </h5>
-                                <div class="d-flex flex-column flex-sm-row">
-                                    <small class="text-muted">
-                                        Membership ID: <t t-esc="membership.name"/>
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    </t>
-                    
-                    <t t-set="card_body">
-                        <div class="row mb-4">
-                            <div class="col-12 col-md-6">
-                                <strong>Membership Period</strong>
-                                <div class="row">
-                                    <div class="col-sm-5"><strong>Start Date:</strong></div>
-                                    <div class="col-sm-7" t-field="membership.start_date" t-options="{'widget': 'date'}"/>
-                                </div>
-                                <div class="row">
-                                    <div class="col-sm-5"><strong>End Date:</strong></div>
-                                    <div class="col-sm-7" t-field="membership.end_date" t-options="{'widget': 'date'}"/>
-                                </div>
-                                <div class="row" t-if="membership.last_renewal_date">
-                                    <div class="col-sm-5"><strong>Last Renewed:</strong></div>
-                                    <div class="col-sm-7" t-field="membership.last_renewal_date" t-options="{'widget': 'date'}"/>
-                                </div>
-                            </div>
-                            
-                            <div class="col-12 col-md-6">
-                                <strong>Membership Details</strong>
-                                <div class="row" t-if="membership.member_type_id">
-                                    <div class="col-sm-5"><strong>Member Type:</strong></div>
-                                    <div class="col-sm-7" t-field="membership.member_type_id.name"/>
-                                </div>
-                                <div class="row">
-                                    <div class="col-sm-5"><strong>Auto Renew:</strong></div>
-                                    <div class="col-sm-7">
-                                        <span t-if="membership.auto_renew" class="text-success">
-                                            <i class="fa fa-check"/> Enabled
-                                        </span>
-                                        <span t-else="" class="text-muted">
-                                            <i class="fa fa-times"/> Disabled
-                                        </span>
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h3 class="mb-0">
+                                            <i class="fa fa-id-card"/> <span t-field="membership.product_id.name"/>
+                                        </h3>
+                                        <span t-attf-class="badge bg-#{membership.state == 'active' and 'success' or membership.state == 'grace' and 'warning' or 'secondary'} fs-6" t-esc="membership.state.title()"/>
                                     </div>
+                                    <small class="text-muted">Membership ID: <span t-esc="membership.name"/></small>
                                 </div>
-                                <div class="row">
-                                    <div class="col-sm-5"><strong>Payment Status:</strong></div>
-                                    <div class="col-sm-7">
-                                        <span t-attf-class="badge rounded-pill text-bg-#{membership.payment_status == 'paid' and 'success' or membership.payment_status == 'pending' and 'warning' or 'secondary'}">
-                                            <t t-esc="membership.payment_status.title()"/>
-                                        </span>
+                                
+                                <div class="card-body">
+                                    <div class="row mb-4">
+                                        <div class="col-md-6">
+                                            <h5>Membership Period</h5>
+                                            <table class="table table-borderless table-sm">
+                                                <tr>
+                                                    <td width="40%"><strong>Start Date:</strong></td>
+                                                    <td t-field="membership.start_date"/>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>End Date:</strong></td>
+                                                    <td t-field="membership.end_date"/>
+                                                </tr>
+                                                <tr t-if="membership.last_renewal_date">
+                                                    <td><strong>Last Renewed:</strong></td>
+                                                    <td t-field="membership.last_renewal_date"/>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <h5>Details</h5>
+                                            <table class="table table-borderless table-sm">
+                                                <tr t-if="membership.member_type_id">
+                                                    <td width="40%"><strong>Member Type:</strong></td>
+                                                    <td t-field="membership.member_type_id.name"/>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Auto Renew:</strong></td>
+                                                    <td>
+                                                        <span t-if="membership.auto_renew" class="text-success">
+                                                            <i class="fa fa-check"/> Enabled
+                                                        </span>
+                                                        <span t-else="" class="text-muted">
+                                                            <i class="fa fa-times"/> Disabled
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Payment:</strong></td>
+                                                    <td>
+                                                        <span t-attf-class="badge bg-#{membership.payment_status == 'paid' and 'success' or membership.payment_status == 'pending' and 'warning' or 'secondary'}" t-esc="membership.payment_status.title()"/>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Benefits Section -->
-                        <t t-if="membership.benefit_ids">
-                            <div class="row mb-4">
-                                <div class="col-12">
-                                    <strong>Your Benefits</strong>
-                                    <div class="row mt-2">
-                                        <t t-foreach="membership.benefit_ids" t-as="benefit">
-                                            <div class="col-12 col-md-6 mb-2">
-                                                <div class="card">
-                                                    <div class="card-body p-3">
-                                                        <h6 class="card-title mb-1">
-                                                            <t t-esc="benefit.name"/>
-                                                        </h6>
-                                                        <div class="text-muted small" t-field="benefit.description"/>
+                                    
+                                    <!-- Benefits Section -->
+                                    <t t-if="membership.benefit_ids">
+                                        <h5>Your Benefits</h5>
+                                        <div class="row mb-4">
+                                            <t t-foreach="membership.benefit_ids" t-as="benefit">
+                                                <div class="col-md-6 mb-3">
+                                                    <div class="card border-primary border-opacity-25">
+                                                        <div class="card-body">
+                                                            <h6 class="card-title">
+                                                                <i class="fa fa-gift text-primary"/> <span t-esc="benefit.name"/>
+                                                            </h6>
+                                                            <p class="card-text text-muted" t-field="benefit.description"/>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </t>
+                                        </div>
+                                    </t>
+                                    
+                                    <!-- Action Buttons -->
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        <t t-if="membership.state == 'active' and not membership.auto_renew">
+                                            <a t-attf-href="/my/memberships/#{membership.id}/renew" class="btn btn-success">
+                                                <i class="fa fa-refresh"/> Renew Membership
+                                            </a>
                                         </t>
+                                        
+                                        <a href="/my/memberships" class="btn btn-outline-secondary">
+                                            <i class="fa fa-arrow-left"/> Back to Memberships
+                                        </a>
                                     </div>
                                 </div>
                             </div>
-                        </t>
-                        
-                        <!-- Action Buttons -->
-                        <div class="row">
-                            <div class="col-12">
-                                <t t-if="membership.state == 'active' and not membership.auto_renew">
-                                    <a t-attf-href="/my/memberships/#{membership.id}/renew" 
-                                       class="btn btn-primary">
-                                        <i class="fa fa-refresh"/> Renew Membership
-                                    </a>
-                                </t>
-                                
-                                <a href="/my/memberships" class="btn btn-outline-secondary ms-2">
-                                    <i class="fa fa-arrow-left"/> Back to Memberships
-                                </a>
-                            </div>
                         </div>
-                    </t>
-                </t>
+                    </div>
+                </div>
             </t>
         </template>
 
         <!-- My Subscriptions List -->
         <template id="portal_my_subscriptions" name="My Subscriptions">
             <t t-call="portal.portal_layout">
-                <t t-set="breadcrumbs_searchbar" t-value="True"/>
+                <t t-set="page_name" t-value="'subscription'"/>
                 
-                <t t-call="portal.portal_searchbar">
-                    <t t-set="title">My Subscriptions</t>
-                </t>
-                
-                <div class="o_portal_wrap">
-                    <div class="o_portal_my_doc_table">
-                        <t t-if="not subscriptions">
-                            <div class="alert alert-info mt-3" role="alert">
-                                <p><strong>No subscriptions found.</strong></p>
-                                <p>You don't have any subscriptions yet. Browse our publications and services to get started.</p>
+                <div class="container mt-4">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h2><i class="fa fa-refresh"/> My Subscriptions</h2>
                             </div>
-                        </t>
-                        
-                        <t t-if="subscriptions">
-                            <div class="table-responsive">
-                                <table class="table table-hover o_portal_my_doc_table">
-                                    <thead>
-                                        <tr class="active">
-                                            <th class="text-start">Subscription</th>
-                                            <th class="text-center">Type</th>
-                                            <th class="text-center">Status</th>
-                                            <th class="text-center">Start Date</th>
-                                            <th class="text-center">End Date</th>
-                                            <th class="text-end">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <t t-foreach="subscriptions" t-as="subscription">
-                                            <tr>
-                                                <td class="text-start">
-                                                    <a t-attf-href="/my/subscriptions/#{subscription.id}" class="fw-bold">
-                                                        <t t-esc="subscription.product_id.name"/>
-                                                    </a>
-                                                    <br/>
-                                                    <small class="text-muted">
-                                                        <t t-esc="subscription.name"/>
-                                                    </small>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span class="badge rounded-pill text-bg-info">
-                                                        <t t-esc="subscription.subscription_type.title()"/>
-                                                    </span>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span t-attf-class="badge rounded-pill text-bg-#{subscription.state == 'active' and 'success' or subscription.state == 'paused' and 'info' or subscription.state == 'suspended' and 'warning' or 'secondary'}">
-                                                        <t t-esc="subscription.state.title()"/>
-                                                    </span>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span t-field="subscription.start_date" t-options="{'widget': 'date'}"/>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span t-field="subscription.end_date" t-options="{'widget': 'date'}"/>
-                                                    <t t-if="subscription.days_until_expiry &lt; 30 and subscription.days_until_expiry &gt; 0">
-                                                        <br/><small class="text-warning">
-                                                            Expires in <t t-esc="subscription.days_until_expiry"/> days
-                                                        </small>
+                            
+                            <t t-if="not subscriptions">
+                                <div class="alert alert-info">
+                                    <h4>No subscriptions found</h4>
+                                    <p>You don't have any subscriptions yet. Browse our publications and services to get started.</p>
+                                </div>
+                            </t>
+                            
+                            <t t-if="subscriptions">
+                                <div class="row">
+                                    <t t-foreach="subscriptions" t-as="subscription">
+                                        <div class="col-lg-6 col-12 mb-4">
+                                            <div class="card h-100">
+                                                <div class="card-header d-flex justify-content-between align-items-center">
+                                                    <h6 class="mb-0" t-esc="subscription.product_id.name"/>
+                                                    <div>
+                                                        <span class="badge bg-info me-1" t-esc="subscription.subscription_type.title()"/>
+                                                        <span t-attf-class="badge bg-#{subscription.state == 'active' and 'success' or subscription.state == 'paused' and 'info' or subscription.state == 'suspended' and 'warning' or 'secondary'}" t-esc="subscription.state.title()"/>
+                                                    </div>
+                                                </div>
+                                                <div class="card-body">
+                                                    <p class="text-muted mb-2">
+                                                        <small>ID: <span t-esc="subscription.name"/></small>
+                                                    </p>
+                                                    <div class="row text-sm">
+                                                        <div class="col-6">
+                                                            <strong>Start:</strong><br/>
+                                                            <span t-field="subscription.start_date"/>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <strong>End:</strong><br/>
+                                                            <span t-field="subscription.end_date"/>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Publication specific info -->
+                                                    <t t-if="subscription.subscription_type == 'publication'">
+                                                        <div class="mt-2">
+                                                            <span t-if="subscription.digital_access" class="badge bg-light text-dark me-1">
+                                                                <i class="fa fa-desktop"/> Digital
+                                                            </span>
+                                                            <span t-if="subscription.print_delivery" class="badge bg-light text-dark">
+                                                                <i class="fa fa-print"/> Print
+                                                            </span>
+                                                        </div>
                                                     </t>
-                                                </td>
-                                                <td class="text-end">
-                                                    <a t-attf-href="/my/subscriptions/#{subscription.id}" 
-                                                       class="btn btn-sm btn-outline-primary">
-                                                        <i class="fa fa-eye"/> View
+                                                </div>
+                                                <div class="card-footer">
+                                                    <a t-attf-href="/my/subscriptions/#{subscription.id}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fa fa-eye"/> View Details
                                                     </a>
-                                                </td>
-                                            </tr>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </template>
+
+        <!-- Subscription Detail -->
+        <template id="portal_subscription_detail" name="Subscription Details">
+            <t t-call="portal.portal_layout">
+                <t t-set="page_name" t-value="'subscription'"/>
+                
+                <div class="container mt-4">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-8">
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item">
+                                        <a href="/my">My Account</a>
+                                    </li>
+                                    <li class="breadcrumb-item">
+                                        <a href="/my/subscriptions">Subscriptions</a>
+                                    </li>
+                                    <li class="breadcrumb-item active" t-esc="subscription.product_id.name"/>
+                                </ol>
+                            </nav>
+
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h3 class="mb-0">
+                                            <i class="fa fa-refresh"/> <span t-field="subscription.product_id.name"/>
+                                        </h3>
+                                        <div>
+                                            <span class="badge bg-info me-1" t-esc="subscription.subscription_type.title()"/>
+                                            <span t-attf-class="badge bg-#{subscription.state == 'active' and 'success' or subscription.state == 'paused' and 'info' or subscription.state == 'suspended' and 'warning' or 'secondary'} fs-6" t-esc="subscription.state.title()"/>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Subscription ID: <span t-esc="subscription.name"/></small>
+                                </div>
+                                
+                                <div class="card-body">
+                                    <div class="row mb-4">
+                                        <div class="col-md-6">
+                                            <h5>Subscription Period</h5>
+                                            <table class="table table-borderless table-sm">
+                                                <tr>
+                                                    <td width="40%"><strong>Start Date:</strong></td>
+                                                    <td t-field="subscription.start_date"/>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>End Date:</strong></td>
+                                                    <td t-field="subscription.end_date"/>
+                                                </tr>
+                                                <tr t-if="subscription.last_renewal_date">
+                                                    <td><strong>Last Renewed:</strong></td>
+                                                    <td t-field="subscription.last_renewal_date"/>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <h5>Details</h5>
+                                            <table class="table table-borderless table-sm">
+                                                <tr>
+                                                    <td width="40%"><strong>Type:</strong></td>
+                                                    <td t-esc="subscription.subscription_type.title()"/>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Auto Renew:</strong></td>
+                                                    <td>
+                                                        <span t-if="subscription.auto_renew" class="text-success">
+                                                            <i class="fa fa-check"/> Enabled
+                                                        </span>
+                                                        <span t-else="" class="text-muted">
+                                                            <i class="fa fa-times"/> Disabled
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                
+                                                <!-- Publication-specific details -->
+                                                <t t-if="subscription.subscription_type == 'publication'">
+                                                    <tr>
+                                                        <td><strong>Digital Access:</strong></td>
+                                                        <td>
+                                                            <span t-if="subscription.digital_access" class="text-success">
+                                                                <i class="fa fa-check"/> Yes
+                                                            </span>
+                                                            <span t-else="" class="text-muted">
+                                                                <i class="fa fa-times"/> No
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Print Delivery:</strong></td>
+                                                        <td>
+                                                            <span t-if="subscription.print_delivery" class="text-success">
+                                                                <i class="fa fa-check"/> Yes
+                                                            </span>
+                                                            <span t-else="" class="text-muted">
+                                                                <i class="fa fa-times"/> No
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Benefits Section -->
+                                    <t t-if="subscription.benefit_ids">
+                                        <h5>Subscription Benefits</h5>
+                                        <div class="row mb-4">
+                                            <t t-foreach="subscription.benefit_ids" t-as="benefit">
+                                                <div class="col-md-6 mb-3">
+                                                    <div class="card border-info border-opacity-25">
+                                                        <div class="card-body">
+                                                            <h6 class="card-title">
+                                                                <i class="fa fa-gift text-info"/> <span t-esc="benefit.name"/>
+                                                            </h6>
+                                                            <p class="card-text text-muted" t-field="benefit.description"/>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </t>
+                                    
+                                    <!-- Action Buttons -->
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        <t t-if="subscription.state == 'active'">
+                                            <form method="post" t-attf-action="/my/subscriptions/#{subscription.id}/pause" style="display:inline;">
+                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <button type="submit" class="btn btn-warning btn-sm">
+                                                    <i class="fa fa-pause"/> Pause
+                                                </button>
+                                            </form>
                                         </t>
-                                    </tbody>
-                                </table>
+                                        
+                                        <t t-if="subscription.state == 'paused'">
+                                            <form method="post" t-attf-action="/my/subscriptions/#{subscription.id}/resume" style="display:inline;">
+                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <button type="submit" class="btn btn-success btn-sm">
+                                                    <i class="fa fa-play"/> Resume
+                                                </button>
+                                            </form>
+                                        </t>
+                                        
+                                        <a href="/my/subscriptions" class="btn btn-outline-secondary">
+                                            <i class="fa fa-arrow-left"/> Back to Subscriptions
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
-                        </t>
+                        </div>
                     </div>
                 </div>
             </t>

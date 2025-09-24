@@ -38,7 +38,7 @@ Integration:
         'account',
         'mail',
         'website',
-        # 'payment',      # Commented out - add back if needed later
+        'payment',      # Commented out - add back if needed later
     ],
     'external_dependencies': {
         'python': ['python-dateutil'],
