@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Memberships Menu -->
+        <menuitem id="menu_ams_memberships"
+            name="Memberships"
+            parent="ams_foundation.menu_ams_members"
+            action="action_ams_membership"
+            sequence="10"/>
+
+        <!-- Active Memberships -->
+        <menuitem id="menu_ams_memberships_active"
+            name="Active Memberships"
+            parent="menu_ams_memberships"
+            action="action_ams_membership_active"
+            sequence="10"/>
+
+        <!-- Expiring Memberships -->
+        <menuitem id="menu_ams_memberships_expiring"
+            name="Expiring Soon"
+            parent="menu_ams_memberships"
+            action="action_ams_membership_expiring"
+            sequence="20"/>
+
+        <!-- Subscriptions Menu -->
+        <menuitem id="menu_ams_subscriptions"
+            name="Subscriptions"
+            parent="ams_foundation.menu_ams_members"
+            action="action_ams_subscription"
+            sequence="20"/>
+
+        <!-- Active Subscriptions -->
+        <menuitem id="menu_ams_subscriptions_active"
+            name="Active Subscriptions"
+            parent="menu_ams_subscriptions"
+            action="action_ams_subscription_active"
+            sequence="10"/>
+
+        <!-- Publication Subscriptions -->
+        <menuitem id="menu_ams_subscriptions_publications"
+            name="Publications"
+            parent="menu_ams_subscriptions"
+            action="action_ams_subscription_publications"
+            sequence="20"/>
+
+        <!-- Chapter Subscriptions -->
+        <menuitem id="menu_ams_subscriptions_chapters"
+            name="Chapters"
+            parent="menu_ams_subscriptions"
+            action="action_ams_subscription_chapters"
+            sequence="30"/>
+
+        <!-- Renewals Menu -->
+        <menuitem id="menu_ams_renewals"
+            name="Renewals"
+            parent="ams_foundation.menu_ams_main"
+            sequence="30"/>
+
+        <!-- All Renewals -->
+        <menuitem id="menu_ams_renewals_all"
+            name="All Renewals"
+            parent="menu_ams_renewals"
+            action="action_ams_renewal"
+            sequence="10"/>
+
+        <!-- Draft Renewals -->
+        <menuitem id="menu_ams_renewals_draft"
+            name="Draft Renewals"
+            parent="menu_ams_renewals"
+            action="action_ams_renewal_draft"
+            sequence="20"/>
+
+        <!-- Pending Renewals -->
+        <menuitem id="menu_ams_renewals_pending"
+            name="Pending Payment"
+            parent="menu_ams_renewals"
+            action="action_ams_renewal_pending"
+            sequence="30"/>
+
+        <!-- Membership Renewals -->
+        <menuitem id="menu_ams_renewals_membership"
+            name="Membership Renewals"
+            parent="menu_ams_renewals"
+            action="action_ams_renewal_membership"
+            sequence="40"/>
+
+        <!-- Subscription Renewals -->
+        <menuitem id="menu_ams_renewals_subscription"
+            name="Subscription Renewals"
+            parent="menu_ams_renewals"
+            action="action_ams_renewal_subscription"
+            sequence="50"/>
+
+        <!-- Products Menu -->
+        <menuitem id="menu_ams_products"
+            name="Products"
+            parent="ams_foundation.menu_ams_configuration"
+            sequence="30"/>
+
+        <!-- Subscription Products -->
+        <menuitem id="menu_ams_products_subscription"
+            name="Subscription Products"
+            parent="menu_ams_products"
+            action="action_product_subscription_products"
+            sequence="10"/>
+
+        <!-- Membership Products -->
+        <menuitem id="menu_ams_products_membership"
+            name="Membership Products"
+            parent="menu_ams_products"
+            action="action_product_membership_products"
+            sequence="20"/>
+
+        <!-- Publication Products -->
+        <menuitem id="menu_ams_products_publication"
+            name="Publication Products"
+            parent="menu_ams_products"
+            action="action_product_publication_products"
+            sequence="30"/>
+
+        <!-- Benefits Menu -->
+        <menuitem id="menu_ams_benefits"
+            name="Benefits"
+            parent="ams_foundation.menu_ams_configuration"
+            action="action_ams_benefit"
+            sequence="40"/>
+
+        <!-- Discount Benefits -->
+        <menuitem id="menu_ams_benefits_discounts"
+            name="Discount Benefits"
+            parent="menu_ams_benefits"
+            action="action_ams_benefit_discounts"
+            sequence="10"/>
+
+        <!-- Access Benefits -->
+        <menuitem id="menu_ams_benefits_access"
+            name="Access Benefits"
+            parent="menu_ams_benefits"
+            action="action_ams_benefit_access"
+            sequence="20"/>
+
+        <!-- Benefit Usage -->
+        <menuitem id="menu_ams_benefits_usage"
+            name="Benefit Usage"
+            parent="menu_ams_benefits"
+            action="action_ams_benefit_usage"
+            sequence="30"/>
+
+        <!-- Tools Menu -->
+        <menuitem id="menu_ams_membership_tools"
+            name="Membership Tools"
+            parent="ams_foundation.menu_ams_tools"
+            sequence="20"/>
+
+        <!-- Mass Renewal -->
+        <menuitem id="menu_ams_mass_renewal"
+            name="Mass Renewal"
+            parent="menu_ams_membership_tools"
+            action="action_mass_renewal_wizard"
+            sequence="10"/>
+
+        <!-- Reports Menu -->
+        <menuitem id="menu_ams_reports"
+            name="Reports"
+            parent="ams_foundation.menu_ams_main"
+            sequence="80"/>
+
+        <!-- Renewal Reports -->
+        <menuitem id="menu_ams_reports_renewals"
+            name="Renewal Reports"
+            parent="menu_ams_reports"
+            sequence="10"/>
+
+        <!-- Early Renewals Report -->
+        <menuitem id="menu_ams_reports_early_renewals"
+            name="Early Renewals"
+            parent="menu_ams_reports_renewals"
+            action="action_ams_renewal_early"
+            sequence="10"/>
+
+        <!-- Late Renewals Report -->
+        <menuitem id="menu_ams_reports_late_renewals"
+            name="Late Renewals"
+            parent="menu_ams_reports_renewals"
+            action="action_ams_renewal_late"
+            sequence="20"/>
+
+    </data>
+</odoo>

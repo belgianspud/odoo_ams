@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Extend Product Template Form View for Subscription Configuration -->
+        <record id="view_product_template_form_subscription" model="ir.ui.view">
+            <field name="name">product.template.form.subscription</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_form_view"/>
+            <field name="arch" type="xml">
+                
+                <!-- Add subscription toggle in header -->
+                <xpath expr="//field[@name='sale_ok']" position="after">
+                    <field name="is_subscription_product"/>
+                </xpath>
+
+                <!-- Add subscription stats buttons -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_memberships" type="object"
+                            class="oe_stat_button" icon="fa-users"
+                            invisible="not is_subscription_product or subscription_product_type != 'membership'"
+                            groups="ams_membership_core.group_membership_user">
+                        <field name="active_memberships_count" widget="statinfo" string="Memberships"/>
+                    </button>
+                    
+                    <button name="action_view_subscriptions" type="object"
+                            class="oe_stat_button" icon="fa-refresh"
+                            invisible="not is_subscription_product or subscription_product_type == 'membership'"
+                            groups="ams_membership_core.group_membership_user">
+                        <field name="active_subscriptions_count" widget="statinfo" string="Subscriptions"/>
+                    </button>
+                    
+                    <button name="action_configure_benefits" type="object"
+                            class="oe_stat_button" icon="fa-gift"
+                            string="Benefits"
+                            invisible="not is_subscription_product"
+                            groups="ams_membership_core.group_membership_manager"/>
+                </xpath>
+
+                <!-- Add Subscription Configuration tab -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Subscription Settings" name="subscription_settings" 
+                          invisible="not is_subscription_product">
+                        
+                        <group>
+                            <group string="Subscription Configuration">
+                                <field name="subscription_product_type" required="is_subscription_product"/>
+                                <field name="subscription_period"/>
+                                <field name="auto_renew_default"/>
+                                <field name="renewal_reminder_days"/>
+                                <field name="grace_period_days"/>
+                            </group>
+                            <group string="Portal &amp; Access">
+                                <field name="grant_portal_access"/>
+                                <field name="portal_access_groups" widget="many2many_tags"
+                                       invisible="not grant_portal_access"/>
+                            </group>
+                        </group>
+
+                        <group string="Product Capabilities">
+                            <group>
+                                <field name="supports_proration"/>
+                                <field name="allows_upgrades"/>
+                                <field name="allows_downgrades"/>
+                            </group>
+                            <group>
+                                <field name="revenue_recognition_method"/>
+                            </group>
+                        </group>
+
+                        <!-- Publication-specific settings -->
+                        <group string="Publication Settings" 
+                               invisible="subscription_product_type != 'publication'">
+                            <group>
+                                <field name="publication_digital_access"/>
+                                <field name="publication_print_delivery"/>
+                            </group>
+                            <group>
+                                <field name="publication_frequency"/>
+                            </group>
+                        </group>
+
+                        <!-- Chapter-specific settings -->
+                        <group string="Chapter Settings" 
+                               invisible="subscription_product_type != 'chapter'">
+                            <group>
+                                <field name="chapter_access_level"/>
+                            </group>
+                        </group>
+
+                        <!-- Benefits Configuration -->
+                        <group string="Included Benefits">
+                            <field name="benefit_ids" nolabel="1" 
+                                   domain="[('active', '=', True)]">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="benefit_type"/>
+                                    <field name="applies_to"/>
+                                    <field name="discount_percentage" 
+                                           invisible="benefit_type != 'discount'"/>
+                                </list>
+                            </field>
+                        </group>
+
+                    </page>
+                </xpath>
+
+                <!-- Add subscription revenue field to sales tab -->
+                <xpath expr="//field[@name='list_price']" position="after">
+                    <field name="total_subscription_revenue" 
+                           invisible="not is_subscription_product"
+                           readonly="True"
+                           groups="ams_membership_core.group_membership_user"/>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- Subscription Products List View -->
+        <record id="view_product_template_list_subscription" model="ir.ui.view">
+            <field name="name">product.template.list.subscription</field>
+            <field name="model">product.template</field>
+            <field name="arch" type="xml">
+                <list string="Subscription Products">
+                    <field name="name"/>
+                    <field name="subscription_product_type"/>
+                    <field name="subscription_period"/>
+                    <field name="list_price" widget="monetary"/>
+                    <field name="active_memberships_count" 
+                           invisible="subscription_product_type != 'membership'"/>
+                    <field name="active_subscriptions_count"
+                           invisible="subscription_product_type == 'membership'"/>
+                    <field name="auto_renew_default"/>
+                    <field name="active"/>
+                    <field name="is_subscription_product" invisible="1"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Subscription Products Kanban View -->
+        <record id="view_product_template_kanban_subscription" model="ir.ui.view">
+            <field name="name">product.template.kanban.subscription</field>
+            <field name="model">product.template</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_mobile">
+                    <field name="name"/>
+                    <field name="subscription_product_type"/>
+                    <field name="list_price"/>
+                    <field name="active_memberships_count"/>
+                    <field name="active_subscriptions_count"/>
+                    <field name="image_128"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_card oe_kanban_global_click">
+                                <div class="o_kanban_image">
+                                    <img t-att-src="kanban_image('product.template', 'image_128', record.id.raw_value)" 
+                                         alt="Product" class="o_image_64_contain"/>
+                                </div>
+                                <div class="oe_kanban_details">
+                                    <div class="o_kanban_record_top">
+                                        <div class="o_kanban_record_headings">
+                                            <strong class="o_kanban_record_title">
+                                                <t t-esc="record.name.value"/>
+                                            </strong>
+                                            <div class="o_kanban_record_subtitle">
+                                                <t t-esc="record.subscription_product_type.value"/>
+                                            </div>
+                                        </div>
+                                        <span class="badge badge-pill badge-info">
+                                            $<t t-esc="record.list_price.value"/>
+                                        </span>
+                                    </div>
+                                    <div class="o_kanban_record_body">
+                                        <div t-if="record.subscription_product_type.raw_value === 'membership'">
+                                            <i class="fa fa-users"/> 
+                                            <t t-esc="record.active_memberships_count.value"/> Active
+                                        </div>
+                                        <div t-if="record.subscription_product_type.raw_value !== 'membership'">
+                                            <i class="fa fa-refresh"/> 
+                                            <t t-esc="record.active_subscriptions_count.value"/> Active
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- Subscription Products Search View -->
+        <record id="view_product_template_search_subscription" model="ir.ui.view">
+            <field name="name">product.template.search.subscription</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_search_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//filter[@name='filter_to_sell']" position="after">
+                    <separator/>
+                    <filter string="Subscription Products" name="subscription_products" 
+                            domain="[('is_subscription_product', '=', True)]"/>
+                    <filter string="Membership Products" name="membership_products" 
+                            domain="[('subscription_product_type', '=', 'membership')]"/>
+                    <filter string="Publication Products" name="publication_products" 
+                            domain="[('subscription_product_type', '=', 'publication')]"/>
+                    <filter string="Chapter Products" name="chapter_products" 
+                            domain="[('subscription_product_type', '=', 'chapter')]"/>
+                    <separator/>
+                    <filter string="Auto-Renew" name="auto_renew" 
+                            domain="[('auto_renew_default', '=', True)]"/>
+                    <filter string="Portal Access" name="portal_access" 
+                            domain="[('grant_portal_access', '=', True)]"/>
+                </xpath>
+                
+                <xpath expr="//group[@name='group_by']" position="inside">
+                    <filter string="Subscription Type" name="group_subscription_type" 
+                            domain="[]" context="{'group_by': 'subscription_product_type'}"/>
+                    <filter string="Subscription Period" name="group_subscription_period" 
+                            domain="[]" context="{'group_by': 'subscription_period'}"/>
+                </xpath>
+                
+                <xpath expr="//field[@name='name']" position="after">
+                    <field name="subscription_product_type"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Subscription Products Action -->
+        <record id="action_subscription_products" model="ir.actions.act_window">
+            <field name="name">Subscription Products</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="domain">[('is_subscription_product', '=', True)]</field>
+            <field name="context">{
+                'search_default_subscription_products': 1,
+                'default_is_subscription_product': True,
+                'default_type': 'service',
+                'default_sale_ok': True
+            }</field>
+            <field name="view_ids" eval="[(5, 0, 0),
+                (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_product_template_kanban_subscription')}),
+                (0, 0, {'view_mode': 'list', 'view_id': ref('view_product_template_list_subscription')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('view_product_template_form_subscription')})
+            ]"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first subscription product
+                </p>
+                <p>
+                    Subscription products automatically create memberships or subscriptions 
+                    when purchased. Configure benefits, renewal settings, and portal access 
+                    for each product type.
+                </p>
+            </field>
+        </record>
+
+        <!-- Membership Products Action -->
+        <record id="action_membership_products" model="ir.actions.act_window">
+            <field name="name">Membership Products</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="domain">[('is_subscription_product', '=', True), ('subscription_product_type', '=', 'membership')]</field>
+            <field name="context">{
+                'search_default_membership_products': 1,
+                'default_is_subscription_product': True,
+                'default_subscription_product_type': 'membership',
+                'default_type': 'service',
+                'default_sale_ok': True,
+                'default_categ_id': ref('ams_membership_core.categ_membership_products')
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first membership product
+                </p>
+                <p>
+                    Membership products create member records when purchased. 
+                    Only one active membership is allowed per member.
+                </p>
+            </field>
+        </record>
+
+        <!-- Publication Products Action -->
+        <record id="action_publication_products" model="ir.actions.act_window">
+            <field name="name">Publication Products</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="domain">[('is_subscription_product', '=', True), ('subscription_product_type', '=', 'publication')]</field>
+            <field name="context">{
+                'search_default_publication_products': 1,
+                'default_is_subscription_product': True,
+                'default_subscription_product_type': 'publication',
+                'default_type': 'service',
+                'default_sale_ok': True,
+                'default_categ_id': ref('ams_membership_core.categ_publication_subscriptions')
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first publication product
+                </p>
+                <p>
+                    Publication products provide digital and/or print access to 
+                    journals, magazines, and other recurring publications.
+                </p>
+            </field>
+        </record>
+
+        <!-- Quick Actions for Product Variants -->
+        <record id="view_product_product_form_subscription" model="ir.ui.view">
+            <field name="name">product.product.form.subscription</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_normal_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_create_membership_quick" type="object"
+                            class="oe_stat_button" icon="fa-plus-circle"
+                            string="Create Membership"
+                            invisible="not is_subscription_product or subscription_product_type != 'membership'"
+                            groups="ams_membership_core.group_membership_user"/>
+                    
+                    <button name="action_create_subscription_quick" type="object"
+                            class="oe_stat_button" icon="fa-plus-circle"
+                            string="Create Subscription"
+                            invisible="not is_subscription_product or subscription_product_type == 'membership'"
+                            groups="ams_membership_core.group_membership_user"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

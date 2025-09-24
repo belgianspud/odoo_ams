@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Membership Transfer Wizard Form View -->
+        <record id="view_membership_transfer_wizard_form" model="ir.ui.view">
+            <field name="name">ams.membership.transfer.wizard.form</field>
+            <field name="model">ams.membership.transfer.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Transfer Membership">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>Transfer Membership</h1>
+                            <p>Transfer membership from one member to another.</p>
+                        </div>
+
+                        <!-- Warnings -->
+                        <div class="alert alert-warning" role="alert" 
+                             invisible="not transfer_warnings">
+                            <strong>Warning:</strong><br/>
+                            <field name="transfer_warnings" readonly="True" nolabel="1"/>
+                        </div>
+
+                        <group>
+                            <group string="Current Membership">
+                                <field name="membership_id" readonly="True"/>
+                                <field name="source_partner_id" readonly="True"/>
+                                <field name="product_id" readonly="True"/>
+                                <field name="current_end_date" readonly="True"/>
+                                <field name="membership_fee" widget="monetary" readonly="True"/>
+                                <field name="currency_id" invisible="True"/>
+                                <field name="remaining_days" readonly="True"/>
+                            </group>
+                            <group string="Transfer Details">
+                                <field name="transfer_type" widget="radio" required="True"/>
+                                <field name="target_partner_id" required="True"/>
+                                <field name="transfer_date" required="True"/>
+                                <field name="transfer_reason" required="True"/>
+                            </group>
+                        </group>
+
+                        <!-- Partial Transfer Settings -->
+                        <group string="Partial Transfer Settings" 
+                               invisible="transfer_type != 'partial'">
+                            <group>
+                                <field name="split_remaining_time"/>
+                                <field name="source_end_date" required="transfer_type == 'partial'"/>
+                                <field name="target_start_date" required="transfer_type == 'partial'"/>
+                            </group>
+                            <group>
+                                <field name="target_end_date" required="transfer_type == 'partial'"/>
+                            </group>
+                        </group>
+
+                        <!-- Full/Replacement Transfer Settings -->
+                        <group string="Transfer Period" 
+                               invisible="transfer_type == 'partial'">
+                            <group>
+                                <field name="target_start_date" readonly="True"/>
+                                <field name="target_end_date" readonly="True"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Financial Settings">
+                                <field name="handle_financials"/>
+                                <field name="prorate_amounts" 
+                                       invisible="not handle_financials"/>
+                                <field name="create_refund" 
+                                       invisible="not handle_financials"/>
+                                <field name="create_invoice" 
+                                       invisible="not handle_financials"/>
+                            </group>
+                            <group string="Calculated Amounts" 
+                                   invisible="not handle_financials">
+                                <field name="refund_amount" widget="monetary" 
+                                       invisible="not create_refund"/>
+                                <field name="invoice_amount" widget="monetary" 
+                                       invisible="not create_invoice"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Member Type Updates">
+                                <field name="update_member_types"/>
+                                <field name="source_new_member_type_id" 
+                                       invisible="not update_member_types"/>
+                                <field name="target_member_type_id" 
+                                       invisible="not update_member_types"/>
+                            </group>
+                            <group string="Additional Options">
+                                <field name="terminate_source" 
+                                       invisible="transfer_type == 'partial'"/>
+                                <field name="copy_benefits"/>
+                                <field name="send_notifications"/>
+                            </group>
+                        </group>
+
+                        <notebook>
+                            <page string="Notes" name="notes">
+                                <group>
+                                    <field name="transfer_notes" 
+                                           placeholder="Reason or details about this transfer..."/>
+                                    <field name="internal_notes" 
+                                           placeholder="Internal notes (not visible to members)..."/>
+                                </group>
+                            </page>
+                        </notebook>
+
+                        <!-- Status indicator -->
+                        <div class="alert alert-success" role="alert" invisible="not can_transfer">
+                            <strong>Ready to transfer:</strong> All requirements are met.
+                        </div>
+                        
+                        <div class="alert alert-danger" role="alert" invisible="can_transfer">
+                            <strong>Cannot transfer:</strong> Please check the membership status and transfer details.
+                        </div>
+
+                        <!-- Hidden fields -->
+                        <field name="can_transfer" invisible="True"/>
+                    </sheet>
+                    
+                    <footer>
+                        <button name="action_transfer_membership" 
+                                string="Transfer Membership" 
+                                type="object" 
+                                class="btn-primary"
+                                invisible="not can_transfer"
+                                confirm="Are you sure you want to transfer this membership? This action cannot be undone."/>
+                        <button string="Cancel" special="cancel" class="btn-secondary"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!-- Membership Transfer Wizard Action -->
+        <record id="action_membership_transfer_wizard" model="ir.actions.act_window">
+            <field name="name">Transfer Membership</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership.transfer.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Transfer membership to another member
+                </p>
+                <p>
+                    Use this wizard to transfer a membership from one member to another.
+                    This is useful for company changes, sales, gifts, or error corrections.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

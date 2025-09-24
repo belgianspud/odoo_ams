@@ -1,0 +1,419 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- AMS Renewal List View -->
+        <record id="view_ams_renewal_list" model="ir.ui.view">
+            <field name="name">ams.renewal.list</field>
+            <field name="model">ams.renewal</field>
+            <field name="arch" type="xml">
+                <list string="Renewals" default_order="renewal_date desc">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="membership_id"/>
+                    <field name="subscription_id"/>
+                    <field name="renewal_date"/>
+                    <field name="previous_end_date" optional="hide"/>
+                    <field name="new_end_date"/>
+                    <field name="renewal_type"/>
+                    <field name="amount" widget="monetary"/>
+                    <field name="payment_state" optional="show"/>
+                    <field name="state" decoration-success="state=='confirmed'" 
+                           decoration-warning="state=='pending'" 
+                           decoration-danger="state=='cancelled'"/>
+                    <field name="is_early_renewal" optional="hide"/>
+                    <field name="is_late_renewal" optional="hide"/>
+                    <field name="days_early" optional="hide"/>
+                    <field name="days_late" optional="hide"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- AMS Renewal Form View -->
+        <record id="view_ams_renewal_form" model="ir.ui.view">
+            <field name="name">ams.renewal.form</field>
+            <field name="model">ams.renewal</field>
+            <field name="arch" type="xml">
+                <form string="Renewal">
+                    <header>
+                        <button name="action_create_invoice" type="object" string="Create Invoice" 
+                                class="oe_highlight" invisible="state != 'draft' or invoice_id"
+                                groups="account.group_account_invoice"/>
+                        <button name="action_confirm" type="object" string="Confirm" 
+                                class="btn-primary" invisible="state != 'draft'"
+                                groups="ams_membership_core.group_membership_user"/>
+                        <button name="action_cancel" type="object" string="Cancel" 
+                                invisible="state in ['confirmed', 'cancelled']"
+                                groups="ams_membership_core.group_membership_user"
+                                confirm="Are you sure you want to cancel this renewal?"/>
+                        <button name="action_view_invoice" type="object" string="View Invoice" 
+                                invisible="not invoice_id"
+                                groups="account.group_account_invoice"/>
+                        <field name="state" widget="statusbar" 
+                               statusbar_visible="draft,pending,confirmed"/>
+                    </header>
+                    
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_invoice" type="object" 
+                                    class="oe_stat_button" icon="fa-file-text-o"
+                                    invisible="not invoice_id"
+                                    groups="account.group_account_invoice">
+                                <div class="o_stat_info">
+                                    <span class="o_stat_text">View</span>
+                                    <span class="o_stat_text">Invoice</span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <div class="oe_title">
+                            <h1>
+                                <field name="display_name" readonly="True"/>
+                            </h1>
+                            <div class="o_row">
+                                <field name="name" readonly="True"/>
+                            </div>
+                        </div>
+
+                        <group>
+                            <group string="Renewal Information">
+                                <field name="partner_id" readonly="True"/>
+                                <field name="membership_id" invisible="not membership_id"/>
+                                <field name="subscription_id" invisible="not subscription_id"/>
+                                <field name="renewal_date" required="True"/>
+                                <field name="renewal_type"/>
+                            </group>
+                            <group string="Period Changes">
+                                <field name="previous_end_date" readonly="True"/>
+                                <field name="new_end_date" required="True"/>
+                                <field name="renewal_period"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Financial Details">
+                                <field name="original_amount" widget="monetary" readonly="True"/>
+                                <field name="discount_amount" widget="monetary" readonly="True"/>
+                                <field name="proration_amount" widget="monetary" readonly="True"/>
+                                <field name="amount" widget="monetary" required="True"/>
+                                <field name="currency_id" invisible="True"/>
+                                <field name="payment_state" readonly="True"/>
+                            </group>
+                            <group string="Renewal Analysis">
+                                <field name="is_early_renewal" readonly="True"/>
+                                <field name="is_late_renewal" readonly="True"/>
+                                <field name="days_early" readonly="True" 
+                                       invisible="not is_early_renewal"/>
+                                <field name="days_late" readonly="True" 
+                                       invisible="not is_late_renewal"/>
+                            </group>
+                        </group>
+
+                        <group string="Revenue Recognition" 
+                               groups="ams_membership_core.group_membership_manager"
+                               invisible="True">  <!-- Placeholder for future billing module -->
+                            <group>
+                                <field name="revenue_recognition_date"/>
+                                <field name="deferred_revenue_amount" widget="monetary"/>
+                            </group>
+                        </group>
+
+                        <group string="Sales Integration" 
+                               groups="sales_team.group_sale_salesman">
+                            <group>
+                                <field name="sale_order_id" readonly="True"/>
+                                <field name="invoice_id" readonly="True"/>
+                            </group>
+                        </group>
+
+                        <notebook>
+                            <page string="Notes" name="notes">
+                                <group>
+                                    <field name="renewal_reason" 
+                                           placeholder="Reason for renewal or comments..."/>
+                                    <field name="notes" 
+                                           placeholder="Internal notes about this renewal..."/>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    
+                    <div class="oe_chatter">
+                        <chatter/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!-- AMS Renewal Kanban View -->
+        <record id="view_ams_renewal_kanban" model="ir.ui.view">
+            <field name="name">ams.renewal.kanban</field>
+            <field name="model">ams.renewal</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_mobile" default_group_by="state">
+                    <field name="partner_id"/>
+                    <field name="membership_id"/>
+                    <field name="subscription_id"/>
+                    <field name="renewal_date"/>
+                    <field name="new_end_date"/>
+                    <field name="renewal_type"/>
+                    <field name="amount"/>
+                    <field name="state"/>
+                    <field name="payment_state"/>
+                    <field name="is_early_renewal"/>
+                    <field name="is_late_renewal"/>
+                    <field name="days_early"/>
+                    <field name="days_late"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                                <div class="row">
+                                    <div class="col-8">
+                                        <strong><t t-esc="record.partner_id.value"/></strong>
+                                    </div>
+                                    <div class="col-4 text-right">
+                                        <span t-attf-class="badge badge-pill badge-#{record.state.raw_value === 'confirmed' ? 'success' : record.state.raw_value === 'pending' ? 'warning' : record.state.raw_value === 'cancelled' ? 'danger' : 'secondary'}">
+                                            <t t-esc="record.state.value"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <t t-if="record.membership_id.value">
+                                            Membership Renewal
+                                        </t>
+                                        <t t-if="record.subscription_id.value">
+                                            Subscription Renewal
+                                        </t>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small>Renewal: <t t-esc="record.renewal_date.value"/></small>
+                                    </div>
+                                    <div class="col-6">
+                                        <small>New End: <t t-esc="record.new_end_date.value"/></small>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small>$<t t-esc="record.amount.value"/></small>
+                                    </div>
+                                    <div class="col-6 text-right">
+                                        <span t-attf-class="badge badge-#{record.payment_state.raw_value === 'paid' ? 'success' : record.payment_state.raw_value === 'in_payment' ? 'info' : 'secondary'}">
+                                            <t t-esc="record.payment_state.value"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <span t-attf-class="badge badge-#{record.renewal_type.raw_value === 'automatic' ? 'info' : record.renewal_type.raw_value === 'early' ? 'success' : record.renewal_type.raw_value === 'late' ? 'warning' : 'secondary'}">
+                                            <t t-esc="record.renewal_type.value"/>
+                                        </span>
+                                        <t t-if="record.is_early_renewal.raw_value">
+                                            <span class="badge badge-success">
+                                                <t t-esc="record.days_early.value"/> days early
+                                            </span>
+                                        </t>
+                                        <t t-if="record.is_late_renewal.raw_value">
+                                            <span class="badge badge-warning">
+                                                <t t-esc="record.days_late.value"/> days late
+                                            </span>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- AMS Renewal Search View -->
+        <record id="view_ams_renewal_search" model="ir.ui.view">
+            <field name="name">ams.renewal.search</field>
+            <field name="model">ams.renewal</field>
+            <field name="arch" type="xml">
+                <search string="Renewals">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="membership_id"/>
+                    <field name="subscription_id"/>
+                    <separator/>
+                    <filter string="Draft" name="draft" 
+                            domain="[('state', '=', 'draft')]"/>
+                    <filter string="Pending" name="pending" 
+                            domain="[('state', '=', 'pending')]"/>
+                    <filter string="Confirmed" name="confirmed" 
+                            domain="[('state', '=', 'confirmed')]"/>
+                    <filter string="Cancelled" name="cancelled" 
+                            domain="[('state', '=', 'cancelled')]"/>
+                    <separator/>
+                    <filter string="Membership Renewals" name="membership_renewals" 
+                            domain="[('membership_id', '!=', False)]"/>
+                    <filter string="Subscription Renewals" name="subscription_renewals" 
+                            domain="[('subscription_id', '!=', False)]"/>
+                    <separator/>
+                    <filter string="Manual Renewals" name="manual" 
+                            domain="[('renewal_type', '=', 'manual')]"/>
+                    <filter string="Automatic Renewals" name="automatic" 
+                            domain="[('renewal_type', '=', 'automatic')]"/>
+                    <filter string="Early Renewals" name="early" 
+                            domain="[('renewal_type', '=', 'early')]"/>
+                    <filter string="Late Renewals" name="late" 
+                            domain="[('renewal_type', '=', 'late')]"/>
+                    <separator/>
+                    <filter string="Paid" name="paid" 
+                            domain="[('payment_state', '=', 'paid')]"/>
+                    <filter string="Not Paid" name="not_paid" 
+                            domain="[('payment_state', '=', 'not_paid')]"/>
+                    <filter string="In Payment" name="in_payment" 
+                            domain="[('payment_state', '=', 'in_payment')]"/>
+                    <separator/>
+                    <filter string="Early Renewals" name="early_renewals" 
+                            domain="[('is_early_renewal', '=', True)]"/>
+                    <filter string="Late Renewals" name="late_renewals" 
+                            domain="[('is_late_renewal', '=', True)]"/>
+                    <separator/>
+                    <filter string="This Month" name="this_month" 
+                            domain="[('renewal_date', '&gt;=', (context_today() - datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                    <filter string="This Year" name="this_year" 
+                            domain="[('renewal_date', '&gt;=', (context_today() - datetime.timedelta(days=365)).strftime('%Y-%m-%d'))]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Status" name="group_state" 
+                                domain="[]" context="{'group_by': 'state'}"/>
+                        <filter string="Renewal Type" name="group_renewal_type" 
+                                domain="[]" context="{'group_by': 'renewal_type'}"/>
+                        <filter string="Payment Status" name="group_payment" 
+                                domain="[]" context="{'group_by': 'payment_state'}"/>
+                        <filter string="Member" name="group_partner" 
+                                domain="[]" context="{'group_by': 'partner_id'}"/>
+                        <filter string="Renewal Date" name="group_renewal_date" 
+                                domain="[]" context="{'group_by': 'renewal_date:month'}"/>
+                        <filter string="Renewal Period" name="group_renewal_period" 
+                                domain="[]" context="{'group_by': 'renewal_period'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- AMS Renewal Actions -->
+        <record id="action_ams_renewal" model="ir.actions.act_window">
+            <field name="name">Renewals</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.renewal</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="context">{'search_default_this_month': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No renewals found
+                </p>
+                <p>
+                    Renewals are created when members renew their memberships
+                    or subscriptions. They track the renewal process, payment,
+                    and any changes to the subscription period.
+                </p>
+            </field>
+        </record>
+
+        <!-- Pending Renewals Action -->
+        <record id="action_ams_renewal_pending" model="ir.actions.act_window">
+            <field name="name">Pending Renewals</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.renewal</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('state', '=', 'pending')]</field>
+            <field name="context">{}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No pending renewals
+                </p>
+                <p>
+                    Pending renewals are waiting for payment confirmation.
+                    Once payment is received, they will be automatically confirmed.
+                </p>
+            </field>
+        </record>
+
+        <!-- Draft Renewals Action -->
+        <record id="action_ams_renewal_draft" model="ir.actions.act_window">
+            <field name="name">Draft Renewals</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.renewal</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('state', '=', 'draft')]</field>
+            <field name="context">{}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No draft renewals
+                </p>
+                <p>
+                    Draft renewals are created from renewal reminders or
+                    manual renewal processes. They need to be confirmed
+                    and invoiced to complete the renewal.
+                </p>
+            </field>
+        </record>
+
+        <!-- Membership Renewals Action -->
+        <record id="action_ams_renewal_membership" model="ir.actions.act_window">
+            <field name="name">Membership Renewals</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.renewal</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('membership_id', '!=', False)]</field>
+            <field name="context">{'search_default_this_year': 1}</field>
+        </record>
+
+        <!-- Subscription Renewals Action -->
+        <record id="action_ams_renewal_subscription" model="ir.actions.act_window">
+            <field name="name">Subscription Renewals</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.renewal</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('subscription_id', '!=', False)]</field>
+            <field name="context">{'search_default_this_year': 1}</field>
+        </record>
+
+        <!-- Early Renewals Report Action -->
+        <record id="action_ams_renewal_early" model="ir.actions.act_window">
+            <field name="name">Early Renewals Report</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.renewal</field>
+            <field name="view_mode">list</field>
+            <field name="domain">[('is_early_renewal', '=', True), ('state', '=', 'confirmed')]</field>
+            <field name="context">{'search_default_this_year': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No early renewals found
+                </p>
+                <p>
+                    This report shows members who renewed before their
+                    expiration date. Early renewals may be eligible for
+                    discounts or other incentives.
+                </p>
+            </field>
+        </record>
+
+        <!-- Late Renewals Report Action -->
+        <record id="action_ams_renewal_late" model="ir.actions.act_window">
+            <field name="name">Late Renewals Report</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.renewal</field>
+            <field name="view_mode">list</field>
+            <field name="domain">[('is_late_renewal', '=', True), ('state', '=', 'confirmed')]</field>
+            <field name="context">{'search_default_this_year': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No late renewals found
+                </p>
+                <p>
+                    This report shows members who renewed after their
+                    membership or subscription expired. Consider follow-up
+                    campaigns for better retention.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>
