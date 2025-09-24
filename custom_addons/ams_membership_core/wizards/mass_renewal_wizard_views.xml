@@ -210,9 +210,9 @@
                     </sheet>
                     
                     <footer>
-                        <button string="View Renewals" 
-                                action="ams_membership_core.action_ams_renewal"
-                                type="action" 
+                        <button name="action_view_renewals"
+                                string="View Renewals" 
+                                type="object" 
                                 class="btn-primary"/>
                         <button string="Close" special="cancel" class="btn-secondary"/>
                     </footer>

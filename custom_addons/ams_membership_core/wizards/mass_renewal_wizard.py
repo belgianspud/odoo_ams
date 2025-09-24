@@ -406,6 +406,17 @@ class MassRenewalWizard(models.TransientModel):
             'target': 'new',
         }
 
+    def action_view_renewals(self):
+        """View renewals action from results screen"""
+        return {
+            'name': _('Renewals'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'ams.renewal',
+            'view_mode': 'list,form',
+            'domain': [],
+            'context': {'search_default_this_month': 1},
+        }
+
     # Constraints
     @api.constrains('expiry_days_ahead')
     def _check_expiry_days(self):

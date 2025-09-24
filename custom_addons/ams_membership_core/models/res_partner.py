@@ -52,7 +52,7 @@ class ResPartner(models.Model):
         help='All benefits currently available to this member'
     )
     
-    # Renewal Information (computed)
+    # Renewal Information (computed and stored for search)
     next_renewal_date = fields.Date(
         string='Next Renewal Date',
         compute='_compute_renewal_info',
@@ -67,16 +67,18 @@ class ResPartner(models.Model):
         help='Number of pending renewal reminders'
     )
     
-    # Statistics (computed)
+    # Statistics (computed and stored for search)
     total_membership_years = fields.Float(
         string='Total Membership Years',
         compute='_compute_membership_stats',
+        store=True,
         help='Total years of membership history'
     )
     
     subscription_count = fields.Integer(
         string='Total Subscriptions',
         compute='_compute_subscription_stats',
+        store=True,
         help='Total number of subscriptions (all time)'
     )
 
@@ -153,6 +155,7 @@ class ResPartner(models.Model):
             ])
             partner.pending_renewals_count = pending_renewals
     
+    @api.depends('membership_ids.start_date', 'membership_ids.end_date')
     def _compute_membership_stats(self):
         """Compute membership statistics"""
         for partner in self:
@@ -165,6 +168,7 @@ class ResPartner(models.Model):
             
             partner.total_membership_years = total_days / 365.25 if total_days > 0 else 0.0
     
+    @api.depends('subscription_ids')
     def _compute_subscription_stats(self):
         """Compute subscription statistics"""
         for partner in self:

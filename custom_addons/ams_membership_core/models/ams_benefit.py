@@ -256,20 +256,28 @@ class AMSBenefit(models.Model):
             'context': {'default_benefit_id': self.id},
         }
     
-    @api.constrains('discount_percentage')
-    def _check_discount_percentage(self):
-        for benefit in self:
-            if benefit.discount_percentage < 0 or benefit.discount_percentage > 100:
-                raise ValidationError(_("Discount percentage must be between 0 and 100"))
+    def action_view_active_members(self):
+        """View members who have this benefit active"""
+        self.ensure_one()
+        
+        # Get unique partner IDs from active memberships and subscriptions
+        active_memberships = self.membership_ids.filtered(lambda m: m.state == 'active')
+        active_subscriptions = self.subscription_ids.filtered(lambda s: s.state == 'active')
+        
+        partner_ids = set()
+        partner_ids.update(active_memberships.mapped('partner_id.id'))
+        partner_ids.update(active_subscriptions.mapped('partner_id.id'))
+        
+        return {
+            'name': _('Active Members: %s') % self.name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'res.partner',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', list(partner_ids))],
+            'context': {'search_default_is_member': 1}
+        }
     
-    @api.constrains('quantity_limit')
-    def _check_quantity_limit(self):
-        for benefit in self:
-            if benefit.is_quantifiable and benefit.quantity_limit <= 0:
-                raise ValidationError(_("Quantity limit must be greater than 0 when benefit is quantifiable"))
-
-
-    def record_usage(self):
+    def action_record_usage(self):
         """Record usage of this benefit (wizard/form method)"""
         self.ensure_one()
     
@@ -285,6 +293,19 @@ class AMSBenefit(models.Model):
                 'default_quantity': 1,
             }
         }
+    
+    @api.constrains('discount_percentage')
+    def _check_discount_percentage(self):
+        for benefit in self:
+            if benefit.discount_percentage < 0 or benefit.discount_percentage > 100:
+                raise ValidationError(_("Discount percentage must be between 0 and 100"))
+    
+    @api.constrains('quantity_limit')
+    def _check_quantity_limit(self):
+        for benefit in self:
+            if benefit.is_quantifiable and benefit.quantity_limit <= 0:
+                raise ValidationError(_("Quantity limit must be greater than 0 when benefit is quantifiable"))
+
 
 class AMSBenefitUsage(models.Model):
     _name = 'ams.benefit.usage'
