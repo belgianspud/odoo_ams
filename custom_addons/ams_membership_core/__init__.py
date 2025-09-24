@@ -151,6 +151,49 @@ def _setup_default_benefits(env):
             _logger.info(f"Created default benefit: {benefit_data['name']}")
 
 
+def _setup_portal_group_integration(env):
+    """Setup portal group integration with foundation groups"""
+    _logger.info("Setting up portal group integration...")
+    
+    try:
+        # Get the membership portal group
+        membership_portal_group = env.ref('ams_membership_core.group_membership_portal', raise_if_not_found=False)
+        
+        if not membership_portal_group:
+            _logger.warning("Membership portal group not found, skipping portal integration")
+            return
+        
+        # Try to get the base portal group
+        try:
+            base_portal_group = env.ref('base.group_portal')
+            
+            # Add the base portal group to the membership portal group's implied_ids
+            if base_portal_group not in membership_portal_group.implied_ids:
+                membership_portal_group.write({
+                    'implied_ids': [(4, base_portal_group.id)]
+                })
+                _logger.info("Added base portal group to membership portal group")
+            
+        except Exception as e:
+            _logger.warning(f"Could not link base portal group: {str(e)}")
+        
+        # Try to get the foundation member group
+        try:
+            foundation_member_group = env.ref('ams_foundation.group_ams_member', raise_if_not_found=False)
+            
+            if foundation_member_group and foundation_member_group not in membership_portal_group.implied_ids:
+                membership_portal_group.write({
+                    'implied_ids': [(4, foundation_member_group.id)]
+                })
+                _logger.info("Added foundation member group to membership portal group")
+                
+        except Exception as e:
+            _logger.warning(f"Could not link foundation member group: {str(e)}")
+            
+    except Exception as e:
+        _logger.warning(f"Portal group integration failed: {str(e)}")
+
+
 def _sync_foundation_members(env):
     """Sync existing foundation members with membership core"""
     # Find members from foundation who don't have membership records
@@ -200,7 +243,7 @@ def _configure_portal_access(env):
     """Configure portal access for existing members"""
     settings = env['ams.settings'].search([('active', '=', True)], limit=1)
     
-    if not settings or not settings.auto_create_portal_users:
+    if not settings or not hasattr(settings, 'auto_create_portal_users') or not settings.auto_create_portal_users:
         return
     
     # Find active members without portal users
@@ -218,7 +261,23 @@ def _configure_portal_access(env):
     
     for member in members_without_portal:
         try:
-            member.action_create_portal_user()
+            # Use foundation's portal user creation method if available
+            if hasattr(member, 'action_create_portal_user'):
+                member.action_create_portal_user()
+            else:
+                # Fallback basic portal user creation
+                portal_group = env.ref('base.group_portal')
+                user_vals = {
+                    'name': member.name,
+                    'login': member.email,
+                    'email': member.email,
+                    'partner_id': member.id,
+                    'groups_id': [(6, 0, [portal_group.id])],
+                    'active': True,
+                }
+                user = env['res.users'].create(user_vals)
+                member.portal_user_id = user.id
+            
             _logger.info(f"Created portal access for: {member.name}")
         except Exception as e:
             _logger.warning(f"Failed to create portal user for {member.name}: {str(e)}")

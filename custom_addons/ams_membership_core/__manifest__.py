@@ -69,7 +69,7 @@ Integration:
         'views/portal_membership_templates.xml',  # Renamed for clarity
         
         # Reports
-        'reports/membership_reports.xml',
+        #'reports/membership_certificate.xml',
         
         # Menu (load last)
         'views/membership_menu.xml',
@@ -79,8 +79,6 @@ Integration:
     ],
     'assets': {
         'web.assets_frontend': [
-            'ams_membership_core/static/src/css/portal_membership.css',
-            'ams_membership_core/static/src/js/portal_membership.js',
         ],
     },
     'installable': True,

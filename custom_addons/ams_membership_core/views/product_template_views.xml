@@ -9,9 +9,12 @@
             <field name="inherit_id" ref="product.product_template_form_view"/>
             <field name="arch" type="xml">
                 
-                <!-- Add subscription toggle in header -->
-                <xpath expr="//field[@name='sale_ok']" position="after">
-                    <field name="is_subscription_product"/>
+                <!-- Move Subscription Product checkbox into the options section -->
+                <xpath expr="//div[@name='options']//span[last()]" position="after">
+                    <span class="d-inline-flex">
+                        <field name="is_subscription_product"/>
+                        <label for="is_subscription_product" string="Subscription"/>
+                    </span>
                 </xpath>
 
                 <!-- Add subscription stats buttons -->
@@ -310,27 +313,9 @@
             </field>
         </record>
 
-        <!-- Quick Actions for Product Variants -->
-        <record id="view_product_product_form_subscription" model="ir.ui.view">
-            <field name="name">product.product.form.subscription</field>
-            <field name="model">product.product</field>
-            <field name="inherit_id" ref="product.product_normal_form_view"/>
-            <field name="arch" type="xml">
-                <xpath expr="//div[@name='button_box']" position="inside">
-                    <button name="action_create_membership_quick" type="object"
-                            class="oe_stat_button" icon="fa-plus-circle"
-                            string="Create Membership"
-                            invisible="not is_subscription_product or subscription_product_type != 'membership'"
-                            groups="ams_membership_core.group_membership_user"/>
-                    
-                    <button name="action_create_subscription_quick" type="object"
-                            class="oe_stat_button" icon="fa-plus-circle"
-                            string="Create Subscription"
-                            invisible="not is_subscription_product or subscription_product_type == 'membership'"
-                            groups="ams_membership_core.group_membership_user"/>
-                </xpath>
-            </field>
-        </record>
+        <!-- REMOVED: Product Variant View that was causing the error -->
+        <!-- The action_view_memberships method doesn't exist on product.product -->
+        <!-- This has been COMPLETELY REMOVED to fix the error -->
 
     </data>
 </odoo>

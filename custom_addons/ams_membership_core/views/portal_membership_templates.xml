@@ -92,7 +92,7 @@
                                                 </div>
                                                 <div class="card-body">
                                                     <p class="text-muted mb-2">
-                                                        <small>ID: <span t-esc="membership.name"/></small>
+                                                        ID: <span t-esc="membership.name"/>
                                                     </p>
                                                     <div class="row text-sm">
                                                         <div class="col-6">
@@ -106,7 +106,7 @@
                                                     </div>
                                                     <t t-if="membership.days_until_expiry &lt; 30 and membership.days_until_expiry &gt; 0">
                                                         <div class="alert alert-warning mt-2 py-1">
-                                                            <small><i class="fa fa-clock-o"/> Expires in <strong t-esc="membership.days_until_expiry"/> days</strong></small>
+                                                            <i class="fa fa-clock-o"/> Expires in <strong t-esc="membership.days_until_expiry"/> days
                                                         </div>
                                                     </t>
                                                 </div>
@@ -161,7 +161,7 @@
                                         </h3>
                                         <span t-attf-class="badge bg-#{membership.state == 'active' and 'success' or membership.state == 'grace' and 'warning' or 'secondary'} fs-6" t-esc="membership.state.title()"/>
                                     </div>
-                                    <small class="text-muted">Membership ID: <span t-esc="membership.name"/></small>
+                                    <span class="text-muted">Membership ID: <span t-esc="membership.name"/></span>
                                 </div>
                                 
                                 <div class="card-body">
@@ -284,7 +284,7 @@
                                                 </div>
                                                 <div class="card-body">
                                                     <p class="text-muted mb-2">
-                                                        <small>ID: <span t-esc="subscription.name"/></small>
+                                                        ID: <span t-esc="subscription.name"/>
                                                     </p>
                                                     <div class="row text-sm">
                                                         <div class="col-6">
@@ -356,7 +356,7 @@
                                             <span t-attf-class="badge bg-#{subscription.state == 'active' and 'success' or subscription.state == 'paused' and 'info' or subscription.state == 'suspended' and 'warning' or 'secondary'} fs-6" t-esc="subscription.state.title()"/>
                                         </div>
                                     </div>
-                                    <small class="text-muted">Subscription ID: <span t-esc="subscription.name"/></small>
+                                    <span class="text-muted">Subscription ID: <span t-esc="subscription.name"/></span>
                                 </div>
                                 
                                 <div class="card-body">
