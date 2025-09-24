@@ -188,7 +188,9 @@
             </field>
         </record>
 
-        <!-- Subscription Products Search View -->
+        <!-- Fixed Subscription Products Search View for Odoo 18 - TEMPORARILY REMOVED -->
+        <!-- We'll add this back once the module is installed and working -->
+        <!--
         <record id="view_product_template_search_subscription" model="ir.ui.view">
             <field name="name">product.template.search.subscription</field>
             <field name="model">product.template</field>
@@ -211,7 +213,8 @@
                             domain="[('grant_portal_access', '=', True)]"/>
                 </xpath>
                 
-                <xpath expr="//group[@name='group_by']" position="inside">
+                <xpath expr="//filter[@string='Category']/.." position="after">
+                    <separator/>
                     <filter string="Subscription Type" name="group_subscription_type" 
                             domain="[]" context="{'group_by': 'subscription_product_type'}"/>
                     <filter string="Subscription Period" name="group_subscription_period" 
@@ -223,6 +226,7 @@
                 </xpath>
             </field>
         </record>
+        -->
 
         <!-- Subscription Products Action -->
         <record id="action_subscription_products" model="ir.actions.act_window">

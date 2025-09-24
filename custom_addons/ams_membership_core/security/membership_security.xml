@@ -17,11 +17,11 @@
             <field name="comment">Can configure membership products, benefits, and perform advanced operations</field>
         </record>
 
-        <!-- Member Portal Group - extends foundation member group -->
+        <!-- Member Portal Group - conditionally extend portal group -->
         <record id="group_membership_portal" model="res.groups">
             <field name="name">Membership Portal Access</field>
             <field name="category_id" ref="base.module_category_hidden"/>
-            <field name="implied_ids" eval="[(4, ref('ams_foundation.group_ams_member')), (4, ref('portal.group_portal'))]"/>
+            <field name="implied_ids" eval="[(4, ref('ams_foundation.group_ams_member'))]"/>
             <field name="comment">Portal access for members with subscription management</field>
         </record>
 

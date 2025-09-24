@@ -5,12 +5,18 @@ from . import wizards
 from . import controllers
 
 import logging
+from datetime import timedelta
+from odoo import fields
+
 _logger = logging.getLogger(__name__)
 
 
-def _pre_init_hook(cr):
+def _pre_init_hook(env):
     """Pre-installation hook for data migration and preparation"""
     _logger.info("AMS Membership Core: Running pre-init hook...")
+    
+    # In Odoo 18, pre_init_hook receives an Environment object
+    cr = env.cr
     
     # Check if foundation module is installed
     cr.execute("""
@@ -27,36 +33,37 @@ def _pre_init_hook(cr):
     _logger.info("AMS Membership Core: Pre-init completed successfully")
 
 
-def _post_init_hook(cr, registry):
+def _post_init_hook(env):
     """Post-installation hook for final setup and integration"""
-    from odoo import api, SUPERUSER_ID
-    
     _logger.info("AMS Membership Core: Running post-init hook...")
     
-    with api.Environment.manage():
-        env = api.Environment(cr, SUPERUSER_ID, {})
+    # Handle the environment properly
+    cr = env.cr
+    
+    try:
+        # 1. Ensure AMS settings exist and are configured
+        _setup_ams_settings(env)
         
-        try:
-            # 1. Ensure AMS settings exist and are configured
-            _setup_ams_settings(env)
-            
-            # 2. Create default product categories if not exist
-            _setup_product_categories(env)
-            
-            # 3. Set up default benefits
-            _setup_default_benefits(env)
-            
-            # 4. Sync any existing foundation members with membership core
-            _sync_foundation_members(env)
-            
-            # 5. Configure portal access for existing members
-            _configure_portal_access(env)
-            
-            _logger.info("AMS Membership Core: Post-init completed successfully")
-            
-        except Exception as e:
-            _logger.error(f"AMS Membership Core: Post-init failed: {str(e)}")
-            raise
+        # 2. Create default product categories if not exist
+        _setup_product_categories(env)
+        
+        # 3. Set up default benefits
+        _setup_default_benefits(env)
+        
+        # 4. Setup portal group integration
+        _setup_portal_group_integration(env)
+        
+        # 5. Sync any existing foundation members with membership core
+        _sync_foundation_members(env)
+        
+        # 6. Configure portal access for existing members
+        _configure_portal_access(env)
+        
+        _logger.info("AMS Membership Core: Post-init completed successfully")
+        
+    except Exception as e:
+        _logger.error(f"AMS Membership Core: Post-init failed: {str(e)}")
+        raise
 
 
 def _setup_ams_settings(env):

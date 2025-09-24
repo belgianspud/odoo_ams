@@ -32,13 +32,13 @@ Integration:
     'category': 'Association Management',
     'license': 'LGPL-3',
     'depends': [
-        'ams_foundation',  # Must be first for proper integration
+        'portal',         # Load portal first to ensure it's available
+        'ams_foundation', # Must be second for proper integration
         'sale_management',
         'account',
-        'portal',
         'mail',
         'website',
-        'payment',  # Added for Odoo 18 payment integration
+        # 'payment',      # Commented out - add back if needed later
     ],
     'external_dependencies': {
         'python': ['python-dateutil'],
