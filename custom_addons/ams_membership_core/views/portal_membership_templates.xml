@@ -2,66 +2,13 @@
 <odoo>
     <data>
 
-        <!-- Very safe portal home extension - just append content -->
-        <template id="portal_my_home_membership" name="Portal My Home: Membership" inherit_id="portal.portal_my_home" priority="30">
-            <!-- Use the most generic possible selector -->
-            <xpath expr="//div" position="after">
-                <t t-set="membership_count" t-value="0"/>
-                <t t-set="subscription_count" t-value="0"/>
-                
-                <!-- Try to safely get counts -->
-                <t t-try="">
-                    <t t-set="membership_count" t-value="len(request.env.user.partner_id.membership_ids) if hasattr(request.env.user.partner_id, 'membership_ids') else 0"/>
-                    <t t-set="subscription_count" t-value="len(request.env.user.partner_id.subscription_ids) if hasattr(request.env.user.partner_id, 'subscription_ids') else 0"/>
-                </t>
-                
-                <!-- Simple membership section -->
-                <div class="col-lg-6 col-xl-4 col-12 mb-3" t-if="membership_count or True">
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <h5 class="card-title">
-                                <i class="fa fa-users"/> Membership
-                            </h5>
-                            <div class="d-grid gap-2">
-                                <a href="/my/memberships" class="btn btn-primary">
-                                    <i class="fa fa-id-card"/> My Memberships
-                                    <span class="badge bg-light text-dark ms-1" t-if="membership_count" t-esc="membership_count"/>
-                                </a>
-                                <a href="/my/subscriptions" class="btn btn-outline-primary">
-                                    <i class="fa fa-refresh"/> My Subscriptions
-                                    <span class="badge bg-secondary ms-1" t-if="subscription_count" t-esc="subscription_count"/>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </xpath>
+        <!-- DISABLED: Portal Home Extension - Causing Issues -->
+        <!-- 
+        <template id="portal_my_home_membership" name="Portal My Home: Membership" inherit_id="portal.portal_my_home" priority="30" active="False">
         </template>
+        -->
 
-        <!-- Alternative minimal portal home extension -->
-        <template id="portal_my_home_membership_minimal" name="Portal My Home: Membership (Minimal)" inherit_id="portal.portal_my_home" priority="31" active="False">
-            <!-- Even safer - just add to the end of the template -->
-            <xpath expr="//*" position="after">
-                <div class="container-fluid mt-4">
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="alert alert-info">
-                                <h5><i class="fa fa-users"/> Membership Portal</h5>
-                                <p>Access your membership and subscription information:</p>
-                                <a href="/my/memberships" class="btn btn-primary me-2">
-                                    <i class="fa fa-id-card"/> Memberships
-                                </a>
-                                <a href="/my/subscriptions" class="btn btn-outline-primary">
-                                    <i class="fa fa-refresh"/> Subscriptions
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </xpath>
-        </template>
-
-        <!-- My Memberships List - Community 18 safe version -->
+        <!-- My Memberships List -->
         <template id="portal_my_memberships" name="My Memberships">
             <t t-call="portal.portal_layout">
                 <t t-set="page_name" t-value="'membership'"/>
@@ -133,7 +80,7 @@
             </t>
         </template>
 
-        <!-- Membership Detail - Community 18 safe version -->
+        <!-- Membership Detail -->
         <template id="portal_membership_detail" name="Membership Details">
             <t t-call="portal.portal_layout">
                 <t t-set="page_name" t-value="'membership'"/>
@@ -471,6 +418,23 @@
                                         </a>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </template>
+
+        <!-- No Membership Access Template -->
+        <template id="portal_no_membership_access" name="No Membership Access">
+            <t t-call="portal.portal_layout">
+                <div class="container mt-4">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-8">
+                            <div class="alert alert-info">
+                                <h4>Membership Portal</h4>
+                                <p>This section is available for members only.</p>
+                                <a href="/contactus" class="btn btn-primary">Contact Us About Membership</a>
                             </div>
                         </div>
                     </div>
