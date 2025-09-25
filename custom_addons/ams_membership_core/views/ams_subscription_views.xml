@@ -7,22 +7,27 @@
             <field name="name">ams.subscription.list</field>
             <field name="model">ams.subscription</field>
             <field name="arch" type="xml">
-                <list string="Subscriptions" default_order="start_date desc">
+                <list string="Subscriptions" default_order="start_date desc"
+                      decoration-success="state=='active'" 
+                      decoration-info="state=='paused'"
+                      decoration-warning="state=='suspended'" 
+                      decoration-danger="state=='terminated'">
                     <field name="name"/>
                     <field name="partner_id"/>
+                    <field name="account_id" optional="hide"/>
                     <field name="product_id"/>
                     <field name="subscription_type"/>
                     <field name="start_date"/>
                     <field name="end_date"/>
-                    <field name="state" decoration-success="state=='active'" 
-                           decoration-info="state=='paused'"
-                           decoration-warning="state=='suspended'" 
-                           decoration-danger="state=='terminated'"/>
+                    <field name="state"/>
                     <field name="subscription_fee" widget="monetary" optional="show"/>
                     <field name="payment_status" optional="hide"/>
                     <field name="auto_renew" optional="hide"/>
                     <field name="renewal_interval" optional="hide"/>
                     <field name="days_until_expiry" optional="hide"/>
+                    <field name="digital_access" optional="hide" invisible="subscription_type != 'publication'"/>
+                    <field name="print_delivery" optional="hide" invisible="subscription_type != 'publication'"/>
+                    <field name="event_access_level" optional="hide" invisible="subscription_type != 'event'"/>
                 </list>
             </field>
         </record>
@@ -69,6 +74,22 @@
                                     <span class="o_stat_text">Invoice</span>
                                 </div>
                             </button>
+                            
+                            <!-- Subscription type indicator -->
+                            <button type="object" class="oe_stat_button" icon="fa-refresh">
+                                <div class="o_stat_info">
+                                    <span class="o_stat_text" t-esc="subscription_type and subscription_type.replace('_', ' ').title() or 'Subscription'"/>
+                                    <span class="o_stat_text">Type</span>
+                                </div>
+                            </button>
+                            
+                            <!-- Days until expiry -->
+                            <button type="object" class="oe_stat_button" icon="fa-calendar" 
+                                    invisible="days_until_expiry &lt;= 0">
+                                <div class="o_stat_info">
+                                    <field name="days_until_expiry" widget="statinfo" string="Days Left"/>
+                                </div>
+                            </button>
                         </div>
 
                         <div class="oe_title">
@@ -77,6 +98,15 @@
                             </h1>
                             <div class="o_row">
                                 <field name="name" readonly="True"/>
+                                <span t-if="subscription_type == 'publication'" class="badge bg-success ms-2">
+                                    <i class="fa fa-book"/> Publication
+                                </span>
+                                <span t-if="subscription_type == 'event'" class="badge bg-warning ms-2">
+                                    <i class="fa fa-calendar"/> Event Access
+                                </span>
+                                <span t-if="subscription_type == 'subscription'" class="badge bg-info ms-2">
+                                    <i class="fa fa-refresh"/> Subscription
+                                </span>
                             </div>
                         </div>
 
@@ -87,14 +117,36 @@
                                        help="Main account for organizational subscriptions"/>
                                 <field name="product_id" required="True"
                                        domain="[('is_subscription_product', '=', True), 
-                                               ('subscription_product_type', '!=', 'membership')]"/>
+                                               ('subscription_product_type', 'not in', ['membership', 'chapter'])]"/>
                                 <field name="subscription_type" readonly="True"/>
                             </group>
                             <group string="Subscription Period">
                                 <field name="start_date" required="True"/>
                                 <field name="end_date" required="True"/>
                                 <field name="last_renewal_date"/>
-                                <field name="subscription_duration" readonly="True"/>
+                                <field name="subscription_duration" readonly="True" widget="integer"/>
+                            </group>
+                        </group>
+
+                        <!-- Publication-specific settings -->
+                        <group string="Publication Settings" 
+                               invisible="subscription_type != 'publication'">
+                            <group string="Access Type">
+                                <field name="digital_access"/>
+                                <field name="print_delivery"/>
+                            </group>
+                            <group string="Delivery">
+                                <field name="delivery_address_id" 
+                                       invisible="not print_delivery"
+                                       domain="[('parent_id', '=', partner_id)]"/>
+                            </group>
+                        </group>
+
+                        <!-- Event-specific settings -->
+                        <group string="Event Access Settings" 
+                               invisible="subscription_type != 'event'">
+                            <group>
+                                <field name="event_access_level"/>
                             </group>
                         </group>
 
@@ -116,38 +168,8 @@
                                 <field name="is_expired" readonly="True"/>
                                 <field name="days_until_expiry" readonly="True"/>
                             </group>
-                            <group string="Access Settings">
-                                <field name="digital_access" 
-                                       invisible="subscription_type != 'publication'"/>
-                                <field name="print_delivery" 
-                                       invisible="subscription_type != 'publication'"/>
-                                <field name="delivery_address_id" 
-                                       invisible="not print_delivery or subscription_type != 'publication'"/>
-                            </group>
-                        </group>
-
-                        <!-- Type-specific sections -->
-                        <group string="Publication Settings" 
-                               invisible="subscription_type != 'publication'">
                             <group>
-                                <field name="digital_access"/>
-                                <field name="print_delivery"/>
-                                <field name="delivery_address_id" 
-                                       invisible="not print_delivery"/>
-                            </group>
-                        </group>
-
-                        <group string="Chapter Settings" 
-                               invisible="subscription_type != 'chapter'">
-                            <group>
-                                <field name="chapter_role"/>
-                            </group>
-                        </group>
-
-                        <group string="Event Access Settings" 
-                               invisible="subscription_type != 'event'">
-                            <group>
-                                <field name="event_access_level"/>
+                                <!-- Placeholder for future fields -->
                             </group>
                         </group>
 
@@ -189,9 +211,12 @@
                                 </group>
                             </page>
                             
-                            <page string="Notes" name="notes">
-                                <field name="notes" placeholder="Internal notes about this subscription..."/>
-                                <field name="tags" widget="many2many_tags"/>
+                            <page string="Notes &amp; Tags" name="notes">
+                                <group>
+                                    <field name="tags" widget="many2many_tags"/>
+                                </group>
+                                <separator string="Internal Notes"/>
+                                <field name="notes" placeholder="Internal notes about this subscription..." nolabel="1"/>
                             </page>
                         </notebook>
                     </sheet>
@@ -220,6 +245,7 @@
                     <field name="auto_renew"/>
                     <field name="digital_access"/>
                     <field name="print_delivery"/>
+                    <field name="event_access_level"/>
                     <templates>
                         <t t-name="kanban-box">
                             <div t-attf-class="oe_kanban_card oe_kanban_global_click">
@@ -235,6 +261,15 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-12">
+                                        <t t-if="record.subscription_type.raw_value === 'publication'">
+                                            <i class="fa fa-book text-success me-1"/>
+                                        </t>
+                                        <t t-if="record.subscription_type.raw_value === 'event'">
+                                            <i class="fa fa-calendar text-warning me-1"/>
+                                        </t>
+                                        <t t-if="record.subscription_type.raw_value === 'subscription'">
+                                            <i class="fa fa-refresh text-info me-1"/>
+                                        </t>
                                         <t t-esc="record.product_id.value"/>
                                     </div>
                                 </div>
@@ -262,10 +297,15 @@
                                             <span class="badge badge-info">Auto Renew</span>
                                         </t>
                                         <t t-if="record.digital_access.raw_value and record.subscription_type.raw_value === 'publication'">
-                                            <span class="badge badge-primary">Digital</span>
+                                            <span class="badge badge-success">Digital</span>
                                         </t>
                                         <t t-if="record.print_delivery.raw_value and record.subscription_type.raw_value === 'publication'">
-                                            <span class="badge badge-success">Print</span>
+                                            <span class="badge badge-primary">Print</span>
+                                        </t>
+                                        <t t-if="record.event_access_level.raw_value and record.subscription_type.raw_value === 'event'">
+                                            <span class="badge badge-warning">
+                                                <t t-esc="record.event_access_level.value and record.event_access_level.value.title()"/>
+                                            </span>
                                         </t>
                                     </div>
                                 </div>
@@ -284,6 +324,7 @@
                 <search string="Subscriptions">
                     <field name="name"/>
                     <field name="partner_id"/>
+                    <field name="account_id"/>
                     <field name="product_id"/>
                     <field name="subscription_type"/>
                     <separator/>
@@ -298,22 +339,32 @@
                     <filter string="Terminated" name="terminated" 
                             domain="[('state', '=', 'terminated')]"/>
                     <separator/>
+                    <!-- Subscription Type Filters -->
                     <filter string="Publications" name="publications" 
                             domain="[('subscription_type', '=', 'publication')]"/>
-                    <filter string="Chapters" name="chapters" 
-                            domain="[('subscription_type', '=', 'chapter')]"/>
+                    <filter string="Event Access" name="events" 
+                            domain="[('subscription_type', '=', 'event')]"/>
                     <filter string="General Subscriptions" name="general" 
                             domain="[('subscription_type', '=', 'subscription')]"/>
+                    <separator/>
+                    <!-- Publication-specific filters -->
+                    <filter string="Digital Access" name="digital_access" 
+                            domain="[('digital_access', '=', True)]"/>
+                    <filter string="Print Delivery" name="print_delivery" 
+                            domain="[('print_delivery', '=', True)]"/>
+                    <separator/>
+                    <!-- Event-specific filters -->
+                    <filter string="Basic Event Access" name="basic_event" 
+                            domain="[('event_access_level', '=', 'basic')]"/>
+                    <filter string="Premium Event Access" name="premium_event" 
+                            domain="[('event_access_level', '=', 'premium')]"/>
+                    <filter string="VIP Event Access" name="vip_event" 
+                            domain="[('event_access_level', '=', 'vip')]"/>
                     <separator/>
                     <filter string="Auto Renew" name="auto_renew" 
                             domain="[('auto_renew', '=', True)]"/>
                     <filter string="Manual Renew" name="manual_renew" 
                             domain="[('auto_renew', '=', False)]"/>
-                    <separator/>
-                    <filter string="Digital Access" name="digital_access" 
-                            domain="[('digital_access', '=', True)]"/>
-                    <filter string="Print Delivery" name="print_delivery" 
-                            domain="[('print_delivery', '=', True)]"/>
                     <separator/>
                     <filter string="Expiring Soon" name="expiring_soon" 
                             domain="[('end_date', '&gt;=', (context_today()).strftime('%Y-%m-%d')), 
@@ -334,12 +385,16 @@
                                 domain="[]" context="{'group_by': 'subscription_type'}"/>
                         <filter string="Product" name="group_product" 
                                 domain="[]" context="{'group_by': 'product_id'}"/>
+                        <filter string="Account" name="group_account" 
+                                domain="[]" context="{'group_by': 'account_id'}"/>
                         <filter string="Start Date" name="group_start_date" 
                                 domain="[]" context="{'group_by': 'start_date:month'}"/>
                         <filter string="Payment Status" name="group_payment" 
                                 domain="[]" context="{'group_by': 'payment_status'}"/>
                         <filter string="Renewal Interval" name="group_renewal" 
                                 domain="[]" context="{'group_by': 'renewal_interval'}"/>
+                        <filter string="Event Access Level" name="group_event_access" 
+                                domain="[]" context="{'group_by': 'event_access_level'}"/>
                     </group>
                 </search>
             </field>
@@ -358,7 +413,7 @@
                 </p>
                 <p>
                     Subscriptions are recurring service records for publications,
-                    chapters, events, or other non-membership services.
+                    event access, or other non-membership services.
                     Members can have multiple active subscriptions.
                 </p>
             </field>
@@ -388,26 +443,46 @@
                 </p>
                 <p>
                     Publication subscriptions provide access to journals,
-                    magazines, and other recurring publications.
+                    magazines, and other recurring publications with digital
+                    and/or print delivery options.
                 </p>
             </field>
         </record>
 
-        <!-- Chapter Subscriptions Action -->
-        <record id="action_ams_subscription_chapters" model="ir.actions.act_window">
-            <field name="name">Chapter Subscriptions</field>
+        <!-- Event Subscriptions Action -->
+        <record id="action_ams_subscription_events" model="ir.actions.act_window">
+            <field name="name">Event Access Subscriptions</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">ams.subscription</field>
-            <field name="view_mode">list,form</field>
-            <field name="domain">[('subscription_type', '=', 'chapter')]</field>
+            <field name="view_mode">list,kanban,form</field>
+            <field name="domain">[('subscription_type', '=', 'event')]</field>
             <field name="context">{'search_default_active': 1}</field>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
-                    No chapter subscriptions found
+                    No event access subscriptions found
                 </p>
                 <p>
-                    Chapter subscriptions provide access to local or regional
-                    chapter activities and events.
+                    Event access subscriptions provide ongoing access to
+                    events with different access levels (Basic, Premium, VIP).
+                </p>
+            </field>
+        </record>
+
+        <!-- General Subscriptions Action -->
+        <record id="action_ams_subscription_general" model="ir.actions.act_window">
+            <field name="name">General Subscriptions</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.subscription</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="domain">[('subscription_type', '=', 'subscription')]</field>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No general subscriptions found
+                </p>
+                <p>
+                    General subscriptions provide access to various services
+                    and resources not covered by publications or events.
                 </p>
             </field>
         </record>
