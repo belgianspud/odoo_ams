@@ -28,7 +28,7 @@ class AMSMembership(models.Model):
     # Product and Sales Integration
     product_id = fields.Many2one('product.product', 'Membership Product', required=True,
                                 domain=[('is_subscription_product', '=', True), 
-                                       ('subscription_product_type', '=', 'membership')])
+                                       ('subscription_product_type', 'in', ['membership', 'chapter'])])
     sale_order_id = fields.Many2one('sale.order', 'Sale Order', readonly=True)
     sale_order_line_id = fields.Many2one('sale.order.line', 'Sale Order Line', readonly=True)
     invoice_id = fields.Many2one('account.move', 'Invoice', readonly=True)
@@ -47,6 +47,49 @@ class AMSMembership(models.Model):
         ('suspended', 'Suspended'),
         ('terminated', 'Terminated'),
     ], string='Status', default='draft', tracking=True)
+    
+    # UPDATED: Chapter membership identification
+    is_chapter_membership = fields.Boolean(
+        string='Chapter Membership', 
+        compute='_compute_is_chapter_membership', 
+        store=True,
+        help='This membership is for a chapter'
+    )
+    
+    membership_type = fields.Selection([
+        ('regular', 'Regular Membership'),
+        ('chapter', 'Chapter Membership'),
+    ], string='Membership Type', compute='_compute_membership_type', store=True)
+    
+    # Chapter-specific fields
+    chapter_access_level = fields.Selection([
+        ('basic', 'Basic Access'),
+        ('premium', 'Premium Access'),
+        ('leadership', 'Leadership Access'),
+        ('officer', 'Officer Access'),
+    ], string='Chapter Access Level', 
+       compute='_compute_chapter_info', store=True)
+    
+    chapter_type = fields.Selection([
+        ('local', 'Local Chapter'),
+        ('regional', 'Regional Chapter'),
+        ('national', 'National Chapter'),
+        ('special', 'Special Interest Chapter'),
+    ], string='Chapter Type',
+       compute='_compute_chapter_info', store=True)
+    
+    chapter_location = fields.Char('Chapter Location',
+                                  compute='_compute_chapter_info', store=True)
+    
+    # Chapter-specific access tracking
+    has_local_events_access = fields.Boolean('Local Events Access', 
+                                            compute='_compute_chapter_access', store=True)
+    has_chapter_documents_access = fields.Boolean('Chapter Documents Access',
+                                                 compute='_compute_chapter_access', store=True)
+    has_chapter_training_access = fields.Boolean('Chapter Training Access',
+                                                compute='_compute_chapter_access', store=True)
+    has_networking_access = fields.Boolean('Networking Access',
+                                          compute='_compute_chapter_access', store=True)
     
     # Renewal Configuration
     auto_renew = fields.Boolean('Auto Renew', default=True, tracking=True)
@@ -99,6 +142,52 @@ class AMSMembership(models.Model):
                 membership.display_name = f"{membership.partner_id.name} - {membership.product_id.name}"
             else:
                 membership.display_name = membership.name or _('New Membership')
+    
+    @api.depends('product_id.subscription_product_type')
+    def _compute_is_chapter_membership(self):
+        """Determine if this is a chapter membership"""
+        for membership in self:
+            membership.is_chapter_membership = (
+                membership.product_id.subscription_product_type == 'chapter'
+            )
+
+    @api.depends('product_id.subscription_product_type')
+    def _compute_membership_type(self):
+        """Compute membership type based on product"""
+        for membership in self:
+            if membership.product_id.subscription_product_type == 'chapter':
+                membership.membership_type = 'chapter'
+            else:
+                membership.membership_type = 'regular'
+
+    @api.depends('product_id.chapter_access_level', 'product_id.chapter_type', 'product_id.chapter_location')
+    def _compute_chapter_info(self):
+        """Get chapter information from product"""
+        for membership in self:
+            if membership.is_chapter_membership:
+                membership.chapter_access_level = membership.product_id.chapter_access_level
+                membership.chapter_type = membership.product_id.chapter_type
+                membership.chapter_location = membership.product_id.chapter_location
+            else:
+                membership.chapter_access_level = False
+                membership.chapter_type = False
+                membership.chapter_location = False
+
+    @api.depends('product_id.provides_local_events', 'product_id.provides_chapter_documents',
+                 'product_id.provides_chapter_training', 'product_id.provides_networking_access')
+    def _compute_chapter_access(self):
+        """Compute chapter access permissions"""
+        for membership in self:
+            if membership.is_chapter_membership:
+                membership.has_local_events_access = membership.product_id.provides_local_events
+                membership.has_chapter_documents_access = membership.product_id.provides_chapter_documents
+                membership.has_chapter_training_access = membership.product_id.provides_chapter_training
+                membership.has_networking_access = membership.product_id.provides_networking_access
+            else:
+                membership.has_local_events_access = False
+                membership.has_chapter_documents_access = False
+                membership.has_chapter_training_access = False
+                membership.has_networking_access = False
     
     @api.depends('partner_id.portal_user_id')
     def _compute_portal_access(self):
@@ -190,7 +279,7 @@ class AMSMembership(models.Model):
         if membership.product_id and membership.product_id.benefit_ids:
             membership.benefit_ids = [(6, 0, membership.product_id.benefit_ids.ids)]
         
-        # CRITICAL: Ensure single active membership per member
+        # UPDATED: Ensure single active membership per member (for regular memberships only)
         if membership.state == 'active':
             membership._ensure_single_active_membership()
         
@@ -208,23 +297,28 @@ class AMSMembership(models.Model):
         return result
     
     def _ensure_single_active_membership(self):
-        """Ensure only one active membership per member - ENHANCED VERSION"""
+        """UPDATED: Ensure only one active REGULAR membership per member - chapters are unlimited"""
         self.ensure_one()
         
         if self.state != 'active':
             _logger.debug(f"Membership {self.name} is not active, skipping single membership check")
             return
         
-        # Find other active memberships for same member (excluding current one)
+        # CRITICAL: Only enforce single membership rule for REGULAR memberships, not chapters
+        if self.is_chapter_membership:
+            _logger.debug(f"Membership {self.name} is a chapter membership - multiple chapters allowed")
+            return
+        
+        # Find other active REGULAR memberships for same member (excluding current one and chapters)
         other_memberships = self.search([
             ('partner_id', '=', self.partner_id.id),
-            ('product_id.subscription_product_type', '=', 'membership'),
+            ('product_id.subscription_product_type', '=', 'membership'),  # Only regular memberships
             ('state', '=', 'active'),
             ('id', '!=', self.id)
         ])
         
         if other_memberships:
-            _logger.info(f"Found {len(other_memberships)} other active memberships for {self.partner_id.name} - terminating them")
+            _logger.info(f"Found {len(other_memberships)} other active REGULAR memberships for {self.partner_id.name} - terminating them")
             
             for other_membership in other_memberships:
                 other_membership.write({
@@ -246,23 +340,24 @@ class AMSMembership(models.Model):
                 terminated_names = ', '.join(other_memberships.mapped('name'))
                 self.notes = current_notes + f"\n\nActivated on {fields.Date.today()} - Terminated other memberships: {terminated_names}"
         else:
-            _logger.debug(f"No other active memberships found for {self.partner_id.name}")
+            _logger.debug(f"No other active regular memberships found for {self.partner_id.name}")
     
     def _handle_state_change(self, new_state):
         """Handle membership state changes and sync with foundation"""
         self.ensure_one()
         
         if new_state == 'active':
-            # Update foundation partner membership status
-            partner_vals = {
-                'member_status': 'active',
-                'membership_start_date': self.start_date,
-                'membership_end_date': self.end_date,
-            }
-            # Use context to prevent recursion
-            self.partner_id.with_context(skip_portal_creation=True).write(partner_vals)
+            # Update foundation partner membership status (for regular memberships)
+            if not self.is_chapter_membership:
+                partner_vals = {
+                    'member_status': 'active',
+                    'membership_start_date': self.start_date,
+                    'membership_end_date': self.end_date,
+                }
+                # Use context to prevent recursion
+                self.partner_id.with_context(skip_portal_creation=True).write(partner_vals)
             
-            # CRITICAL: Ensure single active membership
+            # UPDATED: Ensure single active membership (for regular memberships only)
             self._ensure_single_active_membership()
             
             # Grant portal access if product allows and foundation settings enable it
@@ -272,62 +367,70 @@ class AMSMembership(models.Model):
             self._apply_engagement_points('membership_activation')
             
             # Log the activation
+            membership_type_label = "Chapter membership" if self.is_chapter_membership else "Membership"
             self.message_post(
-                body=f"Membership activated - Member status set to active until {self.end_date}",
-                subject="Membership Activated"
+                body=f"{membership_type_label} activated - Active until {self.end_date}",
+                subject=f"{membership_type_label} Activated"
             )
         
         elif new_state == 'terminated':
-            # Check if this was the active membership
-            if (self.partner_id.member_status == 'active' and 
-                hasattr(self.partner_id, 'current_membership_id') and
-                self.partner_id.current_membership_id == self):
-                
-                # Look for other active memberships
-                other_active = self.search([
-                    ('partner_id', '=', self.partner_id.id),
-                    ('product_id.subscription_product_type', '=', 'membership'),
-                    ('state', '=', 'active'),
-                    ('id', '!=', self.id)
-                ])
-                
-                if not other_active:
-                    # No other active memberships, update partner status
-                    self.partner_id.with_context(skip_portal_creation=True).write({
-                        'member_status': 'terminated'
-                    })
-                    _logger.info(f"Set partner {self.partner_id.name} status to terminated - no other active memberships")
-                else:
-                    _logger.info(f"Partner {self.partner_id.name} has {len(other_active)} other active memberships - maintaining active status")
+            # Only update partner status for regular memberships
+            if not self.is_chapter_membership:
+                # Check if this was the active membership
+                if (self.partner_id.member_status == 'active' and 
+                    hasattr(self.partner_id, 'current_membership_id') and
+                    self.partner_id.current_membership_id == self):
+                    
+                    # Look for other active regular memberships
+                    other_active = self.search([
+                        ('partner_id', '=', self.partner_id.id),
+                        ('product_id.subscription_product_type', '=', 'membership'),
+                        ('state', '=', 'active'),
+                        ('id', '!=', self.id)
+                    ])
+                    
+                    if not other_active:
+                        # No other active regular memberships, update partner status
+                        self.partner_id.with_context(skip_portal_creation=True).write({
+                            'member_status': 'terminated'
+                        })
+                        _logger.info(f"Set partner {self.partner_id.name} status to terminated - no other active memberships")
+                    else:
+                        _logger.info(f"Partner {self.partner_id.name} has {len(other_active)} other active memberships - maintaining active status")
             
             # Log the termination
+            membership_type_label = "Chapter membership" if self.is_chapter_membership else "Membership"
             self.message_post(
-                body=f"Membership terminated",
-                subject="Membership Terminated"
+                body=f"{membership_type_label} terminated",
+                subject=f"{membership_type_label} Terminated"
             )
         
         elif new_state == 'grace':
-            # Update foundation partner status
-            self.partner_id.with_context(skip_portal_creation=True).write({
-                'member_status': 'grace'
-            })
+            # Only update partner status for regular memberships
+            if not self.is_chapter_membership:
+                self.partner_id.with_context(skip_portal_creation=True).write({
+                    'member_status': 'grace'
+                })
             
             # Log grace period start
+            membership_type_label = "Chapter membership" if self.is_chapter_membership else "Membership"
             self.message_post(
-                body=f"Membership entered grace period - expires {self.grace_end_date}",
+                body=f"{membership_type_label} entered grace period - expires {self.grace_end_date}",
                 subject="Grace Period Started"
             )
         
         elif new_state == 'suspended':
-            # Update foundation partner status
-            self.partner_id.with_context(skip_portal_creation=True).write({
-                'member_status': 'suspended'
-            })
+            # Only update partner status for regular memberships
+            if not self.is_chapter_membership:
+                self.partner_id.with_context(skip_portal_creation=True).write({
+                    'member_status': 'suspended'
+                })
             
             # Log suspension
+            membership_type_label = "Chapter membership" if self.is_chapter_membership else "Membership"
             self.message_post(
-                body=f"Membership suspended",
-                subject="Membership Suspended"
+                body=f"{membership_type_label} suspended",
+                subject=f"{membership_type_label} Suspended"
             )
 
     def _handle_portal_access_on_activation(self):
@@ -438,10 +541,10 @@ class AMSMembership(models.Model):
     
     @api.model
     def create_from_invoice_payment(self, invoice_line):
-        """Create membership from paid invoice line - ENHANCED VERSION"""
+        """Create membership from paid invoice line - UPDATED for chapters"""
         product = invoice_line.product_id.product_tmpl_id
         
-        if not product.is_subscription_product or product.subscription_product_type != 'membership':
+        if not product.is_subscription_product or product.subscription_product_type not in ['membership', 'chapter']:
             return False
         
         # Check if membership already exists for this invoice line
@@ -451,24 +554,27 @@ class AMSMembership(models.Model):
         
         partner = invoice_line.move_id.partner_id
         
-        # CRITICAL: Before creating new membership, terminate other active ones
-        _logger.info(f"Creating membership from invoice payment for {partner.name}")
+        _logger.info(f"Creating {product.subscription_product_type} membership from invoice payment for {partner.name}")
         
-        # Find and terminate other active memberships BEFORE creating new one
-        other_active_memberships = self.search([
-            ('partner_id', '=', partner.id),
-            ('product_id.subscription_product_type', '=', 'membership'),
-            ('state', '=', 'active')
-        ])
-        
-        if other_active_memberships:
-            _logger.info(f"Found {len(other_active_memberships)} active memberships to terminate for {partner.name}")
-            for old_membership in other_active_memberships:
-                old_membership.write({
-                    'state': 'terminated',
-                    'notes': (old_membership.notes or '') + f"\n\nTerminated on {fields.Date.today()} due to new membership purchase via invoice {invoice_line.move_id.name}"
-                })
-                _logger.info(f"Terminated existing membership {old_membership.name}")
+        # UPDATED: For chapter memberships, multiple active chapters are allowed per member
+        if product.subscription_product_type == 'chapter':
+            _logger.info(f"Creating chapter membership - multiple chapters allowed per member")
+        else:
+            # For regular memberships, terminate other active memberships BEFORE creating new one
+            other_active_memberships = self.search([
+                ('partner_id', '=', partner.id),
+                ('product_id.subscription_product_type', '=', 'membership'),
+                ('state', '=', 'active')
+            ])
+            
+            if other_active_memberships:
+                _logger.info(f"Found {len(other_active_memberships)} active memberships to terminate for {partner.name}")
+                for old_membership in other_active_memberships:
+                    old_membership.write({
+                        'state': 'terminated',
+                        'notes': (old_membership.notes or '') + f"\n\nTerminated on {fields.Date.today()} due to new membership purchase via invoice {invoice_line.move_id.name}"
+                    })
+                    _logger.info(f"Terminated existing membership {old_membership.name}")
         
         # ENSURE PARTNER IS MARKED AS MEMBER
         partner_vals = {}
@@ -478,10 +584,18 @@ class AMSMembership(models.Model):
         
         # SET DEFAULT MEMBER TYPE IF NONE EXISTS
         if not partner.member_type_id:
-            # Look for default member type (first try "Regular", then "Individual", then first available)
-            default_member_type = self.env['ams.member.type'].search([
-                ('name', 'ilike', 'regular')
-            ], limit=1)
+            # For chapters, try to find a chapter-specific member type, otherwise use default
+            if product.subscription_product_type == 'chapter':
+                default_member_type = self.env['ams.member.type'].search([
+                    ('name', 'ilike', 'chapter')
+                ], limit=1)
+            else:
+                default_member_type = None
+                
+            if not default_member_type:
+                default_member_type = self.env['ams.member.type'].search([
+                    ('name', 'ilike', 'regular')
+                ], limit=1)
             
             if not default_member_type:
                 default_member_type = self.env['ams.member.type'].search([
@@ -493,15 +607,15 @@ class AMSMembership(models.Model):
             
             if default_member_type:
                 partner_vals['member_type_id'] = default_member_type.id
-                _logger.info(f"Setting default member type {default_member_type.name} for {partner.name}")
+                _logger.info(f"Setting member type to: {default_member_type.name}")
         
-        # GENERATE MEMBER NUMBER/ID IF NOT EXISTS
+        # GENERATE MEMBER NUMBER IF NOT EXISTS
         if not getattr(partner, 'member_number', None):
             # Try foundation's method first
             if hasattr(partner, '_generate_member_number'):
                 partner._generate_member_number()
             else:
-                # Fallback: use sequence or simple generation
+                # Fallback member number generation
                 try:
                     settings = self.env['ams.settings'].search([('active', '=', True)], limit=1)
                     if settings:
@@ -531,8 +645,9 @@ class AMSMembership(models.Model):
                 except Exception as e:
                     _logger.warning(f"Could not generate member number for {partner.name}: {str(e)}")
         
-        # SET MEMBER STATUS TO ACTIVE
-        partner_vals['member_status'] = 'active'
+        # SET MEMBER STATUS TO ACTIVE (for regular memberships only)
+        if product.subscription_product_type == 'membership':
+            partner_vals['member_status'] = 'active'
         
         # Apply all partner updates at once
         if partner_vals:
@@ -541,15 +656,12 @@ class AMSMembership(models.Model):
         # CALCULATE MEMBERSHIP DATES
         start_date = fields.Date.today()
         
-        # FIXED: Annual memberships should end December 31st
+        # Chapter and regular memberships use same date logic
         if product.subscription_period == 'annual':
             # Always set to December 31st of the current year
-            # If we're already past December 31st, set to next year's December 31st
             current_year = start_date.year
             end_date = date(current_year, 12, 31)
             
-            # If purchase date is after December 31st (shouldn't happen) or it's December 31st,
-            # extend to next year
             if start_date > end_date:
                 end_date = date(current_year + 1, 12, 31)
                 
@@ -565,11 +677,12 @@ class AMSMembership(models.Model):
             if start_date > end_date:
                 end_date = date(current_year + 1, 12, 31)
         
-        # UPDATE FOUNDATION PARTNER DATES
-        partner.with_context(skip_portal_creation=True).write({
-            'membership_start_date': start_date,
-            'membership_end_date': end_date,
-        })
+        # UPDATE FOUNDATION PARTNER DATES (for regular memberships only)
+        if product.subscription_product_type == 'membership':
+            partner.with_context(skip_portal_creation=True).write({
+                'membership_start_date': start_date,
+                'membership_end_date': end_date,
+            })
         
         # CREATE MEMBERSHIP RECORD
         membership_vals = {
@@ -587,12 +700,40 @@ class AMSMembership(models.Model):
             'renewal_interval': product.subscription_period or 'annual',
         }
         
+        # Add chapter-specific notes
+        if product.subscription_product_type == 'chapter':
+            chapter_info = f"{product.chapter_type or 'Local'} Chapter"
+            if product.chapter_location:
+                chapter_info += f" - {product.chapter_location}"
+            membership_vals['notes'] = f"Chapter Membership: {chapter_info}"
+        
         membership = self.create(membership_vals)
         
-        _logger.info(f"Created membership {membership.name} for {partner.name} "
+        _logger.info(f"Created {product.subscription_product_type} membership {membership.name} for {partner.name} "
                      f"from {start_date} to {end_date}")
         
         return membership
+
+    def get_chapter_access_summary(self):
+        """Get summary of chapter access for this membership"""
+        self.ensure_one()
+        if not self.is_chapter_membership:
+            return "Not a chapter membership"
+        
+        access_items = []
+        if self.has_local_events_access:
+            access_items.append("Local Events")
+        if self.has_chapter_documents_access:
+            access_items.append("Chapter Documents")
+        if self.has_chapter_training_access:
+            access_items.append("Chapter Training")
+        if self.has_networking_access:
+            access_items.append("Networking")
+        
+        if access_items:
+            return f"{self.chapter_access_level.title()} Access: {', '.join(access_items)}"
+        else:
+            return f"{self.chapter_access_level.title()} Access"
     
     @api.model
     def process_membership_lifecycle(self):
@@ -668,13 +809,13 @@ class AMSMembership(models.Model):
     
     @api.constrains('partner_id', 'product_id', 'state')
     def _check_single_active_membership(self):
-        """Ensure only one active membership per member - ENHANCED CONSTRAINT"""
+        """UPDATED: Ensure only one active REGULAR membership per member - chapters are unlimited"""
         for membership in self:
-            if membership.state == 'active':
-                # Count active memberships for this partner (excluding current record)
+            if membership.state == 'active' and not membership.is_chapter_membership:
+                # Count active REGULAR memberships for this partner (excluding current record and chapters)
                 active_count = self.search_count([
                     ('partner_id', '=', membership.partner_id.id),
-                    ('product_id.subscription_product_type', '=', 'membership'),
+                    ('product_id.subscription_product_type', '=', 'membership'),  # Only regular memberships
                     ('state', '=', 'active'),
                     ('id', '!=', membership.id)
                 ])
@@ -682,7 +823,7 @@ class AMSMembership(models.Model):
                 if active_count > 0:
                     # Instead of raising an error, let the system auto-terminate others
                     _logger.warning(
-                        f"Multiple active memberships detected for {membership.partner_id.name}. "
+                        f"Multiple active REGULAR memberships detected for {membership.partner_id.name}. "
                         f"Auto-terminating others to enforce single active membership rule."
                     )
                     # The _ensure_single_active_membership method will handle this

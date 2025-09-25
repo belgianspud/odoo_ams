@@ -23,12 +23,32 @@
             action="action_ams_membership_expiring"
             sequence="20"/>
 
+        <!-- UPDATED: Chapter Memberships Menu -->
+        <menuitem id="menu_ams_chapter_memberships"
+            name="Chapter Memberships"
+            parent="ams_foundation.menu_ams_members"
+            sequence="16"/>
+
+        <!-- Active Chapter Memberships -->
+        <menuitem id="menu_ams_chapter_memberships_active"
+            name="Active Chapter Memberships"
+            parent="menu_ams_chapter_memberships"
+            action="action_ams_membership_chapters_active"
+            sequence="10"/>
+
+        <!-- All Chapter Memberships -->
+        <menuitem id="menu_ams_chapter_memberships_all"
+            name="All Chapter Memberships"
+            parent="menu_ams_chapter_memberships"
+            action="action_ams_membership_chapters_all"
+            sequence="20"/>
+
         <!-- Subscriptions Menu - Use existing foundation parent -->
         <menuitem id="menu_ams_subscriptions"
             name="Subscriptions"
             parent="ams_foundation.menu_ams_members"
             action="action_ams_subscription"
-            sequence="20"/>
+            sequence="25"/>
 
         <!-- Active Subscriptions -->
         <menuitem id="menu_ams_subscriptions_active"
@@ -43,13 +63,6 @@
             parent="menu_ams_subscriptions"
             action="action_ams_subscription_publications"
             sequence="20"/>
-
-        <!-- Chapter Subscriptions -->
-        <menuitem id="menu_ams_subscriptions_chapters"
-            name="Chapters"
-            parent="menu_ams_subscriptions"
-            action="action_ams_subscription_chapters"
-            sequence="30"/>
 
         <!-- Renewals Menu - Use foundation main menu as parent -->
         <menuitem id="menu_ams_renewals"
@@ -85,6 +98,13 @@
             action="action_ams_renewal_membership"
             sequence="40"/>
 
+        <!-- UPDATED: Chapter Renewals -->
+        <menuitem id="menu_ams_renewals_chapter"
+            name="Chapter Renewals"
+            parent="menu_ams_renewals"
+            action="action_ams_renewal_chapter"
+            sequence="45"/>
+
         <!-- Subscription Renewals -->
         <menuitem id="menu_ams_renewals_subscription"
             name="Subscription Renewals"
@@ -111,6 +131,13 @@
             parent="menu_ams_products"
             action="action_membership_products"
             sequence="10"/>
+
+        <!-- UPDATED: Chapter Products -->
+        <menuitem id="menu_ams_products_chapter"
+            name="Chapter Products"
+            parent="menu_ams_products"
+            action="action_chapter_products"
+            sequence="15"/>
 
         <!-- Publication Products -->
         <menuitem id="menu_ams_products_publication"
@@ -184,6 +211,26 @@
             name="Late Renewals"
             parent="menu_ams_reports_renewals"
             action="action_ams_renewal_late"
+            sequence="20"/>
+
+        <!-- UPDATED: Chapter Reports -->
+        <menuitem id="menu_ams_reports_chapters"
+            name="Chapter Analysis"
+            parent="menu_ams_membership_reports"
+            sequence="15"/>
+
+        <!-- Chapter Membership Report -->
+        <menuitem id="menu_ams_reports_chapter_memberships"
+            name="Chapter Membership Report"
+            parent="menu_ams_reports_chapters"
+            action="action_ams_membership_chapter_report"
+            sequence="10"/>
+
+        <!-- Chapter Access Report -->
+        <menuitem id="menu_ams_reports_chapter_access"
+            name="Chapter Access Levels"
+            parent="menu_ams_reports_chapters"
+            action="action_ams_membership_chapter_access_report"
             sequence="20"/>
 
     </data>

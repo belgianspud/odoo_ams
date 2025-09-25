@@ -21,7 +21,7 @@ class SaleOrder(models.Model):
         store=True
     )
     
-    # UPDATED: Chapter products are now separate from subscriptions
+    # UPDATED: Chapter products are part of membership products now
     has_chapter_products = fields.Boolean(
         'Has Chapter Products', 
         compute='_compute_has_chapter_products',
@@ -30,7 +30,7 @@ class SaleOrder(models.Model):
     
     @api.depends('order_line.product_id')
     def _compute_has_membership_products(self):
-        """Check if order has membership products"""
+        """Check if order has regular membership products"""
         for order in self:
             membership_lines = order.order_line.filtered(
                 lambda line: (line.product_id.product_tmpl_id.is_subscription_product and 
@@ -40,20 +40,21 @@ class SaleOrder(models.Model):
     
     @api.depends('order_line.product_id')
     def _compute_has_subscription_products(self):
-        """Check if order has subscription products (excluding memberships)"""
+        """Check if order has subscription products (excluding memberships and chapters)"""
         for order in self:
             subscription_lines = order.order_line.filtered(
                 lambda line: (line.product_id.product_tmpl_id.is_subscription_product and 
-                            line.product_id.product_tmpl_id.subscription_product_type not in ['membership'])
+                            line.product_id.product_tmpl_id.subscription_product_type not in ['membership', 'chapter'])
             )
             order.has_subscription_products = bool(subscription_lines)
     
     @api.depends('order_line.product_id')
     def _compute_has_chapter_products(self):
-        """Check if order has chapter products - UPDATED to use is_chapter_product"""
+        """Check if order has chapter products"""
         for order in self:
             chapter_lines = order.order_line.filtered(
-                lambda line: line.product_id.product_tmpl_id.is_chapter_product
+                lambda line: (line.product_id.product_tmpl_id.is_subscription_product and
+                            line.product_id.product_tmpl_id.subscription_product_type == 'chapter')
             )
             order.has_chapter_products = bool(chapter_lines)
     
@@ -109,7 +110,7 @@ class SaleOrder(models.Model):
         return self.state in ['sale', 'done']
     
     def _process_subscription_activations(self):
-        """Process ALL subscription activations when sale order is paid - UPDATED VERSION"""
+        """Process ALL subscription activations when sale order is paid - UPDATED for chapters"""
         self.ensure_one()
         _logger.info(f"=== SUBSCRIPTION DEBUG: _process_subscription_activations called for order {self.name} ===")
         
@@ -117,14 +118,13 @@ class SaleOrder(models.Model):
             product_tmpl = line.product_id.product_tmpl_id
             _logger.info(f"SUBSCRIPTION DEBUG: Checking line {line.id} - Product: {line.product_id.name}")
             _logger.info(f"SUBSCRIPTION DEBUG: is_subscription_product = {product_tmpl.is_subscription_product}")
-            _logger.info(f"SUBSCRIPTION DEBUG: is_chapter_product = {product_tmpl.is_chapter_product}")
             _logger.info(f"SUBSCRIPTION DEBUG: subscription_product_type = {getattr(product_tmpl, 'subscription_product_type', 'None')}")
             
             # Handle subscription products
             if product_tmpl.is_subscription_product:
                 _logger.info(f"SUBSCRIPTION DEBUG: Processing subscription product for line {line.id}")
                 try:
-                    if product_tmpl.subscription_product_type == 'membership':
+                    if product_tmpl.subscription_product_type in ['membership', 'chapter']:
                         membership = self._create_membership_from_sale_line(line)
                         _logger.info(f"SUBSCRIPTION DEBUG: Successfully created membership: {membership}")
                     else:
@@ -135,23 +135,12 @@ class SaleOrder(models.Model):
                     _logger.error(f"SUBSCRIPTION DEBUG: Failed to create subscription from sale line {line.id}: {str(e)}")
                     _logger.error(f"SUBSCRIPTION DEBUG: Exception details: {type(e).__name__}: {e}")
                     continue
-            
-            # Handle chapter products - UPDATED: Delegate to ams_chapters module
-            elif product_tmpl.is_chapter_product:
-                _logger.info(f"SUBSCRIPTION DEBUG: Processing chapter product for line {line.id}")
-                try:
-                    chapter_membership = self._create_chapter_membership_from_sale_line(line)
-                    _logger.info(f"SUBSCRIPTION DEBUG: Successfully created chapter membership: {chapter_membership}")
-                except Exception as e:
-                    _logger.error(f"SUBSCRIPTION DEBUG: Failed to create chapter membership from sale line {line.id}: {str(e)}")
-                    _logger.error(f"SUBSCRIPTION DEBUG: Exception details: {type(e).__name__}: {e}")
-                    continue
             else:
-                _logger.info(f"SUBSCRIPTION DEBUG: Line {line.id} is not a subscription or chapter product - skipping")
+                _logger.info(f"SUBSCRIPTION DEBUG: Line {line.id} is not a subscription product - skipping")
     
     def _create_membership_from_sale_line(self, line):
-        """Create membership from paid sale order line
-        NOTE: Only ONE active membership allowed per member"""
+        """Create membership from paid sale order line - UPDATED for chapters
+        NOTE: Only ONE active regular membership allowed per member, UNLIMITED chapters"""
         _logger.info(f"=== MEMBERSHIP DEBUG: _create_membership_from_sale_line called for line {line.id} ===")
         
         product_tmpl = line.product_id.product_tmpl_id
@@ -159,6 +148,7 @@ class SaleOrder(models.Model):
         
         _logger.info(f"MEMBERSHIP DEBUG: Partner: {partner.name} (ID: {partner.id})")
         _logger.info(f"MEMBERSHIP DEBUG: Product: {line.product_id.name}")
+        _logger.info(f"MEMBERSHIP DEBUG: Product Type: {product_tmpl.subscription_product_type}")
         
         # Check if membership already exists for this specific sale line
         try:
@@ -175,27 +165,32 @@ class SaleOrder(models.Model):
         except Exception as e:
             _logger.error(f"MEMBERSHIP DEBUG: Error checking existing membership: {str(e)}")
         
-        # IMPORTANT: Check for other active memberships (only one allowed)
-        try:
-            other_active_memberships = self.env['ams.membership'].search([
-                ('partner_id', '=', partner.id),
-                ('product_id.subscription_product_type', '=', 'membership'),
-                ('state', '=', 'active'),
-                ('id', '!=', False)  # Exclude current record if it exists
-            ])
-            
-            if other_active_memberships:
-                _logger.info(f"MEMBERSHIP DEBUG: Found {len(other_active_memberships)} other active memberships - will terminate them")
-                for old_membership in other_active_memberships:
-                    old_membership.write({
-                        'state': 'terminated',
-                        'notes': f"Terminated due to new membership purchase: {line.product_id.name} on {fields.Date.today()}"
-                    })
-                    _logger.info(f"MEMBERSHIP DEBUG: Terminated existing membership {old_membership.name}")
-            else:
-                _logger.info(f"MEMBERSHIP DEBUG: No other active memberships found")
-        except Exception as e:
-            _logger.error(f"MEMBERSHIP DEBUG: Error checking/terminating existing memberships: {str(e)}")
+        # UPDATED: Handle regular memberships vs chapter memberships differently
+        if product_tmpl.subscription_product_type == 'chapter':
+            _logger.info(f"MEMBERSHIP DEBUG: Creating CHAPTER membership - multiple chapters allowed")
+        else:
+            _logger.info(f"MEMBERSHIP DEBUG: Creating REGULAR membership - only one allowed, will terminate others")
+            # Check for other active REGULAR memberships (only one allowed)
+            try:
+                other_active_memberships = self.env['ams.membership'].search([
+                    ('partner_id', '=', partner.id),
+                    ('product_id.subscription_product_type', '=', 'membership'),  # Only regular memberships
+                    ('state', '=', 'active'),
+                    ('id', '!=', False)  # Exclude current record if it exists
+                ])
+                
+                if other_active_memberships:
+                    _logger.info(f"MEMBERSHIP DEBUG: Found {len(other_active_memberships)} other active REGULAR memberships - will terminate them")
+                    for old_membership in other_active_memberships:
+                        old_membership.write({
+                            'state': 'terminated',
+                            'notes': f"Terminated due to new membership purchase: {line.product_id.name} on {fields.Date.today()}"
+                        })
+                        _logger.info(f"MEMBERSHIP DEBUG: Terminated existing membership {old_membership.name}")
+                else:
+                    _logger.info(f"MEMBERSHIP DEBUG: No other active regular memberships found")
+            except Exception as e:
+                _logger.error(f"MEMBERSHIP DEBUG: Error checking/terminating existing memberships: {str(e)}")
         
         # Set partner as member if not already
         try:
@@ -226,9 +221,18 @@ class SaleOrder(models.Model):
         # Set default member type if none exists
         try:
             if not partner.member_type_id:
-                default_member_type = self.env['ams.member.type'].search([
-                    ('name', 'ilike', 'regular')
-                ], limit=1)
+                # For chapters, try to find a chapter-specific member type, otherwise use default
+                if product_tmpl.subscription_product_type == 'chapter':
+                    default_member_type = self.env['ams.member.type'].search([
+                        ('name', 'ilike', 'chapter')
+                    ], limit=1)
+                else:
+                    default_member_type = None
+                
+                if not default_member_type:
+                    default_member_type = self.env['ams.member.type'].search([
+                        ('name', 'ilike', 'regular')
+                    ], limit=1)
                 if not default_member_type:
                     default_member_type = self.env['ams.member.type'].search([
                         ('name', 'ilike', 'individual')
@@ -252,14 +256,17 @@ class SaleOrder(models.Model):
         end_date = self._calculate_membership_end_date(start_date, product_tmpl.subscription_period)
         _logger.info(f"MEMBERSHIP DEBUG: Calculated dates - Start: {start_date}, End: {end_date}")
         
-        # Update foundation partner dates
+        # Update foundation partner dates (for regular memberships only)
         try:
-            partner.write({
-                'membership_start_date': start_date,
-                'membership_end_date': end_date,
-                'member_status': 'active'
-            })
-            _logger.info(f"MEMBERSHIP DEBUG: Updated partner foundation dates")
+            if product_tmpl.subscription_product_type == 'membership':
+                partner.write({
+                    'membership_start_date': start_date,
+                    'membership_end_date': end_date,
+                    'member_status': 'active'
+                })
+                _logger.info(f"MEMBERSHIP DEBUG: Updated partner foundation dates and status")
+            else:
+                _logger.info(f"MEMBERSHIP DEBUG: Chapter membership - not updating partner foundation dates")
         except Exception as e:
             _logger.error(f"MEMBERSHIP DEBUG: Error updating partner foundation dates: {str(e)}")
         
@@ -281,16 +288,24 @@ class SaleOrder(models.Model):
                 'renewal_interval': product_tmpl.subscription_period or 'annual',
             }
             
+            # Add chapter-specific notes
+            if product_tmpl.subscription_product_type == 'chapter':
+                chapter_info = f"{product_tmpl.chapter_type or 'Local'} Chapter"
+                if product_tmpl.chapter_location:
+                    chapter_info += f" - {product_tmpl.chapter_location}"
+                membership_vals['notes'] = f"Chapter Membership: {chapter_info}"
+            
             _logger.info(f"MEMBERSHIP DEBUG: Membership values: {membership_vals}")
             
             membership = self.env['ams.membership'].create(membership_vals)
             
-            _logger.info(f"MEMBERSHIP DEBUG: Successfully created membership {membership.name} (ID: {membership.id}) for partner {partner.name}")
+            membership_type_label = "chapter membership" if product_tmpl.subscription_product_type == 'chapter' else "membership"
+            _logger.info(f"MEMBERSHIP DEBUG: Successfully created {membership_type_label} {membership.name} (ID: {membership.id}) for partner {partner.name}")
             
             # Log activity
             membership.message_post(
-                body=f"Membership activated from sale order {self.name}",
-                subject="Membership Activated"
+                body=f"{membership_type_label.title()} activated from sale order {self.name}",
+                subject=f"{membership_type_label.title()} Activated"
             )
             
             return membership
@@ -301,60 +316,8 @@ class SaleOrder(models.Model):
             _logger.error(f"MEMBERSHIP DEBUG: Exception details: {e}")
             raise e
     
-    def _create_chapter_membership_from_sale_line(self, line):
-        """Create chapter membership from paid sale order line - UPDATED: Delegate to ams_chapters module
-        NOTE: Multiple chapter memberships are allowed per member"""
-        _logger.info(f"=== CHAPTER DEBUG: _create_chapter_membership_from_sale_line called for line {line.id} ===")
-        
-        product_tmpl = line.product_id.product_tmpl_id
-        partner = self.partner_id
-        
-        _logger.info(f"CHAPTER DEBUG: Partner: {partner.name} (ID: {partner.id})")
-        _logger.info(f"CHAPTER DEBUG: Product: {line.product_id.name}")
-        _logger.info(f"CHAPTER DEBUG: IMPORTANT - Multiple chapter memberships are allowed per member")
-        
-        # Check if ams_chapters module is installed
-        if 'ams.chapter.membership' in self.env:
-            _logger.info(f"CHAPTER DEBUG: ams_chapters module detected - delegating to full chapter functionality")
-            try:
-                # Delegate to the ams_chapters module
-                return self.env['ams.chapter.membership'].create_from_sale_line(line)
-            except Exception as e:
-                _logger.error(f"CHAPTER DEBUG: Error delegating to ams_chapters module: {str(e)}")
-                # Fallback to bridge method if delegation fails
-                return self._create_chapter_fallback_record(line)
-        else:
-            _logger.info(f"CHAPTER DEBUG: ams_chapters module not installed - creating fallback record")
-            return self._create_chapter_fallback_record(line)
-    
-    def _create_chapter_fallback_record(self, line):
-        """Create fallback record when ams_chapters module is not available"""
-        _logger.info(f"CHAPTER DEBUG: Creating fallback record for chapter product")
-        
-        # For now, we'll log this and raise an informative error
-        # In a real implementation, you might create a temporary record or queue the creation
-        partner = self.partner_id
-        product = line.product_id
-        
-        # Log the attempt
-        partner.message_post(
-            body=f"Chapter product purchased: {product.name} from order {self.name}. "
-                 f"Requires ams_chapters module for full functionality.",
-            subject="Chapter Product Purchase - Module Required"
-        )
-        
-        # You could create a pending record in a queue table, or just log it
-        _logger.warning(f"Chapter product {product.name} purchased by {partner.name} but ams_chapters module not available")
-        
-        # Return a placeholder object or raise an informative error
-        from odoo.exceptions import UserError
-        raise UserError(
-            f"Chapter product '{product.name}' requires the ams_chapters module to be installed and activated. "
-            f"Please install the module to complete this chapter membership creation."
-        )
-    
     def _create_subscription_from_sale_line(self, line):
-        """Create subscription from paid sale order line - UPDATED: Pure subscriptions only"""
+        """Create subscription from paid sale order line - Pure subscriptions only (not membership or chapter)"""
         _logger.info(f"=== SUBSCRIPTION DEBUG: _create_subscription_from_sale_line called for line {line.id} ===")
         
         product_tmpl = line.product_id.product_tmpl_id
@@ -365,8 +328,8 @@ class SaleOrder(models.Model):
         _logger.info(f"SUBSCRIPTION DEBUG: Subscription Type: {product_tmpl.subscription_product_type}")
         
         # SAFETY CHECK: This method should only handle non-membership subscription products
-        if product_tmpl.subscription_product_type == 'membership':
-            _logger.error(f"SUBSCRIPTION DEBUG: ERROR - This method should not handle membership products!")
+        if product_tmpl.subscription_product_type in ['membership', 'chapter']:
+            _logger.error(f"SUBSCRIPTION DEBUG: ERROR - This method should not handle membership or chapter products!")
             raise ValueError(f"Invalid product type {product_tmpl.subscription_product_type} for subscription creation")
         
         # Check if subscription already exists for this sale line

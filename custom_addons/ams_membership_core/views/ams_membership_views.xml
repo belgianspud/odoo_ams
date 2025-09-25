@@ -335,4 +335,126 @@
         </record>
 
     </data>
+    <!-- Chapter Membership Actions - ADD TO EXISTING FILE -->
+        
+        <!-- Active Chapter Memberships Action -->
+        <record id="action_ams_membership_chapters_active" model="ir.actions.act_window">
+            <field name="name">Active Chapter Memberships</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="domain">[('is_chapter_membership', '=', True), ('state', '=', 'active')]</field>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No active chapter memberships found
+                </p>
+                <p>
+                    Chapter memberships provide access to local or regional chapter
+                    activities. Members can have multiple chapter memberships.
+                </p>
+            </field>
+        </record>
+
+        <!-- All Chapter Memberships Action -->
+        <record id="action_ams_membership_chapters_all" model="ir.actions.act_window">
+            <field name="name">All Chapter Memberships</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership</field>
+            <field name="view_mode">list,kanban,form</field>
+            <field name="domain">[('is_chapter_membership', '=', True)]</field>
+            <field name="context">{}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No chapter memberships found
+                </p>
+                <p>
+                    This view shows all chapter memberships regardless of status.
+                    Use filters to narrow down to specific states or chapters.
+                </p>
+            </field>
+        </record>
+
+        <!-- Chapter Renewals Action -->
+        <record id="action_ams_renewal_chapter" model="ir.actions.act_window">
+            <field name="name">Chapter Renewals</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.renewal</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('membership_id.is_chapter_membership', '=', True)]</field>
+            <field name="context">{'search_default_this_year': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No chapter renewals found
+                </p>
+                <p>
+                    This view shows renewals for chapter memberships only.
+                </p>
+            </field>
+        </record>
+
+        <!-- Chapter Membership Report Action -->
+        <record id="action_ams_membership_chapter_report" model="ir.actions.act_window">
+            <field name="name">Chapter Membership Report</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership</field>
+            <field name="view_mode">list</field>
+            <field name="domain">[('is_chapter_membership', '=', True)]</field>
+            <field name="context">{
+                'search_default_active': 1,
+                'search_default_group_chapter_type': 1,
+                'search_default_group_chapter_location': 1
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No chapter memberships to report
+                </p>
+                <p>
+                    This report shows chapter membership statistics grouped by
+                    chapter type and location for analysis.
+                </p>
+            </field>
+        </record>
+
+        <!-- Chapter Access Levels Report Action -->
+        <record id="action_ams_membership_chapter_access_report" model="ir.actions.act_window">
+            <field name="name">Chapter Access Levels Report</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership</field>
+            <field name="view_mode">list</field>
+            <field name="domain">[('is_chapter_membership', '=', True), ('state', '=', 'active')]</field>
+            <field name="context">{
+                'search_default_group_chapter_access_level': 1,
+                'search_default_group_chapter_type': 1
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No chapter access data to report
+                </p>
+                <p>
+                    This report shows the distribution of chapter access levels
+                    across different chapter types and locations.
+                </p>
+            </field>
+        </record>
+
+        <!-- Mass Renewal Wizard Action (placeholder) -->
+        <record id="action_mass_renewal_wizard" model="ir.actions.act_window">
+            <field name="name">Mass Renewal Wizard</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.renewal</field>
+            <field name="view_mode">list</field>
+            <field name="domain">[('state', '=', 'draft')]</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Mass Renewal Wizard
+                </p>
+                <p>
+                    This tool helps process multiple renewals at once.
+                    (Wizard functionality to be implemented)
+                </p>
+            </field>
+        </record>
+
+    </data>
 </odoo>

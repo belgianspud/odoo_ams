@@ -21,14 +21,14 @@
                 <xpath expr="//div[@name='button_box']" position="inside">
                     <button name="action_view_memberships" type="object"
                             class="oe_stat_button" icon="fa-users"
-                            invisible="not is_subscription_product or subscription_product_type != 'membership'"
+                            invisible="not is_subscription_product or subscription_product_type not in ['membership', 'chapter']"
                             groups="ams_membership_core.group_membership_user">
                         <field name="active_memberships_count" widget="statinfo" string="Memberships"/>
                     </button>
                     
                     <button name="action_view_subscriptions" type="object"
                             class="oe_stat_button" icon="fa-refresh"
-                            invisible="not is_subscription_product or subscription_product_type == 'membership'"
+                            invisible="not is_subscription_product or subscription_product_type in ['membership', 'chapter']"
                             groups="ams_membership_core.group_membership_user">
                         <field name="active_subscriptions_count" widget="statinfo" string="Subscriptions"/>
                     </button>
@@ -83,11 +83,19 @@
                             </group>
                         </group>
 
-                        <!-- Chapter-specific settings -->
+                        <!-- Chapter-specific settings - UPDATED: Fixed field visibility and structure -->
                         <group string="Chapter Settings" 
                                invisible="subscription_product_type != 'chapter'">
                             <group>
                                 <field name="chapter_access_level"/>
+                                <field name="chapter_type"/>
+                                <field name="chapter_location"/>
+                            </group>
+                            <group string="Chapter Benefits">
+                                <field name="provides_local_events"/>
+                                <field name="provides_chapter_documents"/>
+                                <field name="provides_chapter_training"/>
+                                <field name="provides_networking_access"/>
                             </group>
                         </group>
 
@@ -130,9 +138,9 @@
                     <field name="subscription_period"/>
                     <field name="list_price" widget="monetary"/>
                     <field name="active_memberships_count" 
-                           invisible="subscription_product_type != 'membership'"/>
+                           invisible="subscription_product_type not in ['membership', 'chapter']"/>
                     <field name="active_subscriptions_count"
-                           invisible="subscription_product_type == 'membership'"/>
+                           invisible="subscription_product_type in ['membership', 'chapter']"/>
                     <field name="auto_renew_default"/>
                     <field name="active"/>
                     <field name="is_subscription_product" invisible="1"/>
@@ -174,11 +182,11 @@
                                         </span>
                                     </div>
                                     <div class="o_kanban_record_body">
-                                        <div t-if="record.subscription_product_type.raw_value === 'membership'">
+                                        <div t-if="record.subscription_product_type.raw_value in ['membership', 'chapter']">
                                             <i class="fa fa-users"/> 
                                             <t t-esc="record.active_memberships_count.value"/> Active
                                         </div>
-                                        <div t-if="record.subscription_product_type.raw_value !== 'membership'">
+                                        <div t-if="record.subscription_product_type.raw_value not in ['membership', 'chapter']">
                                             <i class="fa fa-refresh"/> 
                                             <t t-esc="record.active_subscriptions_count.value"/> Active
                                         </div>
@@ -191,45 +199,29 @@
             </field>
         </record>
 
-        <!-- Fixed Subscription Products Search View for Odoo 18 - TEMPORARILY REMOVED -->
-        <!-- We'll add this back once the module is installed and working -->
-        <!--
-        <record id="view_product_template_search_subscription" model="ir.ui.view">
-            <field name="name">product.template.search.subscription</field>
-            <field name="model">product.template</field>
-            <field name="inherit_id" ref="product.product_template_search_view"/>
-            <field name="arch" type="xml">
-                <xpath expr="//filter[@name='filter_to_sell']" position="after">
-                    <separator/>
-                    <filter string="Subscription Products" name="subscription_products" 
-                            domain="[('is_subscription_product', '=', True)]"/>
-                    <filter string="Membership Products" name="membership_products" 
-                            domain="[('subscription_product_type', '=', 'membership')]"/>
-                    <filter string="Publication Products" name="publication_products" 
-                            domain="[('subscription_product_type', '=', 'publication')]"/>
-                    <filter string="Chapter Products" name="chapter_products" 
-                            domain="[('subscription_product_type', '=', 'chapter')]"/>
-                    <separator/>
-                    <filter string="Auto-Renew" name="auto_renew" 
-                            domain="[('auto_renew_default', '=', True)]"/>
-                    <filter string="Portal Access" name="portal_access" 
-                            domain="[('grant_portal_access', '=', True)]"/>
-                </xpath>
-                
-                <xpath expr="//filter[@string='Category']/.." position="after">
-                    <separator/>
-                    <filter string="Subscription Type" name="group_subscription_type" 
-                            domain="[]" context="{'group_by': 'subscription_product_type'}"/>
-                    <filter string="Subscription Period" name="group_subscription_period" 
-                            domain="[]" context="{'group_by': 'subscription_period'}"/>
-                </xpath>
-                
-                <xpath expr="//field[@name='name']" position="after">
-                    <field name="subscription_product_type"/>
-                </xpath>
+        <!-- Chapter Products Action -->
+        <record id="action_chapter_products" model="ir.actions.act_window">
+            <field name="name">Chapter Membership Products</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="domain">[('is_subscription_product', '=', True), ('subscription_product_type', '=', 'chapter')]</field>
+            <field name="context">{
+                'default_is_subscription_product': True,
+                'default_subscription_product_type': 'chapter',
+                'default_type': 'service',
+                'default_sale_ok': True
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first chapter membership product
+                </p>
+                <p>
+                    Chapter membership products provide access to local or regional 
+                    chapter events, documents, training, and networking opportunities.
+                </p>
             </field>
         </record>
-        -->
 
         <!-- Subscription Products Action -->
         <record id="action_subscription_products" model="ir.actions.act_window">
@@ -273,8 +265,7 @@
                 'default_is_subscription_product': True,
                 'default_subscription_product_type': 'membership',
                 'default_type': 'service',
-                'default_sale_ok': True,
-                'default_categ_id': ref('ams_membership_core.categ_membership_products')
+                'default_sale_ok': True
             }</field>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
@@ -299,8 +290,7 @@
                 'default_is_subscription_product': True,
                 'default_subscription_product_type': 'publication',
                 'default_type': 'service',
-                'default_sale_ok': True,
-                'default_categ_id': ref('ams_membership_core.categ_publication_subscriptions')
+                'default_sale_ok': True
             }</field>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
@@ -312,10 +302,6 @@
                 </p>
             </field>
         </record>
-
-        <!-- REMOVED: Product Variant View that was causing the error -->
-        <!-- The action_view_memberships method doesn't exist on product.product -->
-        <!-- This has been COMPLETELY REMOVED to fix the error -->
 
     </data>
 </odoo>

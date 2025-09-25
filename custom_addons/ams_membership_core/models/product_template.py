@@ -13,28 +13,48 @@ class ProductTemplate(models.Model):
         help='Enable this to make the product create subscriptions/memberships when purchased'
     )
     
-    # UPDATED: Remove 'chapter' from subscription types
+    # UPDATED: Add 'chapter' back to subscription types
     subscription_product_type = fields.Selection([
         ('membership', 'Membership'),
         ('subscription', 'General Subscription'),
         ('publication', 'Publication'),
-        # Removed 'chapter' - will be handled by ams_chapters module
+        ('chapter', 'Chapter Membership'),  # Added back
     ], string='Subscription Type', default='membership',
        help='Type of subscription this product creates')
     
-    # NEW: Chapter product classification (separate from subscriptions)
+    # Chapter product classification can work alongside subscription products
     is_chapter_product = fields.Boolean(
         string='Chapter Product',
-        default=False,
-        help='Enable this for chapter membership products (requires ams_chapters module)'
+        compute='_compute_is_chapter_product',
+        store=True,
+        help='Automatically set when subscription type is chapter'
     )
     
-    chapter_product_type = fields.Selection([
-        ('chapter_membership', 'Chapter Membership'),
-        ('chapter_leadership', 'Chapter Leadership'),
-        ('chapter_event_access', 'Chapter Event Access'),
-    ], string='Chapter Product Type', 
-       help='Type of chapter product (handled by ams_chapters module)')
+    # Chapter-specific settings - ADDED BACK
+    chapter_access_level = fields.Selection([
+        ('basic', 'Basic Access'),
+        ('premium', 'Premium Access'),
+        ('leadership', 'Leadership Access'),
+        ('officer', 'Officer Access'),
+    ], string='Chapter Access Level', default='basic',
+       help='Access level granted by this chapter membership')
+    
+    chapter_type = fields.Selection([
+        ('local', 'Local Chapter'),
+        ('regional', 'Regional Chapter'),
+        ('national', 'National Chapter'),
+        ('special', 'Special Interest Chapter'),
+    ], string='Chapter Type', default='local',
+       help='Type of chapter this membership provides access to')
+    
+    chapter_location = fields.Char('Chapter Location', 
+                                  help='Geographic location or specialty area of chapter')
+    
+    # Chapter-specific benefits
+    provides_local_events = fields.Boolean('Provides Local Events Access', default=True)
+    provides_chapter_documents = fields.Boolean('Provides Chapter Documents', default=True)
+    provides_chapter_training = fields.Boolean('Provides Chapter Training', default=True)
+    provides_networking_access = fields.Boolean('Provides Networking Access', default=True)
     
     subscription_period = fields.Selection([
         ('monthly', 'Monthly'),
@@ -99,9 +119,6 @@ class ProductTemplate(models.Model):
         ('annually', 'Annually'),
     ], string='Publication Frequency', default='monthly')
     
-    # REMOVED: Chapter-specific settings (moved to ams_chapters module)
-    # These will be handled by the dedicated ams_chapters module
-    
     # Benefits Integration
     benefit_ids = fields.Many2many(
         'ams.benefit',
@@ -151,13 +168,6 @@ class ProductTemplate(models.Model):
         help='Number of active subscriptions created by this product'
     )
     
-    # NEW: Chapter statistics (computed by ams_chapters module if installed)
-    active_chapter_memberships_count = fields.Integer(
-        string='Active Chapter Memberships',
-        compute='_compute_chapter_stats',
-        help='Number of active chapter memberships (requires ams_chapters module)'
-    )
-    
     total_subscription_revenue = fields.Monetary(
         string='Total Subscription Revenue',
         compute='_compute_revenue_stats',
@@ -166,10 +176,16 @@ class ProductTemplate(models.Model):
     )
 
     @api.depends('subscription_product_type')
-    def _compute_membership_stats(self):
-        """Compute membership statistics"""
+    def _compute_is_chapter_product(self):
+        """Auto-set chapter product flag when subscription type is chapter"""
         for product in self:
-            if product.subscription_product_type == 'membership':
+            product.is_chapter_product = (product.subscription_product_type == 'chapter')
+
+    @api.depends('subscription_product_type')
+    def _compute_membership_stats(self):
+        """Compute membership statistics - UPDATED to include chapters"""
+        for product in self:
+            if product.subscription_product_type in ['membership', 'chapter']:
                 active_count = self.env['ams.membership'].search_count([
                     ('product_id.product_tmpl_id', '=', product.id),
                     ('state', '=', 'active')
@@ -182,7 +198,7 @@ class ProductTemplate(models.Model):
     def _compute_subscription_stats(self):
         """Compute subscription statistics"""
         for product in self:
-            if product.subscription_product_type not in ['membership']:  # Removed 'chapter' from exclusion
+            if product.subscription_product_type not in ['membership', 'chapter']:
                 active_count = self.env['ams.subscription'].search_count([
                     ('product_id.product_tmpl_id', '=', product.id),
                     ('state', '=', 'active')
@@ -191,26 +207,10 @@ class ProductTemplate(models.Model):
             else:
                 product.active_subscriptions_count = 0
     
-    def _compute_chapter_stats(self):
-        """Compute chapter statistics - handled by ams_chapters module if installed"""
-        for product in self:
-            if product.is_chapter_product and 'ams.chapter.membership' in self.env:
-                # This will be implemented by the ams_chapters module
-                try:
-                    active_count = self.env['ams.chapter.membership'].search_count([
-                        ('product_id.product_tmpl_id', '=', product.id),
-                        ('state', '=', 'active')
-                    ])
-                    product.active_chapter_memberships_count = active_count
-                except Exception:
-                    product.active_chapter_memberships_count = 0
-            else:
-                product.active_chapter_memberships_count = 0
-    
     def _compute_revenue_stats(self):
         """Compute revenue statistics"""
         for product in self:
-            # Get total revenue from memberships
+            # Get total revenue from memberships (including chapters)
             membership_revenue = sum(self.env['ams.membership'].search([
                 ('product_id.product_tmpl_id', '=', product.id),
                 ('state', '=', 'active')
@@ -222,18 +222,7 @@ class ProductTemplate(models.Model):
                 ('state', '=', 'active')
             ]).mapped('subscription_fee'))
             
-            # Get chapter revenue if ams_chapters module is installed
-            chapter_revenue = 0
-            if product.is_chapter_product and 'ams.chapter.membership' in self.env:
-                try:
-                    chapter_revenue = sum(self.env['ams.chapter.membership'].search([
-                        ('product_id.product_tmpl_id', '=', product.id),
-                        ('state', '=', 'active')
-                    ]).mapped('membership_fee'))
-                except Exception:
-                    chapter_revenue = 0
-            
-            product.total_subscription_revenue = membership_revenue + subscription_revenue + chapter_revenue
+            product.total_subscription_revenue = membership_revenue + subscription_revenue
 
     @api.onchange('is_subscription_product')
     def _onchange_is_subscription_product(self):
@@ -257,31 +246,9 @@ class ProductTemplate(models.Model):
             self.subscription_product_type = 'membership'
             self.benefit_ids = [(5, 0, 0)]  # Clear benefits
     
-    @api.onchange('is_chapter_product')
-    def _onchange_is_chapter_product(self):
-        """Handle chapter product toggle changes"""
-        if self.is_chapter_product:
-            # Set smart defaults for chapter products
-            self.sale_ok = True
-            
-            # Handle different field names across Odoo versions
-            if hasattr(self, 'detailed_type'):
-                self.detailed_type = 'service'  # Odoo 15+
-            else:
-                self.type = 'service'  # Older versions
-            
-            # Set chapter category
-            self._set_chapter_category()
-            
-            # Chapter products should not also be subscription products
-            self.is_subscription_product = False
-        else:
-            # Reset chapter-specific fields
-            self.chapter_product_type = False
-    
     @api.onchange('subscription_product_type')
     def _onchange_subscription_product_type(self):
-        """Handle subscription type changes"""
+        """Handle subscription type changes - UPDATED with chapter support"""
         if self.subscription_product_type:
             # Set type-specific defaults
             if self.subscription_product_type == 'publication':
@@ -290,12 +257,18 @@ class ProductTemplate(models.Model):
             elif self.subscription_product_type == 'membership':
                 self.subscription_period = 'annual'
                 self.grant_portal_access = True
+            elif self.subscription_product_type == 'chapter':
+                self.subscription_period = 'annual'
+                self.grant_portal_access = True
+                self.chapter_access_level = 'basic'
+                self.provides_local_events = True
+                self.provides_chapter_documents = True
             
             # Update category
             self._set_subscription_category()
     
     def _set_subscription_category(self):
-        """Set appropriate product category based on subscription type"""
+        """Set appropriate product category based on subscription type - UPDATED"""
         if not self.is_subscription_product:
             return
             
@@ -303,23 +276,10 @@ class ProductTemplate(models.Model):
             'membership': 'Membership Products',
             'subscription': 'Subscription Products',
             'publication': 'Publication Subscriptions',
+            'chapter': 'Chapter Memberships',  # Added
         }
         
         category_name = category_mapping.get(self.subscription_product_type, 'Subscription Products')
-        
-        # Find or create category
-        category = self.env['product.category'].search([('name', '=', category_name)], limit=1)
-        if not category:
-            category = self.env['product.category'].create({
-                'name': category_name,
-                'parent_id': False,
-            })
-        
-        self.categ_id = category.id
-    
-    def _set_chapter_category(self):
-        """Set appropriate product category for chapter products"""
-        category_name = 'Chapter Products'
         
         # Find or create category
         category = self.env['product.category'].search([('name', '=', category_name)], limit=1)
@@ -363,25 +323,6 @@ class ProductTemplate(models.Model):
             }
         }
     
-    def action_view_chapter_memberships(self):
-        """View chapter memberships created by this product"""
-        self.ensure_one()
-        
-        if not self.is_chapter_product or 'ams.chapter.membership' not in self.env:
-            raise UserError(_("This requires the ams_chapters module to be installed."))
-        
-        return {
-            'name': f'Chapter Memberships: {self.name}',
-            'type': 'ir.actions.act_window',
-            'res_model': 'ams.chapter.membership',
-            'view_mode': 'list,form',
-            'domain': [('product_id.product_tmpl_id', '=', self.id)],
-            'context': {
-                'default_product_id': self.product_variant_id.id,
-                'search_default_active': 1,
-            }
-        }
-    
     def action_configure_benefits(self):
         """Configure benefits for this subscription product"""
         self.ensure_one()
@@ -393,7 +334,7 @@ class ProductTemplate(models.Model):
             'view_mode': 'list,form',
             'domain': [],
             'context': {
-                'default_applies_to': 'membership' if self.subscription_product_type == 'membership' else 'subscription',
+                'default_applies_to': 'membership' if self.subscription_product_type in ['membership', 'chapter'] else 'subscription',
                 'search_default_active': 1,
             },
             'target': 'new',
@@ -403,8 +344,8 @@ class ProductTemplate(models.Model):
         """Create a sample subscription for testing (development helper)"""
         self.ensure_one()
         
-        if not self.is_subscription_product and not self.is_chapter_product:
-            raise UserError(_("This is not a subscription or chapter product."))
+        if not self.is_subscription_product:
+            raise UserError(_("This is not a subscription product."))
         
         # Find a test partner or create one
         test_partner = self.env['res.partner'].search([('email', '=', 'test@example.com')], limit=1)
@@ -415,10 +356,7 @@ class ProductTemplate(models.Model):
                 'is_member': True,
             })
         
-        if self.is_chapter_product:
-            # Chapter products will be handled by ams_chapters module
-            raise UserError(_("Chapter product testing requires the ams_chapters module."))
-        elif self.subscription_product_type == 'membership':
+        if self.subscription_product_type in ['membership', 'chapter']:
             record = self.env['ams.membership'].create({
                 'partner_id': test_partner.id,
                 'product_id': self.product_variant_id.id,
@@ -446,32 +384,13 @@ class ProductTemplate(models.Model):
     # Integration with sale and invoice processing
     def create_subscription_from_sale(self, sale_line):
         """Create subscription/membership from sale order line"""
-        if self.is_chapter_product:
-            # Chapter products are handled by ams_chapters module
-            return self._delegate_to_chapter_module(sale_line)
-        elif self.is_subscription_product:
-            if self.subscription_product_type == 'membership':
-                return self._create_membership_from_sale(sale_line)
-            else:
-                return self._create_subscription_from_sale(sale_line)
-        
-        return False
-    
-    def _delegate_to_chapter_module(self, sale_line):
-        """Delegate chapter product handling to ams_chapters module"""
-        if 'ams.chapter.membership' in self.env:
-            # Call the ams_chapters module method
-            try:
-                return self.env['ams.chapter.membership'].create_from_sale_line(sale_line)
-            except Exception as e:
-                from odoo.exceptions import UserError
-                raise UserError(f"Chapter module error: {str(e)}")
+        if self.subscription_product_type in ['membership', 'chapter']:
+            return self._create_membership_from_sale(sale_line)
         else:
-            from odoo.exceptions import UserError
-            raise UserError(_("Chapter products require the ams_chapters module to be installed."))
+            return self._create_subscription_from_sale(sale_line)
     
     def _create_membership_from_sale(self, sale_line):
-        """Create membership from sale order line"""
+        """Create membership from sale order line - UPDATED for chapters"""
         membership_vals = {
             'partner_id': sale_line.order_id.partner_id.id,
             'product_id': sale_line.product_id.id,
@@ -482,6 +401,13 @@ class ProductTemplate(models.Model):
             'renewal_interval': self.subscription_period,
             'state': 'draft',  # Will be activated when invoice is paid
         }
+        
+        # Add chapter-specific notes
+        if self.subscription_product_type == 'chapter':
+            chapter_info = f"{self.chapter_type or 'Local'} Chapter"
+            if self.chapter_location:
+                chapter_info += f" - {self.chapter_location}"
+            membership_vals['notes'] = f"Chapter Membership: {chapter_info}"
         
         return self.env['ams.membership'].create(membership_vals)
     
@@ -515,25 +441,18 @@ class ProductTemplate(models.Model):
             if product.is_subscription_product and not product.subscription_product_type:
                 raise ValidationError(_("Subscription products must have a subscription type."))
     
-    @api.constrains('is_subscription_product', 'is_chapter_product')
-    def _check_product_type_conflict(self):
-        """Ensure product is not both subscription and chapter product"""
-        for product in self:
-            if product.is_subscription_product and product.is_chapter_product:
-                raise ValidationError(_("A product cannot be both a subscription product and a chapter product."))
-    
     @api.constrains('renewal_reminder_days')
     def _check_reminder_days(self):
         """Validate reminder days"""
         for product in self:
-            if (product.is_subscription_product or product.is_chapter_product) and product.renewal_reminder_days < 0:
+            if product.is_subscription_product and product.renewal_reminder_days < 0:
                 raise ValidationError(_("Renewal reminder days cannot be negative."))
     
     @api.constrains('grace_period_days')
     def _check_grace_period(self):
         """Validate grace period"""
         for product in self:
-            if (product.is_subscription_product or product.is_chapter_product) and product.grace_period_days < 0:
+            if product.is_subscription_product and product.grace_period_days < 0:
                 raise ValidationError(_("Grace period days cannot be negative."))
 
 
@@ -544,7 +463,7 @@ class ProductProduct(models.Model):
         """Quick action to create membership for this product variant"""
         self.ensure_one()
         
-        if not self.is_subscription_product or self.subscription_product_type != 'membership':
+        if not self.is_subscription_product or self.subscription_product_type not in ['membership', 'chapter']:
             raise UserError(_("This product does not create memberships."))
         
         return {
@@ -563,7 +482,7 @@ class ProductProduct(models.Model):
         """Quick action to create subscription for this product variant"""
         self.ensure_one()
         
-        if not self.is_subscription_product or self.subscription_product_type == 'membership':
+        if not self.is_subscription_product or self.subscription_product_type in ['membership', 'chapter']:
             raise UserError(_("This product does not create subscriptions."))
         
         return {
@@ -575,27 +494,5 @@ class ProductProduct(models.Model):
             'context': {
                 'default_product_id': self.id,
                 'default_subscription_fee': self.list_price,
-            }
-        }
-    
-    def action_create_chapter_membership_quick(self):
-        """Quick action to create chapter membership for this product variant"""
-        self.ensure_one()
-        
-        if not self.is_chapter_product:
-            raise UserError(_("This product does not create chapter memberships."))
-        
-        if 'ams.chapter.membership' not in self.env:
-            raise UserError(_("Chapter functionality requires the ams_chapters module."))
-        
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Create Chapter Membership'),
-            'res_model': 'ams.chapter.membership',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_product_id': self.id,
-                'default_membership_fee': self.list_price,
             }
         }
