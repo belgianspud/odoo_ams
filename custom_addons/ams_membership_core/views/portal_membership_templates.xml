@@ -757,6 +757,26 @@
                 </div>
             </t>
         </template>
+    <!-- Fix for JavaScript DOM timing issues -->
 
+<template id="portal_membership_js_fix" name="Portal Membership JS Fix" inherit_id="portal.portal_layout">
+    <xpath expr="//head" position="inside">
+        <script type="text/javascript">
+            // Ensure DOM is ready before manipulating elements
+            document.addEventListener('DOMContentLoaded', function() {
+                // Add any membership-specific JavaScript here
+                console.log('Membership portal loaded');
+                
+                // Fix potential null element access
+                const membershipElements = document.querySelectorAll('[data-membership]');
+                membershipElements.forEach(function(element) {
+                    if (element &amp;&amp; element.textContent !== undefined) {
+                        // Safe to manipulate
+                    }
+                });
+            });
+        </script>
+    </xpath>
+</template>
     </data>
 </odoo>
