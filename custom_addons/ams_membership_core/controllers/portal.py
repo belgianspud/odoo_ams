@@ -253,17 +253,28 @@ class MembershipPortal(CustomerPortal):
     @http.route(['/my/memberships/<int:membership_id>'], 
                 type='http', auth="user", website=True)
     def portal_membership_detail(self, membership_id, **kw):
-        """Display membership details - SAFE VERSION"""
+        """Display membership details - SAFE VERSION WITH CURRENCY FIX"""
         try:
             membership_sudo = self._document_check_access('ams.membership', membership_id)
         except (AccessError, MissingError):
             return request.redirect('/my')
 
+        # Get currency for monetary widget - this fixes the KeyError
+        currency = membership_sudo.currency_id or request.env.company.currency_id
+        
         values = {
             'membership': membership_sudo,
             'partner': membership_sudo.partner_id,
             'member_number': getattr(membership_sudo.partner_id, 'member_number', None) or 'Not Assigned',
             'page_name': 'membership',
+            
+            # Currency context required for monetary widget
+            'display_currency': currency,
+            'currency': currency,
+            
+            # Additional portal context that might be needed
+            'company': request.env.company,
+            'user': request.env.user,
         }
         return request.render("ams_membership_core.portal_membership_detail", values)
 

@@ -391,7 +391,7 @@
             </t>
         </template>
 
-        <!-- Enhanced Membership Detail Template -->
+        <!-- Enhanced Membership Detail Template - WITH CURRENCY FIX -->
         <template id="portal_membership_detail" name="Membership Details">
             <t t-call="portal.portal_layout">
                 <t t-set="page_name" t-value="'membership'"/>
@@ -481,7 +481,12 @@
                                                 <tr t-if="membership.membership_fee">
                                                     <td><strong>Membership Fee:</strong></td>
                                                     <td>
-                                                        <span t-esc="membership.membership_fee" t-options="{'widget': 'monetary'}"/>
+                                                        <!-- FIXED: Replace monetary widget with manual formatting -->
+                                                        <t t-if="membership.currency_id">
+                                                            <t t-esc="membership.currency_id.symbol or '$'"/>
+                                                        </t>
+                                                        <t t-else="">$</t>
+                                                        <t t-esc="'{:,.2f}'.format(membership.membership_fee)"/>
                                                     </td>
                                                 </tr>
                                             </table>
