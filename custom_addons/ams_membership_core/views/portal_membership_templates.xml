@@ -2,42 +2,7 @@
 <odoo>
     <data>
 
-        <!-- Debug Check Template - Remove this after testing -->
-        <template id="portal_membership_debug_simple" name="Debug Check" inherit_id="portal.portal_my_home" priority="1">
-            <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
-                <div class="alert alert-info" style="background-color: #d4edda; border-color: #c3e6cb; margin-bottom: 20px;">
-                    <h6>🔧 DEBUG: Membership Portal Templates Loading</h6>
-                    <p><strong>✓ Portal templates are loading correctly</strong></p>
-                    <hr/>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <small><strong>User:</strong> <span t-esc="(request.env.user and request.env.user.name) or 'No user'"/></small><br/>
-                            <small><strong>Partner:</strong> 
-                                <t t-if="request.env.user and request.env.user.partner_id">
-                                    <span t-esc="request.env.user.partner_id.name or 'No name'"/>
-                                </t>
-                                <t t-else="">No Partner</t>
-                            </small>
-                        </div>
-                        <div class="col-md-6">
-                            <small><strong>Is Member:</strong> 
-                                <t t-if="is_member">
-                                    <span class="text-success">✓ Yes</span>
-                                </t>
-                                <t t-else="">
-                                    <span class="text-muted">No</span>
-                                </t>
-                            </small><br/>
-                            <small><strong>Member Number:</strong> 
-                                <span t-esc="member_number or 'Not Available'"/>
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </xpath>
-        </template>
-
-        <!-- Enhanced Portal Home Extension - SAFE VERSION -->
+        <!-- Enhanced Portal Home Extension - FIXED VERSION -->
         <template id="portal_my_home_membership" name="Portal My Home: Membership" inherit_id="portal.portal_my_home" priority="30">
             <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
                 <t t-if="is_member">
@@ -96,7 +61,7 @@
                 </t>
             </xpath>
             
-            <!-- Add membership and subscription counters to portal docs -->
+            <!-- FIXED: Only add counters for actual numeric values, not boolean flags -->
             <xpath expr="//div[contains(@class,'o_portal_docs')]" position="before">
                 <t t-if="membership_count and membership_count > 0" t-call="portal.portal_docs_entry">
                     <t t-set="icon" t-value="'fa-id-card'"/>
@@ -795,33 +760,6 @@
                     </div>
                 </div>
             </t>
-        </template>
-
-        <!-- JavaScript Error Prevention - SAFE VERSION -->
-        <template id="portal_membership_error_fix" name="Portal Membership Error Prevention" inherit_id="web.layout" priority="999">
-            <xpath expr="//head" position="inside">
-                <script type="text/javascript">
-                    // Error prevention for portal membership
-                    document.addEventListener('DOMContentLoaded', function() {
-                        console.log('Membership Portal: DOM loaded successfully');
-                        
-                        // Prevent textContent errors
-                        try {
-                            // Safe manipulation of membership elements
-                            var elements = document.querySelectorAll('[data-membership], .card-header, .badge');
-                            elements.forEach(function(el) {
-                                if (el &amp;&amp; typeof el.textContent !== 'undefined') {
-                                    // Element is safe - no action needed
-                                } else {
-                                    console.warn('Found potentially problematic element:', el);
-                                }
-                            });
-                        } catch (error) {
-                            console.log('Membership portal loaded with minor JS warnings (this is normal)');
-                        }
-                    });
-                </script>
-            </xpath>
         </template>
 
     </data>

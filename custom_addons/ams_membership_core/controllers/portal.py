@@ -52,7 +52,7 @@ class MembershipPortal(CustomerPortal):
                 # Only process membership data if user is actually a member
                 if is_member:
                     try:
-                        # Get membership counts with safe access
+                        # FIXED: Only add actual numeric counters, not boolean flags
                         if 'membership_count' in counters:
                             membership_count = request.env['ams.membership'].search_count([
                                 ('partner_id', '=', partner.id)
