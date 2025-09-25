@@ -25,14 +25,15 @@ class AMSSubscription(models.Model):
     account_id = fields.Many2one('res.partner', 'Account', 
                                 help='Main account (for organizational subscriptions)')
     
-    # Product and Sales Integration
+    # Product and Sales Integration - UPDATED: Remove chapter support
     product_id = fields.Many2one('product.product', 'Subscription Product', required=True,
                                 domain=[('is_subscription_product', '=', True), 
                                        ('subscription_product_type', '!=', 'membership')])
+    
+    # UPDATED: Remove chapter from subscription types
     subscription_type = fields.Selection([
         ('subscription', 'General Subscription'),
         ('publication', 'Publication'),
-        ('chapter', 'Chapter'),  # Keep for backward compatibility but will be phased out
         ('event', 'Event Access'),
     ], string='Type', compute='_compute_subscription_type', store=True)
     
@@ -80,14 +81,8 @@ class AMSSubscription(models.Model):
     print_delivery = fields.Boolean('Print Delivery', default=False)
     delivery_address_id = fields.Many2one('res.partner', 'Delivery Address')
     
-    # Chapter-specific fields (DEPRECATED - kept for backward compatibility)
-    # These will be removed once ams_chapters module is fully implemented
-    chapter_role = fields.Selection([
-        ('member', 'Chapter Member'),
-        ('officer', 'Chapter Officer'),
-        ('admin', 'Chapter Admin'),
-    ], string='Chapter Role', default='member',
-       help='DEPRECATED: Use ams_chapters module for full chapter functionality')
+    # REMOVED: Chapter-specific fields - these are now handled by ams_chapters module
+    # chapter_role - removed
     
     # Event-specific fields
     event_access_level = fields.Selection([
@@ -114,10 +109,9 @@ class AMSSubscription(models.Model):
     days_until_expiry = fields.Integer('Days Until Expiry', compute='_compute_status_flags')
     subscription_duration = fields.Integer('Duration (Days)', compute='_compute_subscription_duration')
     
-    # Migration/Compatibility Fields
-    is_chapter_bridge = fields.Boolean('Is Chapter Bridge Record', default=False,
-                                      help='True if this subscription represents a chapter membership pending migration')
-    migration_notes = fields.Text('Migration Notes', help='Notes for migration to ams_chapters module')
+    # REMOVED: Migration/Compatibility Fields for chapters
+    # is_chapter_bridge - removed
+    # migration_notes - removed
 
     @api.depends('partner_id', 'product_id', 'start_date')
     def _compute_display_name(self):
@@ -131,7 +125,14 @@ class AMSSubscription(models.Model):
     def _compute_subscription_type(self):
         for subscription in self:
             if subscription.product_id and hasattr(subscription.product_id, 'subscription_product_type'):
-                subscription.subscription_type = subscription.product_id.subscription_product_type or 'subscription'
+                product_type = subscription.product_id.subscription_product_type
+                # Map product types to subscription types (no chapter support)
+                if product_type == 'publication':
+                    subscription.subscription_type = 'publication'
+                elif product_type == 'subscription':
+                    subscription.subscription_type = 'subscription'
+                else:
+                    subscription.subscription_type = 'subscription'
             else:
                 subscription.subscription_type = 'subscription'
     
@@ -186,19 +187,6 @@ class AMSSubscription(models.Model):
         if subscription.product_id and hasattr(subscription.product_id, 'benefit_ids') and subscription.product_id.benefit_ids:
             subscription.benefit_ids = [(6, 0, subscription.product_id.benefit_ids.ids)]
         
-        # CHAPTER COMPATIBILITY: Mark chapter subscriptions as bridge records
-        if subscription.subscription_type == 'chapter':
-            subscription.is_chapter_bridge = True
-            subscription.migration_notes = f"Chapter subscription created {fields.Date.today()} - awaiting migration to ams_chapters module"
-            _logger.info(f"Created chapter bridge subscription {subscription.name} for {subscription.partner_id.name}")
-            
-            # Log a message about future migration
-            subscription.message_post(
-                body="This chapter subscription was created as a bridge record. "
-                     "It will be migrated to the ams_chapters module when available.",
-                subject="Chapter Bridge Record Created"
-            )
-        
         return subscription
     
     def write(self, vals):
@@ -222,13 +210,6 @@ class AMSSubscription(models.Model):
                 body=f"Subscription activated until {self.end_date}",
                 subject="Subscription Activated"
             )
-            
-            # Special handling for chapter bridge records
-            if self.is_chapter_bridge:
-                self.message_post(
-                    body="Chapter subscription activated. Consider migrating to ams_chapters module for full functionality.",
-                    subject="Chapter Bridge Subscription Activated"
-                )
         
         elif new_state in ['paused', 'suspended', 'terminated']:
             # Log state change
@@ -254,10 +235,6 @@ class AMSSubscription(models.Model):
         for subscription in self:
             if subscription.state != 'active':
                 raise UserError(_("Only active subscriptions can be paused."))
-            
-            # Chapter subscriptions should not be paused (they're membership-like)
-            if subscription.subscription_type == 'chapter':
-                raise UserError(_("Chapter memberships cannot be paused. Use suspend instead."))
             
             subscription.write({'state': 'paused'})
     
@@ -315,6 +292,7 @@ class AMSSubscription(models.Model):
             'res_model': 'account.move',
             'res_id': self.invoice_id.id,
             'view_mode': 'form',
+            'views': [(False, 'form')],
         }
     
     def action_view_sale_order(self):
@@ -330,33 +308,7 @@ class AMSSubscription(models.Model):
             'res_model': 'sale.order',
             'res_id': self.sale_order_id.id,
             'view_mode': 'form',
-        }
-    
-    def action_migrate_to_chapters(self):
-        """Migrate chapter bridge subscription to ams_chapters module"""
-        self.ensure_one()
-        
-        if not self.is_chapter_bridge:
-            raise UserError(_("This is not a chapter bridge subscription."))
-        
-        if 'ams.chapter.membership' not in self.env:
-            raise UserError(_("The ams_chapters module is not installed. Cannot migrate."))
-        
-        # TODO: Implement actual migration logic when ams_chapters is ready
-        # For now, just log the intent
-        self.message_post(
-            body="Migration to ams_chapters module requested. This will be processed when migration tools are available.",
-            subject="Chapter Migration Requested"
-        )
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Migration Noted'),
-                'message': _('This chapter subscription has been marked for migration to the ams_chapters module.'),
-                'type': 'info'
-            }
+            'views': [(False, 'form')],
         }
     
     def _calculate_renewal_end_date(self):
@@ -376,17 +328,10 @@ class AMSSubscription(models.Model):
     
     @api.model
     def create_from_invoice_payment(self, invoice_line):
-        """Create subscription from paid invoice line - UPDATED FOR CHAPTER HANDLING"""
+        """Create subscription from paid invoice line - UPDATED: No chapter support"""
         product = invoice_line.product_id.product_tmpl_id
         
         if not product.is_subscription_product or product.subscription_product_type == 'membership':
-            return False
-        
-        # IMPORTANT: Chapter products should not create subscriptions anymore
-        # They should be handled by the sale order logic that routes to chapter membership creation
-        if product.subscription_product_type == 'chapter':
-            _logger.warning(f"Chapter product {product.name} attempted to create subscription via invoice. "
-                          "This should be handled by sale order chapter membership creation.")
             return False
         
         # Check if subscription already exists for this invoice line
@@ -426,7 +371,7 @@ class AMSSubscription(models.Model):
             'renewal_interval': getattr(product, 'subscription_period', 'annual'),
         }
         
-        # Set type-specific fields (but NOT chapter fields)
+        # Set type-specific fields (publications and events only)
         if hasattr(product, 'subscription_product_type') and product.subscription_product_type == 'publication':
             subscription_vals.update({
                 'digital_access': getattr(product, 'publication_digital_access', True),
@@ -501,35 +446,9 @@ class AMSSubscription(models.Model):
         
         return renewal
     
-    # Chapter Bridge Methods (for backward compatibility and migration)
-    def get_chapter_bridge_subscriptions(self, partner_id):
-        """Get chapter bridge subscriptions for a partner"""
-        return self.search([
-            ('partner_id', '=', partner_id),
-            ('is_chapter_bridge', '=', True),
-            ('state', '=', 'active')
-        ])
-    
-    @api.model
-    def migrate_chapter_bridges_to_ams_chapters(self):
-        """Batch migrate chapter bridge subscriptions to ams_chapters module"""
-        if 'ams.chapter.membership' not in self.env:
-            _logger.warning("ams_chapters module not available - cannot migrate chapter bridges")
-            return
-        
-        chapter_bridges = self.search([
-            ('is_chapter_bridge', '=', True),
-            ('state', '=', 'active')
-        ])
-        
-        _logger.info(f"Found {len(chapter_bridges)} chapter bridge subscriptions to migrate")
-        
-        # TODO: Implement actual migration logic when ams_chapters is ready
-        for bridge in chapter_bridges:
-            bridge.message_post(
-                body="Scheduled for migration to ams_chapters module",
-                subject="Migration Scheduled"
-            )
+    # REMOVED: Chapter Bridge Methods - no longer needed
+    # get_chapter_bridge_subscriptions - removed
+    # migrate_chapter_bridges_to_ams_chapters - removed
     
     # Constraints
     @api.constrains('start_date', 'end_date')
@@ -539,46 +458,8 @@ class AMSSubscription(models.Model):
                 if subscription.end_date <= subscription.start_date:
                     raise ValidationError(_("End date must be after start date."))
     
-    @api.constrains('subscription_type', 'state')
-    def _check_chapter_bridge_logic(self):
-        """Special validation for chapter bridge subscriptions"""
-        for subscription in self:
-            if subscription.subscription_type == 'chapter':
-                # Chapter subscriptions cannot be paused (they're membership-like)
-                if subscription.state == 'paused':
-                    raise ValidationError(_("Chapter memberships cannot be paused. Use suspend instead."))
-
-    def action_view_invoice(self):
-        """View subscription invoice"""
-        self.ensure_one()
-    
-        if not self.invoice_id:
-            raise UserError(_("No invoice exists for this subscription."))
-    
-        return {
-           'type': 'ir.actions.act_window',
-            'name': _('Subscription Invoice'),
-            'res_model': 'account.move',
-            'res_id': self.invoice_id.id,
-            'view_mode': 'form',
-            'views': [(False, 'form')],
-        }
-
-    def action_view_sale_order(self):
-        """View subscription sale order"""
-        self.ensure_one()
-    
-        if not self.sale_order_id:
-            raise UserError(_("No sale order exists for this subscription."))
-    
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Subscription Sale Order'),
-            'res_model': 'sale.order',
-            'res_id': self.sale_order_id.id,
-            'view_mode': 'form',
-            'views': [(False, 'form')],
-        }
+    # REMOVED: Chapter-specific validation constraints
+    # _check_chapter_bridge_logic - removed since no chapter support
 
 
 class AMSSubscriptionTag(models.Model):
