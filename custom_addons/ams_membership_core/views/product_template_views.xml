@@ -2,7 +2,7 @@
 <odoo>
     <data>
 
-        <!-- Extend Product Template Form View for Subscription Configuration -->
+        <!-- Extend Product Template Form View for Comprehensive Subscription Configuration -->
         <record id="view_product_template_form_subscription" model="ir.ui.view">
             <field name="name">product.template.form.subscription</field>
             <field name="model">product.template</field>
@@ -17,8 +17,9 @@
                     </span>
                 </xpath>
 
-                <!-- Add subscription stats buttons -->
+                <!-- Add comprehensive subscription stats buttons -->
                 <xpath expr="//div[@name='button_box']" position="inside">
+                    <!-- Membership/Chapter stats -->
                     <button name="action_view_memberships" type="object"
                             class="oe_stat_button" icon="fa-users"
                             invisible="not is_subscription_product or subscription_product_type not in ['membership', 'chapter']"
@@ -26,6 +27,31 @@
                         <field name="active_memberships_count" widget="statinfo" string="Memberships"/>
                     </button>
                     
+                    <!-- Chapter-specific stats -->
+                    <button name="action_view_chapter_members" type="object"
+                            class="oe_stat_button" icon="fa-map-marker"
+                            invisible="not is_chapter_product"
+                            groups="ams_membership_core.group_membership_user">
+                        <field name="chapter_member_count" widget="statinfo" string="Chapter Members"/>
+                    </button>
+                    
+                    <button name="action_view_child_chapters" type="object"
+                            class="oe_stat_button" icon="fa-sitemap"
+                            invisible="not is_chapter_product or not child_chapter_ids"
+                            groups="ams_membership_core.group_membership_user">
+                        <div class="o_stat_info">
+                            <span class="o_stat_text">Sub-Chapters</span>
+                            <span class="o_stat_text" t-esc="len(child_chapter_ids)"/>
+                        </div>
+                    </button>
+                    
+                    <button name="action_chapter_dashboard" type="object"
+                            class="oe_stat_button" icon="fa-dashboard"
+                            string="Chapter Dashboard"
+                            invisible="not is_chapter_product"
+                            groups="ams_membership_core.group_membership_manager"/>
+                    
+                    <!-- Subscription stats -->
                     <button name="action_view_subscriptions" type="object"
                             class="oe_stat_button" icon="fa-refresh"
                             invisible="not is_subscription_product or subscription_product_type in ['membership', 'chapter']"
@@ -33,6 +59,24 @@
                         <field name="active_subscriptions_count" widget="statinfo" string="Subscriptions"/>
                     </button>
                     
+                    <!-- Revenue stats -->
+                    <button type="object" class="oe_stat_button" icon="fa-money"
+                            invisible="not is_subscription_product"
+                            groups="ams_membership_core.group_membership_manager">
+                        <field name="total_subscription_revenue" widget="statinfo" string="Total Revenue"/>
+                    </button>
+                    
+                    <!-- Chapter retention rate -->
+                    <button type="object" class="oe_stat_button" icon="fa-heart"
+                            invisible="not is_chapter_product"
+                            groups="ams_membership_core.group_membership_manager">
+                        <div class="o_stat_info">
+                            <span class="o_stat_text">Retention</span>
+                            <span class="o_stat_text"><field name="chapter_retention_rate" widget="percentage"/></span>
+                        </div>
+                    </button>
+                    
+                    <!-- Benefits configuration -->
                     <button name="action_configure_benefits" type="object"
                             class="oe_stat_button" icon="fa-gift"
                             string="Benefits"
@@ -40,7 +84,7 @@
                             groups="ams_membership_core.group_membership_manager"/>
                 </xpath>
 
-                <!-- Add Subscription Configuration tab -->
+                <!-- Add comprehensive Subscription Configuration tab -->
                 <xpath expr="//notebook" position="inside">
                     <page string="Subscription Settings" name="subscription_settings" 
                           invisible="not is_subscription_product">
@@ -48,6 +92,7 @@
                         <group>
                             <group string="Subscription Configuration">
                                 <field name="subscription_product_type" required="is_subscription_product"/>
+                                <field name="is_chapter_product" readonly="True" invisible="subscription_product_type != 'chapter'"/>
                                 <field name="subscription_period"/>
                                 <field name="auto_renew_default"/>
                                 <field name="renewal_reminder_days"/>
@@ -83,19 +128,82 @@
                             </group>
                         </group>
 
-                        <!-- Chapter-specific settings - UPDATED: Fixed field visibility and structure -->
-                        <group string="Chapter Settings" 
+                        <!-- Comprehensive Chapter-specific settings -->
+                        <group string="Chapter Configuration" 
+                               invisible="subscription_product_type != 'chapter'">
+                            <group string="Basic Chapter Info">
+                                <field name="chapter_type"/>
+                                <field name="chapter_access_level"/>
+                                <field name="chapter_status"/>
+                                <field name="chapter_established_date"/>
+                            </group>
+                            <group string="Chapter Hierarchy">
+                                <field name="parent_chapter_id"/>
+                                <field name="chapter_level" readonly="True"/>
+                                <button name="action_create_sub_chapter" type="object" 
+                                        string="Create Sub-Chapter" class="btn-primary"
+                                        invisible="not is_chapter_product"
+                                        groups="ams_membership_core.group_membership_manager"/>
+                            </group>
+                        </group>
+
+                        <!-- Chapter Location Information -->
+                        <group string="Chapter Location" 
                                invisible="subscription_product_type != 'chapter'">
                             <group>
-                                <field name="chapter_access_level"/>
-                                <field name="chapter_type"/>
                                 <field name="chapter_location"/>
+                                <field name="chapter_city"/>
+                                <field name="chapter_state"/>
+                                <field name="chapter_zip"/>
                             </group>
-                            <group string="Chapter Benefits">
+                            <group>
+                                <field name="chapter_country_id"/>
+                                <field name="chapter_timezone"/>
+                            </group>
+                        </group>
+
+                        <!-- Chapter Contact Information -->
+                        <group string="Chapter Contacts &amp; Communication" 
+                               invisible="subscription_product_type != 'chapter'">
+                            <group string="Leadership">
+                                <field name="chapter_president"/>
+                                <field name="chapter_contact_email"/>
+                                <field name="chapter_contact_phone"/>
+                                <field name="chapter_website"/>
+                            </group>
+                            <group string="Meeting Information">
+                                <field name="chapter_meeting_schedule" placeholder="e.g., 2nd Tuesday of each month at 7:00 PM"/>
+                                <field name="chapter_meeting_location" placeholder="Meeting location details"/>
+                            </group>
+                        </group>
+
+                        <!-- Chapter Member Management -->
+                        <group string="Chapter Member Management" 
+                               invisible="subscription_product_type != 'chapter'">
+                            <group>
+                                <field name="chapter_member_limit"/>
+                                <field name="chapter_minimum_members"/>
+                            </group>
+                            <group>
+                                <field name="chapter_member_count" readonly="True"/>
+                                <field name="chapter_retention_rate" readonly="True" widget="percentage"/>
+                            </group>
+                        </group>
+
+                        <!-- Enhanced Chapter Benefits -->
+                        <group string="Chapter Benefits &amp; Access" 
+                               invisible="subscription_product_type != 'chapter'">
+                            <group string="Core Benefits">
                                 <field name="provides_local_events"/>
                                 <field name="provides_chapter_documents"/>
                                 <field name="provides_chapter_training"/>
                                 <field name="provides_networking_access"/>
+                            </group>
+                            <group string="Extended Benefits">
+                                <field name="provides_mentorship"/>
+                                <field name="provides_certification"/>
+                                <field name="provides_job_board"/>
+                                <field name="provides_newsletter"/>
                             </group>
                         </group>
 
@@ -103,7 +211,7 @@
                         <group string="Included Benefits">
                             <field name="benefit_ids" nolabel="1" 
                                    domain="[('active', '=', True)]">
-                                <list>
+                                <list editable="bottom">
                                     <field name="name"/>
                                     <field name="benefit_type"/>
                                     <field name="applies_to"/>
@@ -113,6 +221,59 @@
                             </field>
                         </group>
 
+                    </page>
+                    
+                    <!-- Chapter Sub-Chapters tab for hierarchy management -->
+                    <page string="Sub-Chapters" name="sub_chapters"
+                          invisible="not is_chapter_product or not child_chapter_ids">
+                        <div class="row">
+                            <div class="col-12">
+                                <button name="action_create_sub_chapter" type="object" 
+                                        string="Create Sub-Chapter" class="btn btn-primary mb-3"
+                                        groups="ams_membership_core.group_membership_manager"/>
+                            </div>
+                        </div>
+                        <field name="child_chapter_ids" nolabel="1">
+                            <kanban>
+                                <field name="name"/>
+                                <field name="chapter_location"/>
+                                <field name="chapter_member_count"/>
+                                <field name="chapter_status"/>
+                                <field name="list_price"/>
+                                <templates>
+                                    <t t-name="kanban-box">
+                                        <div class="oe_kanban_card oe_kanban_global_click">
+                                            <div class="oe_kanban_content">
+                                                <div class="row">
+                                                    <div class="col-8">
+                                                        <strong><t t-esc="record.name.value"/></strong>
+                                                        <br/>
+                                                        <t t-if="record.chapter_location.value">
+                                                            <small class="text-muted">
+                                                                <i class="fa fa-map-marker"/> <t t-esc="record.chapter_location.value"/>
+                                                            </small>
+                                                        </t>
+                                                    </div>
+                                                    <div class="col-4 text-right">
+                                                        <span t-attf-class="badge bg-#{record.chapter_status.raw_value == 'active' ? 'success' : record.chapter_status.raw_value == 'forming' ? 'warning' : 'secondary'}">
+                                                            <t t-esc="record.chapter_status.value"/>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="row mt-2">
+                                                    <div class="col-6">
+                                                        <small><i class="fa fa-users"/> <t t-esc="record.chapter_member_count.value"/> members</small>
+                                                    </div>
+                                                    <div class="col-6 text-right">
+                                                        <small>$<t t-esc="record.list_price.value"/></small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </templates>
+                            </kanban>
+                        </field>
                     </page>
                 </xpath>
 
@@ -124,15 +285,29 @@
                            groups="ams_membership_core.group_membership_user"/>
                 </xpath>
 
+                <!-- Add chapter indicator in title area -->
+                <xpath expr="//div[hasclass('oe_title')]" position="inside">
+                    <div class="o_row" invisible="subscription_product_type != 'chapter'">
+                        <span class="badge bg-info">
+                            <i class="fa fa-map-marker"/> Chapter Product
+                        </span>
+                        <span t-if="parent_chapter_id" class="badge bg-secondary ms-2">
+                            Sub-Chapter of: <t t-esc="parent_chapter_id.name"/>
+                        </span>
+                    </div>
+                </xpath>
+
             </field>
         </record>
 
-        <!-- Subscription Products List View -->
+        <!-- Enhanced Subscription Products List View -->
         <record id="view_product_template_list_subscription" model="ir.ui.view">
             <field name="name">product.template.list.subscription</field>
             <field name="model">product.template</field>
             <field name="arch" type="xml">
-                <list string="Subscription Products">
+                <list string="Subscription Products"
+                      decoration-info="subscription_product_type == 'chapter'"
+                      decoration-success="subscription_product_type == 'membership'">
                     <field name="name"/>
                     <field name="subscription_product_type"/>
                     <field name="subscription_period"/>
@@ -141,14 +316,22 @@
                            invisible="subscription_product_type not in ['membership', 'chapter']"/>
                     <field name="active_subscriptions_count"
                            invisible="subscription_product_type in ['membership', 'chapter']"/>
+                    <field name="chapter_member_count" optional="hide" 
+                           invisible="subscription_product_type != 'chapter'"/>
+                    <field name="chapter_status" optional="hide"
+                           invisible="subscription_product_type != 'chapter'"/>
+                    <field name="chapter_location" optional="hide"
+                           invisible="subscription_product_type != 'chapter'"/>
                     <field name="auto_renew_default"/>
+                    <field name="total_subscription_revenue" widget="monetary" optional="hide"/>
                     <field name="active"/>
                     <field name="is_subscription_product" invisible="1"/>
+                    <field name="is_chapter_product" invisible="1"/>
                 </list>
             </field>
         </record>
 
-        <!-- Subscription Products Kanban View -->
+        <!-- Enhanced Subscription Products Kanban View -->
         <record id="view_product_template_kanban_subscription" model="ir.ui.view">
             <field name="name">product.template.kanban.subscription</field>
             <field name="model">product.template</field>
@@ -159,10 +342,14 @@
                     <field name="list_price"/>
                     <field name="active_memberships_count"/>
                     <field name="active_subscriptions_count"/>
+                    <field name="chapter_member_count"/>
+                    <field name="chapter_location"/>
+                    <field name="chapter_status"/>
+                    <field name="is_chapter_product"/>
                     <field name="image_128"/>
                     <templates>
                         <t t-name="kanban-box">
-                            <div class="oe_kanban_card oe_kanban_global_click">
+                            <div t-attf-class="oe_kanban_card oe_kanban_global_click #{record.is_chapter_product.raw_value ? 'border-info' : ''}">
                                 <div class="o_kanban_image">
                                     <img t-att-src="kanban_image('product.template', 'image_128', record.id.raw_value)" 
                                          alt="Product" class="o_image_64_contain"/>
@@ -171,24 +358,42 @@
                                     <div class="o_kanban_record_top">
                                         <div class="o_kanban_record_headings">
                                             <strong class="o_kanban_record_title">
+                                                <t t-if="record.is_chapter_product.raw_value">
+                                                    <i class="fa fa-map-marker text-info me-1"/>
+                                                </t>
                                                 <t t-esc="record.name.value"/>
                                             </strong>
                                             <div class="o_kanban_record_subtitle">
-                                                <t t-esc="record.subscription_product_type.value"/>
+                                                <t t-esc="record.subscription_product_type.value and record.subscription_product_type.value.replace('_', ' ').title()"/>
+                                                <t t-if="record.is_chapter_product.raw_value and record.chapter_location.value">
+                                                    - <t t-esc="record.chapter_location.value"/>
+                                                </t>
                                             </div>
                                         </div>
-                                        <span class="badge badge-pill badge-info">
-                                            $<t t-esc="record.list_price.value"/>
-                                        </span>
+                                        <div class="d-flex flex-column">
+                                            <span class="badge badge-pill badge-primary">
+                                                $<t t-esc="record.list_price.value"/>
+                                            </span>
+                                            <t t-if="record.is_chapter_product.raw_value and record.chapter_status.raw_value">
+                                                <span t-attf-class="badge badge-pill badge-#{record.chapter_status.raw_value == 'active' ? 'success' : record.chapter_status.raw_value == 'forming' ? 'warning' : 'secondary'} mt-1">
+                                                    <t t-esc="record.chapter_status.value"/>
+                                                </span>
+                                            </t>
+                                        </div>
                                     </div>
                                     <div class="o_kanban_record_body">
                                         <div t-if="record.subscription_product_type.raw_value in ['membership', 'chapter']">
                                             <i class="fa fa-users"/> 
-                                            <t t-esc="record.active_memberships_count.value"/> Active
+                                            <t t-if="record.is_chapter_product.raw_value">
+                                                <t t-esc="record.chapter_member_count.value"/> Chapter Members
+                                            </t>
+                                            <t t-else="">
+                                                <t t-esc="record.active_memberships_count.value"/> Active Memberships
+                                            </t>
                                         </div>
                                         <div t-if="record.subscription_product_type.raw_value not in ['membership', 'chapter']">
                                             <i class="fa fa-refresh"/> 
-                                            <t t-esc="record.active_subscriptions_count.value"/> Active
+                                            <t t-esc="record.active_subscriptions_count.value"/> Active Subscriptions
                                         </div>
                                     </div>
                                 </div>
@@ -199,7 +404,50 @@
             </field>
         </record>
 
-        <!-- Chapter Products Action -->
+        <!-- Enhanced Chapter Products Search -->
+        <record id="view_product_template_search_chapter" model="ir.ui.view">
+            <field name="name">product.template.search.chapter</field>
+            <field name="model">product.template</field>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+                <search string="Chapter Products">
+                    <field name="name"/>
+                    <field name="chapter_location"/>
+                    <field name="chapter_type"/>
+                    <field name="chapter_status"/>
+                    <separator/>
+                    <filter string="Active Chapters" name="active_chapters" 
+                            domain="[('chapter_status', '=', 'active')]"/>
+                    <filter string="Forming Chapters" name="forming_chapters" 
+                            domain="[('chapter_status', '=', 'forming')]"/>
+                    <filter string="Parent Chapters" name="parent_chapters" 
+                            domain="[('parent_chapter_id', '=', False)]"/>
+                    <filter string="Sub-Chapters" name="sub_chapters" 
+                            domain="[('parent_chapter_id', '!=', False)]"/>
+                    <separator/>
+                    <filter string="Local Chapters" name="local_chapters" 
+                            domain="[('chapter_type', '=', 'local')]"/>
+                    <filter string="Regional Chapters" name="regional_chapters" 
+                            domain="[('chapter_type', '=', 'regional')]"/>
+                    <filter string="State Chapters" name="state_chapters" 
+                            domain="[('chapter_type', '=', 'state')]"/>
+                    <filter string="Special Interest" name="special_chapters" 
+                            domain="[('chapter_type', '=', 'special')]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Chapter Type" name="group_chapter_type" 
+                                context="{'group_by': 'chapter_type'}"/>
+                        <filter string="Chapter Status" name="group_chapter_status" 
+                                context="{'group_by': 'chapter_status'}"/>
+                        <filter string="Location" name="group_chapter_location" 
+                                context="{'group_by': 'chapter_location'}"/>
+                        <filter string="Parent Chapter" name="group_parent_chapter" 
+                                context="{'group_by': 'parent_chapter_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Enhanced Chapter Products Action -->
         <record id="action_chapter_products" model="ir.actions.act_window">
             <field name="name">Chapter Membership Products</field>
             <field name="type">ir.actions.act_window</field>
@@ -210,8 +458,10 @@
                 'default_is_subscription_product': True,
                 'default_subscription_product_type': 'chapter',
                 'default_type': 'service',
-                'default_sale_ok': True
+                'default_sale_ok': True,
+                'search_default_active_chapters': 1
             }</field>
+            <field name="search_view_id" ref="view_product_template_search_chapter"/>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
                     Create your first chapter membership product
@@ -219,6 +469,7 @@
                 <p>
                     Chapter membership products provide access to local or regional 
                     chapter events, documents, training, and networking opportunities.
+                    Configure chapter hierarchy, contact information, and member benefits.
                 </p>
             </field>
         </record>
@@ -247,8 +498,8 @@
                 </p>
                 <p>
                     Subscription products automatically create memberships or subscriptions 
-                    when purchased. Configure benefits, renewal settings, and portal access 
-                    for each product type.
+                    when purchased. Configure benefits, renewal settings, portal access,
+                    and chapter hierarchy for each product type.
                 </p>
             </field>
         </record>
