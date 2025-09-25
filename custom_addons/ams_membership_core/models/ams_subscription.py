@@ -25,12 +25,12 @@ class AMSSubscription(models.Model):
     account_id = fields.Many2one('res.partner', 'Account', 
                                 help='Main account (for organizational subscriptions)')
     
-    # Product and Sales Integration - UPDATED: Remove chapter support
+    # Product and Sales Integration - UPDATED: No chapter support (chapters are memberships now)
     product_id = fields.Many2one('product.product', 'Subscription Product', required=True,
                                 domain=[('is_subscription_product', '=', True), 
-                                       ('subscription_product_type', '!=', 'membership')])
+                                       ('subscription_product_type', 'not in', ['membership', 'chapter'])])
     
-    # UPDATED: Remove chapter from subscription types
+    # Subscription types - UPDATED: Only pure subscriptions, no membership or chapter types
     subscription_type = fields.Selection([
         ('subscription', 'General Subscription'),
         ('publication', 'Publication'),
@@ -81,9 +81,6 @@ class AMSSubscription(models.Model):
     print_delivery = fields.Boolean('Print Delivery', default=False)
     delivery_address_id = fields.Many2one('res.partner', 'Delivery Address')
     
-    # REMOVED: Chapter-specific fields - these are now handled by ams_chapters module
-    # chapter_role - removed
-    
     # Event-specific fields
     event_access_level = fields.Selection([
         ('basic', 'Basic Access'),
@@ -108,10 +105,6 @@ class AMSSubscription(models.Model):
     is_expired = fields.Boolean('Is Expired', compute='_compute_status_flags')
     days_until_expiry = fields.Integer('Days Until Expiry', compute='_compute_status_flags')
     subscription_duration = fields.Integer('Duration (Days)', compute='_compute_subscription_duration')
-    
-    # REMOVED: Migration/Compatibility Fields for chapters
-    # is_chapter_bridge - removed
-    # migration_notes - removed
 
     @api.depends('partner_id', 'product_id', 'start_date')
     def _compute_display_name(self):
@@ -126,12 +119,13 @@ class AMSSubscription(models.Model):
         for subscription in self:
             if subscription.product_id and hasattr(subscription.product_id, 'subscription_product_type'):
                 product_type = subscription.product_id.subscription_product_type
-                # Map product types to subscription types (no chapter support)
+                # Map product types to subscription types (no membership or chapter support)
                 if product_type == 'publication':
                     subscription.subscription_type = 'publication'
                 elif product_type == 'subscription':
                     subscription.subscription_type = 'subscription'
                 else:
+                    # Default to subscription for any other types
                     subscription.subscription_type = 'subscription'
             else:
                 subscription.subscription_type = 'subscription'
@@ -328,10 +322,12 @@ class AMSSubscription(models.Model):
     
     @api.model
     def create_from_invoice_payment(self, invoice_line):
-        """Create subscription from paid invoice line - UPDATED: No chapter support"""
+        """Create subscription from paid invoice line - NO MEMBERSHIP/CHAPTER SUPPORT"""
         product = invoice_line.product_id.product_tmpl_id
         
-        if not product.is_subscription_product or product.subscription_product_type == 'membership':
+        # Only handle pure subscription products (not membership or chapter)
+        if (not product.is_subscription_product or 
+            product.subscription_product_type in ['membership', 'chapter']):
             return False
         
         # Check if subscription already exists for this invoice line
@@ -446,10 +442,6 @@ class AMSSubscription(models.Model):
         
         return renewal
     
-    # REMOVED: Chapter Bridge Methods - no longer needed
-    # get_chapter_bridge_subscriptions - removed
-    # migrate_chapter_bridges_to_ams_chapters - removed
-    
     # Constraints
     @api.constrains('start_date', 'end_date')
     def _check_dates(self):
@@ -457,9 +449,6 @@ class AMSSubscription(models.Model):
             if subscription.start_date and subscription.end_date:
                 if subscription.end_date <= subscription.start_date:
                     raise ValidationError(_("End date must be after start date."))
-    
-    # REMOVED: Chapter-specific validation constraints
-    # _check_chapter_bridge_logic - removed since no chapter support
 
 
 class AMSSubscriptionTag(models.Model):
