@@ -21,6 +21,12 @@ class SaleOrder(models.Model):
         store=True
     )
     
+    has_chapter_products = fields.Boolean(
+        'Has Chapter Products', 
+        compute='_compute_has_chapter_products',
+        store=True
+    )
+    
     @api.depends('order_line.product_id')
     def _compute_has_membership_products(self):
         """Check if order has membership products"""
@@ -33,12 +39,23 @@ class SaleOrder(models.Model):
     
     @api.depends('order_line.product_id')
     def _compute_has_subscription_products(self):
-        """Check if order has any subscription products (including non-membership)"""
+        """Check if order has subscription products (excluding memberships and chapters)"""
         for order in self:
             subscription_lines = order.order_line.filtered(
-                lambda line: line.product_id.product_tmpl_id.is_subscription_product
+                lambda line: (line.product_id.product_tmpl_id.is_subscription_product and 
+                            line.product_id.product_tmpl_id.subscription_product_type not in ['membership', 'chapter'])
             )
             order.has_subscription_products = bool(subscription_lines)
+    
+    @api.depends('order_line.product_id')
+    def _compute_has_chapter_products(self):
+        """Check if order has chapter products"""
+        for order in self:
+            chapter_lines = order.order_line.filtered(
+                lambda line: (line.product_id.product_tmpl_id.is_subscription_product and 
+                            line.product_id.product_tmpl_id.subscription_product_type == 'chapter')
+            )
+            order.has_chapter_products = bool(chapter_lines)
     
     def action_confirm(self):
         """Override to handle ALL subscription creation when order is confirmed AND paid"""
@@ -55,10 +72,12 @@ class SaleOrder(models.Model):
         # For orders with ANY subscription products, check if they're paid and process
         for order in self:
             _logger.info(f"SUBSCRIPTION DEBUG: Checking order {order.name}")
+            _logger.info(f"SUBSCRIPTION DEBUG: has_membership_products = {order.has_membership_products}")
             _logger.info(f"SUBSCRIPTION DEBUG: has_subscription_products = {order.has_subscription_products}")
+            _logger.info(f"SUBSCRIPTION DEBUG: has_chapter_products = {order.has_chapter_products}")
             _logger.info(f"SUBSCRIPTION DEBUG: _is_paid() = {order._is_paid()}")
             
-            if order.has_subscription_products and order._is_paid():
+            if (order.has_membership_products or order.has_subscription_products or order.has_chapter_products) and order._is_paid():
                 _logger.info(f"SUBSCRIPTION DEBUG: Processing subscription activation for order {order.name}")
                 order._process_subscription_activations()
             else:
@@ -106,8 +125,13 @@ class SaleOrder(models.Model):
                     if product_tmpl.subscription_product_type == 'membership':
                         membership = self._create_membership_from_sale_line(line)
                         _logger.info(f"SUBSCRIPTION DEBUG: Successfully created membership: {membership}")
+                    elif product_tmpl.subscription_product_type == 'chapter':
+                        # CRITICAL FIX: Chapters are treated as membership-like, not subscriptions
+                        # NOTE: Multiple chapter memberships are allowed per member
+                        chapter_membership = self._create_chapter_membership_from_sale_line(line)
+                        _logger.info(f"SUBSCRIPTION DEBUG: Successfully created chapter membership: {chapter_membership}")
                     else:
-                        # Handle ALL other subscription types (chapter, publication, etc.)
+                        # Handle ONLY non-membership, non-chapter subscription types (publication, etc.)
                         subscription = self._create_subscription_from_sale_line(line)
                         _logger.info(f"SUBSCRIPTION DEBUG: Successfully created subscription: {subscription}")
                 except Exception as e:
@@ -118,16 +142,17 @@ class SaleOrder(models.Model):
                 _logger.info(f"SUBSCRIPTION DEBUG: Line {line.id} is not a subscription product - skipping")
     
     def _create_membership_from_sale_line(self, line):
-        """Create membership from paid sale order line"""
-        _logger.info(f"=== SUBSCRIPTION DEBUG: _create_membership_from_sale_line called for line {line.id} ===")
+        """Create membership from paid sale order line
+        NOTE: Only ONE active membership allowed per member"""
+        _logger.info(f"=== MEMBERSHIP DEBUG: _create_membership_from_sale_line called for line {line.id} ===")
         
         product_tmpl = line.product_id.product_tmpl_id
         partner = self.partner_id
         
-        _logger.info(f"SUBSCRIPTION DEBUG: Partner: {partner.name} (ID: {partner.id})")
-        _logger.info(f"SUBSCRIPTION DEBUG: Product: {line.product_id.name}")
+        _logger.info(f"MEMBERSHIP DEBUG: Partner: {partner.name} (ID: {partner.id})")
+        _logger.info(f"MEMBERSHIP DEBUG: Product: {line.product_id.name}")
         
-        # Check if membership already exists
+        # Check if membership already exists for this specific sale line
         try:
             existing_membership = self.env['ams.membership'].search([
                 ('partner_id', '=', partner.id),
@@ -136,24 +161,43 @@ class SaleOrder(models.Model):
             ], limit=1)
             
             if existing_membership:
-                _logger.info(f"SUBSCRIPTION DEBUG: Membership already exists for sale line {line.id}")
-                # ENSURE ACCESS TOKEN FOR EXISTING MEMBERSHIP'S INVOICE
-                if existing_membership.invoice_id and not existing_membership.invoice_id.access_token:
-                    existing_membership.invoice_id._portal_ensure_token()
+                _logger.info(f"MEMBERSHIP DEBUG: Membership already exists for sale line {line.id}")
                 return existing_membership
-            _logger.info(f"SUBSCRIPTION DEBUG: No existing membership found - creating new one")
+            _logger.info(f"MEMBERSHIP DEBUG: No existing membership found - creating new one")
         except Exception as e:
-            _logger.error(f"SUBSCRIPTION DEBUG: Error checking existing membership: {str(e)}")
+            _logger.error(f"MEMBERSHIP DEBUG: Error checking existing membership: {str(e)}")
+        
+        # IMPORTANT: Check for other active memberships (only one allowed)
+        try:
+            other_active_memberships = self.env['ams.membership'].search([
+                ('partner_id', '=', partner.id),
+                ('product_id.subscription_product_type', '=', 'membership'),
+                ('state', '=', 'active'),
+                ('id', '!=', False)  # Exclude current record if it exists
+            ])
+            
+            if other_active_memberships:
+                _logger.info(f"MEMBERSHIP DEBUG: Found {len(other_active_memberships)} other active memberships - will terminate them")
+                for old_membership in other_active_memberships:
+                    old_membership.write({
+                        'state': 'terminated',
+                        'notes': f"Terminated due to new membership purchase: {line.product_id.name} on {fields.Date.today()}"
+                    })
+                    _logger.info(f"MEMBERSHIP DEBUG: Terminated existing membership {old_membership.name}")
+            else:
+                _logger.info(f"MEMBERSHIP DEBUG: No other active memberships found")
+        except Exception as e:
+            _logger.error(f"MEMBERSHIP DEBUG: Error checking/terminating existing memberships: {str(e)}")
         
         # Set partner as member if not already
         try:
             if not partner.is_member:
                 partner.write({'is_member': True})
-                _logger.info(f"SUBSCRIPTION DEBUG: Set partner {partner.name} as member")
+                _logger.info(f"MEMBERSHIP DEBUG: Set partner {partner.name} as member")
             else:
-                _logger.info(f"SUBSCRIPTION DEBUG: Partner {partner.name} already marked as member")
+                _logger.info(f"MEMBERSHIP DEBUG: Partner {partner.name} already marked as member")
         except Exception as e:
-            _logger.error(f"SUBSCRIPTION DEBUG: Error setting partner as member: {str(e)}")
+            _logger.error(f"MEMBERSHIP DEBUG: Error setting partner as member: {str(e)}")
         
         # Generate member number if needed
         try:
@@ -161,15 +205,15 @@ class SaleOrder(models.Model):
                 # Try foundation method first
                 if hasattr(partner, '_generate_member_number'):
                     partner._generate_member_number()
-                    _logger.info(f"SUBSCRIPTION DEBUG: Generated member number using foundation method")
+                    _logger.info(f"MEMBERSHIP DEBUG: Generated member number using foundation method")
                 else:
                     # Fallback member number generation
                     partner.member_number = self._generate_member_number_fallback()
-                    _logger.info(f"SUBSCRIPTION DEBUG: Generated member number using fallback method: {partner.member_number}")
+                    _logger.info(f"MEMBERSHIP DEBUG: Generated member number using fallback method: {partner.member_number}")
             else:
-                _logger.info(f"SUBSCRIPTION DEBUG: Partner already has member number: {partner.member_number}")
+                _logger.info(f"MEMBERSHIP DEBUG: Partner already has member number: {partner.member_number}")
         except Exception as e:
-            _logger.error(f"SUBSCRIPTION DEBUG: Error generating member number: {str(e)}")
+            _logger.error(f"MEMBERSHIP DEBUG: Error generating member number: {str(e)}")
         
         # Set default member type if none exists
         try:
@@ -187,18 +231,18 @@ class SaleOrder(models.Model):
                 
                 if default_member_type:
                     partner.write({'member_type_id': default_member_type.id})
-                    _logger.info(f"SUBSCRIPTION DEBUG: Set member type to: {default_member_type.name}")
+                    _logger.info(f"MEMBERSHIP DEBUG: Set member type to: {default_member_type.name}")
                 else:
-                    _logger.warning(f"SUBSCRIPTION DEBUG: No member types found in system!")
+                    _logger.warning(f"MEMBERSHIP DEBUG: No member types found in system!")
             else:
-                _logger.info(f"SUBSCRIPTION DEBUG: Partner already has member type: {partner.member_type_id.name}")
+                _logger.info(f"MEMBERSHIP DEBUG: Partner already has member type: {partner.member_type_id.name}")
         except Exception as e:
-            _logger.error(f"SUBSCRIPTION DEBUG: Error setting member type: {str(e)}")
+            _logger.error(f"MEMBERSHIP DEBUG: Error setting member type: {str(e)}")
         
         # Calculate membership dates
         start_date = fields.Date.today()
         end_date = self._calculate_membership_end_date(start_date, product_tmpl.subscription_period)
-        _logger.info(f"SUBSCRIPTION DEBUG: Calculated dates - Start: {start_date}, End: {end_date}")
+        _logger.info(f"MEMBERSHIP DEBUG: Calculated dates - Start: {start_date}, End: {end_date}")
         
         # Update foundation partner dates
         try:
@@ -207,13 +251,13 @@ class SaleOrder(models.Model):
                 'membership_end_date': end_date,
                 'member_status': 'active'
             })
-            _logger.info(f"SUBSCRIPTION DEBUG: Updated partner foundation dates")
+            _logger.info(f"MEMBERSHIP DEBUG: Updated partner foundation dates")
         except Exception as e:
-            _logger.error(f"SUBSCRIPTION DEBUG: Error updating partner foundation dates: {str(e)}")
+            _logger.error(f"MEMBERSHIP DEBUG: Error updating partner foundation dates: {str(e)}")
         
         # Create membership record
         try:
-            _logger.info(f"SUBSCRIPTION DEBUG: Attempting to create ams.membership record...")
+            _logger.info(f"MEMBERSHIP DEBUG: Attempting to create ams.membership record...")
             membership_vals = {
                 'partner_id': partner.id,
                 'product_id': line.product_id.id,
@@ -229,53 +273,11 @@ class SaleOrder(models.Model):
                 'renewal_interval': product_tmpl.subscription_period or 'annual',
             }
             
-            _logger.info(f"SUBSCRIPTION DEBUG: Membership values: {membership_vals}")
+            _logger.info(f"MEMBERSHIP DEBUG: Membership values: {membership_vals}")
             
             membership = self.env['ams.membership'].create(membership_vals)
             
-            _logger.info(f"SUBSCRIPTION DEBUG: Successfully created membership {membership.name} (ID: {membership.id}) for partner {partner.name}")
-            
-            # CRITICAL: Create invoice and ensure access token immediately
-            try:
-                if self.invoice_ids:
-                    # Link to existing invoice
-                    invoice = self.invoice_ids[0]
-                    membership.write({
-                        'invoice_id': invoice.id,
-                        'invoice_line_id': invoice.invoice_line_ids.filtered(
-                            lambda l: l.product_id == line.product_id
-                        )[:1].id if invoice.invoice_line_ids else False
-                    })
-                    # ENSURE ACCESS TOKEN
-                    if not invoice.access_token:
-                        invoice._portal_ensure_token()
-                    _logger.info(f"SUBSCRIPTION DEBUG: Linked membership to invoice {invoice.name} with token")
-                else:
-                    # Create new invoice for membership
-                    invoice_vals = {
-                        'partner_id': partner.id,
-                        'move_type': 'out_invoice',
-                        'invoice_date': fields.Date.today(),
-                        'invoice_line_ids': [(0, 0, {
-                            'product_id': line.product_id.id,
-                            'name': f"Membership: {line.product_id.name}",
-                            'quantity': 1,
-                            'price_unit': line.price_subtotal,
-                        })]
-                    }
-                    invoice = self.env['account.move'].create(invoice_vals)
-                    invoice.action_post()
-                    # ENSURE ACCESS TOKEN
-                    if not invoice.access_token:
-                        invoice._portal_ensure_token()
-                    
-                    membership.write({
-                        'invoice_id': invoice.id,
-                        'invoice_line_id': invoice.invoice_line_ids[0].id
-                    })
-                    _logger.info(f"SUBSCRIPTION DEBUG: Created new invoice {invoice.name} for membership with token")
-            except Exception as e:
-                _logger.error(f"SUBSCRIPTION DEBUG: Error handling invoice for membership: {str(e)}")
+            _logger.info(f"MEMBERSHIP DEBUG: Successfully created membership {membership.name} (ID: {membership.id}) for partner {partner.name}")
             
             # Log activity
             membership.message_post(
@@ -286,13 +288,134 @@ class SaleOrder(models.Model):
             return membership
             
         except Exception as e:
-            _logger.error(f"SUBSCRIPTION DEBUG: CRITICAL ERROR creating membership record: {str(e)}")
-            _logger.error(f"SUBSCRIPTION DEBUG: Exception type: {type(e).__name__}")
-            _logger.error(f"SUBSCRIPTION DEBUG: Exception details: {e}")
+            _logger.error(f"MEMBERSHIP DEBUG: CRITICAL ERROR creating membership record: {str(e)}")
+            _logger.error(f"MEMBERSHIP DEBUG: Exception type: {type(e).__name__}")
+            _logger.error(f"MEMBERSHIP DEBUG: Exception details: {e}")
             raise e
     
+    def _create_chapter_membership_from_sale_line(self, line):
+        """Create chapter membership from paid sale order line
+        NOTE: Multiple chapter memberships are allowed per member"""
+        _logger.info(f"=== CHAPTER DEBUG: _create_chapter_membership_from_sale_line called for line {line.id} ===")
+        
+        product_tmpl = line.product_id.product_tmpl_id
+        partner = self.partner_id
+        
+        _logger.info(f"CHAPTER DEBUG: Partner: {partner.name} (ID: {partner.id})")
+        _logger.info(f"CHAPTER DEBUG: Product: {line.product_id.name}")
+        _logger.info(f"CHAPTER DEBUG: IMPORTANT - Multiple chapter memberships are allowed per member")
+        
+        # Check if ams_chapters module is installed
+        if 'ams.chapter.membership' in self.env:
+            _logger.info(f"CHAPTER DEBUG: ams_chapters module detected - using full chapter functionality")
+            return self._create_ams_chapter_membership(line)
+        else:
+            _logger.info(f"CHAPTER DEBUG: ams_chapters module not installed - creating enhanced subscription")
+            return self._create_chapter_subscription_bridge(line)
+    
+    def _create_ams_chapter_membership(self, line):
+        """Create chapter membership using full ams_chapters module"""
+        # This will be implemented when ams_chapters module is installed
+        # For now, fallback to bridge method
+        _logger.info(f"CHAPTER DEBUG: Full chapter membership creation not yet implemented - using bridge")
+        return self._create_chapter_subscription_bridge(line)
+    
+    def _create_chapter_subscription_bridge(self, line):
+        """Create chapter subscription with enhanced membership-like behavior
+        NOTE: Does NOT terminate other chapter subscriptions (multiple allowed)"""
+        _logger.info(f"CHAPTER DEBUG: Creating chapter subscription bridge for line {line.id}")
+        
+        product_tmpl = line.product_id.product_tmpl_id
+        partner = self.partner_id
+        
+        # Ensure partner is a member (chapters require membership)
+        if not partner.is_member:
+            partner.write({'is_member': True})
+            _logger.info(f"CHAPTER DEBUG: Set partner {partner.name} as member for chapter access")
+        
+        # Check if SAME chapter subscription already exists for this sale line
+        existing_subscription = self.env['ams.subscription'].search([
+            ('partner_id', '=', partner.id),
+            ('product_id', '=', line.product_id.id),
+            ('sale_order_line_id', '=', line.id)
+        ], limit=1)
+        
+        if existing_subscription:
+            _logger.info(f"CHAPTER DEBUG: Chapter subscription already exists for sale line {line.id}")
+            return existing_subscription
+        
+        # IMPORTANT: Check for existing subscription to SAME chapter product
+        # We allow multiple different chapters, but not duplicate same chapter
+        same_chapter_subscription = self.env['ams.subscription'].search([
+            ('partner_id', '=', partner.id),
+            ('product_id', '=', line.product_id.id),
+            ('subscription_type', '=', 'chapter'),
+            ('state', '=', 'active')
+        ], limit=1)
+        
+        if same_chapter_subscription:
+            _logger.warning(f"CHAPTER DEBUG: Partner already has active subscription to same chapter product {line.product_id.name}")
+            # For now, we'll extend the existing one rather than create duplicate
+            # Calculate new end date
+            start_date = fields.Date.today()
+            new_end_date = self._calculate_membership_end_date(start_date, product_tmpl.subscription_period)
+            
+            same_chapter_subscription.write({
+                'end_date': max(same_chapter_subscription.end_date, new_end_date),
+                'subscription_fee': same_chapter_subscription.subscription_fee + line.price_subtotal,
+                'notes': f"Extended/renewed from sale order {self.name} on {fields.Date.today()}"
+            })
+            
+            _logger.info(f"CHAPTER DEBUG: Extended existing chapter subscription {same_chapter_subscription.name}")
+            return same_chapter_subscription
+        
+        # Calculate subscription dates (chapters are typically annual like memberships)
+        start_date = fields.Date.today()
+        end_date = self._calculate_membership_end_date(start_date, product_tmpl.subscription_period)
+        _logger.info(f"CHAPTER DEBUG: Calculated dates - Start: {start_date}, End: {end_date}")
+        
+        # Create subscription record with chapter-specific settings
+        subscription_vals = {
+            'partner_id': partner.id,
+            'product_id': line.product_id.id,
+            'sale_order_id': self.id,
+            'sale_order_line_id': line.id,
+            'start_date': start_date,
+            'end_date': end_date,
+            'last_renewal_date': start_date,
+            'subscription_fee': line.price_subtotal,
+            'payment_status': 'paid',
+            'state': 'active',
+            'auto_renew': product_tmpl.auto_renew_default or True,
+            'renewal_interval': product_tmpl.subscription_period or 'annual',
+            # Chapter-specific defaults
+            'chapter_role': 'member',
+        }
+        
+        _logger.info(f"CHAPTER DEBUG: Chapter subscription values: {subscription_vals}")
+        
+        subscription = self.env['ams.subscription'].create(subscription_vals)
+        
+        _logger.info(f"CHAPTER DEBUG: Successfully created chapter subscription {subscription.name} (ID: {subscription.id}) for partner {partner.name}")
+        
+        # Check how many total chapter subscriptions this member now has
+        total_chapters = self.env['ams.subscription'].search_count([
+            ('partner_id', '=', partner.id),
+            ('subscription_type', '=', 'chapter'),
+            ('state', '=', 'active')
+        ])
+        _logger.info(f"CHAPTER DEBUG: Partner {partner.name} now has {total_chapters} active chapter subscriptions")
+        
+        # Log activity
+        subscription.message_post(
+            body=f"Chapter membership activated from sale order {self.name} (Total chapters: {total_chapters})",
+            subject="Chapter Membership Activated"
+        )
+        
+        return subscription
+    
     def _create_subscription_from_sale_line(self, line):
-        """Create subscription from paid sale order line - NEW METHOD FOR NON-MEMBERSHIP SUBSCRIPTIONS"""
+        """Create subscription from paid sale order line - UPDATED TO EXCLUDE CHAPTERS"""
         _logger.info(f"=== SUBSCRIPTION DEBUG: _create_subscription_from_sale_line called for line {line.id} ===")
         
         product_tmpl = line.product_id.product_tmpl_id
@@ -302,7 +425,12 @@ class SaleOrder(models.Model):
         _logger.info(f"SUBSCRIPTION DEBUG: Product: {line.product_id.name}")
         _logger.info(f"SUBSCRIPTION DEBUG: Subscription Type: {product_tmpl.subscription_product_type}")
         
-        # Check if subscription already exists
+        # SAFETY CHECK: This method should not handle chapters or memberships
+        if product_tmpl.subscription_product_type in ['membership', 'chapter']:
+            _logger.error(f"SUBSCRIPTION DEBUG: ERROR - This method should not handle {product_tmpl.subscription_product_type} products!")
+            raise ValueError(f"Invalid product type {product_tmpl.subscription_product_type} for subscription creation")
+        
+        # Check if subscription already exists for this sale line
         try:
             existing_subscription = self.env['ams.subscription'].search([
                 ('partner_id', '=', partner.id),
@@ -312,9 +440,6 @@ class SaleOrder(models.Model):
             
             if existing_subscription:
                 _logger.info(f"SUBSCRIPTION DEBUG: Subscription already exists for sale line {line.id}")
-                # ENSURE ACCESS TOKEN FOR EXISTING SUBSCRIPTION'S INVOICE
-                if existing_subscription.invoice_id and not existing_subscription.invoice_id.access_token:
-                    existing_subscription.invoice_id._portal_ensure_token()
                 return existing_subscription
             _logger.info(f"SUBSCRIPTION DEBUG: No existing subscription found - creating new one")
         except Exception as e:
@@ -343,68 +468,19 @@ class SaleOrder(models.Model):
                 'renewal_interval': product_tmpl.subscription_period or 'annual',
             }
             
-            # Add type-specific fields
+            # Add type-specific fields for NON-CHAPTER subscriptions
             if product_tmpl.subscription_product_type == 'publication':
                 subscription_vals.update({
                     'digital_access': getattr(product_tmpl, 'publication_digital_access', True),
                     'print_delivery': getattr(product_tmpl, 'publication_print_delivery', False),
                 })
-            elif product_tmpl.subscription_product_type == 'chapter':
-                subscription_vals.update({
-                    'chapter_role': 'member',  # Default chapter role
-                })
-            elif product_tmpl.subscription_product_type == 'event':
-                subscription_vals.update({
-                    'event_access_level': getattr(product_tmpl, 'event_access_level', 'basic'),
-                })
+            # Remove chapter-specific handling from here
             
             _logger.info(f"SUBSCRIPTION DEBUG: Subscription values: {subscription_vals}")
             
             subscription = self.env['ams.subscription'].create(subscription_vals)
             
             _logger.info(f"SUBSCRIPTION DEBUG: Successfully created subscription {subscription.name} (ID: {subscription.id}) for partner {partner.name}")
-            
-            # CRITICAL: Create invoice and ensure access token immediately
-            try:
-                if self.invoice_ids:
-                    # Link to existing invoice
-                    invoice = self.invoice_ids[0]
-                    subscription.write({
-                        'invoice_id': invoice.id,
-                        'invoice_line_id': invoice.invoice_line_ids.filtered(
-                            lambda l: l.product_id == line.product_id
-                        )[:1].id if invoice.invoice_line_ids else False
-                    })
-                    # ENSURE ACCESS TOKEN
-                    if not invoice.access_token:
-                        invoice._portal_ensure_token()
-                    _logger.info(f"SUBSCRIPTION DEBUG: Linked subscription to invoice {invoice.name} with token")
-                else:
-                    # Create new invoice for subscription
-                    invoice_vals = {
-                        'partner_id': partner.id,
-                        'move_type': 'out_invoice',
-                        'invoice_date': fields.Date.today(),
-                        'invoice_line_ids': [(0, 0, {
-                            'product_id': line.product_id.id,
-                            'name': f"Subscription: {line.product_id.name}",
-                            'quantity': 1,
-                            'price_unit': line.price_subtotal,
-                        })]
-                    }
-                    invoice = self.env['account.move'].create(invoice_vals)
-                    invoice.action_post()
-                    # ENSURE ACCESS TOKEN
-                    if not invoice.access_token:
-                        invoice._portal_ensure_token()
-                    
-                    subscription.write({
-                        'invoice_id': invoice.id,
-                        'invoice_line_id': invoice.invoice_line_ids[0].id
-                    })
-                    _logger.info(f"SUBSCRIPTION DEBUG: Created new invoice {invoice.name} for subscription with token")
-            except Exception as e:
-                _logger.error(f"SUBSCRIPTION DEBUG: Error handling invoice for subscription: {str(e)}")
             
             # Log activity
             subscription.message_post(
@@ -485,43 +561,9 @@ class PaymentTransaction(models.Model):
         for tx in self:
             if tx.state == 'done' and tx.sale_order_ids:
                 for order in tx.sale_order_ids:
-                    if order.has_subscription_products:
+                    if (order.has_membership_products or 
+                        order.has_subscription_products or 
+                        order.has_chapter_products):
                         order._process_subscription_activations()
-        
-        return result
-
-
-# ADDITIONAL: Invoice creation override for direct subscription invoices
-class SaleOrderLine(models.Model):
-    _inherit = 'sale.order.line'
-    
-    def _prepare_invoice_line(self, **optional_values):
-        """Override to ensure subscription invoices get access tokens"""
-        result = super()._prepare_invoice_line(**optional_values)
-        
-        # Mark subscription lines for special handling
-        if self.product_id.product_tmpl_id.is_subscription_product:
-            result['name'] = f"{result.get('name', '')} (Subscription)"
-            
-        return result
-
-
-# HELPER: Automatic invoice token generation
-class SaleAdvancePaymentInv(models.TransientModel):
-    _inherit = 'sale.advance.payment.inv'
-    
-    def create_invoices(self):
-        """Override to ensure subscription invoices get access tokens"""
-        result = super().create_invoices()
-        
-        # Get the created invoices
-        if hasattr(self, '_context') and self._context.get('active_ids'):
-            sale_orders = self.env['sale.order'].browse(self._context.get('active_ids'))
-            for order in sale_orders:
-                if order.has_subscription_products and order.invoice_ids:
-                    for invoice in order.invoice_ids:
-                        if not invoice.access_token:
-                            invoice._portal_ensure_token()
-                            _logger.info(f"Generated access token for subscription invoice {invoice.name}")
         
         return result

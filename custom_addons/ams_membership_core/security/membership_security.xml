@@ -63,5 +63,7 @@
             <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
         </record>
 
+        
+
     </data>
 </odoo>

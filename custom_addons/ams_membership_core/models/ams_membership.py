@@ -91,7 +91,7 @@ class AMSMembership(models.Model):
     is_expired = fields.Boolean('Is Expired', compute='_compute_status_flags')
     days_until_expiry = fields.Integer('Days Until Expiry', compute='_compute_status_flags')
     membership_duration = fields.Integer('Duration (Days)', compute='_compute_membership_duration')
-    
+
     @api.depends('partner_id', 'product_id', 'start_date')
     def _compute_display_name(self):
         for membership in self:
@@ -190,17 +190,9 @@ class AMSMembership(models.Model):
         if membership.product_id and membership.product_id.benefit_ids:
             membership.benefit_ids = [(6, 0, membership.product_id.benefit_ids.ids)]
         
-        # Handle membership type restrictions (only 1 active membership)
-        if membership.product_id.subscription_product_type == 'membership':
+        # CRITICAL: Ensure single active membership per member
+        if membership.state == 'active':
             membership._ensure_single_active_membership()
-        
-        # CRITICAL: Ensure invoice access token if invoice exists
-        if membership.invoice_id and not membership.invoice_id.access_token:
-            try:
-                membership.invoice_id._portal_ensure_token()
-                _logger.info(f"Generated access token for membership invoice {membership.invoice_id.name}")
-            except Exception as e:
-                _logger.error(f"Failed to generate access token for membership invoice: {str(e)}")
         
         return membership
     
@@ -213,26 +205,17 @@ class AMSMembership(models.Model):
             for membership in self:
                 membership._handle_state_change(vals['state'])
         
-        # CRITICAL: Ensure access token when invoice is linked
-        if 'invoice_id' in vals and vals['invoice_id']:
-            for membership in self:
-                if membership.invoice_id and not membership.invoice_id.access_token:
-                    try:
-                        membership.invoice_id._portal_ensure_token()
-                        _logger.info(f"Generated access token for linked invoice {membership.invoice_id.name}")
-                    except Exception as e:
-                        _logger.error(f"Failed to generate access token for linked invoice: {str(e)}")
-        
         return result
     
     def _ensure_single_active_membership(self):
-        """Ensure only one active membership per member"""
+        """Ensure only one active membership per member - ENHANCED VERSION"""
         self.ensure_one()
         
         if self.state != 'active':
+            _logger.debug(f"Membership {self.name} is not active, skipping single membership check")
             return
         
-        # Find other active memberships for same member
+        # Find other active memberships for same member (excluding current one)
         other_memberships = self.search([
             ('partner_id', '=', self.partner_id.id),
             ('product_id.subscription_product_type', '=', 'membership'),
@@ -241,11 +224,29 @@ class AMSMembership(models.Model):
         ])
         
         if other_memberships:
-            # Terminate other active memberships
-            other_memberships.write({
-                'state': 'terminated',
-                'notes': f"Terminated due to new active membership: {self.name}"
-            })
+            _logger.info(f"Found {len(other_memberships)} other active memberships for {self.partner_id.name} - terminating them")
+            
+            for other_membership in other_memberships:
+                other_membership.write({
+                    'state': 'terminated',
+                    'notes': (other_membership.notes or '') + f"\n\nTerminated on {fields.Date.today()} due to new active membership: {self.name}"
+                })
+                
+                # Log the termination
+                other_membership.message_post(
+                    body=f"Membership terminated due to new active membership: {self.display_name}",
+                    subject="Membership Terminated - Single Active Rule"
+                )
+                
+                _logger.info(f"Terminated membership {other_membership.name} for {self.partner_id.name}")
+            
+            # Update notes on current membership
+            current_notes = self.notes or ''
+            if other_memberships:
+                terminated_names = ', '.join(other_memberships.mapped('name'))
+                self.notes = current_notes + f"\n\nActivated on {fields.Date.today()} - Terminated other memberships: {terminated_names}"
+        else:
+            _logger.debug(f"No other active memberships found for {self.partner_id.name}")
     
     def _handle_state_change(self, new_state):
         """Handle membership state changes and sync with foundation"""
@@ -261,20 +262,27 @@ class AMSMembership(models.Model):
             # Use context to prevent recursion
             self.partner_id.with_context(skip_portal_creation=True).write(partner_vals)
             
-            # Ensure single active membership for membership products
-            if self.product_id.subscription_product_type == 'membership':
-                self._ensure_single_active_membership()
+            # CRITICAL: Ensure single active membership
+            self._ensure_single_active_membership()
             
             # Grant portal access if product allows and foundation settings enable it
             self._handle_portal_access_on_activation()
             
             # Apply engagement points for membership activation
             self._apply_engagement_points('membership_activation')
+            
+            # Log the activation
+            self.message_post(
+                body=f"Membership activated - Member status set to active until {self.end_date}",
+                subject="Membership Activated"
+            )
         
         elif new_state == 'terminated':
             # Check if this was the active membership
             if (self.partner_id.member_status == 'active' and 
-                self.product_id.subscription_product_type == 'membership'):
+                hasattr(self.partner_id, 'current_membership_id') and
+                self.partner_id.current_membership_id == self):
+                
                 # Look for other active memberships
                 other_active = self.search([
                     ('partner_id', '=', self.partner_id.id),
@@ -288,6 +296,39 @@ class AMSMembership(models.Model):
                     self.partner_id.with_context(skip_portal_creation=True).write({
                         'member_status': 'terminated'
                     })
+                    _logger.info(f"Set partner {self.partner_id.name} status to terminated - no other active memberships")
+                else:
+                    _logger.info(f"Partner {self.partner_id.name} has {len(other_active)} other active memberships - maintaining active status")
+            
+            # Log the termination
+            self.message_post(
+                body=f"Membership terminated",
+                subject="Membership Terminated"
+            )
+        
+        elif new_state == 'grace':
+            # Update foundation partner status
+            self.partner_id.with_context(skip_portal_creation=True).write({
+                'member_status': 'grace'
+            })
+            
+            # Log grace period start
+            self.message_post(
+                body=f"Membership entered grace period - expires {self.grace_end_date}",
+                subject="Grace Period Started"
+            )
+        
+        elif new_state == 'suspended':
+            # Update foundation partner status
+            self.partner_id.with_context(skip_portal_creation=True).write({
+                'member_status': 'suspended'
+            })
+            
+            # Log suspension
+            self.message_post(
+                body=f"Membership suspended",
+                subject="Membership Suspended"
+            )
 
     def _handle_portal_access_on_activation(self):
         """Handle portal access when membership becomes active"""
@@ -397,7 +438,7 @@ class AMSMembership(models.Model):
     
     @api.model
     def create_from_invoice_payment(self, invoice_line):
-        """Create membership from paid invoice line - CORRECTED VERSION WITH ACCESS TOKEN"""
+        """Create membership from paid invoice line - ENHANCED VERSION"""
         product = invoice_line.product_id.product_tmpl_id
         
         if not product.is_subscription_product or product.subscription_product_type != 'membership':
@@ -410,15 +451,32 @@ class AMSMembership(models.Model):
         
         partner = invoice_line.move_id.partner_id
         
-        # CRITICAL FIXES START HERE
+        # CRITICAL: Before creating new membership, terminate other active ones
+        _logger.info(f"Creating membership from invoice payment for {partner.name}")
         
-        # 1. ENSURE PARTNER IS MARKED AS MEMBER
+        # Find and terminate other active memberships BEFORE creating new one
+        other_active_memberships = self.search([
+            ('partner_id', '=', partner.id),
+            ('product_id.subscription_product_type', '=', 'membership'),
+            ('state', '=', 'active')
+        ])
+        
+        if other_active_memberships:
+            _logger.info(f"Found {len(other_active_memberships)} active memberships to terminate for {partner.name}")
+            for old_membership in other_active_memberships:
+                old_membership.write({
+                    'state': 'terminated',
+                    'notes': (old_membership.notes or '') + f"\n\nTerminated on {fields.Date.today()} due to new membership purchase via invoice {invoice_line.move_id.name}"
+                })
+                _logger.info(f"Terminated existing membership {old_membership.name}")
+        
+        # ENSURE PARTNER IS MARKED AS MEMBER
         partner_vals = {}
         if not partner.is_member:
             partner_vals['is_member'] = True
             _logger.info(f"Setting is_member=True for {partner.name}")
         
-        # 2. SET DEFAULT MEMBER TYPE IF NONE EXISTS
+        # SET DEFAULT MEMBER TYPE IF NONE EXISTS
         if not partner.member_type_id:
             # Look for default member type (first try "Regular", then "Individual", then first available)
             default_member_type = self.env['ams.member.type'].search([
@@ -437,7 +495,7 @@ class AMSMembership(models.Model):
                 partner_vals['member_type_id'] = default_member_type.id
                 _logger.info(f"Setting default member type {default_member_type.name} for {partner.name}")
         
-        # 3. GENERATE MEMBER NUMBER/ID IF NOT EXISTS
+        # GENERATE MEMBER NUMBER/ID IF NOT EXISTS
         if not getattr(partner, 'member_number', None):
             # Try foundation's method first
             if hasattr(partner, '_generate_member_number'):
@@ -473,14 +531,14 @@ class AMSMembership(models.Model):
                 except Exception as e:
                     _logger.warning(f"Could not generate member number for {partner.name}: {str(e)}")
         
-        # 4. SET MEMBER STATUS TO ACTIVE
+        # SET MEMBER STATUS TO ACTIVE
         partner_vals['member_status'] = 'active'
         
         # Apply all partner updates at once
         if partner_vals:
             partner.with_context(skip_portal_creation=True).write(partner_vals)
         
-        # 5. CALCULATE MEMBERSHIP DATES
+        # CALCULATE MEMBERSHIP DATES
         start_date = fields.Date.today()
         
         # FIXED: Annual memberships should end December 31st
@@ -507,13 +565,13 @@ class AMSMembership(models.Model):
             if start_date > end_date:
                 end_date = date(current_year + 1, 12, 31)
         
-        # 6. UPDATE FOUNDATION PARTNER DATES
+        # UPDATE FOUNDATION PARTNER DATES
         partner.with_context(skip_portal_creation=True).write({
             'membership_start_date': start_date,
             'membership_end_date': end_date,
         })
         
-        # 7. CREATE MEMBERSHIP RECORD
+        # CREATE MEMBERSHIP RECORD
         membership_vals = {
             'partner_id': partner.id,
             'product_id': invoice_line.product_id.id,
@@ -530,14 +588,6 @@ class AMSMembership(models.Model):
         }
         
         membership = self.create(membership_vals)
-        
-        # 8. CRITICAL: ENSURE INVOICE HAS ACCESS TOKEN
-        if not invoice_line.move_id.access_token:
-            try:
-                invoice_line.move_id._portal_ensure_token()
-                _logger.info(f"Generated access token for membership invoice {invoice_line.move_id.name}")
-            except Exception as e:
-                _logger.error(f"Failed to generate access token for membership invoice: {str(e)}")
         
         _logger.info(f"Created membership {membership.name} for {partner.name} "
                      f"from {start_date} to {end_date}")
@@ -618,39 +668,31 @@ class AMSMembership(models.Model):
     
     @api.constrains('partner_id', 'product_id', 'state')
     def _check_single_active_membership(self):
-        """Ensure only one active membership per member"""
+        """Ensure only one active membership per member - ENHANCED CONSTRAINT"""
         for membership in self:
-            if (membership.state == 'active' and 
-                membership.product_id.subscription_product_type == 'membership'):
-                
-                existing = self.search([
+            if membership.state == 'active':
+                # Count active memberships for this partner (excluding current record)
+                active_count = self.search_count([
                     ('partner_id', '=', membership.partner_id.id),
                     ('product_id.subscription_product_type', '=', 'membership'),
                     ('state', '=', 'active'),
                     ('id', '!=', membership.id)
                 ])
                 
-                if existing:
-                    raise ValidationError(
-                        _("Member %s already has an active membership: %s. "
-                          "Only one active membership is allowed per member.") % 
-                        (membership.partner_id.name, existing[0].name)
+                if active_count > 0:
+                    # Instead of raising an error, let the system auto-terminate others
+                    _logger.warning(
+                        f"Multiple active memberships detected for {membership.partner_id.name}. "
+                        f"Auto-terminating others to enforce single active membership rule."
                     )
+                    # The _ensure_single_active_membership method will handle this
 
     def action_view_invoice(self):
-        """View membership invoice - ENHANCED WITH ACCESS TOKEN"""
+        """View membership invoice"""
         self.ensure_one()
     
         if not self.invoice_id:
             raise UserError(_("No invoice exists for this membership."))
-    
-        # CRITICAL: Ensure access token exists
-        if not self.invoice_id.access_token:
-            try:
-                self.invoice_id._portal_ensure_token()
-                _logger.info(f"Generated access token for invoice {self.invoice_id.name}")
-            except Exception as e:
-                _logger.error(f"Failed to generate access token: {str(e)}")
     
         return {
             'type': 'ir.actions.act_window',
@@ -675,30 +717,6 @@ class AMSMembership(models.Model):
             'res_id': self.sale_order_id.id,
             'view_mode': 'form',
             'views': [(False, 'form')],
-        }
-
-    def action_generate_portal_invoice_link(self):
-        """Generate portal-accessible invoice link for this membership"""
-        self.ensure_one()
-        
-        if not self.invoice_id:
-            raise UserError(_("No invoice exists for this membership."))
-        
-        # Ensure access token exists
-        if not self.invoice_id.access_token:
-            try:
-                self.invoice_id._portal_ensure_token()
-            except Exception as e:
-                raise UserError(_("Failed to generate access token: %s") % str(e))
-        
-        # Return the portal URL
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        invoice_url = f"{base_url}/my/invoices/{self.invoice_id.id}?access_token={self.invoice_id.access_token}"
-        
-        return {
-            'type': 'ir.actions.act_url',
-            'url': invoice_url,
-            'target': 'new',
         }
 
 
