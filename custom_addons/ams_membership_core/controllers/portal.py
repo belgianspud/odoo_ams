@@ -13,57 +13,156 @@ _logger = logging.getLogger(__name__)
 class MembershipPortal(CustomerPortal):
     
     def _prepare_home_portal_values(self, counters):
-        """Add membership and subscription counts to portal home - ENHANCED VERSION"""
+        """Add membership and subscription counts to portal home - SAFE VERSION"""
         values = super()._prepare_home_portal_values(counters)
         
         partner = request.env.user.partner_id
         
-        # Only show membership info if user is a member
-        if partner.is_member:
+        # CRITICAL: Add safe checks for all foundation fields
+        if partner:
             try:
-                # Get membership counts
-                if 'membership_count' in counters:
-                    membership_count = request.env['ams.membership'].search_count([
-                        ('partner_id', '=', partner.id)
-                    ]) if request.env['ams.membership'].check_access_rights('read', raise_exception=False) else 0
-                    values['membership_count'] = membership_count
-
-                if 'subscription_count' in counters:
-                    subscription_count = request.env['ams.subscription'].search_count([
-                        ('partner_id', '=', partner.id)
-                    ]) if request.env['ams.subscription'].check_access_rights('read', raise_exception=False) else 0
-                    values['subscription_count'] = subscription_count
-
-                # Add member info for dashboard
+                # Safe foundation field access with fallbacks
+                is_member = getattr(partner, 'is_member', False)
+                member_number = getattr(partner, 'member_number', None) or 'Not Assigned'
+                member_status = getattr(partner, 'member_status', None) or 'unknown'
+                
+                # Safe member_type access
+                member_type = None
+                member_type_name = 'Not Set'
+                if hasattr(partner, 'member_type_id') and partner.member_type_id:
+                    member_type = partner.member_type_id
+                    member_type_name = member_type.name or 'Not Set'
+                
+                # Safe date access
+                membership_start_date = getattr(partner, 'membership_start_date', None)
+                membership_end_date = getattr(partner, 'membership_end_date', None)
+                next_renewal_date = getattr(partner, 'next_renewal_date', None)
+                
+                # Always provide safe base values
                 values.update({
-                    'is_member': True,
-                    'member_number': partner.member_number or 'Not Assigned',
-                    'member_type': partner.member_type_id.name if partner.member_type_id else 'Not Set',
-                    'member_status': partner.member_status or 'unknown',
-                    'current_membership': partner.current_membership_id,
-                    'membership_end_date': partner.membership_end_date,
-                    'next_renewal_date': partner.next_renewal_date,
+                    'is_member': is_member,
+                    'member_number': member_number,
+                    'member_type': member_type_name,  # Always a string, never None
+                    'member_status': member_status,
+                    'membership_start_date': membership_start_date,
+                    'membership_end_date': membership_end_date,
+                    'next_renewal_date': next_renewal_date,
                 })
                 
+                # Only process membership data if user is actually a member
+                if is_member:
+                    try:
+                        # Get membership counts with safe access
+                        if 'membership_count' in counters:
+                            membership_count = request.env['ams.membership'].search_count([
+                                ('partner_id', '=', partner.id)
+                            ]) if request.env['ams.membership'].check_access_rights('read', raise_exception=False) else 0
+                            values['membership_count'] = membership_count
+
+                        if 'subscription_count' in counters:
+                            subscription_count = request.env['ams.subscription'].search_count([
+                                ('partner_id', '=', partner.id)
+                            ]) if request.env['ams.subscription'].check_access_rights('read', raise_exception=False) else 0
+                            values['subscription_count'] = subscription_count
+
+                        # Add computed membership data with safe access
+                        current_membership = getattr(partner, 'current_membership_id', None)
+                        active_benefits = getattr(partner, 'active_benefit_ids', request.env['ams.benefit'])
+                        
+                        values.update({
+                            'current_membership': current_membership,
+                            'active_benefits': active_benefits,
+                            'pending_renewals_count': getattr(partner, 'pending_renewals_count', 0),
+                        })
+                        
+                    except Exception as e:
+                        _logger.error(f"Error getting membership data for portal: {e}")
+                        # Provide safe fallback values
+                        values.update({
+                            'membership_count': 0,
+                            'subscription_count': 0,
+                            'current_membership': None,
+                            'active_benefits': request.env['ams.benefit'],
+                            'pending_renewals_count': 0,
+                        })
+                else:
+                    # Not a member - provide safe non-member values
+                    values.update({
+                        'membership_count': 0,
+                        'subscription_count': 0,
+                        'current_membership': None,
+                        'active_benefits': request.env['ams.benefit'],
+                        'pending_renewals_count': 0,
+                    })
+                        
             except Exception as e:
-                _logger.error(f"Error in portal home values: {e}")
-                # Don't break the portal if there's an error
-                pass
+                _logger.error(f"Error in portal home values preparation: {e}")
+                # Provide all safe fallback values
+                values.update({
+                    'is_member': False,
+                    'member_number': 'Not Available',
+                    'member_type': 'Not Available', 
+                    'member_status': 'unknown',
+                    'membership_start_date': None,
+                    'membership_end_date': None,
+                    'next_renewal_date': None,
+                    'membership_count': 0,
+                    'subscription_count': 0,
+                    'current_membership': None,
+                    'active_benefits': request.env['ams.benefit'],
+                    'pending_renewals_count': 0,
+                })
+        else:
+            # Partner is None - provide all safe defaults
+            values.update({
+                'is_member': False,
+                'member_number': 'Not Available',
+                'member_type': 'Not Available', 
+                'member_status': 'unknown',
+                'membership_start_date': None,
+                'membership_end_date': None,
+                'next_renewal_date': None,
+                'membership_count': 0,
+                'subscription_count': 0,
+                'current_membership': None,
+                'active_benefits': request.env['ams.benefit'],
+                'pending_renewals_count': 0,
+            })
                 
         return values
 
     def _prepare_portal_layout_values(self):
-        """Prepare portal layout values with member context"""
+        """Prepare portal layout values with member context - SAFE VERSION"""
         values = super()._prepare_portal_layout_values()
         
-        # Add member-specific navigation
-        partner = request.env.user.partner_id
-        if partner.is_member:
+        try:
+            # Add member-specific navigation
+            partner = request.env.user.partner_id
+            if partner and getattr(partner, 'is_member', False):
+                member_name = partner.name or 'Member'
+                member_number = getattr(partner, 'member_number', None) or 'Not Assigned'
+                member_status = getattr(partner, 'member_status', None) or 'unknown'
+                
+                values.update({
+                    'show_membership_nav': True,
+                    'member_name': member_name,
+                    'member_number': member_number,
+                    'member_status': member_status,
+                })
+            else:
+                values.update({
+                    'show_membership_nav': False,
+                    'member_name': '',
+                    'member_number': '',
+                    'member_status': '',
+                })
+        except Exception as e:
+            _logger.error(f"Error in portal layout values: {e}")
             values.update({
-                'show_membership_nav': True,
-                'member_name': partner.name,
-                'member_number': partner.member_number,
-                'member_status': partner.member_status,
+                'show_membership_nav': False,
+                'member_name': '',
+                'member_number': '',
+                'member_status': '',
             })
             
         return values
@@ -80,7 +179,7 @@ class MembershipPortal(CustomerPortal):
                 type='http', auth="user", website=True)
     def portal_my_memberships(self, page=1, date_begin=None, date_end=None, 
                              sortby=None, search=None, search_in='name', **kw):
-        """Display member's memberships - ENHANCED"""
+        """Display member's memberships - SAFE VERSION"""
         values = self._prepare_portal_layout_values()
         partner = request.env.user.partner_id
 
@@ -144,6 +243,7 @@ class MembershipPortal(CustomerPortal):
                                            limit=self._items_per_page, 
                                            offset=pager['offset'])
 
+            # Add safe member info to values
             values.update({
                 'date': date_begin,
                 'memberships': memberships,
@@ -155,6 +255,12 @@ class MembershipPortal(CustomerPortal):
                 'search_in': search_in,
                 'search': search,
                 'sortby': sortby,
+                # Add safe member context
+                'is_member': True,
+                'member_number': getattr(partner, 'member_number', None) or 'Not Assigned',
+                'member_type': partner.member_type_id if hasattr(partner, 'member_type_id') else None,
+                'member_status': getattr(partner, 'member_status', None) or 'unknown',
+                'membership_end_date': getattr(partner, 'membership_end_date', None),
             })
             
         except Exception as e:
@@ -162,41 +268,66 @@ class MembershipPortal(CustomerPortal):
             values.update({
                 'memberships': [],
                 'page_name': 'membership',
+                'is_member': True,
+                'member_number': 'Not Available',
+                'member_type': None,
+                'member_status': 'unknown',
+                'membership_end_date': None,
             })
             
         return request.render("ams_membership_core.portal_my_memberships", values)
 
     @http.route(['/my/member/profile'], type='http', auth="user", website=True)
     def portal_member_profile(self, **kw):
-        """Member profile dashboard - NEW"""
+        """Member profile dashboard - SAFE VERSION"""
         values = self._prepare_portal_layout_values()
         partner = request.env.user.partner_id
 
         if not partner or not getattr(partner, 'is_member', False):
             return request.render("ams_membership_core.portal_no_membership_access", values)
 
-        # Get comprehensive member information
-        values.update({
-            'partner': partner,
-            'member_number': partner.member_number or 'Not Assigned',
-            'member_type': partner.member_type_id,
-            'member_status': partner.member_status,
-            'membership_start_date': partner.membership_start_date,
-            'membership_end_date': partner.membership_end_date,
-            'current_membership': partner.current_membership_id,
-            'active_subscriptions': partner.active_subscription_ids,
-            'active_benefits': partner.active_benefit_ids,
-            'next_renewal_date': partner.next_renewal_date,
-            'pending_renewals_count': partner.pending_renewals_count,
-            'page_name': 'member_profile',
-        })
+        try:
+            # Get comprehensive member information safely
+            values.update({
+                'partner': partner,
+                'member_number': getattr(partner, 'member_number', None) or 'Not Assigned',
+                'member_type': getattr(partner, 'member_type_id', None),
+                'member_status': getattr(partner, 'member_status', None) or 'unknown',
+                'membership_start_date': getattr(partner, 'membership_start_date', None),
+                'membership_end_date': getattr(partner, 'membership_end_date', None),
+                'current_membership': getattr(partner, 'current_membership_id', None),
+                'active_subscriptions': getattr(partner, 'active_subscription_ids', partner.env['ams.subscription']),
+                'active_benefits': getattr(partner, 'active_benefit_ids', partner.env['ams.benefit']),
+                'next_renewal_date': getattr(partner, 'next_renewal_date', None),
+                'pending_renewals_count': getattr(partner, 'pending_renewals_count', 0),
+                'subscription_count': getattr(partner, 'subscription_count', 0),
+                'page_name': 'member_profile',
+            })
+        except Exception as e:
+            _logger.error(f"Error in portal_member_profile: {e}")
+            # Provide safe fallbacks
+            values.update({
+                'partner': partner,
+                'member_number': 'Not Available',
+                'member_type': None,
+                'member_status': 'unknown',
+                'membership_start_date': None,
+                'membership_end_date': None,
+                'current_membership': None,
+                'active_subscriptions': partner.env['ams.subscription'],
+                'active_benefits': partner.env['ams.benefit'],
+                'next_renewal_date': None,
+                'pending_renewals_count': 0,
+                'subscription_count': 0,
+                'page_name': 'member_profile',
+            })
 
         return request.render("ams_membership_core.portal_member_profile", values)
 
     @http.route(['/my/memberships/<int:membership_id>'], 
                 type='http', auth="user", website=True)
     def portal_membership_detail(self, membership_id, **kw):
-        """Display membership details - ENHANCED"""
+        """Display membership details - SAFE VERSION"""
         try:
             membership_sudo = self._document_check_access('ams.membership', membership_id)
         except (AccessError, MissingError):
@@ -205,7 +336,7 @@ class MembershipPortal(CustomerPortal):
         values = {
             'membership': membership_sudo,
             'partner': membership_sudo.partner_id,
-            'member_number': membership_sudo.partner_id.member_number or 'Not Assigned',
+            'member_number': getattr(membership_sudo.partner_id, 'member_number', None) or 'Not Assigned',
             'page_name': 'membership',
         }
         return request.render("ams_membership_core.portal_membership_detail", values)
@@ -214,7 +345,7 @@ class MembershipPortal(CustomerPortal):
                 type='http', auth="user", website=True)
     def portal_my_subscriptions(self, page=1, date_begin=None, date_end=None, 
                                sortby=None, search=None, search_in='name', **kw):
-        """Display member's subscriptions"""
+        """Display member's subscriptions - SAFE VERSION"""
         values = self._prepare_portal_layout_values()
         partner = request.env.user.partner_id
         
