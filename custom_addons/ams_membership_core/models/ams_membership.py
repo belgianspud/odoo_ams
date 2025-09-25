@@ -539,6 +539,27 @@ class AMSMembership(models.Model):
         else:  # annual
             return base_date + relativedelta(years=1)
     
+    def get_chapter_access_summary(self):
+        """Get summary of chapter access for this membership"""
+        self.ensure_one()
+        if not self.is_chapter_membership:
+            return "Not a chapter membership"
+        
+        access_items = []
+        if self.has_local_events_access:
+            access_items.append("Local Events")
+        if self.has_chapter_documents_access:
+            access_items.append("Chapter Documents")
+        if self.has_chapter_training_access:
+            access_items.append("Chapter Training")
+        if self.has_networking_access:
+            access_items.append("Networking")
+        
+        if access_items:
+            return f"{self.chapter_access_level.title()} Access: {', '.join(access_items)}"
+        else:
+            return f"{self.chapter_access_level.title()} Access"
+    
     @api.model
     def create_from_invoice_payment(self, invoice_line):
         """Create membership from paid invoice line - UPDATED for chapters"""
@@ -714,27 +735,6 @@ class AMSMembership(models.Model):
         
         return membership
 
-    def get_chapter_access_summary(self):
-        """Get summary of chapter access for this membership"""
-        self.ensure_one()
-        if not self.is_chapter_membership:
-            return "Not a chapter membership"
-        
-        access_items = []
-        if self.has_local_events_access:
-            access_items.append("Local Events")
-        if self.has_chapter_documents_access:
-            access_items.append("Chapter Documents")
-        if self.has_chapter_training_access:
-            access_items.append("Chapter Training")
-        if self.has_networking_access:
-            access_items.append("Networking")
-        
-        if access_items:
-            return f"{self.chapter_access_level.title()} Access: {', '.join(access_items)}"
-        else:
-            return f"{self.chapter_access_level.title()} Access"
-    
     @api.model
     def process_membership_lifecycle(self):
         """Cron job to process membership lifecycle transitions using foundation logic"""
@@ -809,10 +809,11 @@ class AMSMembership(models.Model):
     
     @api.constrains('partner_id', 'product_id', 'state')
     def _check_single_active_membership(self):
-        """UPDATED: Ensure only one active REGULAR membership per member - chapters are unlimited"""
+        """FIXED: Ensure only one active REGULAR membership per member - chapters are unlimited"""
         for membership in self:
-            if membership.state == 'active' and not membership.is_chapter_membership:
-                # Count active REGULAR memberships for this partner (excluding current record and chapters)
+            if (membership.state == 'active' and 
+                membership.product_id.subscription_product_type == 'membership'):  # Only regular memberships
+                
                 active_count = self.search_count([
                     ('partner_id', '=', membership.partner_id.id),
                     ('product_id.subscription_product_type', '=', 'membership'),  # Only regular memberships
@@ -821,12 +822,11 @@ class AMSMembership(models.Model):
                 ])
                 
                 if active_count > 0:
-                    # Instead of raising an error, let the system auto-terminate others
-                    _logger.warning(
-                        f"Multiple active REGULAR memberships detected for {membership.partner_id.name}. "
-                        f"Auto-terminating others to enforce single active membership rule."
+                    raise ValidationError(
+                        _("Member %s already has an active regular membership. "
+                          "Only one active regular membership is allowed per member. "
+                          "Chapter memberships are unlimited.") % membership.partner_id.name
                     )
-                    # The _ensure_single_active_membership method will handle this
 
     def action_view_invoice(self):
         """View membership invoice"""

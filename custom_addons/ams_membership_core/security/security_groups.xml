@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Membership Management Groups -->
+        <record id="group_membership_user" model="res.groups">
+            <field name="name">Membership User</field>
+            <field name="category_id" ref="ams_foundation.module_category_association"/>
+            <field name="comment">Can view and manage membership records, subscriptions, and renewals</field>
+            <field name="implied_ids" eval="[(4, ref('ams_foundation.group_member_user'))]"/>
+        </record>
+
+        <record id="group_membership_manager" model="res.groups">
+            <field name="name">Membership Manager</field>
+            <field name="category_id" ref="ams_foundation.module_category_association"/>
+            <field name="comment">Full access to membership system including configuration, benefits, and bulk operations</field>
+            <field name="implied_ids" eval="[(4, ref('group_membership_user')), (4, ref('ams_foundation.group_member_manager'))]"/>
+        </record>
+
+        <!-- Portal Group for Members -->
+        <record id="group_membership_portal" model="res.groups">
+            <field name="name">Membership Portal Access</field>
+            <field name="category_id" ref="base.module_category_hidden"/>
+            <field name="comment">Portal access for members to view and manage their memberships and subscriptions</field>
+            <field name="is_portal" eval="True"/>
+        </record>
+
+        <!-- Chapter-Specific Groups -->
+        <record id="group_chapter_user" model="res.groups">
+            <field name="name">Chapter User</field>
+            <field name="category_id" ref="ams_foundation.module_category_association"/>
+            <field name="comment">Can view and manage chapter memberships and chapter-specific activities</field>
+            <field name="implied_ids" eval="[(4, ref('group_membership_user'))]"/>
+        </record>
+
+        <record id="group_chapter_manager" model="res.groups">
+            <field name="name">Chapter Manager</field>
+            <field name="category_id" ref="ams_foundation.module_category_association"/>
+            <field name="comment">Full access to chapter management including setup, member management, and reporting</field>
+            <field name="implied_ids" eval="[(4, ref('group_chapter_user')), (4, ref('group_membership_manager'))]"/>
+        </record>
+
+        <!-- Specialized Access Groups -->
+        <record id="group_renewal_manager" model="res.groups">
+            <field name="name">Renewal Manager</field>
+            <field name="category_id" ref="ams_foundation.module_category_association"/>
+            <field name="comment">Specialized access for managing renewals and mass renewal operations</field>
+            <field name="implied_ids" eval="[(4, ref('group_membership_user'))]"/>
+        </record>
+
+        <record id="group_benefit_manager" model="res.groups">
+            <field name="name">Benefit Manager</field>
+            <field name="category_id" ref="ams_foundation.module_category_association"/>
+            <field name="comment">Specialized access for managing member benefits and benefit programs</field>
+            <field name="implied_ids" eval="[(4, ref('group_membership_user'))]"/>
+        </record>
+
+        <!-- Financial Integration Groups -->
+        <record id="group_subscription_billing" model="res.groups">
+            <field name="name">Subscription Billing</field>
+            <field name="category_id" ref="ams_foundation.module_category_association"/>
+            <field name="comment">Access to subscription billing, invoicing, and financial aspects of memberships</field>
+            <field name="implied_ids" eval="[(4, ref('group_membership_user')), (4, ref('account.group_account_user'))]"/>
+        </record>
+
+        <!-- Add membership portal group to base portal group -->
+        <record id="base.group_portal" model="res.groups">
+            <field name="implied_ids" eval="[(4, ref('group_membership_portal'))]"/>
+        </record>
+
+        <!-- Rule Categories -->
+        <record id="ir_rule_category_membership" model="ir.rule">
+            <field name="name">Membership Records Access</field>
+            <field name="model_id" ref="model_ams_membership"/>
+            <field name="domain_force">['|', ('partner_id.user_ids', 'in', user.id), ('partner_id', '=', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="ir_rule_category_subscription" model="ir.rule">
+            <field name="name">Subscription Records Access</field>
+            <field name="model_id" ref="model_ams_subscription"/>
+            <field name="domain_force">['|', ('partner_id.user_ids', 'in', user.id), ('partner_id', '=', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="ir_rule_category_renewal" model="ir.rule">
+            <field name="name">Renewal Records Access</field>
+            <field name="model_id" ref="model_ams_renewal"/>
+            <field name="domain_force">['|', ('partner_id.user_ids', 'in', user.id), ('partner_id', '=', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Internal User Rules -->
+        <record id="ir_rule_membership_internal" model="ir.rule">
+            <field name="name">Membership Internal Access</field>
+            <field name="model_id" ref="model_ams_membership"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <record id="ir_rule_subscription_internal" model="ir.rule">
+            <field name="name">Subscription Internal Access</field>
+            <field name="model_id" ref="model_ams_subscription"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <record id="ir_rule_renewal_internal" model="ir.rule">
+            <field name="name">Renewal Internal Access</field>
+            <field name="model_id" ref="model_ams_renewal"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <record id="ir_rule_benefit_internal" model="ir.rule">
+            <field name="name">Benefit Internal Access</field>
+            <field name="model_id" ref="model_ams_benefit"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Manager-only access for sensitive operations -->
+        <record id="ir_rule_mass_operations" model="ir.rule">
+            <field name="name">Mass Operations Access</field>
+            <field name="model_id" ref="model_ams_mass_renewal_wizard"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

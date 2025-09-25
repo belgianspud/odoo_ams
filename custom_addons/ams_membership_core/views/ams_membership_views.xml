@@ -12,6 +12,9 @@
                     <field name="partner_id"/>
                     <field name="member_type_id" optional="show"/>
                     <field name="product_id"/>
+                    <field name="membership_type" optional="show"/>
+                    <field name="chapter_type" optional="hide" invisible="not is_chapter_membership"/>
+                    <field name="chapter_location" optional="hide" invisible="not is_chapter_membership"/>
                     <field name="start_date"/>
                     <field name="end_date"/>
                     <field name="state" decoration-success="state=='active'" 
@@ -22,6 +25,7 @@
                     <field name="auto_renew" optional="hide"/>
                     <field name="renewal_interval" optional="hide"/>
                     <field name="days_until_expiry" optional="hide"/>
+                    <field name="is_chapter_membership" invisible="1"/>
                 </list>
             </field>
         </record>
@@ -70,6 +74,7 @@
                             </h1>
                             <div class="o_row">
                                 <field name="name" readonly="True"/>
+                                <span t-if="is_chapter_membership" class="badge bg-info ms-2">Chapter</span>
                             </div>
                         </div>
 
@@ -80,13 +85,30 @@
                                 <field name="member_type_id" readonly="True"/>
                                 <field name="product_id" required="True"
                                        domain="[('is_subscription_product', '=', True), 
-                                               ('subscription_product_type', '=', 'membership')]"/>
+                                               ('subscription_product_type', 'in', ['membership', 'chapter'])]"/>
+                                <field name="membership_type" readonly="True"/>
+                                <field name="is_chapter_membership" invisible="1"/>
                             </group>
                             <group string="Membership Period">
                                 <field name="start_date" required="True"/>
                                 <field name="end_date" required="True"/>
                                 <field name="last_renewal_date"/>
                                 <field name="membership_duration" readonly="True"/>
+                            </group>
+                        </group>
+
+                        <!-- Chapter-specific information -->
+                        <group string="Chapter Information" invisible="not is_chapter_membership">
+                            <group>
+                                <field name="chapter_type" readonly="True"/>
+                                <field name="chapter_location" readonly="True"/>
+                                <field name="chapter_access_level" readonly="True"/>
+                            </group>
+                            <group string="Chapter Access">
+                                <field name="has_local_events_access" readonly="True"/>
+                                <field name="has_chapter_documents_access" readonly="True"/>
+                                <field name="has_chapter_training_access" readonly="True"/>
+                                <field name="has_networking_access" readonly="True"/>
                             </group>
                         </group>
 
@@ -127,6 +149,28 @@
                                         <field name="active"/>
                                     </list>
                                 </field>
+                            </page>
+
+                            <!-- Chapter-specific access page -->
+                            <page string="Chapter Access" name="chapter_access" 
+                                  invisible="not is_chapter_membership">
+                                <div class="alert alert-info">
+                                    <h5>Chapter Access Summary</h5>
+                                    <field name="get_chapter_access_summary" readonly="True" nolabel="1"/>
+                                </div>
+                                <group>
+                                    <group string="Access Permissions">
+                                        <field name="has_local_events_access" readonly="True"/>
+                                        <field name="has_chapter_documents_access" readonly="True"/>
+                                        <field name="has_chapter_training_access" readonly="True"/>
+                                        <field name="has_networking_access" readonly="True"/>
+                                    </group>
+                                    <group string="Chapter Details">
+                                        <field name="chapter_type" readonly="True"/>
+                                        <field name="chapter_location" readonly="True"/>
+                                        <field name="chapter_access_level" readonly="True"/>
+                                    </group>
+                                </group>
                             </page>
                             
                             <page string="Renewals" name="renewals">
@@ -169,6 +213,41 @@
             </field>
         </record>
 
+        <!-- Chapter Membership Specific Form View -->
+        <record id="view_ams_membership_form_chapter" model="ir.ui.view">
+            <field name="name">ams.membership.form.chapter</field>
+            <field name="model">ams.membership</field>
+            <field name="inherit_id" ref="view_ams_membership_form"/>
+            <field name="arch" type="xml">
+                
+                <!-- Highlight chapter status in title -->
+                <xpath expr="//div[@class='oe_title']/div[@class='o_row']/span" position="replace">
+                    <span t-if="is_chapter_membership" class="badge bg-info ms-2">
+                        <i class="fa fa-map-marker"/> Chapter Membership
+                    </span>
+                </xpath>
+
+                <!-- Add chapter-specific buttons -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button type="object" class="oe_stat_button" icon="fa-map-marker"
+                            invisible="not is_chapter_membership">
+                        <div class="o_stat_info">
+                            <span class="o_stat_text" t-esc="chapter_type and chapter_type.title() or 'Chapter'"/>
+                            <span class="o_stat_text">Type</span>
+                        </div>
+                    </button>
+                    <button type="object" class="oe_stat_button" icon="fa-key"
+                            invisible="not is_chapter_membership">
+                        <div class="o_stat_info">
+                            <span class="o_stat_text" t-esc="chapter_access_level and chapter_access_level.title() or 'Basic'"/>
+                            <span class="o_stat_text">Access</span>
+                        </div>
+                    </button>
+                </xpath>
+
+            </field>
+        </record>
+
         <!-- AMS Membership Kanban View -->
         <record id="view_ams_membership_kanban" model="ir.ui.view">
             <field name="name">ams.membership.kanban</field>
@@ -183,6 +262,10 @@
                     <field name="membership_fee"/>
                     <field name="days_until_expiry"/>
                     <field name="auto_renew"/>
+                    <field name="is_chapter_membership"/>
+                    <field name="membership_type"/>
+                    <field name="chapter_type"/>
+                    <field name="chapter_location"/>
                     <templates>
                         <t t-name="kanban-box">
                             <div t-attf-class="oe_kanban_card oe_kanban_global_click">
@@ -199,6 +282,21 @@
                                 <div class="row">
                                     <div class="col-12">
                                         <t t-esc="record.product_id.value"/>
+                                        <t t-if="record.is_chapter_membership.raw_value">
+                                            <span class="badge badge-info badge-sm ms-1">Chapter</span>
+                                        </t>
+                                    </div>
+                                </div>
+                                <!-- Chapter-specific info -->
+                                <div class="row" t-if="record.is_chapter_membership.raw_value">
+                                    <div class="col-12">
+                                        <small class="text-muted">
+                                            <i class="fa fa-map-marker"/> 
+                                            <t t-esc="record.chapter_type.value"/>
+                                            <t t-if="record.chapter_location.value">
+                                                - <t t-esc="record.chapter_location.value"/>
+                                            </t>
+                                        </small>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -219,9 +317,11 @@
                                         </small>
                                     </div>
                                 </div>
-                                <div class="row" t-if="record.auto_renew.raw_value">
+                                <div class="row">
                                     <div class="col-12">
-                                        <span class="badge badge-info">Auto Renew</span>
+                                        <t t-if="record.auto_renew.raw_value">
+                                            <span class="badge badge-info">Auto Renew</span>
+                                        </t>
                                     </div>
                                 </div>
                             </div>
@@ -231,7 +331,7 @@
             </field>
         </record>
 
-        <!-- AMS Membership Search View -->
+        <!-- AMS Membership Search View - ENHANCED with Chapter Filters -->
         <record id="view_ams_membership_search" model="ir.ui.view">
             <field name="name">ams.membership.search</field>
             <field name="model">ams.membership</field>
@@ -241,6 +341,7 @@
                     <field name="partner_id"/>
                     <field name="product_id"/>
                     <field name="member_type_id"/>
+                    <field name="chapter_location"/>
                     <separator/>
                     <filter string="Active" name="active" 
                             domain="[('state', '=', 'active')]"/>
@@ -252,6 +353,22 @@
                             domain="[('state', '=', 'suspended')]"/>
                     <filter string="Terminated" name="terminated" 
                             domain="[('state', '=', 'terminated')]"/>
+                    <separator/>
+                    <!-- NEW: Chapter vs Regular membership filters -->
+                    <filter string="Regular Memberships" name="regular_memberships" 
+                            domain="[('is_chapter_membership', '=', False)]"/>
+                    <filter string="Chapter Memberships" name="chapter_memberships" 
+                            domain="[('is_chapter_membership', '=', True)]"/>
+                    <separator/>
+                    <!-- NEW: Chapter type filters -->
+                    <filter string="Local Chapters" name="local_chapters" 
+                            domain="[('chapter_type', '=', 'local')]"/>
+                    <filter string="Regional Chapters" name="regional_chapters" 
+                            domain="[('chapter_type', '=', 'regional')]"/>
+                    <filter string="National Chapters" name="national_chapters" 
+                            domain="[('chapter_type', '=', 'national')]"/>
+                    <filter string="Special Interest Chapters" name="special_chapters" 
+                            domain="[('chapter_type', '=', 'special')]"/>
                     <separator/>
                     <filter string="Auto Renew" name="auto_renew" 
                             domain="[('auto_renew', '=', True)]"/>
@@ -277,6 +394,15 @@
                                 domain="[]" context="{'group_by': 'member_type_id'}"/>
                         <filter string="Product" name="group_product" 
                                 domain="[]" context="{'group_by': 'product_id'}"/>
+                        <!-- NEW: Chapter-specific groupings -->
+                        <filter string="Membership Type" name="group_membership_type" 
+                                domain="[]" context="{'group_by': 'membership_type'}"/>
+                        <filter string="Chapter Type" name="group_chapter_type" 
+                                domain="[]" context="{'group_by': 'chapter_type'}"/>
+                        <filter string="Chapter Location" name="group_chapter_location" 
+                                domain="[]" context="{'group_by': 'chapter_location'}"/>
+                        <filter string="Chapter Access Level" name="group_chapter_access_level" 
+                                domain="[]" context="{'group_by': 'chapter_access_level'}"/>
                         <filter string="Start Date" name="group_start_date" 
                                 domain="[]" context="{'group_by': 'start_date:month'}"/>
                         <filter string="Payment Status" name="group_payment" 
@@ -300,7 +426,7 @@
                 <p>
                     Memberships are individual membership records that track a member's
                     subscription to the organization. Each member can only have one 
-                    active membership at a time.
+                    active regular membership at a time, but unlimited chapter memberships.
                 </p>
             </field>
         </record>
@@ -334,8 +460,7 @@
             </field>
         </record>
 
-    </data>
-    <!-- Chapter Membership Actions - ADD TO EXISTING FILE -->
+        <!-- ENHANCED: Chapter Membership Actions -->
         
         <!-- Active Chapter Memberships Action -->
         <record id="action_ams_membership_chapters_active" model="ir.actions.act_window">
@@ -375,6 +500,25 @@
             </field>
         </record>
 
+        <!-- Regular Memberships Only Action -->
+        <record id="action_ams_membership_regular_only" model="ir.actions.act_window">
+            <field name="name">Regular Memberships</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="domain">[('is_chapter_membership', '=', False)]</field>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No regular memberships found
+                </p>
+                <p>
+                    This view shows only regular (non-chapter) memberships.
+                    Each member can have only one active regular membership.
+                </p>
+            </field>
+        </record>
+
         <!-- Chapter Renewals Action -->
         <record id="action_ams_renewal_chapter" model="ir.actions.act_window">
             <field name="name">Chapter Renewals</field>
@@ -402,8 +546,7 @@
             <field name="domain">[('is_chapter_membership', '=', True)]</field>
             <field name="context">{
                 'search_default_active': 1,
-                'search_default_group_chapter_type': 1,
-                'search_default_group_chapter_location': 1
+                'search_default_group_chapter_type': 1
             }</field>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
@@ -438,20 +581,38 @@
             </field>
         </record>
 
+        <!-- Local Chapters Action -->
+        <record id="action_ams_membership_local_chapters" model="ir.actions.act_window">
+            <field name="name">Local Chapter Memberships</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership</field>
+            <field name="view_mode">list,kanban,form</field>
+            <field name="domain">[('chapter_type', '=', 'local'), ('state', '=', 'active')]</field>
+            <field name="context">{'search_default_group_chapter_location': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No local chapter memberships found
+                </p>
+                <p>
+                    This view shows active local chapter memberships grouped by location.
+                </p>
+            </field>
+        </record>
+
         <!-- Mass Renewal Wizard Action (placeholder) -->
         <record id="action_mass_renewal_wizard" model="ir.actions.act_window">
             <field name="name">Mass Renewal Wizard</field>
             <field name="type">ir.actions.act_window</field>
-            <field name="res_model">ams.renewal</field>
-            <field name="view_mode">list</field>
-            <field name="domain">[('state', '=', 'draft')]</field>
+            <field name="res_model">ams.mass.renewal.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
                     Mass Renewal Wizard
                 </p>
                 <p>
-                    This tool helps process multiple renewals at once.
-                    (Wizard functionality to be implemented)
+                    This tool helps process multiple renewals at once for both
+                    regular and chapter memberships.
                 </p>
             </field>
         </record>
