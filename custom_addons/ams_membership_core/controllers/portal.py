@@ -383,6 +383,40 @@ class MembershipPortal(CustomerPortal):
         }
         return request.render("ams_membership_core.portal_subscription_detail", values)
 
+    # CRITICAL: Custom invoice handler for membership/subscription invoices
+    @http.route(['/my/invoices/<int:invoice_id>'], type='http', auth="user", website=True)
+    def portal_my_invoice_detail(self, invoice_id, access_token=None, report_type=None, download=False, **kw):
+        """Custom invoice detail handler for membership/subscription invoices"""
+        try:
+            # Use enhanced document access check
+            invoice_sudo = self._document_check_access('account.move', invoice_id, access_token)
+            
+            # Check if this is a membership/subscription invoice
+            if hasattr(invoice_sudo, 'has_subscription_lines') and invoice_sudo.has_subscription_lines:
+                # Find related membership/subscription for context
+                membership_line = invoice_sudo.invoice_line_ids.filtered(lambda l: hasattr(l, 'related_membership_id') and l.related_membership_id)
+                subscription_line = invoice_sudo.invoice_line_ids.filtered(lambda l: hasattr(l, 'related_subscription_id') and l.related_subscription_id)
+                
+                values = {
+                    'invoice': invoice_sudo,
+                    'related_membership': membership_line.related_membership_id if membership_line else None,
+                    'related_subscription': subscription_line.related_subscription_id if subscription_line else None,
+                    'report_type': report_type,
+                    'download': download,
+                    'page_name': 'invoice',
+                    'token': access_token,
+                }
+                
+                # Use standard invoice template
+                return request.render("account.portal_invoice_page", values)
+            else:
+                # Let the standard account portal handle non-subscription invoices
+                return super()._document_check_access('account.move', invoice_id, access_token)
+                
+        except (AccessError, MissingError):
+            # Redirect to portal home if access denied
+            return request.redirect('/my')
+
     @http.route(['/my/memberships/<int:membership_id>/renew'], 
                 type='http', auth="user", website=True)
     def portal_membership_renew(self, membership_id, **kw):
@@ -411,7 +445,11 @@ class MembershipPortal(CustomerPortal):
             
             # Redirect to invoice payment if available
             if renewal.invoice_id:
-                return request.redirect(f'/my/invoices/{renewal.invoice_id.id}')
+                # Use access token for invoice redirect
+                redirect_url = f'/my/invoices/{renewal.invoice_id.id}'
+                if renewal.invoice_id.access_token:
+                    redirect_url += f'?access_token={renewal.invoice_id.access_token}'
+                return request.redirect(redirect_url)
             else:
                 request.session['renewal_success'] = True
                 return request.redirect(f'/my/memberships/{membership_id}')
@@ -447,7 +485,7 @@ class MembershipPortal(CustomerPortal):
         return request.redirect(f'/my/subscriptions/{subscription_id}')
 
     def _document_check_access(self, model_name, document_id, access_token=None):
-        """Check access to membership/subscription documents"""
+        """ENHANCED: Check access to membership/subscription documents AND invoices"""
         document = request.env[model_name].browse([document_id])
         document_sudo = document.with_user(request.env.ref('base.user_root').id)
         
@@ -455,10 +493,34 @@ class MembershipPortal(CustomerPortal):
             document.check_access_rights('read')
             document.check_access_rule('read')
         except AccessError:
+            # ENHANCED: Special handling for subscription invoices
+            if model_name == 'account.move':
+                partner = request.env.user.partner_id
+                
+                # Check if invoice belongs to the current user
+                if document_sudo.partner_id == partner:
+                    # Additional check for subscription invoices
+                    if getattr(document_sudo, 'has_subscription_lines', False):
+                        _logger.info(f"Granting access to subscription invoice {document_id} for partner {partner.id}")
+                        return document_sudo
+                    
+                    # Check if they have general invoice access (fallback)
+                    try:
+                        # Try to access with token if provided
+                        if access_token and hasattr(document_sudo, 'access_token'):
+                            if document_sudo.access_token == access_token:
+                                return document_sudo
+                    except Exception as e:
+                        _logger.warning(f"Token validation failed: {e}")
+                
+                # If it's an invoice and user should have access, grant it
+                if document_sudo.partner_id == partner and document_sudo.state == 'posted':
+                    return document_sudo
+                    
             raise AccessError(_("Access Denied"))
 
-        # Additional check for partner ownership
-        if document_sudo.partner_id != request.env.user.partner_id:
+        # Additional check for partner ownership for membership/subscription documents
+        if hasattr(document_sudo, 'partner_id') and document_sudo.partner_id != request.env.user.partner_id:
             raise AccessError(_("Access Denied"))
             
         return document_sudo

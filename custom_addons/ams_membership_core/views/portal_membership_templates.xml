@@ -373,8 +373,18 @@
                                                                 <i class="fa fa-refresh"/> Renew
                                                             </a>
                                                         </t>
+                                                        <!-- FIXED: Invoice link with proper access token handling -->
                                                         <t t-if="membership.invoice_id">
-                                                            <a t-attf-href="/my/invoices/#{membership.invoice_id.id}" class="btn btn-sm btn-outline-secondary">
+                                                            <!-- Primary link with access token if available -->
+                                                            <a t-if="membership.invoice_id.access_token"
+                                                               t-attf-href="/my/invoices/#{membership.invoice_id.id}?access_token=#{membership.invoice_id.access_token}" 
+                                                               class="btn btn-sm btn-outline-secondary">
+                                                                <i class="fa fa-file-text-o"/> Invoice
+                                                            </a>
+                                                            <!-- Fallback link without token -->
+                                                            <a t-if="not membership.invoice_id.access_token"
+                                                               t-attf-href="/my/invoices/#{membership.invoice_id.id}" 
+                                                               class="btn btn-sm btn-outline-secondary">
                                                                 <i class="fa fa-file-text-o"/> Invoice
                                                             </a>
                                                         </t>
@@ -391,7 +401,7 @@
             </t>
         </template>
 
-        <!-- Enhanced Membership Detail Template - WITH CURRENCY FIX -->
+        <!-- Enhanced Membership Detail Template - WITH CURRENCY AND INVOICE FIX -->
         <template id="portal_membership_detail" name="Membership Details">
             <t t-call="portal.portal_layout">
                 <t t-set="page_name" t-value="'membership'"/>
@@ -525,8 +535,18 @@
                                             </a>
                                         </t>
                                         
+                                        <!-- FIXED: Invoice button with proper access token -->
                                         <t t-if="membership.invoice_id">
-                                            <a t-attf-href="/my/invoices/#{membership.invoice_id.id}" class="btn btn-outline-primary">
+                                            <!-- Primary button with access token if available -->
+                                            <a t-if="membership.invoice_id.access_token"
+                                               t-attf-href="/my/invoices/#{membership.invoice_id.id}?access_token=#{membership.invoice_id.access_token}" 
+                                               class="btn btn-outline-primary">
+                                                <i class="fa fa-file-text-o"/> View Invoice
+                                            </a>
+                                            <!-- Fallback button without token -->
+                                            <a t-if="not membership.invoice_id.access_token"
+                                               t-attf-href="/my/invoices/#{membership.invoice_id.id}" 
+                                               class="btn btn-outline-primary">
                                                 <i class="fa fa-file-text-o"/> View Invoice
                                             </a>
                                         </t>

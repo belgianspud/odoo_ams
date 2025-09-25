@@ -34,6 +34,9 @@ class AccountMove(models.Model):
             if (move.move_type == 'out_invoice' and 
                 move.state == 'posted' and 
                 move.has_subscription_lines):
+                # ENSURE PORTAL ACCESS TOKEN EXISTS FOR SUBSCRIPTION INVOICES
+                if not move.access_token:
+                    move._portal_ensure_token()
                 move._process_subscription_activations()
         
         return result
@@ -52,9 +55,13 @@ class AccountMove(models.Model):
             
             try:
                 if line.product_id.subscription_product_type == 'membership':
-                    self._activate_membership_from_line(line)
+                    membership = self._activate_membership_from_line(line)
+                    if membership:
+                        _logger.info(f"Activated membership {membership.name} from invoice {self.name}")
                 else:
-                    self._activate_subscription_from_line(line)
+                    subscription = self._activate_subscription_from_line(line)
+                    if subscription:
+                        _logger.info(f"Activated subscription {subscription.name} from invoice {self.name}")
                     
             except Exception as e:
                 _logger.error(f"Failed to activate subscription from invoice line {line.id}: {str(e)}")
@@ -114,6 +121,53 @@ class AccountMove(models.Model):
         
         return subscription
 
+    def _get_portal_return_action(self):
+        """Override portal return action for membership invoices"""
+        # First try the standard method
+        try:
+            action = super()._get_portal_return_action()
+        except:
+            action = None
+        
+        # If this invoice is related to a membership/subscription, provide specific return action
+        if hasattr(self, 'has_subscription_lines') and self.has_subscription_lines:
+            membership_line = self.invoice_line_ids.filtered(lambda l: hasattr(l, 'related_membership_id') and l.related_membership_id)
+            if membership_line and membership_line.related_membership_id:
+                return {
+                    'type': 'ir.actions.act_url',
+                    'target': 'self',
+                    'url': f'/my/memberships/{membership_line.related_membership_id.id}'
+                }
+                
+            subscription_line = self.invoice_line_ids.filtered(lambda l: hasattr(l, 'related_subscription_id') and l.related_subscription_id)
+            if subscription_line and subscription_line.related_subscription_id:
+                return {
+                    'type': 'ir.actions.act_url', 
+                    'target': 'self',
+                    'url': f'/my/subscriptions/{subscription_line.related_subscription_id.id}'
+                }
+        
+        return action or {
+            'type': 'ir.actions.act_url',
+            'target': 'self',
+            'url': '/my'
+        }
+
+    def _compute_access_token(self):
+        """Ensure membership/subscription invoices have access tokens"""
+        super()._compute_access_token()
+        # Additional token generation for subscription invoices
+        for move in self:
+            if not move.access_token and getattr(move, 'has_subscription_lines', False):
+                move._portal_ensure_token()
+
+    def _portal_ensure_token(self):
+        """Ensure this invoice has a portal access token"""
+        if not self.access_token:
+            # Generate a new token
+            import secrets
+            self.access_token = secrets.token_urlsafe(32)
+
 
 class AccountPayment(models.Model):
     _inherit = 'account.payment'
@@ -137,7 +191,7 @@ class AccountPayment(models.Model):
         reconciled_moves = self._get_reconciled_invoices()
         
         for invoice in reconciled_moves:
-            if invoice.has_subscription_lines and invoice.payment_state in ['paid', 'in_payment']:
+            if getattr(invoice, 'has_subscription_lines', False) and invoice.payment_state in ['paid', 'in_payment']:
                 invoice._process_subscription_activations()
     
     def _get_reconciled_invoices(self):
@@ -145,14 +199,17 @@ class AccountPayment(models.Model):
         reconciled_invoices = self.env['account.move']
         
         # Get reconciled move lines
-        reconciled_lines = self.line_ids.mapped('matched_debit_ids.debit_move_id') | \
-                          self.line_ids.mapped('matched_credit_ids.credit_move_id')
-        
-        # Filter for customer invoices
-        for line in reconciled_lines:
-            if (line.move_id.move_type == 'out_invoice' and 
-                line.move_id not in reconciled_invoices):
-                reconciled_invoices |= line.move_id
+        try:
+            reconciled_lines = self.line_ids.mapped('matched_debit_ids.debit_move_id') | \
+                              self.line_ids.mapped('matched_credit_ids.credit_move_id')
+            
+            # Filter for customer invoices
+            for line in reconciled_lines:
+                if (line.move_id.move_type == 'out_invoice' and 
+                    line.move_id not in reconciled_invoices):
+                    reconciled_invoices |= line.move_id
+        except Exception as e:
+            _logger.warning(f"Error getting reconciled invoices: {str(e)}")
         
         return reconciled_invoices
 
@@ -186,7 +243,7 @@ class AccountMoveLine(models.Model):
         """Check if this line is for a subscription product"""
         for line in self:
             line.is_subscription_line = bool(
-                line.product_id and line.product_id.is_subscription_product
+                line.product_id and getattr(line.product_id, 'is_subscription_product', False)
             )
     
     @api.depends('move_id', 'product_id')
@@ -200,16 +257,22 @@ class AccountMoveLine(models.Model):
                 continue
             
             # Look for related membership
-            membership = self.env['ams.membership'].search([
-                ('invoice_line_id', '=', line.id)
-            ], limit=1)
-            if membership:
-                line.related_membership_id = membership.id
-                continue
+            try:
+                membership = self.env['ams.membership'].search([
+                    ('invoice_line_id', '=', line.id)
+                ], limit=1)
+                if membership:
+                    line.related_membership_id = membership.id
+                    continue
+            except Exception:
+                pass
             
             # Look for related subscription
-            subscription = self.env['ams.subscription'].search([
-                ('invoice_line_id', '=', line.id)
-            ], limit=1)
-            if subscription:
-                line.related_subscription_id = subscription.id
+            try:
+                subscription = self.env['ams.subscription'].search([
+                    ('invoice_line_id', '=', line.id)
+                ], limit=1)
+                if subscription:
+                    line.related_subscription_id = subscription.id
+            except Exception:
+                pass

@@ -194,6 +194,14 @@ class AMSMembership(models.Model):
         if membership.product_id.subscription_product_type == 'membership':
             membership._ensure_single_active_membership()
         
+        # CRITICAL: Ensure invoice access token if invoice exists
+        if membership.invoice_id and not membership.invoice_id.access_token:
+            try:
+                membership.invoice_id._portal_ensure_token()
+                _logger.info(f"Generated access token for membership invoice {membership.invoice_id.name}")
+            except Exception as e:
+                _logger.error(f"Failed to generate access token for membership invoice: {str(e)}")
+        
         return membership
     
     def write(self, vals):
@@ -204,6 +212,16 @@ class AMSMembership(models.Model):
         if 'state' in vals:
             for membership in self:
                 membership._handle_state_change(vals['state'])
+        
+        # CRITICAL: Ensure access token when invoice is linked
+        if 'invoice_id' in vals and vals['invoice_id']:
+            for membership in self:
+                if membership.invoice_id and not membership.invoice_id.access_token:
+                    try:
+                        membership.invoice_id._portal_ensure_token()
+                        _logger.info(f"Generated access token for linked invoice {membership.invoice_id.name}")
+                    except Exception as e:
+                        _logger.error(f"Failed to generate access token for linked invoice: {str(e)}")
         
         return result
     
@@ -379,7 +397,7 @@ class AMSMembership(models.Model):
     
     @api.model
     def create_from_invoice_payment(self, invoice_line):
-        """Create membership from paid invoice line - CORRECTED VERSION"""
+        """Create membership from paid invoice line - CORRECTED VERSION WITH ACCESS TOKEN"""
         product = invoice_line.product_id.product_tmpl_id
         
         if not product.is_subscription_product or product.subscription_product_type != 'membership':
@@ -513,6 +531,14 @@ class AMSMembership(models.Model):
         
         membership = self.create(membership_vals)
         
+        # 8. CRITICAL: ENSURE INVOICE HAS ACCESS TOKEN
+        if not invoice_line.move_id.access_token:
+            try:
+                invoice_line.move_id._portal_ensure_token()
+                _logger.info(f"Generated access token for membership invoice {invoice_line.move_id.name}")
+            except Exception as e:
+                _logger.error(f"Failed to generate access token for membership invoice: {str(e)}")
+        
         _logger.info(f"Created membership {membership.name} for {partner.name} "
                      f"from {start_date} to {end_date}")
         
@@ -612,11 +638,19 @@ class AMSMembership(models.Model):
                     )
 
     def action_view_invoice(self):
-        """View membership invoice"""
+        """View membership invoice - ENHANCED WITH ACCESS TOKEN"""
         self.ensure_one()
     
         if not self.invoice_id:
             raise UserError(_("No invoice exists for this membership."))
+    
+        # CRITICAL: Ensure access token exists
+        if not self.invoice_id.access_token:
+            try:
+                self.invoice_id._portal_ensure_token()
+                _logger.info(f"Generated access token for invoice {self.invoice_id.name}")
+            except Exception as e:
+                _logger.error(f"Failed to generate access token: {str(e)}")
     
         return {
             'type': 'ir.actions.act_window',
@@ -641,6 +675,30 @@ class AMSMembership(models.Model):
             'res_id': self.sale_order_id.id,
             'view_mode': 'form',
             'views': [(False, 'form')],
+        }
+
+    def action_generate_portal_invoice_link(self):
+        """Generate portal-accessible invoice link for this membership"""
+        self.ensure_one()
+        
+        if not self.invoice_id:
+            raise UserError(_("No invoice exists for this membership."))
+        
+        # Ensure access token exists
+        if not self.invoice_id.access_token:
+            try:
+                self.invoice_id._portal_ensure_token()
+            except Exception as e:
+                raise UserError(_("Failed to generate access token: %s") % str(e))
+        
+        # Return the portal URL
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        invoice_url = f"{base_url}/my/invoices/{self.invoice_id.id}?access_token={self.invoice_id.access_token}"
+        
+        return {
+            'type': 'ir.actions.act_url',
+            'url': invoice_url,
+            'target': 'new',
         }
 
 

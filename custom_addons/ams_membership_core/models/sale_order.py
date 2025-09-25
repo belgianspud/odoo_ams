@@ -137,6 +137,9 @@ class SaleOrder(models.Model):
             
             if existing_membership:
                 _logger.info(f"SUBSCRIPTION DEBUG: Membership already exists for sale line {line.id}")
+                # ENSURE ACCESS TOKEN FOR EXISTING MEMBERSHIP'S INVOICE
+                if existing_membership.invoice_id and not existing_membership.invoice_id.access_token:
+                    existing_membership.invoice_id._portal_ensure_token()
                 return existing_membership
             _logger.info(f"SUBSCRIPTION DEBUG: No existing membership found - creating new one")
         except Exception as e:
@@ -232,6 +235,48 @@ class SaleOrder(models.Model):
             
             _logger.info(f"SUBSCRIPTION DEBUG: Successfully created membership {membership.name} (ID: {membership.id}) for partner {partner.name}")
             
+            # CRITICAL: Create invoice and ensure access token immediately
+            try:
+                if self.invoice_ids:
+                    # Link to existing invoice
+                    invoice = self.invoice_ids[0]
+                    membership.write({
+                        'invoice_id': invoice.id,
+                        'invoice_line_id': invoice.invoice_line_ids.filtered(
+                            lambda l: l.product_id == line.product_id
+                        )[:1].id if invoice.invoice_line_ids else False
+                    })
+                    # ENSURE ACCESS TOKEN
+                    if not invoice.access_token:
+                        invoice._portal_ensure_token()
+                    _logger.info(f"SUBSCRIPTION DEBUG: Linked membership to invoice {invoice.name} with token")
+                else:
+                    # Create new invoice for membership
+                    invoice_vals = {
+                        'partner_id': partner.id,
+                        'move_type': 'out_invoice',
+                        'invoice_date': fields.Date.today(),
+                        'invoice_line_ids': [(0, 0, {
+                            'product_id': line.product_id.id,
+                            'name': f"Membership: {line.product_id.name}",
+                            'quantity': 1,
+                            'price_unit': line.price_subtotal,
+                        })]
+                    }
+                    invoice = self.env['account.move'].create(invoice_vals)
+                    invoice.action_post()
+                    # ENSURE ACCESS TOKEN
+                    if not invoice.access_token:
+                        invoice._portal_ensure_token()
+                    
+                    membership.write({
+                        'invoice_id': invoice.id,
+                        'invoice_line_id': invoice.invoice_line_ids[0].id
+                    })
+                    _logger.info(f"SUBSCRIPTION DEBUG: Created new invoice {invoice.name} for membership with token")
+            except Exception as e:
+                _logger.error(f"SUBSCRIPTION DEBUG: Error handling invoice for membership: {str(e)}")
+            
             # Log activity
             membership.message_post(
                 body=f"Membership activated from sale order {self.name}",
@@ -267,6 +312,9 @@ class SaleOrder(models.Model):
             
             if existing_subscription:
                 _logger.info(f"SUBSCRIPTION DEBUG: Subscription already exists for sale line {line.id}")
+                # ENSURE ACCESS TOKEN FOR EXISTING SUBSCRIPTION'S INVOICE
+                if existing_subscription.invoice_id and not existing_subscription.invoice_id.access_token:
+                    existing_subscription.invoice_id._portal_ensure_token()
                 return existing_subscription
             _logger.info(f"SUBSCRIPTION DEBUG: No existing subscription found - creating new one")
         except Exception as e:
@@ -315,6 +363,48 @@ class SaleOrder(models.Model):
             subscription = self.env['ams.subscription'].create(subscription_vals)
             
             _logger.info(f"SUBSCRIPTION DEBUG: Successfully created subscription {subscription.name} (ID: {subscription.id}) for partner {partner.name}")
+            
+            # CRITICAL: Create invoice and ensure access token immediately
+            try:
+                if self.invoice_ids:
+                    # Link to existing invoice
+                    invoice = self.invoice_ids[0]
+                    subscription.write({
+                        'invoice_id': invoice.id,
+                        'invoice_line_id': invoice.invoice_line_ids.filtered(
+                            lambda l: l.product_id == line.product_id
+                        )[:1].id if invoice.invoice_line_ids else False
+                    })
+                    # ENSURE ACCESS TOKEN
+                    if not invoice.access_token:
+                        invoice._portal_ensure_token()
+                    _logger.info(f"SUBSCRIPTION DEBUG: Linked subscription to invoice {invoice.name} with token")
+                else:
+                    # Create new invoice for subscription
+                    invoice_vals = {
+                        'partner_id': partner.id,
+                        'move_type': 'out_invoice',
+                        'invoice_date': fields.Date.today(),
+                        'invoice_line_ids': [(0, 0, {
+                            'product_id': line.product_id.id,
+                            'name': f"Subscription: {line.product_id.name}",
+                            'quantity': 1,
+                            'price_unit': line.price_subtotal,
+                        })]
+                    }
+                    invoice = self.env['account.move'].create(invoice_vals)
+                    invoice.action_post()
+                    # ENSURE ACCESS TOKEN
+                    if not invoice.access_token:
+                        invoice._portal_ensure_token()
+                    
+                    subscription.write({
+                        'invoice_id': invoice.id,
+                        'invoice_line_id': invoice.invoice_line_ids[0].id
+                    })
+                    _logger.info(f"SUBSCRIPTION DEBUG: Created new invoice {invoice.name} for subscription with token")
+            except Exception as e:
+                _logger.error(f"SUBSCRIPTION DEBUG: Error handling invoice for subscription: {str(e)}")
             
             # Log activity
             subscription.message_post(
@@ -397,5 +487,41 @@ class PaymentTransaction(models.Model):
                 for order in tx.sale_order_ids:
                     if order.has_subscription_products:
                         order._process_subscription_activations()
+        
+        return result
+
+
+# ADDITIONAL: Invoice creation override for direct subscription invoices
+class SaleOrderLine(models.Model):
+    _inherit = 'sale.order.line'
+    
+    def _prepare_invoice_line(self, **optional_values):
+        """Override to ensure subscription invoices get access tokens"""
+        result = super()._prepare_invoice_line(**optional_values)
+        
+        # Mark subscription lines for special handling
+        if self.product_id.product_tmpl_id.is_subscription_product:
+            result['name'] = f"{result.get('name', '')} (Subscription)"
+            
+        return result
+
+
+# HELPER: Automatic invoice token generation
+class SaleAdvancePaymentInv(models.TransientModel):
+    _inherit = 'sale.advance.payment.inv'
+    
+    def create_invoices(self):
+        """Override to ensure subscription invoices get access tokens"""
+        result = super().create_invoices()
+        
+        # Get the created invoices
+        if hasattr(self, '_context') and self._context.get('active_ids'):
+            sale_orders = self.env['sale.order'].browse(self._context.get('active_ids'))
+            for order in sale_orders:
+                if order.has_subscription_products and order.invoice_ids:
+                    for invoice in order.invoice_ids:
+                        if not invoice.access_token:
+                            invoice._portal_ensure_token()
+                            _logger.info(f"Generated access token for subscription invoice {invoice.name}")
         
         return result
