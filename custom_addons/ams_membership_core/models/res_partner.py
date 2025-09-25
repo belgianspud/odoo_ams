@@ -48,25 +48,24 @@ class ResPartner(models.Model):
         except Exception:
             return default
 
-    # === MEMBERSHIP CORE EXTENSIONS ===
-    # Add subscription-specific fields that don't conflict with foundation
+    # === MEMBERSHIP CORE EXTENSIONS - FIXED ===
     
     # Membership Records (real data - stored in membership_core)
     membership_ids = fields.One2many(
         'ams.membership',
         'partner_id',
-        string='Memberships',
+        string='All Memberships',
         help='All membership records for this member'
     )
     
     subscription_ids = fields.One2many(
         'ams.subscription',
         'partner_id', 
-        string='Subscriptions',
+        string='All Subscriptions',
         help='All subscription records for this member'
     )
     
-    # Current Active Records (computed from real data)
+    # Active Records (computed from real data) - FIXED
     current_membership_id = fields.Many2one(
         'ams.membership',
         string='Current Membership',
@@ -75,12 +74,49 @@ class ResPartner(models.Model):
         help='Current active membership (only one allowed)'
     )
     
+    active_membership_ids = fields.One2many(
+        'ams.membership',
+        'partner_id',
+        string='Active Memberships',
+        compute='_compute_active_records',
+        help='All currently active memberships'
+    )
+    
     active_subscription_ids = fields.One2many(
         'ams.subscription',
         'partner_id',
         string='Active Subscriptions',
-        domain=[('state', '=', 'active')],
+        compute='_compute_active_records',
         help='All currently active subscriptions'
+    )
+    
+    # Counts (for stat buttons) - FIXED
+    membership_count = fields.Integer(
+        string='Total Memberships',
+        compute='_compute_record_counts',
+        store=True,
+        help='Total number of membership records'
+    )
+    
+    active_membership_count = fields.Integer(
+        string='Active Memberships',
+        compute='_compute_record_counts',
+        store=True,
+        help='Number of active memberships'
+    )
+    
+    subscription_count = fields.Integer(
+        string='Total Subscriptions',
+        compute='_compute_record_counts',
+        store=True,
+        help='Total number of subscription records'
+    )
+    
+    active_subscription_count = fields.Integer(
+        string='Active Subscriptions',
+        compute='_compute_record_counts',
+        store=True,
+        help='Number of active subscriptions'
     )
     
     # Benefits (computed from active memberships/subscriptions)
@@ -113,15 +149,8 @@ class ResPartner(models.Model):
         store=True,
         help='Total years of membership history'
     )
-    
-    subscription_count = fields.Integer(
-        string='Total Subscriptions',
-        compute='_compute_subscription_stats',
-        store=True,
-        help='Total number of subscriptions (all time)'
-    )
 
-    # === SAFE COMPUTED METHODS ===
+    # === FIXED COMPUTED METHODS ===
     
     @api.depends('membership_ids.state')
     def _compute_current_membership(self):
@@ -178,27 +207,64 @@ class ResPartner(models.Model):
                 except Exception:
                     pass
     
+    @api.depends('membership_ids.state', 'subscription_ids.state')
+    def _compute_active_records(self):
+        """Compute active memberships and subscriptions - NEW METHOD"""
+        for partner in self:
+            try:
+                # Get active memberships
+                active_memberships = partner.membership_ids.filtered(lambda m: m.state == 'active')
+                partner.active_membership_ids = [(6, 0, active_memberships.ids)]
+                
+                # Get active subscriptions
+                active_subscriptions = partner.subscription_ids.filtered(lambda s: s.state == 'active')
+                partner.active_subscription_ids = [(6, 0, active_subscriptions.ids)]
+                
+            except Exception as e:
+                _logger.error(f"Error computing active records for {partner.name}: {e}")
+                partner.active_membership_ids = [(6, 0, [])]
+                partner.active_subscription_ids = [(6, 0, [])]
+    
+    @api.depends('membership_ids', 'subscription_ids', 'membership_ids.state', 'subscription_ids.state')
+    def _compute_record_counts(self):
+        """Compute membership and subscription counts - NEW METHOD"""
+        for partner in self:
+            try:
+                # Total counts
+                partner.membership_count = len(partner.membership_ids)
+                partner.subscription_count = len(partner.subscription_ids)
+                
+                # Active counts
+                active_memberships = partner.membership_ids.filtered(lambda m: m.state == 'active')
+                partner.active_membership_count = len(active_memberships)
+                
+                active_subscriptions = partner.subscription_ids.filtered(lambda s: s.state == 'active')
+                partner.active_subscription_count = len(active_subscriptions)
+                
+            except Exception as e:
+                _logger.error(f"Error computing record counts for {partner.name}: {e}")
+                partner.membership_count = 0
+                partner.subscription_count = 0
+                partner.active_membership_count = 0
+                partner.active_subscription_count = 0
+    
     def _compute_active_benefits(self):
         """Compute all active benefits - SAFE VERSION"""
         for partner in self:
             try:
                 benefit_ids = set()
                 
-                # Benefits from active membership
-                if partner.current_membership_id and hasattr(partner.current_membership_id, 'benefit_ids'):
-                    try:
-                        benefit_ids.update(partner.current_membership_id.benefit_ids.ids)
-                    except Exception as e:
-                        _logger.warning(f"Error getting membership benefits for {partner.name}: {e}")
+                # Benefits from active memberships
+                active_memberships = partner.membership_ids.filtered(lambda m: m.state == 'active')
+                for membership in active_memberships:
+                    if hasattr(membership, 'benefit_ids') and membership.benefit_ids:
+                        benefit_ids.update(membership.benefit_ids.ids)
                 
                 # Benefits from active subscriptions
-                try:
-                    active_subscriptions = partner.active_subscription_ids
-                    for subscription in active_subscriptions:
-                        if hasattr(subscription, 'benefit_ids') and subscription.benefit_ids:
-                            benefit_ids.update(subscription.benefit_ids.ids)
-                except Exception as e:
-                    _logger.warning(f"Error getting subscription benefits for {partner.name}: {e}")
+                active_subscriptions = partner.subscription_ids.filtered(lambda s: s.state == 'active')
+                for subscription in active_subscriptions:
+                    if hasattr(subscription, 'benefit_ids') and subscription.benefit_ids:
+                        benefit_ids.update(subscription.benefit_ids.ids)
                 
                 # Always return a recordset, never None
                 partner.active_benefit_ids = [(6, 0, list(benefit_ids))]
@@ -214,18 +280,16 @@ class ResPartner(models.Model):
             try:
                 renewal_dates = []
                 
-                # Collect renewal dates safely
-                if (partner.current_membership_id and 
-                    hasattr(partner.current_membership_id, 'next_renewal_date') and
-                    partner.current_membership_id.next_renewal_date):
-                    renewal_dates.append(partner.current_membership_id.next_renewal_date)
+                # Collect renewal dates safely from active records
+                active_memberships = partner.membership_ids.filtered(lambda m: m.state == 'active')
+                for membership in active_memberships:
+                    if hasattr(membership, 'next_renewal_date') and membership.next_renewal_date:
+                        renewal_dates.append(membership.next_renewal_date)
                 
-                try:
-                    for subscription in partner.active_subscription_ids:
-                        if hasattr(subscription, 'next_renewal_date') and subscription.next_renewal_date:
-                            renewal_dates.append(subscription.next_renewal_date)
-                except Exception as e:
-                    _logger.warning(f"Error getting subscription renewal dates for {partner.name}: {e}")
+                active_subscriptions = partner.subscription_ids.filtered(lambda s: s.state == 'active')
+                for subscription in active_subscriptions:
+                    if hasattr(subscription, 'next_renewal_date') and subscription.next_renewal_date:
+                        renewal_dates.append(subscription.next_renewal_date)
                 
                 # Set values safely
                 partner.next_renewal_date = min(renewal_dates) if renewal_dates else False
@@ -267,16 +331,6 @@ class ResPartner(models.Model):
             except Exception as e:
                 _logger.error(f"Error computing membership stats for {partner.name}: {e}")
                 partner.total_membership_years = 0.0
-    
-    @api.depends('subscription_ids')
-    def _compute_subscription_stats(self):
-        """Compute subscription statistics - SAFE VERSION"""
-        for partner in self:
-            try:
-                partner.subscription_count = len(partner.subscription_ids) if partner.subscription_ids else 0
-            except Exception as e:
-                _logger.error(f"Error computing subscription stats for {partner.name}: {e}")
-                partner.subscription_count = 0
 
     # === SAFE READ METHOD ===
     
@@ -359,7 +413,8 @@ class ResPartner(models.Model):
                 
                 # Also suspend active subscriptions
                 try:
-                    for subscription in self.active_subscription_ids:
+                    active_subscriptions = self.subscription_ids.filtered(lambda s: s.state == 'active')
+                    for subscription in active_subscriptions:
                         subscription.write({'state': 'suspended'})
                 except Exception as e:
                     _logger.warning(f"Error suspending subscriptions for {self.name}: {e}")
@@ -396,6 +451,32 @@ class ResPartner(models.Model):
             'res_model': 'ams.subscription',
             'view_mode': 'list,form',
             'domain': [('partner_id', '=', self.id)],
+            'context': {'default_partner_id': self.id}
+        }
+    
+    def action_view_active_memberships(self):
+        """View active memberships for this partner"""
+        self.ensure_one()
+        
+        return {
+            'name': _('Active Memberships: %s') % (self.name or 'Partner'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'ams.membership',
+            'view_mode': 'list,form',
+            'domain': [('partner_id', '=', self.id), ('state', '=', 'active')],
+            'context': {'default_partner_id': self.id}
+        }
+    
+    def action_view_active_subscriptions(self):
+        """View active subscriptions for this partner"""
+        self.ensure_one()
+        
+        return {
+            'name': _('Active Subscriptions: %s') % (self.name or 'Partner'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'ams.subscription',
+            'view_mode': 'list,form',
+            'domain': [('partner_id', '=', self.id), ('state', '=', 'active')],
             'context': {'default_partner_id': self.id}
         }
     
