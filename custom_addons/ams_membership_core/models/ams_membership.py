@@ -48,7 +48,7 @@ class AMSMembership(models.Model):
         ('terminated', 'Terminated'),
     ], string='Status', default='draft', tracking=True)
     
-    # UPDATED: Chapter membership identification
+    # Enhanced Chapter Membership Identification
     is_chapter_membership = fields.Boolean(
         string='Chapter Membership', 
         compute='_compute_is_chapter_membership', 
@@ -61,27 +61,54 @@ class AMSMembership(models.Model):
         ('chapter', 'Chapter Membership'),
     ], string='Membership Type', compute='_compute_membership_type', store=True)
     
-    # Chapter-specific fields
+    # Enhanced Chapter-Specific Fields
     chapter_access_level = fields.Selection([
         ('basic', 'Basic Access'),
         ('premium', 'Premium Access'),
         ('leadership', 'Leadership Access'),
         ('officer', 'Officer Access'),
+        ('board', 'Board Member'),
     ], string='Chapter Access Level', 
        compute='_compute_chapter_info', store=True)
     
     chapter_type = fields.Selection([
         ('local', 'Local Chapter'),
         ('regional', 'Regional Chapter'),
+        ('state', 'State Chapter'),
         ('national', 'National Chapter'),
+        ('international', 'International Chapter'),
         ('special', 'Special Interest Chapter'),
+        ('student', 'Student Chapter'),
+        ('professional', 'Professional Chapter'),
     ], string='Chapter Type',
        compute='_compute_chapter_info', store=True)
     
     chapter_location = fields.Char('Chapter Location',
                                   compute='_compute_chapter_info', store=True)
+    chapter_city = fields.Char('Chapter City', compute='_compute_chapter_info', store=True)
+    chapter_state = fields.Char('Chapter State', compute='_compute_chapter_info', store=True)
+    chapter_country_id = fields.Many2one('res.country', 'Chapter Country',
+                                        compute='_compute_chapter_info', store=True)
     
-    # Chapter-specific access tracking
+    # Chapter Role and Responsibilities
+    chapter_role = fields.Selection([
+        ('member', 'Member'),
+        ('volunteer', 'Volunteer'),
+        ('committee_member', 'Committee Member'),
+        ('officer', 'Officer'),
+        ('board_member', 'Board Member'),
+        ('president', 'President'),
+        ('vice_president', 'Vice President'),
+        ('secretary', 'Secretary'),
+        ('treasurer', 'Treasurer'),
+    ], string='Chapter Role', default='member', tracking=True)
+    
+    chapter_committee_ids = fields.Many2many('chapter.committee', string='Committees',
+                                           help='Committees this member participates in')
+    chapter_position_start_date = fields.Date('Position Start Date')
+    chapter_position_end_date = fields.Date('Position End Date')
+    
+    # Enhanced Chapter Access and Benefits Tracking
     has_local_events_access = fields.Boolean('Local Events Access', 
                                             compute='_compute_chapter_access', store=True)
     has_chapter_documents_access = fields.Boolean('Chapter Documents Access',
@@ -90,8 +117,39 @@ class AMSMembership(models.Model):
                                                 compute='_compute_chapter_access', store=True)
     has_networking_access = fields.Boolean('Networking Access',
                                           compute='_compute_chapter_access', store=True)
+    has_mentorship_access = fields.Boolean('Mentorship Access',
+                                          compute='_compute_chapter_access', store=True)
+    has_certification_access = fields.Boolean('Certification Access',
+                                             compute='_compute_chapter_access', store=True)
+    has_job_board_access = fields.Boolean('Job Board Access',
+                                         compute='_compute_chapter_access', store=True)
+    has_newsletter_access = fields.Boolean('Newsletter Access',
+                                          compute='_compute_chapter_access', store=True)
     
-    # Renewal Configuration
+    # Chapter Participation and Engagement
+    chapter_events_attended = fields.Integer('Events Attended', default=0)
+    chapter_volunteer_hours = fields.Float('Volunteer Hours', default=0.0)
+    chapter_last_activity_date = fields.Date('Last Chapter Activity')
+    chapter_engagement_score = fields.Float('Chapter Engagement Score', 
+                                           compute='_compute_chapter_engagement', store=True)
+    
+    # Chapter Transfer and Migration Support
+    previous_chapter_id = fields.Many2one('product.product', 'Previous Chapter',
+                                         domain=[('subscription_product_type', '=', 'chapter')])
+    transfer_reason = fields.Text('Transfer Reason')
+    transfer_date = fields.Date('Transfer Date')
+    
+    # Chapter Geographic Preferences and Restrictions
+    chapter_geographic_restriction = fields.Boolean('Geographic Restriction',
+                                                   help='Member must be in chapter geographic area')
+    member_zip_code = fields.Char('Member ZIP Code', related='partner_id.zip', store=True)
+    member_state = fields.Char('Member State', related='partner_id.state_id.name', store=True)
+    member_country_id = fields.Many2one('res.country', 'Member Country', 
+                                       related='partner_id.country_id', store=True)
+    geographic_distance_km = fields.Float('Distance from Chapter (km)',
+                                         compute='_compute_geographic_distance')
+    
+    # Regular Membership Fields (existing)
     auto_renew = fields.Boolean('Auto Renew', default=True, tracking=True)
     renewal_interval = fields.Selection([
         ('monthly', 'Monthly'),
@@ -126,6 +184,13 @@ class AMSMembership(models.Model):
     next_renewal_date = fields.Date('Next Renewal Date', compute='_compute_next_renewal_date', store=True)
     renewal_reminder_sent = fields.Boolean('Renewal Reminder Sent', default=False)
     
+    # Enhanced Chapter Activity Tracking
+    chapter_activity_ids = fields.One2many('chapter.activity', 'membership_id', 'Chapter Activities')
+    chapter_meeting_attendance = fields.Float('Meeting Attendance %',
+                                             compute='_compute_chapter_participation')
+    chapter_committee_participation = fields.Boolean('Committee Participation',
+                                                    compute='_compute_chapter_participation')
+    
     # Additional Information
     notes = fields.Text('Internal Notes')
     tags = fields.Many2many('ams.membership.tag', string='Tags')
@@ -135,11 +200,13 @@ class AMSMembership(models.Model):
     days_until_expiry = fields.Integer('Days Until Expiry', compute='_compute_status_flags')
     membership_duration = fields.Integer('Duration (Days)', compute='_compute_membership_duration')
 
-    @api.depends('partner_id', 'product_id', 'start_date')
+    # Enhanced display name computation
+    @api.depends('partner_id', 'product_id', 'start_date', 'is_chapter_membership')
     def _compute_display_name(self):
         for membership in self:
             if membership.partner_id and membership.product_id:
-                membership.display_name = f"{membership.partner_id.name} - {membership.product_id.name}"
+                prefix = "Chapter: " if membership.is_chapter_membership else ""
+                membership.display_name = f"{prefix}{membership.partner_id.name} - {membership.product_id.name}"
             else:
                 membership.display_name = membership.name or _('New Membership')
     
@@ -160,34 +227,119 @@ class AMSMembership(models.Model):
             else:
                 membership.membership_type = 'regular'
 
-    @api.depends('product_id.chapter_access_level', 'product_id.chapter_type', 'product_id.chapter_location')
+    @api.depends('product_id.chapter_access_level', 'product_id.chapter_type', 'product_id.chapter_location',
+                 'product_id.chapter_city', 'product_id.chapter_state', 'product_id.chapter_country_id')
     def _compute_chapter_info(self):
-        """Get chapter information from product"""
+        """Get enhanced chapter information from product"""
         for membership in self:
             if membership.is_chapter_membership:
                 membership.chapter_access_level = membership.product_id.chapter_access_level
                 membership.chapter_type = membership.product_id.chapter_type
                 membership.chapter_location = membership.product_id.chapter_location
+                membership.chapter_city = membership.product_id.chapter_city
+                membership.chapter_state = membership.product_id.chapter_state
+                membership.chapter_country_id = membership.product_id.chapter_country_id
             else:
                 membership.chapter_access_level = False
                 membership.chapter_type = False
                 membership.chapter_location = False
+                membership.chapter_city = False
+                membership.chapter_state = False
+                membership.chapter_country_id = False
 
     @api.depends('product_id.provides_local_events', 'product_id.provides_chapter_documents',
-                 'product_id.provides_chapter_training', 'product_id.provides_networking_access')
+                 'product_id.provides_chapter_training', 'product_id.provides_networking_access',
+                 'product_id.provides_mentorship', 'product_id.provides_certification',
+                 'product_id.provides_job_board', 'product_id.provides_newsletter')
     def _compute_chapter_access(self):
-        """Compute chapter access permissions"""
+        """Compute enhanced chapter access permissions"""
         for membership in self:
             if membership.is_chapter_membership:
                 membership.has_local_events_access = membership.product_id.provides_local_events
                 membership.has_chapter_documents_access = membership.product_id.provides_chapter_documents
                 membership.has_chapter_training_access = membership.product_id.provides_chapter_training
                 membership.has_networking_access = membership.product_id.provides_networking_access
+                membership.has_mentorship_access = membership.product_id.provides_mentorship
+                membership.has_certification_access = membership.product_id.provides_certification
+                membership.has_job_board_access = membership.product_id.provides_job_board
+                membership.has_newsletter_access = membership.product_id.provides_newsletter
             else:
                 membership.has_local_events_access = False
                 membership.has_chapter_documents_access = False
                 membership.has_chapter_training_access = False
                 membership.has_networking_access = False
+                membership.has_mentorship_access = False
+                membership.has_certification_access = False
+                membership.has_job_board_access = False
+                membership.has_newsletter_access = False
+
+    @api.depends('chapter_events_attended', 'chapter_volunteer_hours', 'chapter_last_activity_date',
+                 'chapter_meeting_attendance', 'chapter_committee_participation')
+    def _compute_chapter_engagement(self):
+        """Compute chapter engagement score"""
+        for membership in self:
+            if membership.is_chapter_membership:
+                score = 0.0
+                
+                # Event attendance component (0-30 points)
+                if membership.chapter_events_attended > 0:
+                    score += min(membership.chapter_events_attended * 5, 30)
+                
+                # Volunteer hours component (0-25 points)
+                if membership.chapter_volunteer_hours > 0:
+                    score += min(membership.chapter_volunteer_hours * 2, 25)
+                
+                # Meeting attendance component (0-25 points)
+                score += (membership.chapter_meeting_attendance / 100) * 25
+                
+                # Committee participation (0-20 points)
+                if membership.chapter_committee_participation:
+                    score += 20
+                
+                # Recent activity bonus (0-10 points)
+                if membership.chapter_last_activity_date:
+                    days_since = (fields.Date.today() - membership.chapter_last_activity_date).days
+                    if days_since <= 30:
+                        score += 10 - (days_since / 3)  # Decay over 30 days
+                
+                membership.chapter_engagement_score = min(score, 100)
+            else:
+                membership.chapter_engagement_score = 0.0
+
+    @api.depends('chapter_activity_ids')
+    def _compute_chapter_participation(self):
+        """Compute chapter participation metrics"""
+        for membership in self:
+            if membership.is_chapter_membership:
+                activities = membership.chapter_activity_ids
+                
+                # Calculate meeting attendance
+                meeting_activities = activities.filtered(lambda a: a.activity_type == 'meeting')
+                if meeting_activities:
+                    attended = meeting_activities.filtered(lambda a: a.attended)
+                    membership.chapter_meeting_attendance = (len(attended) / len(meeting_activities)) * 100
+                else:
+                    membership.chapter_meeting_attendance = 0.0
+                
+                # Check committee participation
+                membership.chapter_committee_participation = bool(membership.chapter_committee_ids)
+            else:
+                membership.chapter_meeting_attendance = 0.0
+                membership.chapter_committee_participation = False
+
+    def _compute_geographic_distance(self):
+        """Compute distance from chapter location (placeholder for geo calculation)"""
+        for membership in self:
+            if membership.is_chapter_membership:
+                # This would integrate with a geocoding service
+                # For now, set to 0 for members in same state/country
+                if (membership.member_state == membership.chapter_state and 
+                    membership.member_country_id == membership.chapter_country_id):
+                    membership.geographic_distance_km = 0.0
+                else:
+                    membership.geographic_distance_km = 999999.0  # Placeholder for different state/country
+            else:
+                membership.geographic_distance_km = 0.0
     
     @api.depends('partner_id.portal_user_id')
     def _compute_portal_access(self):
@@ -279,9 +431,13 @@ class AMSMembership(models.Model):
         if membership.product_id and membership.product_id.benefit_ids:
             membership.benefit_ids = [(6, 0, membership.product_id.benefit_ids.ids)]
         
-        # UPDATED: Ensure single active membership per member (for regular memberships only)
+        # Enhanced single active membership handling (for regular memberships only)
         if membership.state == 'active':
             membership._ensure_single_active_membership()
+        
+        # Chapter-specific setup
+        if membership.is_chapter_membership:
+            membership._setup_chapter_membership()
         
         return membership
     
@@ -294,10 +450,70 @@ class AMSMembership(models.Model):
             for membership in self:
                 membership._handle_state_change(vals['state'])
         
+        # Handle chapter role changes
+        if 'chapter_role' in vals:
+            for membership in self:
+                if membership.is_chapter_membership:
+                    membership._handle_chapter_role_change(vals['chapter_role'])
+        
         return result
     
+    def _setup_chapter_membership(self):
+        """Setup chapter-specific configuration"""
+        self.ensure_one()
+        
+        if not self.is_chapter_membership:
+            return
+        
+        # Set default chapter role if not set
+        if not self.chapter_role:
+            self.chapter_role = 'member'
+        
+        # Check geographic restrictions
+        if self.product_id.chapter_geographic_restriction:
+            self._check_geographic_eligibility()
+        
+        # Log chapter membership creation
+        self.message_post(
+            body=f"Chapter membership created for {self.product_id.name}",
+            subject="Chapter Membership Created"
+        )
+    
+    def _check_geographic_eligibility(self):
+        """Check if member meets geographic requirements"""
+        self.ensure_one()
+        
+        if not self.is_chapter_membership:
+            return
+        
+        # Simple check - same state/country
+        if (self.member_state != self.chapter_state or 
+            self.member_country_id != self.chapter_country_id):
+            _logger.warning(f"Geographic restriction warning for {self.partner_id.name} - "
+                           f"Member in {self.member_state}, {self.member_country_id.name or 'Unknown'} "
+                           f"joining chapter in {self.chapter_state}, {self.chapter_country_id.name or 'Unknown'}")
+    
+    def _handle_chapter_role_change(self, new_role):
+        """Handle chapter role changes"""
+        self.ensure_one()
+        
+        if not self.is_chapter_membership:
+            return
+        
+        # Update position dates
+        if new_role != 'member' and self.chapter_role == 'member':
+            self.chapter_position_start_date = fields.Date.today()
+        elif new_role == 'member' and self.chapter_role != 'member':
+            self.chapter_position_end_date = fields.Date.today()
+        
+        # Log role change
+        self.message_post(
+            body=f"Chapter role changed from {self.chapter_role or 'None'} to {new_role}",
+            subject="Chapter Role Changed"
+        )
+    
     def _ensure_single_active_membership(self):
-        """UPDATED: Ensure only one active REGULAR membership per member - chapters are unlimited"""
+        """Enhanced: Ensure only one active REGULAR membership per member - chapters are unlimited"""
         self.ensure_one()
         
         if self.state != 'active':
@@ -343,7 +559,7 @@ class AMSMembership(models.Model):
             _logger.debug(f"No other active regular memberships found for {self.partner_id.name}")
     
     def _handle_state_change(self, new_state):
-        """Handle membership state changes and sync with foundation"""
+        """Enhanced state change handling with chapter support"""
         self.ensure_one()
         
         if new_state == 'active':
@@ -357,7 +573,7 @@ class AMSMembership(models.Model):
                 # Use context to prevent recursion
                 self.partner_id.with_context(skip_portal_creation=True).write(partner_vals)
             
-            # UPDATED: Ensure single active membership (for regular memberships only)
+            # Enhanced single active membership handling
             self._ensure_single_active_membership()
             
             # Grant portal access if product allows and foundation settings enable it
@@ -365,6 +581,10 @@ class AMSMembership(models.Model):
             
             # Apply engagement points for membership activation
             self._apply_engagement_points('membership_activation')
+            
+            # Chapter-specific activation
+            if self.is_chapter_membership:
+                self._handle_chapter_activation()
             
             # Log the activation
             membership_type_label = "Chapter membership" if self.is_chapter_membership else "Membership"
@@ -398,6 +618,10 @@ class AMSMembership(models.Model):
                     else:
                         _logger.info(f"Partner {self.partner_id.name} has {len(other_active)} other active memberships - maintaining active status")
             
+            # Chapter-specific termination
+            if self.is_chapter_membership:
+                self._handle_chapter_termination()
+            
             # Log the termination
             membership_type_label = "Chapter membership" if self.is_chapter_membership else "Membership"
             self.message_post(
@@ -426,12 +650,54 @@ class AMSMembership(models.Model):
                     'member_status': 'suspended'
                 })
             
+            # Chapter-specific suspension
+            if self.is_chapter_membership:
+                self._handle_chapter_suspension()
+            
             # Log suspension
             membership_type_label = "Chapter membership" if self.is_chapter_membership else "Membership"
             self.message_post(
                 body=f"{membership_type_label} suspended",
                 subject=f"{membership_type_label} Suspended"
             )
+    
+    def _handle_chapter_activation(self):
+        """Handle chapter membership activation"""
+        self.ensure_one()
+        
+        # Check member limits
+        if (self.product_id.chapter_member_limit > 0 and 
+            self.product_id.chapter_member_count >= self.product_id.chapter_member_limit):
+            _logger.warning(f"Chapter {self.product_id.name} is at member limit")
+        
+        # Create welcome activity
+        self.env['chapter.activity'].create({
+            'membership_id': self.id,
+            'activity_type': 'membership',
+            'activity_date': fields.Date.today(),
+            'description': 'Chapter membership activated',
+            'attended': True,
+        })
+    
+    def _handle_chapter_termination(self):
+        """Handle chapter membership termination"""
+        self.ensure_one()
+        
+        # End any officer positions
+        if self.chapter_role != 'member':
+            self.chapter_position_end_date = fields.Date.today()
+            self.chapter_role = 'member'
+        
+        # Clear committee memberships
+        self.chapter_committee_ids = [(5, 0, 0)]
+    
+    def _handle_chapter_suspension(self):
+        """Handle chapter membership suspension"""
+        self.ensure_one()
+        
+        # Temporarily end officer positions but don't clear them
+        if self.chapter_role != 'member':
+            self.chapter_position_end_date = fields.Date.today()
 
     def _handle_portal_access_on_activation(self):
         """Handle portal access when membership becomes active"""
@@ -479,7 +745,64 @@ class AMSMembership(models.Model):
             except Exception as e:
                 _logger.warning(f"Failed to apply engagement rule {rule.name}: {str(e)}")
     
-    # Action Methods
+    # Chapter-specific action methods
+    def action_record_chapter_activity(self):
+        """Record chapter activity"""
+        self.ensure_one()
+        
+        if not self.is_chapter_membership:
+            raise UserError(_("This is not a chapter membership."))
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Record Chapter Activity'),
+            'res_model': 'chapter.activity',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_membership_id': self.id,
+                'default_activity_date': fields.Date.today(),
+            }
+        }
+    
+    def action_transfer_chapter(self):
+        """Transfer to another chapter"""
+        self.ensure_one()
+        
+        if not self.is_chapter_membership:
+            raise UserError(_("This is not a chapter membership."))
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Transfer Chapter Membership'),
+            'res_model': 'chapter.transfer.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_membership_id': self.id,
+            }
+        }
+    
+    def action_chapter_dashboard(self):
+        """Open chapter dashboard"""
+        self.ensure_one()
+        
+        if not self.is_chapter_membership:
+            raise UserError(_("This is not a chapter membership."))
+        
+        return {
+            'name': f'Chapter Dashboard: {self.product_id.name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'chapter.dashboard.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_membership_id': self.id,
+                'default_chapter_product_id': self.product_id.id,
+            }
+        }
+    
+    # Regular action methods (existing)
     def action_activate(self):
         """Activate membership"""
         for membership in self:
@@ -540,7 +863,7 @@ class AMSMembership(models.Model):
             return base_date + relativedelta(years=1)
     
     def get_chapter_access_summary(self):
-        """Get summary of chapter access for this membership"""
+        """Get enhanced summary of chapter access for this membership"""
         self.ensure_one()
         if not self.is_chapter_membership:
             return "Not a chapter membership"
@@ -554,15 +877,49 @@ class AMSMembership(models.Model):
             access_items.append("Chapter Training")
         if self.has_networking_access:
             access_items.append("Networking")
+        if self.has_mentorship_access:
+            access_items.append("Mentorship")
+        if self.has_certification_access:
+            access_items.append("Certification")
+        if self.has_job_board_access:
+            access_items.append("Job Board")
+        if self.has_newsletter_access:
+            access_items.append("Newsletter")
         
+        access_level = self.chapter_access_level.title() if self.chapter_access_level else 'Basic'
+        role = self.chapter_role.replace('_', ' ').title() if self.chapter_role else 'Member'
+        
+        summary = f"{access_level} Access ({role})"
         if access_items:
-            return f"{self.chapter_access_level.title()} Access: {', '.join(access_items)}"
-        else:
-            return f"{self.chapter_access_level.title()} Access"
+            summary += f": {', '.join(access_items)}"
+        
+        return summary
+    
+    def get_chapter_participation_summary(self):
+        """Get chapter participation summary"""
+        self.ensure_one()
+        if not self.is_chapter_membership:
+            return "Not a chapter membership"
+        
+        summary_parts = []
+        
+        if self.chapter_events_attended:
+            summary_parts.append(f"{self.chapter_events_attended} events attended")
+        
+        if self.chapter_volunteer_hours:
+            summary_parts.append(f"{self.chapter_volunteer_hours:.1f} volunteer hours")
+        
+        if self.chapter_meeting_attendance:
+            summary_parts.append(f"{self.chapter_meeting_attendance:.0f}% meeting attendance")
+        
+        if self.chapter_committee_ids:
+            summary_parts.append(f"{len(self.chapter_committee_ids)} committee(s)")
+        
+        return "; ".join(summary_parts) if summary_parts else "No recorded participation"
     
     @api.model
     def create_from_invoice_payment(self, invoice_line):
-        """Create membership from paid invoice line - UPDATED for chapters"""
+        """Enhanced: Create membership from paid invoice line with better chapter support"""
         product = invoice_line.product_id.product_tmpl_id
         
         if not product.is_subscription_product or product.subscription_product_type not in ['membership', 'chapter']:
@@ -577,7 +934,7 @@ class AMSMembership(models.Model):
         
         _logger.info(f"Creating {product.subscription_product_type} membership from invoice payment for {partner.name}")
         
-        # UPDATED: For chapter memberships, multiple active chapters are allowed per member
+        # Enhanced handling for chapter vs regular memberships
         if product.subscription_product_type == 'chapter':
             _logger.info(f"Creating chapter membership - multiple chapters allowed per member")
         else:
@@ -597,18 +954,18 @@ class AMSMembership(models.Model):
                     })
                     _logger.info(f"Terminated existing membership {old_membership.name}")
         
-        # ENSURE PARTNER IS MARKED AS MEMBER
+        # Enhanced partner setup
         partner_vals = {}
         if not partner.is_member:
             partner_vals['is_member'] = True
             _logger.info(f"Setting is_member=True for {partner.name}")
         
-        # SET DEFAULT MEMBER TYPE IF NONE EXISTS
+        # Enhanced member type handling for chapters
         if not partner.member_type_id:
-            # For chapters, try to find a chapter-specific member type, otherwise use default
             if product.subscription_product_type == 'chapter':
+                # Try to find chapter-specific member type first
                 default_member_type = self.env['ams.member.type'].search([
-                    ('name', 'ilike', 'chapter')
+                    '|', ('name', 'ilike', 'chapter'), ('name', 'ilike', 'local')
                 ], limit=1)
             else:
                 default_member_type = None
@@ -630,17 +987,18 @@ class AMSMembership(models.Model):
                 partner_vals['member_type_id'] = default_member_type.id
                 _logger.info(f"Setting member type to: {default_member_type.name}")
         
-        # GENERATE MEMBER NUMBER IF NOT EXISTS
+        # Enhanced member number generation
         if not getattr(partner, 'member_number', None):
-            # Try foundation's method first
             if hasattr(partner, '_generate_member_number'):
                 partner._generate_member_number()
             else:
-                # Fallback member number generation
+                # Enhanced fallback member number generation
                 try:
                     settings = self.env['ams.settings'].search([('active', '=', True)], limit=1)
                     if settings:
                         prefix = getattr(settings, 'member_number_prefix', 'M')
+                        if product.subscription_product_type == 'chapter':
+                            prefix = getattr(settings, 'chapter_member_prefix', prefix + 'C')
                         padding = getattr(settings, 'member_number_padding', 6)
                         sequence = self.env['ir.sequence'].next_by_code('ams.member.number')
                         if not sequence:
@@ -652,7 +1010,6 @@ class AMSMembership(models.Model):
                             next_num = 1
                             if last_member and last_member.member_number:
                                 try:
-                                    # Extract number from existing member number
                                     import re
                                     numbers = re.findall(r'\d+', last_member.member_number)
                                     if numbers:
@@ -666,7 +1023,7 @@ class AMSMembership(models.Model):
                 except Exception as e:
                     _logger.warning(f"Could not generate member number for {partner.name}: {str(e)}")
         
-        # SET MEMBER STATUS TO ACTIVE (for regular memberships only)
+        # Only set member status to active for regular memberships
         if product.subscription_product_type == 'membership':
             partner_vals['member_status'] = 'active'
         
@@ -674,10 +1031,9 @@ class AMSMembership(models.Model):
         if partner_vals:
             partner.with_context(skip_portal_creation=True).write(partner_vals)
         
-        # CALCULATE MEMBERSHIP DATES
+        # Enhanced date calculation
         start_date = fields.Date.today()
         
-        # Chapter and regular memberships use same date logic
         if product.subscription_period == 'annual':
             # Always set to December 31st of the current year
             current_year = start_date.year
@@ -698,14 +1054,14 @@ class AMSMembership(models.Model):
             if start_date > end_date:
                 end_date = date(current_year + 1, 12, 31)
         
-        # UPDATE FOUNDATION PARTNER DATES (for regular memberships only)
+        # Update foundation partner dates (for regular memberships only)
         if product.subscription_product_type == 'membership':
             partner.with_context(skip_portal_creation=True).write({
                 'membership_start_date': start_date,
                 'membership_end_date': end_date,
             })
         
-        # CREATE MEMBERSHIP RECORD
+        # Enhanced membership record creation
         membership_vals = {
             'partner_id': partner.id,
             'product_id': invoice_line.product_id.id,
@@ -721,27 +1077,40 @@ class AMSMembership(models.Model):
             'renewal_interval': product.subscription_period or 'annual',
         }
         
-        # Add chapter-specific notes
+        # Enhanced chapter-specific setup
         if product.subscription_product_type == 'chapter':
-            chapter_info = f"{product.chapter_type or 'Local'} Chapter"
+            chapter_info = f"{product.chapter_type.title() if product.chapter_type else 'Local'} Chapter"
             if product.chapter_location:
                 chapter_info += f" - {product.chapter_location}"
-            membership_vals['notes'] = f"Chapter Membership: {chapter_info}"
+            if product.chapter_city:
+                chapter_info += f", {product.chapter_city}"
+            if product.chapter_state:
+                chapter_info += f", {product.chapter_state}"
+            
+            notes = f"Chapter Membership: {chapter_info}"
+            if product.chapter_contact_email:
+                notes += f"\nChapter Contact: {product.chapter_contact_email}"
+            if product.chapter_meeting_schedule:
+                notes += f"\nMeetings: {product.chapter_meeting_schedule}"
+            
+            membership_vals['notes'] = notes
+            membership_vals['chapter_role'] = 'member'
         
         membership = self.create(membership_vals)
         
-        _logger.info(f"Created {product.subscription_product_type} membership {membership.name} for {partner.name} "
+        membership_type_label = "chapter membership" if product.subscription_product_type == 'chapter' else "membership"
+        _logger.info(f"Created {membership_type_label} {membership.name} for {partner.name} "
                      f"from {start_date} to {end_date}")
         
         return membership
 
     @api.model
     def process_membership_lifecycle(self):
-        """Cron job to process membership lifecycle transitions using foundation logic"""
+        """Enhanced membership lifecycle processing with chapter support"""
         _logger.info("Processing membership lifecycle transitions...")
         
         # Let foundation handle the main lifecycle transitions
-        # This method will sync membership records with partner status
+        # Enhanced sync for both regular and chapter memberships
         today = fields.Date.today()
         
         # Sync active memberships with expired foundation member status
@@ -758,10 +1127,15 @@ class AMSMembership(models.Model):
             ])
             
             for membership in active_memberships:
-                membership.write({'state': 'grace'})
-                _logger.info(f"Synced membership {membership.name} to grace period")
+                # Only sync regular memberships with partner status
+                if not membership.is_chapter_membership:
+                    membership.write({'state': 'grace'})
+                    _logger.info(f"Synced regular membership {membership.name} to grace period")
         
-        # Sync lapsed members
+        # Enhanced chapter-specific lifecycle processing
+        self._process_chapter_lifecycle()
+        
+        # Sync lapsed members (regular memberships only)
         lapsed_partners = self.env['res.partner'].search([
             ('is_member', '=', True),
             ('member_status', '=', 'lapsed')
@@ -770,16 +1144,45 @@ class AMSMembership(models.Model):
         for partner in lapsed_partners:
             grace_memberships = self.search([
                 ('partner_id', '=', partner.id),
-                ('state', '=', 'grace')
+                ('state', '=', 'grace'),
+                ('is_chapter_membership', '=', False)  # Only regular memberships
             ])
             
             for membership in grace_memberships:
                 membership.write({'state': 'suspended'})
-                _logger.info(f"Synced membership {membership.name} to suspended")
+                _logger.info(f"Synced regular membership {membership.name} to suspended")
+    
+    def _process_chapter_lifecycle(self):
+        """Process chapter-specific lifecycle transitions"""
+        today = fields.Date.today()
+        
+        # Check chapter member limits and status
+        chapter_products = self.env['product.template'].search([
+            ('is_chapter_product', '=', True),
+            ('chapter_status', '=', 'active')
+        ])
+        
+        for chapter_product in chapter_products:
+            active_members = self.search([
+                ('product_id.product_tmpl_id', '=', chapter_product.id),
+                ('state', '=', 'active')
+            ])
+            
+            member_count = len(active_members)
+            
+            # Check minimum members requirement
+            if (chapter_product.chapter_minimum_members > 0 and 
+                member_count < chapter_product.chapter_minimum_members):
+                _logger.warning(f"Chapter {chapter_product.name} below minimum members: "
+                               f"{member_count}/{chapter_product.chapter_minimum_members}")
+            
+            # Update chapter member count
+            if chapter_product.chapter_member_count != member_count:
+                chapter_product.write({'chapter_member_count': member_count})
     
     @api.model
     def send_renewal_reminders(self):
-        """Send renewal reminders using foundation settings"""
+        """Enhanced renewal reminders with chapter support"""
         settings = self._get_ams_settings()
         if not settings or not hasattr(settings, 'renewal_reminder_enabled') or not settings.renewal_reminder_enabled:
             return
@@ -787,6 +1190,7 @@ class AMSMembership(models.Model):
         reminder_days = getattr(settings, 'renewal_reminder_days', 30)
         reminder_date = fields.Date.today() + timedelta(days=reminder_days)
         
+        # Enhanced expiring memberships query (both regular and chapter)
         expiring_memberships = self.search([
             ('state', '=', 'active'),
             ('auto_renew', '=', False),
@@ -795,11 +1199,19 @@ class AMSMembership(models.Model):
         ])
         
         for membership in expiring_memberships:
-            # TODO: Send renewal reminder email
-            membership.renewal_reminder_sent = True
-            _logger.info(f"Sent renewal reminder for membership {membership.name}")
+            # Different reminder templates for chapters vs regular memberships
+            template_ref = 'ams_membership_core.email_chapter_renewal_reminder' if membership.is_chapter_membership else 'ams_membership_core.email_membership_renewal_reminder'
+            
+            try:
+                template = self.env.ref(template_ref, raise_if_not_found=False)
+                if template:
+                    template.send_mail(membership.id, force_send=True)
+                membership.renewal_reminder_sent = True
+                _logger.info(f"Sent renewal reminder for {membership.display_name}")
+            except Exception as e:
+                _logger.error(f"Failed to send renewal reminder for {membership.display_name}: {str(e)}")
     
-    # Constraints
+    # Enhanced constraints
     @api.constrains('start_date', 'end_date')
     def _check_dates(self):
         for membership in self:
@@ -809,7 +1221,7 @@ class AMSMembership(models.Model):
     
     @api.constrains('partner_id', 'product_id', 'state')
     def _check_single_active_membership(self):
-        """FIXED: Ensure only one active REGULAR membership per member - chapters are unlimited"""
+        """Enhanced: Ensure only one active REGULAR membership per member - chapters are unlimited"""
         for membership in self:
             if (membership.state == 'active' and 
                 membership.product_id.subscription_product_type == 'membership'):  # Only regular memberships
@@ -827,7 +1239,37 @@ class AMSMembership(models.Model):
                           "Only one active regular membership is allowed per member. "
                           "Chapter memberships are unlimited.") % membership.partner_id.name
                     )
+    
+    @api.constrains('chapter_role', 'is_chapter_membership')
+    def _check_chapter_role(self):
+        """Validate chapter role constraints"""
+        for membership in self:
+            if membership.chapter_role and membership.chapter_role != 'member':
+                if not membership.is_chapter_membership:
+                    raise ValidationError(_("Chapter roles can only be assigned to chapter memberships."))
+                
+                # Check for duplicate leadership roles within same chapter
+                if membership.chapter_role in ['president', 'vice_president', 'secretary', 'treasurer']:
+                    existing = self.search([
+                        ('product_id', '=', membership.product_id.id),
+                        ('chapter_role', '=', membership.chapter_role),
+                        ('state', '=', 'active'),
+                        ('id', '!=', membership.id)
+                    ])
+                    if existing:
+                        raise ValidationError(
+                            _("Chapter already has an active %s: %s") % 
+                            (membership.chapter_role.replace('_', ' ').title(), existing[0].partner_id.name)
+                        )
+    
+    @api.constrains('chapter_committee_ids', 'is_chapter_membership')
+    def _check_chapter_committees(self):
+        """Validate chapter committee assignments"""
+        for membership in self:
+            if membership.chapter_committee_ids and not membership.is_chapter_membership:
+                raise ValidationError(_("Committee assignments can only be made for chapter memberships."))
 
+    # Enhanced action methods
     def action_view_invoice(self):
         """View membership invoice"""
         self.ensure_one()
@@ -868,3 +1310,57 @@ class AMSMembershipTag(models.Model):
     name = fields.Char('Tag Name', required=True)
     color = fields.Integer('Color')
     active = fields.Boolean('Active', default=True)
+    applies_to = fields.Selection([
+        ('all', 'All Memberships'),
+        ('regular', 'Regular Memberships Only'),
+        ('chapter', 'Chapter Memberships Only'),
+    ], string='Applies To', default='all')
+
+
+# New models for enhanced chapter support
+class ChapterCommittee(models.Model):
+    _name = 'chapter.committee'
+    _description = 'Chapter Committee'
+    
+    name = fields.Char('Committee Name', required=True)
+    chapter_product_id = fields.Many2one('product.template', 'Chapter',
+                                        domain=[('is_chapter_product', '=', True)],
+                                        required=True)
+    description = fields.Text('Description')
+    chair_id = fields.Many2one('res.partner', 'Committee Chair')
+    member_ids = fields.Many2many('ams.membership', 'chapter_committee_membership_rel',
+                                 'committee_id', 'membership_id', 'Committee Members',
+                                 domain=[('is_chapter_membership', '=', True)])
+    meeting_schedule = fields.Text('Meeting Schedule')
+    active = fields.Boolean('Active', default=True)
+
+
+class ChapterActivity(models.Model):
+    _name = 'chapter.activity'
+    _description = 'Chapter Activity Record'
+    
+    name = fields.Char('Activity Name', compute='_compute_name', store=True)
+    membership_id = fields.Many2one('ams.membership', 'Membership', required=True)
+    partner_id = fields.Many2one(related='membership_id.partner_id', store=True)
+    
+    activity_type = fields.Selection([
+        ('meeting', 'Chapter Meeting'),
+        ('event', 'Chapter Event'),
+        ('volunteer', 'Volunteer Activity'),
+        ('training', 'Training Session'),
+        ('networking', 'Networking Event'),
+        ('committee', 'Committee Meeting'),
+        ('membership', 'Membership Activity'),
+        ('other', 'Other'),
+    ], string='Activity Type', required=True)
+    
+    activity_date = fields.Date('Activity Date', required=True)
+    description = fields.Text('Description')
+    attended = fields.Boolean('Attended', default=False)
+    hours = fields.Float('Hours', default=1.0)
+    notes = fields.Text('Notes')
+    
+    @api.depends('activity_type', 'activity_date', 'membership_id')
+    def _compute_name(self):
+        for activity in self:
+            activity.name = f"{activity.activity_type.replace('_', ' ').title()} - {activity.activity_date}"
