@@ -2,8 +2,10 @@
 <odoo>
     <data>
 
-        <!-- Enhanced Portal Home Extension - FIXED VERSION -->
+        <!-- Enhanced Portal Home Extension - FINAL FIXED VERSION -->
         <template id="portal_my_home_membership" name="Portal My Home: Membership" inherit_id="portal.portal_my_home" priority="30">
+            
+            <!-- Add member status card BEFORE the portal docs -->
             <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
                 <t t-if="is_member">
                     <div class="row">
@@ -61,23 +63,43 @@
                 </t>
             </xpath>
             
-            <!-- FIXED: Only add counters for actual numeric values, not boolean flags -->
-            <xpath expr="//div[contains(@class,'o_portal_docs')]" position="before">
-                <t t-if="membership_count and membership_count > 0" t-call="portal.portal_docs_entry">
-                    <t t-set="icon" t-value="'fa-id-card'"/>
-                    <t t-set="title">Memberships</t>
-                    <t t-set="url" t-value="'/my/memberships'"/>
-                    <t t-set="text">Follow your membership status and renewals</t>
-                    <t t-set="count" t-value="membership_count"/>
-                </t>
-                <t t-if="subscription_count and subscription_count > 0" t-call="portal.portal_docs_entry">
-                    <t t-set="icon" t-value="'fa-refresh'"/>
-                    <t t-set="title">Subscriptions</t>
-                    <t t-set="url" t-value="'/my/subscriptions'"/>
-                    <t t-set="text">Manage your publication and service subscriptions</t>
-                    <t t-set="count" t-value="subscription_count"/>
+            <!-- MANUAL membership/subscription links - NO COUNTER SYSTEM -->
+            <xpath expr="//div[contains(@class,'o_portal_docs')]/div" position="after">
+                <t t-if="is_member">
+                    <!-- Manual Membership Link (No Counter) -->
+                    <div class="col-lg-3 col-6 o_portal_docs">
+                        <a href="/my/memberships" class="d-flex align-items-center text-decoration-none">
+                            <div class="o_portal_docs_entry">
+                                <div class="d-flex align-items-center">
+                                    <i class="fa fa-id-card fa-2x text-primary me-3"/>
+                                    <div>
+                                        <h4 class="mb-0">Memberships</h4>
+                                        <small class="text-muted">Follow your membership status and renewals</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <!-- Manual Subscription Link (No Counter) -->
+                    <t t-if="total_subscription_count and total_subscription_count > 0">
+                        <div class="col-lg-3 col-6 o_portal_docs">
+                            <a href="/my/subscriptions" class="d-flex align-items-center text-decoration-none">
+                                <div class="o_portal_docs_entry">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fa fa-refresh fa-2x text-info me-3"/>
+                                        <div>
+                                            <h4 class="mb-0">Subscriptions</h4>
+                                            <small class="text-muted">Manage your publication and service subscriptions</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </t>
                 </t>
             </xpath>
+            
         </template>
 
         <!-- Member Profile Dashboard - SAFE VERSION -->
@@ -235,7 +257,7 @@
                                         <a href="/my/memberships" class="btn btn-outline-primary">
                                             <i class="fa fa-id-card"/> View All Memberships
                                         </a>
-                                        <a href="/my/subscriptions" class="btn btn-outline-info" t-if="subscription_count and subscription_count > 0">
+                                        <a href="/my/subscriptions" class="btn btn-outline-info" t-if="total_subscription_count and total_subscription_count > 0">
                                             <i class="fa fa-refresh"/> View Subscriptions
                                         </a>
                                         <t t-if="current_membership and not current_membership.auto_renew">
@@ -257,7 +279,7 @@
             </t>
         </template>
 
-        <!-- My Memberships List - SAFE VERSION -->
+        <!-- My Memberships List -->
         <template id="portal_my_memberships" name="My Memberships">
             <t t-call="portal.portal_layout">
                 <t t-set="page_name" t-value="'membership'"/>
@@ -369,7 +391,7 @@
             </t>
         </template>
 
-        <!-- Enhanced Membership Detail Template - SAFE VERSION -->
+        <!-- Enhanced Membership Detail Template -->
         <template id="portal_membership_detail" name="Membership Details">
             <t t-call="portal.portal_layout">
                 <t t-set="page_name" t-value="'membership'"/>
@@ -516,7 +538,7 @@
             </t>
         </template>
 
-        <!-- My Subscriptions List - SAFE VERSION -->
+        <!-- My Subscriptions List -->
         <template id="portal_my_subscriptions" name="My Subscriptions">
             <t t-call="portal.portal_layout">
                 <t t-set="page_name" t-value="'subscription'"/>
@@ -591,7 +613,7 @@
             </t>
         </template>
 
-        <!-- Subscription Detail - SAFE VERSION -->
+        <!-- Subscription Detail -->
         <template id="portal_subscription_detail" name="Subscription Details">
             <t t-call="portal.portal_layout">
                 <t t-set="page_name" t-value="'subscription'"/>
