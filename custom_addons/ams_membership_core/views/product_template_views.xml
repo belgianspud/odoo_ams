@@ -35,15 +35,12 @@
                         <field name="chapter_member_count" widget="statinfo" string="Chapter Members"/>
                     </button>
                     
+                    <!-- Fixed: Simple sub-chapters button without non-existent field -->
                     <button name="action_view_child_chapters" type="object"
                             class="oe_stat_button" icon="fa-sitemap"
+                            string="Sub-Chapters"
                             invisible="not is_chapter_product or not child_chapter_ids"
-                            groups="ams_membership_core.group_membership_user">
-                        <div class="o_stat_info">
-                            <span class="o_stat_text">Sub-Chapters</span>
-                            <span class="o_stat_text" t-esc="len(child_chapter_ids)"/>
-                        </div>
-                    </button>
+                            groups="ams_membership_core.group_membership_user"/>
                     
                     <button name="action_chapter_dashboard" type="object"
                             class="oe_stat_button" icon="fa-dashboard"
@@ -285,14 +282,14 @@
                            groups="ams_membership_core.group_membership_user"/>
                 </xpath>
 
-                <!-- Add chapter indicator in title area -->
+                <!-- Fixed: Remove OWL directive from form view -->
                 <xpath expr="//div[hasclass('oe_title')]" position="inside">
                     <div class="o_row" invisible="subscription_product_type != 'chapter'">
                         <span class="badge bg-info">
                             <i class="fa fa-map-marker"/> Chapter Product
                         </span>
-                        <span t-if="parent_chapter_id" class="badge bg-secondary ms-2">
-                            Sub-Chapter of: <t t-esc="parent_chapter_id.name"/>
+                        <span invisible="not parent_chapter_id" class="badge bg-secondary ms-2">
+                            Sub-Chapter of: <field name="parent_chapter_id" readonly="1" nolabel="1"/>
                         </span>
                     </div>
                 </xpath>

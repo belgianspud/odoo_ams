@@ -31,7 +31,7 @@
             <field name="code">PORTAL</field>
             <field name="description">Access to member portal with exclusive content and resources</field>
             <field name="benefit_type">access</field>
-            <field name="applies_to">both</field>
+            <field name="applies_to">all</field>
             <field name="auto_apply">True</field>
             <field name="sequence">10</field>
         </record>
@@ -53,7 +53,7 @@
             <field name="code">EVENT_DISC</field>
             <field name="description">Discounted pricing on association events and conferences</field>
             <field name="benefit_type">discount</field>
-            <field name="applies_to">both</field>
+            <field name="applies_to">membership_and_chapter</field>
             <field name="discount_type">percentage</field>
             <field name="discount_percentage">15.0</field>
             <field name="applies_to_products">True</field>
@@ -67,7 +67,7 @@
             <field name="code">PUB_DIGITAL</field>
             <field name="description">Online access to association publications and archives</field>
             <field name="benefit_type">digital</field>
-            <field name="applies_to">both</field>
+            <field name="applies_to">all</field>
             <field name="auto_apply">True</field>
             <field name="sequence">40</field>
         </record>
@@ -100,7 +100,7 @@
             <field name="code">EARLY_REG</field>
             <field name="description">Priority registration access for events and conferences</field>
             <field name="benefit_type">event</field>
-            <field name="applies_to">membership</field>
+            <field name="applies_to">membership_and_chapter</field>
             <field name="early_bird_access">True</field>
             <field name="auto_apply">True</field>
             <field name="sequence">70</field>

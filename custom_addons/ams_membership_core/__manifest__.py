@@ -85,6 +85,5 @@ Integration:
     'application': False,  # Extension module
     'auto_install': False,
     'sequence': 16,
-    'post_init_hook': '_post_init_hook',
-    'pre_init_hook': '_pre_init_hook',  # Added for data migration
+    'post_init_hook': 'post_init_hook', 
 }
