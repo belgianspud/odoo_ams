@@ -2,7 +2,7 @@
 <odoo>
     <data>
         
-        <!-- Memberships Menu - Use existing foundation parent -->
+        <!-- Main Memberships Menu -->
         <menuitem id="menu_ams_memberships"
             name="Memberships"
             parent="ams_foundation.menu_ams_members"
@@ -16,14 +16,21 @@
             action="action_ams_membership_active"
             sequence="10"/>
 
+        <!-- Regular Memberships Only -->
+        <menuitem id="menu_ams_memberships_regular_only"
+            name="Regular Memberships"
+            parent="menu_ams_memberships"
+            action="action_ams_membership_regular_only"
+            sequence="20"/>
+
         <!-- Expiring Memberships -->
         <menuitem id="menu_ams_memberships_expiring"
             name="Expiring Soon"
             parent="menu_ams_memberships"
             action="action_ams_membership_expiring"
-            sequence="20"/>
+            sequence="30"/>
 
-        <!-- UPDATED: Chapter Memberships Menu -->
+        <!-- Chapter Memberships Menu -->
         <menuitem id="menu_ams_chapter_memberships"
             name="Chapter Memberships"
             parent="ams_foundation.menu_ams_members"
@@ -31,206 +38,73 @@
 
         <!-- Active Chapter Memberships -->
         <menuitem id="menu_ams_chapter_memberships_active"
-            name="Active Chapter Memberships"
+            name="Active Chapter Members"
             parent="menu_ams_chapter_memberships"
             action="action_ams_membership_chapters_active"
             sequence="10"/>
 
         <!-- All Chapter Memberships -->
         <menuitem id="menu_ams_chapter_memberships_all"
-            name="All Chapter Memberships"
+            name="All Chapter Members"
             parent="menu_ams_chapter_memberships"
             action="action_ams_membership_chapters_all"
             sequence="20"/>
 
-        <!-- Subscriptions Menu - Use existing foundation parent -->
+        <!-- Chapter Officers -->
+        <menuitem id="menu_ams_chapter_officers"
+            name="Chapter Officers"
+            parent="menu_ams_chapter_memberships"
+            action="action_ams_membership_chapter_officers"
+            sequence="30"/>
+
+        <!-- High Engagement Members -->
+        <menuitem id="menu_ams_chapter_high_engagement"
+            name="High Engagement Members"
+            parent="menu_ams_chapter_memberships"
+            action="action_ams_membership_high_engagement"
+            sequence="40"/>
+
+        <!-- Chapter Dashboard -->
+        <menuitem id="menu_ams_chapter_dashboard"
+            name="Chapter Dashboard"
+            parent="menu_ams_chapter_memberships"
+            action="action_ams_membership_chapter_dashboard"
+            sequence="50"/>
+
+        <!-- Subscriptions Menu (placeholder for future) -->
         <menuitem id="menu_ams_subscriptions"
             name="Subscriptions"
             parent="ams_foundation.menu_ams_members"
-            action="action_ams_subscription"
             sequence="25"/>
 
-        <!-- Active Subscriptions -->
-        <menuitem id="menu_ams_subscriptions_active"
-            name="Active Subscriptions"
-            parent="menu_ams_subscriptions"
-            action="action_ams_subscription_active"
-            sequence="10"/>
-
-        <!-- Publication Subscriptions -->
-        <menuitem id="menu_ams_subscriptions_publications"
-            name="Publications"
-            parent="menu_ams_subscriptions"
-            action="action_ams_subscription_publications"
-            sequence="20"/>
-
-        <!-- Renewals Menu - Use foundation main menu as parent -->
+        <!-- Renewals Menu (placeholder for future) -->
         <menuitem id="menu_ams_renewals"
             name="Renewals"
             parent="ams_foundation.menu_ams_main"
             sequence="25"/>
 
-        <!-- All Renewals -->
-        <menuitem id="menu_ams_renewals_all"
-            name="All Renewals"
-            parent="menu_ams_renewals"
-            action="action_ams_renewal"
-            sequence="10"/>
-
-        <!-- Draft Renewals -->
-        <menuitem id="menu_ams_renewals_draft"
-            name="Draft Renewals"
-            parent="menu_ams_renewals"
-            action="action_ams_renewal_draft"
-            sequence="20"/>
-
-        <!-- Pending Renewals -->
-        <menuitem id="menu_ams_renewals_pending"
-            name="Pending Payment"
-            parent="menu_ams_renewals"
-            action="action_ams_renewal_pending"
-            sequence="30"/>
-
-        <!-- Membership Renewals -->
-        <menuitem id="menu_ams_renewals_membership"
-            name="Membership Renewals"
-            parent="menu_ams_renewals"
-            action="action_ams_renewal_membership"
-            sequence="40"/>
-
-        <!-- UPDATED: Chapter Renewals -->
-        <menuitem id="menu_ams_renewals_chapter"
-            name="Chapter Renewals"
-            parent="menu_ams_renewals"
-            action="action_ams_renewal_chapter"
-            sequence="45"/>
-
-        <!-- Subscription Renewals -->
-        <menuitem id="menu_ams_renewals_subscription"
-            name="Subscription Renewals"
-            parent="menu_ams_renewals"
-            action="action_ams_renewal_subscription"
-            sequence="50"/>
-
-        <!-- Products Menu - Use foundation configuration parent -->
+        <!-- Products Menu (placeholder for future) -->
         <menuitem id="menu_ams_products"
             name="Subscription Products"
             parent="ams_foundation.menu_ams_configuration"
             sequence="30"/>
 
-        <!-- All Subscription Products -->
-        <menuitem id="menu_ams_products_all"
-            name="All Products"
-            parent="menu_ams_products"
-            action="action_subscription_products"
-            sequence="5"/>
-
-        <!-- Membership Products -->
-        <menuitem id="menu_ams_products_membership"
-            name="Membership Products"
-            parent="menu_ams_products"
-            action="action_membership_products"
-            sequence="10"/>
-
-        <!-- UPDATED: Chapter Products -->
-        <menuitem id="menu_ams_products_chapter"
-            name="Chapter Products"
-            parent="menu_ams_products"
-            action="action_chapter_products"
-            sequence="15"/>
-
-        <!-- Publication Products -->
-        <menuitem id="menu_ams_products_publication"
-            name="Publication Products"
-            parent="menu_ams_products"
-            action="action_publication_products"
-            sequence="20"/>
-
-        <!-- Benefits Menu - Use foundation configuration parent -->
+        <!-- Benefits Menu (placeholder for future) -->
         <menuitem id="menu_ams_benefits"
             name="Member Benefits"
             parent="ams_foundation.menu_ams_configuration"
-            action="action_ams_benefit"
             sequence="40"/>
 
-        <!-- Discount Benefits -->
-        <menuitem id="menu_ams_benefits_discounts"
-            name="Discount Benefits"
-            parent="menu_ams_benefits"
-            action="action_ams_benefit_discounts"
-            sequence="10"/>
-
-        <!-- Access Benefits -->
-        <menuitem id="menu_ams_benefits_access"
-            name="Access Benefits"
-            parent="menu_ams_benefits"
-            action="action_ams_benefit_access"
-            sequence="20"/>
-
-        <!-- Benefit Usage -->
-        <menuitem id="menu_ams_benefits_usage"
-            name="Benefit Usage Log"
-            parent="menu_ams_benefits"
-            action="action_ams_benefit_usage"
-            sequence="30"/>
-
-        <!-- Tools Menu - Use foundation tools parent -->
+        <!-- Tools Menu (placeholder for future) -->
         <menuitem id="menu_ams_membership_tools"
             name="Membership Tools"
             parent="ams_foundation.menu_ams_tools"
             sequence="20"/>
 
-        <!-- Mass Renewal -->
-        <menuitem id="menu_ams_mass_renewal"
-            name="Mass Renewal Wizard"
-            parent="menu_ams_membership_tools"
-            action="action_mass_renewal_wizard"
-            sequence="10"/>
-
-        <!-- Reports Menu - Use foundation main menu -->
+        <!-- Reports Menu (placeholder for future) -->
         <menuitem id="menu_ams_membership_reports"
             name="Membership Reports"
             parent="ams_foundation.menu_ams_main"
-            sequence="20"/>
-
-        <!-- Renewal Reports -->
-        <menuitem id="menu_ams_reports_renewals"
-            name="Renewal Analysis"
-            parent="menu_ams_membership_reports"
-            sequence="10"/>
-
-        <!-- Early Renewals Report -->
-        <menuitem id="menu_ams_reports_early_renewals"
-            name="Early Renewals"
-            parent="menu_ams_reports_renewals"
-            action="action_ams_renewal_early"
-            sequence="10"/>
-
-        <!-- Late Renewals Report -->
-        <menuitem id="menu_ams_reports_late_renewals"
-            name="Late Renewals"
-            parent="menu_ams_reports_renewals"
-            action="action_ams_renewal_late"
-            sequence="20"/>
-
-        <!-- UPDATED: Chapter Reports -->
-        <menuitem id="menu_ams_reports_chapters"
-            name="Chapter Analysis"
-            parent="menu_ams_membership_reports"
-            sequence="15"/>
-
-        <!-- Chapter Membership Report -->
-        <menuitem id="menu_ams_reports_chapter_memberships"
-            name="Chapter Membership Report"
-            parent="menu_ams_reports_chapters"
-            action="action_ams_membership_chapter_report"
-            sequence="10"/>
-
-        <!-- Chapter Access Report -->
-        <menuitem id="menu_ams_reports_chapter_access"
-            name="Chapter Access Levels"
-            parent="menu_ams_reports_chapters"
-            action="action_ams_membership_chapter_access_report"
             sequence="20"/>
 
     </data>
