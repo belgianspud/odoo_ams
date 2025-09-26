@@ -178,8 +178,9 @@ class MembershipPortal(CustomerPortal):
     @http.route(['/my/memberships', '/my/memberships/page/<int:page>'], 
                 type='http', auth="user", website=True)
     def portal_my_memberships(self, page=1, date_begin=None, date_end=None, 
-                             sortby=None, search=None, search_in='name', **kw):
-        """FIXED: Display member's memberships with proper data separation"""
+                             sortby=None, search=None, search_in='name', 
+                             filterby=None, **kw):
+        """ENHANCED: Display member's memberships with proper data separation and filtering"""
         values = self._prepare_portal_layout_values()
         partner = request.env.user.partner_id
 
@@ -206,10 +207,24 @@ class MembershipPortal(CustomerPortal):
                 'product': {'input': 'product', 'label': _('Search in Product')},
             }
 
+            # ENHANCED: Filter options for membership types
+            searchbar_filters = {
+                'all': {'label': _('All'), 'domain': []},
+                'active': {'label': _('Active'), 'domain': [('state', '=', 'active')]},
+                'regular': {'label': _('Regular Only'), 'domain': [('is_chapter_membership', '=', False)]},
+                'chapter': {'label': _('Chapters Only'), 'domain': [('is_chapter_membership', '=', True)]},
+                'expired': {'label': _('Expired'), 'domain': [('end_date', '<', fields.Date.today())]},
+            }
+
             # Default sort
             if not sortby:
                 sortby = 'date'
             order = searchbar_sortings[sortby]['order']
+
+            # Default filter
+            if not filterby:
+                filterby = 'all'
+            domain += searchbar_filters[filterby]['domain']
 
             # Search
             if search and search_in:
@@ -238,7 +253,8 @@ class MembershipPortal(CustomerPortal):
             pager = portal_pager(
                 url="/my/memberships",
                 url_args={'date_begin': date_begin, 'date_end': date_end,
-                         'sortby': sortby, 'search_in': search_in, 'search': search},
+                         'sortby': sortby, 'search_in': search_in, 'search': search,
+                         'filterby': filterby},
                 total=membership_count,
                 page=page,
                 step=self._items_per_page
@@ -282,9 +298,11 @@ class MembershipPortal(CustomerPortal):
                 'default_url': '/my/memberships',
                 'searchbar_sortings': searchbar_sortings,
                 'searchbar_inputs': searchbar_inputs,
+                'searchbar_filters': searchbar_filters,  # ENHANCED
                 'search_in': search_in,
                 'search': search,
                 'sortby': sortby,
+                'filterby': filterby,  # ENHANCED
                 
                 # Ensure member context is available
                 'partner': partner,
@@ -301,6 +319,44 @@ class MembershipPortal(CustomerPortal):
             })
             
         return request.render("ams_membership_core.portal_my_memberships", values)
+
+    @http.route(['/my/memberships/history'], type='http', auth="user", website=True)
+    def portal_my_memberships_history(self, **kw):
+        """ENHANCED: Display all historical memberships"""
+        values = self._prepare_portal_layout_values()
+        partner = request.env.user.partner_id
+
+        if not partner or not getattr(partner, 'is_member', False):
+            return request.render("ams_membership_core.portal_no_membership_access", values)
+
+        try:
+            # Get ALL memberships (including expired/terminated)
+            all_memberships = request.env['ams.membership'].search([
+                ('partner_id', '=', partner.id)
+            ], order='start_date desc')
+
+            # Separate by type for template
+            regular_history = all_memberships.filtered(lambda m: not m.is_chapter_membership)
+            chapter_history = all_memberships.filtered(lambda m: m.is_chapter_membership)
+
+            values.update({
+                'all_memberships': all_memberships,
+                'regular_history': regular_history,
+                'chapter_history': chapter_history,
+                'page_name': 'membership_history',
+                'partner': partner,
+            })
+
+        except Exception as e:
+            _logger.error(f"Error in portal_my_memberships_history: {e}")
+            values.update({
+                'all_memberships': request.env['ams.membership'],
+                'regular_history': request.env['ams.membership'],
+                'chapter_history': request.env['ams.membership'],
+                'page_name': 'membership_history',
+            })
+
+        return request.render("ams_membership_core.portal_membership_history", values)
 
     @http.route(['/my/member/profile'], type='http', auth="user", website=True)
     def portal_member_profile(self, **kw):
@@ -618,7 +674,7 @@ class MembershipPortal(CustomerPortal):
         
         return request.redirect(f'/my/subscriptions/{subscription_id}')
 
-    # DEBUG ROUTES FOR TROUBLESHOOTING
+    # DEBUG ROUTES FOR TROUBLESHOOTING - ENHANCED
     @http.route(['/my/debug'], type='http', auth="user", website=True)
     def debug_portal(self, **kw):
         """Debug route to check portal access"""
@@ -626,90 +682,317 @@ class MembershipPortal(CustomerPortal):
         user = request.env.user
         
         debug_info = f"""
-        <html><head><title>Portal Debug</title></head><body>
-        <h2>Portal Debug Information</h2>
-        <h3>User Info</h3>
-        <p><strong>User ID:</strong> {user.id}</p>
-        <p><strong>User Login:</strong> {user.login}</p>
-        <p><strong>User Groups:</strong> {', '.join(user.groups_id.mapped('name'))}</p>
-        
-        <h3>Partner Info</h3>
-        <p><strong>Partner ID:</strong> {partner.id}</p>
-        <p><strong>Partner Name:</strong> {partner.name}</p>
-        <p><strong>Partner Email:</strong> {partner.email}</p>
-        <p><strong>Is Member:</strong> {getattr(partner, 'is_member', 'FIELD_NOT_FOUND')}</p>
-        <p><strong>Member Status:</strong> {getattr(partner, 'member_status', 'FIELD_NOT_FOUND')}</p>
-        <p><strong>Member Number:</strong> {getattr(partner, 'member_number', 'FIELD_NOT_FOUND')}</p>
-        
-        <h3>Access Tests</h3>
+        <html>
+        <head>
+            <title>Portal Debug</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 20px; }}
+                .section {{ margin: 20px 0; padding: 15px; border: 1px solid #ddd; }}
+                .success {{ background-color: #d4edda; border-color: #c3e6cb; }}
+                .error {{ background-color: #f8d7da; border-color: #f5c6cb; }}
+                .info {{ background-color: #d1ecf1; border-color: #bee5eb; }}
+                pre {{ background: #f8f9fa; padding: 10px; border-radius: 5px; }}
+            </style>
+        </head>
+        <body>
+            <h1>🔍 Portal Debug Information</h1>
+            
+            <div class="section info">
+                <h3>👤 User Info</h3>
+                <p><strong>User ID:</strong> {user.id}</p>
+                <p><strong>User Login:</strong> {user.login}</p>
+                <p><strong>User Groups:</strong> {', '.join(user.groups_id.mapped('name'))}</p>
+            </div>
+            
+            <div class="section info">
+                <h3>🏢 Partner Info</h3>
+                <p><strong>Partner ID:</strong> {partner.id}</p>
+                <p><strong>Partner Name:</strong> {partner.name}</p>
+                <p><strong>Partner Email:</strong> {partner.email}</p>
+                <p><strong>Is Member:</strong> {getattr(partner, 'is_member', 'FIELD_NOT_FOUND')}</p>
+                <p><strong>Member Status:</strong> {getattr(partner, 'member_status', 'FIELD_NOT_FOUND')}</p>
+                <p><strong>Member Number:</strong> {getattr(partner, 'member_number', 'FIELD_NOT_FOUND')}</p>
+            </div>
         """
         
+        # Test membership model access
+        debug_info += '<div class="section">'
+        debug_info += '<h3>🧪 Access Tests</h3>'
+        
         try:
-            # Test membership model access
             membership_count = request.env['ams.membership'].search_count([])
-            debug_info += f"<p><strong>Total Memberships (no domain):</strong> {membership_count}</p>"
+            debug_info += f'<p class="success">✅ <strong>Total Memberships (no domain):</strong> {membership_count}</p>'
         except Exception as e:
-            debug_info += f"<p><strong>Membership Access Error:</strong> {str(e)}</p>"
+            debug_info += f'<p class="error">❌ <strong>Membership Access Error:</strong> {str(e)}</p>'
         
+        # Test partner membership access
         try:
-            # Test partner membership access
             partner_memberships = request.env['ams.membership'].search([('partner_id', '=', partner.id)])
-            debug_info += f"<p><strong>Partner Memberships Found:</strong> {len(partner_memberships)}</p>"
-            for membership in partner_memberships:
-                debug_info += f"<p>  - {membership.name}: {membership.state} ({membership.product_id.name})</p>"
+            debug_info += f'<p class="success">✅ <strong>Partner Memberships Found:</strong> {len(partner_memberships)}</p>'
+            
+            if partner_memberships:
+                debug_info += '<div><strong>Membership Details:</strong><ul>'
+                for membership in partner_memberships:
+                    is_chapter = getattr(membership, 'is_chapter_membership', 'Unknown')
+                    debug_info += f'<li>{membership.name}: {membership.state} ({membership.product_id.name}) - Chapter: {is_chapter}</li>'
+                debug_info += '</ul></div>'
+            else:
+                debug_info += '<p class="error">⚠️ No memberships found for this partner</p>'
+                
         except Exception as e:
-            debug_info += f"<p><strong>Partner Membership Error:</strong> {str(e)}</p>"
+            debug_info += f'<p class="error">❌ <strong>Partner Membership Error:</strong> {str(e)}</p>'
         
+        # Test direct SQL query
         try:
-            # Test direct SQL query
             request.env.cr.execute("""
                 SELECT id, name, state, partner_id 
                 FROM ams_membership 
                 WHERE partner_id = %s
             """, (partner.id,))
             sql_results = request.env.cr.fetchall()
-            debug_info += f"<p><strong>Direct SQL Results:</strong> {len(sql_results)} records</p>"
-            for row in sql_results:
-                debug_info += f"<p>  - ID {row[0]}: {row[1]} ({row[2]})</p>"
+            debug_info += f'<p class="success">✅ <strong>Direct SQL Results:</strong> {len(sql_results)} records</p>'
+            
+            if sql_results:
+                debug_info += '<div><strong>SQL Results:</strong><ul>'
+                for row in sql_results:
+                    debug_info += f'<li>ID {row[0]}: {row[1]} ({row[2]})</li>'
+                debug_info += '</ul></div>'
+                
         except Exception as e:
-            debug_info += f"<p><strong>SQL Query Error:</strong> {str(e)}</p>"
+            debug_info += f'<p class="error">❌ <strong>SQL Query Error:</strong> {str(e)}</p>'
         
-        debug_info += """
-        <h3>Test Links</h3>
-        <a href="/my" style="margin-right: 10px;">Portal Home</a>
-        <a href="/my/memberships" style="margin-right: 10px;">Memberships</a>
-        <a href="/my/chapters" style="margin-right: 10px;">Chapters</a>
-        </body></html>
-        """
-        return debug_info
-
-    @http.route(['/my/membership/debug'], type='http', auth="user", website=True)
-    def portal_membership_debug(self, **kw):
-        """Detailed membership debug with template context"""
-        values = self._prepare_portal_layout_values()
-        partner = request.env.user.partner_id
+        debug_info += '</div>'
+        
+        # Test portal layout values
+        debug_info += '<div class="section">'
+        debug_info += '<h3>🏠 Portal Layout Values</h3>'
         
         try:
-            memberships = request.env['ams.membership'].search([('partner_id', '=', partner.id)])
-            regular_memberships = memberships.filtered(lambda m: not getattr(m, 'is_chapter_membership', False))
-            chapter_memberships = memberships.filtered(lambda m: getattr(m, 'is_chapter_membership', False))
+            layout_values = self._prepare_portal_layout_values()
+            key_values = ['is_member', 'member_number', 'member_type', 'member_status', 
+                         'chapter_memberships', 'chapter_membership_count']
             
-            values.update({
-                'memberships': memberships,
-                'regular_memberships': regular_memberships, 
-                'chapter_memberships': chapter_memberships,
-                'debug_partner_id': partner.id,
-                'debug_membership_count': len(memberships),
-                'debug_regular_count': len(regular_memberships),
-                'debug_chapter_count': len(chapter_memberships),
-            })
+            for key in key_values:
+                value = layout_values.get(key, 'NOT_PROVIDED')
+                if key == 'chapter_memberships' and hasattr(value, '__len__'):
+                    value = f"Recordset with {len(value)} records"
+                debug_info += f'<p><strong>{key}:</strong> {value}</p>'
+                
         except Exception as e:
-            values.update({
-                'debug_error': str(e),
-                'memberships': request.env['ams.membership'],
-            })
+            debug_info += f'<p class="error">❌ <strong>Portal Layout Error:</strong> {str(e)}</p>'
         
-        return request.render("ams_membership_core.portal_membership_debug", values)
+        debug_info += '</div>'
+        
+        # Test links
+        debug_info += '''
+            <div class="section">
+                <h3>🔗 Test Links</h3>
+                <a href="/my" style="margin-right: 15px; padding: 8px 12px; background: #007bff; color: white; text-decoration: none; border-radius: 4px;">Portal Home</a>
+                <a href="/my/memberships" style="margin-right: 15px; padding: 8px 12px; background: #28a745; color: white; text-decoration: none; border-radius: 4px;">Memberships</a>
+                <a href="/my/chapters" style="margin-right: 15px; padding: 8px 12px; background: #17a2b8; color: white; text-decoration: none; border-radius: 4px;">Chapters</a>
+                <a href="/my/memberships/history" style="margin-right: 15px; padding: 8px 12px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px;">History</a>
+                <a href="/my/membership/debug2" style="margin-right: 15px; padding: 8px 12px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px;">Detailed Debug</a>
+            </div>
+        </body>
+        </html>
+        '''
+        
+        return debug_info
+
+    @http.route(['/my/membership/debug2'], type='http', auth="user", website=True)
+    def portal_membership_debug_detailed(self, **kw):
+        """Detailed membership debug without template"""
+        partner = request.env.user.partner_id
+        
+        debug_info = f"""
+        <html>
+        <head>
+            <title>Detailed Membership Debug</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 20px; }}
+                .section {{ margin: 20px 0; padding: 15px; border: 1px solid #ddd; }}
+                .success {{ background-color: #d4edda; border-color: #c3e6cb; }}
+                .error {{ background-color: #f8d7da; border-color: #f5c6cb; }}
+                .info {{ background-color: #d1ecf1; border-color: #bee5eb; }}
+                .warning {{ background-color: #fff3cd; border-color: #ffeaa7; }}
+                table {{ border-collapse: collapse; width: 100%; }}
+                th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+                th {{ background-color: #f2f2f2; }}
+            </style>
+        </head>
+        <body>
+            <h1>📊 Detailed Membership Debug</h1>
+            <p><a href="/my/debug">← Back to Basic Debug</a></p>
+        """
+        
+        try:
+            # Test controller data preparation
+            debug_info += '<div class="section info">'
+            debug_info += '<h3>🔧 Controller Data Preparation Test</h3>'
+            
+            # Test the actual controller method data
+            try:
+                Membership = request.env['ams.membership']
+                domain = [('partner_id', '=', partner.id)]
+                memberships = Membership.search(domain)
+                
+                debug_info += f'<p><strong>Search Domain:</strong> {domain}</p>'
+                debug_info += f'<p><strong>Total Memberships Found:</strong> {len(memberships)}</p>'
+                
+                # Separate memberships
+                regular_memberships = []
+                chapter_memberships = []
+                
+                for membership in memberships:
+                    try:
+                        is_chapter = getattr(membership, 'is_chapter_membership', False)
+                        if is_chapter:
+                            chapter_memberships.append(membership)
+                        else:
+                            regular_memberships.append(membership)
+                    except Exception as e:
+                        debug_info += f'<p class="error">Error checking membership {membership.id}: {e}</p>'
+                        regular_memberships.append(membership)
+                
+                debug_info += f'<p><strong>Regular Memberships:</strong> {len(regular_memberships)}</p>'
+                debug_info += f'<p><strong>Chapter Memberships:</strong> {len(chapter_memberships)}</p>'
+                
+                # Show detailed membership info
+                if memberships:
+                    debug_info += '<table><tr><th>ID</th><th>Name</th><th>Product</th><th>State</th><th>Is Chapter</th><th>Start Date</th><th>End Date</th></tr>'
+                    for membership in memberships:
+                        is_chapter = getattr(membership, 'is_chapter_membership', 'Unknown')
+                        debug_info += f'''
+                        <tr>
+                            <td>{membership.id}</td>
+                            <td>{membership.name}</td>
+                            <td>{membership.product_id.name}</td>
+                            <td>{membership.state}</td>
+                            <td>{is_chapter}</td>
+                            <td>{membership.start_date}</td>
+                            <td>{membership.end_date}</td>
+                        </tr>
+                        '''
+                    debug_info += '</table>'
+                
+            except Exception as e:
+                debug_info += f'<p class="error">❌ Controller test failed: {str(e)}</p>'
+            
+            debug_info += '</div>'
+            
+            # Test template values that would be passed
+            debug_info += '<div class="section">'
+            debug_info += '<h3>📝 Template Values Test</h3>'
+            
+            try:
+                values = self._prepare_portal_layout_values()
+                
+                # Key template variables
+                template_vars = {
+                    'is_member': values.get('is_member'),
+                    'member_number': values.get('member_number'),
+                    'member_type': values.get('member_type'),
+                    'member_status': values.get('member_status'),
+                    'chapter_memberships': values.get('chapter_memberships'),
+                    'chapter_membership_count': values.get('chapter_membership_count'),
+                    'total_subscription_count': values.get('total_subscription_count'),
+                }
+                
+                debug_info += '<table><tr><th>Variable</th><th>Value</th><th>Type</th></tr>'
+                for key, value in template_vars.items():
+                    if hasattr(value, '__len__') and hasattr(value, 'ids'):
+                        value_display = f"Recordset with {len(value)} records: {value.ids}"
+                    else:
+                        value_display = str(value)
+                    debug_info += f'<tr><td>{key}</td><td>{value_display}</td><td>{type(value).__name__}</td></tr>'
+                debug_info += '</table>'
+                
+            except Exception as e:
+                debug_info += f'<p class="error">❌ Template values test failed: {str(e)}</p>'
+            
+            debug_info += '</div>'
+            
+            # Check field access on membership records
+            if memberships:
+                debug_info += '<div class="section">'
+                debug_info += '<h3>🔍 Field Access Test</h3>'
+                
+                membership = memberships[0]
+                fields_to_test = ['is_chapter_membership', 'chapter_type', 'chapter_role', 
+                                'chapter_engagement_score', 'chapter_events_attended']
+                
+                debug_info += '<table><tr><th>Field</th><th>Value</th><th>Accessible</th></tr>'
+                for field in fields_to_test:
+                    try:
+                        value = getattr(membership, field, 'FIELD_NOT_FOUND')
+                        accessible = "✅ Yes"
+                    except Exception as e:
+                        value = f"Error: {e}"
+                        accessible = "❌ No"
+                    
+                    debug_info += f'<tr><td>{field}</td><td>{value}</td><td>{accessible}</td></tr>'
+                debug_info += '</table>'
+                debug_info += '</div>'
+            
+            # Database direct check
+            debug_info += '<div class="section">'
+            debug_info += '<h3>🗃️ Database Structure Check</h3>'
+            
+            try:
+                # Check if is_chapter_membership field exists
+                request.env.cr.execute("""
+                    SELECT column_name, data_type 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'ams_membership' 
+                    AND column_name LIKE '%chapter%'
+                """)
+                chapter_fields = request.env.cr.fetchall()
+                
+                debug_info += '<p><strong>Chapter-related fields in ams_membership table:</strong></p>'
+                if chapter_fields:
+                    debug_info += '<ul>'
+                    for field in chapter_fields:
+                        debug_info += f'<li>{field[0]} ({field[1]})</li>'
+                    debug_info += '</ul>'
+                else:
+                    debug_info += '<p class="warning">⚠️ No chapter-related fields found in database</p>'
+                
+                # Check actual data
+                request.env.cr.execute("""
+                    SELECT id, name, state, is_chapter_membership 
+                    FROM ams_membership 
+                    WHERE partner_id = %s
+                    LIMIT 5
+                """, (partner.id,))
+                db_results = request.env.cr.fetchall()
+                
+                if db_results:
+                    debug_info += '<p><strong>Direct database query results:</strong></p>'
+                    debug_info += '<table><tr><th>ID</th><th>Name</th><th>State</th><th>Is Chapter</th></tr>'
+                    for row in db_results:
+                        debug_info += f'<tr><td>{row[0]}</td><td>{row[1]}</td><td>{row[2]}</td><td>{row[3]}</td></tr>'
+                    debug_info += '</table>'
+                
+            except Exception as e:
+                debug_info += f'<p class="error">❌ Database check failed: {str(e)}</p>'
+            
+            debug_info += '</div>'
+            
+        except Exception as e:
+            debug_info += f'<div class="section error"><h3>Critical Error</h3><p>{str(e)}</p></div>'
+        
+        debug_info += '''
+            <div class="section">
+                <h3>🔗 Navigation</h3>
+                <a href="/my/debug" style="margin-right: 15px; padding: 8px 12px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px;">Basic Debug</a>
+                <a href="/my" style="margin-right: 15px; padding: 8px 12px; background: #007bff; color: white; text-decoration: none; border-radius: 4px;">Portal Home</a>
+                <a href="/my/memberships" style="margin-right: 15px; padding: 8px 12px; background: #28a745; color: white; text-decoration: none; border-radius: 4px;">Try Memberships</a>
+            </div>
+        </body>
+        </html>
+        '''
+        
+        return debug_info
 
     def _document_check_access(self, model_name, document_id, access_token=None):
         """ENHANCED: Check access to membership/subscription documents AND invoices"""
@@ -751,6 +1034,3 @@ class MembershipPortal(CustomerPortal):
             raise AccessError(_("Access Denied"))
             
         return document_sudo
-
-
-    

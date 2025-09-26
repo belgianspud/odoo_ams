@@ -39,6 +39,58 @@ class AMSSettings(models.Model):
     terminate_period_days = fields.Integer('Terminate Period (Days)', default=90, required=True,
                                          help="Days before final termination cleanup")
 
+    # Membership Dating Configuration
+    default_membership_period_type = fields.Selection([
+        ('calendar', 'Calendar Year'),
+        ('anniversary', 'Anniversary'),
+        ('rolling', 'Rolling Period')
+    ], string='Default Membership Period Type', default='calendar', tracking=True,
+       help="Default period type for new membership products")
+
+    # Multiple Membership Rules
+    allow_multiple_active_memberships = fields.Boolean('Allow Multiple Active Memberships', 
+                                                      default=False, tracking=True,
+                                                      help="Allow members to have multiple active membership products simultaneously")
+    max_active_memberships_per_class = fields.Integer('Max Active Memberships Per Class', 
+                                                     default=1,
+                                                     help="Maximum number of active memberships per product class (0 = unlimited)")
+
+    # Pro-rating Configuration
+    enable_prorating = fields.Boolean('Enable Pro-rating', default=True, tracking=True,
+                                     help="Calculate pro-rated pricing for partial periods")
+    prorate_method = fields.Selection([
+        ('daily', 'Daily Pro-rating'),
+        ('monthly', 'Monthly Pro-rating')
+    ], string='Pro-rate Method', default='monthly',
+       help="Method for calculating pro-rated amounts")
+
+    # Billing and Renewal Configuration
+    renewal_invoice_days_advance = fields.Integer('Renewal Invoice Days in Advance', 
+                                                 default=30,
+                                                 help="Days before expiration to generate renewal invoice")
+    auto_create_renewal_invoices = fields.Boolean('Auto Create Renewal Invoices', 
+                                                 default=True,
+                                                 help="Automatically create renewal invoices")
+    
+    # Upgrade/Downgrade Billing
+    upgrade_billing_method = fields.Selection([
+        ('credit_invoice', 'Credit Memo + New Invoice'),
+        ('adjustment_invoice', 'Single Adjustment Invoice'),
+        ('immediate_charge', 'Immediate Charge/Refund')
+    ], string='Upgrade Billing Method', default='credit_invoice',
+       help="How to handle billing when upgrading/downgrading memberships")
+
+    # Cancellation Policy
+    cancellation_policy = fields.Selection([
+        ('immediate', 'Immediate Termination'),
+        ('end_of_period', 'End of Current Period'),
+        ('end_of_month', 'End of Current Month')
+    ], string='Cancellation Policy', default='end_of_month',
+       help="When cancelled memberships should terminate")
+    
+    cancellation_grace_period = fields.Boolean('Cancellation Grace Period', default=True,
+                                              help="Move cancelled memberships to grace period instead of immediate termination")
+
     # Portal and User Management
     auto_create_portal_users = fields.Boolean('Auto Create Portal Users', default=True,
                                             tracking=True,
@@ -263,6 +315,27 @@ class AMSSettings(models.Model):
         from datetime import timedelta
         return start_date + timedelta(days=self.terminate_period_days)
 
+    def calculate_membership_end_date(self, start_date, period_type=None, duration_days=365):
+        """Calculate membership end date based on period type and duration"""
+        self.ensure_one()
+        if not period_type:
+            period_type = self.default_membership_period_type
+        
+        from datetime import timedelta
+        
+        if period_type == 'calendar':
+            # Set to December 31 of the current year
+            return start_date.replace(month=12, day=31)
+        elif period_type == 'anniversary':
+            # Add duration to start date
+            return start_date + timedelta(days=duration_days)
+        elif period_type == 'rolling':
+            # Rolling period - same as anniversary for now
+            return start_date + timedelta(days=duration_days)
+        else:
+            # Default to anniversary
+            return start_date + timedelta(days=duration_days)
+
     @api.model
     def get_active_settings(self):
         """Get the currently active settings record"""
@@ -292,6 +365,13 @@ class AMSSettings(models.Model):
         # Check renewal reminders
         if self.renewal_reminder_enabled and self.renewal_reminder_days <= 0:
             issues.append(_("Renewal reminder days must be positive."))
+
+        # Check membership configuration
+        if self.max_active_memberships_per_class < 0:
+            issues.append(_("Max active memberships per class cannot be negative."))
+
+        if self.renewal_invoice_days_advance <= 0:
+            issues.append(_("Renewal invoice advance days must be positive."))
 
         return issues
 
@@ -361,6 +441,22 @@ class AMSSettings(models.Model):
                 raise ValidationError(_("Data retention must be at least 1 year."))
             if setting.data_retention_years > 50:
                 raise ValidationError(_("Data retention period seems excessive (>50 years)."))
+
+    @api.constrains('max_active_memberships_per_class')
+    def _check_max_memberships(self):
+        """Validate max active memberships per class"""
+        for setting in self:
+            if setting.max_active_memberships_per_class < 0:
+                raise ValidationError(_("Max active memberships per class cannot be negative. Use 0 for unlimited."))
+
+    @api.constrains('renewal_invoice_days_advance')
+    def _check_renewal_invoice_advance(self):
+        """Validate renewal invoice advance days"""
+        for setting in self:
+            if setting.renewal_invoice_days_advance <= 0:
+                raise ValidationError(_("Renewal invoice advance days must be positive."))
+            if setting.renewal_invoice_days_advance > 365:
+                raise ValidationError(_("Renewal invoice advance days seems excessive (>365 days)."))
 
     @api.constrains('active')
     def _check_one_active_setting(self):

@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Enhanced Partner Form with Membership Tables -->
+        <record id="view_partner_form_membership_core" model="ir.ui.view">
+            <field name="name">res.partner.form.membership.core</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="ams_foundation.view_partner_form_member"/>
+            <field name="arch" type="xml">
+
+                <!-- Add stat buttons to the existing button box -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    
+                    <!-- Memberships Button -->
+                    <button name="action_view_memberships" type="object"
+                            class="oe_stat_button" icon="fa-id-card"
+                            invisible="membership_count == 0">
+                        <div class="o_field_widget o_stat_info">
+                            <span class="o_stat_value">
+                                <field name="active_membership_count"/>/<field name="membership_count"/>
+                            </span>
+                            <span class="o_stat_text">Memberships</span>
+                        </div>
+                    </button>
+                    
+                    <!-- Chapter Memberships Button -->
+                    <button name="action_view_chapter_memberships" type="object"
+                            class="oe_stat_button" icon="fa-users"
+                            invisible="chapter_membership_count == 0">
+                        <div class="o_field_widget o_stat_info">
+                            <span class="o_stat_value">
+                                <field name="active_chapter_count"/>/<field name="chapter_membership_count"/>
+                            </span>
+                            <span class="o_stat_text">Chapters</span>
+                        </div>
+                    </button>
+                    
+                    <!-- Subscriptions Button -->
+                    <button name="action_view_subscriptions" type="object"
+                            class="oe_stat_button" icon="fa-refresh"
+                            invisible="subscription_count == 0">
+                        <div class="o_field_widget o_stat_info">
+                            <span class="o_stat_value">
+                                <field name="active_subscription_count"/>/<field name="subscription_count"/>
+                            </span>
+                            <span class="o_stat_text">Subscriptions</span>
+                        </div>
+                    </button>
+                    
+                    <!-- Chapter Engagement Button -->
+                    <button name="action_view_chapter_memberships" type="object"
+                            class="oe_stat_button" icon="fa-trophy"
+                            invisible="chapter_engagement_score == 0">
+                        <div class="o_field_widget o_stat_info">
+                            <span class="o_stat_value">
+                                <field name="chapter_engagement_score" widget="integer"/>%
+                            </span>
+                            <span class="o_stat_text">Engagement</span>
+                        </div>
+                    </button>
+
+                </xpath>
+
+                <!-- Enhance the existing membership tab -->
+                <xpath expr="//page[@name='membership']" position="inside">
+                    
+                    <!-- Add membership summary at the top -->
+                    <group string="Membership Summary" invisible="not is_member">
+                        <group>
+                            <field name="current_membership_id" readonly="1"/>
+                            <field name="membership_count" readonly="1"/>
+                            <field name="active_membership_count" readonly="1"/>
+                            <field name="total_membership_years" readonly="1" widget="float" digits="[16,1]"/>
+                        </group>
+                        <group>
+                            <field name="chapter_membership_count" readonly="1"/>
+                            <field name="active_chapter_count" readonly="1"/>
+                            <field name="subscription_count" readonly="1"/>
+                            <field name="next_renewal_date" readonly="1" invisible="not next_renewal_date"/>
+                        </group>
+                    </group>
+
+                    <!-- Chapter Summary Section -->
+                    <group string="Chapter Summary" invisible="active_chapter_count == 0">
+                        <group>
+                            <field name="chapter_engagement_score" readonly="1" widget="progressbar"/>
+                            <field name="chapter_leadership_roles" readonly="1" invisible="chapter_leadership_roles == 0"/>
+                        </group>
+                        <group>
+                            <field name="total_chapter_years" readonly="1" widget="float" digits="[16,1]"/>
+                            <field name="chapter_renewals_count" readonly="1" invisible="chapter_renewals_count == 0"/>
+                        </group>
+                    </group>
+
+                    <!-- Add comprehensive membership tables -->
+                    <notebook>
+                        <!-- All Memberships Tab -->
+                        <page string="All Memberships" name="all_memberships" invisible="membership_count == 0">
+                            <field name="membership_ids" nolabel="1">
+                                <list string="All Memberships" 
+                                      decoration-success="state=='active'" 
+                                      decoration-warning="state=='grace'"
+                                      decoration-info="is_chapter_membership"
+                                      decoration-muted="state=='terminated'">
+                                    <field name="name"/>
+                                    <field name="product_id"/>
+                                    <field name="membership_type" optional="show"/>
+                                    <field name="is_chapter_membership" invisible="1"/>
+                                    <field name="state"/>
+                                    <field name="start_date"/>
+                                    <field name="end_date"/>
+                                    <field name="days_until_expiry" optional="hide"/>
+                                    <field name="membership_fee" widget="monetary" optional="show"/>
+                                    <field name="payment_status" optional="hide"/>
+                                    <field name="auto_renew" optional="hide"/>
+                                    <!-- Chapter-specific fields -->
+                                    <field name="chapter_type" optional="hide" invisible="not is_chapter_membership"/>
+                                    <field name="chapter_location" optional="hide" invisible="not is_chapter_membership"/>
+                                    <field name="chapter_role" optional="hide" invisible="not is_chapter_membership"/>
+                                    <field name="chapter_engagement_score" optional="hide" invisible="not is_chapter_membership" widget="progressbar"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- Active Memberships Tab -->
+                        <page string="Active Memberships" name="active_memberships" invisible="active_membership_count == 0">
+                            <field name="active_membership_ids" nolabel="1">
+                                <list string="Active Memberships" 
+                                      decoration-info="is_chapter_membership">
+                                    <field name="name"/>
+                                    <field name="product_id"/>
+                                    <field name="membership_type"/>
+                                    <field name="is_chapter_membership" invisible="1"/>
+                                    <field name="start_date"/>
+                                    <field name="end_date"/>
+                                    <field name="days_until_expiry"/>
+                                    <field name="membership_fee" widget="monetary"/>
+                                    <field name="auto_renew"/>
+                                    <field name="next_renewal_date" optional="show"/>
+                                    <!-- Chapter-specific fields -->
+                                    <field name="chapter_type" invisible="not is_chapter_membership"/>
+                                    <field name="chapter_location" invisible="not is_chapter_membership"/>
+                                    <field name="chapter_role" invisible="not is_chapter_membership"/>
+                                    <field name="chapter_engagement_score" invisible="not is_chapter_membership" widget="progressbar"/>
+                                    <field name="chapter_events_attended" invisible="not is_chapter_membership" optional="hide"/>
+                                    <field name="chapter_volunteer_hours" invisible="not is_chapter_membership" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- Chapter Memberships Tab -->
+                        <page string="Chapter Memberships" name="chapter_memberships" invisible="chapter_membership_count == 0">
+                            <field name="chapter_membership_ids" nolabel="1">
+                                <list string="Chapter Memberships" 
+                                      decoration-success="state=='active'" 
+                                      decoration-warning="state=='grace'"
+                                      decoration-muted="state=='terminated'">
+                                    <field name="name"/>
+                                    <field name="product_id"/>
+                                    <field name="chapter_type"/>
+                                    <field name="chapter_location"/>
+                                    <field name="chapter_role"/>
+                                    <field name="state"/>
+                                    <field name="start_date"/>
+                                    <field name="end_date"/>
+                                    <field name="chapter_engagement_score" widget="progressbar"/>
+                                    <field name="chapter_events_attended" optional="show"/>
+                                    <field name="chapter_volunteer_hours" optional="show"/>
+                                    <field name="chapter_meeting_attendance" optional="hide" widget="percentage"/>
+                                    <field name="chapter_last_activity_date" optional="hide"/>
+                                    <field name="membership_fee" widget="monetary" optional="show"/>
+                                    <field name="auto_renew" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- All Subscriptions Tab -->
+                        <page string="All Subscriptions" name="all_subscriptions" invisible="subscription_count == 0">
+                            <field name="subscription_ids" nolabel="1">
+                                <list string="All Subscriptions" 
+                                      decoration-success="state=='active'" 
+                                      decoration-info="state=='paused'"
+                                      decoration-warning="state=='suspended'"
+                                      decoration-muted="state=='terminated'">
+                                    <field name="name"/>
+                                    <field name="product_id"/>
+                                    <field name="subscription_type"/>
+                                    <field name="state"/>
+                                    <field name="start_date"/>
+                                    <field name="end_date"/>
+                                    <field name="days_until_expiry" optional="hide"/>
+                                    <field name="subscription_fee" widget="monetary" optional="show"/>
+                                    <field name="payment_status" optional="hide"/>
+                                    <field name="auto_renew" optional="hide"/>
+                                    <!-- Type-specific fields -->
+                                    <field name="digital_access" optional="hide" invisible="subscription_type != 'publication'"/>
+                                    <field name="print_delivery" optional="hide" invisible="subscription_type != 'publication'"/>
+                                    <field name="event_access_level" optional="hide" invisible="subscription_type != 'event'"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- Active Subscriptions Tab -->
+                        <page string="Active Subscriptions" name="active_subscriptions" invisible="active_subscription_count == 0">
+                            <field name="active_subscription_ids" nolabel="1">
+                                <list string="Active Subscriptions">
+                                    <field name="name"/>
+                                    <field name="product_id"/>
+                                    <field name="subscription_type"/>
+                                    <field name="start_date"/>
+                                    <field name="end_date"/>
+                                    <field name="days_until_expiry"/>
+                                    <field name="subscription_fee" widget="monetary"/>
+                                    <field name="auto_renew"/>
+                                    <field name="next_renewal_date" optional="show"/>
+                                    <!-- Type-specific fields -->
+                                    <field name="digital_access" invisible="subscription_type != 'publication'"/>
+                                    <field name="print_delivery" invisible="subscription_type != 'publication'"/>
+                                    <field name="event_access_level" invisible="subscription_type != 'event'"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- Benefits Tab -->
+                        <page string="Active Benefits" name="active_benefits" invisible="not active_benefit_ids">
+                            <field name="active_benefit_ids" nolabel="1">
+                                <list string="Active Benefits">
+                                    <field name="name"/>
+                                    <field name="code"/>
+                                    <field name="benefit_type"/>
+                                    <field name="description"/>
+                                    <field name="applies_to"/>
+                                </list>
+                            </field>
+                        </page>
+
+                    </notebook>
+
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- Enhanced Member List View with Membership Counts -->
+        <record id="view_partner_list_members_enhanced" model="ir.ui.view">
+            <field name="name">res.partner.list.members.enhanced</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="ams_foundation.view_partner_member_list"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='engagement_score']" position="after">
+                    <field name="active_membership_count" optional="show"/>
+                    <field name="active_chapter_count" optional="show"/>
+                    <field name="subscription_count" optional="hide"/>
+                    <field name="next_renewal_date" optional="hide"/>
+                    <field name="chapter_engagement_score" optional="hide" widget="progressbar"/>
+                    <field name="total_membership_years" optional="hide" widget="float"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Enhanced Member Search View -->
+        <record id="view_partner_member_search_enhanced" model="ir.ui.view">
+            <field name="name">res.partner.member.search.enhanced</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="ams_foundation.view_partner_member_search"/>
+            <field name="arch" type="xml">
+                <xpath expr="//filter[@name='new_members']" position="after">
+                    <separator/>
+                    <!-- Membership Type Filters -->
+                    <filter string="Multiple Memberships" name="multi_membership" 
+                            domain="[('active_membership_count', '>', 1)]"/>
+                    <filter string="Chapter Members" name="chapter_members" 
+                            domain="[('active_chapter_count', '>', 0)]"/>
+                    <filter string="With Subscriptions" name="with_subscriptions" 
+                            domain="[('subscription_count', '>', 0)]"/>
+                    <separator/>
+                    <!-- Engagement Filters -->
+                    <filter string="High Engagement" name="high_engagement" 
+                            domain="[('chapter_engagement_score', '>=', 75)]"/>
+                    <filter string="Chapter Leaders" name="chapter_leaders" 
+                            domain="[('chapter_leadership_roles', '>', 0)]"/>
+                    <filter string="Renewal Due Soon" name="renewal_due" 
+                            domain="[('next_renewal_date', '&lt;=', (context_today() + datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                </xpath>
+                
+                <xpath expr="//filter[@name='group_join_year']" position="after">
+                    <separator/>
+                    <!-- Enhanced Groupings -->
+                    <filter string="Membership Count" name="group_membership_count" 
+                            domain="[]" context="{'group_by': 'active_membership_count'}"/>
+                    <filter string="Chapter Count" name="group_chapter_count" 
+                            domain="[]" context="{'group_by': 'active_chapter_count'}"/>
+                    <filter string="Engagement Level" name="group_engagement" 
+                            domain="[]" context="{'group_by': 'chapter_engagement_score'}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Action for Members with Multiple Memberships -->
+        <record id="action_partner_multi_membership" model="ir.actions.act_window">
+            <field name="name">Multi-Membership Members</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('is_member', '=', True), ('active_membership_count', '>', 1)]</field>
+            <field name="context">{'search_default_multi_membership': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No members with multiple memberships found
+                </p>
+                <p>
+                    This view shows members who have more than one active membership
+                    (regular membership plus chapter memberships).
+                </p>
+            </field>
+        </record>
+
+        <!-- Action for Chapter Members -->
+        <record id="action_partner_chapter_members" model="ir.actions.act_window">
+            <field name="name">Chapter Members</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">list,kanban,form</field>
+            <field name="domain">[('is_member', '=', True), ('active_chapter_count', '>', 0)]</field>
+            <field name="context">{'search_default_chapter_members': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No chapter members found
+                </p>
+                <p>
+                    This view shows members who have active chapter memberships.
+                </p>
+            </field>
+        </record>
+
+        <!-- Action for Members with Subscriptions -->
+        <record id="action_partner_subscription_members" model="ir.actions.act_window">
+            <field name="name">Members with Subscriptions</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('is_member', '=', True), ('subscription_count', '>', 0)]</field>
+            <field name="context">{'search_default_with_subscriptions': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No members with subscriptions found
+                </p>
+                <p>
+                    This view shows members who have active subscriptions
+                    to publications, events, or other services.
+                </p>
+            </field>
+        </record>
+
+        <!-- Action for High Engagement Members -->
+        <record id="action_partner_high_engagement" model="ir.actions.act_window">
+            <field name="name">High Engagement Members</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">list,kanban,form</field>
+            <field name="domain">[('is_member', '=', True), ('chapter_engagement_score', '>=', 75)]</field>
+            <field name="context">{'search_default_high_engagement': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No highly engaged members found
+                </p>
+                <p>
+                    This view shows members with high chapter engagement scores
+                    (75% or higher).
+                </p>
+            </field>
+        </record>
+
+        <!-- Action for Chapter Leaders -->
+        <record id="action_partner_chapter_leaders" model="ir.actions.act_window">
+            <field name="name">Chapter Leaders</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('is_member', '=', True), ('chapter_leadership_roles', '>', 0)]</field>
+            <field name="context">{'search_default_chapter_leaders': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No chapter leaders found
+                </p>
+                <p>
+                    This view shows members who hold leadership positions
+                    in one or more chapters.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

@@ -10,10 +10,20 @@
             <field name="code">REG</field>
             <field name="description">Full professional membership with all benefits and voting rights</field>
             <field name="active">True</field>
+            <field name="product_class">membership</field>
+            <field name="recurrence_period">annual</field>
+            <field name="membership_period_type">calendar</field>
             <field name="base_annual_fee">250.00</field>
             <field name="requires_approval">False</field>
             <field name="auto_renewal">True</field>
             <field name="voting_rights">True</field>
+            <field name="allow_multiple_active">False</field>
+            <field name="max_active_per_member">1</field>
+            <field name="allow_upgrades">True</field>
+            <field name="allow_downgrades">True</field>
+            <field name="enable_prorating">True</field>
+            <field name="prorate_on_upgrade">True</field>
+            <field name="prorate_on_downgrade">True</field>
             <field name="eligibility_criteria">Must be a licensed professional in the field with minimum 2 years experience</field>
             <field name="requires_license">True</field>
             <field name="min_experience_years">2</field>
@@ -27,10 +37,21 @@
             <field name="code">STU</field>
             <field name="description">Discounted membership for full-time students</field>
             <field name="active">True</field>
+            <field name="product_class">membership</field>
+            <field name="recurrence_period">annual</field>
+            <field name="membership_period_type">calendar</field>
             <field name="base_annual_fee">50.00</field>
             <field name="requires_approval">True</field>
             <field name="auto_renewal">False</field>
             <field name="voting_rights">False</field>
+            <field name="allow_multiple_active">False</field>
+            <field name="max_active_per_member">1</field>
+            <field name="allow_upgrades">True</field>
+            <field name="allow_downgrades">False</field>
+            <field name="enable_prorating">True</field>
+            <field name="prorate_on_upgrade">True</field>
+            <field name="prorate_on_downgrade">False</field>
+            <field name="upgrade_member_type_ids" eval="[(4, ref('member_type_associate')), (4, ref('member_type_regular'))]"/>
             <field name="eligibility_criteria">Must be enrolled full-time in an accredited program</field>
             <field name="requires_license">False</field>
             <field name="min_experience_years">0</field>
@@ -44,10 +65,21 @@
             <field name="code">ASC</field>
             <field name="description">Entry-level membership for new professionals</field>
             <field name="active">True</field>
+            <field name="product_class">membership</field>
+            <field name="recurrence_period">annual</field>
+            <field name="membership_period_type">calendar</field>
             <field name="base_annual_fee">150.00</field>
             <field name="requires_approval">False</field>
             <field name="auto_renewal">True</field>
             <field name="voting_rights">False</field>
+            <field name="allow_multiple_active">False</field>
+            <field name="max_active_per_member">1</field>
+            <field name="allow_upgrades">True</field>
+            <field name="allow_downgrades">False</field>
+            <field name="enable_prorating">True</field>
+            <field name="prorate_on_upgrade">True</field>
+            <field name="prorate_on_downgrade">False</field>
+            <field name="upgrade_member_type_ids" eval="[(4, ref('member_type_regular'))]"/>
             <field name="eligibility_criteria">Recent graduates or professionals with less than 2 years experience</field>
             <field name="requires_license">False</field>
             <field name="min_experience_years">0</field>
@@ -61,10 +93,20 @@
             <field name="code">RET</field>
             <field name="description">Reduced-rate membership for retired professionals</field>
             <field name="active">True</field>
+            <field name="product_class">membership</field>
+            <field name="recurrence_period">annual</field>
+            <field name="membership_period_type">calendar</field>
             <field name="base_annual_fee">75.00</field>
             <field name="requires_approval">True</field>
             <field name="auto_renewal">True</field>
             <field name="voting_rights">True</field>
+            <field name="allow_multiple_active">False</field>
+            <field name="max_active_per_member">1</field>
+            <field name="allow_upgrades">False</field>
+            <field name="allow_downgrades">False</field>
+            <field name="enable_prorating">True</field>
+            <field name="prorate_on_upgrade">False</field>
+            <field name="prorate_on_downgrade">False</field>
             <field name="eligibility_criteria">Must have been a member for minimum 10 years and be retired from active practice</field>
             <field name="requires_license">False</field>
             <field name="min_experience_years">10</field>
@@ -78,10 +120,20 @@
             <field name="code">CORP</field>
             <field name="description">Organizational membership for companies and institutions</field>
             <field name="active">True</field>
+            <field name="product_class">membership</field>
+            <field name="recurrence_period">annual</field>
+            <field name="membership_period_type">calendar</field>
             <field name="base_annual_fee">1500.00</field>
             <field name="requires_approval">True</field>
             <field name="auto_renewal">True</field>
             <field name="voting_rights">True</field>
+            <field name="allow_multiple_active">False</field>
+            <field name="max_active_per_member">1</field>
+            <field name="allow_upgrades">False</field>
+            <field name="allow_downgrades">False</field>
+            <field name="enable_prorating">True</field>
+            <field name="prorate_on_upgrade">False</field>
+            <field name="prorate_on_downgrade">False</field>
             <field name="eligibility_criteria">Companies or organizations supporting the profession</field>
             <field name="requires_license">False</field>
             <field name="min_experience_years">0</field>
@@ -95,10 +147,21 @@
             <field name="code">INTL</field>
             <field name="description">Membership for professionals outside the primary region</field>
             <field name="active">True</field>
+            <field name="product_class">membership</field>
+            <field name="recurrence_period">annual</field>
+            <field name="membership_period_type">calendar</field>
             <field name="base_annual_fee">200.00</field>
             <field name="requires_approval">False</field>
             <field name="auto_renewal">True</field>
             <field name="voting_rights">False</field>
+            <field name="allow_multiple_active">False</field>
+            <field name="max_active_per_member">1</field>
+            <field name="allow_upgrades">True</field>
+            <field name="allow_downgrades">True</field>
+            <field name="enable_prorating">True</field>
+            <field name="prorate_on_upgrade">True</field>
+            <field name="prorate_on_downgrade">True</field>
+            <field name="upgrade_member_type_ids" eval="[(4, ref('member_type_regular'))]"/>
             <field name="eligibility_criteria">Licensed professionals practicing outside the primary geographic region</field>
             <field name="requires_license">True</field>
             <field name="min_experience_years">1</field>
@@ -112,15 +175,79 @@
             <field name="code">HON</field>
             <field name="description">Complimentary membership for distinguished individuals</field>
             <field name="active">True</field>
+            <field name="product_class">membership</field>
+            <field name="recurrence_period">annual</field>
+            <field name="membership_period_type">calendar</field>
             <field name="base_annual_fee">0.00</field>
             <field name="requires_approval">True</field>
             <field name="auto_renewal">False</field>
             <field name="voting_rights">True</field>
+            <field name="allow_multiple_active">False</field>
+            <field name="max_active_per_member">1</field>
+            <field name="allow_upgrades">False</field>
+            <field name="allow_downgrades">False</field>
+            <field name="enable_prorating">False</field>
+            <field name="prorate_on_upgrade">False</field>
+            <field name="prorate_on_downgrade">False</field>
             <field name="eligibility_criteria">Distinguished service to the profession, nominated by board</field>
             <field name="requires_license">False</field>
             <field name="min_experience_years">0</field>
             <field name="membership_duration">365</field>
             <field name="sequence">70</field>
+        </record>
+
+        <!-- Example Chapter Membership Type -->
+        <record id="member_type_chapter_local" model="ams.member.type">
+            <field name="name">Local Chapter Membership</field>
+            <field name="code">CHAP</field>
+            <field name="description">Membership in local geographic chapter</field>
+            <field name="active">True</field>
+            <field name="product_class">chapter</field>
+            <field name="recurrence_period">annual</field>
+            <field name="membership_period_type">calendar</field>
+            <field name="base_annual_fee">25.00</field>
+            <field name="requires_approval">False</field>
+            <field name="auto_renewal">True</field>
+            <field name="voting_rights">False</field>
+            <field name="allow_multiple_active">True</field>
+            <field name="max_active_per_member">0</field>
+            <field name="allow_upgrades">False</field>
+            <field name="allow_downgrades">False</field>
+            <field name="enable_prorating">True</field>
+            <field name="prorate_on_upgrade">False</field>
+            <field name="prorate_on_downgrade">False</field>
+            <field name="eligibility_criteria">Must have active primary membership</field>
+            <field name="requires_license">False</field>
+            <field name="min_experience_years">0</field>
+            <field name="membership_duration">365</field>
+            <field name="sequence">80</field>
+        </record>
+
+        <!-- Example Newsletter Subscription -->
+        <record id="member_type_newsletter" model="ams.member.type">
+            <field name="name">Professional Newsletter</field>
+            <field name="code">NEWS</field>
+            <field name="description">Monthly professional newsletter subscription</field>
+            <field name="active">True</field>
+            <field name="product_class">newsletter</field>
+            <field name="recurrence_period">monthly</field>
+            <field name="membership_period_type">rolling</field>
+            <field name="base_annual_fee">120.00</field>
+            <field name="requires_approval">False</field>
+            <field name="auto_renewal">True</field>
+            <field name="voting_rights">False</field>
+            <field name="allow_multiple_active">True</field>
+            <field name="max_active_per_member">0</field>
+            <field name="allow_upgrades">False</field>
+            <field name="allow_downgrades">False</field>
+            <field name="enable_prorating">True</field>
+            <field name="prorate_on_upgrade">False</field>
+            <field name="prorate_on_downgrade">False</field>
+            <field name="eligibility_criteria">Open to all members and non-members</field>
+            <field name="requires_license">False</field>
+            <field name="min_experience_years">0</field>
+            <field name="membership_duration">30</field>
+            <field name="sequence">90</field>
         </record>
 
     </data>

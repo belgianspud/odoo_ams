@@ -20,6 +20,41 @@ class AMSMemberType(models.Model):
     sequence = fields.Integer('Sequence', default=10)
     active = fields.Boolean('Active', default=True, tracking=True)
 
+    # Product Class Configuration
+    product_class = fields.Selection([
+        ('membership', 'Membership'),
+        ('chapter', 'Chapter Membership'),
+        ('subscription', 'Subscription'),
+        ('publication', 'Publication'),
+        ('exhibits', 'Exhibits'),
+        ('advertising', 'Advertising'),
+        ('donations', 'Donations'),
+        ('courses', 'Courses'),
+        ('sponsorship', 'Sponsorship'),
+        ('event_booth', 'Event Booth'),
+        ('newsletter', 'Newsletter'),
+        ('services', 'Services')
+    ], string='Product Class', default='membership', required=True, tracking=True,
+       help="Defines the type of product/service this member type represents")
+
+    # Membership Period Configuration
+    membership_period_type = fields.Selection([
+        ('calendar', 'Calendar Year'),
+        ('anniversary', 'Anniversary'),
+        ('rolling', 'Rolling Period')
+    ], string='Period Type', tracking=True,
+       help="How membership periods are calculated. Leave blank to use system default.")
+    
+    recurrence_period = fields.Selection([
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+        ('semi_annual', 'Semi-Annual'),
+        ('annual', 'Annual'),
+        ('biennial', 'Biennial'),
+        ('one_time', 'One Time')
+    ], string='Recurrence Period', default='annual', tracking=True,
+       help="How often this membership renews")
+
     # Pricing and Duration
     base_annual_fee = fields.Float('Base Annual Fee', default=0.0, tracking=True)
     currency_id = fields.Many2one('res.currency', 'Currency')
@@ -43,6 +78,31 @@ class AMSMemberType(models.Model):
     event_discounts = fields.Boolean('Event Discounts', default=True,
                                     help="Eligible for member event pricing")
 
+    # Multiple Membership Rules
+    allow_multiple_active = fields.Boolean('Allow Multiple Active', 
+                                         help="Allow multiple active memberships of this type per member")
+    max_active_per_member = fields.Integer('Max Active Per Member', default=1,
+                                         help="Maximum active memberships of this type per member (0 = unlimited)")
+    
+    # Upgrade/Downgrade Rules
+    allow_upgrades = fields.Boolean('Allow Upgrades', default=True,
+                                  help="Allow upgrading to higher tier memberships")
+    allow_downgrades = fields.Boolean('Allow Downgrades', default=True,
+                                    help="Allow downgrading to lower tier memberships")
+    upgrade_member_type_ids = fields.Many2many('ams.member.type', 
+                                             'member_type_upgrade_rel',
+                                             'from_type_id', 'to_type_id',
+                                             string='Upgrade Options',
+                                             help="Member types this can be upgraded to")
+
+    # Prorating Configuration
+    enable_prorating = fields.Boolean('Enable Pro-rating', default=True,
+                                     help="Calculate pro-rated pricing for partial periods")
+    prorate_on_upgrade = fields.Boolean('Pro-rate on Upgrade', default=True,
+                                      help="Apply pro-rating when upgrading")
+    prorate_on_downgrade = fields.Boolean('Pro-rate on Downgrade', default=True,
+                                        help="Apply pro-rating when downgrading")
+
     # Eligibility Requirements
     requires_license = fields.Boolean('Requires Professional License', default=False)
     min_experience_years = fields.Integer('Minimum Experience (Years)', default=0)
@@ -55,7 +115,7 @@ class AMSMemberType(models.Model):
     reference_letters_required = fields.Integer('Reference Letters Required', default=0)
     interview_required = fields.Boolean('Interview Required', default=False)
 
-    # Approval Workflow - Changed to Char field to avoid missing model reference
+    # Approval Workflow
     approval_committee_id = fields.Char('Approval Committee', 
                                        help="Committee responsible for approvals (free text for now)")
     approval_voting_required = fields.Boolean('Approval Voting Required', default=False)
@@ -70,6 +130,12 @@ class AMSMemberType(models.Model):
                                help="0 = unlimited")
     waiting_list_enabled = fields.Boolean('Waiting List Enabled', default=False)
     renewal_restrictions = fields.Text('Renewal Restrictions')
+
+    # Product Integration
+    default_product_id = fields.Many2one('product.template', 'Default Product',
+                                       help="Default product for this member type")
+    auto_create_product = fields.Boolean('Auto Create Product', default=False,
+                                       help="Automatically create product when member type is created")
 
     # Rich Text Fields
     eligibility_criteria = fields.Html('Eligibility Criteria',
@@ -141,7 +207,7 @@ class AMSMemberType(models.Model):
 
     @api.model
     def create(self, vals):
-        """Override create to handle validations"""
+        """Override create to handle validations and auto-create product"""
         # Ensure code is uppercase
         if 'code' in vals and vals['code']:
             vals['code'] = vals['code'].upper()
@@ -150,7 +216,13 @@ class AMSMemberType(models.Model):
         if 'currency_id' not in vals or not vals['currency_id']:
             vals['currency_id'] = self._get_default_currency_id()
         
-        return super().create(vals)
+        member_type = super().create(vals)
+        
+        # Auto-create product if enabled
+        if member_type.auto_create_product:
+            member_type._create_default_product()
+        
+        return member_type
 
     def write(self, vals):
         """Override write to handle validations"""
@@ -159,6 +231,33 @@ class AMSMemberType(models.Model):
             vals['code'] = vals['code'].upper()
         
         return super().write(vals)
+
+    def _create_default_product(self):
+        """Create default product for this member type"""
+        self.ensure_one()
+        
+        if self.default_product_id:
+            return self.default_product_id
+        
+        product_vals = {
+            'name': f"{self.name} - {self.get_product_class_display()}",
+            'type': 'service',
+            'is_subscription_product': True,
+            'product_class': self.product_class,
+            'member_type_id': self.id,
+            'list_price': self.base_annual_fee,
+            'recurrence_period': self.recurrence_period,
+            'membership_period_type': self.membership_period_type,
+            'membership_duration': self.membership_duration,
+        }
+        
+        try:
+            product = self.env['product.template'].create(product_vals)
+            self.default_product_id = product.id
+            return product
+        except Exception as e:
+            _logger.warning(f"Failed to create default product for member type {self.name}: {str(e)}")
+            return False
 
     def name_get(self):
         """Custom name_get to show code in parentheses"""
@@ -213,6 +312,27 @@ class AMSMemberType(models.Model):
             }
         }
 
+    def action_create_default_product(self):
+        """Manually create default product"""
+        self.ensure_one()
+        
+        if self.default_product_id:
+            raise UserError(_("Default product already exists for this member type."))
+        
+        product = self._create_default_product()
+        if product:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Success'),
+                    'message': _('Default product created successfully.'),
+                    'type': 'success'
+                }
+            }
+        else:
+            raise UserError(_("Failed to create default product."))
+
     def check_eligibility(self, partner):
         """Check if a partner is eligible for this member type"""
         self.ensure_one()
@@ -249,6 +369,36 @@ class AMSMemberType(models.Model):
 
         return errors
 
+    def check_multiple_membership_rules(self, partner):
+        """Check if partner can have multiple memberships of this type"""
+        self.ensure_one()
+        
+        if self.allow_multiple_active:
+            if self.max_active_per_member > 0:
+                # Check current count for this member type
+                current_count = self.env['ams.membership.base'].search_count([
+                    ('partner_id', '=', partner.id),
+                    ('member_type_id', '=', self.id),
+                    ('state', '=', 'active')
+                ])
+                
+                if current_count >= self.max_active_per_member:
+                    return False, _("Maximum number of active memberships of this type reached.")
+            
+            return True, _("Multiple memberships allowed.")
+        else:
+            # Check if partner has any active membership of this type
+            existing = self.env['ams.membership.base'].search([
+                ('partner_id', '=', partner.id),
+                ('member_type_id', '=', self.id),
+                ('state', '=', 'active')
+            ], limit=1)
+            
+            if existing:
+                return False, _("Member already has an active membership of this type.")
+            
+            return True, _("No conflicts found.")
+
     def get_effective_grace_period(self):
         """Get effective grace period days (override or system default)"""
         self.ensure_one()
@@ -258,14 +408,32 @@ class AMSMemberType(models.Model):
             settings = self.env['ams.settings'].search([('active', '=', True)], limit=1)
             return settings.grace_period_days if settings else 30
 
+    def get_effective_membership_period_type(self):
+        """Get effective membership period type (override or system default)"""
+        self.ensure_one()
+        if self.membership_period_type:
+            return self.membership_period_type
+        else:
+            settings = self.env['ams.settings'].search([('active', '=', True)], limit=1)
+            return settings.default_membership_period_type if settings else 'calendar'
+
     def calculate_membership_end_date(self, start_date=None):
-        """Calculate membership end date based on duration"""
+        """Calculate membership end date based on duration and period type"""
         self.ensure_one()
         if not start_date:
             start_date = fields.Date.today()
         
-        from datetime import timedelta
-        return start_date + timedelta(days=self.membership_duration)
+        settings = self.env['ams.settings'].search([('active', '=', True)], limit=1)
+        if settings:
+            return settings.calculate_membership_end_date(
+                start_date, 
+                self.get_effective_membership_period_type(),
+                self.membership_duration
+            )
+        else:
+            # Fallback calculation
+            from datetime import timedelta
+            return start_date + timedelta(days=self.membership_duration)
 
     def get_pricing_info(self):
         """Get formatted pricing information"""
@@ -275,6 +443,19 @@ class AMSMemberType(models.Model):
         else:
             currency_symbol = self.currency_id.symbol if self.currency_id else "$"
             return f"{currency_symbol}{self.base_annual_fee:,.2f}"
+
+    def get_recurrence_display(self):
+        """Get user-friendly recurrence display"""
+        self.ensure_one()
+        recurrence_map = {
+            'monthly': _('Monthly'),
+            'quarterly': _('Quarterly'),
+            'semi_annual': _('Semi-Annual'),
+            'annual': _('Annual'),
+            'biennial': _('Biennial'),
+            'one_time': _('One Time')
+        }
+        return recurrence_map.get(self.recurrence_period, self.recurrence_period)
 
     def toggle_active(self):
         """Toggle active status with validation"""
@@ -352,6 +533,13 @@ class AMSMemberType(models.Model):
             if record.max_members < 0:
                 raise ValidationError(_("Maximum members cannot be negative. Use 0 for unlimited."))
 
+    @api.constrains('max_active_per_member')
+    def _check_max_active_per_member(self):
+        """Validate max active per member"""
+        for record in self:
+            if record.max_active_per_member < 0:
+                raise ValidationError(_("Max active per member cannot be negative. Use 0 for unlimited."))
+
     @api.constrains('reference_letters_required')
     def _check_reference_letters(self):
         """Validate reference letters required"""
@@ -361,12 +549,19 @@ class AMSMemberType(models.Model):
             if record.reference_letters_required > 10:
                 raise ValidationError(_("Reference letters required seems excessive (>10)."))
 
+    @api.constrains('upgrade_member_type_ids')
+    def _check_upgrade_circular_reference(self):
+        """Prevent circular upgrade references"""
+        for record in self:
+            if record.id in record.upgrade_member_type_ids.ids:
+                raise ValidationError(_("Member type cannot upgrade to itself."))
+
     def copy(self, default=None):
         """Override copy to handle unique code"""
         if default is None:
             default = {}
         if 'code' not in default:
-            default['code'] = _("%s (copy)") % self.code
+            default['code'] = _("%s_COPY") % self.code
         if 'name' not in default:
             default['name'] = _("%s (copy)") % self.name
         return super().copy(default)
