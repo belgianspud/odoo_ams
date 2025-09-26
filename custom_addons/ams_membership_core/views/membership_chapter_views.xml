@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Chapter Membership List View -->
+        <record id="view_membership_chapter_list" model="ir.ui.view">
+            <field name="name">ams.membership.chapter.list</field>
+            <field name="model">ams.membership.chapter</field>
+            <field name="inherit_id" ref="view_membership_base_list"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='auto_renewal']" position="after">
+                    <field name="chapter_code"/>
+                    <field name="chapter_name"/>
+                    <field name="chapter_location"/>
+                    <field name="leadership_role"/>
+                    <field name="local_voting_rights"/>
+                    <field name="primary_membership_id"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Chapter Membership Form View -->
+        <record id="view_membership_chapter_form" model="ir.ui.view">
+            <field name="name">ams.membership.chapter.form</field>
+            <field name="model">ams.membership.chapter</field>
+            <field name="inherit_id" ref="view_membership_base_form"/>
+            <field name="arch" type="xml">
+                
+                <!-- Add chapter-specific buttons -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_primary_membership" type="object" 
+                            class="oe_stat_button" icon="fa-user"
+                            string="Primary Membership"
+                            invisible="not primary_membership_id"/>
+                    <button name="action_record_meeting_attendance" type="object" 
+                            class="oe_stat_button" icon="fa-calendar-check-o"
+                            string="Record Attendance"
+                            invisible="state not in ['active', 'grace']"
+                            groups="ams_foundation.group_ams_staff"/>
+                    <button name="action_update_leadership_role" type="object" 
+                            class="oe_stat_button" icon="fa-star"
+                            string="Update Role"
+                            invisible="state not in ['active', 'grace']"
+                            groups="ams_foundation.group_ams_manager"/>
+                </xpath>
+
+                <!-- Add chapter-specific fields -->
+                <xpath expr="//group[2]/group[2]" position="after">
+                    <group string="Chapter Information">
+                        <field name="chapter_code"/>
+                        <field name="chapter_name"/>
+                        <field name="chapter_location"/>
+                        <field name="primary_membership_id" required="True"/>
+                    </group>
+                </xpath>
+
+                <!-- Replace configuration group -->
+                <xpath expr="//group[string='Configuration']" position="replace">
+                    <group string="Chapter Benefits">
+                        <field name="local_voting_rights"/>
+                        <field name="committee_access"/>
+                        <field name="local_event_access"/>
+                        <field name="newsletter_subscription"/>
+                    </group>
+                </xpath>
+
+                <!-- Add chapter-specific pages -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Leadership &amp; Involvement" name="leadership">
+                        <group>
+                            <group string="Leadership Role">
+                                <field name="leadership_role"/>
+                                <field name="committee_memberships"/>
+                                <field name="volunteer_hours"/>
+                            </group>
+                            <group string="Chapter Dues">
+                                <field name="chapter_dues"/>
+                                <field name="dues_paid_separately"/>
+                            </group>
+                        </group>
+                    </page>
+                    
+                    <page string="Meeting Participation" name="meetings">
+                        <group>
+                            <group string="Attendance Statistics">
+                                <field name="meeting_attendance_rate" widget="percentage"/>
+                                <field name="last_meeting_attended"/>
+                                <field name="total_meetings_attended"/>
+                            </group>
+                            <group string="Actions">
+                                <button name="action_record_meeting_attendance" 
+                                        string="Record Meeting Attendance" 
+                                        type="object" class="btn-primary"
+                                        groups="ams_foundation.group_ams_staff"/>
+                            </group>
+                        </group>
+                    </page>
+                    
+                    <page string="Chapter Activities" name="activities">
+                        <group>
+                            <button name="action_view_chapter_activities" 
+                                    string="View Chapter Activities" 
+                                    type="object" class="btn-secondary"/>
+                            <p class="text-muted">
+                                Chapter activities and events will be available when the 
+                                ams_chapters module is installed.
+                            </p>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Chapter Membership Search View -->
+        <record id="view_membership_chapter_search" model="ir.ui.view">
+            <field name="name">ams.membership.chapter.search</field>
+            <field name="model">ams.membership.chapter</field>
+            <field name="inherit_id" ref="view_membership_base_search"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='member_type_id']" position="after">
+                    <field name="chapter_code"/>
+                    <field name="chapter_name"/>
+                    <field name="chapter_location"/>
+                    <field name="leadership_role"/>
+                    <field name="primary_membership_id"/>
+                </xpath>
+                
+                <xpath expr="//filter[@name='renewals']" position="after">
+                    <separator/>
+                    <filter string="Local Voting Rights" name="local_voting" 
+                            domain="[('local_voting_rights', '=', True)]"/>
+                    <filter string="Committee Access" name="committee_access" 
+                            domain="[('committee_access', '=', True)]"/>
+                    <filter string="Leadership Roles" name="leadership" 
+                            domain="[('leadership_role', '!=', 'member')]"/>
+                    <filter string="Board Members" name="board_members" 
+                            domain="[('leadership_role', 'in', ['board', 'officer', 'president'])]"/>
+                    <filter string="High Attendance" name="high_attendance" 
+                            domain="[('meeting_attendance_rate', '>', 75)]"/>
+                </xpath>
+                
+                <xpath expr="//filter[@name='group_end_month']" position="after">
+                    <filter string="Chapter" name="group_chapter" 
+                            domain="[]" context="{'group_by': 'chapter_name'}"/>
+                    <filter string="Chapter Location" name="group_location" 
+                            domain="[]" context="{'group_by': 'chapter_location'}"/>
+                    <filter string="Leadership Role" name="group_leadership" 
+                            domain="[]" context="{'group_by': 'leadership_role'}"/>
+                    <filter string="Primary Membership" name="group_primary" 
+                            domain="[]" context="{'group_by': 'primary_membership_id'}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Chapter Membership Kanban View -->
+        <record id="view_membership_chapter_kanban" model="ir.ui.view">
+            <field name="name">ams.membership.chapter.kanban</field>
+            <field name="model">ams.membership.chapter</field>
+            <field name="inherit_id" ref="view_membership_base_kanban"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='paid_amount']" position="after">
+                    <field name="chapter_name"/>
+                    <field name="chapter_location"/>
+                    <field name="leadership_role"/>
+                    <field name="local_voting_rights"/>
+                    <field name="meeting_attendance_rate"/>
+                </xpath>
+                
+                <xpath expr="//div[@class='row'][last()]" position="after">
+                    <div class="row">
+                        <div class="col-8">
+                            <strong><t t-esc="record.chapter_name.value"/></strong>
+                        </div>
+                        <div class="col-4 text-right">
+                            <t t-if="record.local_voting_rights.raw_value">
+                                <span class="badge badge-success">Voting</span>
+                            </t>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <small>
+                                <i class="fa fa-map-marker"/> 
+                                <t t-esc="record.chapter_location.value"/>
+                            </small>
+                        </div>
+                        <div class="col-6 text-right">
+                            <span class="badge badge-info">
+                                <t t-esc="record.leadership_role.value"/>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row" t-if="record.meeting_attendance_rate.raw_value > 0">
+                        <div class="col-12">
+                            <small>
+                                Attendance: <t t-esc="record.meeting_attendance_rate.value"/>%
+                            </small>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Chapter Membership Action (already referenced in menu_views.xml) -->
+        <record id="action_membership_chapter" model="ir.actions.act_window">
+            <field name="name">Chapter Memberships</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership.chapter</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No chapter memberships found
+                </p>
+                <p>
+                    Chapter memberships provide local networking and professional 
+                    development opportunities in specific geographic regions.
+                    Each chapter membership requires an active primary association membership.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

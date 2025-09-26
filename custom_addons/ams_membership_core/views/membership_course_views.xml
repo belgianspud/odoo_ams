@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Course Membership List View -->
+        <record id="view_membership_course_list" model="ir.ui.view">
+            <field name="name">ams.membership.course.list</field>
+            <field name="model">ams.membership.course</field>
+            <field name="inherit_id" ref="view_membership_base_list"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='auto_renewal']" position="after">
+                    <field name="course_type"/>
+                    <field name="course_level"/>
+                    <field name="completion_status"/>
+                    <field name="progress_percentage" widget="percentage"/>
+                    <field name="passed"/>
+                    <field name="certificate_issued"/>
+                    <field name="ce_credits_earned"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Course Membership Form View -->
+        <record id="view_membership_course_form" model="ir.ui.view">
+            <field name="name">ams.membership.course.form</field>
+            <field name="model">ams.membership.course</field>
+            <field name="inherit_id" ref="view_membership_base_form"/>
+            <field name="arch" type="xml">
+                
+                <!-- Add course-specific buttons -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_start_course" type="object" 
+                            class="oe_stat_button" icon="fa-play"
+                            string="Start Course"
+                            invisible="completion_status != 'not_started'"
+                            groups="ams_foundation.group_ams_staff"/>
+                    <button name="action_access_course" type="object" 
+                            class="oe_stat_button" icon="fa-external-link"
+                            string="Access Course"
+                            invisible="state not in ['active', 'grace']"/>
+                    <button name="action_submit_assessment" type="object" 
+                            class="oe_stat_button" icon="fa-pencil"
+                            string="Submit Assessment"
+                            invisible="not assessment_required or completion_status != 'in_progress'"
+                            groups="ams_foundation.group_ams_staff"/>
+                    <button name="action_issue_certificate" type="object" 
+                            class="oe_stat_button" icon="fa-certificate"
+                            string="Issue Certificate"
+                            invisible="not passed or certificate_issued"
+                            groups="ams_foundation.group_ams_staff"/>
+                    <button name="action_view_transcript" type="object" 
+                            class="oe_stat_button" icon="fa-file-text"
+                            string="View Transcript"
+                            invisible="completion_status == 'not_started'"/>
+                </xpath>
+
+                <!-- Add course-specific fields -->
+                <xpath expr="//group[2]/group[2]" position="after">
+                    <group string="Course Details">
+                        <field name="course_type"/>
+                        <field name="course_level"/>
+                        <field name="course_category"/>
+                        <field name="total_duration_hours"/>
+                    </group>
+                </xpath>
+
+                <!-- Replace configuration group -->
+                <xpath expr="//group[string='Configuration']" position="replace">
+                    <group string="Course Configuration">
+                        <field name="auto_renewal" invisible="True"/>
+                        <field name="requires_approval" readonly="True"/>
+                        <field name="assessment_required"/>
+                        <field name="passing_score" invisible="not assessment_required"/>
+                        <field name="max_attempts" invisible="not assessment_required"/>
+                    </group>
+                </xpath>
+
+                <!-- Add course-specific pages -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Progress &amp; Completion" name="progress">
+                        <group>
+                            <group string="Progress Tracking">
+                                <field name="enrollment_date"/>
+                                <field name="first_access_date" readonly="True"/>
+                                <field name="last_access_date" readonly="True"/>
+                                <field name="completion_date" readonly="True"/>
+                                <field name="estimated_completion_time"/>
+                            </group>
+                            <group string="Course Progress">
+                                <field name="completion_status"/>
+                                <field name="progress_percentage" widget="percentage"/>
+                                <field name="modules_completed"/>
+                                <field name="total_modules"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <group string="Assessment Results" invisible="not assessment_required">
+                                <field name="number_of_attempts" readonly="True"/>
+                                <field name="final_score" readonly="True" widget="percentage"/>
+                                <field name="passed" readonly="True"/>
+                            </group>
+                            <group string="Course Access">
+                                <field name="access_start_date"/>
+                                <field name="access_end_date"/>
+                                <field name="access_duration_days"/>
+                            </group>
+                        </group>
+                    </page>
+                    
+                    <page string="Continuing Education" name="ce_credits">
+                        <group>
+                            <group string="CE Credits">
+                                <field name="ce_credits_available"/>
+                                <field name="ce_credits_earned" readonly="True"/>
+                                <field name="ce_provider"/>
+                                <field name="ce_approval_number"/>
+                            </group>
+                            <group string="Certification">
+                                <field name="certificate_issued" readonly="True"/>
+                                <field name="certificate_number" readonly="True"/>
+                                <field name="certificate_issue_date" readonly="True"/>
+                                <field name="certificate_expiry_date" readonly="True"/>
+                            </group>
+                        </group>
+                    </page>
+                    
+                    <page string="Course Content &amp; Access" name="content">
+                        <group>
+                            <group string="Learning Platform">
+                                <field name="learning_platform"/>
+                                <field name="access_url" widget="url"/>
+                                <field name="login_credentials" groups="ams_foundation.group_ams_staff"/>
+                            </group>
+                            <group string="Instructor &amp; Support">
+                                <field name="instructor_id"/>
+                                <field name="instructor_email" readonly="True"/>
+                                <field name="support_contact"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <group string="Course Materials">
+                                <field name="materials_included"/>
+                                <field name="prerequisites"/>
+                                <field name="learning_objectives"/>
+                            </group>
+                            <group string="Course Features">
+                                <field name="discussion_forum_access"/>
+                                <field name="peer_networking_enabled"/>
+                                <field name="study_group_access"/>
+                            </group>
+                        </group>
+                    </page>
+                    
+                    <page string="Feedback &amp; Evaluation" name="feedback">
+                        <group>
+                            <group string="Course Rating">
+                                <field name="course_rating" readonly="True" widget="percentage"/>
+                                <field name="instructor_rating" readonly="True" widget="percentage"/>
+                                <field name="feedback_provided" readonly="True"/>
+                            </group>
+                            <group string="Actions">
+                                <button name="action_provide_feedback" 
+                                        string="Provide Course Feedback" 
+                                        type="object" class="btn-primary"
+                                        invisible="completion_status == 'not_started'"/>
+                                <button name="action_extend_access" 
+                                        string="Extend Course Access" 
+                                        type="object" class="btn-secondary"
+                                        groups="ams_foundation.group_ams_staff"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Course Membership Search View -->
+        <record id="view_membership_course_search" model="ir.ui.view">
+            <field name="name">ams.membership.course.search</field>
+            <field name="model">ams.membership.course</field>
+            <field name="inherit_id" ref="view_membership_base_search"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='member_type_id']" position="after">
+                    <field name="course_type"/>
+                    <field name="course_level"/>
+                    <field name="course_category"/>
+                    <field name="completion_status"/>
+                    <field name="instructor_id"/>
+                </xpath>
+                
+                <xpath expr="//filter[@name='renewals']" position="after">
+                    <separator/>
+                    <filter string="Not Started" name="not_started" 
+                            domain="[('completion_status', '=', 'not_started')]"/>
+                    <filter string="In Progress" name="in_progress" 
+                            domain="[('completion_status', '=', 'in_progress')]"/>
+                    <filter string="Completed" name="completed" 
+                            domain="[('completion_status', '=', 'completed')]"/>
+                    <filter string="Passed" name="passed" 
+                            domain="[('passed', '=', True)]"/>
+                    <filter string="Certificate Issued" name="certificate_issued" 
+                            domain="[('certificate_issued', '=', True)]"/>
+                    <filter string="CE Credits Available" name="ce_credits" 
+                            domain="[('ce_credits_available', '>', 0)]"/>
+                    <filter string="Assessment Required" name="assessment_required" 
+                            domain="[('assessment_required', '=', True)]"/>
+                    <filter string="Access Expiring Soon" name="access_expiring" 
+                            domain="[('access_end_date', '&lt;=', (context_today() + datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                </xpath>
+                
+                <xpath expr="//filter[@name='group_end_month']" position="after">
+                    <filter string="Course Type" name="group_course_type" 
+                            domain="[]" context="{'group_by': 'course_type'}"/>
+                    <filter string="Course Level" name="group_course_level" 
+                            domain="[]" context="{'group_by': 'course_level'}"/>
+                    <filter string="Course Category" name="group_course_category" 
+                            domain="[]" context="{'group_by': 'course_category'}"/>
+                    <filter string="Completion Status" name="group_completion" 
+                            domain="[]" context="{'group_by': 'completion_status'}"/>
+                    <filter string="Instructor" name="group_instructor" 
+                            domain="[]" context="{'group_by': 'instructor_id'}"/>
+                    <filter string="Learning Platform" name="group_platform" 
+                            domain="[]" context="{'group_by': 'learning_platform'}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Course Membership Kanban View -->
+        <record id="view_membership_course_kanban" model="ir.ui.view">
+            <field name="name">ams.membership.course.kanban</field>
+            <field name="model">ams.membership.course</field>
+            <field name="inherit_id" ref="view_membership_base_kanban"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='paid_amount']" position="after">
+                    <field name="course_type"/>
+                    <field name="course_level"/>
+                    <field name="completion_status"/>
+                    <field name="progress_percentage"/>
+                    <field name="passed"/>
+                    <field name="certificate_issued"/>
+                    <field name="ce_credits_available"/>
+                    <field name="access_end_date"/>
+                </xpath>
+                
+                <xpath expr="//div[@class='row'][last()]" position="after">
+                    <div class="row">
+                        <div class="col-6">
+                            <span class="badge badge-info">
+                                <t t-esc="record.course_type.value"/>
+                            </span>
+                        </div>
+                        <div class="col-6 text-right">
+                            <span class="badge badge-secondary">
+                                <t t-esc="record.course_level.value"/>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-8">
+                            <span t-attf-class="badge badge-pill badge-#{record.completion_status.raw_value === 'completed' ? 'success' : record.completion_status.raw_value === 'in_progress' ? 'primary' : 'secondary'}">
+                                <t t-esc="record.completion_status.value"/>
+                            </span>
+                        </div>
+                        <div class="col-4 text-right">
+                            <t t-if="record.certificate_issued.raw_value">
+                                <span class="badge badge-warning">
+                                    <i class="fa fa-certificate"/> Cert
+                                </span>
+                            </t>
+                        </div>
+                    </div>
+                    <div class="row" t-if="record.progress_percentage.raw_value > 0">
+                        <div class="col-12">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" 
+                                     t-attf-style="width: #{record.progress_percentage.value}%"
+                                     t-attf-title="Progress: #{record.progress_percentage.value}%"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" t-if="record.ce_credits_available.raw_value > 0">
+                        <div class="col-12">
+                            <small>
+                                <i class="fa fa-graduation-cap"/> 
+                                <t t-esc="record.ce_credits_available.value"/> CE Credits
+                            </small>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Course Membership Action (already referenced in menu_views.xml) -->
+        <record id="action_membership_course" model="ir.actions.act_window">
+            <field name="name">Courses &amp; Training</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership.course</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No course enrollments found
+                </p>
+                <p>
+                    Track member enrollments in educational courses, training programs,
+                    and certification preparation. Monitor progress, issue certificates,
+                    and award continuing education credits.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

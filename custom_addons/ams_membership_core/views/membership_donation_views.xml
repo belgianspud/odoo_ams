@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Donation Membership List View -->
+        <record id="view_membership_donation_list" model="ir.ui.view">
+            <field name="name">ams.membership.donation.list</field>
+            <field name="model">ams.membership.donation</field>
+            <field name="inherit_id" ref="view_membership_base_list"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='auto_renewal']" position="after">
+                    <field name="donation_type"/>
+                    <field name="donation_amount" widget="monetary"/>
+                    <field name="total_donated" widget="monetary"/>
+                    <field name="payments_made"/>
+                    <field name="donor_recognition_level"/>
+                    <field name="pledge_balance" widget="monetary"/>
+                    <field name="is_memorial_gift"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Donation Membership Form View -->
+        <record id="view_membership_donation_form" model="ir.ui.view">
+            <field name="name">ams.membership.donation.form</field>
+            <field name="model">ams.membership.donation</field>
+            <field name="inherit_id" ref="view_membership_base_form"/>
+            <field name="arch" type="xml">
+                
+                <!-- Add donation-specific buttons -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_send_thank_you" type="object" 
+                            class="oe_stat_button" icon="fa-heart"
+                            string="Send Thank You"
+                            invisible="thank_you_sent"
+                            groups="ams_foundation.group_ams_staff"/>
+                    <button name="action_generate_receipt" type="object" 
+                            class="oe_stat_button" icon="fa-file-pdf-o"
+                            string="Tax Receipt"
+                            invisible="not tax_deductible"/>
+                    <button name="action_record_pledge_payment" type="object" 
+                            class="oe_stat_button" icon="fa-money"
+                            string="Record Payment"
+                            invisible="pledge_balance &lt;= 0"
+                            groups="ams_foundation.group_ams_staff"/>
+                    <button name="action_submit_matching_gift" type="object" 
+                            class="oe_stat_button" icon="fa-building"
+                            string="Submit Matching"
+                            invisible="not employer_matching or matching_gift_submitted"
+                            groups="ams_foundation.group_ams_staff"/>
+                    <button name="action_donor_profile" type="object" 
+                            class="oe_stat_button" icon="fa-user-circle"
+                            string="Donor Profile"/>
+                </xpath>
+
+                <!-- Add donation-specific fields -->
+                <xpath expr="//group[2]/group[2]" position="after">
+                    <group string="Donation Details">
+                        <field name="donation_type"/>
+                        <field name="donation_amount" widget="monetary"/>
+                        <field name="gift_type"/>
+                        <field name="donor_recognition_level"/>
+                    </group>
+                </xpath>
+
+                <!-- Replace configuration group -->
+                <xpath expr="//group[string='Configuration']" position="replace">
+                    <group string="Donation Configuration">
+                        <field name="auto_renewal"/>
+                        <field name="tax_deductible"/>
+                        <field name="receipt_required"/>
+                        <field name="receipt_delivery" invisible="not receipt_required"/>
+                    </group>
+                </xpath>
+
+                <!-- Add donation-specific pages -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Donation Summary" name="summary">
+                        <group>
+                            <group string="Donation Statistics">
+                                <field name="total_donated" widget="monetary"/>
+                                <field name="payments_made"/>
+                                <field name="thank_you_sent" readonly="True"/>
+                                <field name="thank_you_date" readonly="True" invisible="not thank_you_sent"/>
+                                <field name="impact_report_sent" readonly="True"/>
+                            </group>
+                            <group string="Pledge Information" invisible="not pledge_amount">
+                                <field name="pledge_amount" widget="monetary"/>
+                                <field name="pledge_fulfilled" widget="monetary"/>
+                                <field name="pledge_balance" widget="monetary"/>
+                                <field name="pledge_end_date"/>
+                            </group>
+                        </group>
+                    </page>
+                    
+                    <page string="Recognition &amp; Acknowledgment" name="recognition">
+                        <group>
+                            <group string="Recognition Settings">
+                                <field name="public_recognition"/>
+                                <field name="recognition_name" invisible="not public_recognition"/>
+                                <field name="donor_recognition_level"/>
+                            </group>
+                            <group string="Stewardship">
+                                <field name="stewardship_level"/>
+                                <field name="donor_relations_contact"/>
+                                <field name="giving_circle_member"/>
+                                <field name="board_invited"/>
+                                <field name="special_events_invited"/>
+                                <field name="behind_scenes_access"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <group string="Communication Preferences">
+                                <field name="communication_preferences"/>
+                            </group>
+                            <group string="Special Programs">
+                                <field name="is_memorial_gift"/>
+                                <field name="memorial_honoree" invisible="not is_memorial_gift"/>
+                                <field name="is_tribute_gift"/>
+                                <field name="tribute_honoree" invisible="not is_tribute_gift"/>
+                                <field name="notification_contact" 
+                                       invisible="not is_memorial_gift and not is_tribute_gift"/>
+                            </group>
+                        </group>
+                    </page>
+                    
+                    <page string="Matching Gifts" name="matching">
+                        <group>
+                            <group string="Employer Matching">
+                                <field name="employer_matching"/>
+                                <field name="matching_gift_employer" invisible="not employer_matching"/>
+                                <field name="expected_matching_amount" widget="monetary" 
+                                       invisible="not employer_matching"/>
+                            </group>
+                            <group string="Matching Status">
+                                <field name="matching_gift_submitted" readonly="True"/>
+                                <button name="action_submit_matching_gift" 
+                                        string="Submit Matching Gift Request" 
+                                        type="object" class="btn-primary"
+                                        invisible="not employer_matching or matching_gift_submitted"
+                                        groups="ams_foundation.group_ams_staff"/>
+                            </group>
+                        </group>
+                    </page>
+                    
+                    <page string="Impact &amp; Purpose" name="impact">
+                        <group>
+                            <group string="Donation Purpose">
+                                <field name="donation_designation"/>
+                                <field name="impact_category"/>
+                            </group>
+                            <group string="Campaign Information">
+                                <field name="campaign_id"/>
+                                <field name="solicitation_method"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <group string="Impact Tracking">
+                                <field name="impact_metrics"/>
+                                <field name="success_stories"/>
+                            </group>
+                            <group string="Actions">
+                                <button name="action_send_impact_report" 
+                                        string="Send Impact Report" 
+                                        type="object" class="btn-primary"
+                                        groups="ams_foundation.group_ams_staff"/>
+                                <button name="action_update_stewardship" 
+                                        string="Update Stewardship" 
+                                        type="object" class="btn-secondary"
+                                        groups="ams_foundation.group_ams_manager"/>
+                            </group>
+                        </group>
+                    </page>
+                    
+                    <page string="Donation History" name="history">
+                        <group>
+                            <button name="action_donation_history" 
+                                    string="View Full Donation History" 
+                                    type="object" class="btn-secondary"/>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Donation Membership Search View -->
+        <record id="view_membership_donation_search" model="ir.ui.view">
+            <field name="name">ams.membership.donation.search</field>
+            <field name="model">ams.membership.donation</field>
+            <field name="inherit_id" ref="view_membership_base_search"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='member_type_id']" position="after">
+                    <field name="donation_type"/>
+                    <field name="donor_recognition_level"/>
+                    <field name="stewardship_level"/>
+                    <field name="gift_type"/>
+                    <field name="campaign_id"/>
+                    <field name="solicitation_method"/>
+                </xpath>
+                
+                <xpath expr="//filter[@name='renewals']" position="after">
+                    <separator/>
+                    <filter string="General Fund" name="general_fund" 
+                            domain="[('donation_type', '=', 'general')]"/>
+                    <filter string="Scholarship Fund" name="scholarship_fund" 
+                            domain="[('donation_type', '=', 'scholarship')]"/>
+                    <filter string="Memorial Gifts" name="memorial_gifts" 
+                            domain="[('is_memorial_gift', '=', True)]"/>
+                    <filter string="Tribute Gifts" name="tribute_gifts" 
+                            domain="[('is_tribute_gift', '=', True)]"/>
+                    <filter string="Tax Deductible" name="tax_deductible" 
+                            domain="[('tax_deductible', '=', True)]"/>
+                    <filter string="Major Donors" name="major_donors" 
+                            domain="[('donor_recognition_level', 'in', ['major_donor', 'legacy_circle', 'founders_circle'])]"/>
+                    <filter string="Employer Matching" name="employer_matching" 
+                            domain="[('employer_matching', '=', True)]"/>
+                    <filter string="Outstanding Pledges" name="outstanding_pledges" 
+                            domain="[('pledge_balance', '>', 0)]"/>
+                    <filter string="Thank You Pending" name="thank_you_pending" 
+                            domain="[('thank_you_sent', '=', False)]"/>
+                    <filter string="Giving Circle" name="giving_circle" 
+                            domain="[('giving_circle_member', '=', True)]"/>
+                </xpath>
+                
+                <xpath expr="//filter[@name='group_end_month']" position="after">
+                    <filter string="Donation Type" name="group_donation_type" 
+                            domain="[]" context="{'group_by': 'donation_type'}"/>
+                    <filter string="Recognition Level" name="group_recognition" 
+                            domain="[]" context="{'group_by': 'donor_recognition_level'}"/>
+                    <filter string="Stewardship Level" name="group_stewardship" 
+                            domain="[]" context="{'group_by': 'stewardship_level'}"/>
+                    <filter string="Gift Type" name="group_gift_type" 
+                            domain="[]" context="{'group_by': 'gift_type'}"/>
+                    <filter string="Campaign" name="group_campaign" 
+                            domain="[]" context="{'group_by': 'campaign_id'}"/>
+                    <filter string="Solicitation Method" name="group_solicitation" 
+                            domain="[]" context="{'group_by': 'solicitation_method'}"/>
+                    <filter string="Impact Category" name="group_impact" 
+                            domain="[]" context="{'group_by': 'impact_category'}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Donation Membership Kanban View -->
+        <record id="view_membership_donation_kanban" model="ir.ui.view">
+            <field name="name">ams.membership.donation.kanban</field>
+            <field name="model">ams.membership.donation</field>
+            <field name="inherit_id" ref="view_membership_base_kanban"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='paid_amount']" position="after">
+                    <field name="donation_type"/>
+                    <field name="donation_amount"/>
+                    <field name="total_donated"/>
+                    <field name="donor_recognition_level"/>
+                    <field name="is_memorial_gift"/>
+                    <field name="is_tribute_gift"/>
+                    <field name="thank_you_sent"/>
+                    <field name="pledge_balance"/>
+                </xpath>
+                
+                <xpath expr="//div[@class='row'][last()]" position="after">
+                    <div class="row">
+                        <div class="col-8">
+                            <span class="badge badge-info">
+                                <t t-esc="record.donation_type.value"/>
+                            </span>
+                        </div>
+                        <div class="col-4 text-right">
+                            <t t-if="record.is_memorial_gift.raw_value">
+                                <span class="badge badge-secondary">Memorial</span>
+                            </t>
+                            <t t-if="record.is_tribute_gift.raw_value">
+                                <span class="badge badge-secondary">Tribute</span>
+                            </t>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <small>
+                                Total: $<t t-esc="record.total_donated.value"/>
+                            </small>
+                        </div>
+                        <div class="col-6 text-right">
+                            <span t-attf-class="badge badge-pill badge-#{record.donor_recognition_level.raw_value === 'founders_circle' ? 'warning' : record.donor_recognition_level.raw_value === 'major_donor' ? 'info' : 'secondary'}">
+                                <t t-esc="record.donor_recognition_level.value"/>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row" t-if="record.pledge_balance.raw_value > 0">
+                        <div class="col-12">
+                            <small class="text-warning">
+                                <i class="fa fa-clock-o"/> 
+                                Pledge Balance: $<t t-esc="record.pledge_balance.value"/>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="row" t-if="not record.thank_you_sent.raw_value">
+                        <div class="col-12">
+                            <small class="text-danger">
+                                <i class="fa fa-exclamation-triangle"/> 
+                                Thank you pending
+                            </small>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Donation Membership Action (already referenced in menu_views.xml) -->
+        <record id="action_membership_donation" model="ir.actions.act_window">
+            <field name="name">Donations</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership.donation</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No donations found
+                </p>
+                <p>
+                    Manage recurring donations and donor relationships including
+                    general fund, scholarship, and special project donations.
+                    Track donor recognition levels, stewardship activities, and impact reporting.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>
