@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Membership Renewal Wizard Form View -->
+        <record id="view_membership_renewal_wizard_form" model="ir.ui.view">
+            <field name="name">ams.membership.renewal.wizard.form</field>
+            <field name="model">ams.membership.renewal.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Renew Membership">
+                    <header>
+                        <button name="action_calculate_pricing" string="Recalculate Pricing" 
+                                type="object" class="btn-secondary"/>
+                        <button name="action_preview_renewal" string="Preview Renewal" 
+                                type="object" class="oe_highlight"
+                                invisible="not renewal_eligible"/>
+                        <button name="action_process_renewal" string="Process Renewal" 
+                                type="object" class="oe_highlight"
+                                invisible="not renewal_eligible"/>
+                        <button name="action_upgrade_instead" string="Upgrade Instead" 
+                                type="object" class="btn-info"
+                                invisible="not upgrade_available"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </header>
+                    
+                    <sheet>
+                        <div class="alert alert-danger" role="alert" 
+                             invisible="renewal_eligible">
+                            <strong>Renewal Not Available</strong><br/>
+                            <field name="eligibility_message"/>
+                        </div>
+                        
+                        <div class="alert alert-warning" role="alert" 
+                             invisible="not warnings">
+                            <strong>Renewal Warnings</strong><br/>
+                            <field name="warnings"/>
+                        </div>
+
+                        <div class="alert alert-success" role="alert" 
+                             invisible="not renewal_eligible">
+                            <strong>Renewal Available</strong><br/>
+                            This membership is eligible for renewal.
+                        </div>
+
+                        <group>
+                            <group string="Current Membership">
+                                <field name="membership_id" 
+                                       domain="[('can_be_renewed', '=', True)]"
+                                       options="{'no_create': True}"/>
+                                <field name="partner_id" readonly="True"/>
+                                <field name="product_id" readonly="True"/>
+                                <field name="member_type_id" readonly="True"/>
+                            </group>
+                            <group string="Current Status">
+                                <field name="current_start_date" readonly="True"/>
+                                <field name="current_end_date" readonly="True"/>
+                                <field name="days_remaining" readonly="True"/>
+                                <field name="current_paid_amount" readonly="True" widget="monetary"/>
+                                <field name="is_expired" readonly="True" invisible="True"/>
+                                <field name="early_renewal" readonly="True" invisible="True"/>
+                                <field name="grace_period_renewal" readonly="True" invisible="True"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Renewal Configuration">
+                                <field name="renewal_start_date"/>
+                                <field name="renewal_end_date" readonly="True"/>
+                                <field name="renewal_period_type" readonly="True"/>
+                            </group>
+                            <group string="Pricing">
+                                <field name="original_price" readonly="True" widget="monetary"/>
+                                <field name="renewal_price" widget="monetary"/>
+                                <field name="discount_amount" widget="monetary"/>
+                                <field name="final_price" readonly="True" widget="monetary"
+                                       class="oe_subtotal_footer_separator"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Renewal Options">
+                                <field name="auto_renewal_setup"/>
+                                <field name="maintain_benefits" readonly="True"/>
+                            </group>
+                            <group string="Billing Options">
+                                <field name="create_sale_order"/>
+                                <field name="auto_confirm_order" 
+                                       invisible="not create_sale_order"/>
+                                <field name="invoice_immediately" 
+                                       invisible="not create_sale_order"/>
+                                <field name="payment_term_id" 
+                                       invisible="not create_sale_order"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Communication">
+                                <field name="send_confirmation_email"/>
+                                <field name="send_welcome_back_email"/>
+                            </group>
+                            <group string="Multiple Memberships" 
+                                   invisible="not additional_membership_ids">
+                                <field name="renew_all_memberships"/>
+                                <field name="additional_membership_ids" widget="many2many_tags"
+                                       invisible="not renew_all_memberships"/>
+                            </group>
+                        </group>
+
+                        <notebook invisible="not renewal_eligible">
+                            <page string="Renewal Summary" name="summary">
+                                <group>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <h4>Renewal Summary</h4>
+                                            <table class="table table-sm">
+                                                <tr>
+                                                    <td><strong>Product:</strong></td>
+                                                    <td><field name="product_id" readonly="True" nolabel="1"/></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Current Period:</strong></td>
+                                                    <td>
+                                                        <field name="current_start_date" readonly="True" nolabel="1"/> to 
+                                                        <field name="current_end_date" readonly="True" nolabel="1"/>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Renewal Period:</strong></td>
+                                                    <td>
+                                                        <field name="renewal_start_date" readonly="True" nolabel="1"/> to 
+                                                        <field name="renewal_end_date" readonly="True" nolabel="1"/>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Period Type:</strong></td>
+                                                    <td><field name="renewal_period_type" readonly="True" nolabel="1"/></td>
+                                                </tr>
+                                                <tr class="table-info">
+                                                    <td><strong>Renewal Amount:</strong></td>
+                                                    <td><field name="final_price" readonly="True" nolabel="1" widget="monetary"/></td>
+                                                </tr>
+                                            </table>
+                                            
+                                            <div invisible="not early_renewal" class="alert alert-info">
+                                                <i class="fa fa-info-circle"/> This is an early renewal. 
+                                                The new membership will begin after the current membership expires.
+                                            </div>
+                                            
+                                            <div invisible="not grace_period_renewal" class="alert alert-warning">
+                                                <i class="fa fa-exclamation-triangle"/> This member is currently in grace period. 
+                                                Renewal will restore active status immediately.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </group>
+                            </page>
+                            
+                            <page string="Available Upgrades" name="upgrades" 
+                                  invisible="not upgrade_available">
+                                <group>
+                                    <p>The following upgrade options are available instead of renewal:</p>
+                                    <field name="available_upgrades" nolabel="1">
+                                        <tree string="Available Upgrades" create="false" edit="false">
+                                            <field name="name"/>
+                                            <field name="list_price" widget="monetary"/>
+                                            <field name="member_type_id"/>
+                                            <field name="recurrence_period"/>
+                                        </tree>
+                                    </field>
+                                    <button name="action_upgrade_instead" string="Upgrade Instead" 
+                                            type="object" class="btn-primary"/>
+                                </group>
+                            </page>
+                            
+                            <page string="Notes" name="notes">
+                                <group>
+                                    <field name="renewal_notes" 
+                                           placeholder="Notes about this renewal (visible to member)..."/>
+                                </group>
+                            </page>
+                            
+                            <page string="Internal Notes" name="internal_notes" 
+                                  groups="ams_foundation.group_ams_staff">
+                                <field name="internal_notes" 
+                                       placeholder="Internal notes about this renewal (not visible to member)..."/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Membership Renewal Wizard Action -->
+        <record id="action_membership_renewal_wizard" model="ir.actions.act_window">
+            <field name="name">Renew Membership</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership.renewal.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Renew Membership
+                </p>
+                <p>
+                    Use this wizard to renew an existing membership.
+                    Configure renewal dates, pricing, and options.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

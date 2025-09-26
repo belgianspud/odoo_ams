@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from . import product_template
+from . import product_product
 from . import ams_membership_base
 from . import ams_membership_membership
 from . import ams_membership_chapter

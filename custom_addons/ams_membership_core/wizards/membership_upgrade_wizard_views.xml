@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Membership Upgrade Wizard Form View -->
+        <record id="view_membership_upgrade_wizard_form" model="ir.ui.view">
+            <field name="name">ams.membership.upgrade.wizard.form</field>
+            <field name="model">ams.membership.upgrade.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Upgrade Membership">
+                    <header>
+                        <button name="action_preview_upgrade" string="Preview Upgrade" 
+                                type="object" class="oe_highlight"
+                                invisible="not upgrade_available"/>
+                        <button name="action_process_upgrade" string="Process Upgrade" 
+                                type="object" class="oe_highlight"
+                                invisible="not upgrade_available"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </header>
+                    
+                    <sheet>
+                        <div class="alert alert-danger" role="alert" 
+                             invisible="upgrade_available">
+                            <strong>Upgrade Not Available</strong><br/>
+                            <field name="eligibility_message"/>
+                        </div>
+                        
+                        <div class="alert alert-success" role="alert" 
+                             invisible="not upgrade_available">
+                            <strong>Upgrade Available</strong><br/>
+                            This membership can be upgraded to a higher tier.
+                        </div>
+
+                        <group>
+                            <group string="Current Membership">
+                                <field name="membership_id" 
+                                       domain="[('state', 'in', ['active', 'grace']), ('can_be_renewed', '=', True)]"
+                                       options="{'no_create': True}"/>
+                                <field name="partner_id" readonly="True"/>
+                                <field name="current_product_id" readonly="True"/>
+                                <field name="current_member_type_id" readonly="True"/>
+                            </group>
+                            <group string="Current Period">
+                                <field name="current_start_date" readonly="True"/>
+                                <field name="current_end_date" readonly="True"/>
+                                <field name="days_remaining" readonly="True"/>
+                                <field name="current_paid_amount" readonly="True" widget="monetary"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Upgrade To">
+                                <field name="upgrade_product_id" 
+                                       domain="[('product_tmpl_id.is_subscription_product', '=', True), ('product_tmpl_id.allow_upgrades', '=', True)]"
+                                       options="{'no_create': True}"
+                                       required="True"/>
+                                <field name="new_member_type_id" readonly="True"/>
+                                <field name="upgrade_effective_date"/>
+                            </group>
+                            <group string="Upgrade Options">
+                                <field name="prorate_current"/>
+                                <field name="prorate_upgrade"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Pricing Calculation">
+                                <field name="original_price" readonly="True" widget="monetary"/>
+                                <field name="prorated_credit" readonly="True" widget="monetary"
+                                       invisible="not prorate_current"/>
+                                <field name="upgrade_price" readonly="True" widget="monetary"/>
+                                <field name="net_amount" readonly="True" widget="monetary"
+                                       class="oe_subtotal_footer_separator"/>
+                            </group>
+                            <group string="Billing Options">
+                                <field name="create_sale_order"/>
+                                <field name="auto_confirm_order" 
+                                       invisible="not create_sale_order"/>
+                                <field name="payment_term_id" 
+                                       invisible="not create_sale_order"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Communication">
+                                <field name="send_confirmation_email"/>
+                            </group>
+                            <group string="Notes">
+                                <field name="upgrade_reason" placeholder="Reason for upgrade..."/>
+                            </group>
+                        </group>
+
+                        <notebook invisible="not upgrade_available">
+                            <page string="Upgrade Summary" name="summary">
+                                <group>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <h4>Upgrade Summary</h4>
+                                            <table class="table table-sm">
+                                                <tr>
+                                                    <td><strong>Current Product:</strong></td>
+                                                    <td><field name="current_product_id" readonly="True" nolabel="1"/></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Upgrade To:</strong></td>
+                                                    <td><field name="upgrade_product_id" readonly="True" nolabel="1"/></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Effective Date:</strong></td>
+                                                    <td><field name="upgrade_effective_date" readonly="True" nolabel="1"/></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>New End Date:</strong></td>
+                                                    <td><field name="current_end_date" readonly="True" nolabel="1"/></td>
+                                                </tr>
+                                                <tr class="table-info">
+                                                    <td><strong>Amount Due:</strong></td>
+                                                    <td><field name="net_amount" readonly="True" nolabel="1" widget="monetary"/></td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </group>
+                            </page>
+                            
+                            <page string="Internal Notes" name="internal_notes" 
+                                  groups="ams_foundation.group_ams_staff">
+                                <field name="internal_notes" 
+                                       placeholder="Internal notes about this upgrade (not visible to member)..."/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Membership Upgrade Wizard Action -->
+        <record id="action_membership_upgrade_wizard" model="ir.actions.act_window">
+            <field name="name">Upgrade Membership</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership.upgrade.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Upgrade Membership
+                </p>
+                <p>
+                    Use this wizard to upgrade a member to a higher tier membership.
+                    The system will calculate pro-rated pricing and handle the transition.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>
