@@ -31,35 +31,7 @@
             <field name="sequence">10</field>
         </record>
 
-        <!-- Student Member -->
-        <record id="member_type_student" model="ams.member.type">
-            <field name="name">Student Member</field>
-            <field name="code">STU</field>
-            <field name="description">Discounted membership for full-time students</field>
-            <field name="active">True</field>
-            <field name="product_class">membership</field>
-            <field name="recurrence_period">annual</field>
-            <field name="membership_period_type">calendar</field>
-            <field name="base_annual_fee">50.00</field>
-            <field name="requires_approval">True</field>
-            <field name="auto_renewal">False</field>
-            <field name="voting_rights">False</field>
-            <field name="allow_multiple_active">False</field>
-            <field name="max_active_per_member">1</field>
-            <field name="allow_upgrades">True</field>
-            <field name="allow_downgrades">False</field>
-            <field name="enable_prorating">True</field>
-            <field name="prorate_on_upgrade">True</field>
-            <field name="prorate_on_downgrade">False</field>
-            <field name="upgrade_member_type_ids" eval="[(4, ref('member_type_associate')), (4, ref('member_type_regular'))]"/>
-            <field name="eligibility_criteria">Must be enrolled full-time in an accredited program</field>
-            <field name="requires_license">False</field>
-            <field name="min_experience_years">0</field>
-            <field name="membership_duration">365</field>
-            <field name="sequence">20</field>
-        </record>
-
-        <!-- Associate Member -->
+        <!-- Associate Member (moved before student to avoid forward reference) -->
         <record id="member_type_associate" model="ams.member.type">
             <field name="name">Associate Member</field>
             <field name="code">ASC</field>
@@ -85,6 +57,34 @@
             <field name="min_experience_years">0</field>
             <field name="membership_duration">365</field>
             <field name="sequence">30</field>
+        </record>
+
+        <!-- Student Member (now references are available) -->
+        <record id="member_type_student" model="ams.member.type">
+            <field name="name">Student Member</field>
+            <field name="code">STU</field>
+            <field name="description">Discounted membership for full-time students</field>
+            <field name="active">True</field>
+            <field name="product_class">membership</field>
+            <field name="recurrence_period">annual</field>
+            <field name="membership_period_type">calendar</field>
+            <field name="base_annual_fee">50.00</field>
+            <field name="requires_approval">True</field>
+            <field name="auto_renewal">False</field>
+            <field name="voting_rights">False</field>
+            <field name="allow_multiple_active">False</field>
+            <field name="max_active_per_member">1</field>
+            <field name="allow_upgrades">True</field>
+            <field name="allow_downgrades">False</field>
+            <field name="enable_prorating">True</field>
+            <field name="prorate_on_upgrade">True</field>
+            <field name="prorate_on_downgrade">False</field>
+            <field name="upgrade_member_type_ids" eval="[(4, ref('member_type_associate')), (4, ref('member_type_regular'))]"/>
+            <field name="eligibility_criteria">Must be enrolled full-time in an accredited program</field>
+            <field name="requires_license">False</field>
+            <field name="min_experience_years">0</field>
+            <field name="membership_duration">365</field>
+            <field name="sequence">20</field>
         </record>
 
         <!-- Retired Member -->
