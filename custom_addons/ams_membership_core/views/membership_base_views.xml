@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Membership Base List View (Abstract - for inheritance) -->
+        <record id="view_membership_base_list" model="ir.ui.view">
+            <field name="name">ams.membership.base.list</field>
+            <field name="model">ams.membership.base</field>
+            <field name="arch" type="xml">
+                <list string="Memberships" default_order="start_date desc">
+                    <field name="member_number"/>
+                    <field name="partner_id"/>
+                    <field name="product_id"/>
+                    <field name="member_type_id"/>
+                    <field name="start_date"/>
+                    <field name="end_date"/>
+                    <field name="days_remaining"/>
+                    <field name="state" decoration-success="state == 'active'" 
+                           decoration-warning="state == 'grace'" 
+                           decoration-danger="state in ['lapsed', 'terminated']"/>
+                    <field name="paid_amount" widget="monetary"/>
+                    <field name="auto_renewal"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Membership Base Form View (Abstract - for inheritance) -->
+        <record id="view_membership_base_form" model="ir.ui.view">
+            <field name="name">ams.membership.base.form</field>
+            <field name="model">ams.membership.base</field>
+            <field name="arch" type="xml">
+                <form string="Membership">
+                    <header>
+                        <button name="action_activate" string="Activate" type="object" 
+                                class="oe_highlight" invisible="state != 'pending'"
+                                groups="ams_foundation.group_ams_staff"/>
+                        <button name="action_suspend" string="Suspend" type="object" 
+                                invisible="state not in ['active', 'grace']"
+                                groups="ams_foundation.group_ams_manager"/>
+                        <button name="action_cancel" string="Cancel" type="object" 
+                                invisible="state in ['cancelled', 'terminated']"
+                                groups="ams_foundation.group_ams_manager"/>
+                        <button name="action_reinstate" string="Reinstate" type="object" 
+                                invisible="state not in ['suspended', 'cancelled']"
+                                groups="ams_foundation.group_ams_manager"/>
+                        <button name="action_renew" string="Renew" type="object" 
+                                class="oe_highlight" invisible="not can_be_renewed"
+                                groups="ams_foundation.group_ams_staff"/>
+                        <button name="action_upgrade" string="Upgrade" type="object" 
+                                invisible="state not in ['active', 'grace']"
+                                groups="ams_foundation.group_ams_staff"/>
+                        <field name="state" widget="statusbar" 
+                               statusbar_visible="pending,active,grace,lapsed"/>
+                    </header>
+                    
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_invoice" type="object" 
+                                    class="oe_stat_button" icon="fa-file-text-o"
+                                    invisible="not invoice_id">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_text">View</span>
+                                    <span class="o_stat_text">Invoice</span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" readonly="True"/>
+                            </h1>
+                            <div class="o_row">
+                                <field name="member_number" readonly="True"/>
+                            </div>
+                        </div>
+
+                        <group>
+                            <group string="Member Information">
+                                <field name="partner_id" required="True"/>
+                                <field name="product_id" required="True"/>
+                                <field name="member_type_id"/>
+                            </group>
+                            <group string="Membership Period">
+                                <field name="start_date" required="True"/>
+                                <field name="end_date" required="True"/>
+                                <field name="days_remaining" readonly="True"/>
+                                <field name="grace_period_end" readonly="True" 
+                                       invisible="state != 'grace'"/>
+                                <field name="activation_date" readonly="True"/>
+                                <field name="cancellation_date" readonly="True" 
+                                       invisible="not cancellation_date"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Financial Information">
+                                <field name="original_price" readonly="True"/>
+                                <field name="paid_amount" readonly="True"/>
+                                <field name="prorated_amount" readonly="True" 
+                                       invisible="not prorated_amount"/>
+                                <field name="setup_fee" readonly="True" 
+                                       invisible="not setup_fee"/>
+                            </group>
+                            <group string="Configuration">
+                                <field name="auto_renewal"/>
+                                <field name="requires_approval" readonly="True"/>
+                                <field name="is_upgrade" readonly="True"/>
+                                <field name="is_renewal" readonly="True"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Related Records">
+                                <field name="invoice_line_id" readonly="True"/>
+                                <field name="sale_order_line_id" readonly="True"/>
+                                <field name="previous_membership_id" readonly="True"/>
+                                <field name="next_membership_id" readonly="True"/>
+                            </group>
+                            <group string="Status Information">
+                                <field name="is_expiring_soon" readonly="True"/>
+                                <field name="renewal_due" readonly="True"/>
+                                <field name="can_be_renewed" readonly="True"/>
+                            </group>
+                        </group>
+
+                        <notebook>
+                            <page string="Notes" name="notes">
+                                <group>
+                                    <field name="notes" placeholder="General notes about this membership..."/>
+                                </group>
+                                <group string="Status Changes" invisible="not cancellation_reason">
+                                    <field name="cancellation_reason" readonly="True"/>
+                                </group>
+                                <group string="Approval" invisible="not requires_approval">
+                                    <field name="approval_notes"/>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <chatter/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!-- Membership Base Search View -->
+        <record id="view_membership_base_search" model="ir.ui.view">
+            <field name="name">ams.membership.base.search</field>
+            <field name="model">ams.membership.base</field>
+            <field name="arch" type="xml">
+                <search string="Memberships">
+                    <field name="name"/>
+                    <field name="member_number"/>
+                    <field name="partner_id"/>
+                    <field name="product_id"/>
+                    <field name="member_type_id"/>
+                    <separator/>
+                    <filter string="Active" name="active" 
+                            domain="[('state', '=', 'active')]"/>
+                    <filter string="Grace Period" name="grace" 
+                            domain="[('state', '=', 'grace')]"/>
+                    <filter string="Pending" name="pending" 
+                            domain="[('state', '=', 'pending')]"/>
+                    <filter string="Lapsed" name="lapsed" 
+                            domain="[('state', '=', 'lapsed')]"/>
+                    <filter string="Suspended" name="suspended" 
+                            domain="[('state', '=', 'suspended')]"/>
+                    <filter string="Cancelled" name="cancelled" 
+                            domain="[('state', '=', 'cancelled')]"/>
+                    <separator/>
+                    <filter string="Expiring Soon" name="expiring_soon" 
+                            domain="[('is_expiring_soon', '=', True)]"/>
+                    <filter string="Renewal Due" name="renewal_due" 
+                            domain="[('renewal_due', '=', True)]"/>
+                    <filter string="Can Be Renewed" name="renewable" 
+                            domain="[('can_be_renewed', '=', True)]"/>
+                    <separator/>
+                    <filter string="Auto Renewal" name="auto_renewal" 
+                            domain="[('auto_renewal', '=', True)]"/>
+                    <filter string="Upgrades" name="upgrades" 
+                            domain="[('is_upgrade', '=', True)]"/>
+                    <filter string="Renewals" name="renewals" 
+                            domain="[('is_renewal', '=', True)]"/>
+                    <separator/>
+                    <filter string="This Month" name="this_month" 
+                            domain="[('start_date', '&gt;=', (context_today() + datetime.timedelta(days=-30)).strftime('%Y-%m-%d'))]"/>
+                    <filter string="This Year" name="this_year" 
+                            domain="[('start_date', '&gt;=', context_today().replace(month=1, day=1).strftime('%Y-%m-%d'))]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Status" name="group_status" 
+                                domain="[]" context="{'group_by': 'state'}"/>
+                        <filter string="Member Type" name="group_member_type" 
+                                domain="[]" context="{'group_by': 'member_type_id'}"/>
+                        <filter string="Product" name="group_product" 
+                                domain="[]" context="{'group_by': 'product_id'}"/>
+                        <filter string="Start Month" name="group_start_month" 
+                                domain="[]" context="{'group_by': 'start_date:month'}"/>
+                        <filter string="End Month" name="group_end_month" 
+                                domain="[]" context="{'group_by': 'end_date:month'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Membership Base Kanban View -->
+        <record id="view_membership_base_kanban" model="ir.ui.view">
+            <field name="name">ams.membership.base.kanban</field>
+            <field name="model">ams.membership.base</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_mobile" default_group_by="state">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="member_number"/>
+                    <field name="state"/>
+                    <field name="start_date"/>
+                    <field name="end_date"/>
+                    <field name="days_remaining"/>
+                    <field name="paid_amount"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                                <div class="row">
+                                    <div class="col-8">
+                                        <strong><t t-esc="record.name.value"/></strong>
+                                    </div>
+                                    <div class="col-4 text-right">
+                                        <span t-attf-class="badge badge-pill badge-#{record.state.raw_value === 'active' ? 'success' : record.state.raw_value === 'grace' ? 'warning' : 'secondary'}">
+                                            <t t-esc="record.state.value"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <span><t t-esc="record.partner_id.value"/></span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small>Start: <t t-esc="record.start_date.value"/></small>
+                                    </div>
+                                    <div class="col-6 text-right">
+                                        <small>End: <t t-esc="record.end_date.value"/></small>
+                                    </div>
+                                </div>
+                                <div class="row" t-if="record.state.raw_value in ['active', 'grace']">
+                                    <div class="col-12">
+                                        <small>
+                                            <t t-esc="record.days_remaining.value"/> days remaining
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12 text-right">
+                                        <span class="badge badge-light">
+                                            $<t t-esc="record.paid_amount.value"/>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+    </data>
+</odoo>

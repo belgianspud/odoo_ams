@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Extend Product Template Form View for Subscription Products -->
+        <record id="view_product_template_form_subscription" model="ir.ui.view">
+            <field name="name">product.template.form.subscription</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_only_form_view"/>
+            <field name="arch" type="xml">
+                
+                <!-- Move Subscription Product checkbox into the options section -->
+                <xpath expr="//div[@name='options']//span[last()]" position="after">
+                    <span class="d-inline-flex">
+                        <field name="is_subscription_product"/>
+                        <label for="is_subscription_product" string="Subscription"/>
+                    </span>
+                </xpath>
+
+                <!-- Add Subscription Options Tab -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Subscription Options" name="subscription_options" 
+                          invisible="not is_subscription_product">
+                        
+                        <group>
+                            <group string="Product Classification">
+                                <field name="product_class" required="is_subscription_product"/>
+                                <field name="member_type_id"/>
+                                <field name="membership_model" readonly="True"/>
+                            </group>
+                            <group string="Recurrence &amp; Duration">
+                                <field name="recurrence_period"/>
+                                <field name="membership_period_type"/>
+                                <field name="membership_duration"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Pricing &amp; Pro-rating">
+                                <field name="enable_prorating"/>
+                                <field name="prorate_method" 
+                                       invisible="not enable_prorating"/>
+                                <field name="setup_fee"/>
+                                <field name="cancellation_fee"/>
+                            </group>
+                            <group string="Grace Period">
+                                <field name="grace_period_override"/>
+                                <field name="grace_period_days" 
+                                       invisible="not grace_period_override"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Access &amp; Eligibility">
+                                <field name="requires_approval"/>
+                                <field name="auto_renewal_eligible"/>
+                                <field name="portal_access_required"/>
+                                <field name="member_only"/>
+                                <field name="guest_purchase_allowed"/>
+                            </group>
+                            <group string="Multiple Memberships">
+                                <field name="allow_multiple_active"/>
+                                <field name="max_active_per_member"
+                                       invisible="not allow_multiple_active"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Upgrade/Downgrade Options">
+                                <field name="allow_upgrades"/>
+                                <field name="allow_downgrades"/>
+                            </group>
+                            <group string="Renewal Configuration">
+                                <field name="renewal_invoice_days_advance"/>
+                                <field name="auto_create_renewal_invoices"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Integration Settings">
+                                <field name="create_membership_record"/>
+                            </group>
+                            <group string="Statistics" invisible="not id">
+                                <field name="subscription_count" readonly="True"/>
+                                <field name="revenue_monthly" readonly="True" widget="monetary"/>
+                                <field name="revenue_annual" readonly="True" widget="monetary"/>
+                            </group>
+                        </group>
+
+                        <group string="Upgrade Options" invisible="not allow_upgrades">
+                            <field name="upgrade_product_ids" widget="many2many_tags" 
+                                   domain="[('is_subscription_product', '=', True), ('id', '!=', id)]"/>
+                        </group>
+
+                        <group string="Downgrade Options" invisible="not allow_downgrades">
+                            <field name="downgrade_product_ids" widget="many2many_tags"
+                                   domain="[('is_subscription_product', '=', True), ('id', '!=', id)]"/>
+                        </group>
+
+                    </page>
+                </xpath>
+
+                <!-- Add button to view subscriptions -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_subscriptions" type="object" 
+                            class="oe_stat_button" icon="fa-users"
+                            invisible="not is_subscription_product or not id">
+                        <field name="subscription_count" widget="statinfo" 
+                               string="Active Subscriptions"/>
+                    </button>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- Subscription Products List View -->
+        <record id="view_product_template_subscription_list" model="ir.ui.view">
+            <field name="name">product.template.subscription.list</field>
+            <field name="model">product.template</field>
+            <field name="arch" type="xml">
+                <list string="Subscription Products" default_order="product_class,name">
+                    <field name="name"/>
+                    <field name="product_class"/>
+                    <field name="member_type_id"/>
+                    <field name="recurrence_period"/>
+                    <field name="list_price" widget="monetary"/>
+                    <field name="subscription_count"/>
+                    <field name="revenue_annual" widget="monetary"/>
+                    <field name="auto_renewal_eligible"/>
+                    <field name="requires_approval"/>
+                    <field name="active"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Subscription Products Search View -->
+        <record id="view_product_template_subscription_search" model="ir.ui.view">
+            <field name="name">product.template.subscription.search</field>
+            <field name="model">product.template</field>
+            <field name="arch" type="xml">
+                <search string="Subscription Products">
+                    <field name="name"/>
+                    <field name="product_class"/>
+                    <field name="member_type_id"/>
+                    <separator/>
+                    <filter string="Subscription Products" name="subscription_products" 
+                            domain="[('is_subscription_product', '=', True)]"/>
+                    <filter string="Membership Products" name="membership_products" 
+                            domain="[('product_class', '=', 'membership')]"/>
+                    <filter string="Chapter Memberships" name="chapter_products" 
+                            domain="[('product_class', '=', 'chapter')]"/>
+                    <filter string="Subscriptions" name="subscription_products_only" 
+                            domain="[('product_class', 'in', ['subscription', 'newsletter', 'publication'])]"/>
+                    <filter string="Courses" name="course_products" 
+                            domain="[('product_class', '=', 'courses')]"/>
+                    <filter string="Donations" name="donation_products" 
+                            domain="[('product_class', '=', 'donations')]"/>
+                    <separator/>
+                    <filter string="Auto Renewal Eligible" name="auto_renewal" 
+                            domain="[('auto_renewal_eligible', '=', True)]"/>
+                    <filter string="Requires Approval" name="requires_approval" 
+                            domain="[('requires_approval', '=', True)]"/>
+                    <filter string="Member Only" name="member_only" 
+                            domain="[('member_only', '=', True)]"/>
+                    <filter string="Pro-rating Enabled" name="prorating_enabled" 
+                            domain="[('enable_prorating', '=', True)]"/>
+                    <separator/>
+                    <filter string="Annual Recurrence" name="annual" 
+                            domain="[('recurrence_period', '=', 'annual')]"/>
+                    <filter string="Monthly Recurrence" name="monthly" 
+                            domain="[('recurrence_period', '=', 'monthly')]"/>
+                    <filter string="One Time" name="one_time" 
+                            domain="[('recurrence_period', '=', 'one_time')]"/>
+                    <separator/>
+                    <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                    <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Product Class" name="group_product_class" 
+                                domain="[]" context="{'group_by': 'product_class'}"/>
+                        <filter string="Member Type" name="group_member_type" 
+                                domain="[]" context="{'group_by': 'member_type_id'}"/>
+                        <filter string="Recurrence Period" name="group_recurrence" 
+                                domain="[]" context="{'group_by': 'recurrence_period'}"/>
+                        <filter string="Auto Renewal" name="group_auto_renewal" 
+                                domain="[]" context="{'group_by': 'auto_renewal_eligible'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Subscription Products Action -->
+        <record id="action_product_subscription" model="ir.actions.act_window">
+            <field name="name">Subscription Products</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">list,form</field>
+            <field name="view_id" ref="view_product_template_subscription_list"/>
+            <field name="search_view_id" ref="view_product_template_subscription_search"/>
+            <field name="domain">[('is_subscription_product', '=', True)]</field>
+            <field name="context">{'default_is_subscription_product': True, 'default_type': 'service'}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first subscription product
+                </p>
+                <p>
+                    Subscription products can be memberships, publications, courses, donations,
+                    or other recurring services. Configure recurrence periods, pricing, 
+                    pro-rating, and member benefits.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

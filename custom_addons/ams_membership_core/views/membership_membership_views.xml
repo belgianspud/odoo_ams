@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Regular Membership List View -->
+        <record id="view_membership_membership_list" model="ir.ui.view">
+            <field name="name">ams.membership.membership.list</field>
+            <field name="model">ams.membership.membership</field>
+            <field name="inherit_id" ref="view_membership_base_list"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='auto_renewal']" position="after">
+                    <field name="membership_level"/>
+                    <field name="voting_rights"/>
+                    <field name="ce_credits_earned"/>
+                    <field name="chapter_count"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Regular Membership Form View -->
+        <record id="view_membership_membership_form" model="ir.ui.view">
+            <field name="name">ams.membership.membership.form</field>
+            <field name="model">ams.membership.membership</field>
+            <field name="inherit_id" ref="view_membership_base_form"/>
+            <field name="arch" type="xml">
+                
+                <!-- Add additional buttons -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_chapters" type="object" 
+                            class="oe_stat_button" icon="fa-map-marker"
+                            invisible="not chapter_count">
+                        <field name="chapter_count" widget="statinfo" string="Chapters"/>
+                    </button>
+                    <button name="action_create_chapter_membership" type="object" 
+                            class="oe_stat_button" icon="fa-plus"
+                            string="Add Chapter"
+                            invisible="state not in ['active', 'grace']"
+                            groups="ams_foundation.group_ams_staff"/>
+                    <button name="action_view_subscriptions" type="object" 
+                            class="oe_stat_button" icon="fa-newspaper-o"
+                            string="View Subscriptions"/>
+                    <button name="action_generate_membership_certificate" type="object" 
+                            class="oe_stat_button" icon="fa-certificate"
+                            string="Certificate"
+                            invisible="state not in ['active', 'grace']"/>
+                </xpath>
+
+                <!-- Add membership-specific fields -->
+                <xpath expr="//group[2]/group[2]" position="after">
+                    <group string="Membership Details">
+                        <field name="membership_level" readonly="True"/>
+                        <field name="voting_rights" readonly="True"/>
+                        <field name="directory_access" readonly="True"/>
+                        <field name="event_discounts" readonly="True"/>
+                    </group>
+                </xpath>
+
+                <!-- Add professional information -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Professional Information" name="professional_info">
+                        <group>
+                            <group string="Professional Details">
+                                <field name="professional_designation" readonly="True"/>
+                                <field name="license_number" readonly="True"/>
+                                <field name="specialty_area" readonly="True"/>
+                                <field name="years_experience" readonly="True"/>
+                            </group>
+                            <group string="Continuing Education">
+                                <field name="ce_credits_required" readonly="True"/>
+                                <field name="ce_credits_earned"/>
+                                <field name="ce_credits_balance" readonly="True"/>
+                                <button name="action_record_ce_credits" string="Record CE Credits" 
+                                        type="object" class="btn-primary"
+                                        groups="ams_foundation.group_ams_staff"/>
+                            </group>
+                        </group>
+                    </page>
+                    
+                    <page string="Membership History" name="history">
+                        <group>
+                            <group string="Statistics">
+                                <field name="total_renewals" readonly="True"/>
+                                <field name="membership_tenure_years" readonly="True"/>
+                                <field name="first_membership_date" readonly="True"/>
+                            </group>
+                            <group string="Financial">
+                                <field name="dues_current" readonly="True"/>
+                                <field name="last_payment_date" readonly="True"/>
+                                <field name="next_dues_amount" readonly="True" widget="monetary"/>
+                            </group>
+                        </group>
+                        <group>
+                            <button name="action_membership_history" string="View Full History" 
+                                    type="object" class="btn-secondary"/>
+                        </group>
+                    </page>
+                    
+                    <page string="Benefits &amp; Privileges" name="benefits">
+                        <group>
+                            <group string="Committee Involvement">
+                                <field name="committee_memberships"/>
+                                <field name="mentorship_program"/>
+                            </group>
+                            <group string="Special Privileges">
+                                <field name="special_privileges"/>
+                            </group>
+                        </group>
+                        <group>
+                            <button name="action_update_benefits" string="Update Benefits" 
+                                    type="object" class="btn-primary"
+                                    groups="ams_foundation.group_ams_manager"/>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Regular Membership Search View -->
+        <record id="view_membership_membership_search" model="ir.ui.view">
+            <field name="name">ams.membership.membership.search</field>
+            <field name="model">ams.membership.membership</field>
+            <field name="inherit_id" ref="view_membership_base_search"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='member_type_id']" position="after">
+                    <field name="professional_designation"/>
+                    <field name="specialty_area"/>
+                    <field name="license_number"/>
+                </xpath>
+                
+                <xpath expr="//filter[@name='renewals']" position="after">
+                    <separator/>
+                    <filter string="Voting Rights" name="voting_rights" 
+                            domain="[('voting_rights', '=', True)]"/>
+                    <filter string="Mentorship Program" name="mentorship" 
+                            domain="[('mentorship_program', '=', True)]"/>
+                    <filter string="Has Chapters" name="has_chapters" 
+                            domain="[('chapter_count', '>', 0)]"/>
+                    <filter string="CE Credits Complete" name="ce_complete" 
+                            domain="[('ce_credits_balance', '>=', 0)]"/>
+                </xpath>
+                
+                <xpath expr="//filter[@name='group_end_month']" position="after">
+                    <filter string="Membership Level" name="group_level" 
+                            domain="[]" context="{'group_by': 'membership_level'}"/>
+                    <filter string="Professional Designation" name="group_designation" 
+                            domain="[]" context="{'group_by': 'professional_designation'}"/>
+                    <filter string="Specialty Area" name="group_specialty" 
+                            domain="[]" context="{'group_by': 'specialty_area'}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Regular Membership Kanban View -->
+        <record id="view_membership_membership_kanban" model="ir.ui.view">
+            <field name="name">ams.membership.membership.kanban</field>
+            <field name="model">ams.membership.membership</field>
+            <field name="inherit_id" ref="view_membership_base_kanban"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='paid_amount']" position="after">
+                    <field name="membership_level"/>
+                    <field name="voting_rights"/>
+                    <field name="chapter_count"/>
+                    <field name="ce_credits_balance"/>
+                </xpath>
+                
+                <xpath expr="//div[@class='row'][last()]" position="after">
+                    <div class="row">
+                        <div class="col-6">
+                            <span class="badge badge-info">
+                                <t t-esc="record.membership_level.value"/>
+                            </span>
+                        </div>
+                        <div class="col-6 text-right">
+                            <t t-if="record.voting_rights.raw_value">
+                                <span class="badge badge-success">Voting</span>
+                            </t>
+                        </div>
+                    </div>
+                    <div class="row" t-if="record.chapter_count.raw_value > 0">
+                        <div class="col-12">
+                            <small>
+                                <i class="fa fa-map-marker"/> 
+                                <t t-esc="record.chapter_count.value"/> chapters
+                            </small>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Regular Membership Action -->
+        <record id="action_membership_membership" model="ir.actions.act_window">
+            <field name="name">Regular Memberships</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership.membership</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No memberships found
+                </p>
+                <p>
+                    Regular memberships are the primary association memberships providing
+                    full benefits including voting rights, directory access, and event discounts.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

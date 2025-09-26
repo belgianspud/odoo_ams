@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Product Categories for Memberships -->
+        <record id="product_category_memberships" model="product.category">
+            <field name="name">Memberships</field>
+            <field name="parent_id" ref="product.product_category_all"/>
+        </record>
+
+        <record id="product_category_subscriptions" model="product.category">
+            <field name="name">Subscriptions</field>
+            <field name="parent_id" ref="product.product_category_all"/>
+        </record>
+
+        <record id="product_category_courses" model="product.category">
+            <field name="name">Courses &amp; Training</field>
+            <field name="parent_id" ref="product.product_category_all"/>
+        </record>
+
+        <record id="product_category_donations" model="product.category">
+            <field name="name">Donations</field>
+            <field name="parent_id" ref="product.product_category_all"/>
+        </record>
+
+        <!-- Regular Membership Products -->
+        <record id="product_membership_regular" model="product.template">
+            <field name="name">Regular Membership - Annual</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product_category_memberships"/>
+            <field name="list_price">250.00</field>
+            <field name="is_subscription_product">True</field>
+            <field name="product_class">membership</field>
+            <field name="member_type_id" ref="ams_foundation.member_type_regular"/>
+            <field name="recurrence_period">annual</field>
+            <field name="membership_period_type">calendar</field>
+            <field name="membership_duration">365</field>
+            <field name="enable_prorating">True</field>
+            <field name="auto_renewal_eligible">True</field>
+            <field name="create_membership_record">True</field>
+            <field name="membership_model">ams.membership.membership</field>
+            <field name="description">
+Full professional membership with all benefits including:
+- Voting rights
+- Member directory access
+- Event discounts
+- Professional development resources
+- Networking opportunities
+            </field>
+        </record>
+
+        <record id="product_membership_student" model="product.template">
+            <field name="name">Student Membership - Annual</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product_category_memberships"/>
+            <field name="list_price">50.00</field>
+            <field name="is_subscription_product">True</field>
+            <field name="product_class">membership</field>
+            <field name="member_type_id" ref="ams_foundation.member_type_student"/>
+            <field name="recurrence_period">annual</field>
+            <field name="membership_period_type">calendar</field>
+            <field name="membership_duration">365</field>
+            <field name="enable_prorating">True</field>
+            <field name="auto_renewal_eligible">False</field>
+            <field name="requires_approval">True</field>
+            <field name="create_membership_record">True</field>
+            <field name="membership_model">ams.membership.membership</field>
+            <field name="description">
+Discounted membership for full-time students including:
+- Educational resources access
+- Student networking events
+- Career development resources
+- Mentorship program access
+            </field>
+        </record>
+
+        <record id="product_membership_corporate" model="product.template">
+            <field name="name">Corporate Membership - Annual</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product_category_memberships"/>
+            <field name="list_price">1500.00</field>
+            <field name="is_subscription_product">True</field>
+            <field name="product_class">membership</field>
+            <field name="member_type_id" ref="ams_foundation.member_type_corporate"/>
+            <field name="recurrence_period">annual</field>
+            <field name="membership_period_type">calendar</field>
+            <field name="membership_duration">365</field>
+            <field name="enable_prorating">True</field>
+            <field name="auto_renewal_eligible">True</field>
+            <field name="requires_approval">True</field>
+            <field name="create_membership_record">True</field>
+            <field name="membership_model">ams.membership.membership</field>
+            <field name="description">
+Organizational membership for companies including:
+- Multiple employee access
+- Corporate networking events
+- Industry insights and reports
+- Recruitment and hiring resources
+- Sponsorship opportunities
+            </field>
+        </record>
+
+        <!-- Chapter Membership Products -->
+        <record id="product_chapter_local" model="product.template">
+            <field name="name">Local Chapter Membership</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product_category_memberships"/>
+            <field name="list_price">25.00</field>
+            <field name="is_subscription_product">True</field>
+            <field name="product_class">chapter</field>
+            <field name="member_type_id" ref="ams_foundation.member_type_chapter_local"/>
+            <field name="recurrence_period">annual</field>
+            <field name="membership_period_type">calendar</field>
+            <field name="membership_duration">365</field>
+            <field name="enable_prorating">True</field>
+            <field name="auto_renewal_eligible">True</field>
+            <field name="allow_multiple_active">True</field>
+            <field name="create_membership_record">True</field>
+            <field name="membership_model">ams.membership.chapter</field>
+            <field name="member_only">True</field>
+            <field name="description">
+Local chapter membership providing:
+- Local networking events
+- Regional professional development
+- Community involvement opportunities
+- Local industry insights
+            </field>
+        </record>
+
+        <!-- Newsletter and Publication Subscriptions -->
+        <record id="product_newsletter_monthly" model="product.template">
+            <field name="name">Professional Newsletter - Monthly</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product_category_subscriptions"/>
+            <field name="list_price">120.00</field>
+            <field name="is_subscription_product">True</field>
+            <field name="product_class">newsletter</field>
+            <field name="member_type_id" ref="ams_foundation.member_type_newsletter"/>
+            <field name="recurrence_period">monthly</field>
+            <field name="membership_period_type">rolling</field>
+            <field name="membership_duration">30</field>
+            <field name="enable_prorating">True</field>
+            <field name="auto_renewal_eligible">True</field>
+            <field name="allow_multiple_active">True</field>
+            <field name="create_membership_record">True</field>
+            <field name="membership_model">ams.membership.subscription</field>
+            <field name="guest_purchase_allowed">True</field>
+            <field name="description">
+Monthly professional newsletter featuring:
+- Industry news and trends
+- Expert analysis and insights
+- Professional development tips
+- Member spotlights and achievements
+            </field>
+        </record>
+
+        <record id="product_journal_quarterly" model="product.template">
+            <field name="name">Professional Journal - Quarterly</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product_category_subscriptions"/>
+            <field name="list_price">200.00</field>
+            <field name="is_subscription_product">True</field>
+            <field name="product_class">publication</field>
+            <field name="recurrence_period">quarterly</field>
+            <field name="membership_period_type">rolling</field>
+            <field name="membership_duration">90</field>
+            <field name="enable_prorating">True</field>
+            <field name="auto_renewal_eligible">True</field>
+            <field name="allow_multiple_active">True</field>
+            <field name="create_membership_record">True</field>
+            <field name="membership_model">ams.membership.subscription</field>
+            <field name="guest_purchase_allowed">True</field>
+            <field name="description">
+Quarterly professional journal with:
+- Peer-reviewed articles
+- Research findings and studies
+- Case studies and best practices
+- Industry analysis and forecasts
+            </field>
+        </record>
+
+        <!-- Course Products -->
+        <record id="product_course_online" model="product.template">
+            <field name="name">Professional Development Course - Online</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product_category_courses"/>
+            <field name="list_price">299.00</field>
+            <field name="is_subscription_product">True</field>
+            <field name="product_class">courses</field>
+            <field name="recurrence_period">one_time</field>
+            <field name="membership_duration">365</field>
+            <field name="enable_prorating">False</field>
+            <field name="auto_renewal_eligible">False</field>
+            <field name="allow_multiple_active">True</field>
+            <field name="create_membership_record">True</field>
+            <field name="membership_model">ams.membership.course</field>
+            <field name="guest_purchase_allowed">True</field>
+            <field name="description">
+Professional development course offering:
+- 12 hours of online content
+- Interactive exercises and assessments
+- Certificate of completion
+- Continuing education credits
+- 1 year access to materials
+            </field>
+        </record>
+
+        <record id="product_certification_prep" model="product.template">
+            <field name="name">Certification Preparation Program</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product_category_courses"/>
+            <field name="list_price">599.00</field>
+            <field name="is_subscription_product">True</field>
+            <field name="product_class">courses</field>
+            <field name="recurrence_period">one_time</field>
+            <field name="membership_duration">180</field>
+            <field name="enable_prorating">False</field>
+            <field name="auto_renewal_eligible">False</field>
+            <field name="allow_multiple_active">True</field>
+            <field name="create_membership_record">True</field>
+            <field name="membership_model">ams.membership.course</field>
+            <field name="description">
+Comprehensive certification preparation including:
+- 40+ hours of study materials
+- Practice exams and assessments
+- Live webinar sessions
+- Expert instructor support
+- 6 months access
+            </field>
+        </record>
+
+        <!-- Donation Products -->
+        <record id="product_donation_general" model="product.template">
+            <field name="name">General Fund Donation - Monthly</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product_category_donations"/>
+            <field name="list_price">25.00</field>
+            <field name="is_subscription_product">True</field>
+            <field name="product_class">donations</field>
+            <field name="recurrence_period">monthly</field>
+            <field name="membership_period_type">rolling</field>
+            <field name="membership_duration">30</field>
+            <field name="enable_prorating">False</field>
+            <field name="auto_renewal_eligible">True</field>
+            <field name="allow_multiple_active">True</field>
+            <field name="create_membership_record">True</field>
+            <field name="membership_model">ams.membership.donation</field>
+            <field name="guest_purchase_allowed">True</field>
+            <field name="description">
+Monthly recurring donation to support:
+- Association programs and services
+- Member benefits and resources
+- Professional development initiatives
+- Community outreach programs
+            </field>
+        </record>
+
+        <record id="product_donation_scholarship" model="product.template">
+            <field name="name">Scholarship Fund Donation - Annual</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product_category_donations"/>
+            <field name="list_price">100.00</field>
+            <field name="is_subscription_product">True</field>
+            <field name="product_class">donations</field>
+            <field name="recurrence_period">annual</field>
+            <field name="membership_period_type">rolling</field>
+            <field name="membership_duration">365</field>
+            <field name="enable_prorating">False</field>
+            <field name="auto_renewal_eligible">True</field>
+            <field name="allow_multiple_active">True</field>
+            <field name="create_membership_record">True</field>
+            <field name="membership_model">ams.membership.donation</field>
+            <field name="guest_purchase_allowed">True</field>
+            <field name="description">
+Annual scholarship fund donation supporting:
+- Student member scholarships
+- Educational grants and awards
+- Professional development funding
+- Research and innovation support
+            </field>
+        </record>
+
+        <!-- Service Products -->
+        <record id="product_consulting_service" model="product.template">
+            <field name="name">Professional Consulting Service</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product_category_subscriptions"/>
+            <field name="list_price">150.00</field>
+            <field name="is_subscription_product">True</field>
+            <field name="product_class">services</field>
+            <field name="recurrence_period">monthly</field>
+            <field name="membership_duration">30</field>
+            <field name="enable_prorating">True</field>
+            <field name="auto_renewal_eligible">True</field>
+            <field name="allow_multiple_active">True</field>
+            <field name="create_membership_record">True</field>
+            <field name="membership_model">ams.membership.subscription</field>
+            <field name="description">
+Monthly professional consulting service including:
+- Expert advice and guidance
+- Industry insights and analysis
+- Custom recommendations
+- Priority support access
+            </field>
+        </record>
+
+        <!-- Event and Advertising Products -->
+        <record id="product_event_booth" model="product.template">
+            <field name="name">Exhibition Booth Rental - Annual Conference</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product_category_subscriptions"/>
+            <field name="list_price">2500.00</field>
+            <field name="is_subscription_product">True</field>
+            <field name="product_class">event_booth</field>
+            <field name="recurrence_period">one_time</field>
+            <field name="membership_duration">7</field>
+            <field name="enable_prorating">False</field>
+            <field name="auto_renewal_eligible">False</field>
+            <field name="allow_multiple_active">True</field>
+            <field name="create_membership_record">True</field>
+            <field name="membership_model">ams.membership.subscription</field>
+            <field name="description">
+Exhibition booth rental package including:
+- 10x10 booth space
+- Basic furniture and setup
+- Electrical and internet access
+- Marketing materials placement
+- Lead generation tools
+            </field>
+        </record>
+
+        <record id="product_advertising_annual" model="product.template">
+            <field name="name">Annual Advertising Package</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product_category_subscriptions"/>
+            <field name="list_price">1200.00</field>
+            <field name="is_subscription_product">True</field>
+            <field name="product_class">advertising</field>
+            <field name="recurrence_period">annual</field>
+            <field name="membership_duration">365</field>
+            <field name="enable_prorating">True</field>
+            <field name="auto_renewal_eligible">True</field>
+            <field name="allow_multiple_active">True</field>
+            <field name="create_membership_record">True</field>
+            <field name="membership_model">ams.membership.subscription</field>
+            <field name="description">
+Annual advertising package featuring:
+- Newsletter advertisement placement
+- Website banner advertising
+- Event promotion opportunities
+- Directory listing enhancement
+- Social media promotion
+            </field>
+        </record>
+
+    </data>
+</odoo>

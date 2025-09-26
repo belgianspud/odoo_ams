@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Subscription List View -->
+        <record id="view_membership_subscription_list" model="ir.ui.view">
+            <field name="name">ams.membership.subscription.list</field>
+            <field name="model">ams.membership.subscription</field>
+            <field name="inherit_id" ref="view_membership_base_list"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='auto_renewal']" position="after">
+                    <field name="subscription_type"/>
+                    <field name="delivery_method"/>
+                    <field name="digital_access_granted"/>
+                    <field name="issues_remaining"/>
+                    <field name="engagement_score"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Subscription Form View -->
+        <record id="view_membership_subscription_form" model="ir.ui.view">
+            <field name="name">ams.membership.subscription.form</field>
+            <field name="model">ams.membership.subscription</field>
+            <field name="inherit_id" ref="view_membership_base_form"/>
+            <field name="arch" type="xml">
+                
+                <!-- Add subscription-specific buttons -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_send_test_issue" type="object" 
+                            class="oe_stat_button" icon="fa-paper-plane"
+                            string="Send Test"
+                            invisible="state not in ['active', 'grace']"
+                            groups="ams_foundation.group_ams_staff"/>
+                    <button name="action_grant_digital_access" type="object" 
+                            class="oe_stat_button" icon="fa-key"
+                            string="Grant Access"
+                            invisible="digital_access_granted or state not in ['active', 'grace']"
+                            groups="ams_foundation.group_ams_staff"/>
+                    <button name="action_revoke_digital_access" type="object" 
+                            class="oe_stat_button" icon="fa-ban"
+                            string="Revoke Access"
+                            invisible="not digital_access_granted"
+                            groups="ams_foundation.group_ams_manager"/>
+                    <button name="action_view_archive" type="object" 
+                            class="oe_stat_button" icon="fa-archive"
+                            string="Archive"
+                            invisible="not archive_access_years"/>
+                </xpath>
+
+                <!-- Add subscription-specific fields -->
+                <xpath expr="//group[2]/group[2]" position="after">
+                    <group string="Subscription Details">
+                        <field name="subscription_type" readonly="True"/>
+                        <field name="delivery_method"/>
+                        <field name="content_format"/>
+                        <field name="frequency" readonly="True"/>
+                    </group>
+                </xpath>
+
+                <!-- Replace configuration group -->
+                <xpath expr="//group[string='Configuration']" position="replace">
+                    <group string="Configuration">
+                        <field name="auto_renewal"/>
+                        <field name="requires_approval" readonly="True"/>
+                        <field name="is_upgrade" readonly="True"/>
+                        <field name="is_renewal" readonly="True"/>
+                        <field name="digital_access_granted" readonly="True"/>
+                    </group>
+                </xpath>
+
+                <!-- Add subscription-specific pages -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Delivery &amp; Content" name="delivery">
+                        <group>
+                            <group string="Delivery Settings">
+                                <field name="delivery_method"/>
+                                <field name="delivery_address_id" 
+                                       invisible="delivery_method not in ['physical_mail', 'both', 'courier']"/>
+                                <field name="content_format"/>
+                                <field name="language_preference"/>
+                            </group>
+                            <group string="Issue Tracking">
+                                <field name="issues_remaining"/>
+                                <field name="total_issues_purchased"/>
+                                <field name="current_issue_number" readonly="True"/>
+                                <field name="last_issue_sent" readonly="True"/>
+                                <field name="next_issue_due" readonly="True"/>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <group string="Digital Access">
+                                <field name="digital_access_granted" readonly="True"/>
+                                <field name="access_credentials" readonly="True"
+                                       groups="ams_foundation.group_ams_staff"/>
+                                <field name="login_url" readonly="True" widget="url"/>
+                                <field name="digital_library_access"/>
+                            </group>
+                            <group string="Archive Access">
+                                <field name="archive_access_years"/>
+                                <field name="archive_download_limit"/>
+                                <field name="downloads_used" readonly="True"/>
+                            </group>
+                        </group>
+                    </page>
+                    
+                    <page string="Preferences &amp; Settings" name="preferences">
+                        <group>
+                            <group string="Content Preferences">
+                                <field name="topics_of_interest"/>
+                                <field name="content_level"/>
+                                <field name="member_discount_applied" readonly="True"/>
+                                <field name="member_discount_amount" readonly="True" widget="monetary"/>
+                            </group>
+                            <group string="Communication">
+                                <field name="email_notifications"/>
+                                <field name="sms_notifications"/>
+                                <field name="marketing_emails"/>
+                            </group>
+                        </group>
+                    </page>
+                    
+                    <page string="Engagement &amp; Analytics" name="analytics">
+                        <group>
+                            <group string="Engagement Metrics">
+                                <field name="engagement_score" readonly="True"/>
+                                <field name="open_rate" readonly="True"/>
+                                <field name="click_rate" readonly="True"/>
+                                <field name="last_access_date" readonly="True"/>
+                                <field name="total_access_count" readonly="True"/>
+                            </group>
+                            <group string="Usage Statistics">
+                                <button name="action_record_access" string="Record Access" 
+                                        type="object" class="btn-secondary"
+                                        groups="ams_foundation.group_ams_staff"/>
+                            </group>
+                        </group>
+                    </page>
+                    
+                    <page string="Delivery Management" name="delivery_management" 
+                          groups="ams_foundation.group_ams_staff">
+                        <group>
+                            <button name="action_update_delivery_preferences" 
+                                    string="Update Delivery Preferences" 
+                                    type="object" class="btn-primary"/>
+                            <button name="action_change_delivery_address" 
+                                    string="Change Delivery Address" 
+                                    type="object" class="btn-secondary"/>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Subscription Search View -->
+        <record id="view_membership_subscription_search" model="ir.ui.view">
+            <field name="name">ams.membership.subscription.search</field>
+            <field name="model">ams.membership.subscription</field>
+            <field name="inherit_id" ref="view_membership_base_search"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='member_type_id']" position="after">
+                    <field name="subscription_type"/>
+                    <field name="delivery_method"/>
+                    <field name="content_format"/>
+                    <field name="topics_of_interest"/>
+                </xpath>
+                
+                <xpath expr="//filter[@name='renewals']" position="after">
+                    <separator/>
+                    <filter string="Digital Access" name="digital_access" 
+                            domain="[('digital_access_granted', '=', True)]"/>
+                    <filter string="Email Delivery" name="email_delivery" 
+                            domain="[('delivery_method', 'in', ['email', 'both'])]"/>
+                    <filter string="Physical Delivery" name="physical_delivery" 
+                            domain="[('delivery_method', 'in', ['physical_mail', 'both'])]"/>
+                    <filter string="Archive Access" name="archive_access" 
+                            domain="[('archive_access_years', '>', 0)]"/>
+                    <filter string="High Engagement" name="high_engagement" 
+                            domain="[('engagement_score', '>', 70)]"/>
+                </xpath>
+                
+                <xpath expr="//filter[@name='group_end_month']" position="after">
+                    <filter string="Subscription Type" name="group_subscription_type" 
+                            domain="[]" context="{'group_by': 'subscription_type'}"/>
+                    <filter string="Delivery Method" name="group_delivery" 
+                            domain="[]" context="{'group_by': 'delivery_method'}"/>
+                    <filter string="Content Format" name="group_format" 
+                            domain="[]" context="{'group_by': 'content_format'}"/>
+                    <filter string="Content Level" name="group_level" 
+                            domain="[]" context="{'group_by': 'content_level'}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Subscription Kanban View -->
+        <record id="view_membership_subscription_kanban" model="ir.ui.view">
+            <field name="name">ams.membership.subscription.kanban</field>
+            <field name="model">ams.membership.subscription</field>
+            <field name="inherit_id" ref="view_membership_base_kanban"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='paid_amount']" position="after">
+                    <field name="subscription_type"/>
+                    <field name="delivery_method"/>
+                    <field name="digital_access_granted"/>
+                    <field name="issues_remaining"/>
+                    <field name="engagement_score"/>
+                </xpath>
+                
+                <xpath expr="//div[@class='row'][last()]" position="after">
+                    <div class="row">
+                        <div class="col-8">
+                            <span class="badge badge-info">
+                                <t t-esc="record.subscription_type.value"/>
+                            </span>
+                        </div>
+                        <div class="col-4 text-right">
+                            <t t-if="record.digital_access_granted.raw_value">
+                                <span class="badge badge-success">Digital</span>
+                            </t>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <small>
+                                <i class="fa fa-truck"/> 
+                                <t t-esc="record.delivery_method.value"/>
+                            </small>
+                        </div>
+                        <div class="col-6 text-right">
+                            <small>
+                                <t t-esc="record.issues_remaining.value"/> issues left
+                            </small>
+                        </div>
+                    </div>
+                    <div class="row" t-if="record.engagement_score.raw_value > 0">
+                        <div class="col-12">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" 
+                                     t-attf-style="width: #{record.engagement_score.value}%"
+                                     t-attf-title="Engagement: #{record.engagement_score.value}%"/>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

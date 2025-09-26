@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Memberships Menu Section -->
+        <menuitem id="menu_ams_memberships"
+            name="Memberships"
+            parent="ams_foundation.menu_ams_main"
+            sequence="20"
+            groups="ams_foundation.group_ams_staff"/>
+
+        <!-- Regular Memberships -->
+        <menuitem id="menu_ams_membership_membership"
+            name="Regular Memberships"
+            parent="menu_ams_memberships"
+            action="action_membership_membership"
+            sequence="10"
+            groups="ams_foundation.group_ams_staff"/>
+
+        <!-- Chapter Memberships -->
+        <menuitem id="menu_ams_membership_chapter"
+            name="Chapter Memberships"
+            parent="menu_ams_memberships"
+            action="action_membership_chapter"
+            sequence="20"
+            groups="ams_foundation.group_ams_staff"/>
+
+        <!-- Subscriptions Menu Section -->
+        <menuitem id="menu_ams_subscriptions"
+            name="Subscriptions"
+            parent="ams_foundation.menu_ams_main"
+            sequence="30"
+            groups="ams_foundation.group_ams_staff"/>
+
+        <!-- Publications & Newsletters -->
+        <menuitem id="menu_ams_subscription_subscription"
+            name="Publications &amp; Newsletters"
+            parent="menu_ams_subscriptions"
+            action="action_membership_subscription"
+            sequence="10"
+            groups="ams_foundation.group_ams_staff"/>
+
+        <!-- Courses -->
+        <menuitem id="menu_ams_subscription_course"
+            name="Courses &amp; Training"
+            parent="menu_ams_subscriptions"
+            action="action_membership_course"
+            sequence="20"
+            groups="ams_foundation.group_ams_staff"/>
+
+        <!-- Donations -->
+        <menuitem id="menu_ams_subscription_donation"
+            name="Donations"
+            parent="menu_ams_subscriptions"
+            action="action_membership_donation"
+            sequence="30"
+            groups="ams_foundation.group_ams_staff"/>
+
+        <!-- Products Menu -->
+        <menuitem id="menu_ams_products"
+            name="Products"
+            parent="ams_foundation.menu_ams_configuration"
+            sequence="30"
+            groups="ams_foundation.group_ams_manager"/>
+
+        <!-- Subscription Products -->
+        <menuitem id="menu_ams_product_subscription"
+            name="Subscription Products"
+            parent="menu_ams_products"
+            action="action_product_subscription"
+            sequence="10"
+            groups="ams_foundation.group_ams_manager"/>
+
+        <!-- Regular Products -->
+        <menuitem id="menu_ams_product_regular"
+            name="All Products"
+            parent="menu_ams_products"
+            action="product.product_template_action"
+            sequence="20"
+            groups="ams_foundation.group_ams_manager"/>
+
+        <!-- Reports Menu -->
+        <menuitem id="menu_ams_membership_reports"
+            name="Membership Reports"
+            parent="ams_foundation.menu_ams_main"
+            sequence="80"
+            groups="ams_foundation.group_ams_manager"/>
+
+        <!-- Membership Summary Report Action -->
+        <record id="action_membership_summary_report" model="ir.actions.act_window">
+            <field name="name">Membership Summary</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership.membership</field>
+            <field name="view_mode">graph,pivot,list</field>
+            <field name="context">{
+                'search_default_active': 1,
+                'search_default_group_member_type': 1
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No membership data to display
+                </p>
+                <p>
+                    View membership statistics and trends across different member types
+                    and time periods.
+                </p>
+            </field>
+        </record>
+
+        <!-- Subscription Analytics Action -->
+        <record id="action_subscription_analytics" model="ir.actions.act_window">
+            <field name="name">Subscription Analytics</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership.subscription</field>
+            <field name="view_mode">graph,pivot,list</field>
+            <field name="context">{
+                'search_default_active': 1,
+                'search_default_group_subscription_type': 1
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No subscription data to display
+                </p>
+                <p>
+                    Analyze subscription trends, engagement metrics, and revenue patterns.
+                </p>
+            </field>
+        </record>
+
+        <!-- Revenue Analysis Action -->
+        <record id="action_revenue_analysis" model="ir.actions.act_window">
+            <field name="name">Revenue Analysis</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership.base</field>
+            <field name="view_mode">graph,pivot,list</field>
+            <field name="context">{
+                'search_default_active': 1,
+                'search_default_group_product': 1
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No revenue data to display
+                </p>
+                <p>
+                    Analyze revenue from memberships, subscriptions, courses, and donations.
+                </p>
+            </field>
+        </record>
+
+        <!-- Report Menu Items -->
+        <menuitem id="menu_ams_report_membership_summary"
+            name="Membership Summary"
+            parent="menu_ams_membership_reports"
+            action="action_membership_summary_report"
+            sequence="10"
+            groups="ams_foundation.group_ams_manager"/>
+
+        <menuitem id="menu_ams_report_subscription_analytics"
+            name="Subscription Analytics"
+            parent="menu_ams_membership_reports"
+            action="action_subscription_analytics"
+            sequence="20"
+            groups="ams_foundation.group_ams_manager"/>
+
+        <menuitem id="menu_ams_report_revenue_analysis"
+            name="Revenue Analysis"
+            parent="menu_ams_membership_reports"
+            action="action_revenue_analysis"
+            sequence="30"
+            groups="ams_foundation.group_ams_manager"/>
+
+        <!-- Placeholder Actions for other models (will be defined in their respective view files) -->
+        
+        <!-- Chapter Memberships Action -->
+        <record id="action_membership_chapter" model="ir.actions.act_window">
+            <field name="name">Chapter Memberships</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership.chapter</field>
+            <field name="view_mode">list,form</field>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No chapter memberships found
+                </p>
+                <p>
+                    Chapter memberships provide local networking and professional 
+                    development opportunities in specific geographic regions.
+                </p>
+            </field>
+        </record>
+
+        <!-- Subscriptions Action -->
+        <record id="action_membership_subscription" model="ir.actions.act_window">
+            <field name="name">Publications &amp; Newsletters</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership.subscription</field>
+            <field name="view_mode">list,form</field>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No subscriptions found
+                </p>
+                <p>
+                    Manage member subscriptions to publications, newsletters, 
+                    and other content services.
+                </p>
+            </field>
+        </record>
+
+        <!-- Courses Action -->
+        <record id="action_membership_course" model="ir.actions.act_window">
+            <field name="name">Courses &amp; Training</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership.course</field>
+            <field name="view_mode">list,form</field>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No course enrollments found
+                </p>
+                <p>
+                    Track member enrollments in educational courses, training programs,
+                    and certification preparation.
+                </p>
+            </field>
+        </record>
+
+        <!-- Donations Action -->
+        <record id="action_membership_donation" model="ir.actions.act_window">
+            <field name="name">Donations</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ams.membership.donation</field>
+            <field name="view_mode">list,form</field>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No donations found
+                </p>
+                <p>
+                    Manage recurring donations and donor relationships including
+                    general fund, scholarship, and special project donations.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>
