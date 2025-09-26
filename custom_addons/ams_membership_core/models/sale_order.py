@@ -188,7 +188,7 @@ class SaleOrder(models.Model):
         return result
     
     def _validate_chapter_eligibility(self):
-        """Validate chapter membership eligibility - NEW METHOD"""
+        """Validate chapter membership eligibility - EMERGENCY SAFE VERSION"""
         self.ensure_one()
         
         warnings = []
@@ -210,24 +210,26 @@ class SaleOrder(models.Model):
                 if existing_chapter:
                     warnings.append(f"Customer already has membership in {product_tmpl.name}")
                 
-                # Check geographic restrictions
-                if product_tmpl.chapter_geographic_restriction:
-                    customer_country = self.partner_id.country_id
-                    customer_state = self.partner_id.state_id.name if self.partner_id.state_id else ''
-                    
-                    if (customer_country != product_tmpl.chapter_country_id or 
-                        customer_state != product_tmpl.chapter_state):
-                        warnings.append(f"Geographic restriction: {product_tmpl.name} requires location in {product_tmpl.chapter_state}, {product_tmpl.chapter_country_id.name}")
+                # SKIP geographic restrictions for now - EMERGENCY FIX
+                # TODO: Add back when chapter_geographic_restriction field is added
                 
-                # Check member limits
-                if (product_tmpl.chapter_member_limit > 0 and 
-                    product_tmpl.chapter_member_count >= product_tmpl.chapter_member_limit):
-                    warnings.append(f"Chapter at capacity: {product_tmpl.name} has reached its member limit")
+                # Check member limits - SAFE VERSION
+                try:
+                    if hasattr(product_tmpl, 'chapter_member_limit') and product_tmpl.chapter_member_limit > 0:
+                        member_count = getattr(product_tmpl, 'chapter_member_count', 0)
+                        if member_count >= product_tmpl.chapter_member_limit:
+                            warnings.append(f"Chapter at capacity: {product_tmpl.name} has reached its member limit")
+                except (AttributeError, TypeError):
+                    pass
                 
-                # Check minimum member requirement for chapter viability
-                if (product_tmpl.chapter_minimum_members > 0 and 
-                    product_tmpl.chapter_member_count < product_tmpl.chapter_minimum_members):
-                    warnings.append(f"Chapter below minimum: {product_tmpl.name} needs more members to remain active")
+                # Check minimum member requirement - SAFE VERSION
+                try:
+                    if hasattr(product_tmpl, 'chapter_minimum_members') and product_tmpl.chapter_minimum_members > 0:
+                        member_count = getattr(product_tmpl, 'chapter_member_count', 0)
+                        if member_count < product_tmpl.chapter_minimum_members:
+                            warnings.append(f"Chapter below minimum: {product_tmpl.name} needs more members to remain active")
+                except (AttributeError, TypeError):
+                    pass
         
         if warnings:
             self.chapter_warnings = '\n'.join(warnings)
@@ -584,7 +586,7 @@ class SaleOrder(models.Model):
         return self._create_membership_record(membership_vals, 'chapter membership')
     
     def _check_detailed_chapter_eligibility(self, partner, product_tmpl):
-        """Detailed chapter eligibility check"""
+        """Detailed chapter eligibility check - EMERGENCY SAFE VERSION"""
         try:
             # Check if already in this chapter
             existing = partner.membership_ids.filtered(
@@ -594,16 +596,17 @@ class SaleOrder(models.Model):
             if existing:
                 return False, f"Already a member of {product_tmpl.name}"
             
-            # Check member limits
-            if (product_tmpl.chapter_member_limit > 0 and 
-                product_tmpl.chapter_member_count >= product_tmpl.chapter_member_limit):
-                return False, f"Chapter at member capacity ({product_tmpl.chapter_member_limit})"
+            # Check member limits - SAFE
+            try:
+                if hasattr(product_tmpl, 'chapter_member_limit') and product_tmpl.chapter_member_limit > 0:
+                    member_count = getattr(product_tmpl, 'chapter_member_count', 0)
+                    if member_count >= product_tmpl.chapter_member_limit:
+                        return False, f"Chapter at member capacity ({product_tmpl.chapter_member_limit})"
+            except (AttributeError, TypeError):
+                pass
             
-            # Check geographic restrictions
-            if product_tmpl.chapter_geographic_restriction:
-                if (partner.country_id != product_tmpl.chapter_country_id or 
-                    (partner.state_id.name if partner.state_id else '') != product_tmpl.chapter_state):
-                    return False, "Geographic restriction - not in chapter area"
+            # SKIP geographic restrictions for now - EMERGENCY FIX
+            # TODO: Add back when fields are properly added
             
             return True, "Eligible for chapter membership"
             

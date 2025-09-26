@@ -61,6 +61,38 @@ class ProductTemplate(models.Model):
     chapter_zip = fields.Char('Chapter ZIP/Postal Code')
     chapter_timezone = fields.Selection('_tz_get', string='Chapter Timezone')
     
+    # NEW: Geographic restrictions for chapters
+    chapter_geographic_restriction = fields.Boolean(
+        string='Enable Geographic Restriction',
+        default=False,
+        help='Restrict chapter membership to specific geographic areas'
+    )
+    
+    chapter_max_distance_km = fields.Float(
+        string='Maximum Distance (km)',
+        default=0.0,
+        help='Maximum distance from chapter location (0 = no distance restriction)'
+    )
+    
+    chapter_requires_local_address = fields.Boolean(
+        string='Require Local Address',
+        default=False,
+        help='Members must have an address in the chapter area'
+    )
+    
+    chapter_allowed_countries = fields.Many2many(
+        'res.country',
+        'chapter_country_restriction_rel',
+        'chapter_id', 'country_id',
+        string='Allowed Countries',
+        help='Countries where members can be located (empty = no restriction)'
+    )
+    
+    chapter_allowed_states = fields.Text(
+        string='Allowed States/Provinces',
+        help='List of allowed states/provinces, one per line (empty = no restriction)'
+    )
+    
     # Chapter hierarchy support
     parent_chapter_id = fields.Many2one('product.template', 'Parent Chapter',
                                        domain=[('is_chapter_product', '=', True)],
@@ -241,7 +273,6 @@ class ProductTemplate(models.Model):
     @api.model
     def _tz_get(self):
         """Get timezone options"""
-
         timezones = [(tz, tz) for tz in sorted(all_timezones)]
         return timezones
 
@@ -380,6 +411,16 @@ class ProductTemplate(models.Model):
                 self.chapter_state = self.parent_chapter_id.chapter_state
         else:
             self.chapter_level = 1
+
+    @api.onchange('chapter_geographic_restriction')
+    def _onchange_chapter_geographic_restriction(self):
+        """Handle geographic restriction toggle"""
+        if not self.chapter_geographic_restriction:
+            # Clear geographic restriction fields when disabled
+            self.chapter_max_distance_km = 0.0
+            self.chapter_requires_local_address = False
+            self.chapter_allowed_countries = [(5, 0, 0)]  # Clear many2many
+            self.chapter_allowed_states = False
     
     def _set_subscription_category(self):
         """Set appropriate product category based on subscription type"""
@@ -404,6 +445,55 @@ class ProductTemplate(models.Model):
             })
         
         self.categ_id = category.id
+    
+    # Enhanced Chapter Methods
+    def check_geographic_eligibility(self, partner):
+        """Check if a partner is geographically eligible for this chapter"""
+        self.ensure_one()
+        
+        if not self.is_chapter_product or not self.chapter_geographic_restriction:
+            return True, "No geographic restrictions"
+        
+        if not partner:
+            return False, "No partner provided"
+        
+        # Check country restrictions
+        if self.chapter_allowed_countries:
+            if not partner.country_id or partner.country_id not in self.chapter_allowed_countries:
+                allowed_names = ', '.join(self.chapter_allowed_countries.mapped('name'))
+                return False, f"Must be located in: {allowed_names}"
+        
+        # Check specific chapter country
+        if self.chapter_country_id:
+            if not partner.country_id or partner.country_id != self.chapter_country_id:
+                return False, f"Must be located in {self.chapter_country_id.name}"
+        
+        # Check state restrictions
+        if self.chapter_allowed_states:
+            allowed_states = [s.strip().lower() for s in self.chapter_allowed_states.split('\n') if s.strip()]
+            if allowed_states:
+                partner_state = (partner.state_id.name or '').lower()
+                if not partner_state or partner_state not in allowed_states:
+                    return False, f"Must be located in allowed states/provinces"
+        
+        # Check specific chapter state
+        if self.chapter_state:
+            partner_state = (partner.state_id.name or '').lower()
+            if not partner_state or partner_state != self.chapter_state.lower():
+                return False, f"Must be located in {self.chapter_state}"
+        
+        # Check local address requirement
+        if self.chapter_requires_local_address:
+            if not partner.zip or not partner.city:
+                return False, "Complete local address required"
+        
+        # TODO: Implement distance checking with geocoding service
+        if self.chapter_max_distance_km > 0:
+            # This would require a geocoding service to calculate actual distances
+            # For now, we'll skip this check
+            pass
+        
+        return True, "Geographically eligible"
     
     # Chapter-specific actions
     def action_view_chapter_members(self):
@@ -480,6 +570,22 @@ class ProductTemplate(models.Model):
                 'default_chapter_country_id': self.chapter_country_id.id if self.chapter_country_id else False,
                 'default_chapter_state': self.chapter_state,
             }
+        }
+    
+    def action_test_geographic_restrictions(self):
+        """Test geographic restrictions for this chapter"""
+        self.ensure_one()
+        
+        if not self.is_chapter_product:
+            raise UserError(_("This is not a chapter product."))
+        
+        return {
+            'name': f'Test Geographic Restrictions: {self.name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'chapter.geographic.test.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_chapter_product_id': self.id}
         }
     
     # Existing methods (abbreviated for space)
@@ -739,6 +845,27 @@ class ProductTemplate(models.Model):
             if product.is_subscription_product and product.grace_period_days < 0:
                 raise ValidationError(_("Grace period days cannot be negative."))
 
+    @api.constrains('chapter_max_distance_km')
+    def _check_max_distance(self):
+        """Validate maximum distance"""
+        for product in self:
+            if product.chapter_max_distance_km < 0:
+                raise ValidationError(_("Maximum distance cannot be negative."))
+
+    @api.constrains('chapter_geographic_restriction', 'chapter_allowed_countries', 'chapter_allowed_states')
+    def _check_geographic_restrictions(self):
+        """Validate geographic restriction settings"""
+        for product in self:
+            if product.chapter_geographic_restriction:
+                if (not product.chapter_allowed_countries and 
+                    not product.chapter_allowed_states and 
+                    not product.chapter_country_id and 
+                    not product.chapter_state and 
+                    not product.chapter_requires_local_address):
+                    raise ValidationError(
+                        _("When geographic restrictions are enabled, you must specify at least one restriction criteria.")
+                    )
+
 
 class ProductProduct(models.Model):
     _inherit = 'product.product'
@@ -789,3 +916,7 @@ class ProductProduct(models.Model):
                 'default_subscription_fee': self.list_price,
             }
         }
+
+    def check_chapter_eligibility(self, partner):
+        """Check if partner is eligible for this chapter product"""
+        return self.product_tmpl_id.check_geographic_eligibility(partner)
