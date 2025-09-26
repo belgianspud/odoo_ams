@@ -57,14 +57,14 @@
                     </button>
                     
                     <!-- Revenue stats -->
-                    <button type="object" class="oe_stat_button" icon="fa-money"
+                    <button name="action_view_revenue_report" type="object" class="oe_stat_button" icon="fa-money"
                             invisible="not is_subscription_product"
                             groups="ams_membership_core.group_membership_manager">
                         <field name="total_subscription_revenue" widget="statinfo" string="Total Revenue"/>
                     </button>
                     
                     <!-- Chapter retention rate -->
-                    <button type="object" class="oe_stat_button" icon="fa-heart"
+                    <button name="action_view_retention_report" type="object" class="oe_stat_button" icon="fa-heart"
                             invisible="not is_chapter_product"
                             groups="ams_membership_core.group_membership_manager">
                         <div class="o_stat_info">

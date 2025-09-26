@@ -83,38 +83,36 @@
                                 </div>
                             </button>
                             
-                            <!-- Chapter-specific stat buttons -->
-                            <button type="object" class="oe_stat_button" icon="fa-map-marker"
+                            <!-- Chapter-specific stat buttons - NOW CLICKABLE -->
+                            <button name="action_chapter_dashboard" type="object" class="oe_stat_button" icon="fa-map-marker"
                                     invisible="not is_chapter_membership">
                                 <div class="o_stat_info">
-                                    <span class="o_stat_text" t-esc="chapter_type and chapter_type.replace('_', ' ').title() or 'Chapter'"/>
-                                    <span class="o_stat_text">Type</span>
+                                    <field name="chapter_type" widget="statinfo" string="Chapter Type"/>
                                 </div>
                             </button>
                             
-                            <button type="object" class="oe_stat_button" icon="fa-key"
+                            <button name="action_chapter_dashboard" type="object" class="oe_stat_button" icon="fa-key"
                                     invisible="not is_chapter_membership">
                                 <div class="o_stat_info">
-                                    <span class="o_stat_text" t-esc="chapter_access_level and chapter_access_level.replace('_', ' ').title() or 'Basic'"/>
-                                    <span class="o_stat_text">Access</span>
+                                    <field name="chapter_access_level" widget="statinfo" string="Access Level"/>
                                 </div>
                             </button>
                             
-                            <button type="object" class="oe_stat_button" icon="fa-trophy"
+                            <button name="action_chapter_dashboard" type="object" class="oe_stat_button" icon="fa-trophy"
                                     invisible="not is_chapter_membership">
                                 <div class="o_stat_info">
                                     <field name="chapter_engagement_score" widget="statinfo" string="Engagement"/>
                                 </div>
                             </button>
                             
-                            <button type="object" class="oe_stat_button" icon="fa-calendar"
+                            <button name="action_record_chapter_activity" type="object" class="oe_stat_button" icon="fa-calendar"
                                     invisible="not is_chapter_membership or not chapter_events_attended">
                                 <div class="o_stat_info">
                                     <field name="chapter_events_attended" widget="statinfo" string="Events"/>
                                 </div>
                             </button>
                             
-                            <button type="object" class="oe_stat_button" icon="fa-clock-o"
+                            <button name="action_record_chapter_activity" type="object" class="oe_stat_button" icon="fa-clock-o"
                                     invisible="not is_chapter_membership or not chapter_volunteer_hours">
                                 <div class="o_stat_info">
                                     <field name="chapter_volunteer_hours" widget="statinfo" string="Vol. Hours"/>
@@ -128,7 +126,7 @@
                             </h1>
                             <div class="o_row">
                                 <field name="name" readonly="True"/>
-                                <span t-if="is_chapter_membership" class="badge bg-info ms-2">
+                                <span invisible="not is_chapter_membership" class="badge bg-info ms-2">
                                     <i class="fa fa-map-marker"/> Chapter Membership
                                 </span>
                             </div>
@@ -279,13 +277,13 @@
                                         <div class="alert alert-info">
                                             <h5><i class="fa fa-info-circle"/> Chapter Access Summary</h5>
                                             <p class="mb-1">
-                                                <strong>Access Level:</strong> <span t-esc="chapter_access_level and chapter_access_level.replace('_', ' ').title() or 'Basic'"/>
+                                                <strong>Access Level:</strong> <field name="chapter_access_level" readonly="True"/>
                                             </p>
                                             <p class="mb-1">
-                                                <strong>Role:</strong> <span t-esc="chapter_role and chapter_role.replace('_', ' ').title() or 'Member'"/>
+                                                <strong>Role:</strong> <field name="chapter_role" readonly="True"/>
                                             </p>
                                             <p class="mb-0">
-                                                <strong>Engagement Score:</strong> <span t-esc="chapter_engagement_score or 0"/>/100
+                                                <strong>Engagement Score:</strong> <field name="chapter_engagement_score" readonly="True"/>/100
                                             </p>
                                         </div>
                                     </div>

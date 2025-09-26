@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
-
+from pytz import timezone, all_timezones
 
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
@@ -241,7 +241,7 @@ class ProductTemplate(models.Model):
     @api.model
     def _tz_get(self):
         """Get timezone options"""
-        from pytz import timezone, all_timezones
+
         timezones = [(tz, tz) for tz in sorted(all_timezones)]
         return timezones
 
@@ -515,6 +515,121 @@ class ProductTemplate(models.Model):
             }
         }
     
+    def action_view_revenue_report(self):
+        """View revenue report for this subscription product"""
+        self.ensure_one()
+        
+        if not self.is_subscription_product:
+            raise UserError(_("This is not a subscription product."))
+        
+        # Get revenue data
+        membership_revenue = 0
+        subscription_revenue = 0
+        
+        if self.subscription_product_type in ['membership', 'chapter']:
+            memberships = self.env['ams.membership'].search([
+                ('product_id.product_tmpl_id', '=', self.id),
+                ('state', '=', 'active')
+            ])
+            membership_revenue = sum(memberships.mapped('membership_fee'))
+        else:
+            subscriptions = self.env['ams.subscription'].search([
+                ('product_id.product_tmpl_id', '=', self.id),
+                ('state', '=', 'active')
+            ])
+            subscription_revenue = sum(subscriptions.mapped('subscription_fee'))
+        
+        # Show simple message for now - could be enhanced with a detailed report view
+        message = f"Revenue Summary for {self.name}:\n\n"
+        message += f"Active Revenue: ${membership_revenue + subscription_revenue:,.2f}\n"
+        if self.subscription_product_type in ['membership', 'chapter']:
+            message += f"Active Memberships: {self.active_memberships_count}\n"
+            message += f"Average per Member: ${(membership_revenue/self.active_memberships_count) if self.active_memberships_count else 0:,.2f}"
+        else:
+            message += f"Active Subscriptions: {self.active_subscriptions_count}\n"
+            message += f"Average per Subscription: ${(subscription_revenue/self.active_subscriptions_count) if self.active_subscriptions_count else 0:,.2f}"
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': f'Revenue Report: {self.name}',
+                'message': message,
+                'type': 'info',
+                'sticky': True,
+            }
+        }
+    
+    def action_view_retention_report(self):
+        """View retention report for this chapter product"""
+        self.ensure_one()
+        
+        if not self.is_chapter_product:
+            raise UserError(_("This is not a chapter product."))
+        
+        # Get retention data
+        active_memberships = self.env['ams.membership'].search([
+            ('product_id.product_tmpl_id', '=', self.id),
+            ('state', '=', 'active')
+        ])
+        
+        total_members = len(active_memberships)
+        renewed_members = len(active_memberships.filtered(lambda m: m.last_renewal_date))
+        new_members = len(active_memberships.filtered(lambda m: not m.last_renewal_date))
+        
+        retention_rate = (renewed_members / total_members * 100) if total_members > 0 else 0
+        
+        message = f"Retention Report for {self.name}:\n\n"
+        message += f"Total Active Members: {total_members}\n"
+        message += f"Renewed Members: {renewed_members}\n"
+        message += f"New Members: {new_members}\n"
+        message += f"Retention Rate: {retention_rate:.1f}%\n\n"
+        
+        if self.chapter_member_limit:
+            occupancy = (total_members / self.chapter_member_limit * 100)
+            message += f"Chapter Occupancy: {occupancy:.1f}% ({total_members}/{self.chapter_member_limit})"
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': f'Retention Report: {self.name}',
+                'message': message,
+                'type': 'info',
+                'sticky': True,
+            }
+        }
+    
+    def action_configure_benefits(self):
+        """Configure benefits for this subscription product"""
+        self.ensure_one()
+        
+        if not self.is_subscription_product:
+            raise UserError(_("This is not a subscription product."))
+        
+        # Filter benefits based on subscription type
+        if self.subscription_product_type == 'chapter':
+            domain = [('applies_to', 'in', ['chapter', 'membership_and_chapter', 'all'])]
+        elif self.subscription_product_type == 'membership':
+            domain = [('applies_to', 'in', ['membership', 'membership_and_chapter', 'all'])]
+        elif self.subscription_product_type == 'subscription':
+            domain = [('applies_to', 'in', ['subscription', 'all'])]
+        else:
+            domain = [('applies_to', '=', 'all')]
+        
+        return {
+            'name': f'Configure Benefits: {self.name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'ams.benefit',
+            'view_mode': 'list,form',
+            'domain': domain,
+            'context': {
+                'search_default_active': 1,
+                'default_applies_to': 'chapter' if self.subscription_product_type == 'chapter' else 'membership',
+            },
+            'target': 'new',
+        }
+
     # Integration with sale and invoice processing
     def create_subscription_from_sale(self, sale_line):
         """Create subscription/membership from sale order line"""

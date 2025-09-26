@@ -75,16 +75,15 @@
                                 </div>
                             </button>
                             
-                            <!-- Subscription type indicator -->
-                            <button type="object" class="oe_stat_button" icon="fa-refresh">
+                            <!-- Subscription type indicator - FIXED: Added name attribute -->
+                            <button name="action_renew" type="object" class="oe_stat_button" icon="fa-refresh">
                                 <div class="o_stat_info">
-                                    <span class="o_stat_text" t-esc="subscription_type and subscription_type.replace('_', ' ').title() or 'Subscription'"/>
-                                    <span class="o_stat_text">Type</span>
+                                    <field name="subscription_type" widget="statinfo" string="Subscription Type"/>
                                 </div>
                             </button>
                             
-                            <!-- Days until expiry -->
-                            <button type="object" class="oe_stat_button" icon="fa-calendar" 
+                            <!-- Days until expiry - FIXED: Added name attribute -->
+                            <button name="action_renew" type="object" class="oe_stat_button" icon="fa-calendar" 
                                     invisible="days_until_expiry &lt;= 0">
                                 <div class="o_stat_info">
                                     <field name="days_until_expiry" widget="statinfo" string="Days Left"/>
@@ -98,13 +97,14 @@
                             </h1>
                             <div class="o_row">
                                 <field name="name" readonly="True"/>
-                                <span t-if="subscription_type == 'publication'" class="badge bg-success ms-2">
+                                <!-- FIXED: Replaced t-if with invisible attribute -->
+                                <span invisible="subscription_type != 'publication'" class="badge bg-success ms-2">
                                     <i class="fa fa-book"/> Publication
                                 </span>
-                                <span t-if="subscription_type == 'event'" class="badge bg-warning ms-2">
+                                <span invisible="subscription_type != 'event'" class="badge bg-warning ms-2">
                                     <i class="fa fa-calendar"/> Event Access
                                 </span>
-                                <span t-if="subscription_type == 'subscription'" class="badge bg-info ms-2">
+                                <span invisible="subscription_type != 'subscription'" class="badge bg-info ms-2">
                                     <i class="fa fa-refresh"/> Subscription
                                 </span>
                             </div>
