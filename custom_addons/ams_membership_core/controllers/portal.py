@@ -49,13 +49,11 @@ class MembershipPortal(CustomerPortal):
         return values
 
     def _prepare_portal_layout_values(self):
-        """Prepare portal layout values with member context - SAFE VERSION"""
+        """ENHANCED: Prepare portal layout values with complete member context"""
         values = super()._prepare_portal_layout_values()
         
         partner = request.env.user.partner_id
         
-        # CRITICAL: Add member data as TEMPLATE CONTEXT, not as counters
-        # These go into template context and are NOT processed as counters
         try:
             if partner:
                 # Safe foundation field access with fallbacks
@@ -73,6 +71,34 @@ class MembershipPortal(CustomerPortal):
                 membership_end_date = getattr(partner, 'membership_end_date', None)
                 next_renewal_date = getattr(partner, 'next_renewal_date', None)
                 
+                # ENHANCED: Get chapter memberships for portal home
+                chapter_memberships = request.env['ams.membership']
+                chapter_membership_count = 0
+                total_subscription_count = 0
+                
+                try:
+                    if is_member:
+                        # Get all active memberships
+                        all_memberships = request.env['ams.membership'].search([
+                            ('partner_id', '=', partner.id),
+                            ('state', '=', 'active')
+                        ])
+                        
+                        # Filter chapter memberships
+                        chapter_memberships = all_memberships.filtered(
+                            lambda m: getattr(m, 'is_chapter_membership', False)
+                        )
+                        chapter_membership_count = len(chapter_memberships)
+                        
+                        # Get subscription count
+                        total_subscription_count = request.env['ams.subscription'].search_count([
+                            ('partner_id', '=', partner.id),
+                            ('state', '=', 'active')
+                        ])
+                        
+                except Exception as e:
+                    _logger.warning(f"Error getting member data: {e}")
+                
                 # TEMPLATE CONTEXT ONLY - these are for display, not counters
                 values.update({
                     'is_member': is_member,
@@ -82,6 +108,10 @@ class MembershipPortal(CustomerPortal):
                     'membership_start_date': membership_start_date,
                     'membership_end_date': membership_end_date,
                     'next_renewal_date': next_renewal_date,
+                    
+                    # CHAPTER CONTEXT - FIXED
+                    'chapter_memberships': chapter_memberships,
+                    'chapter_membership_count': chapter_membership_count,
                 })
                 
                 # Only add additional member data if they are a member
@@ -90,13 +120,12 @@ class MembershipPortal(CustomerPortal):
                         current_membership = getattr(partner, 'current_membership_id', None)
                         active_benefits = getattr(partner, 'active_benefit_ids', partner.env['ams.benefit'])
                         pending_renewals_count = getattr(partner, 'pending_renewals_count', 0)
-                        total_subscription_count = getattr(partner, 'subscription_count', 0)
                         
                         values.update({
                             'current_membership': current_membership,
                             'active_benefits': active_benefits,
                             'pending_renewals_count': pending_renewals_count,
-                            'total_subscription_count': total_subscription_count,  # Different name to avoid conflicts
+                            'total_subscription_count': total_subscription_count,
                         })
                     except Exception as e:
                         _logger.error(f"Error getting member data: {e}")
@@ -114,6 +143,8 @@ class MembershipPortal(CustomerPortal):
                     'active_benefits': request.env['ams.benefit'],
                     'pending_renewals_count': 0,
                     'total_subscription_count': 0,
+                    'chapter_memberships': request.env['ams.membership'],
+                    'chapter_membership_count': 0,
                 })
         except Exception as e:
             _logger.error(f"Error in portal layout values: {e}")
@@ -130,6 +161,8 @@ class MembershipPortal(CustomerPortal):
                 'active_benefits': request.env['ams.benefit'],
                 'pending_renewals_count': 0,
                 'total_subscription_count': 0,
+                'chapter_memberships': request.env['ams.membership'],
+                'chapter_membership_count': 0,
             })
             
         return values
@@ -146,12 +179,15 @@ class MembershipPortal(CustomerPortal):
                 type='http', auth="user", website=True)
     def portal_my_memberships(self, page=1, date_begin=None, date_end=None, 
                              sortby=None, search=None, search_in='name', **kw):
-        """Display member's memberships - SAFE VERSION"""
+        """FIXED: Display member's memberships with proper data separation"""
         values = self._prepare_portal_layout_values()
         partner = request.env.user.partner_id
 
+        _logger.info(f"Portal memberships accessed by user {request.env.user.login} for partner {partner.id}")
+
         # Check if partner exists and is a member
         if not partner or not getattr(partner, 'is_member', False):
+            _logger.warning(f"Access denied - partner: {partner}, is_member: {getattr(partner, 'is_member', False)}")
             return request.render("ams_membership_core.portal_no_membership_access", values)
 
         try:
@@ -192,8 +228,11 @@ class MembershipPortal(CustomerPortal):
                     ('start_date', '<=', date_end)
                 ]])
 
+            _logger.info(f"Searching memberships with domain: {domain}")
+
             # Count for pager
             membership_count = Membership.search_count(domain)
+            _logger.info(f"Found {membership_count} memberships for partner {partner.id}")
 
             # Pager
             pager = portal_pager(
@@ -210,10 +249,34 @@ class MembershipPortal(CustomerPortal):
                                            limit=self._items_per_page, 
                                            offset=pager['offset'])
 
-            # Add page-specific data
+            _logger.info(f"Retrieved {len(memberships)} memberships")
+
+            # CRITICAL FIX: Properly separate memberships for templates
+            regular_memberships = []
+            chapter_memberships = []
+            
+            for membership in memberships:
+                try:
+                    if getattr(membership, 'is_chapter_membership', False):
+                        chapter_memberships.append(membership)
+                    else:
+                        regular_memberships.append(membership)
+                except Exception as e:
+                    _logger.warning(f"Error checking membership type for {membership.id}: {e}")
+                    regular_memberships.append(membership)  # Default to regular
+
+            # Convert to recordsets for template compatibility
+            regular_memberships = Membership.browse([m.id for m in regular_memberships])
+            chapter_memberships = Membership.browse([m.id for m in chapter_memberships])
+
+            _logger.info(f"Separated: {len(regular_memberships)} regular, {len(chapter_memberships)} chapter")
+
+            # Add page-specific data with ALL required template variables
             values.update({
                 'date': date_begin,
-                'memberships': memberships,
+                'memberships': memberships,                    # All memberships (for compatibility)
+                'regular_memberships': regular_memberships,    # Regular only
+                'chapter_memberships': chapter_memberships,    # Chapter only - CRITICAL FIX
                 'page_name': 'membership',
                 'pager': pager,
                 'default_url': '/my/memberships',
@@ -222,13 +285,19 @@ class MembershipPortal(CustomerPortal):
                 'search_in': search_in,
                 'search': search,
                 'sortby': sortby,
+                
+                # Ensure member context is available
+                'partner': partner,
             })
             
         except Exception as e:
-            _logger.error(f"Error in portal_my_memberships: {e}")
+            _logger.error(f"Error in portal_my_memberships: {e}", exc_info=True)
             values.update({
-                'memberships': [],
+                'memberships': Membership,
+                'regular_memberships': Membership,
+                'chapter_memberships': Membership,
                 'page_name': 'membership',
+                'error_message': str(e),
             })
             
         return request.render("ams_membership_core.portal_my_memberships", values)
@@ -383,6 +452,71 @@ class MembershipPortal(CustomerPortal):
         }
         return request.render("ams_membership_core.portal_subscription_detail", values)
 
+    @http.route(['/my/chapters'], type='http', auth="user", website=True)
+    def portal_my_chapters(self, **kw):
+        """Display member's chapter memberships - NEW METHOD"""
+        values = self._prepare_portal_layout_values()
+        partner = request.env.user.partner_id
+
+        if not partner or not getattr(partner, 'is_member', False):
+            return request.render("ams_membership_core.portal_no_membership_access", values)
+
+        try:
+            # Get all chapter memberships
+            chapter_memberships = request.env['ams.membership'].search([
+                ('partner_id', '=', partner.id),
+                ('is_chapter_membership', '=', True)
+            ])
+
+            # Calculate analytics
+            total_events_attended = sum(m.chapter_events_attended or 0 for m in chapter_memberships)
+            total_volunteer_hours = sum(m.chapter_volunteer_hours or 0 for m in chapter_memberships)
+            
+            active_chapters = chapter_memberships.filtered(lambda m: m.state == 'active')
+            if active_chapters:
+                scores = [m.chapter_engagement_score for m in active_chapters if m.chapter_engagement_score > 0]
+                average_engagement_score = sum(scores) / len(scores) if scores else 0
+            else:
+                average_engagement_score = 0
+
+            values.update({
+                'chapter_memberships': chapter_memberships,
+                'total_events_attended': total_events_attended,
+                'total_volunteer_hours': total_volunteer_hours,
+                'average_engagement_score': average_engagement_score,
+                'page_name': 'chapters',
+            })
+
+        except Exception as e:
+            _logger.error(f"Error in portal_my_chapters: {e}")
+            values.update({
+                'chapter_memberships': request.env['ams.membership'],
+                'page_name': 'chapters',
+            })
+
+        return request.render("ams_membership_core.portal_my_chapters", values)
+
+    @http.route(['/my/chapters/<int:membership_id>'], 
+                type='http', auth="user", website=True)
+    def portal_chapter_detail(self, membership_id, **kw):
+        """Display chapter membership details"""
+        try:
+            membership_sudo = self._document_check_access('ams.membership', membership_id)
+            
+            # Verify it's a chapter membership
+            if not getattr(membership_sudo, 'is_chapter_membership', False):
+                return request.redirect('/my/memberships')
+                
+        except (AccessError, MissingError):
+            return request.redirect('/my')
+
+        values = {
+            'membership': membership_sudo,
+            'chapter': membership_sudo,  # Alias for template compatibility
+            'page_name': 'chapters',
+        }
+        return request.render("ams_membership_core.portal_membership_detail", values)
+
     # CRITICAL: Custom invoice handler for membership/subscription invoices
     @http.route(['/my/invoices/<int:invoice_id>'], type='http', auth="user", website=True)
     def portal_my_invoice_detail(self, invoice_id, access_token=None, report_type=None, download=False, **kw):
@@ -484,6 +618,99 @@ class MembershipPortal(CustomerPortal):
         
         return request.redirect(f'/my/subscriptions/{subscription_id}')
 
+    # DEBUG ROUTES FOR TROUBLESHOOTING
+    @http.route(['/my/debug'], type='http', auth="user", website=True)
+    def debug_portal(self, **kw):
+        """Debug route to check portal access"""
+        partner = request.env.user.partner_id
+        user = request.env.user
+        
+        debug_info = f"""
+        <html><head><title>Portal Debug</title></head><body>
+        <h2>Portal Debug Information</h2>
+        <h3>User Info</h3>
+        <p><strong>User ID:</strong> {user.id}</p>
+        <p><strong>User Login:</strong> {user.login}</p>
+        <p><strong>User Groups:</strong> {', '.join(user.groups_id.mapped('name'))}</p>
+        
+        <h3>Partner Info</h3>
+        <p><strong>Partner ID:</strong> {partner.id}</p>
+        <p><strong>Partner Name:</strong> {partner.name}</p>
+        <p><strong>Partner Email:</strong> {partner.email}</p>
+        <p><strong>Is Member:</strong> {getattr(partner, 'is_member', 'FIELD_NOT_FOUND')}</p>
+        <p><strong>Member Status:</strong> {getattr(partner, 'member_status', 'FIELD_NOT_FOUND')}</p>
+        <p><strong>Member Number:</strong> {getattr(partner, 'member_number', 'FIELD_NOT_FOUND')}</p>
+        
+        <h3>Access Tests</h3>
+        """
+        
+        try:
+            # Test membership model access
+            membership_count = request.env['ams.membership'].search_count([])
+            debug_info += f"<p><strong>Total Memberships (no domain):</strong> {membership_count}</p>"
+        except Exception as e:
+            debug_info += f"<p><strong>Membership Access Error:</strong> {str(e)}</p>"
+        
+        try:
+            # Test partner membership access
+            partner_memberships = request.env['ams.membership'].search([('partner_id', '=', partner.id)])
+            debug_info += f"<p><strong>Partner Memberships Found:</strong> {len(partner_memberships)}</p>"
+            for membership in partner_memberships:
+                debug_info += f"<p>  - {membership.name}: {membership.state} ({membership.product_id.name})</p>"
+        except Exception as e:
+            debug_info += f"<p><strong>Partner Membership Error:</strong> {str(e)}</p>"
+        
+        try:
+            # Test direct SQL query
+            request.env.cr.execute("""
+                SELECT id, name, state, partner_id 
+                FROM ams_membership 
+                WHERE partner_id = %s
+            """, (partner.id,))
+            sql_results = request.env.cr.fetchall()
+            debug_info += f"<p><strong>Direct SQL Results:</strong> {len(sql_results)} records</p>"
+            for row in sql_results:
+                debug_info += f"<p>  - ID {row[0]}: {row[1]} ({row[2]})</p>"
+        except Exception as e:
+            debug_info += f"<p><strong>SQL Query Error:</strong> {str(e)}</p>"
+        
+        debug_info += """
+        <h3>Test Links</h3>
+        <a href="/my" style="margin-right: 10px;">Portal Home</a>
+        <a href="/my/memberships" style="margin-right: 10px;">Memberships</a>
+        <a href="/my/chapters" style="margin-right: 10px;">Chapters</a>
+        </body></html>
+        """
+        return debug_info
+
+    @http.route(['/my/membership/debug'], type='http', auth="user", website=True)
+    def portal_membership_debug(self, **kw):
+        """Detailed membership debug with template context"""
+        values = self._prepare_portal_layout_values()
+        partner = request.env.user.partner_id
+        
+        try:
+            memberships = request.env['ams.membership'].search([('partner_id', '=', partner.id)])
+            regular_memberships = memberships.filtered(lambda m: not getattr(m, 'is_chapter_membership', False))
+            chapter_memberships = memberships.filtered(lambda m: getattr(m, 'is_chapter_membership', False))
+            
+            values.update({
+                'memberships': memberships,
+                'regular_memberships': regular_memberships, 
+                'chapter_memberships': chapter_memberships,
+                'debug_partner_id': partner.id,
+                'debug_membership_count': len(memberships),
+                'debug_regular_count': len(regular_memberships),
+                'debug_chapter_count': len(chapter_memberships),
+            })
+        except Exception as e:
+            values.update({
+                'debug_error': str(e),
+                'memberships': request.env['ams.membership'],
+            })
+        
+        return request.render("ams_membership_core.portal_membership_debug", values)
+
     def _document_check_access(self, model_name, document_id, access_token=None):
         """ENHANCED: Check access to membership/subscription documents AND invoices"""
         document = request.env[model_name].browse([document_id])
@@ -524,3 +751,6 @@ class MembershipPortal(CustomerPortal):
             raise AccessError(_("Access Denied"))
             
         return document_sudo
+
+
+    

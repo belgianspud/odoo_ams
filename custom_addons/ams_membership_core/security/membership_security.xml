@@ -46,11 +46,24 @@
             <field name="perm_unlink" eval="True"/>
         </record>
 
+        <!-- ENHANCED: Portal access rule with better domain -->
         <record id="membership_rule_portal_own" model="ir.rule">
             <field name="name">Membership: Portal users see own</field>
             <field name="model_id" ref="model_ams_membership"/>
-            <field name="domain_force">[('partner_id.user_ids', 'in', user.id)]</field>
+            <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
             <field name="groups" eval="[(4, ref('group_membership_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- ENHANCED: Additional portal rule for base.group_portal users -->
+        <record id="membership_rule_base_portal_own" model="ir.rule">
+            <field name="name">Membership: Base Portal users see own</field>
+            <field name="model_id" ref="model_ams_membership"/>
+            <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="False"/>
@@ -65,19 +78,46 @@
             <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
         </record>
 
+        <!-- ENHANCED: Portal subscription access -->
         <record id="subscription_rule_portal_own" model="ir.rule">
             <field name="name">Subscription: Portal users see own</field>
             <field name="model_id" ref="model_ams_subscription"/>
-            <field name="domain_force">[('partner_id.user_ids', 'in', user.id)]</field>
+            <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
             <field name="groups" eval="[(4, ref('group_membership_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
         </record>
 
-        <!-- Benefit Rules -->
+        <record id="subscription_rule_base_portal_own" model="ir.rule">
+            <field name="name">Subscription: Base Portal users see own</field>
+            <field name="model_id" ref="model_ams_subscription"/>
+            <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Benefit Rules - Portal users can see all benefits (global) -->
         <record id="benefit_rule_user_all" model="ir.rule">
             <field name="name">Benefit: Users see all</field>
             <field name="model_id" ref="model_ams_benefit"/>
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
+        </record>
+
+        <record id="benefit_rule_portal_all" model="ir.rule">
+            <field name="name">Benefit: Portal users see all active benefits</field>
+            <field name="model_id" ref="model_ams_benefit"/>
+            <field name="domain_force">[('active', '=', True)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_portal')), (4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
         </record>
 
         <!-- Renewal Rules -->
@@ -88,11 +128,119 @@
             <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
         </record>
 
+        <!-- ENHANCED: Portal renewal access -->
         <record id="renewal_rule_portal_own" model="ir.rule">
             <field name="name">Renewal: Portal users see own</field>
             <field name="model_id" ref="model_ams_renewal"/>
-            <field name="domain_force">[('partner_id.user_ids', 'in', user.id)]</field>
+            <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
             <field name="groups" eval="[(4, ref('group_membership_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="renewal_rule_base_portal_own" model="ir.rule">
+            <field name="name">Renewal: Base Portal users see own</field>
+            <field name="model_id" ref="model_ams_renewal"/>
+            <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- NEW: Chapter Activity Rules -->
+        <record id="chapter_activity_rule_user_all" model="ir.rule">
+            <field name="name">Chapter Activity: Users see all</field>
+            <field name="model_id" ref="model_chapter_activity"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
+        </record>
+
+        <record id="chapter_activity_rule_portal_own" model="ir.rule">
+            <field name="name">Chapter Activity: Portal users see own</field>
+            <field name="model_id" ref="model_chapter_activity"/>
+            <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_portal')), (4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- NEW: Chapter Committee Rules -->
+        <record id="chapter_committee_rule_user_all" model="ir.rule">
+            <field name="name">Chapter Committee: Users see all</field>
+            <field name="model_id" ref="model_chapter_committee"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
+        </record>
+
+        <record id="chapter_committee_rule_portal_all" model="ir.rule">
+            <field name="name">Chapter Committee: Portal users see all active</field>
+            <field name="model_id" ref="model_chapter_committee"/>
+            <field name="domain_force">[('active', '=', True)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_portal')), (4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- NEW: Benefit Usage Rules -->
+        <record id="benefit_usage_rule_user_all" model="ir.rule">
+            <field name="name">Benefit Usage: Users see all</field>
+            <field name="model_id" ref="model_ams_benefit_usage"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
+        </record>
+
+        <record id="benefit_usage_rule_portal_own" model="ir.rule">
+            <field name="name">Benefit Usage: Portal users see own</field>
+            <field name="model_id" ref="model_ams_benefit_usage"/>
+            <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_portal')), (4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- NEW: Partner access rules for portal (needed for portal profile) -->
+        <record id="partner_rule_portal_own" model="ir.rule">
+            <field name="name">Partner: Portal users see own</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="domain_force">['|', ('id', '=', user.partner_id.id), ('id', 'child_of', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- NEW: Product access rules for portal (needed to see membership product info) -->
+        <record id="product_template_rule_portal_subscription" model="ir.rule">
+            <field name="name">Product Template: Portal users see subscription products</field>
+            <field name="model_id" ref="product.model_product_template"/>
+            <field name="domain_force">[('is_subscription_product', '=', True)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_portal')), (4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="product_product_rule_portal_subscription" model="ir.rule">
+            <field name="name">Product Product: Portal users see subscription products</field>
+            <field name="model_id" ref="product.model_product_product"/>
+            <field name="domain_force">[('is_subscription_product', '=', True)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_portal')), (4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
         </record>
 
     </data>
