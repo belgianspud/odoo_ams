@@ -79,7 +79,7 @@ class AMSMembershipSubscription(models.Model):
     # Digital Access
     digital_access_granted = fields.Boolean('Digital Access Granted', default=False)
     access_credentials = fields.Char('Access Credentials', groups="ams_foundation.group_ams_staff")
-    login_url = fields.Url('Access URL')
+    login_url = fields.Char('Access URL')
     digital_library_access = fields.Boolean('Digital Library Access', default=False)
     
     # Member Benefits Integration

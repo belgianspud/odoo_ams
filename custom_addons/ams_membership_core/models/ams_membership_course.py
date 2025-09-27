@@ -111,7 +111,7 @@ class AMSMembershipCourse(models.Model):
         ('vimeo', 'Vimeo')
     ], string='Learning Platform', default='internal')
     
-    access_url = fields.Url('Course Access URL')
+    access_url = fields.Char('Course Access URL')
     login_credentials = fields.Text('Login Credentials', groups="ams_foundation.group_ams_staff")
     
     # Assessments and Evaluations
