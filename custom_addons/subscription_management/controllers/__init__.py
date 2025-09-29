@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
 
 from . import portal
-from . import website_course_sale
+from . import main

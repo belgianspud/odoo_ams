@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Subscription List View -->
+    <record id="subscription_subscription_view_list" model="ir.ui.view">
+        <field name="name">subscription.subscription.view.list</field>
+        <field name="model">subscription.subscription</field>
+        <field name="arch" type="xml">
+            <list string="Subscriptions" decoration-success="state=='active'" 
+                  decoration-warning="state=='trial'" decoration-danger="state=='cancelled'">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="plan_id"/>
+                <field name="date_start"/>
+                <field name="next_billing_date"/>
+                <field name="price" widget="monetary"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="state" widget="badge" 
+                       decoration-success="state=='active'" 
+                       decoration-warning="state=='trial'"
+                       decoration-danger="state=='cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Subscription Form View -->
+    <record id="subscription_subscription_view_form" model="ir.ui.view">
+        <field name="name">subscription.subscription.view.form</field>
+        <field name="model">subscription.subscription</field>
+        <field name="arch" type="xml">
+            <form string="Subscription">
+                <header>
+                    <button name="action_start_trial" string="Start Trial" type="object" 
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_activate" string="Activate" type="object" 
+                            class="btn-primary" invisible="state not in ['draft', 'trial']"/>
+                    <button name="action_suspend" string="Suspend" type="object" 
+                            invisible="state not in ['active', 'trial']"/>
+                    <button name="action_cancel" string="Cancel" type="object" 
+                            invisible="state in ['cancelled', 'expired']"/>
+                    <button name="action_renew" string="Renew" type="object" 
+                            invisible="state != 'expired'"/>
+                    <field name="state" widget="statusbar" 
+                           statusbar_visible="draft,trial,active,suspended,cancelled"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_invoices" type="object" 
+                                class="oe_stat_button" icon="fa-pencil-square-o">
+                            <field name="invoice_count" widget="statinfo" string="Invoices"/>
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group string="Customer Information">
+                            <field name="partner_id"/>
+                            <field name="partner_invoice_id"/>
+                            <field name="partner_shipping_id"/>
+                        </group>
+                        <group string="Subscription Details">
+                            <field name="plan_id"/>
+                            <field name="price" widget="monetary"/>
+                            <field name="currency_id"/>
+                            <field name="tag_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="Dates">
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                            <field name="trial_end_date" invisible="not trial_end_date"/>
+                            <field name="next_billing_date"/>
+                        </group>
+                        <group string="Billing Information">
+                            <field name="last_invoice_id"/>
+                            <field name="last_invoice_date"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Usage" name="usage" invisible="not plan_id">
+                            <group>
+                                <group string="Current Usage">
+                                    <field name="current_usage"/>
+                                    <field name="usage_limit"/>
+                                    <field name="usage_overage"/>
+                                </group>
+                            </group>
+                            <field name="usage_ids">
+                                <list>
+                                    <field name="date"/>
+                                    <field name="usage_type"/>
+                                    <field name="quantity"/>
+                                    <field name="price_unit"/>
+                                    <field name="price_total"/>
+                                    <field name="billable"/>
+                                </list>
+                            </field>
+                        </page>
+                        
+                        <page string="Subscription Lines" name="lines">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="name"/>
+                                    <field name="quantity"/>
+                                    <field name="price_unit"/>
+                                    <field name="price_subtotal"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <chatter/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Subscription Kanban View -->
+    <record id="subscription_subscription_view_kanban" model="ir.ui.view">
+        <field name="name">subscription.subscription.view.kanban</field>
+        <field name="model">subscription.subscription</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="plan_id"/>
+                <field name="price"/>
+                <field name="currency_id"/>
+                <field name="state"/>
+                <field name="next_billing_date"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                        </strong>
+                                        <br/>
+                                        <field name="partner_id"/>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div>Plan: <field name="plan_id"/></div>
+                                    <div><field name="price" widget="monetary"/></div>
+                                    <div t-if="record.next_billing_date.value">
+                                        Next billing: <field name="next_billing_date"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Subscription Search View -->
+    <record id="subscription_subscription_view_search" model="ir.ui.view">
+        <field name="name">subscription.subscription.view.search</field>
+        <field name="model">subscription.subscription</field>
+        <field name="arch" type="xml">
+            <search string="Subscriptions">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="plan_id"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Trial" name="trial" domain="[('state', '=', 'trial')]"/>
+                <filter string="Active" name="active" domain="[('state', '=', 'active')]"/>
+                <filter string="Suspended" name="suspended" domain="[('state', '=', 'suspended')]"/>
+                <filter string="Cancelled" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <filter string="Due for Billing" name="due_billing" 
+                        domain="[('next_billing_date', '&lt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <group expand="1" string="Group By">
+                    <filter string="Customer" name="customer" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Plan" name="plan" context="{'group_by': 'plan_id'}"/>
+                    <filter string="Status" name="status" context="{'group_by': 'state'}"/>
+                    <filter string="Start Date" name="start_date" context="{'group_by': 'date_start'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Subscription Action -->
+    <record id="action_subscription_subscription" model="ir.actions.act_window">
+        <field name="name">Subscriptions</field>
+        <field name="res_model">subscription.subscription</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No subscriptions yet!
+            </p>
+            <p>
+                Create subscriptions for your customers to manage their recurring services
+                and billing automatically.
+            </p>
+        </field>
+    </record>
+
+</odoo>

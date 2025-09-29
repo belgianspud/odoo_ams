@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Security Groups -->
+    <record id="group_subscription_user" model="res.groups">
+        <field name="name">Subscription User</field>
+        <field name="category_id" ref="base.module_category_sales"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="group_subscription_manager" model="res.groups">
+        <field name="name">Subscription Manager</field>
+        <field name="category_id" ref="base.module_category_sales"/>
+        <field name="implied_ids" eval="[(4, ref('group_subscription_user'))]"/>
+    </record>
+
+    <!-- Record Rules -->
+    
+    <!-- Subscription Plans - All users can read, managers can write -->
+    <record id="subscription_plan_rule_read" model="ir.rule">
+        <field name="name">Subscription Plan: Read All</field>
+        <field name="model_id" ref="model_subscription_plan"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('group_subscription_user'))]"/>
+    </record>
+
+    <record id="subscription_plan_rule_write" model="ir.rule">
+        <field name="name">Subscription Plan: Manager Full Access</field>
+        <field name="model_id" ref="model_subscription_plan"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('group_subscription_manager'))]"/>
+    </record>
+
+    <!-- Subscriptions - Users can see all, managers can modify all -->
+    <record id="subscription_subscription_rule_user" model="ir.rule">
+        <field name="name">Subscription: User Access</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('group_subscription_user'))]"/>
+    </record>
+
+    <record id="subscription_subscription_rule_manager" model="ir.rule">
+        <field name="name">Subscription: Manager Full Access</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('group_subscription_manager'))]"/>
+    </record>
+
+    <!-- Subscription Lines - Follow subscription access -->
+    <record id="subscription_line_rule" model="ir.rule">
+        <field name="name">Subscription Line: Follow Subscription</field>
+        <field name="model_id" ref="model_subscription_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('group_subscription_user'))]"/>
+    </record>
+
+    <!-- Usage Records - Follow subscription access -->
+    <record id="subscription_usage_rule" model="ir.rule">
+        <field name="name">Subscription Usage: Follow Subscription</field>
+        <field name="model_id" ref="model_subscription_usage"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('group_subscription_user'))]"/>
+    </record>
+
+    <!-- Portal Rules - Customers can only see their own subscriptions -->
+    <record id="subscription_subscription_rule_portal" model="ir.rule">
+        <field name="name">Subscription: Portal Users Own Records</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="domain_force">[('partner_id', 'child_of', [user.partner_id.id])]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+    </record>
+
+    <record id="subscription_usage_rule_portal" model="ir.rule">
+        <field name="name">Subscription Usage: Portal Users Own Records</field>
+        <field name="model_id" ref="model_subscription_usage"/>
+        <field name="domain_force">[('subscription_id.partner_id', 'child_of', [user.partner_id.id])]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+    </record>
+
+</odoo>

@@ -125,10 +125,43 @@ class ProductTemplate(models.Model):
         ('ams.membership.membership', 'Regular Membership'),
         ('ams.membership.chapter', 'Chapter Membership'),
         ('ams.membership.subscription', 'Subscription'),
-        ('ams.membership.course', 'Course'),
+        ('slide.channel.partner', 'Course Enrollment'),
         ('ams.membership.donation', 'Donation'),
     ], string='Membership Model', compute='_compute_membership_model', store=True,
        help="Model used to create membership records")
+
+    # ===== COURSE INTEGRATION FIELDS =====
+    
+    # Course Link
+    course_id = fields.Many2one('slide.channel', 'Associated Course',
+                               domain=[('is_ams_course', '=', True)],
+                               help="Link this product to an e-learning course")
+    
+    # Course-specific Configuration
+    course_access_duration = fields.Integer('Course Access Duration (Days)', default=365,
+                                          help="Days of access to course content")
+    max_attendees_per_purchase = fields.Integer('Max Attendees Per Purchase', default=1,
+                                              help="For corporate enrollments")
+    auto_enroll_purchaser = fields.Boolean('Auto-Enroll Purchaser', default=True,
+                                         help="Automatically enroll the purchaser in the course")
+    
+    # Member Pricing for Courses
+    member_price = fields.Float('Member Price', default=0.0,
+                               help="Special pricing for association members")
+    price_difference = fields.Float('Price Difference', compute='_compute_price_difference', store=True,
+                                   help="Difference between member and non-member pricing")
+    
+    # Website/Store Integration
+    website_course_preview = fields.Boolean('Show Course Preview', default=True,
+                                          help="Show course preview on website")
+    course_syllabus = fields.Html('Course Syllabus', help="Displayed on website product page")
+    instructor_bio = fields.Html('Instructor Bio')
+    course_prerequisites = fields.Html('Prerequisites')
+    
+    # Course Statistics
+    course_enrollments = fields.Integer('Course Enrollments', compute='_compute_course_stats')
+    course_completion_rate = fields.Float('Course Completion Rate (%)', compute='_compute_course_stats')
+    course_rating = fields.Float('Course Rating', compute='_compute_course_stats')
 
     # Computed Fields
     subscription_count = fields.Integer('Active Subscriptions', compute='_compute_subscription_count')
@@ -144,7 +177,7 @@ class ProductTemplate(models.Model):
             'subscription': 'ams.membership.subscription',
             'newsletter': 'ams.membership.subscription',
             'publication': 'ams.membership.subscription',
-            'courses': 'ams.membership.course',
+            'courses': 'slide.channel.partner',  # Use e-learning model
             'donations': 'ams.membership.donation',
             # Default for other types
             'exhibits': 'ams.membership.subscription',
@@ -157,15 +190,45 @@ class ProductTemplate(models.Model):
         for product in self:
             product.membership_model = model_mapping.get(product.product_class, 'ams.membership.subscription')
 
+    @api.depends('list_price', 'member_price')
+    def _compute_price_difference(self):
+        """Compute price difference between member and non-member pricing"""
+        for product in self:
+            if product.member_price > 0:
+                product.price_difference = product.list_price - product.member_price
+            else:
+                product.price_difference = 0.0
+
+    @api.depends('course_id')
+    def _compute_course_stats(self):
+        """Compute course-related statistics"""
+        for product in self:
+            if product.course_id:
+                product.course_enrollments = len(product.course_id.channel_partner_ids)
+                product.course_completion_rate = product.course_id.completion_rate
+                product.course_rating = product.course_id.rating_avg
+            else:
+                product.course_enrollments = 0
+                product.course_completion_rate = 0.0
+                product.course_rating = 0.0
+
     def _compute_subscription_count(self):
         """Compute count of active subscriptions for this product"""
         for product in self:
             if product.is_subscription_product and product.membership_model:
                 try:
-                    count = self.env[product.membership_model].search_count([
-                        ('product_id', 'in', product.product_variant_ids.ids),
-                        ('state', '=', 'active')
-                    ])
+                    if product.membership_model == 'slide.channel.partner':
+                        # For courses, count enrollments
+                        if product.course_id:
+                            count = len(product.course_id.channel_partner_ids)
+                        else:
+                            count = 0
+                    else:
+                        # For other membership types
+                        count = self.env[product.membership_model].search_count([
+                            ('product_id', 'in', product.product_variant_ids.ids),
+                            ('state', '=', 'active')
+                        ])
                     product.subscription_count = count
                 except:
                     product.subscription_count = 0
@@ -178,7 +241,9 @@ class ProductTemplate(models.Model):
             if product.is_subscription_product:
                 # Calculate based on active subscriptions and pricing
                 active_subs = product.subscription_count
-                price = product.list_price
+                
+                # Use member price if available and significant portion are members
+                price = product.member_price if product.member_price > 0 else product.list_price
                 
                 if product.recurrence_period == 'monthly':
                     product.revenue_monthly = active_subs * price
@@ -191,6 +256,10 @@ class ProductTemplate(models.Model):
                     product.revenue_annual = active_subs * price * 2
                 elif product.recurrence_period == 'annual':
                     product.revenue_monthly = active_subs * price / 12
+                    product.revenue_annual = active_subs * price
+                elif product.recurrence_period == 'one_time':
+                    # For courses, estimate annual revenue
+                    product.revenue_monthly = 0
                     product.revenue_annual = active_subs * price
                 else:
                     product.revenue_monthly = 0
@@ -236,6 +305,19 @@ class ProductTemplate(models.Model):
                 self.allow_multiple_active = member_type.allow_multiple_active
                 self.max_active_per_member = member_type.max_active_per_member
 
+            # Course-specific defaults
+            if self.product_class == 'courses':
+                self.type = 'service'
+                self.recurrence_period = 'one_time'
+                self.membership_duration = 365
+                self.website_published = True
+                self.auto_enroll_purchaser = True
+                self.course_access_duration = 365
+                
+                # Set member pricing if not already set
+                if not self.member_price and self.list_price:
+                    self.member_price = self.list_price * 0.8  # 20% member discount by default
+
     @api.onchange('member_type_id')
     def _onchange_member_type_id(self):
         """Update fields based on selected member type"""
@@ -247,6 +329,84 @@ class ProductTemplate(models.Model):
             if self.list_price == 0:  # Only update if not already set
                 self.list_price = self.member_type_id.base_annual_fee
 
+    @api.onchange('course_id')
+    def _onchange_course_id(self):
+        """Update fields when course is selected"""
+        if self.course_id:
+            course = self.course_id
+            
+            # Update product info from course
+            if not self.name or self.name == 'New':
+                self.name = course.name
+            if not self.description:
+                self.description = course.description
+            
+            # Set pricing from course
+            if course.non_member_price > 0:
+                self.list_price = course.non_member_price
+            if course.member_price > 0:
+                self.member_price = course.member_price
+            
+            # Set access duration
+            if course.access_duration_days:
+                self.course_access_duration = course.access_duration_days
+            
+            # Set member restrictions
+            self.member_only = course.requires_membership
+            self.guest_purchase_allowed = course.guest_purchase_allowed
+
+    # Course Integration Methods
+    def get_course_price(self, partner=None):
+        """Get appropriate course price for partner"""
+        self.ensure_one()
+        
+        if self.product_class != 'courses':
+            return self.list_price
+        
+        if not partner:
+            return self.list_price
+        
+        if partner.is_member and self.member_price > 0:
+            return self.member_price
+        else:
+            return self.list_price
+
+    def _get_course_info_for_website(self):
+        """Get course information for website display"""
+        self.ensure_one()
+        if self.product_class != 'courses' or not self.course_id:
+            return {}
+            
+        course = self.course_id
+        return {
+            'course_name': course.name,
+            'total_slides': len(course.slide_ids),
+            'estimated_duration': course.estimated_duration_hours,
+            'difficulty_level': course.difficulty_level,
+            'course_level': course.course_level,
+            'course_category': course.course_category,
+            'ce_credits': course.ce_credits,
+            'instructor': course.user_id.name,
+            'enrollments': len(course.channel_partner_ids),
+            'completion_rate': course.completion_rate,
+            'rating': course.rating_avg,
+            'prerequisites': course.prerequisites,
+            'learning_objectives': course.learning_objectives,
+            'member_price': self.member_price,
+            'non_member_price': self.list_price,
+            'requires_membership': course.requires_membership,
+        }
+
+    def check_course_enrollment_eligibility(self, partner):
+        """Check if partner can enroll in course"""
+        self.ensure_one()
+        
+        if self.product_class != 'courses' or not self.course_id:
+            return {'eligible': True, 'issues': []}
+        
+        return self.course_id.check_enrollment_eligibility(partner)
+
+    # Existing Methods (Enhanced)
     def get_effective_membership_period_type(self):
         """Get effective membership period type (product -> member type -> system default)"""
         self.ensure_one()
@@ -325,6 +485,7 @@ class ProductTemplate(models.Model):
         
         return max(0, self.list_price * proportion)
 
+    # Action Methods
     def action_view_subscriptions(self):
         """View active subscriptions for this product"""
         self.ensure_one()
@@ -332,19 +493,71 @@ class ProductTemplate(models.Model):
         if not self.is_subscription_product or not self.membership_model:
             raise UserError(_("This is not a subscription product."))
         
+        if self.membership_model == 'slide.channel.partner':
+            # For courses, show enrollments
+            return {
+                'name': _('Course Enrollments: %s') % self.name,
+                'type': 'ir.actions.act_window',
+                'res_model': 'slide.channel.partner',
+                'view_mode': 'list,form',
+                'domain': [('channel_id', '=', self.course_id.id)] if self.course_id else [],
+                'context': {'search_default_enrolled': 1},
+            }
+        else:
+            return {
+                'name': _('Active Subscriptions: %s') % self.name,
+                'type': 'ir.actions.act_window',
+                'res_model': self.membership_model,
+                'view_mode': 'list,form',
+                'domain': [
+                    ('product_id', 'in', self.product_variant_ids.ids),
+                    ('state', 'in', ['active', 'grace'])
+                ],
+                'context': {
+                    'default_product_id': self.product_variant_ids[0].id if self.product_variant_ids else False,
+                    'search_default_active': 1
+                },
+            }
+
+    def action_view_course_content(self):
+        """View associated course content"""
+        self.ensure_one()
+        if not self.course_id:
+            raise UserError(_("No course associated with this product."))
+            
         return {
-            'name': _('Active Subscriptions: %s') % self.name,
             'type': 'ir.actions.act_window',
-            'res_model': self.membership_model,
-            'view_mode': 'list,form',
-            'domain': [
-                ('product_id', 'in', self.product_variant_ids.ids),
-                ('state', 'in', ['active', 'grace'])
-            ],
-            'context': {
-                'default_product_id': self.product_variant_ids[0].id if self.product_variant_ids else False,
-                'search_default_active': 1
-            },
+            'name': _('Course Content'),
+            'res_model': 'slide.channel',
+            'res_id': self.course_id.id,
+            'view_mode': 'form',
+        }
+
+    def action_sync_course_pricing(self):
+        """Sync pricing with associated course"""
+        self.ensure_one()
+        
+        if not self.course_id:
+            raise UserError(_("No course associated with this product."))
+        
+        course = self.course_id
+        
+        # Update course pricing from product
+        course.write({
+            'member_price': self.member_price,
+            'non_member_price': self.list_price,
+            'requires_membership': self.member_only,
+            'guest_purchase_allowed': self.guest_purchase_allowed,
+        })
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Pricing Synced'),
+                'message': _('Course pricing has been synchronized with product pricing.'),
+                'type': 'success'
+            }
         }
 
     def create_membership_record(self, partner, invoice_line=None, start_date=None):
@@ -357,6 +570,54 @@ class ProductTemplate(models.Model):
         if not self.membership_model:
             _logger.warning(f"No membership model defined for product {self.name}")
             return False
+        
+        # Handle course enrollments differently
+        if self.membership_model == 'slide.channel.partner' and self.course_id:
+            return self._create_course_enrollment(partner, invoice_line, start_date)
+        else:
+            return self._create_standard_membership(partner, invoice_line, start_date)
+
+    def _create_course_enrollment(self, partner, invoice_line=None, start_date=None):
+        """Create course enrollment"""
+        self.ensure_one()
+        
+        if not self.course_id:
+            _logger.warning(f"No course associated with product {self.name}")
+            return False
+        
+        # Check if already enrolled
+        existing = self.env['slide.channel.partner'].search([
+            ('channel_id', '=', self.course_id.id),
+            ('partner_id', '=', partner.id)
+        ])
+        
+        if existing:
+            _logger.info(f"Partner {partner.name} already enrolled in course {self.course_id.name}")
+            return existing
+        
+        try:
+            # Create enrollment
+            enrollment_vals = {
+                'channel_id': self.course_id.id,
+                'partner_id': partner.id,
+                'enrollment_date': start_date or fields.Date.today(),
+            }
+            
+            enrollment = self.env['slide.channel.partner'].create(enrollment_vals)
+            
+            # Send welcome email if configured
+            if self.course_id.enroll_msg:
+                enrollment._send_enrollment_email()
+            
+            return enrollment
+            
+        except Exception as e:
+            _logger.error(f"Failed to create course enrollment: {str(e)}")
+            return False
+
+    def _create_standard_membership(self, partner, invoice_line=None, start_date=None):
+        """Create standard membership record"""
+        self.ensure_one()
         
         # Calculate dates
         if not start_date:
@@ -434,6 +695,23 @@ class ProductTemplate(models.Model):
                 raise ValidationError(_("Setup fee cannot be negative."))
             if product.cancellation_fee < 0:
                 raise ValidationError(_("Cancellation fee cannot be negative."))
+
+    @api.constrains('member_price')
+    def _check_member_price(self):
+        """Validate member price"""
+        for product in self:
+            if product.member_price < 0:
+                raise ValidationError(_("Member price cannot be negative."))
+
+    @api.constrains('course_access_duration', 'max_attendees_per_purchase')
+    def _check_course_settings(self):
+        """Validate course-specific settings"""
+        for product in self:
+            if product.product_class == 'courses':
+                if product.course_access_duration < 1:
+                    raise ValidationError(_("Course access duration must be at least 1 day."))
+                if product.max_attendees_per_purchase < 1:
+                    raise ValidationError(_("Max attendees per purchase must be at least 1."))
 
     @api.constrains('upgrade_product_ids')
     def _check_upgrade_circular_reference(self):

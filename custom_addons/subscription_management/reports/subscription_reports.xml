@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Subscription Analytics Graph View -->
+    <record id="subscription_analytics_graph" model="ir.ui.view">
+        <field name="name">subscription.analytics.graph</field>
+        <field name="model">subscription.subscription</field>
+        <field name="arch" type="xml">
+            <graph string="Subscription Analytics" type="bar">
+                <field name="plan_id" type="row"/>
+                <field name="state" type="row"/>
+                <field name="price" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Subscription Analytics Pivot View -->
+    <record id="subscription_analytics_pivot" model="ir.ui.view">
+        <field name="name">subscription.analytics.pivot</field>
+        <field name="model">subscription.subscription</field>
+        <field name="arch" type="xml">
+            <pivot string="Subscription Analytics">
+                <field name="plan_id" type="row"/>
+                <field name="state" type="col"/>
+                <field name="price" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Subscription Analytics Action -->
+    <record id="action_subscription_analytics" model="ir.actions.act_window">
+        <field name="name">Subscription Analytics</field>
+        <field name="res_model">subscription.subscription</field>
+        <field name="view_mode">graph,pivot</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No subscription data to analyze yet!
+            </p>
+            <p>
+                Once you have subscriptions, you'll see analytics here showing
+                subscription distribution by plan and status.
+            </p>
+        </field>
+    </record>
+
+    <!-- Revenue Analytics Graph View -->
+    <record id="subscription_revenue_graph" model="ir.ui.view">
+        <field name="name">subscription.revenue.graph</field>
+        <field name="model">subscription.subscription</field>
+        <field name="arch" type="xml">
+            <graph string="Monthly Recurring Revenue" type="line">
+                <field name="date_start" type="row" interval="month"/>
+                <field name="price" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Revenue Analytics Action -->
+    <record id="action_subscription_revenue" model="ir.actions.act_window">
+        <field name="name">Revenue Analytics</field>
+        <field name="res_model">subscription.subscription</field>
+        <field name="view_mode">graph,pivot</field>
+        <field name="domain">[('state', 'in', ['active', 'trial'])]</field>
+        <field name="context">{}</field>
+    </record>
+
+    <!-- Usage Report List View -->
+    <record id="subscription_usage_report_list" model="ir.ui.view">
+        <field name="name">subscription.usage.report.list</field>
+        <field name="model">subscription.usage</field>
+        <field name="arch" type="xml">
+            <list string="Usage Report" create="false" edit="false">
+                <field name="date"/>
+                <field name="subscription_id"/>
+                <field name="usage_type"/>
+                <field name="quantity" sum="Total Quantity"/>
+                <field name="price_total" sum="Total Price"/>
+                <field name="billable"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Usage Graph View -->
+    <record id="subscription_usage_graph" model="ir.ui.view">
+        <field name="name">subscription.usage.graph</field>
+        <field name="model">subscription.usage</field>
+        <field name="arch" type="xml">
+            <graph string="Usage Analytics" type="line">
+                <field name="date" type="row" interval="day"/>
+                <field name="quantity" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Usage Report Action -->
+    <record id="action_subscription_usage_report" model="ir.actions.act_window">
+        <field name="name">Usage Report</field>
+        <field name="res_model">subscription.usage</field>
+        <field name="view_mode">list,graph,pivot</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No usage data recorded yet!
+            </p>
+            <p>
+                Usage data will appear here as your customers use your services.
+            </p>
+        </field>
+    </record>
+
+    <!-- Billing Report List View -->
+    <record id="subscription_billing_report_list" model="ir.ui.view">
+        <field name="name">subscription.billing.report.list</field>
+        <field name="model">subscription.subscription</field>
+        <field name="arch" type="xml">
+            <list string="Billing Report" create="false" edit="false">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="plan_id"/>
+                <field name="next_billing_date"/>
+                <field name="price" sum="Total MRR"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="state"/>
+                <field name="last_invoice_date"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Billing Report Action -->
+    <record id="action_subscription_billing_report" model="ir.actions.act_window">
+        <field name="name">Billing Report</field>
+        <field name="res_model">subscription.subscription</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="subscription_billing_report_list"/>
+        <field name="domain">[('state', 'in', ['active', 'trial'])]</field>
+        <field name="context">{'search_default_due_billing': 1}</field>
+    </record>
+
+    <!-- Customer Subscription Report List View -->
+    <record id="partner_subscription_report_list" model="ir.ui.view">
+        <field name="name">partner.subscription.report.list</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list string="Customer Subscription Report" create="false" edit="false">
+                <field name="name"/>
+                <field name="email"/>
+                <field name="subscription_count"/>
+                <field name="active_subscription_count"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Customer Report Action -->
+    <record id="action_customer_subscription_report" model="ir.actions.act_window">
+        <field name="name">Customer Subscription Report</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="partner_subscription_report_list"/>
+        <field name="domain">[('subscription_count', '>', 0)]</field>
+        <field name="context">{}</field>
+    </record>
+
+    <!-- Subscription Report Printable -->
+    <record id="action_report_subscription" model="ir.actions.report">
+        <field name="name">Subscription Report</field>
+        <field name="model">subscription.subscription</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">subscription_management.subscription_report_document</field>
+        <field name="report_file">subscription_management.subscription_report_document</field>
+        <field name="binding_model_id" ref="model_subscription_subscription"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Subscription Report Template -->
+    <template id="subscription_report_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="subscription">
+                <div class="page">
+                    <div class="oe_structure"/>
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <h2>Subscription Details</h2>
+                        </div>
+                        <div class="col-6 text-right">
+                            <h3><span t-field="subscription.name"/></h3>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt32">
+                        <div class="col-6">
+                            <strong>Customer:</strong><br/>
+                            <span t-field="subscription.partner_id.name"/><br/>
+                            <span t-field="subscription.partner_id.email"/><br/>
+                            <span t-field="subscription.partner_id.phone"/>
+                        </div>
+                        <div class="col-6">
+                            <strong>Plan:</strong> <span t-field="subscription.plan_id.name"/><br/>
+                            <strong>Status:</strong> <span t-field="subscription.state"/><br/>
+                            <strong>Start Date:</strong> <span t-field="subscription.date_start"/><br/>
+                            <strong>Price:</strong> <span t-field="subscription.price" t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt32" t-if="subscription.usage_ids">
+                        <div class="col-12">
+                            <h3>Usage History</h3>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Quantity</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="subscription.usage_ids" t-as="usage">
+                                        <tr>
+                                            <td><span t-field="usage.date"/></td>
+                                            <td><span t-field="usage.usage_type"/></td>
+                                            <td><span t-field="usage.quantity"/></td>
+                                            <td><span t-field="usage.description"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- Report Menu Items -->
+    <menuitem id="menu_subscription_analytics" 
+              name="Subscription Analytics" 
+              parent="menu_subscription_reports" 
+              action="action_subscription_analytics" 
+              sequence="10"/>
+              
+    <menuitem id="menu_revenue_analytics" 
+              name="Revenue Analytics" 
+              parent="menu_subscription_reports" 
+              action="action_subscription_revenue" 
+              sequence="20"/>
+              
+    <menuitem id="menu_usage_report" 
+              name="Usage Report" 
+              parent="menu_subscription_reports" 
+              action="action_subscription_usage_report" 
+              sequence="30"/>
+              
+    <menuitem id="menu_billing_report" 
+              name="Billing Report" 
+              parent="menu_subscription_reports" 
+              action="action_subscription_billing_report" 
+              sequence="40"/>
+              
+    <menuitem id="menu_customer_report" 
+              name="Customer Report" 
+              parent="menu_subscription_reports" 
+              action="action_customer_subscription_report" 
+              sequence="50"/>
+
+</odoo>

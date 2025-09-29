@@ -1,0 +1,343 @@
+/* Subscription Management CSS */
+
+/* Dashboard Cards */
+.o_subscription_dashboard .card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.o_subscription_dashboard .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.border-left-primary {
+    border-left: 4px solid #007bff !important;
+}
+
+.border-left-success {
+    border-left: 4px solid #28a745 !important;
+}
+
+.border-left-info {
+    border-left: 4px solid #17a2b8 !important;
+}
+
+.border-left-warning {
+    border-left: 4px solid #ffc107 !important;
+}
+
+/* Subscription Status Badges */
+.subscription-status-active {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.subscription-status-trial {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.subscription-status-suspended {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.subscription-status-cancelled {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* Plan Cards */
+.subscription-plan-card {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.subscription-plan-card:hover {
+    border-color: #007bff;
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,123,255,0.15);
+}
+
+.subscription-plan-card.featured {
+    border-color: #28a745;
+    position: relative;
+}
+
+.subscription-plan-card.featured::before {
+    content: "Most Popular";
+    position: absolute;
+    top: 20px;
+    right: -30px;
+    background: #28a745;
+    color: white;
+    padding: 5px 40px;
+    transform: rotate(45deg);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.plan-price {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #007bff;
+}
+
+.plan-period {
+    font-size: 1rem;
+    color: #6c757d;
+}
+
+.plan-features {
+    list-style: none;
+    padding: 0;
+}
+
+.plan-features li {
+    padding: 8px 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.plan-features li:last-child {
+    border-bottom: none;
+}
+
+.plan-features .fa-check {
+    color: #28a745;
+    margin-right: 10px;
+}
+
+.plan-features .fa-times {
+    color: #dc3545;
+    margin-right: 10px;
+}
+
+/* Usage Progress Bar */
+.usage-progress-container {
+    position: relative;
+    margin: 20px 0;
+}
+
+.usage-progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.usage-progress-bar {
+    height: 100%;
+    transition: width 0.6s ease;
+}
+
+.usage-progress-bar.normal {
+    background: linear-gradient(90deg, #28a745, #20c997);
+}
+
+.usage-progress-bar.warning {
+    background: linear-gradient(90deg, #ffc107, #fd7e14);
+}
+
+.usage-progress-bar.danger {
+    background: linear-gradient(90deg, #dc3545, #e74c3c);
+}
+
+.usage-text {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Subscription Timeline */
+.subscription-timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.subscription-timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -23px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #007bff;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px #007bff;
+}
+
+.timeline-item.success::before {
+    background: #28a745;
+    box-shadow: 0 0 0 2px #28a745;
+}
+
+.timeline-item.warning::before {
+    background: #ffc107;
+    box-shadow: 0 0 0 2px #ffc107;
+}
+
+.timeline-item.danger::before {
+    background: #dc3545;
+    box-shadow: 0 0 0 2px #dc3545;
+}
+
+.timeline-content {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.timeline-date {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+/* Metric Cards */
+.metric-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.1);
+    transform: rotate(45deg);
+    transition: all 0.3s ease;
+}
+
+.metric-card:hover::before {
+    right: -25%;
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.metric-label {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.metric-change {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 0.875rem;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .subscription-plan-card {
+        margin-bottom: 20px;
+    }
+    
+    .plan-price {
+        font-size: 2rem;
+    }
+    
+    .metric-card {
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+    }
+    
+    .subscription-timeline {
+        padding-left: 20px;
+    }
+    
+    .timeline-item::before {
+        left: -18px;
+    }
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in-right {
+    animation: slideInRight 0.5s ease-out;
+}
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .subscription-plan-card {
+        background-color: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .timeline-content {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+}

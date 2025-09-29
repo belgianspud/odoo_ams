@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Subscription Usage List View -->
+    <record id="subscription_usage_view_list" model="ir.ui.view">
+        <field name="name">subscription.usage.view.list</field>
+        <field name="model">subscription.usage</field>
+        <field name="arch" type="xml">
+            <list string="Usage Records" editable="bottom">
+                <field name="date"/>
+                <field name="subscription_id"/>
+                <field name="usage_type"/>
+                <field name="quantity"/>
+                <field name="description"/>
+                <field name="billable"/>
+                <field name="price_unit"/>
+                <field name="price_total"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Subscription Usage Form View -->
+    <record id="subscription_usage_view_form" model="ir.ui.view">
+        <field name="name">subscription.usage.view.form</field>
+        <field name="model">subscription.usage</field>
+        <field name="arch" type="xml">
+            <form string="Usage Record">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="subscription_id"/>
+                            <field name="date"/>
+                            <field name="usage_type"/>
+                            <field name="quantity"/>
+                        </group>
+                        <group>
+                            <field name="description"/>
+                            <field name="billable"/>
+                            <field name="price_unit"/>
+                            <field name="price_total"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Subscription Usage Search View -->
+    <record id="subscription_usage_view_search" model="ir.ui.view">
+        <field name="name">subscription.usage.view.search</field>
+        <field name="model">subscription.usage</field>
+        <field name="arch" type="xml">
+            <search string="Usage Records">
+                <field name="subscription_id"/>
+                <field name="usage_type"/>
+                <field name="date"/>
+                <filter string="Billable" name="billable" domain="[('billable', '=', True)]"/>
+                <filter string="Non-Billable" name="non_billable" domain="[('billable', '=', False)]"/>
+                <group expand="1" string="Group By">
+                    <filter string="Subscription" name="subscription" context="{'group_by': 'subscription_id'}"/>
+                    <filter string="Usage Type" name="usage_type_group" context="{'group_by': 'usage_type'}"/>
+                    <filter string="Date" name="date_group" context="{'group_by': 'date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Subscription Usage Action -->
+    <record id="action_subscription_usage" model="ir.actions.act_window">
+        <field name="name">Usage Records</field>
+        <field name="res_model">subscription.usage</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No usage records yet!
+            </p>
+            <p>
+                Usage records will appear here as your customers use your services.
+            </p>
+        </field>
+    </record>
+
+</odoo>

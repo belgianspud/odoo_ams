@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Subscription Plan List View -->
+    <record id="subscription_plan_view_list" model="ir.ui.view">
+        <field name="name">subscription.plan.view.list</field>
+        <field name="model">subscription.plan</field>
+        <field name="arch" type="xml">
+            <list string="Subscription Plans">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="price" widget="monetary"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="billing_period"/>
+                <field name="billing_interval"/>
+                <field name="subscription_count"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Subscription Plan Form View -->
+    <record id="subscription_plan_view_form" model="ir.ui.view">
+        <field name="name">subscription.plan.view.form</field>
+        <field name="model">subscription.plan</field>
+        <field name="arch" type="xml">
+            <form string="Subscription Plan">
+                <header>
+                    <field name="active" widget="boolean_toggle"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_subscriptions" type="object" 
+                                class="oe_stat_button" icon="fa-users">
+                            <field name="subscription_count" widget="statinfo" string="Subscriptions"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Plan Name"/>
+                        </h1>
+                        <div>
+                            <field name="code" placeholder="Plan Code"/>
+                        </div>
+                    </div>
+                    
+                    <notebook>
+                        <page string="General Information" name="general">
+                            <group>
+                                <group string="Basic Information">
+                                    <field name="sequence"/>
+                                    <field name="description" widget="html"/>
+                                </group>
+                                <group string="Pricing">
+                                    <field name="price"/>
+                                    <field name="currency_id"/>
+                                    <field name="product_template_id" domain="[('type', '=', 'service')]"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <page string="Billing Configuration" name="billing">
+                            <group>
+                                <group string="Billing Settings">
+                                    <field name="billing_period"/>
+                                    <field name="billing_interval"/>
+                                    <field name="auto_renew"/>
+                                </group>
+                                <group string="Trial Configuration">
+                                    <field name="trial_period"/>
+                                    <field name="trial_price" invisible="trial_period == 0"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <page string="Usage &amp; Limits" name="usage">
+                            <group>
+                                <group string="Plan Limits">
+                                    <field name="user_limit"/>
+                                    <field name="storage_limit"/>
+                                    <field name="min_duration"/>
+                                    <field name="max_duration"/>
+                                    <field name="cancellation_period"/>
+                                </group>
+                                <group string="Usage-based Billing">
+                                    <field name="usage_based"/>
+                                    <field name="usage_unit" invisible="not usage_based"/>
+                                    <field name="usage_price" invisible="not usage_based"/>
+                                    <field name="included_usage" invisible="not usage_based"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <chatter/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Subscription Plan Kanban View -->
+    <record id="subscription_plan_view_kanban" model="ir.ui.view">
+        <field name="name">subscription.plan.view.kanban</field>
+        <field name="model">subscription.plan</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_dashboard">
+                <field name="name"/>
+                <field name="price"/>
+                <field name="currency_id"/>
+                <field name="billing_period"/>
+                <field name="subscription_count"/>
+                <field name="active"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                        </strong>
+                                    </div>
+                                    <div class="o_kanban_manage_button_section">
+                                        <a class="o_kanban_manage_toggle_button" href="#">
+                                            <i class="fa fa-ellipsis-v" role="img" aria-label="Manage" title="Manage"/>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div class="o_kanban_record_bottom">
+                                        <div class="oe_kanban_bottom_left">
+                                            <span><field name="price" widget="monetary"/> / <field name="billing_period"/></span>
+                                        </div>
+                                        <div class="oe_kanban_bottom_right">
+                                            <span class="badge badge-pill">
+                                                <field name="subscription_count"/> subscriptions
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Subscription Plan Search View -->
+    <record id="subscription_plan_view_search" model="ir.ui.view">
+        <field name="name">subscription.plan.view.search</field>
+        <field name="model">subscription.plan</field>
+        <field name="arch" type="xml">
+            <search string="Subscription Plans">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="billing_period"/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Inactive" name="inactive" domain="[('active', '=', False)]"/>
+                <group expand="1" string="Group By">
+                    <filter string="Billing Period" name="billing_period" context="{'group_by': 'billing_period'}"/>
+                    <filter string="Active" name="group_active" context="{'group_by': 'active'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Subscription Plan Action -->
+    <record id="action_subscription_plan" model="ir.actions.act_window">
+        <field name="name">Subscription Plans</field>
+        <field name="res_model">subscription.plan</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first subscription plan!
+            </p>
+            <p>
+                Define subscription plans with different pricing models, billing periods,
+                and features to offer to your customers.
+            </p>
+        </field>
+    </record>
+
+</odoo>

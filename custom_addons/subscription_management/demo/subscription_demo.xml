@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Demo Product Templates for Subscriptions -->
+    <record id="product_template_basic_plan" model="product.template">
+        <field name="name">Basic Subscription Service</field>
+        <field name="type">service</field>
+        <field name="categ_id" ref="product.product_category_3"/>
+        <field name="list_price">29.99</field>
+        <field name="is_subscription">True</field>
+        <field name="description">Basic subscription plan with essential features</field>
+    </record>
+
+    <record id="product_template_professional_plan" model="product.template">
+        <field name="name">Professional Subscription Service</field>
+        <field name="type">service</field>
+        <field name="categ_id" ref="product.product_category_3"/>
+        <field name="list_price">79.99</field>
+        <field name="is_subscription">True</field>
+        <field name="description">Professional subscription plan with advanced features</field>
+    </record>
+
+    <record id="product_template_enterprise_plan" model="product.template">
+        <field name="name">Enterprise Subscription Service</field>
+        <field name="type">service</field>
+        <field name="categ_id" ref="product.product_category_3"/>
+        <field name="list_price">199.99</field>
+        <field name="is_subscription">True</field>
+        <field name="description">Enterprise subscription plan with all features</field>
+    </record>
+
+    <!-- Demo Subscription Plans -->
+    <record id="subscription_plan_basic" model="subscription.plan">
+        <field name="name">Basic Plan</field>
+        <field name="code">BASIC</field>
+        <field name="description"><![CDATA[
+            <ul>
+                <li>Up to 5 users</li>
+                <li>10 GB storage</li>
+                <li>Email support</li>
+                <li>Basic features</li>
+            </ul>
+        ]]></field>
+        <field name="sequence">10</field>
+        <field name="price">29.99</field>
+        <field name="billing_period">monthly</field>
+        <field name="billing_interval">1</field>
+        <field name="trial_period">14</field>
+        <field name="trial_price">0.0</field>
+        <field name="user_limit">5</field>
+        <field name="storage_limit">10.0</field>
+        <field name="min_duration">0</field>
+        <field name="auto_renew">True</field>
+        <field name="cancellation_period">30</field>
+        <field name="product_template_id" ref="product_template_basic_plan"/>
+        <field name="active">True</field>
+    </record>
+
+    <record id="subscription_plan_professional" model="subscription.plan">
+        <field name="name">Professional Plan</field>
+        <field name="code">PRO</field>
+        <field name="description"><![CDATA[
+            <ul>
+                <li>Up to 25 users</li>
+                <li>100 GB storage</li>
+                <li>Priority support</li>
+                <li>Advanced features</li>
+                <li>API access</li>
+                <li>Custom integrations</li>
+            </ul>
+        ]]></field>
+        <field name="sequence">20</field>
+        <field name="price">79.99</field>
+        <field name="billing_period">monthly</field>
+        <field name="billing_interval">1</field>
+        <field name="trial_period">14</field>
+        <field name="trial_price">0.0</field>
+        <field name="user_limit">25</field>
+        <field name="storage_limit">100.0</field>
+        <field name="usage_based">True</field>
+        <field name="usage_unit">API calls</field>
+        <field name="usage_price">0.01</field>
+        <field name="included_usage">10000</field>
+        <field name="min_duration">0</field>
+        <field name="auto_renew">True</field>
+        <field name="cancellation_period">30</field>
+        <field name="product_template_id" ref="product_template_professional_plan"/>
+        <field name="active">True</field>
+    </record>
+
+    <record id="subscription_plan_enterprise" model="subscription.plan">
+        <field name="name">Enterprise Plan</field>
+        <field name="code">ENTERPRISE</field>
+        <field name="description"><![CDATA[
+            <ul>
+                <li>Unlimited users</li>
+                <li>1 TB storage</li>
+                <li>24/7 dedicated support</li>
+                <li>All features included</li>
+                <li>Unlimited API access</li>
+                <li>Custom development</li>
+                <li>SLA guarantee</li>
+            </ul>
+        ]]></field>
+        <field name="sequence">30</field>
+        <field name="price">199.99</field>
+        <field name="billing_period">monthly</field>
+        <field name="billing_interval">1</field>
+        <field name="trial_period">30</field>
+        <field name="trial_price">0.0</field>
+        <field name="user_limit">0</field>
+        <field name="storage_limit">1000.0</field>
+        <field name="usage_based">True</field>
+        <field name="usage_unit">API calls</field>
+        <field name="usage_price">0.005</field>
+        <field name="included_usage">100000</field>
+        <field name="min_duration">12</field>
+        <field name="auto_renew">True</field>
+        <field name="cancellation_period">60</field>
+        <field name="product_template_id" ref="product_template_enterprise_plan"/>
+        <field name="active">True</field>
+    </record>
+
+    <!-- Demo Customers -->
+    <record id="partner_demo_customer_1" model="res.partner">
+        <field name="name">Demo Customer 1</field>
+        <field name="email">customer1@example.com</field>
+        <field name="phone">+1-555-123-4567</field>
+        <field name="is_company">False</field>
+        <field name="customer_rank">1</field>
+    </record>
+
+    <record id="partner_demo_customer_2" model="res.partner">
+        <field name="name">Tech Startup Inc.</field>
+        <field name="email">contact@techstartup.com</field>
+        <field name="phone">+1-555-987-6543</field>
+        <field name="is_company">True</field>
+        <field name="customer_rank">1</field>
+    </record>
+
+    <record id="partner_demo_customer_3" model="res.partner">
+        <field name="name">Large Enterprise Corp</field>
+        <field name="email">admin@enterprise.com</field>
+        <field name="phone">+1-555-456-7890</field>
+        <field name="is_company">True</field>
+        <field name="customer_rank">1</field>
+    </record>
+
+    <!-- Demo Subscriptions -->
+    <record id="subscription_demo_1" model="subscription.subscription">
+        <field name="name">SUB00001</field>
+        <field name="partner_id" ref="partner_demo_customer_1"/>
+        <field name="plan_id" ref="subscription_plan_basic"/>
+        <field name="state">active</field>
+        <field name="date_start" eval="(DateTime.now() - timedelta(days=30)).strftime('%Y-%m-%d')"/>
+        <field name="last_invoice_date" eval="(DateTime.now() - timedelta(days=30)).strftime('%Y-%m-%d')"/>
+    </record>
+
+    <record id="subscription_demo_2" model="subscription.subscription">
+        <field name="name">SUB00002</field>
+        <field name="partner_id" ref="partner_demo_customer_2"/>
+        <field name="plan_id" ref="subscription_plan_professional"/>
+        <field name="state">trial</field>
+        <field name="date_start" eval="(DateTime.now() - timedelta(days=7)).strftime('%Y-%m-%d')"/>
+        <field name="current_usage">2500</field>
+    </record>
+
+    <record id="subscription_demo_3" model="subscription.subscription">
+        <field name="name">SUB00003</field>
+        <field name="partner_id" ref="partner_demo_customer_3"/>
+        <field name="plan_id" ref="subscription_plan_enterprise"/>
+        <field name="state">active</field>
+        <field name="date_start" eval="(DateTime.now() - timedelta(days=60)).strftime('%Y-%m-%d')"/>
+        <field name="last_invoice_date" eval="(DateTime.now() - timedelta(days=30)).strftime('%Y-%m-%d')"/>
+        <field name="current_usage">45000</field>
+    </record>
+
+    <!-- Demo Usage Records -->
+    <record id="usage_demo_1" model="subscription.usage">
+        <field name="subscription_id" ref="subscription_demo_2"/>
+        <field name="date" eval="(DateTime.now() - timedelta(days=1)).strftime('%Y-%m-%d')"/>
+        <field name="usage_type">API calls</field>
+        <field name="quantity">500</field>
+        <field name="description">Daily API usage batch processing</field>
+        <field name="billable">True</field>
+        <field name="price_unit">0.01</field>
+    </record>
+
+    <record id="usage_demo_2" model="subscription.usage">
+        <field name="subscription_id" ref="subscription_demo_2"/>
+        <field name="date" eval="(DateTime.now() - timedelta(days=2)).strftime('%Y-%m-%d')"/>
+        <field name="usage_type">API calls</field>
+        <field name="quantity">750</field>
+        <field name="description">API usage for data synchronization</field>
+        <field name="billable">True</field>
+        <field name="price_unit">0.01</field>
+    </record>
+
+    <record id="usage_demo_3" model="subscription.usage">
+        <field name="subscription_id" ref="subscription_demo_3"/>
+        <field name="date" eval="(DateTime.now() - timedelta(days=1)).strftime('%Y-%m-%d')"/>
+        <field name="usage_type">API calls</field>
+        <field name="quantity">15000</field>
+        <field name="description">Enterprise API usage - bulk operations</field>
+        <field name="billable">True</field>
+        <field name="price_unit">0.005</field>
+    </record>
+
+    <!-- Demo Subscription Lines -->
+    <record id="subscription_line_demo_1" model="subscription.line">
+        <field name="subscription_id" ref="subscription_demo_1"/>
+        <field name="product_id" ref="product_template_basic_plan.product_variant_id"/>
+        <field name="name">Basic Plan Monthly Subscription</field>
+        <field name="quantity">1</field>
+        <field name="price_unit">29.99</field>
+    </record>
+
+    <record id="subscription_line_demo_2" model="subscription.line">
+        <field name="subscription_id" ref="subscription_demo_2"/>
+        <field name="product_id" ref="product_template_professional_plan.product_variant_id"/>
+        <field name="name">Professional Plan Monthly Subscription</field>
+        <field name="quantity">1</field>
+        <field name="price_unit">79.99</field>
+    </record>
+
+    <record id="subscription_line_demo_3" model="subscription.line">
+        <field name="subscription_id" ref="subscription_demo_3"/>
+        <field name="product_id" ref="product_template_enterprise_plan.product_variant_id"/>
+        <field name="name">Enterprise Plan Monthly Subscription</field>
+        <field name="quantity">1</field>
+        <field name="price_unit">199.99</field>
+    </record>
+
+</odoo>

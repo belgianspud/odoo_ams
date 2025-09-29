@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Cron Jobs for Subscription Automation -->
+    
+    <!-- Daily billing check -->
+    <record id="cron_subscription_billing" model="ir.cron">
+        <field name="name">Subscription: Process Billing</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_process_billing()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <!-- Check trial expiration -->
+    <record id="cron_subscription_trial_expiry" model="ir.cron">
+        <field name="name">Subscription: Check Trial Expiry</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_check_trial_expiry()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <!-- Check subscription expiration -->
+    <record id="cron_subscription_expiry" model="ir.cron">
+        <field name="name">Subscription: Check Expiry</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_check_expiry()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <!-- Process auto-renewals -->
+    <record id="cron_subscription_auto_renew" model="ir.cron">
+        <field name="name">Subscription: Auto Renew</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_auto_renew()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <!-- Send billing reminders -->
+    <record id="cron_subscription_billing_reminders" model="ir.cron">
+        <field name="name">Subscription: Billing Reminders</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_send_billing_reminders()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <!-- Update usage metrics -->
+    <record id="cron_subscription_usage_update" model="ir.cron">
+        <field name="name">Subscription: Update Usage Metrics</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_update_usage_metrics()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <!-- Email Templates -->
+    
+    <!-- Welcome email for new subscriptions -->
+    <record id="email_template_subscription_welcome" model="mail.template">
+        <field name="name">Subscription: Welcome Email</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="subject">Welcome to {{ object.plan_id.name }}!</field>
+        <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+        <field name="email_to">{{ object.partner_id.email }}</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p>Dear {{ object.partner_id.name }},</p>
+    
+    <p>Welcome to {{ object.plan_id.name }}! Your subscription has been activated.</p>
+    
+    <h3>Subscription Details:</h3>
+    <ul>
+        <li><strong>Plan:</strong> {{ object.plan_id.name }}</li>
+        <li><strong>Subscription ID:</strong> {{ object.name }}</li>
+        <li><strong>Start Date:</strong> {{ object.date_start }}</li>
+        <li><strong>Price:</strong> {{ object.price }} {{ object.currency_id.symbol }}</li>
+        <li><strong>Billing Period:</strong> {{ object.plan_id.billing_period }}</li>
+        <li><strong>Next Billing Date:</strong> {{ object.next_billing_date }}</li>
+    </ul>
+    
+    <p>You can manage your subscription and view your usage at any time by logging into your customer portal.</p>
+    
+    <p>Thank you for choosing our service!</p>
+    
+    <p>Best regards,<br/>{{ user.name }}</p>
+</div>
+        </field>
+    </record>
+
+    <!-- Billing reminder email -->
+    <record id="email_template_subscription_billing_reminder" model="mail.template">
+        <field name="name">Subscription: Billing Reminder</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="subject">Upcoming billing for {{ object.plan_id.name }}</field>
+        <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+        <field name="email_to">{{ object.partner_id.email }}</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p>Dear {{ object.partner_id.name }},</p>
+    
+    <p>This is a reminder that your subscription billing is coming up.</p>
+    
+    <h3>Billing Information:</h3>
+    <ul>
+        <li><strong>Plan:</strong> {{ object.plan_id.name }}</li>
+        <li><strong>Amount:</strong> {{ object.price }} {{ object.currency_id.symbol }}</li>
+        <li><strong>Billing Date:</strong> {{ object.next_billing_date }}</li>
+    </ul>
+    
+    <p>Please ensure your payment method is up to date to avoid any service interruption.</p>
+    
+    <p>You can update your payment information in your customer portal.</p>
+    
+    <p>Best regards,<br/>{{ user.name }}</p>
+</div>
+        </field>
+    </record>
+
+    <!-- Trial expiry reminder -->
+    <record id="email_template_subscription_trial_expiry" model="mail.template">
+        <field name="name">Subscription: Trial Expiry Reminder</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="subject">Your trial period is ending soon</field>
+        <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+        <field name="email_to">{{ object.partner_id.email }}</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p>Dear {{ object.partner_id.name }},</p>
+    
+    <p>Your trial period for {{ object.plan_id.name }} is ending soon.</p>
+    
+    <h3>Trial Information:</h3>
+    <ul>
+        <li><strong>Plan:</strong> {{ object.plan_id.name }}</li>
+        <li><strong>Trial End Date:</strong> {{ object.trial_end_date }}</li>
+        <li><strong>Regular Price:</strong> {{ object.price }} {{ object.currency_id.symbol }}</li>
+    </ul>
+    
+    <p>To continue enjoying our service, please ensure your payment method is set up.</p>
+    
+    <p>Visit your customer portal to manage your subscription.</p>
+    
+    <p>Best regards,<br/>{{ user.name }}</p>
+</div>
+        </field>
+    </record>
+
+    <!-- Cancellation confirmation -->
+    <record id="email_template_subscription_cancelled" model="mail.template">
+        <field name="name">Subscription: Cancellation Confirmation</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="subject">Subscription cancelled: {{ object.plan_id.name }}</field>
+        <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+        <field name="email_to">{{ object.partner_id.email }}</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p>Dear {{ object.partner_id.name }},</p>
+    
+    <p>We're sorry to see you go! Your subscription has been cancelled as requested.</p>
+    
+    <h3>Cancellation Details:</h3>
+    <ul>
+        <li><strong>Plan:</strong> {{ object.plan_id.name }}</li>
+        <li><strong>Subscription ID:</strong> {{ object.name }}</li>
+        <li><strong>Cancellation Date:</strong> {{ object.date_end }}</li>
+    </ul>
+    
+    <p>You will continue to have access to the service until your current billing period ends.</p>
+    
+    <p>If you change your mind, you can reactivate your subscription anytime.</p>
+    
+    <p>Thank you for using our service!</p>
+    
+    <p>Best regards,<br/>{{ user.name }}</p>
+</div>
+        </field>
+    </record>
+
+</odoo>

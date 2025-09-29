@@ -1,0 +1,410 @@
+/* Subscription Management Portal CSS */
+
+/* Portal Subscription Cards */
+.portal-subscription-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+    background: #fff;
+}
+
+.portal-subscription-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+/* Subscription Status Badge */
+.subscription-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.subscription-badge.active {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.subscription-badge.trial {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.subscription-badge.suspended {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.subscription-badge.cancelled {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+/* Plan Selection Cards */
+.plan-selection-card {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.plan-selection-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 8px 25px rgba(0,123,255,0.15);
+    transform: translateY(-5px);
+}
+
+.plan-selection-card.featured {
+    border-color: #28a745;
+    border-width: 3px;
+    position: relative;
+}
+
+.plan-selection-card.featured::after {
+    content: "Popular";
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #28a745;
+    color: white;
+    padding: 4px 16px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.plan-price-display {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #007bff;
+    margin: 20px 0;
+}
+
+.plan-price-period {
+    font-size: 1rem;
+    color: #6c757d;
+    font-weight: normal;
+}
+
+.plan-features-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+    text-align: left;
+    flex-grow: 1;
+}
+
+.plan-features-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.plan-features-list li:last-child {
+    border-bottom: none;
+}
+
+.plan-features-list i {
+    margin-right: 10px;
+    color: #28a745;
+}
+
+/* Usage Display */
+.usage-display {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.usage-metric {
+    text-align: center;
+    padding: 15px;
+}
+
+.usage-metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #007bff;
+}
+
+.usage-metric-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+.usage-progress-bar {
+    height: 12px;
+    border-radius: 6px;
+    background: #e9ecef;
+    overflow: hidden;
+    margin: 15px 0;
+}
+
+.usage-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    transition: width 0.6s ease;
+}
+
+.usage-progress-fill.warning {
+    background: linear-gradient(90deg, #ffc107, #fd7e14);
+}
+
+.usage-progress-fill.danger {
+    background: linear-gradient(90deg, #dc3545, #e74c3c);
+}
+
+/* Billing Information */
+.billing-info-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+.billing-amount {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.billing-date {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+/* Action Buttons */
+.subscription-action-btn {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.subscription-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Usage History Table */
+.usage-history-table {
+    width: 100%;
+    margin-top: 20px;
+}
+
+.usage-history-table thead {
+    background: #f8f9fa;
+}
+
+.usage-history-table th,
+.usage-history-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.usage-history-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+/* Modal Styling */
+.subscription-modal .modal-header {
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.subscription-modal .modal-body {
+    padding: 30px;
+}
+
+.subscription-modal .modal-footer {
+    border-top: 2px solid #dee2e6;
+    padding: 20px;
+}
+
+/* Support Card */
+.support-card {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    background: #f8f9fa;
+}
+
+.support-card i {
+    font-size: 3rem;
+    color: #007bff;
+    margin-bottom: 15px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .plan-selection-card {
+        margin-bottom: 20px;
+    }
+    
+    .plan-price-display {
+        font-size: 2.5rem;
+    }
+    
+    .usage-metric-value {
+        font-size: 1.5rem;
+    }
+    
+    .billing-amount {
+        font-size: 2rem;
+    }
+    
+    .portal-subscription-card {
+        padding: 15px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .subscription-action-btn,
+    .support-card,
+    .modal {
+        display: none !important;
+    }
+    
+    .portal-subscription-card {
+        page-break-inside: avoid;
+    }
+}
+
+/* Accessibility */
+.subscription-action-btn:focus,
+.plan-selection-card:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* Loading State */
+.subscription-loading {
+    text-align: center;
+    padding: 40px;
+}
+
+.subscription-loading .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    color: #007bff;
+}
+
+/* Empty State */
+.subscription-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.subscription-empty-state i {
+    font-size: 4rem;
+    color: #dee2e6;
+    margin-bottom: 20px;
+}
+
+.subscription-empty-state h3 {
+    color: #6c757d;
+    margin-bottom: 10px;
+}
+
+.subscription-empty-state p {
+    color: #adb5bd;
+}
+
+/* Alert Banners */
+.subscription-alert {
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    border-left: 4px solid;
+}
+
+.subscription-alert.info {
+    background: #d1ecf1;
+    border-color: #0c5460;
+    color: #0c5460;
+}
+
+.subscription-alert.warning {
+    background: #fff3cd;
+    border-color: #856404;
+    color: #856404;
+}
+
+.subscription-alert.danger {
+    background: #f8d7da;
+    border-color: #721c24;
+    color: #721c24;
+}
+
+.subscription-alert.success {
+    background: #d4edda;
+    border-color: #155724;
+    color: #155724;
+}
+
+/* Timeline for Portal */
+.portal-timeline {
+    position: relative;
+    padding-left: 40px;
+    margin: 30px 0;
+}
+
+.portal-timeline::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.portal-timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+    padding-left: 10px;
+}
+
+.portal-timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -28px;
+    top: 5px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #007bff;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px #007bff;
+}
+
+.portal-timeline-date {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.portal-timeline-content {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+}

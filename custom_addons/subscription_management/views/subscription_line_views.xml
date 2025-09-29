@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Subscription Line List View -->
+    <record id="subscription_line_view_list" model="ir.ui.view">
+        <field name="name">subscription.line.view.list</field>
+        <field name="model">subscription.line</field>
+        <field name="arch" type="xml">
+            <list string="Subscription Lines" editable="bottom">
+                <field name="subscription_id"/>
+                <field name="product_id"/>
+                <field name="name"/>
+                <field name="quantity"/>
+                <field name="price_unit"/>
+                <field name="price_subtotal"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Subscription Line Form View -->
+    <record id="subscription_line_view_form" model="ir.ui.view">
+        <field name="name">subscription.line.view.form</field>
+        <field name="model">subscription.line</field>
+        <field name="arch" type="xml">
+            <form string="Subscription Line">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="subscription_id"/>
+                            <field name="product_id"/>
+                            <field name="name"/>
+                        </group>
+                        <group>
+                            <field name="quantity"/>
+                            <field name="price_unit"/>
+                            <field name="price_subtotal"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

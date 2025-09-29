@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Sequence for Subscription References -->
+    <record id="sequence_subscription" model="ir.sequence">
+        <field name="name">Subscription</field>
+        <field name="code">subscription.subscription</field>
+        <field name="prefix">SUB</field>
+        <field name="padding">5</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <!-- Product Categories for Subscription Services -->
+    <record id="product_category_subscription" model="product.category">
+        <field name="name">Subscription Services</field>
+        <field name="parent_id" ref="product.product_category_all"/>
+    </record>
+
+    <!-- Default Company Configuration -->
+    <record id="subscription_config_settings" model="ir.config_parameter">
+        <field name="key">subscription.default_trial_period</field>
+        <field name="value">14</field>
+    </record>
+
+    <record id="subscription_config_billing_reminder_days" model="ir.config_parameter">
+        <field name="key">subscription.billing_reminder_days</field>
+        <field name="value">3</field>
+    </record>
+
+    <record id="subscription_config_auto_post_invoices" model="ir.config_parameter">
+        <field name="key">subscription.auto_post_invoices</field>
+        <field name="value">True</field>
+    </record>
+
+    <record id="subscription_config_send_welcome_email" model="ir.config_parameter">
+        <field name="key">subscription.send_welcome_email</field>
+        <field name="value">True</field>
+    </record>
+
+    <!-- Default Subscription Settings -->
+    <record id="subscription_settings_grace_period" model="ir.config_parameter">
+        <field name="key">subscription.settings.grace_period_days</field>
+        <field name="value">7</field>
+    </record>
+
+    <record id="subscription_settings_max_retries" model="ir.config_parameter">
+        <field name="key">subscription.settings.max_billing_retries</field>
+        <field name="value">3</field>
+    </record>
+
+    <!-- Subscription Tags -->
+    <record id="subscription_tag_vip" model="subscription.tag">
+        <field name="name">VIP Customer</field>
+        <field name="color">1</field>
+    </record>
+
+    <record id="subscription_tag_enterprise" model="subscription.tag">
+        <field name="name">Enterprise</field>
+        <field name="color">2</field>
+    </record>
+
+    <record id="subscription_tag_high_usage" model="subscription.tag">
+        <field name="name">High Usage</field>
+        <field name="color">3</field>
+    </record>
+
+    <record id="subscription_tag_at_risk" model="subscription.tag">
+        <field name="name">At Risk</field>
+        <field name="color">8</field>
+    </record>
+
+</odoo>

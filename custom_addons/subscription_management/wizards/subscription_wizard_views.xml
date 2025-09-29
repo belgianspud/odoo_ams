@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Subscription Wizard Form View -->
+    <record id="subscription_wizard_form" model="ir.ui.view">
+        <field name="name">subscription.wizard.form</field>
+        <field name="model">subscription.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Subscription Management">
+                <group>
+                    <field name="action_type"/>
+                </group>
+                
+                <group invisible="action_type in ['modify', 'cancel', 'suspend', 'renew', 'change_plan']">
+                    <group string="Customer Information">
+                        <field name="partner_id"/>
+                    </group>
+                    <group string="Plan Information">
+                        <field name="plan_id"/>
+                        <field name="start_date"/>
+                        <field name="end_date"/>
+                    </group>
+                </group>
+                
+                <group invisible="action_type not in ['modify', 'change_plan']">
+                    <group string="Pricing">
+                        <field name="use_price_override"/>
+                        <field name="price_override" invisible="not use_price_override"/>
+                    </group>
+                    <group string="Plan Change" invisible="action_type != 'change_plan'">
+                        <field name="new_plan_id"/>
+                        <field name="prorate_billing"/>
+                    </group>
+                </group>
+                
+                <group invisible="action_type not in ['cancel', 'suspend']">
+                    <group string="Cancellation/Suspension Details">
+                        <field name="effective_date"/>
+                        <field name="reason"/>
+                    </group>
+                </group>
+                
+                <group>
+                    <group string="Options">
+                        <field name="send_email"/>
+                        <field name="create_invoice" invisible="action_type in ['cancel', 'suspend']"/>
+                    </group>
+                </group>
+                
+                <footer>
+                    <button string="Execute" name="action_execute" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Bulk Action Wizard Form View -->
+    <record id="subscription_bulk_action_wizard_form" model="ir.ui.view">
+        <field name="name">subscription.bulk.action.wizard.form</field>
+        <field name="model">subscription.bulk.action.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Bulk Subscription Actions">
+                <group>
+                    <field name="action"/>
+                    <field name="subscription_ids" widget="many2many_tags" readonly="1"/>
+                </group>
+                
+                <group invisible="action not in ['suspend', 'cancel']">
+                    <field name="reason"/>
+                </group>
+                
+                <group invisible="action != 'update_price'">
+                    <group string="Price Update">
+                        <field name="new_price"/>
+                        <field name="price_increase_percent"/>
+                    </group>
+                </group>
+                
+                <group>
+                    <field name="send_email"/>
+                </group>
+                
+                <footer>
+                    <button string="Execute" name="action_execute_bulk" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Usage Import Wizard Form View -->
+    <record id="subscription_usage_import_wizard_form" model="ir.ui.view">
+        <field name="name">subscription.usage.import.wizard.form</field>
+        <field name="model">subscription.usage.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Usage Data">
+                <group>
+                    <group string="File Information">
+                        <field name="file_data" filename="file_name"/>
+                        <field name="file_name" invisible="1"/>
+                        <field name="file_type"/>
+                    </group>
+                    <group string="Import Settings">
+                        <field name="subscription_id"/>
+                        <field name="usage_type"/>
+                    </group>
+                </group>
+                
+                <group string="Column Mapping">
+                    <group>
+                        <field name="date_column"/>
+                        <field name="quantity_column"/>
+                    </group>
+                    <group>
+                        <field name="description_column"/>
+                    </group>
+                </group>
+                
+                <footer>
+                    <button string="Import" name="action_import_usage" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Wizard Actions -->
+    <record id="action_subscription_wizard" model="ir.actions.act_window">
+        <field name="name">Subscription Management</field>
+        <field name="res_model">subscription.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="action_subscription_bulk_action_wizard" model="ir.actions.act_window">
+        <field name="name">Bulk Subscription Actions</field>
+        <field name="res_model">subscription.bulk.action.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_subscription_subscription"/>
+        <field name="binding_view_types">list</field>
+    </record>
+
+    <record id="action_subscription_usage_import_wizard" model="ir.actions.act_window">
+        <field name="name">Import Usage Data</field>
+        <field name="res_model">subscription.usage.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Add Import Usage to Configuration Menu -->
+    <menuitem id="menu_subscription_import_usage"
+              name="Import Usage"
+              parent="menu_subscription_config"
+              action="action_subscription_usage_import_wizard"
+              sequence="10"/>
+
+</odoo>

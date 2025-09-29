@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Portal Menu -->
+    <template id="portal_my_home_subscription" name="Portal My Home: Subscription entries" customize_show="True" inherit_id="portal.portal_my_home" priority="50">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="title">Subscriptions</t>
+                <t t-set="url" t-value="'/my/subscriptions'"/>
+                <t t-set="placeholder_count" t-value="'subscription_count'"/>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- Subscription List Page -->
+    <template id="portal_my_subscriptions" name="My Subscriptions">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Subscriptions</t>
+            </t>
+
+            <t t-if="not subscriptions">
+                <div class="alert alert-info" role="alert">
+                    <p>You don't have any subscriptions yet.</p>
+                </div>
+            </t>
+
+            <t t-if="subscriptions" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>Subscription #</th>
+                        <th>Plan</th>
+                        <th>Status</th>
+                        <th>Start Date</th>
+                        <th>Next Billing</th>
+                        <th>Amount</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="subscriptions" t-as="subscription">
+                        <tr>
+                            <td>
+                                <a t-attf-href="/my/subscriptions/{{ subscription.id }}">
+                                    <t t-esc="subscription.name"/>
+                                </a>
+                            </td>
+                            <td>
+                                <t t-esc="subscription.plan_id.name"/>
+                            </td>
+                            <td>
+                                <span t-attf-class="badge badge-pill badge-{{ 'success' if subscription.state == 'active' else 'warning' if subscription.state == 'trial' else 'danger' if subscription.state == 'cancelled' else 'secondary' }}">
+                                    <t t-esc="subscription.state.title()"/>
+                                </span>
+                            </td>
+                            <td>
+                                <span t-field="subscription.date_start"/>
+                            </td>
+                            <td>
+                                <span t-field="subscription.next_billing_date"/>
+                            </td>
+                            <td>
+                                <span t-field="subscription.price" t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                            </td>
+                            <td class="text-right">
+                                <a t-attf-href="/my/subscriptions/{{ subscription.id }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fa fa-eye"/> View
+                                </a>
+                            </td>
+                        </tr>
+                    </t>
+                </tbody>
+            </t>
+        </t>
+    </template>
+
+    <!-- Subscription Detail Page -->
+    <template id="portal_subscription_detail" name="Subscription Detail">
+        <t t-call="portal.portal_layout">
+            <t t-set="o_portal_fullwidth_alert" t-value="True"/>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <h4 class="mb-0">
+                                        <t t-esc="subscription.name"/>
+                                        <small class="text-muted">
+                                            (<span t-field="subscription.plan_id.name"/>)
+                                        </small>
+                                    </h4>
+                                </div>
+                                <div class="col-lg-6 text-right">
+                                    <span t-attf-class="badge badge-pill badge-lg badge-{{ 'success' if subscription.state == 'active' else 'warning' if subscription.state == 'trial' else 'danger' if subscription.state == 'cancelled' else 'secondary' }}">
+                                        <t t-esc="subscription.state.title()"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Subscription Details</h6>
+                                    <dl class="row">
+                                        <dt class="col-sm-5">Plan:</dt>
+                                        <dd class="col-sm-7"><t t-esc="subscription.plan_id.name"/></dd>
+                                        
+                                        <dt class="col-sm-5">Start Date:</dt>
+                                        <dd class="col-sm-7"><span t-field="subscription.date_start"/></dd>
+                                        
+                                        <dt class="col-sm-5">Price:</dt>
+                                        <dd class="col-sm-7">
+                                            <span t-field="subscription.price" t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                                            / <t t-esc="subscription.plan_id.billing_period"/>
+                                        </dd>
+                                        
+                                        <dt class="col-sm-5">Next Billing:</dt>
+                                        <dd class="col-sm-7">
+                                            <span t-field="subscription.next_billing_date"/>
+                                        </dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Plan Features</h6>
+                                    <div t-if="subscription.plan_id.description" t-field="subscription.plan_id.description"/>
+                                    
+                                    <t t-if="subscription.plan_id.user_limit > 0">
+                                        <p><strong>User Limit:</strong> <t t-esc="subscription.plan_id.user_limit"/> users</p>
+                                    </t>
+                                    
+                                    <t t-if="subscription.plan_id.storage_limit > 0">
+                                        <p><strong>Storage:</strong> <t t-esc="subscription.plan_id.storage_limit"/> GB</p>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Usage Information -->
+                    <t t-if="subscription.plan_id.usage_based">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">Usage Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <h6>Current Usage</h6>
+                                        <p class="h4">
+                                            <t t-esc="subscription.current_usage"/>
+                                            <small><t t-esc="subscription.plan_id.usage_unit"/></small>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h6>Included Usage</h6>
+                                        <p class="h4">
+                                            <t t-esc="subscription.usage_limit"/>
+                                            <small><t t-esc="subscription.plan_id.usage_unit"/></small>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h6>Overage</h6>
+                                        <p class="h4" t-attf-style="color: {{ 'red' if subscription.usage_overage > 0 else 'green' }}">
+                                            <t t-esc="subscription.usage_overage"/>
+                                            <small><t t-esc="subscription.plan_id.usage_unit"/></small>
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Usage Progress Bar -->
+                                <div class="progress mt-2">
+                                    <div class="progress-bar" role="progressbar" 
+                                         t-attf-style="width: {{ min(100, (subscription.current_usage / subscription.usage_limit * 100) if subscription.usage_limit > 0 else 0) }}%"
+                                         t-attf-aria-valuenow="{{ subscription.current_usage }}"
+                                         aria-valuemin="0" 
+                                         t-attf-aria-valuemax="{{ subscription.usage_limit }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+
+                    <!-- Recent Usage History -->
+                    <t t-if="usage_records">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">Recent Usage</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Type</th>
+                                                <th>Quantity</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="usage_records" t-as="usage">
+                                                <tr>
+                                                    <td><span t-field="usage.date"/></td>
+                                                    <td><t t-esc="usage.usage_type"/></td>
+                                                    <td><t t-esc="usage.quantity"/></td>
+                                                    <td><t t-esc="usage.description"/></td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <!-- Actions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <t t-if="subscription.state in ('active', 'trial')">
+                                <a href="#" class="btn btn-outline-warning btn-block mb-2" 
+                                   data-toggle="modal" data-target="#suspendModal">
+                                    <i class="fa fa-pause"/> Suspend Subscription
+                                </a>
+                                <a href="#" class="btn btn-outline-danger btn-block mb-2"
+                                   data-toggle="modal" data-target="#cancelModal">
+                                    <i class="fa fa-times"/> Cancel Subscription
+                                </a>
+                            </t>
+                            
+                            <t t-if="subscription.state == 'suspended'">
+                                <a t-attf-href="/my/subscriptions/{{ subscription.id }}/reactivate" class="btn btn-success btn-block mb-2">
+                                    <i class="fa fa-play"/> Reactivate Subscription
+                                </a>
+                            </t>
+                            
+                            <a href="/my/invoices" class="btn btn-outline-primary btn-block">
+                                <i class="fa fa-file-text-o"/> View Invoices
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Contact Support -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">Need Help?</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>If you have any questions about your subscription, please contact our support team.</p>
+                            <a href="/contactus" class="btn btn-primary btn-block">
+                                <i class="fa fa-envelope"/> Contact Support
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modals -->
+            <!-- Suspend Modal -->
+            <div class="modal fade" id="suspendModal" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Suspend Subscription</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&#215;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to suspend your subscription? You can reactivate it at any time.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <a t-attf-href="/my/subscriptions/{{ subscription.id }}/suspend" class="btn btn-warning">
+                                Suspend Subscription
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cancel Modal -->
+            <div class="modal fade" id="cancelModal" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Cancel Subscription</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&#215;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to cancel your subscription? This action cannot be undone.</p>
+                            <p>You will continue to have access until your current billing period ends.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Keep Subscription</button>
+                            <a t-attf-href="/my/subscriptions/{{ subscription.id }}/cancel" class="btn btn-danger">
+                                Cancel Subscription
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Subscription Plans Selection Page -->
+    <template id="portal_subscription_plans" name="Subscription Plans">
+        <t t-call="portal.portal_layout">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h2 class="text-center mb-4">Choose Your Plan</h2>
+                        <p class="text-center text-muted mb-5">Select the perfect plan for your needs</p>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <t t-foreach="plans" t-as="plan">
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="card h-100 text-center">
+                                <div class="card-header">
+                                    <h4 class="card-title"><t t-esc="plan.name"/></h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="display-4 text-primary mb-3">
+                                        <span t-field="plan.price" t-options="{'widget': 'monetary', 'display_currency': plan.currency_id}"/>
+                                        <small class="text-muted">/<t t-esc="plan.billing_period"/></small>
+                                    </div>
+                                    
+                                    <t t-if="plan.trial_period > 0">
+                                        <p class="text-success">
+                                            <i class="fa fa-gift"/> <t t-esc="plan.trial_period"/> days free trial
+                                        </p>
+                                    </t>
+                                    
+                                    <div class="text-left">
+                                        <t t-if="plan.description" t-field="plan.description"/>
+                                        
+                                        <ul class="list-unstyled">
+                                            <t t-if="plan.user_limit > 0">
+                                                <li><i class="fa fa-check text-success"/> Up to <t t-esc="plan.user_limit"/> users</li>
+                                            </t>
+                                            <t t-if="plan.storage_limit > 0">
+                                                <li><i class="fa fa-check text-success"/> <t t-esc="plan.storage_limit"/> GB storage</li>
+                                            </t>
+                                            <t t-if="plan.usage_based">
+                                                <li><i class="fa fa-check text-success"/> <t t-esc="plan.included_usage"/> <t t-esc="plan.usage_unit"/> included</li>
+                                            </t>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <a t-attf-href="/my/subscriptions/subscribe/{{ plan.id }}" class="btn btn-primary btn-block">
+                                        Choose Plan
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>
