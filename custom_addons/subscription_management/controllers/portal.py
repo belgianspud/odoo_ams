@@ -53,6 +53,7 @@ class SubscriptionPortal(CustomerPortal):
             'trial': {'label': _('Trial'), 'domain': [('state', '=', 'trial')]},
             'suspended': {'label': _('Suspended'), 'domain': [('state', '=', 'suspended')]},
             'cancelled': {'label': _('Cancelled'), 'domain': [('state', '=', 'cancelled')]},
+            'expired': {'label': _('Expired'), 'domain': [('state', '=', 'expired')]},
         }
         
         searchbar_inputs = {
@@ -93,15 +94,30 @@ class SubscriptionPortal(CustomerPortal):
             step=self._items_per_page
         )
 
-        # Content
-        subscriptions = SubscriptionSudo.search(domain, order=order, limit=self._items_per_page, 
-                                               offset=pager['offset'])
+        # Content - Get all subscriptions and separate by status
+        all_subscriptions = SubscriptionSudo.search(domain, order=order)
+        
+        # Separate active and inactive subscriptions
+        active_subscriptions = all_subscriptions.filtered(
+            lambda s: s.state in ('active', 'trial')
+        )
+        inactive_subscriptions = all_subscriptions.filtered(
+            lambda s: s.state not in ('active', 'trial')
+        )
+        
+        # Apply pagination to combined results
+        start = pager['offset']
+        end = start + self._items_per_page
+        subscriptions = all_subscriptions[start:end]
+        
         request.session['my_subscriptions_history'] = subscriptions.ids[:100]
 
         values.update({
             'date': date_begin,
             'date_end': date_end,
             'subscriptions': subscriptions,
+            'active_subscriptions': active_subscriptions,
+            'inactive_subscriptions': inactive_subscriptions,
             'page_name': 'subscription',
             'archive_groups': [],
             'default_url': '/my/subscriptions',
@@ -224,6 +240,17 @@ class SubscriptionPortal(CustomerPortal):
             return request.redirect('/subscription/plans')
 
         partner = request.env.user.partner_id
+        
+        # Check if customer already has active subscription for this plan
+        existing = request.env['subscription.subscription'].sudo().search([
+            ('partner_id', '=', partner.id),
+            ('plan_id', '=', plan.id),
+            ('state', 'in', ['active', 'trial'])
+        ], limit=1)
+        
+        if existing:
+            # Redirect to existing subscription with a message
+            return request.redirect(f'/my/subscriptions/{existing.id}?already_subscribed=1')
         
         # Create subscription
         subscription_vals = {

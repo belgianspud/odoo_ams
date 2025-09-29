@@ -1,9 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Partner Form View - Inherit (Updated ID to force refresh) -->
-    <record id="res_partner_form_view_inherit_subscription_v2" model="ir.ui.view">
-        <field name="name">res.partner.form.inherit.subscription.v2</field>
+    <!-- Subscription List View for Partner -->
+    <record id="subscription_subscription_list_partner" model="ir.ui.view">
+        <field name="name">subscription.subscription.list.partner</field>
+        <field name="model">subscription.subscription</field>
+        <field name="arch" type="xml">
+            <list decoration-success="state=='active'" 
+                  decoration-warning="state=='trial'"
+                  decoration-muted="state in ['cancelled', 'expired']"
+                  create="false">
+                <field name="name"/>
+                <field name="plan_id"/>
+                <field name="date_start"/>
+                <field name="next_billing_date" optional="show"/>
+                <field name="date_end" optional="hide"/>
+                <field name="price" widget="monetary"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="state" widget="badge"
+                       decoration-success="state=='active'"
+                       decoration-warning="state=='trial'"
+                       decoration-danger="state=='cancelled'"
+                       decoration-muted="state=='expired'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Partner Form View - Inherit (Updated with Subscriptions Tab) -->
+    <record id="res_partner_form_view_inherit_subscription_v3" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.subscription.v3</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
@@ -19,9 +44,42 @@
                 </button>
             </xpath>
             
-            <!-- Add hidden fields for counts -->
-            <xpath expr="//field[@name='category_id']" position="after">
-                <field name="active_subscription_count" invisible="1"/>
+            <!-- Add Subscriptions tab in notebook -->
+            <xpath expr="//page[@name='sales_purchases']" position="after">
+                <page string="Subscriptions" name="subscriptions" invisible="subscription_count == 0">
+                    <field name="subscription_count" invisible="1"/>
+                    <field name="active_subscription_count" invisible="1"/>
+                    
+                    <group>
+                        <group string="Summary">
+                            <label for="subscription_count"/>
+                            <div>
+                                <field name="subscription_count" readonly="1" class="oe_inline"/> Total Subscriptions
+                            </div>
+                            <label for="active_subscription_count"/>
+                            <div>
+                                <field name="active_subscription_count" readonly="1" class="oe_inline"/> Active Subscriptions
+                            </div>
+                        </group>
+                        <group/>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Active Subscriptions" name="active_subs">
+                            <field name="subscription_ids" 
+                                   nolabel="1"
+                                   domain="[('state', 'in', ['active', 'trial'])]"
+                                   context="{'default_partner_id': active_id, 'list_view_ref': 'subscription_management.subscription_subscription_list_partner'}"/>
+                        </page>
+                        
+                        <page string="Inactive Subscriptions" name="inactive_subs">
+                            <field name="subscription_ids" 
+                                   nolabel="1"
+                                   domain="[('state', 'not in', ['active', 'trial'])]"
+                                   context="{'default_partner_id': active_id, 'list_view_ref': 'subscription_management.subscription_subscription_list_partner'}"/>
+                        </page>
+                    </notebook>
+                </page>
             </xpath>
             
         </field>

@@ -80,6 +80,18 @@
         <field name="active" eval="True"/>
     </record>
 
+    <!-- NEW: Check renewals and send reminders -->
+    <record id="cron_subscription_check_renewals" model="ir.cron">
+        <field name="name">Subscription: Check Renewals</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_check_renewals()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+        <field name="priority">15</field>
+    </record>
+
     <!-- Email Templates -->
     
     <!-- Welcome email for new subscriptions -->
@@ -473,55 +485,65 @@
         </field>
     </record>
 
-    <!-- Subscription Renewal Reminder -->
-    <record id="email_template_subscription_renewal" model="mail.template">
+    <!-- Subscription Renewal Reminder - NEW -->
+    <record id="email_template_subscription_renewal_reminder" model="mail.template">
         <field name="name">Subscription: Renewal Reminder</field>
         <field name="model_id" ref="model_subscription_subscription"/>
-        <field name="subject">Your {{ object.plan_id.name }} subscription is renewing soon</field>
+        <field name="subject">Time to Renew: {{ object.plan_id.name }}</field>
         <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
         <field name="email_to">{{ object.partner_id.email }}</field>
         <field name="body_html" type="html">
 <div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
-    <div style="background: #28a745; padding: 30px; text-align: center;">
-        <h2 style="color: white; margin: 0;">🔄 Subscription Renewal</h2>
+    <div style="background: #667eea; padding: 30px; text-align: center;">
+        <h2 style="color: white; margin: 0;">🔄 Renewal Time!</h2>
     </div>
     
     <div style="padding: 30px; background: #f8f9fa;">
         <p style="font-size: 16px;">Hi {{ object.partner_id.name }},</p>
         
-        <p style="font-size: 16px;">Your subscription will automatically renew soon. This is just a friendly heads-up!</p>
+        <p style="font-size: 16px;">Your subscription to <strong>{{ object.plan_id.name }}</strong> is coming up for renewal.</p>
         
-        <div style="background: white; border-left: 4px solid #28a745; padding: 20px; margin: 20px 0;">
-            <h3 style="margin-top: 0; color: #28a745;">Renewal Details:</h3>
+        <div style="background: white; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #667eea;">Subscription Details:</h3>
             <table style="width: 100%; font-size: 14px;">
                 <tr>
                     <td style="padding: 8px 0;"><strong>Plan:</strong></td>
                     <td style="padding: 8px 0;">{{ object.plan_id.name }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px 0;"><strong>Renewal Date:</strong></td>
-                    <td style="padding: 8px 0; font-size: 18px; color: #28a745;"><strong>{{ object.next_billing_date }}</strong></td>
+                    <td style="padding: 8px 0;"><strong>Subscription ID:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.name }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px 0;"><strong>Amount:</strong></td>
+                    <td style="padding: 8px 0;"><strong>Current End Date:</strong></td>
+                    <td style="padding: 8px 0; font-size: 18px; color: #667eea;"><strong>{{ object.date_end }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Renewal Price:</strong></td>
                     <td style="padding: 8px 0;">{{ object.price }} {{ object.currency_id.symbol }}</td>
                 </tr>
-                <tr>
-                    <td style="padding: 8px 0;"><strong>Billing Period:</strong></td>
-                    <td style="padding: 8px 0;">{{ object.plan_id.billing_period }}</td>
+                <tr t-if="object.plan_id.billing_type == 'calendar'">
+                    <td style="padding: 8px 0;"><strong>Billing Type:</strong></td>
+                    <td style="padding: 8px 0;">Calendar-based (aligned to calendar periods)</td>
                 </tr>
             </table>
         </div>
         
-        <p style="font-size: 16px;">Your subscription will automatically renew on the renewal date above. No action is required on your part.</p>
+        <p style="font-size: 16px;">To continue enjoying uninterrupted service, please renew your subscription.</p>
         
-        <p style="font-size: 14px; color: #6c757d;">If you wish to make changes to your subscription or payment method, you can do so anytime from your account.</p>
+        <t t-if="object.plan_id.auto_renew">
+            <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <p style="font-size: 14px; margin: 0; color: #155724;">
+                    <strong>✓ Auto-renewal is enabled.</strong> Your subscription will automatically renew unless you choose to cancel.
+                </p>
+            </div>
+        </t>
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="/my/subscriptions/{{ object.id }}" style="background: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Manage Subscription</a>
+            <a href="/my/subscriptions/{{ object.id }}" style="background: #667eea; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 16px;">Manage Subscription</a>
         </div>
         
-        <p style="font-size: 14px; color: #6c757d;">Thank you for being a valued customer!</p>
+        <p style="font-size: 14px; color: #6c757d;">If you have any questions or would like to discuss your renewal, please don't hesitate to contact us.</p>
         
         <p style="font-size: 14px; color: #6c757d;">Best regards,<br/>{{ user.name }}</p>
     </div>

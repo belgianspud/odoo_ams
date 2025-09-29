@@ -45,7 +45,7 @@ class SaleOrder(models.Model):
     
     def action_confirm(self):
         """Override to create subscriptions when order is confirmed"""
-        res = super().action_confirm()
+        res = super(SaleOrder, self).action_confirm()
         
         for order in self:
             if order.has_subscription_products and not order.subscription_id:
@@ -139,17 +139,20 @@ class SaleOrder(models.Model):
         existing = self.env['subscription.subscription'].search([
             ('partner_id', '=', self.partner_id.id),
             ('plan_id', '=', plan.id),
-            ('state', 'in', ['draft', 'trial', 'active'])
+            ('state', 'in', ['active', 'trial'])
         ], limit=1)
         
         if existing:
-            _logger.info(f"Active subscription already exists for partner {self.partner_id.name} and plan {plan.name}")
+            _logger.warning(f"Active subscription {existing.name} already exists for partner {self.partner_id.name} and plan {plan.name}")
             self.subscription_id = existing.id
             self.message_post(
-                body=f"Linked to existing subscription {existing.name}",
-                message_type='comment'
+                body=f"Cannot create new subscription: Customer already has active subscription {existing.name} for this plan.",
+                message_type='notification'
             )
-            return existing
+            raise UserError(_(
+                'Customer already has an active subscription (%s) for plan %s. '
+                'Please cancel or modify the existing subscription before creating a new one.'
+            ) % (existing.name, plan.name))
         
         # Determine start date
         start_date = fields.Date.today()

@@ -104,11 +104,59 @@ class SubscriptionSubscription(models.Model):
     coupon_id = fields.Many2one('subscription.coupon', 'Applied Coupon')
     original_price = fields.Float('Original Price')
     
+    # SQL Constraints
+    _sql_constraints = [
+        ('unique_active_subscription',
+         'CHECK(1=1)',
+         'Customer already has an active subscription for this plan!')
+    ]
+    
+    @api.constrains('partner_id', 'plan_id', 'state')
+    def _check_duplicate_active_subscription(self):
+        """Prevent duplicate active subscriptions for the same partner and plan"""
+        for subscription in self:
+            if subscription.state in ('active', 'trial'):
+                duplicate = self.search([
+                    ('partner_id', '=', subscription.partner_id.id),
+                    ('plan_id', '=', subscription.plan_id.id),
+                    ('state', 'in', ('active', 'trial')),
+                    ('id', '!=', subscription.id)
+                ], limit=1)
+                
+                if duplicate:
+                    raise ValidationError(_(
+                        'Customer %s already has an active subscription (%s) for plan %s. '
+                        'Please cancel or modify the existing subscription instead.'
+                    ) % (subscription.partner_id.name, duplicate.name, subscription.plan_id.name))
+    
     @api.model
     def create(self, vals):
+        """Override create to set dates based on billing type"""
         if vals.get('name', _('New')) == _('New'):
             vals['name'] = self.env['ir.sequence'].next_by_code('subscription.subscription') or _('New')
-        return super().create(vals)
+        
+        subscription = super(SubscriptionSubscription, self).create(vals)
+        
+        # Set subscription dates after creation
+        subscription._set_subscription_dates()
+        
+        return subscription
+    
+    def write(self, vals):
+        """Override write to update dates when plan changes"""
+        result = super(SubscriptionSubscription, self).write(vals)
+        
+        # If plan changed, recalculate dates
+        if 'plan_id' in vals or 'date_start' in vals:
+            for subscription in self:
+                if subscription.plan_id and subscription.date_start:
+                    # Only update end date if calendar-based
+                    if subscription.plan_id.billing_type == 'calendar' and not vals.get('date_end'):
+                        subscription.date_end = subscription.plan_id.get_subscription_end_date(
+                            subscription.date_start
+                        )
+        
+        return result
     
     @api.depends('partner_id')
     def _compute_company_id(self):
@@ -132,7 +180,7 @@ class SubscriptionSubscription(models.Model):
             else:
                 subscription.trial_end_date = False
     
-    @api.depends('date_start', 'plan_id', 'last_invoice_date', 'state')
+    @api.depends('date_start', 'plan_id', 'last_invoice_date', 'state', 'plan_id.billing_type')
     def _compute_next_billing_date(self):
         for subscription in self:
             if subscription.state in ('active', 'trial') and subscription.plan_id:
@@ -166,6 +214,72 @@ class SubscriptionSubscription(models.Model):
         for subscription in self:
             subscription.failed_invoice_count = len(subscription.failed_invoice_ids)
     
+    @api.onchange('plan_id', 'date_start')
+    def _onchange_plan_set_end_date(self):
+        """Automatically set end date when plan or start date changes"""
+        if self.plan_id and self.date_start and not self.date_end:
+            # Set end date based on billing type
+            self.date_end = self.plan_id.get_subscription_end_date(self.date_start)
+    
+    def _set_subscription_dates(self):
+        """Set subscription dates based on plan billing type"""
+        self.ensure_one()
+        
+        if not self.date_start:
+            self.date_start = fields.Date.today()
+        
+        # Set end date if not already set
+        if not self.date_end and self.plan_id:
+            self.date_end = self.plan_id.get_subscription_end_date(self.date_start)
+        
+        # Set next billing date
+        if self.state in ('active', 'trial'):
+            if self.last_invoice_date:
+                base_date = self.last_invoice_date
+            else:
+                base_date = self.trial_end_date or self.date_start
+            
+            if base_date:
+                self.next_billing_date = self.plan_id.get_next_billing_date(base_date)
+    
+    def get_renewal_date(self):
+        """Get the date when renewal should be offered"""
+        self.ensure_one()
+        
+        if not self.date_end:
+            return False
+        
+        # For calendar-based subscriptions, offer renewal closer to period end
+        if self.plan_id.billing_type == 'calendar':
+            if self.plan_id.billing_period == 'yearly':
+                # Offer renewal 2 months before year end
+                return self.date_end - relativedelta(months=2)
+            elif self.plan_id.billing_period == 'quarterly':
+                # Offer renewal 2 weeks before quarter end
+                return self.date_end - relativedelta(weeks=2)
+            else:
+                # Offer renewal 1 week before month end
+                return self.date_end - relativedelta(weeks=1)
+        else:
+            # Anniversary-based: offer renewal 1 week before
+            return self.date_end - relativedelta(days=7)
+    
+    def should_offer_renewal(self):
+        """Check if renewal should be offered now"""
+        self.ensure_one()
+        
+        if self.state not in ('active', 'trial'):
+            return False
+        
+        if not self.date_end:
+            return False
+        
+        renewal_date = self.get_renewal_date()
+        if not renewal_date:
+            return False
+        
+        return fields.Date.today() >= renewal_date
+    
     def action_start_trial(self):
         """Start trial period"""
         self.ensure_one()
@@ -197,12 +311,42 @@ class SubscriptionSubscription(models.Model):
         self.date_end = fields.Date.today()
     
     def action_renew(self):
-        """Renew subscription"""
+        """Renew subscription - handle calendar vs anniversary billing"""
         self.ensure_one()
+        
         if self.plan_id.auto_renew:
-            self.date_end = self.plan_id.get_next_billing_date(self.date_end or self.date_start)
+            # Calculate new end date based on billing type
+            if self.plan_id.billing_type == 'calendar':
+                # For calendar-based, set to next calendar period end
+                current_end = self.date_end or self.date_start
+                
+                if self.plan_id.billing_period == 'yearly':
+                    # Next year end
+                    self.date_end = date(current_end.year + 1, 12, 31)
+                elif self.plan_id.billing_period == 'quarterly':
+                    # Next quarter end
+                    next_quarter_start = current_end + relativedelta(days=1)
+                    self.date_end = self.plan_id._get_calendar_based_billing_date(next_quarter_start)
+                elif self.plan_id.billing_period == 'monthly':
+                    # Next month end
+                    next_month_start = current_end + relativedelta(days=1)
+                    self.date_end = self.plan_id._get_calendar_based_billing_date(next_month_start)
+                else:
+                    # For daily/weekly, use anniversary
+                    self.date_end = self.plan_id.get_next_billing_date(current_end)
+            else:
+                # Anniversary-based: add billing period to current end date
+                self.date_end = self.plan_id.get_next_billing_date(
+                    self.date_end or self.date_start
+                )
+            
             if self.state == 'expired':
                 self.state = 'active'
+            
+            self.message_post(
+                body=f"Subscription renewed until {self.date_end}",
+                message_type='notification'
+            )
     
     def action_view_invoices(self):
         """Action to view subscription invoices"""
@@ -427,6 +571,64 @@ class SubscriptionSubscription(models.Model):
                     
             except Exception as e:
                 _logger.error(f"Error retrying payment for subscription {subscription.name}: {e}")
+    
+    @api.model
+    def _cron_check_renewals(self):
+        """Check for subscriptions that need renewal and send reminders"""
+        today = fields.Date.today()
+        
+        # Find subscriptions that should offer renewal
+        subscriptions = self.search([
+            ('state', 'in', ['active', 'trial']),
+            ('date_end', '!=', False)
+        ])
+        
+        renewal_count = 0
+        reminder_count = 0
+        
+        for subscription in subscriptions:
+            try:
+                if subscription.should_offer_renewal():
+                    # Check if reminder already sent recently
+                    last_message = subscription.message_ids.filtered(
+                        lambda m: 'Renewal reminder sent' in (m.body or '')
+                    )[:1]
+                    
+                    # Only send reminder once per week
+                    send_reminder = True
+                    if last_message:
+                        days_since_last = (today - last_message.date.date()).days
+                        if days_since_last < 7:
+                            send_reminder = False
+                    
+                    if send_reminder:
+                        # Send renewal reminder email
+                        template = self.env.ref(
+                            'subscription_management.email_template_subscription_renewal_reminder',
+                            raise_if_not_found=False
+                        )
+                        if template:
+                            template.send_mail(subscription.id, force_send=False)
+                            subscription.message_post(
+                                body=f"Renewal reminder sent for subscription ending on {subscription.date_end}",
+                                message_type='notification'
+                            )
+                            reminder_count += 1
+                        
+                        # Create activity for sales team
+                        subscription.activity_schedule(
+                            'mail.mail_activity_data_call',
+                            summary=f'Follow up on renewal for {subscription.partner_id.name}',
+                            note=f'Subscription {subscription.name} is due for renewal on {subscription.date_end}. Contact customer to confirm renewal.',
+                            date_deadline=subscription.date_end - relativedelta(days=3),
+                            user_id=self.env.ref('base.user_admin').id
+                        )
+                        renewal_count += 1
+                        
+            except Exception as e:
+                _logger.error(f"Error checking renewal for subscription {subscription.name}: {e}")
+        
+        _logger.info(f"Renewal check completed: {renewal_count} subscriptions due for renewal, {reminder_count} reminders sent")
     
     # ==========================================
     # Existing Cron Methods

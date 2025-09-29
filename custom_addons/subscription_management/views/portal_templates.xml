@@ -12,7 +12,7 @@
         </xpath>
     </template>
 
-    <!-- Subscription List Page -->
+    <!-- Subscription List Page with Active/Inactive Sections -->
     <template id="portal_my_subscriptions" name="My Subscriptions">
         <t t-call="portal.portal_layout">
             <t t-set="breadcrumbs_searchbar" t-value="True"/>
@@ -21,58 +21,132 @@
                 <t t-set="title">Subscriptions</t>
             </t>
 
-            <t t-if="not subscriptions">
+            <t t-if="not subscriptions and not active_subscriptions and not inactive_subscriptions">
                 <div class="alert alert-info" role="alert">
                     <p>You don't have any subscriptions yet.</p>
+                    <a href="/subscription/plans" class="btn btn-primary">Browse Plans</a>
                 </div>
             </t>
 
-            <t t-if="subscriptions" t-call="portal.portal_table">
-                <thead>
-                    <tr class="active">
-                        <th>Subscription #</th>
-                        <th>Plan</th>
-                        <th>Status</th>
-                        <th>Start Date</th>
-                        <th>Next Billing</th>
-                        <th>Amount</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <t t-foreach="subscriptions" t-as="subscription">
-                        <tr>
-                            <td>
-                                <a t-attf-href="/my/subscriptions/{{ subscription.id }}">
-                                    <t t-esc="subscription.name"/>
-                                </a>
-                            </td>
-                            <td>
-                                <t t-esc="subscription.plan_id.name"/>
-                            </td>
-                            <td>
-                                <span t-attf-class="badge badge-pill badge-{{ 'success' if subscription.state == 'active' else 'warning' if subscription.state == 'trial' else 'danger' if subscription.state == 'cancelled' else 'secondary' }}">
-                                    <t t-esc="subscription.state.title()"/>
-                                </span>
-                            </td>
-                            <td>
-                                <span t-field="subscription.date_start"/>
-                            </td>
-                            <td>
-                                <span t-field="subscription.next_billing_date"/>
-                            </td>
-                            <td>
-                                <span t-field="subscription.price" t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
-                            </td>
-                            <td class="text-right">
-                                <a t-attf-href="/my/subscriptions/{{ subscription.id }}" class="btn btn-outline-primary btn-sm">
-                                    <i class="fa fa-eye"/> View
-                                </a>
-                            </td>
-                        </tr>
-                    </t>
-                </tbody>
+            <!-- Active Subscriptions Section -->
+            <t t-if="active_subscriptions">
+                <div class="mb-4">
+                    <h3 class="mb-3">
+                        <i class="fa fa-check-circle text-success"/> Active Subscriptions
+                        <span class="badge badge-success"><t t-esc="len(active_subscriptions)"/></span>
+                    </h3>
+                    
+                    <div class="row">
+                        <t t-foreach="active_subscriptions" t-as="subscription">
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card h-100 portal-subscription-card border-success">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <t t-esc="subscription.plan_id.name"/>
+                                        </h5>
+                                        <p class="card-text">
+                                            <small class="text-muted">
+                                                <t t-esc="subscription.name"/>
+                                            </small>
+                                        </p>
+                                        
+                                        <div class="mb-2">
+                                            <span t-attf-class="badge subscription-badge {{ subscription.state }}">
+                                                <t t-esc="subscription.state.title()"/>
+                                            </span>
+                                        </div>
+                                        
+                                        <dl class="row mb-0">
+                                            <dt class="col-6">Price:</dt>
+                                            <dd class="col-6">
+                                                <span t-field="subscription.price" 
+                                                      t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                                            </dd>
+                                            
+                                            <dt class="col-6">Next Billing:</dt>
+                                            <dd class="col-6">
+                                                <span t-field="subscription.next_billing_date"/>
+                                            </dd>
+                                        </dl>
+                                    </div>
+                                    <div class="card-footer bg-transparent">
+                                        <a t-attf-href="/my/subscriptions/{{ subscription.id }}" 
+                                           class="btn btn-sm btn-primary btn-block">
+                                            <i class="fa fa-eye"/> View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </div>
             </t>
+
+            <!-- Inactive Subscriptions Section -->
+            <t t-if="inactive_subscriptions">
+                <div class="mb-4">
+                    <h3 class="mb-3">
+                        <i class="fa fa-archive text-muted"/> Inactive Subscriptions
+                        <span class="badge badge-secondary"><t t-esc="len(inactive_subscriptions)"/></span>
+                    </h3>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Subscription #</th>
+                                    <th>Plan</th>
+                                    <th>Status</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Amount</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="inactive_subscriptions" t-as="subscription">
+                                    <tr>
+                                        <td>
+                                            <a t-attf-href="/my/subscriptions/{{ subscription.id }}">
+                                                <t t-esc="subscription.name"/>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <t t-esc="subscription.plan_id.name"/>
+                                        </td>
+                                        <td>
+                                            <span t-attf-class="badge badge-pill badge-{{ 'warning' if subscription.state == 'suspended' else 'danger' if subscription.state == 'cancelled' else 'secondary' }}">
+                                                <t t-esc="subscription.state.title()"/>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span t-field="subscription.date_start"/>
+                                        </td>
+                                        <td>
+                                            <span t-field="subscription.date_end"/>
+                                        </td>
+                                        <td>
+                                            <span t-field="subscription.price" 
+                                                  t-options="{'widget': 'monetary', 'display_currency': subscription.currency_id}"/>
+                                        </td>
+                                        <td class="text-right">
+                                            <a t-attf-href="/my/subscriptions/{{ subscription.id }}" 
+                                               class="btn btn-outline-secondary btn-sm">
+                                                <i class="fa fa-eye"/> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </t>
+
+            <!-- Pagination -->
+            <div t-if="pager" class="o_portal_pager text-center">
+                <t t-call="portal.pager"/>
+            </div>
         </t>
     </template>
 

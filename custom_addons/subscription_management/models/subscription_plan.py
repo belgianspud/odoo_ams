@@ -3,6 +3,7 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 from dateutil.relativedelta import relativedelta
+from datetime import datetime, date
 
 
 class SubscriptionPlan(models.Model):
@@ -33,6 +34,14 @@ class SubscriptionPlan(models.Model):
     
     billing_interval = fields.Integer('Billing Interval', default=1, 
                                       help='Repeat every X periods')
+    
+    # Billing Type - NEW FIELD
+    billing_type = fields.Selection([
+        ('anniversary', 'Anniversary-based'),
+        ('calendar', 'Calendar-based'),
+    ], string='Billing Type', default='anniversary', required=True, tracking=True,
+       help='Anniversary: Billing cycle is X period from purchase date.\n'
+            'Calendar: Billing cycle aligns with calendar periods (end of month/quarter/year).')
     
     # Trial Configuration
     trial_period = fields.Integer('Trial Period (days)', default=0)
@@ -86,7 +95,16 @@ class SubscriptionPlan(models.Model):
                 raise ValidationError(_('Price cannot be negative'))
     
     def get_next_billing_date(self, start_date):
-        """Calculate next billing date based on plan configuration"""
+        """Calculate next billing date based on plan configuration and billing type"""
+        self.ensure_one()
+        
+        if self.billing_type == 'calendar':
+            return self._get_calendar_based_billing_date(start_date)
+        else:
+            return self._get_anniversary_based_billing_date(start_date)
+    
+    def _get_anniversary_based_billing_date(self, start_date):
+        """Calculate anniversary-based billing date (X period from start date)"""
         if self.billing_period == 'daily':
             return start_date + relativedelta(days=self.billing_interval)
         elif self.billing_period == 'weekly':
@@ -98,6 +116,56 @@ class SubscriptionPlan(models.Model):
         elif self.billing_period == 'yearly':
             return start_date + relativedelta(years=self.billing_interval)
         return start_date
+    
+    def _get_calendar_based_billing_date(self, start_date):
+        """Calculate calendar-based billing date (aligned to calendar periods)"""
+        if isinstance(start_date, str):
+            start_date = fields.Date.from_string(start_date)
+        
+        if self.billing_period == 'daily':
+            # Daily billing doesn't make sense for calendar-based, treat as anniversary
+            return start_date + relativedelta(days=self.billing_interval)
+        
+        elif self.billing_period == 'weekly':
+            # End of current week (Sunday)
+            days_until_sunday = (6 - start_date.weekday()) % 7
+            if days_until_sunday == 0:
+                days_until_sunday = 7
+            return start_date + relativedelta(days=days_until_sunday)
+        
+        elif self.billing_period == 'monthly':
+            # End of current month
+            next_month = start_date + relativedelta(months=1)
+            return date(next_month.year, next_month.month, 1) - relativedelta(days=1)
+        
+        elif self.billing_period == 'quarterly':
+            # End of current quarter
+            # Quarters: Q1 (Jan-Mar), Q2 (Apr-Jun), Q3 (Jul-Sep), Q4 (Oct-Dec)
+            current_quarter = (start_date.month - 1) // 3
+            end_month = (current_quarter + 1) * 3  # Last month of quarter
+            
+            if end_month > 12:
+                # Next year's Q1
+                return date(start_date.year + 1, 3, 31)
+            else:
+                # End of current quarter
+                next_month = date(start_date.year, end_month, 1) + relativedelta(months=1)
+                return next_month - relativedelta(days=1)
+        
+        elif self.billing_period == 'yearly':
+            # End of current year
+            return date(start_date.year, 12, 31)
+        
+        return start_date
+    
+    def get_subscription_end_date(self, start_date):
+        """Calculate subscription end date based on billing type"""
+        self.ensure_one()
+        
+        if self.billing_type == 'calendar':
+            return self._get_calendar_based_billing_date(start_date)
+        else:
+            return self._get_anniversary_based_billing_date(start_date)
     
     def action_view_subscriptions(self):
         """Action to view subscriptions for this plan"""

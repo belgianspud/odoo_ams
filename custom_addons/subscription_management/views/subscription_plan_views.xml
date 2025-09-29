@@ -50,24 +50,39 @@
                             <group>
                                 <group string="Basic Information">
                                     <field name="sequence"/>
-                                            <field name="product_template_id" 
-                                                    domain="[('is_subscription', '=', True)]"
-                                                    options="{'no_create': True}"/>
+                                    <field name="product_template_id" 
+                                           domain="[('is_subscription', '=', True)]"
+                                           options="{'no_create': True}"/>
                                     <field name="description" widget="html"/>
                                 </group>
                                 <group string="Pricing">
                                     <field name="price"/>
                                     <field name="currency_id"/>
-                                    <field name="product_template_id" domain="[('type', '=', 'service')]"/>
                                 </group>
                             </group>
                         </page>
                         
                         <page string="Billing Configuration" name="billing">
                             <group>
-                                <group string="Billing Settings">
+                                <group string="Billing Period">
                                     <field name="billing_period"/>
                                     <field name="billing_interval"/>
+                                </group>
+                                <group string="Billing Type">
+                                    <field name="billing_type" widget="radio"/>
+                                    <div class="alert alert-info" role="alert" colspan="2">
+                                        <strong>Billing Types:</strong>
+                                        <ul class="mb-0">
+                                            <li><strong>Anniversary-based:</strong> Billing cycle is calculated from the purchase date. 
+                                                E.g., if purchased on Jan 15 with yearly billing, next billing is Jan 15 next year.</li>
+                                            <li><strong>Calendar-based:</strong> Billing aligns with calendar periods. 
+                                                E.g., if purchased on Jan 15 with yearly billing, next billing is Dec 31 this year.</li>
+                                        </ul>
+                                    </div>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Renewal Settings">
                                     <field name="auto_renew"/>
                                 </group>
                                 <group string="Trial Configuration">
