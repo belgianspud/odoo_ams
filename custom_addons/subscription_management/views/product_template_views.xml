@@ -8,31 +8,80 @@
         <field name="inherit_id" ref="product.product_template_only_form_view"/>
         <field name="arch" type="xml">
             
-            <!-- Add Subscription toggle in options section -->
-            <xpath expr="//div[@name='options']//span[last()]" position="after">
-                <div>
-                    <field name="is_subscription"/>
-                    <label for="is_subscription"/>
-                </div>
+            <!-- Add Subscription toggle after Point of Sale (after the label) -->
+            <xpath expr="//label[@for='available_in_pos']" position="after">
+                <field name="is_subscription"/>
+                <label for="is_subscription"/>
             </xpath>
             
             <!-- Add Subscriptions page in notebook -->
             <xpath expr="//page[@name='general_information']" position="after">
                 <page string="Subscriptions" name="subscriptions" invisible="not is_subscription">
                     <group>
-                        <field name="subscription_plan_count" invisible="1"/>
+                        <group>
+                            <field name="subscription_plan_count" invisible="1"/>
+                        </group>
                     </group>
-                    <field name="subscription_plan_ids">
+                    
+                    <group>
+                        <button name="%(subscription_management.action_subscription_plan)d" 
+                                string="Manage All Plans" 
+                                type="action" 
+                                class="oe_highlight"
+                                help="Open the subscription plans menu to create or modify plans, then link them here"/>
+                    </group>
+                    
+                    <field name="subscription_plan_ids" 
+                           context="{'default_product_template_id': id}">
                         <list string="Subscription Plans">
+                            <field name="sequence" widget="handle"/>
                             <field name="name"/>
                             <field name="code"/>
                             <field name="price" widget="monetary"/>
                             <field name="currency_id" column_invisible="1"/>
                             <field name="billing_period"/>
-                            <field name="subscription_count"/>
-                            <field name="active"/>
+                            <field name="billing_interval"/>
+                            <field name="trial_period"/>
+                            <field name="subscription_count" string="Subs"/>
+                            <field name="active" widget="boolean_toggle"/>
+                            <button name="%(subscription_management.action_subscription_plan)d" 
+                                    type="action" 
+                                    icon="fa-external-link" 
+                                    context="{'default_id': id}"
+                                    title="Open Plan Details"/>
                         </list>
+                        <form string="Subscription Plan">
+                            <sheet>
+                                <group>
+                                    <group>
+                                        <field name="name"/>
+                                        <field name="code"/>
+                                        <field name="price"/>
+                                        <field name="currency_id"/>
+                                    </group>
+                                    <group>
+                                        <field name="billing_period"/>
+                                        <field name="billing_interval"/>
+                                        <field name="trial_period"/>
+                                        <field name="active"/>
+                                    </group>
+                                </group>
+                            </sheet>
+                        </form>
                     </field>
+                    
+                    <div class="alert alert-info mt-3" role="alert">
+                        <p class="mb-0">
+                            <i class="fa fa-info-circle"/> 
+                            <strong>How to link plans:</strong>
+                        </p>
+                        <ol class="mb-0">
+                            <li>Click <strong>"Add a line"</strong> above to create a new plan for this product, OR</li>
+                            <li>Click <strong>"Manage All Plans"</strong> to open the plans menu</li>
+                            <li>In the plans menu, open any plan and set its "Product Template" field to this product</li>
+                            <li>Save and return here - the plan will now appear in the list</li>
+                        </ol>
+                    </div>
                 </page>
             </xpath>
             

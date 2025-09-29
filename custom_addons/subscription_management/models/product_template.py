@@ -1,3 +1,4 @@
+# custom_addons/subscription_management/models/product_template.py
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields
@@ -6,7 +7,7 @@ from odoo import models, fields
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
     
-    is_subscription = fields.Boolean('Is Subscription Product',
+    is_subscription = fields.Boolean('Subscription',  # Changed from 'Is Subscription Product'
                                      help='Check this if the product is used for subscriptions')
     subscription_plan_ids = fields.One2many('subscription.plan', 'product_template_id',
                                             'Subscription Plans',

@@ -50,6 +50,9 @@
                             <group>
                                 <group string="Basic Information">
                                     <field name="sequence"/>
+                                            <field name="product_template_id" 
+                                                    domain="[('is_subscription', '=', True)]"
+                                                    options="{'no_create': True}"/>
                                     <field name="description" widget="html"/>
                                 </group>
                                 <group string="Pricing">

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Sale Order Form View - Inherit -->
+    <record id="sale_order_form_view_inherit_subscription" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.subscription</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add smart button for subscription -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_subscription" 
+                        type="object" 
+                        class="oe_stat_button" 
+                        icon="fa-refresh"
+                        invisible="subscription_count == 0">
+                    <field name="subscription_count" widget="statinfo" string="Subscription"/>
+                </button>
+            </xpath>
+            
+            <!-- Add hidden fields -->
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="has_subscription_products" invisible="1"/>
+                <field name="subscription_id" invisible="1"/>
+            </xpath>
+            
+        </field>
+    </record>
+
+    <!-- Sale Order List View - Inherit -->
+    <record id="sale_order_list_view_inherit_subscription" model="ir.ui.view">
+        <field name="name">sale.order.list.inherit.subscription</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_quotation_tree"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add has_subscription_products field -->
+            <xpath expr="//field[@name='amount_total']" position="after">
+                <field name="has_subscription_products" optional="hide"/>
+            </xpath>
+            
+        </field>
+    </record>
+
+</odoo>

@@ -18,6 +18,8 @@ Features:
 * Usage Tracking and Metering
 * Customer Portal
 * Analytics and Reporting
+* Sales Order Integration
+* Failed Payment Handling & Dunning
 
 This module provides a complete subscription management system for Odoo Community.
     """,
@@ -26,6 +28,7 @@ This module provides a complete subscription management system for Odoo Communit
     'depends': [
         'base',
         'sale',
+        'sale_management',
         'account',
         'product',
         'portal',
@@ -44,6 +47,7 @@ This module provides a complete subscription management system for Odoo Communit
         'views/subscription_menus.xml',
         'views/product_template_views.xml',
         'views/res_partner_views.xml',
+        'views/sale_order_views.xml',
         'views/portal_templates.xml',
         'reports/subscription_reports.xml',
         'wizards/subscription_wizard_views.xml',

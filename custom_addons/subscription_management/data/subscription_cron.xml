@@ -69,6 +69,17 @@
         <field name="active" eval="True"/>
     </record>
 
+    <!-- Retry failed payments -->
+    <record id="cron_subscription_retry_payments" model="ir.cron">
+        <field name="name">Subscription: Retry Failed Payments</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_retry_failed_payments()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
     <!-- Email Templates -->
     
     <!-- Welcome email for new subscriptions -->
@@ -79,26 +90,52 @@
         <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
         <field name="email_to">{{ object.partner_id.email }}</field>
         <field name="body_html" type="html">
-<div style="margin: 0px; padding: 0px;">
-    <p>Dear {{ object.partner_id.name }},</p>
+<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; text-align: center;">
+        <h1 style="color: white; margin: 0;">Welcome to {{ object.plan_id.name }}!</h1>
+    </div>
     
-    <p>Welcome to {{ object.plan_id.name }}! Your subscription has been activated.</p>
-    
-    <h3>Subscription Details:</h3>
-    <ul>
-        <li><strong>Plan:</strong> {{ object.plan_id.name }}</li>
-        <li><strong>Subscription ID:</strong> {{ object.name }}</li>
-        <li><strong>Start Date:</strong> {{ object.date_start }}</li>
-        <li><strong>Price:</strong> {{ object.price }} {{ object.currency_id.symbol }}</li>
-        <li><strong>Billing Period:</strong> {{ object.plan_id.billing_period }}</li>
-        <li><strong>Next Billing Date:</strong> {{ object.next_billing_date }}</li>
-    </ul>
-    
-    <p>You can manage your subscription and view your usage at any time by logging into your customer portal.</p>
-    
-    <p>Thank you for choosing our service!</p>
-    
-    <p>Best regards,<br/>{{ user.name }}</p>
+    <div style="padding: 30px; background: #f8f9fa;">
+        <p style="font-size: 16px;">Dear {{ object.partner_id.name }},</p>
+        
+        <p style="font-size: 16px;">Thank you for subscribing! Your subscription has been activated and you can start enjoying your benefits immediately.</p>
+        
+        <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #667eea;">Subscription Details:</h3>
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Plan:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.plan_id.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Subscription ID:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Start Date:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.date_start }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Price:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.price }} {{ object.currency_id.symbol }} / {{ object.plan_id.billing_period }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Next Billing Date:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.next_billing_date }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <p style="font-size: 16px;">You can manage your subscription and view your usage at any time by logging into your customer portal.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/my/subscriptions/{{ object.id }}" style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">View My Subscription</a>
+        </div>
+        
+        <p style="font-size: 16px;">Thank you for choosing our service!</p>
+        
+        <p style="font-size: 14px; color: #6c757d;">Best regards,<br/>{{ user.name }}</p>
+    </div>
 </div>
         </field>
     </record>
@@ -111,23 +148,42 @@
         <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
         <field name="email_to">{{ object.partner_id.email }}</field>
         <field name="body_html" type="html">
-<div style="margin: 0px; padding: 0px;">
-    <p>Dear {{ object.partner_id.name }},</p>
+<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+    <div style="background: #17a2b8; padding: 30px; text-align: center;">
+        <h2 style="color: white; margin: 0;">Upcoming Billing Reminder</h2>
+    </div>
     
-    <p>This is a reminder that your subscription billing is coming up.</p>
-    
-    <h3>Billing Information:</h3>
-    <ul>
-        <li><strong>Plan:</strong> {{ object.plan_id.name }}</li>
-        <li><strong>Amount:</strong> {{ object.price }} {{ object.currency_id.symbol }}</li>
-        <li><strong>Billing Date:</strong> {{ object.next_billing_date }}</li>
-    </ul>
-    
-    <p>Please ensure your payment method is up to date to avoid any service interruption.</p>
-    
-    <p>You can update your payment information in your customer portal.</p>
-    
-    <p>Best regards,<br/>{{ user.name }}</p>
+    <div style="padding: 30px; background: #f8f9fa;">
+        <p style="font-size: 16px;">Dear {{ object.partner_id.name }},</p>
+        
+        <p style="font-size: 16px;">This is a friendly reminder that your subscription billing is coming up soon.</p>
+        
+        <div style="background: white; border-left: 4px solid #17a2b8; padding: 20px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #17a2b8;">Billing Information:</h3>
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Plan:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.plan_id.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Amount:</strong></td>
+                    <td style="padding: 8px 0; font-size: 18px; color: #17a2b8;"><strong>{{ object.price }} {{ object.currency_id.symbol }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Billing Date:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.next_billing_date }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <p style="font-size: 16px;">Please ensure your payment method is up to date to avoid any service interruption.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/my/subscriptions/{{ object.id }}" style="background: #17a2b8; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Manage Payment Method</a>
+        </div>
+        
+        <p style="font-size: 14px; color: #6c757d;">Best regards,<br/>{{ user.name }}</p>
+    </div>
 </div>
         </field>
     </record>
@@ -140,23 +196,42 @@
         <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
         <field name="email_to">{{ object.partner_id.email }}</field>
         <field name="body_html" type="html">
-<div style="margin: 0px; padding: 0px;">
-    <p>Dear {{ object.partner_id.name }},</p>
+<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+    <div style="background: #ffc107; padding: 30px; text-align: center;">
+        <h2 style="color: #333; margin: 0;">Your Trial is Ending Soon</h2>
+    </div>
     
-    <p>Your trial period for {{ object.plan_id.name }} is ending soon.</p>
-    
-    <h3>Trial Information:</h3>
-    <ul>
-        <li><strong>Plan:</strong> {{ object.plan_id.name }}</li>
-        <li><strong>Trial End Date:</strong> {{ object.trial_end_date }}</li>
-        <li><strong>Regular Price:</strong> {{ object.price }} {{ object.currency_id.symbol }}</li>
-    </ul>
-    
-    <p>To continue enjoying our service, please ensure your payment method is set up.</p>
-    
-    <p>Visit your customer portal to manage your subscription.</p>
-    
-    <p>Best regards,<br/>{{ user.name }}</p>
+    <div style="padding: 30px; background: #f8f9fa;">
+        <p style="font-size: 16px;">Dear {{ object.partner_id.name }},</p>
+        
+        <p style="font-size: 16px;">Your trial period for <strong>{{ object.plan_id.name }}</strong> is ending soon.</p>
+        
+        <div style="background: white; border-left: 4px solid #ffc107; padding: 20px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #ffc107;">Trial Information:</h3>
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Plan:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.plan_id.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Trial End Date:</strong></td>
+                    <td style="padding: 8px 0; font-size: 18px; color: #ffc107;"><strong>{{ object.trial_end_date }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Regular Price:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.price }} {{ object.currency_id.symbol }} / {{ object.plan_id.billing_period }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <p style="font-size: 16px;">To continue enjoying our service without interruption, please ensure your payment method is set up.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/my/subscriptions/{{ object.id }}" style="background: #ffc107; color: #333; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Manage Subscription</a>
+        </div>
+        
+        <p style="font-size: 14px; color: #6c757d;">Best regards,<br/>{{ user.name }}</p>
+    </div>
 </div>
         </field>
     </record>
@@ -169,25 +244,287 @@
         <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
         <field name="email_to">{{ object.partner_id.email }}</field>
         <field name="body_html" type="html">
-<div style="margin: 0px; padding: 0px;">
-    <p>Dear {{ object.partner_id.name }},</p>
+<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+    <div style="background: #6c757d; padding: 30px; text-align: center;">
+        <h2 style="color: white; margin: 0;">Subscription Cancelled</h2>
+    </div>
     
-    <p>We're sorry to see you go! Your subscription has been cancelled as requested.</p>
+    <div style="padding: 30px; background: #f8f9fa;">
+        <p style="font-size: 16px;">Dear {{ object.partner_id.name }},</p>
+        
+        <p style="font-size: 16px;">We're sorry to see you go! Your subscription has been cancelled as requested.</p>
+        
+        <div style="background: white; border-left: 4px solid #6c757d; padding: 20px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #6c757d;">Cancellation Details:</h3>
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Plan:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.plan_id.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Subscription ID:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Cancellation Date:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.date_end }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <p style="font-size: 16px;">You will continue to have access to the service until your current billing period ends.</p>
+        
+        <p style="font-size: 16px;">If you change your mind, you can reactivate your subscription anytime.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/my/subscriptions" style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">View My Subscriptions</a>
+        </div>
+        
+        <p style="font-size: 16px;">Thank you for using our service!</p>
+        
+        <p style="font-size: 14px; color: #6c757d;">Best regards,<br/>{{ user.name }}</p>
+    </div>
+</div>
+        </field>
+    </record>
+
+    <!-- Payment Failed - Soft Dunning -->
+    <record id="email_template_payment_failed_soft" model="mail.template">
+        <field name="name">Subscription: Payment Failed (Soft Dunning)</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="subject">Payment issue with your {{ object.plan_id.name }} subscription</field>
+        <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+        <field name="email_to">{{ object.partner_id.email }}</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+    <div style="background: #ffc107; padding: 30px; text-align: center;">
+        <h2 style="color: #333; margin: 0;">⚠️ Payment Issue</h2>
+    </div>
     
-    <h3>Cancellation Details:</h3>
-    <ul>
-        <li><strong>Plan:</strong> {{ object.plan_id.name }}</li>
-        <li><strong>Subscription ID:</strong> {{ object.name }}</li>
-        <li><strong>Cancellation Date:</strong> {{ object.date_end }}</li>
-    </ul>
+    <div style="padding: 30px; background: #f8f9fa;">
+        <p style="font-size: 16px;">Hi {{ object.partner_id.name }},</p>
+        
+        <p style="font-size: 16px;">We were unable to process your payment for <strong>{{ object.plan_id.name }}</strong>.</p>
+        
+        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 20px 0; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #856404;">Payment Details:</h3>
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Plan:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.plan_id.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Amount:</strong></td>
+                    <td style="padding: 8px 0; font-size: 18px; color: #856404;"><strong>{{ object.price }} {{ object.currency_id.symbol }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Retry Attempt:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.payment_retry_count }} of 3</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Next Retry:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.payment_retry_date }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <p style="font-size: 16px;">This can happen for various reasons such as:</p>
+        <ul style="font-size: 14px; color: #6c757d;">
+            <li>Insufficient funds</li>
+            <li>Expired card</li>
+            <li>Card limit reached</li>
+            <li>Security restrictions</li>
+        </ul>
+        
+        <p style="font-size: 16px;"><strong>Please update your payment method to continue your service without interruption.</strong></p>
+        
+        <p style="font-size: 14px; color: #6c757d;">We'll automatically retry the payment in 3 days.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/my/subscriptions/{{ object.id }}" style="background: #ffc107; color: #333; padding: 15px 40px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 16px;">Update Payment Method</a>
+        </div>
+        
+        <p style="font-size: 14px; color: #6c757d;">If you have any questions, please don't hesitate to contact us.</p>
+        
+        <p style="font-size: 14px; color: #6c757d;">Best regards,<br/>{{ user.name }}</p>
+    </div>
+</div>
+        </field>
+    </record>
+
+    <!-- Payment Failed - Hard Dunning -->
+    <record id="email_template_payment_failed_hard" model="mail.template">
+        <field name="name">Subscription: Payment Failed (Hard Dunning)</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="subject">URGENT: Payment issue with your subscription - Action Required</field>
+        <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+        <field name="email_to">{{ object.partner_id.email }}</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+    <div style="background: #dc3545; padding: 30px; text-align: center;">
+        <h2 style="color: white; margin: 0;">🚨 URGENT: Action Required</h2>
+    </div>
     
-    <p>You will continue to have access to the service until your current billing period ends.</p>
+    <div style="padding: 30px; background: #f8f9fa;">
+        <p style="font-size: 16px;">Hi {{ object.partner_id.name }},</p>
+        
+        <p style="font-size: 18px; color: #dc3545;"><strong>Your subscription service is at risk of suspension.</strong></p>
+        
+        <p style="font-size: 16px;">We've attempted to charge your payment method <strong>{{ object.payment_retry_count }} times</strong> without success for your <strong>{{ object.plan_id.name }}</strong> subscription.</p>
+        
+        <div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 20px; margin: 20px 0; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #721c24;">⚠️ Immediate Action Required:</h3>
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Outstanding Amount:</strong></td>
+                    <td style="padding: 8px 0; font-size: 20px; color: #dc3545;"><strong>{{ object.price }} {{ object.currency_id.symbol }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Payment Attempts:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.payment_retry_count }} of 3</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Final Retry Date:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.payment_retry_date }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="font-size: 14px; margin: 0; color: #856404;"><strong>⚠️ Warning:</strong> If payment is not received by {{ object.payment_retry_date }}, your subscription will be automatically suspended.</p>
+        </div>
+        
+        <p style="font-size: 16px;"><strong>Please update your payment information immediately to avoid service interruption.</strong></p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/my/subscriptions/{{ object.id }}" style="background: #dc3545; color: white; padding: 18px 50px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 18px;">Update Payment Now</a>
+        </div>
+        
+        <p style="font-size: 14px; color: #6c757d;">If you're experiencing issues or would like to discuss your account, please contact us immediately.</p>
+        
+        <p style="font-size: 14px; color: #6c757d;">Best regards,<br/>{{ user.name }}</p>
+    </div>
+</div>
+        </field>
+    </record>
+
+    <!-- Payment Failed - Final Notice -->
+    <record id="email_template_payment_failed_final" model="mail.template">
+        <field name="name">Subscription: Payment Failed (Final Notice)</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="subject">FINAL NOTICE: Your subscription has been suspended</field>
+        <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+        <field name="email_to">{{ object.partner_id.email }}</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+    <div style="background: #343a40; padding: 30px; text-align: center;">
+        <h2 style="color: white; margin: 0;">🔒 Subscription Suspended</h2>
+    </div>
     
-    <p>If you change your mind, you can reactivate your subscription anytime.</p>
+    <div style="padding: 30px; background: #f8f9fa;">
+        <p style="font-size: 16px;">Hi {{ object.partner_id.name }},</p>
+        
+        <p style="font-size: 18px; color: #dc3545;"><strong>Your {{ object.plan_id.name }} subscription has been suspended due to failed payment.</strong></p>
+        
+        <p style="font-size: 16px;">Despite multiple attempts to process your payment, we were unable to successfully charge your payment method.</p>
+        
+        <div style="background: #e2e3e5; border-left: 4px solid #343a40; padding: 20px; margin: 20px 0; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #343a40;">Account Status:</h3>
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Status:</strong></td>
+                    <td style="padding: 8px 0; color: #dc3545;"><strong>SUSPENDED</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Outstanding Amount:</strong></td>
+                    <td style="padding: 8px 0; font-size: 18px;"><strong>{{ object.price }} {{ object.currency_id.symbol }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Payment Attempts:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.payment_retry_count }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Suspension Date:</strong></td>
+                    <td style="padding: 8px 0;">{{ now().strftime('%Y-%m-%d') }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div style="background: #d1ecf1; border: 1px solid #0c5460; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="font-size: 14px; margin: 0; color: #0c5460;"><strong>ℹ️ Good News:</strong> Your subscription can be reactivated immediately once payment is received. Your data and settings are safe.</p>
+        </div>
+        
+        <p style="font-size: 16px;"><strong>To reactivate your subscription:</strong></p>
+        <ol style="font-size: 14px;">
+            <li>Update your payment method</li>
+            <li>Clear the outstanding balance</li>
+            <li>Your service will be restored immediately</li>
+        </ol>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/my/subscriptions/{{ object.id }}" style="background: #28a745; color: white; padding: 18px 50px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 18px;">Reactivate My Subscription</a>
+        </div>
+        
+        <p style="font-size: 14px; color: #6c757d;">If you have questions or need assistance, please contact our support team. We're here to help!</p>
+        
+        <p style="font-size: 14px; color: #6c757d;">Best regards,<br/>{{ user.name }}</p>
+    </div>
+</div>
+        </field>
+    </record>
+
+    <!-- Subscription Renewal Reminder -->
+    <record id="email_template_subscription_renewal" model="mail.template">
+        <field name="name">Subscription: Renewal Reminder</field>
+        <field name="model_id" ref="model_subscription_subscription"/>
+        <field name="subject">Your {{ object.plan_id.name }} subscription is renewing soon</field>
+        <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+        <field name="email_to">{{ object.partner_id.email }}</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+    <div style="background: #28a745; padding: 30px; text-align: center;">
+        <h2 style="color: white; margin: 0;">🔄 Subscription Renewal</h2>
+    </div>
     
-    <p>Thank you for using our service!</p>
-    
-    <p>Best regards,<br/>{{ user.name }}</p>
+    <div style="padding: 30px; background: #f8f9fa;">
+        <p style="font-size: 16px;">Hi {{ object.partner_id.name }},</p>
+        
+        <p style="font-size: 16px;">Your subscription will automatically renew soon. This is just a friendly heads-up!</p>
+        
+        <div style="background: white; border-left: 4px solid #28a745; padding: 20px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #28a745;">Renewal Details:</h3>
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Plan:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.plan_id.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Renewal Date:</strong></td>
+                    <td style="padding: 8px 0; font-size: 18px; color: #28a745;"><strong>{{ object.next_billing_date }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Amount:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.price }} {{ object.currency_id.symbol }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Billing Period:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.plan_id.billing_period }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <p style="font-size: 16px;">Your subscription will automatically renew on the renewal date above. No action is required on your part.</p>
+        
+        <p style="font-size: 14px; color: #6c757d;">If you wish to make changes to your subscription or payment method, you can do so anytime from your account.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/my/subscriptions/{{ object.id }}" style="background: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Manage Subscription</a>
+        </div>
+        
+        <p style="font-size: 14px; color: #6c757d;">Thank you for being a valued customer!</p>
+        
+        <p style="font-size: 14px; color: #6c757d;">Best regards,<br/>{{ user.name }}</p>
+    </div>
 </div>
         </field>
     </record>
