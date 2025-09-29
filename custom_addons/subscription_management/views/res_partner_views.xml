@@ -69,14 +69,14 @@
                             <field name="subscription_ids" 
                                    nolabel="1"
                                    domain="[('state', 'in', ['active', 'trial'])]"
-                                   context="{'default_partner_id': active_id, 'list_view_ref': 'subscription_management.subscription_subscription_list_partner'}"/>
+                                   context="{'default_partner_id': id, 'list_view_ref': 'subscription_management.subscription_subscription_list_partner'}"/>
                         </page>
                         
                         <page string="Inactive Subscriptions" name="inactive_subs">
                             <field name="subscription_ids" 
                                    nolabel="1"
                                    domain="[('state', 'not in', ['active', 'trial'])]"
-                                   context="{'default_partner_id': active_id, 'list_view_ref': 'subscription_management.subscription_subscription_list_partner'}"/>
+                                   context="{'default_partner_id': id, 'list_view_ref': 'subscription_management.subscription_subscription_list_partner'}"/>
                         </page>
                     </notebook>
                 </page>
