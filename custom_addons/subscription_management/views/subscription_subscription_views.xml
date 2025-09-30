@@ -40,6 +40,9 @@
                             invisible="state in ['cancelled', 'expired']"/>
                     <button name="action_renew" string="Renew" type="object" 
                             invisible="state != 'expired'"/>
+                    <button name="action_reactivate" string="Reactivate" type="object" 
+                            class="btn-success" invisible="state not in ['cancelled', 'expired']"
+                            groups="subscription_management.group_subscription_user"/>
                     <field name="state" widget="statusbar" 
                            statusbar_visible="draft,trial,active,suspended,cancelled"/>
                 </header>

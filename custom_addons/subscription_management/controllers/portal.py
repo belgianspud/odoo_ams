@@ -206,8 +206,8 @@ class SubscriptionPortal(CustomerPortal):
         try:
             subscription_sudo = self._document_check_access('subscription.subscription', 
                                                           subscription_id)
-            if subscription_sudo.state == 'suspended':
-                subscription_sudo.action_activate()
+            if subscription_sudo.state in ('cancelled', 'expired', 'suspended'):
+                subscription_sudo.action_reactivate()
                 request.env['mail.message'].sudo().create({
                     'model': 'subscription.subscription',
                     'res_id': subscription_id,
