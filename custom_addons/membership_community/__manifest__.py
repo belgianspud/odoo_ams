@@ -45,7 +45,7 @@
         'data/settings_data.xml',
         
         # Data - membership types (original module, always load)
-        'data/membership_data.xml',
+        'data/member_types_data.xml',
         
         # Data - cron jobs
         'data/cron_jobs.xml',
@@ -56,10 +56,13 @@
         'views/res_engagement_rule_views.xml',
         
         # Views - Core membership
-        'views/membership_type_views.xml',
-        'views/membership_membership_views.xml',
+        'views/ams_member_type_views.xml',
+        'views/membership_views.xml',  
         'views/membership_payment_views.xml',
         'views/res_partner_views.xml',
+        
+        # Portal templates
+        'views/portal_templates.xml',
         
         # Wizards
         'wizard/membership_invoice_wizard_views.xml',
@@ -70,7 +73,8 @@
     ],
     'demo': [
         # Demo data - AMS member types (only loaded in demo mode)
-        'data/member_types_data.xml',
+        # Commented out to avoid conflicts with existing data
+        # 'data/member_types_data.xml',
     ],
     'installable': True,
     'application': True,

@@ -6,7 +6,6 @@ from . import ams_member_type
 from . import ams_engagement_rule
 
 # Membership Community models
-from . import membership_type
 from . import membership
 from . import membership_payment
 from . import account_move

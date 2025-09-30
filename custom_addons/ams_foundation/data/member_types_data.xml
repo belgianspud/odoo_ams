@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="1">
+    <!-- Changed noupdate to 0 and added forcecreate to handle existing records -->
+    <data noupdate="0">
         
         <!-- Default Member Types for Professional Associations -->
         
         <!-- Regular/Professional Member -->
-        <record id="member_type_regular" model="ams.member.type">
+        <record id="member_type_regular" model="ams.member.type" forcecreate="0">
             <field name="name">Regular Member</field>
             <field name="code">REG</field>
             <field name="description">Full professional membership with all benefits and voting rights</field>
@@ -31,8 +32,8 @@
             <field name="sequence">10</field>
         </record>
 
-        <!-- Associate Member (moved before student to avoid forward reference) -->
-        <record id="member_type_associate" model="ams.member.type">
+        <!-- Associate Member -->
+        <record id="member_type_associate" model="ams.member.type" forcecreate="0">
             <field name="name">Associate Member</field>
             <field name="code">ASC</field>
             <field name="description">Entry-level membership for new professionals</field>
@@ -59,8 +60,8 @@
             <field name="sequence">30</field>
         </record>
 
-        <!-- Student Member (now references are available) -->
-        <record id="member_type_student" model="ams.member.type">
+        <!-- Student Member -->
+        <record id="member_type_student" model="ams.member.type" forcecreate="0">
             <field name="name">Student Member</field>
             <field name="code">STU</field>
             <field name="description">Discounted membership for full-time students</field>
@@ -88,7 +89,7 @@
         </record>
 
         <!-- Retired Member -->
-        <record id="member_type_retired" model="ams.member.type">
+        <record id="member_type_retired" model="ams.member.type" forcecreate="0">
             <field name="name">Retired Member</field>
             <field name="code">RET</field>
             <field name="description">Reduced-rate membership for retired professionals</field>
@@ -115,7 +116,7 @@
         </record>
 
         <!-- Corporate Member -->
-        <record id="member_type_corporate" model="ams.member.type">
+        <record id="member_type_corporate" model="ams.member.type" forcecreate="0">
             <field name="name">Corporate Member</field>
             <field name="code">CORP</field>
             <field name="description">Organizational membership for companies and institutions</field>
@@ -142,7 +143,7 @@
         </record>
 
         <!-- International Member -->
-        <record id="member_type_international" model="ams.member.type">
+        <record id="member_type_international" model="ams.member.type" forcecreate="0">
             <field name="name">International Member</field>
             <field name="code">INTL</field>
             <field name="description">Membership for professionals outside the primary region</field>
@@ -170,7 +171,7 @@
         </record>
 
         <!-- Honorary Member -->
-        <record id="member_type_honorary" model="ams.member.type">
+        <record id="member_type_honorary" model="ams.member.type" forcecreate="0">
             <field name="name">Honorary Member</field>
             <field name="code">HON</field>
             <field name="description">Complimentary membership for distinguished individuals</field>
@@ -196,8 +197,8 @@
             <field name="sequence">70</field>
         </record>
 
-        <!-- Example Chapter Membership Type -->
-        <record id="member_type_chapter_local" model="ams.member.type">
+        <!-- Chapter Membership Type -->
+        <record id="member_type_chapter_local" model="ams.member.type" forcecreate="0">
             <field name="name">Local Chapter Membership</field>
             <field name="code">CHAP</field>
             <field name="description">Membership in local geographic chapter</field>
@@ -223,8 +224,8 @@
             <field name="sequence">80</field>
         </record>
 
-        <!-- Example Newsletter Subscription -->
-        <record id="member_type_newsletter" model="ams.member.type">
+        <!-- Newsletter Subscription -->
+        <record id="member_type_newsletter" model="ams.member.type" forcecreate="0">
             <field name="name">Professional Newsletter</field>
             <field name="code">NEWS</field>
             <field name="description">Monthly professional newsletter subscription</field>
