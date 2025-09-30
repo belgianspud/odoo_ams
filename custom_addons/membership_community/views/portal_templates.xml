@@ -16,43 +16,108 @@
         <template id="portal_my_memberships" name="My Memberships">
             <t t-call="portal.portal_layout">
                 <t t-set="breadcrumbs_searchbar" t-value="True"/>
+                
                 <t t-call="portal.portal_searchbar">
                     <t t-set="title">Memberships</t>
                 </t>
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Membership #</th>
-                                            <th>Type</th>
-                                            <th>Start Date</th>
-                                            <th>End Date</th>
-                                            <th>Status</th>
-                                            <th>Payment Status</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <t t-foreach="memberships" t-as="membership">
-                                            <tr>
-                                                <td><a t-attf-href="/my/membership/#{membership.id}"><t t-esc="membership.name"/></a></td>
-                                                <td><t t-esc="membership.membership_type_id.name"/></td>
-                                                <td><t t-esc="membership.start_date"/></td>
-                                                <td><t t-esc="membership.end_date"/></td>
-                                                <td><span t-attf-class="badge badge-#{membership.state == 'active' and 'success' or membership.state == 'expired' and 'danger' or 'secondary'}"><t t-esc="membership.state.title()"/></span></td>
-                                                <td><span t-attf-class="badge badge-#{membership.payment_state == 'paid' and 'success' or membership.payment_state == 'not_paid' and 'danger' or 'warning'}"><t t-esc="membership.payment_state.replace('_', ' ').title()"/></span></td>
-                                                <td><a t-attf-href="/my/membership/#{membership.id}" class="btn btn-sm btn-outline-primary">View</a></td>
-                                            </tr>
+                
+                <!-- Searchbar with filters and sorting -->
+                <t t-if="not memberships">
+                    <div class="alert alert-warning mt-3" role="alert">
+                        There are currently no memberships for your account.
+                    </div>
+                </t>
+                <t t-else="">
+                    <div class="o_portal_search_panel d-print-none mb-3">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <form method="get" class="form-inline o_portal_search_panel_form">
+                                    <div class="btn-group btn-group-toggle mr-2 mb-2" data-toggle="buttons">
+                                        <t t-foreach="searchbar_filters" t-as="filter_name">
+                                            <label t-attf-class="btn btn-sm btn-outline-secondary #{filterby == filter_name and 'active' or ''}">
+                                                <input type="radio" name="filterby" t-att-value="filter_name" t-att-checked="filterby == filter_name"/>
+                                                <t t-esc="searchbar_filters[filter_name]['label']"/>
+                                            </label>
                                         </t>
-                                    </tbody>
-                                </table>
+                                    </div>
+                                    
+                                    <div class="btn-group btn-group-toggle mb-2" data-toggle="buttons">
+                                        <t t-foreach="searchbar_sortings" t-as="sort_name">
+                                            <label t-attf-class="btn btn-sm btn-outline-secondary #{sortby == sort_name and 'active' or ''}">
+                                                <input type="radio" name="sortby" t-att-value="sort_name" t-att-checked="sortby == sort_name"/>
+                                                <i t-attf-class="fa fa-sort-amount-#{sort_name == 'date' and 'desc' or 'asc'}"/>
+                                                <t t-esc="searchbar_sortings[sort_name]['label']"/>
+                                            </label>
+                                        </t>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
-                </div>
+                    
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <t t-foreach="memberships" t-as="membership">
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-8">
+                                                <h5 class="card-title">
+                                                    <a t-attf-href="/my/membership/#{membership.id}">
+                                                        <t t-esc="membership.name"/>
+                                                    </a>
+                                                </h5>
+                                                <p class="card-text">
+                                                    <strong>Type:</strong> <t t-esc="membership.membership_type_id.name"/><br/>
+                                                    <strong>Start Date:</strong> <t t-esc="membership.start_date"/><br/>
+                                                    <strong>End Date:</strong> <t t-esc="membership.end_date or 'Unlimited'"/><br/>
+                                                    <t t-if="membership.end_date and membership.state == 'active'">
+                                                        <strong>Days Remaining:</strong> 
+                                                        <t t-set="days_left" t-value="(membership.end_date - datetime.date.today()).days"/>
+                                                        <span t-attf-class="badge badge-#{days_left &lt; 30 and 'warning' or 'info'}">
+                                                            <t t-esc="days_left"/> days
+                                                        </span>
+                                                        <br/>
+                                                    </t>
+                                                    <strong>Amount:</strong> $<t t-esc="'%.2f' % membership.amount_total"/><br/>
+                                                    <strong>Amount Due:</strong> $<t t-esc="'%.2f' % membership.amount_due"/>
+                                                </p>
+                                            </div>
+                                            <div class="col-md-4 text-right">
+                                                <span t-attf-class="badge badge-lg badge-#{membership.state == 'active' and 'success' or membership.state == 'expired' and 'danger' or membership.state == 'draft' and 'warning' or 'secondary'} mb-2">
+                                                    <t t-esc="membership.state.title()"/>
+                                                </span>
+                                                <br/>
+                                                <span t-attf-class="badge badge-lg badge-#{membership.payment_state == 'paid' and 'success' or membership.payment_state == 'not_paid' and 'danger' or 'warning'} mb-2">
+                                                    <t t-esc="membership.payment_state.replace('_', ' ').title()"/>
+                                                </span>
+                                                <br/>
+                                                <a t-attf-href="/my/membership/#{membership.id}" class="btn btn-primary btn-sm mt-2">
+                                                    View Details
+                                                </a>
+                                                
+                                                <!-- Show unpaid invoices -->
+                                                <t t-set="unpaid_invoices" t-value="membership.invoice_ids.filtered(lambda inv: inv.state == 'posted' and inv.payment_state in ['not_paid', 'partial'])"/>
+                                                <t t-if="unpaid_invoices">
+                                                    <t t-foreach="unpaid_invoices" t-as="invoice">
+                                                        <a t-attf-href="/my/invoices/#{invoice.id}" class="btn btn-warning btn-sm mt-2">
+                                                            Pay Invoice
+                                                        </a>
+                                                    </t>
+                                                </t>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                    
+                    <!-- Pager -->
+                    <div t-if="pager" class="o_portal_pager text-center">
+                        <t t-call="portal.pager"/>
+                    </div>
+                </t>
             </t>
         </template>
 
@@ -60,37 +125,205 @@
         <template id="portal_my_membership_detail" name="Membership Details">
             <t t-call="portal.portal_layout">
                 <t t-set="breadcrumbs_searchbar" t-value="True"/>
-                <div class="row">
+                
+                <t t-call="portal.portal_searchbar">
+                    <t t-set="title">Membership Details</t>
+                </t>
+                
+                <div class="row mt-3">
                     <div class="col-lg-8">
-                        <div class="card">
-                            <div class="card-header">
-                                <h4>Membership Details</h4>
+                        <div class="card mb-3">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="mb-0">
+                                    <i class="fa fa-id-card-o mr-2"/>
+                                    <t t-esc="membership.name"/>
+                                </h4>
                             </div>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <strong>Membership Number:</strong> <t t-esc="membership.name"/><br/>
-                                        <strong>Type:</strong> <t t-esc="membership.membership_type_id.name"/><br/>
-                                        <strong>Start Date:</strong> <t t-esc="membership.start_date"/><br/>
-                                        <strong>End Date:</strong> <t t-esc="membership.end_date"/><br/>
+                                        <h5>Membership Information</h5>
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <th>Member:</th>
+                                                <td><t t-esc="membership.partner_id.name"/></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Type:</th>
+                                                <td><t t-esc="membership.membership_type_id.name"/></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Start Date:</th>
+                                                <td><t t-esc="membership.start_date"/></td>
+                                            </tr>
+                                            <tr>
+                                                <th>End Date:</th>
+                                                <td><t t-esc="membership.end_date or 'Unlimited'"/></td>
+                                            </tr>
+                                            <tr t-if="membership.renewal_date">
+                                                <th>Renewal Date:</th>
+                                                <td><t t-esc="membership.renewal_date"/></td>
+                                            </tr>
+                                        </table>
                                     </div>
                                     <div class="col-md-6">
-                                        <strong>Status:</strong> <span t-attf-class="badge badge-#{membership.state == 'active' and 'success' or membership.state == 'expired' and 'danger' or 'secondary'}"><t t-esc="membership.state.title()"/></span><br/>
-                                        <strong>Payment Status:</strong> <span t-attf-class="badge badge-#{membership.payment_state == 'paid' and 'success' or membership.payment_state == 'not_paid' and 'danger' or 'warning'}"><t t-esc="membership.payment_state.replace('_', ' ').title()"/></span><br/>
-                                        <strong>Amount:</strong> <t t-esc="membership.amount_total" t-options="{'widget': 'monetary', 'display_currency': membership.currency_id}"/><br/>
-                                        <strong>Amount Due:</strong> <t t-esc="membership.amount_due" t-options="{'widget': 'monetary', 'display_currency': membership.currency_id}"/><br/>
+                                        <h5>Payment Information</h5>
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <th>Status:</th>
+                                                <td>
+                                                    <span t-attf-class="badge badge-#{membership.state == 'active' and 'success' or membership.state == 'expired' and 'danger' or 'secondary'}">
+                                                        <t t-esc="membership.state.title()"/>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Payment Status:</th>
+                                                <td>
+                                                    <span t-attf-class="badge badge-#{membership.payment_state == 'paid' and 'success' or membership.payment_state == 'not_paid' and 'danger' or 'warning'}">
+                                                        <t t-esc="membership.payment_state.replace('_', ' ').title()"/>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Total Amount:</th>
+                                                <td>$<t t-esc="'%.2f' % membership.amount_total"/></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Amount Paid:</th>
+                                                <td>$<t t-esc="'%.2f' % membership.amount_paid"/></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Amount Due:</th>
+                                                <td class="text-danger"><strong>$<t t-esc="'%.2f' % membership.amount_due"/></strong></td>
+                                            </tr>
+                                        </table>
                                     </div>
                                 </div>
+                                
+                                <!-- Payments History -->
+                                <t t-if="membership.payment_ids">
+                                    <hr/>
+                                    <h5>Payment History</h5>
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Reference</th>
+                                                <th>Method</th>
+                                                <th>Amount</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="membership.payment_ids" t-as="payment">
+                                                <tr>
+                                                    <td><t t-esc="payment.payment_date"/></td>
+                                                    <td><t t-esc="payment.name"/></td>
+                                                    <td><t t-esc="payment.payment_method.replace('_', ' ').title()"/></td>
+                                                    <td>$<t t-esc="'%.2f' % payment.amount"/></td>
+                                                    <td>
+                                                        <span t-attf-class="badge badge-#{payment.state == 'confirmed' and 'success' or 'secondary'}">
+                                                            <t t-esc="payment.state.title()"/>
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </t>
+                                
+                                <!-- Invoices -->
+                                <t t-if="membership.invoice_ids">
+                                    <hr/>
+                                    <h5>Related Invoices</h5>
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Invoice</th>
+                                                <th>Date</th>
+                                                <th>Amount</th>
+                                                <th>Payment Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="membership.invoice_ids" t-as="invoice">
+                                                <tr>
+                                                    <td><t t-esc="invoice.name"/></td>
+                                                    <td><t t-esc="invoice.invoice_date"/></td>
+                                                    <td>$<t t-esc="'%.2f' % invoice.amount_total"/></td>
+                                                    <td>
+                                                        <span t-attf-class="badge badge-#{invoice.payment_state == 'paid' and 'success' or invoice.payment_state == 'not_paid' and 'danger' or 'warning'}">
+                                                            <t t-esc="invoice.payment_state.replace('_', ' ').title()"/>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <a t-attf-href="/my/invoices/#{invoice.id}" class="btn btn-sm btn-primary">
+                                                            View Invoice
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </t>
                             </div>
                         </div>
+                        
+                        <!-- Notes -->
+                        <t t-if="membership.notes">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Notes</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p><t t-esc="membership.notes"/></p>
+                                </div>
+                            </div>
+                        </t>
                     </div>
+                    
                     <div class="col-lg-4">
-                        <div class="card">
+                        <div class="card mb-3">
                             <div class="card-header">
-                                <h5>Actions</h5>
+                                <h5 class="mb-0">Actions</h5>
                             </div>
                             <div class="card-body">
-                                <a href="/my/memberships" class="btn btn-secondary btn-block">Back to Memberships</a>
+                                <a href="/my/memberships" class="btn btn-secondary btn-block mb-2">
+                                    <i class="fa fa-arrow-left"/> Back to Memberships
+                                </a>
+                                
+                                <!-- Show pay button if there are unpaid invoices -->
+                                <t t-set="unpaid_invoices" t-value="membership.invoice_ids.filtered(lambda inv: inv.state == 'posted' and inv.payment_state in ['not_paid', 'partial'])"/>
+                                <t t-if="unpaid_invoices">
+                                    <t t-foreach="unpaid_invoices" t-as="invoice">
+                                        <a t-attf-href="/my/invoices/#{invoice.id}" class="btn btn-warning btn-block mb-2">
+                                            <i class="fa fa-credit-card"/> Pay Invoice <t t-esc="invoice.name"/>
+                                        </a>
+                                    </t>
+                                </t>
+                                
+                                <t t-if="membership.state == 'active' and membership.payment_state == 'paid'">
+                                    <div class="alert alert-success mt-3">
+                                        <i class="fa fa-check-circle"/> Your membership is active and fully paid!
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                        
+                        <!-- Membership card preview -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Membership Card</h5>
+                            </div>
+                            <div class="card-body text-center">
+                                <div class="border p-3">
+                                    <h6><t t-esc="membership.partner_id.name"/></h6>
+                                    <p class="mb-1"><small><t t-esc="membership.name"/></small></p>
+                                    <p class="mb-1"><small><t t-esc="membership.membership_type_id.name"/></small></p>
+                                    <p class="mb-0"><small>Valid until: <t t-esc="membership.end_date or 'Unlimited'"/></small></p>
+                                </div>
                             </div>
                         </div>
                     </div>

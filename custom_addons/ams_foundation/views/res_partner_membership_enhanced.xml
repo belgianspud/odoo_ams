@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Enhanced Member Directory List View with Membership Info -->
+        <record id="view_partner_member_list_enhanced" model="ir.ui.view">
+            <field name="name">res.partner.member.list.enhanced</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="ams_foundation.view_partner_member_list"/>
+            <field name="arch" type="xml">
+                <field name="engagement_score" position="after">
+                    <field name="current_membership_id" optional="hide"/>
+                </field>
+            </field>
+        </record>
+
+        <!-- Enhanced Member Search View with Membership Filters -->
+        <record id="view_partner_member_search_enhanced" model="ir.ui.view">
+            <field name="name">res.partner.member.search.enhanced</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="ams_foundation.view_partner_member_search"/>
+            <field name="arch" type="xml">
+                <filter name="new_members" position="after">
+                    <separator/>
+                    <filter name="has_membership_record" 
+                            string="Has Membership Record" 
+                            domain="[('current_membership_id', '!=', False)]"/>
+                    <filter name="no_membership_record" 
+                            string="No Membership Record" 
+                            domain="[('is_member', '=', True), ('current_membership_id', '=', False)]"/>
+                </filter>
+            </field>
+        </record>
+
+        <!-- Add Membership Info to Partner Form -->
+        <record id="view_partner_form_membership_enhanced" model="ir.ui.view">
+            <field name="name">res.partner.form.membership.enhanced</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="ams_foundation.view_partner_form_member"/>
+            <field name="arch" type="xml">
+                <!-- Add button box buttons for memberships -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_membership_records" 
+                            type="object"
+                            class="oe_stat_button" 
+                            icon="fa-id-card"
+                            invisible="not is_member"
+                            groups="ams_foundation.group_ams_staff">
+                        <field name="membership_record_count" widget="statinfo" string="Memberships"/>
+                    </button>
+                    
+                    <button name="action_create_membership_record" 
+                            type="object"
+                            class="oe_stat_button" 
+                            icon="fa-plus-circle"
+                            string="New Membership"
+                            invisible="not is_member"
+                            groups="ams_foundation.group_ams_staff"/>
+                </xpath>
+                
+                <!-- Add Current Membership and List to Membership Tab -->
+                <xpath expr="//page[@name='membership']//field[@name='engagement_score']" position="after">
+                    <separator/>
+                    <group string="Current Membership Record" invisible="not current_membership_id">
+                        <field name="current_membership_id" 
+                               context="{'form_view_ref': 'membership_community.view_membership_membership_form'}"
+                               options="{'no_create': True}"/>
+                    </group>
+                    
+                    <separator string="All Membership Records"/>
+                    <field name="membership_ids" nolabel="1">
+                        <list>
+                            <field name="name"/>
+                            <field name="membership_type_id"/>
+                            <field name="membership_period_type"/>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'active'"
+                                   decoration-danger="state == 'expired'"
+                                   decoration-warning="state == 'draft'"/>
+                            <field name="payment_state" widget="badge"
+                                   decoration-success="payment_state == 'paid'"
+                                   decoration-danger="payment_state == 'not_paid'"
+                                   decoration-warning="payment_state == 'partial'"/>
+                            <field name="amount_due" widget="monetary"/>
+                        </list>
+                    </field>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

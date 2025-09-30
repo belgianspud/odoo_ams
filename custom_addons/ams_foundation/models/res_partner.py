@@ -66,6 +66,26 @@ class ResPartner(models.Model):
     portal_user_id = fields.Many2one('res.users', 'Portal User', readonly=True)
     portal_user_created = fields.Datetime('Portal User Created', readonly=True)
 
+    # Integration with membership_community
+    membership_ids = fields.One2many(
+        'membership.membership', 
+        'partner_id', 
+        string='Membership Records',
+        help="All membership records for this member"
+    )
+    current_membership_id = fields.Many2one(
+        'membership.membership', 
+        string='Current Membership Record',
+        compute='_compute_current_membership', 
+        store=True,
+        help="The currently active membership record"
+    )
+    membership_record_count = fields.Integer(
+        'Membership Count', 
+        compute='_compute_membership_record_count',
+        help="Total number of membership records"
+    )
+
     @api.model
     def create(self, vals):
         """Override create to handle member creation logic"""
@@ -176,6 +196,70 @@ class ResPartner(models.Model):
     def _get_ams_settings(self):
         """Get active AMS settings"""
         return self.env['ams.settings'].search([('active', '=', True)], limit=1)
+
+    @api.depends('membership_ids', 'membership_ids.state', 'membership_ids.start_date')
+    def _compute_current_membership(self):
+        """Get the current active membership record"""
+        for partner in self:
+            # First try to find active memberships
+            active_memberships = partner.membership_ids.filtered(
+                lambda m: m.state == 'active'
+            ).sorted('start_date', reverse=True)
+            
+            if active_memberships:
+                partner.current_membership_id = active_memberships[0]
+            else:
+                # If no active, get the most recent one
+                recent = partner.membership_ids.sorted('start_date', reverse=True)
+                partner.current_membership_id = recent[0] if recent else False
+
+    @api.depends('membership_ids')
+    def _compute_membership_record_count(self):
+        """Count total membership records"""
+        for partner in self:
+            partner.membership_record_count = len(partner.membership_ids)
+
+    def action_view_membership_records(self):
+        """Open list of all membership records for this partner"""
+        self.ensure_one()
+        
+        return {
+            'name': _('Membership Records: %s') % self.name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'membership.membership',
+            'view_mode': 'list,form',
+            'domain': [('partner_id', '=', self.id)],
+            'context': {
+                'default_partner_id': self.id,
+                'default_membership_type_id': self.member_type_id.id if self.member_type_id else False,
+            },
+            'target': 'current',
+        }
+
+    def action_create_membership_record(self):
+        """Create a new membership record for this partner"""
+        self.ensure_one()
+        
+        # Check if member type is set
+        if not self.member_type_id:
+            raise UserError(_("Please set a member type before creating a membership record."))
+        
+        # Check if partner is marked as member
+        if not self.is_member:
+            raise UserError(_("Partner must be marked as 'Is Association Member' before creating membership records."))
+        
+        return {
+            'name': _('New Membership Record'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'membership.membership',
+            'view_mode': 'form',
+            'context': {
+                'default_partner_id': self.id,
+                'default_membership_type_id': self.member_type_id.id,
+                'default_start_date': fields.Date.today(),
+            },
+            'target': 'current',
+        }
 
     # Status Action Methods
     def action_activate_member(self):

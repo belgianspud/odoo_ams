@@ -1,43 +1,78 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'Membership Management',
-    'version': '18.0.1.0.0',
-    'category': 'Association',
-    'summary': 'Manage memberships, member types, and member payments',
+    'name': 'Membership Community (Merged with AMS Foundation)',
+    'version': '1.0.0',
+    'category': 'Membership',
+    'summary': 'Comprehensive membership and association management system',
     'description': """
-Community Membership Management Module
-=====================================
-
-This module provides comprehensive membership management functionality including:
-* Member registration and management
-* Multiple membership types and plans
-* Payment tracking and invoicing
-* Member portal access
-* Membership renewal management
-* Reporting and analytics
-* Integration with contacts and accounting
+        Membership Community Management - Merged Module
+        ================================================
+        
+        This module combines:
+        - Original membership_community features
+        - AMS Foundation advanced member management
+        
+        Features:
+        - Member directory and profiles
+        - Membership types and records
+        - Payment tracking
+        - Member status management (prospective, active, grace, lapsed, suspended, terminated)
+        - Professional information tracking
+        - Portal user management
+        - Engagement scoring system
+        - Multiple membership configurations
+        - Pro-rating and billing options
+        - Automated status transitions
+        - Communication preferences
     """,
-    'author': 'Your Organization',
-    'website': 'https://yourwebsite.com',
-    'depends': ['base', 'mail', 'portal', 'account', 'sale'],
+    'author': 'Your Company',
+    'website': 'https://www.yourcompany.com',
+    'license': 'LGPL-3',
+    'depends': [
+        'base',
+        'mail',
+        'account',
+        'product',
+        'portal',
+    ],
     'data': [
+        # Security
         'security/membership_security.xml',
         'security/ir.model.access.csv',
+        
+        # Data - sequences and settings (always load)
+        'data/sequences.xml',
+        'data/settings_data.xml',
+        
+        # Data - membership types (original module, always load)
         'data/membership_data.xml',
+        
+        # Data - cron jobs
+        'data/cron_jobs.xml',
+        
+        # Views - Settings and Configuration
+        'views/ams_settings_views.xml',
+        'views/ams_member_type_views.xml',
+        'views/res_engagement_rule_views.xml',
+        
+        # Views - Core membership
         'views/membership_type_views.xml',
-        'views/membership_views.xml',
-        'views/res_partner_views.xml',
+        'views/membership_membership_views.xml',
         'views/membership_payment_views.xml',
-        'views/membership_menus.xml',
-        'views/portal_templates.xml',
-        'reports/membership_reports.xml',
+        'views/res_partner_views.xml',
+        
+        # Wizards
         'wizard/membership_invoice_wizard_views.xml',
+        'wizard/portal_user_wizard_views.xml',
+        
+        # Menus (must be last)
+        'views/membership_menus.xml',
     ],
     'demo': [
-        'demo/membership_demo.xml',
+        # Demo data - AMS member types (only loaded in demo mode)
+        'data/member_types_data.xml',
     ],
     'installable': True,
     'application': True,
     'auto_install': False,
-    'license': 'LGPL-3',
 }
