@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Demo Partners -->
+        <record id="demo_partner_john" model="res.partner">
+            <field name="name">John Doe</field>
+            <field name="email">john.doe@example.com</field>
+            <field name="is_company" eval="False"/>
+        </record>
+
+        <record id="demo_partner_jane" model="res.partner">
+            <field name="name">Jane Smith</field>
+            <field name="email">jane.smith@example.com</field>
+            <field name="is_company" eval="False"/>
+        </record>
+
+        <!-- Demo Memberships -->
+        <record id="demo_membership_john" model="membership.membership">
+            <field name="partner_id" ref="demo_partner_john"/>
+            <field name="membership_type_id" ref="membership_type_basic"/>
+            <field name="start_date" eval="(DateTime.today() - relativedelta(months=2)).strftime('%Y-%m-%d')"/>
+            <field name="state">active</field>
+        </record>
+
+        <record id="demo_membership_jane" model="membership.membership">
+            <field name="partner_id" ref="demo_partner_jane"/>
+            <field name="membership_type_id" ref="membership_type_premium"/>
+            <field name="start_date" eval="DateTime.today().strftime('%Y-%m-%d')"/>
+            <field name="state">active</field>
+        </record>
+
+        <!-- Demo Payments -->
+        <record id="demo_payment_john" model="membership.payment">
+            <field name="name">Payment for John Doe</field>
+            <field name="membership_id" ref="demo_membership_john"/>
+            <field name="amount">100.00</field>
+            <field name="payment_date" eval="DateTime.today().strftime('%Y-%m-%d')"/>
+            <field name="payment_method">bank_transfer</field>
+            <field name="state">confirmed</field>
+        </record>
+    </data>
+</odoo>

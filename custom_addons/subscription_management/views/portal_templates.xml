@@ -312,7 +312,8 @@
                             </t>
                             
                             <t t-if="subscription.state == 'suspended'">
-                                <a t-attf-href="/my/subscriptions/{{ subscription.id }}/reactivate" class="btn btn-success btn-block mb-2">
+                                <a href="#" class="btn btn-success btn-block mb-2"
+                                   data-bs-toggle="modal" data-bs-target="#reactivateSuspendedModal">
                                     <i class="fa fa-play"/> Reactivate Subscription
                                 </a>
                             </t>
@@ -389,7 +390,7 @@
                 </div>
             </div>
             
-            <!-- Reactivate Modal -->
+            <!-- Reactivate Modal (for cancelled/expired) -->
             <div class="modal fade" id="reactivateModal" tabindex="-1" aria-labelledby="reactivateModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -416,6 +417,40 @@
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                             <a t-attf-href="/my/subscriptions/{{ subscription.id }}/reactivate" class="btn btn-success">
                                 <i class="fa fa-refresh"/> Reactivate Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reactivate from Suspended Modal -->
+            <div class="modal fade" id="reactivateSuspendedModal" tabindex="-1" aria-labelledby="reactivateSuspendedModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title" id="reactivateSuspendedModalLabel">Reactivate Subscription</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p><strong>Resume your subscription!</strong> Your subscription is currently suspended.</p>
+                            
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">What happens when you reactivate:</h6>
+                                <ul class="mb-0">
+                                    <li>Your subscription will resume immediately</li>
+                                    <li>Your current subscription period will continue</li>
+                                    <li>Billing will resume according to your original schedule</li>
+                                    <li>All your data and settings remain intact</li>
+                                    <li>No immediate invoice will be created</li>
+                                </ul>
+                            </div>
+                            
+                            <p class="mb-0">Your next billing date: <strong><span t-field="subscription.next_billing_date"/></strong></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <a t-attf-href="/my/subscriptions/{{ subscription.id }}/reactivate" class="btn btn-success">
+                                <i class="fa fa-play"/> Resume Subscription
                             </a>
                         </div>
                     </div>

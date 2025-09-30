@@ -202,18 +202,14 @@ class SubscriptionPortal(CustomerPortal):
     @http.route(['/my/subscriptions/<int:subscription_id>/reactivate'], 
                 type='http', auth="user", website=True, methods=['GET'])
     def portal_subscription_reactivate(self, subscription_id, **kw):
-        """Reactivate subscription"""
+        """Reactivate a suspended, cancelled or expired subscription"""
         try:
             subscription_sudo = self._document_check_access('subscription.subscription', 
                                                           subscription_id)
-            if subscription_sudo.state in ('cancelled', 'expired', 'suspended'):
-                subscription_sudo.action_reactivate()
-                request.env['mail.message'].sudo().create({
-                    'model': 'subscription.subscription',
-                    'res_id': subscription_id,
-                    'message_type': 'notification',
-                    'body': _('Subscription reactivated by customer'),
-                })
+            
+            # Call the action_reactivate method which handles all logic
+            subscription_sudo.action_reactivate()
+            
             return request.redirect(f'/my/subscriptions/{subscription_id}')
         except (AccessError, MissingError):
             return request.redirect('/my')

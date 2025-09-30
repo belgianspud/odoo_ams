@@ -157,19 +157,6 @@ class SubscriptionSubscription(models.Model):
         
         return result
     
-    
-    # @api.depends('partner_id')
-    # def _compute_company_id(self):
-    #     """Set company from partner or use default"""
-    #     for subscription in self:
-    #         if not subscription.company_id:
-    #             # Try to get company from partner
-    #             if subscription.partner_id and subscription.partner_id.company_id:
-    #                 subscription.company_id = subscription.partner_id.company_id
-    #             else:
-    #                 # Fallback to default company
-    #                 subscription.company_id = self.env.company
-    
     @api.depends('plan_id.trial_period', 'date_start')
     def _compute_trial_end_date(self):
         for subscription in self:
@@ -349,30 +336,52 @@ class SubscriptionSubscription(models.Model):
             )
     
     def action_reactivate(self):
-        """Reactivate a cancelled or expired subscription"""
+        """Reactivate a suspended, cancelled or expired subscription"""
         self.ensure_one()
         
-        if self.state not in ('cancelled', 'expired'):
-            raise UserError(_('Only cancelled or expired subscriptions can be reactivated.'))
+        if self.state not in ('suspended', 'cancelled', 'expired'):
+            raise UserError(_('Only suspended, cancelled or expired subscriptions can be reactivated.'))
         
-        # Set new dates
-        today = fields.Date.today()
-        self.date_start = today
+        # For suspended subscriptions, simply reactivate without changing dates
+        if self.state == 'suspended':
+            self.write({
+                'state': 'active',
+                'payment_retry_count': 0,
+                'dunning_level': 'none',
+                'last_payment_error': False,
+                'payment_retry_date': False,
+            })
+            
+            self.message_post(
+                body=_('Subscription reactivated from suspended state'),
+                message_type='notification'
+            )
         
-        # Calculate new end date based on billing type
-        self.date_end = self.plan_id.get_subscription_end_date(today)
-        
-        # Reset dunning state
-        self.write({
-            'state': 'active',
-            'payment_retry_count': 0,
-            'dunning_level': 'none',
-            'last_payment_error': False,
-            'payment_retry_date': False,
-        })
-        
-        # Create reactivation invoice
-        invoice = self._create_initial_invoice()
+        # For cancelled/expired subscriptions, reset dates and create new invoice
+        else:
+            # Set new dates
+            today = fields.Date.today()
+            self.date_start = today
+            
+            # Calculate new end date based on billing type
+            self.date_end = self.plan_id.get_subscription_end_date(today)
+            
+            # Reset dunning state
+            self.write({
+                'state': 'active',
+                'payment_retry_count': 0,
+                'dunning_level': 'none',
+                'last_payment_error': False,
+                'payment_retry_date': False,
+            })
+            
+            # Create reactivation invoice
+            invoice = self._create_initial_invoice()
+            
+            self.message_post(
+                body=_('Subscription reactivated with new billing period'),
+                message_type='notification'
+            )
         
         # Send reactivation email
         template = self.env.ref(
@@ -382,17 +391,12 @@ class SubscriptionSubscription(models.Model):
         if template:
             template.send_mail(self.id, force_send=False)
         
-        self.message_post(
-            body=_('Subscription reactivated by %s') % self.env.user.name,
-            message_type='notification'
-        )
-        
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'title': _('Success'),
-                'message': _('Subscription reactivated successfully. An invoice has been created.'),
+                'message': _('Subscription reactivated successfully.'),
                 'type': 'success',
                 'sticky': False,
             }

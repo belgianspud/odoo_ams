@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Main Menu -->
+        <menuitem id="menu_membership_root" 
+                  name="Membership" 
+                  sequence="50" 
+                  groups="group_membership_user" 
+                  web_icon="membership_community,static/description/icon.png"/>
+
+        <!-- Membership Submenu -->
+        <menuitem id="menu_membership_main" 
+                  name="Memberships" 
+                  parent="menu_membership_root" 
+                  sequence="10"/>
+        
+        <menuitem id="menu_membership_memberships" 
+                  name="Memberships" 
+                  parent="menu_membership_main" 
+                  action="action_membership_membership" 
+                  sequence="10"/>
+        
+        <menuitem id="menu_membership_members" 
+                  name="Members" 
+                  parent="menu_membership_main" 
+                  action="action_membership_members" 
+                  sequence="20"/>
+
+        <!-- Configuration Submenu -->
+        <menuitem id="menu_membership_config" 
+                  name="Configuration" 
+                  parent="menu_membership_root" 
+                  sequence="90" 
+                  groups="group_membership_manager"/>
+        
+        <menuitem id="menu_membership_types" 
+                  name="Membership Types" 
+                  parent="menu_membership_config" 
+                  action="action_membership_type" 
+                  sequence="10"/>
+
+        <!-- Reporting Submenu -->
+        <menuitem id="menu_membership_reporting" 
+                  name="Reporting" 
+                  parent="menu_membership_root" 
+                  sequence="80"/>
+        
+        <menuitem id="menu_membership_payments" 
+                  name="Payments" 
+                  parent="menu_membership_reporting" 
+                  action="action_membership_payment" 
+                  sequence="10"/>
+    </data>
+</odoo>

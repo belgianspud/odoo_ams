@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Partner Form View Extension -->
+        <record id="view_partner_form_membership" model="ir.ui.view">
+            <field name="name">res.partner.form.membership</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                <notebook position="inside">
+                    <page string="Membership" name="membership" invisible="is_company">
+                        <group>
+                            <group>
+                                <field name="is_member"/>
+                                <field name="membership_state" invisible="not is_member"/>
+                                <field name="membership_type" invisible="not is_member"/>
+                            </group>
+                            <group>
+                                <field name="membership_start_date" invisible="not is_member"/>
+                                <field name="membership_end_date" invisible="not is_member"/>
+                            </group>
+                        </group>
+                        <field name="membership_ids">
+                            <list>
+                                <field name="name"/>
+                                <field name="membership_type_id"/>
+                                <field name="start_date"/>
+                                <field name="end_date"/>
+                                <field name="state" widget="badge"/>
+                                <field name="payment_state" widget="badge"/>
+                            </list>
+                        </field>
+                    </page>
+                </notebook>
+            </field>
+        </record>
+
+        <!-- Members Action -->
+        <record id="action_membership_members" model="ir.actions.act_window">
+            <field name="name">Members</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="domain">[('is_member', '=', True)]</field>
+            <field name="context">{'search_default_is_member': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No members found!
+                </p>
+                <p>
+                    Create memberships to see members here.
+                </p>
+            </field>
+        </record>
+    </data>
+</odoo>

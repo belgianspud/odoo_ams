@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_membership_type_user,membership.type user,model_membership_type,group_membership_user,1,0,0,0
+access_membership_type_manager,membership.type manager,model_membership_type,group_membership_manager,1,1,1,1
+access_membership_membership_user,membership.membership user,model_membership_membership,group_membership_user,1,0,0,0
+access_membership_membership_manager,membership.membership manager,model_membership_membership,group_membership_manager,1,1,1,1
+access_membership_payment_user,membership.payment user,model_membership_payment,group_membership_user,1,1,1,0
+access_membership_payment_manager,membership.payment manager,model_membership_payment,group_membership_manager,1,1,1,1
+access_membership_invoice_wizard_user,membership.invoice.wizard user,model_membership_invoice_wizard,group_membership_user,1,1,1,1
+access_membership_invoice_wizard_manager,membership.invoice.wizard manager,model_membership_invoice_wizard,group_membership_manager,1,1,1,1

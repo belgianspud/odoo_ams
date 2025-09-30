@@ -36,7 +36,8 @@ class IrModuleModule(models.Model):
         #Custom Modules
         'ams_foundation',       # MVP AMS core module
         'ams_membership_core',  # MVP AMS core module
-        'subscription_management',
+        'subscription_management', # MVP base subscriptions module
+        'membership_community', # MVP base memberships module
 
         """
         #commenting out this section to provide clean list of modules to use for ams. 

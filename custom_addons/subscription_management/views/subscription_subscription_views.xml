@@ -41,7 +41,7 @@
                     <button name="action_renew" string="Renew" type="object" 
                             invisible="state != 'expired'"/>
                     <button name="action_reactivate" string="Reactivate" type="object" 
-                            class="btn-success" invisible="state not in ['cancelled', 'expired']"
+                            class="btn-success" invisible="state not in ['suspended', 'cancelled', 'expired']"
                             groups="subscription_management.group_subscription_user"/>
                     <field name="state" widget="statusbar" 
                            statusbar_visible="draft,trial,active,suspended,cancelled"/>
@@ -51,6 +51,11 @@
                         <button name="action_view_invoices" type="object" 
                                 class="oe_stat_button" icon="fa-pencil-square-o">
                             <field name="invoice_count" widget="statinfo" string="Invoices"/>
+                        </button>
+                        <button name="action_view_failed_invoices" type="object" 
+                                class="oe_stat_button" icon="fa-exclamation-triangle"
+                                invisible="failed_invoice_count == 0">
+                            <field name="failed_invoice_count" widget="statinfo" string="Failed Invoices"/>
                         </button>
                     </div>
                     
@@ -65,6 +70,7 @@
                             <field name="partner_id"/>
                             <field name="partner_invoice_id"/>
                             <field name="partner_shipping_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                         <group string="Subscription Details">
                             <field name="plan_id"/>
@@ -84,6 +90,17 @@
                         <group string="Billing Information">
                             <field name="last_invoice_id"/>
                             <field name="last_invoice_date"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Payment &amp; Dunning" invisible="dunning_level == 'none' and payment_retry_count == 0">
+                        <group>
+                            <field name="payment_retry_count"/>
+                            <field name="payment_retry_date"/>
+                            <field name="dunning_level"/>
+                        </group>
+                        <group>
+                            <field name="last_payment_error"/>
                         </group>
                     </group>
                     

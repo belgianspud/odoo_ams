@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Portal Layout Extension -->
+        <template id="portal_my_home_membership" name="Portal My Home : Membership" inherit_id="portal.portal_my_home" priority="50">
+            <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+                <t t-call="portal.portal_docs_entry">
+                    <t t-set="title">Memberships</t>
+                    <t t-set="url" t-value="'/my/memberships'"/>
+                    <t t-set="placeholder_count" t-value="'membership_count'"/>
+                </t>
+            </xpath>
+        </template>
+
+        <!-- My Memberships Page -->
+        <template id="portal_my_memberships" name="My Memberships">
+            <t t-call="portal.portal_layout">
+                <t t-set="breadcrumbs_searchbar" t-value="True"/>
+                <t t-call="portal.portal_searchbar">
+                    <t t-set="title">Memberships</t>
+                </t>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Membership #</th>
+                                            <th>Type</th>
+                                            <th>Start Date</th>
+                                            <th>End Date</th>
+                                            <th>Status</th>
+                                            <th>Payment Status</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="memberships" t-as="membership">
+                                            <tr>
+                                                <td><a t-attf-href="/my/membership/#{membership.id}"><t t-esc="membership.name"/></a></td>
+                                                <td><t t-esc="membership.membership_type_id.name"/></td>
+                                                <td><t t-esc="membership.start_date"/></td>
+                                                <td><t t-esc="membership.end_date"/></td>
+                                                <td><span t-attf-class="badge badge-#{membership.state == 'active' and 'success' or membership.state == 'expired' and 'danger' or 'secondary'}"><t t-esc="membership.state.title()"/></span></td>
+                                                <td><span t-attf-class="badge badge-#{membership.payment_state == 'paid' and 'success' or membership.payment_state == 'not_paid' and 'danger' or 'warning'}"><t t-esc="membership.payment_state.replace('_', ' ').title()"/></span></td>
+                                                <td><a t-attf-href="/my/membership/#{membership.id}" class="btn btn-sm btn-outline-primary">View</a></td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </template>
+
+        <!-- Membership Detail Page -->
+        <template id="portal_my_membership_detail" name="Membership Details">
+            <t t-call="portal.portal_layout">
+                <t t-set="breadcrumbs_searchbar" t-value="True"/>
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4>Membership Details</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Membership Number:</strong> <t t-esc="membership.name"/><br/>
+                                        <strong>Type:</strong> <t t-esc="membership.membership_type_id.name"/><br/>
+                                        <strong>Start Date:</strong> <t t-esc="membership.start_date"/><br/>
+                                        <strong>End Date:</strong> <t t-esc="membership.end_date"/><br/>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Status:</strong> <span t-attf-class="badge badge-#{membership.state == 'active' and 'success' or membership.state == 'expired' and 'danger' or 'secondary'}"><t t-esc="membership.state.title()"/></span><br/>
+                                        <strong>Payment Status:</strong> <span t-attf-class="badge badge-#{membership.payment_state == 'paid' and 'success' or membership.payment_state == 'not_paid' and 'danger' or 'warning'}"><t t-esc="membership.payment_state.replace('_', ' ').title()"/></span><br/>
+                                        <strong>Amount:</strong> <t t-esc="membership.amount_total" t-options="{'widget': 'monetary', 'display_currency': membership.currency_id}"/><br/>
+                                        <strong>Amount Due:</strong> <t t-esc="membership.amount_due" t-options="{'widget': 'monetary', 'display_currency': membership.currency_id}"/><br/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Actions</h5>
+                            </div>
+                            <div class="card-body">
+                                <a href="/my/memberships" class="btn btn-secondary btn-block">Back to Memberships</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </template>
+    </data>
+</odoo>
