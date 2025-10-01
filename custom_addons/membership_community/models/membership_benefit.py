@@ -77,7 +77,6 @@ class MembershipBenefit(models.Model):
         ('networking', 'Networking'),
         ('professional', 'Professional Development'),
         ('recognition', 'Recognition & Awards'),
-        ('insurance', 'Insurance & Legal'),
         ('business', 'Business Services'),
         ('other', 'Other')
     ], string='Benefit Category',
@@ -168,6 +167,12 @@ class MembershipBenefit(models.Model):
         default=0.0,
         help='Fixed discount amount'
     )
+    
+    discount_type = fields.Selection([
+        ('percentage', 'Percentage'),
+        ('fixed', 'Fixed Amount')
+    ], string='Discount Type',
+       help='Type of discount')
     
     discount_applies_to = fields.Selection([
         ('events', 'Event Registrations'),
@@ -532,17 +537,13 @@ class MembershipBenefit(models.Model):
             if current_month not in self.available_months.split(','):
                 return (False, _("Benefit not available this month"))
         
-        # Check if partner has membership with this benefit
-        active_memberships = self.env['membership.record'].search([
-            ('partner_id', '=', partner.id),
-            ('state', '=', 'active')
-        ])
-        
-        has_benefit = False
-        for membership in active_memberships:
-            if self in membership.product_id.benefit_ids:
-                has_benefit = True
-                break
+        # Check if partner has subscription with this benefit
+        has_benefit = bool(
+            partner.membership_subscription_ids.filtered(
+                lambda s: s.state in ['open', 'active'] and 
+                         self in s.product_id.benefit_ids
+            )
+        )
         
         if not has_benefit:
             return (False, _("Your membership does not include this benefit"))
@@ -563,30 +564,6 @@ class MembershipBenefit(models.Model):
             'res_model': 'product.template',
             'view_mode': 'tree,form',
             'domain': [('id', 'in', self.product_ids.ids)],
-        }
-
-    def action_view_usage(self):
-        """View usage tracking for this benefit"""
-        self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Benefit Usage: %s') % self.name,
-            'res_model': 'membership.benefit.usage',
-            'view_mode': 'tree,graph,pivot',
-            'domain': [('benefit_id', '=', self.id)],
-            'context': {'default_benefit_id': self.id}
-        }
-
-    def action_send_to_members(self):
-        """Send benefit information to eligible members"""
-        self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Send Benefit Info'),
-            'res_model': 'membership.benefit.notification.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {'default_benefit_id': self.id}
         }
 
     @api.model
@@ -627,27 +604,15 @@ class MembershipBenefit(models.Model):
         
         return value
 
-    def get_all_benefits_value(self, partner_id):
-        """
-        Calculate total value of all benefits for a member
-        
-        Args:
-            partner_id: res.partner record or ID
-        
-        Returns:
-            float: Total monetary value
-        """
-        if isinstance(partner_id, int):
-            partner = self.env['res.partner'].browse(partner_id)
-        else:
-            partner = partner_id
-        
-        total_value = 0.0
-        for benefit in partner.available_benefits:
-            if benefit.has_monetary_value:
-                total_value += benefit.get_member_value(partner_id)
-        
-        return total_value
+    def name_get(self):
+        """Custom name display"""
+        result = []
+        for record in self:
+            name = record.name
+            if record.code:
+                name = f"{name} [{record.code}]"
+            result.append((record.id, name))
+        return result
 
     # ==========================================
     # CONSTRAINTS

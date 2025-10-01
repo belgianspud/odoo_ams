@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from . import membership_record
 from . import membership_category
-from . import membership_feature
 from . import membership_benefit
+from . import membership_feature
 from . import product_template
 from . import res_partner
+from . import subscription_subscription

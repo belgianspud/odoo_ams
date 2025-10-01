@@ -16,13 +16,13 @@ class MembershipFeature(models.Model):
         string='Feature Name',
         required=True,
         translate=True,
-        help='Display name for this feature (e.g., "Event Registration Discount", "Journal Access")'
+        help='Display name for this feature (e.g., "Portal Access", "CE Tracking")'
     )
     
     code = fields.Char(
         string='Feature Code',
         required=True,
-        help='Unique code for this feature (e.g., EVENT_DISC, JOURNAL_ACCESS)'
+        help='Unique code for this feature (e.g., PORTAL_ACCESS, CE_TRACKING)'
     )
     
     active = fields.Boolean(
@@ -58,26 +58,24 @@ class MembershipFeature(models.Model):
     
     category = fields.Selection([
         ('access', 'Access Rights'),
-        ('discount', 'Discounts'),
-        ('publication', 'Publications'),
+        ('portal', 'Portal Features'),
+        ('directory', 'Directory'),
         ('event', 'Events'),
         ('professional', 'Professional Services'),
         ('networking', 'Networking'),
         ('education', 'Education & Training'),
         ('certification', 'Certification'),
-        ('portal', 'Portal Features'),
-        ('directory', 'Directory'),
+        ('publication', 'Publications'),
         ('other', 'Other')
     ], string='Feature Category',
        required=True,
        default='other',
-       help='Type of benefit this feature provides')
+       help='Type of feature this provides')
     
     feature_type = fields.Selection([
         ('boolean', 'Yes/No'),
         ('quantity', 'Quantity'),
         ('percentage', 'Percentage'),
-        ('amount', 'Amount'),
         ('text', 'Text Value'),
         ('unlimited', 'Unlimited')
     ], string='Feature Type',
@@ -114,7 +112,7 @@ class MembershipFeature(models.Model):
     min_value = fields.Float(
         string='Minimum Value',
         default=0.0,
-        help='Minimum allowed value (for quantity/percentage/amount types)'
+        help='Minimum allowed value (for quantity/percentage types)'
     )
     
     max_value = fields.Float(
@@ -124,48 +122,7 @@ class MembershipFeature(models.Model):
     )
 
     # ==========================================
-    # DISCOUNT FEATURES
-    # (when category = 'discount')
-    # ==========================================
-    
-    discount_type = fields.Selection([
-        ('percentage', 'Percentage'),
-        ('fixed', 'Fixed Amount'),
-        ('early_bird', 'Early Bird'),
-        ('member_only', 'Member-Only Pricing')
-    ], string='Discount Type',
-       help='Type of discount provided')
-    
-    applies_to = fields.Selection([
-        ('events', 'Event Registrations'),
-        ('products', 'Product Purchases'),
-        ('publications', 'Publications'),
-        ('certifications', 'Certifications'),
-        ('all', 'All Purchases')
-    ], string='Applies To',
-       help='What this discount applies to')
-    
-    discount_percentage = fields.Float(
-        string='Discount %',
-        default=0.0,
-        help='Discount percentage (if discount_type = percentage)'
-    )
-    
-    discount_amount = fields.Float(
-        string='Discount Amount',
-        default=0.0,
-        help='Fixed discount amount (if discount_type = fixed)'
-    )
-    
-    currency_id = fields.Many2one(
-        'res.currency',
-        string='Currency',
-        default=lambda self: self.env.company.currency_id
-    )
-
-    # ==========================================
-    # ACCESS FEATURES
-    # (when category = 'access')
+    # PORTAL FEATURES
     # ==========================================
     
     grants_portal_access = fields.Boolean(
@@ -196,73 +153,7 @@ class MembershipFeature(models.Model):
        help='What information is shown in directory')
 
     # ==========================================
-    # PUBLICATION FEATURES
-    # (when category = 'publication')
-    # ==========================================
-    
-    publication_access_type = fields.Selection([
-        ('digital', 'Digital Only'),
-        ('print', 'Print Only'),
-        ('both', 'Digital + Print')
-    ], string='Publication Access',
-       help='Type of publication access')
-    
-    publication_ids = fields.Many2many(
-        'product.template',
-        'feature_publication_rel',
-        'feature_id',
-        'publication_id',
-        string='Included Publications',
-        domain=[('subscription_product_type', 'in', ['journal', 'newsletter', 'subscription'])],
-        help='Which publications are included'
-    )
-    
-    download_limit = fields.Integer(
-        string='Download Limit',
-        default=0,
-        help='Maximum downloads per period (0 = unlimited)'
-    )
-    
-    archive_access_years = fields.Integer(
-        string='Archive Access (Years)',
-        default=0,
-        help='How many years of archives are accessible (0 = current only)'
-    )
-
-    # ==========================================
-    # EVENT FEATURES
-    # (when category = 'event')
-    # ==========================================
-    
-    event_registration_benefit = fields.Selection([
-        ('priority', 'Priority Registration'),
-        ('discount', 'Discounted Registration'),
-        ('free', 'Free Registration'),
-        ('unlimited', 'Unlimited Events')
-    ], string='Event Benefit Type',
-       help='Type of event benefit')
-    
-    free_event_count = fields.Integer(
-        string='Free Events Per Year',
-        default=0,
-        help='Number of free event registrations (0 = none)'
-    )
-    
-    event_discount_percentage = fields.Float(
-        string='Event Discount %',
-        default=0.0,
-        help='Percentage discount on event registrations'
-    )
-    
-    early_registration_days = fields.Integer(
-        string='Early Registration Period (Days)',
-        default=0,
-        help='Days before public when member can register'
-    )
-
-    # ==========================================
     # PROFESSIONAL FEATURES
-    # (when category = 'professional')
     # ==========================================
     
     enables_credential_tracking = fields.Boolean(
@@ -288,16 +179,9 @@ class MembershipFeature(models.Model):
         default=False,
         help='Can apply for professional designations (Fellow, etc.)'
     )
-    
-    certification_discount = fields.Float(
-        string='Certification Discount %',
-        default=0.0,
-        help='Discount on certification exams'
-    )
 
     # ==========================================
     # NETWORKING FEATURES
-    # (when category = 'networking')
     # ==========================================
     
     enables_member_directory = fields.Boolean(
@@ -323,12 +207,31 @@ class MembershipFeature(models.Model):
         default=False,
         help='Can post/view jobs on member job board'
     )
+
+    # ==========================================
+    # USAGE SETTINGS
+    # ==========================================
     
-    networking_event_access = fields.Boolean(
-        string='Networking Events',
+    has_usage_limit = fields.Boolean(
+        string='Has Usage Limit',
         default=False,
-        help='Invitation to exclusive networking events'
+        help='This feature has a maximum number of uses'
     )
+    
+    usage_limit = fields.Integer(
+        string='Usage Limit',
+        default=0,
+        help='Maximum uses (0 = unlimited)'
+    )
+    
+    usage_period = fields.Selection([
+        ('membership', 'Per Membership Period'),
+        ('calendar_year', 'Per Calendar Year'),
+        ('month', 'Per Month'),
+        ('lifetime', 'Lifetime')
+    ], string='Usage Period',
+       default='membership',
+       help='Time period for usage limit')
 
     # ==========================================
     # MODULE INTEGRATION
@@ -526,41 +429,37 @@ class MembershipFeature(models.Model):
             if not available:
                 return (False, _("Feature not available this month"))
         
-        # Check if partner has membership with this feature
+        # Check if partner has subscription with this feature
         if isinstance(partner_id, int):
             partner = self.env['res.partner'].browse(partner_id)
         else:
             partner = partner_id
         
-        has_feature = False
-        active_memberships = self.env['membership.record'].search([
-            ('partner_id', '=', partner.id),
-            ('state', '=', 'active')
-        ])
-        
-        for membership in active_memberships:
-            if self in membership.product_id.feature_ids:
-                has_feature = True
-                break
+        has_feature = bool(
+            partner.membership_subscription_ids.filtered(
+                lambda s: s.state in ['open', 'active'] and 
+                         self in s.product_id.feature_ids
+            )
+        )
         
         if not has_feature:
             return (False, _("Your membership does not include this feature"))
         
         return (True, '')
 
-    def get_value_for_membership(self, membership_id):
+    def get_value_for_member(self, partner_id):
         """
-        Get the configured value of this feature for a specific membership
+        Get the configured value of this feature for a specific member
         
         Args:
-            membership_id: membership.record ID or record
+            partner_id: res.partner record or ID
         
         Returns:
             Value based on feature_type
         """
         self.ensure_one()
         
-        # Could be extended to allow per-membership overrides
+        # Could be extended to allow per-member overrides via subscription
         # For now, return default value
         
         if self.feature_type == 'boolean':
@@ -581,18 +480,6 @@ class MembershipFeature(models.Model):
             'domain': [('id', 'in', self.product_ids.ids)],
         }
 
-    def action_track_usage(self):
-        """View usage tracking for this feature"""
-        self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Feature Usage: %s') % self.name,
-            'res_model': 'membership.feature.usage',
-            'view_mode': 'tree,graph',
-            'domain': [('feature_id', '=', self.id)],
-            'context': {'default_feature_id': self.id}
-        }
-
     @api.model
     def get_feature_by_code(self, code):
         """
@@ -606,18 +493,15 @@ class MembershipFeature(models.Model):
         """
         return self.search([('code', '=', code)], limit=1)
 
-    def toggle_for_membership(self, membership_id, enable=True):
-        """
-        Enable or disable this feature for a specific membership
-        (Would require a junction table for per-membership overrides)
-        
-        Args:
-            membership_id: membership.record ID
-            enable: True to enable, False to disable
-        """
-        self.ensure_one()
-        # Implementation would depend on feature override system
-        pass
+    def name_get(self):
+        """Custom name display"""
+        result = []
+        for record in self:
+            name = record.name
+            if record.code:
+                name = f"{name} [{record.code}]"
+            result.append((record.id, name))
+        return result
 
     # ==========================================
     # CONSTRAINTS
@@ -633,13 +517,6 @@ class MembershipFeature(models.Model):
             ]) > 0:
                 raise ValidationError(_("Feature code must be unique. '%s' is already used.") % feature.code)
 
-    @api.constrains('discount_percentage')
-    def _check_discount_percentage(self):
-        """Validate discount percentage"""
-        for feature in self:
-            if feature.discount_percentage < 0 or feature.discount_percentage > 100:
-                raise ValidationError(_("Discount percentage must be between 0 and 100."))
-
     @api.constrains('min_value', 'max_value')
     def _check_value_range(self):
         """Validate value range"""
@@ -654,6 +531,13 @@ class MembershipFeature(models.Model):
             if feature.start_date and feature.end_date:
                 if feature.end_date < feature.start_date:
                     raise ValidationError(_("End date must be after start date."))
+
+    @api.constrains('usage_limit')
+    def _check_usage_limit(self):
+        """Validate usage limit"""
+        for feature in self:
+            if feature.has_usage_limit and feature.usage_limit < 1:
+                raise ValidationError(_("Usage limit must be at least 1 if limit is enabled."))
 
     _sql_constraints = [
         ('code_unique', 'UNIQUE(code)', 'Feature code must be unique!'),

@@ -1,97 +1,93 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Membership Community',
-    'version': '2.0.0',
+    'version': '18.0.1.0.0',
     'category': 'Membership',
-    'summary': 'Enhanced membership management with subscription integration',
+    'summary': 'Association membership management extending subscriptions',
     'description': '''
-Membership Community Module
-===========================
+Membership Community - Association Management
+============================================
 
-Comprehensive membership management system that extends subscription_management
-with member-specific features for professional associations.
+Extends subscription_management with association-specific features:
 
-Key Features:
-* Membership Records - Track member history and status
-* Member Categories - Individual, Student, Corporate, Honorary, etc.
-* Membership Benefits - Define benefits included with memberships
-* Membership Features - Technical features for module integration
-* Anniversary vs Calendar Year - Flexible membership year types
-* Subscription Integration - Leverages subscription_management for billing/renewal
-* Chapter Memberships - Support for chapter/section memberships
-* Organizational Support - Foundation for seat-based organizational memberships
-* Professional Integration - Extension points for professional features
-* Portal Ready - Member portal access configuration
+Core Features:
+* Member Categories (Individual, Student, Corporate, Honorary, etc.)
+* Membership Benefits (discounts, access, publications)
+* Membership Features (portal access, credentials, CE tracking)
+* Eligibility Requirements & Verification
+* Chapter Memberships
+* Member Directory
+* Professional Integration hooks
 
-Member Categories:
-* Individual Members
-* Organizational/Corporate Members
-* Student Members
-* Honorary Members
-* Retired Members
-* Emeritus Members
-* Affiliate Members
-* Associate Members
+Leverages subscription_management for:
+* Recurring billing and invoicing
+* Subscription lifecycle management
+* Renewal and upgrade/downgrade logic
+* Seat management for organizational memberships
+* Pricing tiers and prorating
+* Calendar vs Anniversary periods
 
-Membership Year Types:
-* Calendar Year - Jan 1 - Dec 31 (with prorating)
-* Anniversary Year - 12 months from join date
-
-Integration Points:
-* Extends subscription_management for billing and renewal
-* Ready for membership_professional module (credentials, CE, designations)
-* Ready for membership_organizational module (seats, org admin)
-* Portal integration for member self-service
-
-This module provides the foundation for professional association membership
-management while leveraging proven subscription infrastructure.
+Perfect for:
+* Professional Associations
+* Trade Organizations
+* Non-profit Membership Organizations
+* Clubs and Societies
     ''',
-    'author': 'Your Organization',
-    'website': 'https://www.yourorganization.com',
+    'author': 'Your Company',
+    'website': 'https://www.yourcompany.com',
     'license': 'LGPL-3',
+    
     'depends': [
-        'base',
-        'contacts',
-        'product',
-        'sale',
-        'sale_management',
-        'subscription_management',  # KEY DEPENDENCY - for billing/renewal
-        'portal',
-        'mail',
+        'subscription_management',  # Core dependency - provides billing & lifecycle
+        'portal',                   # Member portal access
+        'mail',                     # Messaging and activity tracking
     ],
+    
     'data': [
         # Security
         'security/membership_security.xml',
         'security/ir.model.access.csv',
         
-        # Data
-        'data/membership_sequence.xml',
+        # Data - load in order
         'data/membership_category_data.xml',
         'data/membership_feature_data.xml',
         'data/membership_benefit_data.xml',
         
         # Views - Master Data
         'views/membership_category_views.xml',
-        'views/membership_feature_views.xml',
         'views/membership_benefit_views.xml',
+        'views/membership_feature_views.xml',
         
-        # Views - Core
-        'views/membership_record_views.xml',
+        # Views - Extensions
         'views/product_template_views.xml',
         'views/res_partner_views.xml',
+        'views/subscription_views.xml',
+        
+        # Wizards
+        'wizards/membership_wizard_views.xml',
+        'wizards/category_change_wizard_views.xml',
         
         # Menus
         'views/menu_views.xml',
     ],
+    
     'demo': [
         'demo/membership_demo.xml',
     ],
+    
+    'assets': {
+        'web.assets_backend': [
+            'membership_community/static/src/css/membership.css',
+        ],
+    },
+    
     'images': [
         'static/description/banner.png',
+        'static/description/icon.png',
     ],
+    
     'installable': True,
     'auto_install': False,
     'application': True,
-    'sequence': 10,
-    'post_init_hook': 'post_init_hook',
+    'sequence': 15,
 }

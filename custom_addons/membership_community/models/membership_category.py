@@ -7,6 +7,7 @@ class MembershipCategory(models.Model):
     _name = 'membership.category'
     _description = 'Membership Category'
     _order = 'sequence, name'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     # ==========================================
     # BASIC INFORMATION
@@ -16,12 +17,14 @@ class MembershipCategory(models.Model):
         string='Category Name',
         required=True,
         translate=True,
+        tracking=True,
         help='Display name for this member category (e.g., Individual Member, Student Member)'
     )
     
     code = fields.Char(
         string='Code',
         required=True,
+        tracking=True,
         help='Unique code for this category (e.g., IND, STU, CORP)'
     )
     
@@ -33,6 +36,7 @@ class MembershipCategory(models.Model):
     
     active = fields.Boolean(
         default=True,
+        tracking=True,
         help='Inactive categories are hidden but not deleted'
     )
     
@@ -64,11 +68,13 @@ class MembershipCategory(models.Model):
     ], string='Category Type',
        required=True,
        default='individual',
+       tracking=True,
        help='Primary classification of this member category')
     
     is_voting_member = fields.Boolean(
         string='Voting Rights',
         default=True,
+        tracking=True,
         help='Members in this category have voting rights'
     )
     
@@ -128,7 +134,7 @@ class MembershipCategory(models.Model):
         help='Membership in this category requires staff verification'
     )
     
-    eligibility_requirements = fields.Text(
+    eligibility_requirements = fields.Html(
         string='Eligibility Requirements',
         translate=True,
         help='Description of eligibility criteria for this category'
@@ -165,7 +171,6 @@ class MembershipCategory(models.Model):
 
     # ==========================================
     # PROFESSIONAL REQUIREMENTS
-    # (for professional associations)
     # ==========================================
     
     requires_degree = fields.Boolean(
@@ -191,7 +196,7 @@ class MembershipCategory(models.Model):
     
     required_license_types = fields.Text(
         string='Required License Types',
-        help='Types of licenses that qualify (e.g., "Medical License, Board Certification")'
+        help='Types of licenses that qualify'
     )
     
     requires_experience = fields.Boolean(
@@ -241,7 +246,7 @@ class MembershipCategory(models.Model):
     )
 
     # ==========================================
-    # DURATION & TERM LIMITS
+    # TERM LIMITS
     # ==========================================
     
     has_term_limit = fields.Boolean(
@@ -263,25 +268,23 @@ class MembershipCategory(models.Model):
     )
 
     # ==========================================
-    # PRICING & DISCOUNTS
-    # (Integrates with subscription pricing tiers)
+    # PRICING INFORMATION (for reference)
     # ==========================================
+    
+    typical_discount_percent = fields.Float(
+        string='Typical Discount %',
+        default=0.0,
+        help='Typical discount percentage for this category (informational only - actual pricing via subscription tiers)'
+    )
     
     has_discounted_pricing = fields.Boolean(
         string='Has Discounted Pricing',
         compute='_compute_pricing_flags',
         help='This category typically has discounted pricing'
     )
-    
-    typical_discount_percent = fields.Float(
-        string='Typical Discount %',
-        default=0.0,
-        help='Typical discount percentage for this category (informational)'
-    )
 
     # ==========================================
     # PRODUCT MAPPING
-    # Which products are available to this category
     # ==========================================
     
     allowed_product_ids = fields.Many2many(
@@ -302,7 +305,7 @@ class MembershipCategory(models.Model):
     )
 
     # ==========================================
-    # MEMBERSHIP STATISTICS
+    # STATISTICS
     # ==========================================
     
     member_count = fields.Integer(
@@ -319,7 +322,6 @@ class MembershipCategory(models.Model):
 
     # ==========================================
     # ORGANIZATIONAL SETTINGS
-    # (for organizational/corporate categories)
     # ==========================================
     
     is_organizational = fields.Boolean(
@@ -343,7 +345,6 @@ class MembershipCategory(models.Model):
 
     # ==========================================
     # STUDENT SETTINGS
-    # (for student categories)
     # ==========================================
     
     is_student_category = fields.Boolean(
@@ -383,6 +384,7 @@ class MembershipCategory(models.Model):
         for category in self:
             category.is_student_category = category.category_type == 'student'
 
+    @api.depends('typical_discount_percent')
     def _compute_pricing_flags(self):
         """Compute pricing-related flags"""
         for category in self:
@@ -391,16 +393,18 @@ class MembershipCategory(models.Model):
     def _compute_member_count(self):
         """Calculate member statistics"""
         for category in self:
-            # Count active members
-            category.member_count = self.env['membership.record'].search_count([
+            # Count partners with active subscriptions in this category
+            active_members = self.env['res.partner'].search_count([
                 ('membership_category_id', '=', category.id),
-                ('state', '=', 'active')
+                ('is_member', '=', True)
             ])
+            category.member_count = active_members
             
-            # Count all-time members
-            category.total_members_all_time = self.env['membership.record'].search_count([
+            # All-time count
+            all_members = self.env['subscription.subscription'].search_count([
                 ('membership_category_id', '=', category.id)
             ])
+            category.total_members_all_time = all_members
 
     # ==========================================
     # BUSINESS METHODS
@@ -448,17 +452,6 @@ class MembershipCategory(models.Model):
             if self.requires_ein:
                 if not hasattr(partner, 'vat') or not partner.vat:
                     reasons.append(_("EIN/Tax ID is required."))
-            
-            if self.min_employee_count > 0:
-                # Could check employee count here if that field exists
-                pass
-        
-        # Check student requirements
-        if self.is_student_category:
-            if self.requires_enrollment_verification:
-                # Check if enrollment is verified
-                # This would integrate with a verification system
-                pass
         
         is_eligible = len(reasons) == 0
         return (is_eligible, reasons)
@@ -487,25 +480,13 @@ class MembershipCategory(models.Model):
         return {
             'type': 'ir.actions.act_window',
             'name': _('Members - %s') % self.name,
-            'res_model': 'membership.record',
+            'res_model': 'res.partner',
             'view_mode': 'tree,form',
             'domain': [('membership_category_id', '=', self.id)],
             'context': {
                 'default_membership_category_id': self.id,
-                'search_default_active': 1
+                'search_default_active_members': 1
             }
-        }
-
-    def action_configure_requirements(self):
-        """Open wizard to configure category requirements"""
-        self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Configure Requirements'),
-            'res_model': 'membership.category.requirement.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {'default_category_id': self.id}
         }
 
     @api.model
@@ -537,6 +518,17 @@ class MembershipCategory(models.Model):
             return self.allows_upgrade_to
         else:
             return self.allows_downgrade_to
+
+    def name_get(self):
+        """Custom name_get to show code in parentheses"""
+        result = []
+        for record in self:
+            if record.code:
+                name = f"{record.name} ({record.code})"
+            else:
+                name = record.name
+            result.append((record.id, name))
+        return result
 
     # ==========================================
     # CONSTRAINTS
