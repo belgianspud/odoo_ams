@@ -77,6 +77,23 @@ class SubscriptionPlan(models.Model):
     auto_renew = fields.Boolean('Auto Renew', default=True)
     cancellation_period = fields.Integer('Cancellation Notice (days)', default=30)
     
+    # Lifecycle Management - Plan-specific overrides
+    grace_period_days = fields.Integer(
+        string='Grace Period (Days)',
+        default=0,
+        help='Plan-specific grace period. 0 = use system default'
+    )
+    suspend_period_days = fields.Integer(
+        string='Suspension Period (Days)',
+        default=0,
+        help='Plan-specific suspension period. 0 = use system default'
+    )
+    terminate_period_days = fields.Integer(
+        string='Termination Period (Days)',
+        default=0,
+        help='Plan-specific termination period. 0 = use system default'
+    )
+    
     @api.depends('subscription_ids')
     def _compute_subscription_count(self):
         for plan in self:

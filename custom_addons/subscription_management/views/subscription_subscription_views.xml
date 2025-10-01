@@ -93,6 +93,24 @@
                         </group>
                     </group>
                     
+                    <group string="Lifecycle Periods" 
+                           groups="subscription_management.group_subscription_manager">
+                        <group>
+                            <field name="grace_period_days" readonly="1"/>
+                            <field name="suspend_period_days" readonly="1"/>
+                            <field name="terminate_period_days" readonly="1"/>
+                        </group>
+                        <group>
+                            <div class="alert alert-info">
+                                <p class="mb-0">
+                                    <strong>ℹ️ Info:</strong> These periods are inherited from either the subscription plan 
+                                    (if plan-specific values are set) or from the system settings (if plan values are 0). 
+                                    They cannot be edited directly on the subscription.
+                                </p>
+                            </div>
+                        </group>
+                    </group>
+                    
                     <group string="Payment &amp; Dunning" invisible="dunning_level == 'none' and payment_retry_count == 0">
                         <group>
                             <field name="payment_retry_count"/>

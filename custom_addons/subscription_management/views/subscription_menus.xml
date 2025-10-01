@@ -38,5 +38,22 @@
               name="Configuration" 
               parent="menu_subscription_root" 
               sequence="90"/>
+    
+    <!-- Settings Action -->
+    <record id="action_subscription_settings" model="ir.actions.act_window">
+        <field name="name">Subscription Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'subscription_management'}</field>
+    </record>
+    
+    <!-- Settings Menu Item -->
+    <menuitem id="menu_subscription_settings"
+              name="Settings"
+              parent="menu_subscription_config"
+              action="action_subscription_settings"
+              groups="subscription_management.group_subscription_manager"
+              sequence="1"/>
 
 </odoo>

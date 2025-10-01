@@ -110,23 +110,23 @@ class SubscriptionSubscription(models.Model):
     # Period Overrides (can be customized per subscription)
     grace_period_days = fields.Integer(
         string='Grace Period (Days)',
-        default=lambda self: int(self.env['ir.config_parameter'].sudo().get_param(
-            'subscription.grace_period_days', '30')),
-        help='Days after expiry before suspension'
+        compute='_compute_lifecycle_periods',
+        store=True,
+        help='Days after expiry before suspension. Inherits from plan or system default.'
     )
     
     suspend_period_days = fields.Integer(
         string='Suspension Period (Days)',
-        default=lambda self: int(self.env['ir.config_parameter'].sudo().get_param(
-            'subscription.suspend_period_days', '60')),
-        help='Days in suspension before termination'
+        compute='_compute_lifecycle_periods',
+        store=True,
+        help='Days in suspension before termination. Inherits from plan or system default.'
     )
     
     terminate_period_days = fields.Integer(
         string='Termination Period (Days)',
-        default=lambda self: int(self.env['ir.config_parameter'].sudo().get_param(
-            'subscription.terminate_period_days', '90')),
-        help='Total days before termination'
+        compute='_compute_lifecycle_periods',
+        store=True,
+        help='Total days before termination. Inherits from plan or system default.'
     )
     
     # Computed Dates
@@ -346,6 +346,42 @@ class SubscriptionSubscription(models.Model):
                 subscription.paid_through_date = subscription.date_end
             else:
                 subscription.paid_through_date = False
+    
+    @api.depends('plan_id', 'plan_id.grace_period_days', 'plan_id.suspend_period_days', 
+                 'plan_id.terminate_period_days')
+    def _compute_lifecycle_periods(self):
+        """Compute lifecycle periods from plan or system defaults"""
+        # Get system defaults
+        sys_grace = int(self.env['ir.config_parameter'].sudo().get_param(
+            'subscription.grace_period_days', '30'))
+        sys_suspend = int(self.env['ir.config_parameter'].sudo().get_param(
+            'subscription.suspend_period_days', '60'))
+        sys_terminate = int(self.env['ir.config_parameter'].sudo().get_param(
+            'subscription.terminate_period_days', '90'))
+        
+        for subscription in self:
+            # Use plan-specific periods if set (> 0), otherwise use system defaults
+            if subscription.plan_id:
+                subscription.grace_period_days = (
+                    subscription.plan_id.grace_period_days 
+                    if subscription.plan_id.grace_period_days > 0 
+                    else sys_grace
+                )
+                subscription.suspend_period_days = (
+                    subscription.plan_id.suspend_period_days 
+                    if subscription.plan_id.suspend_period_days > 0 
+                    else sys_suspend
+                )
+                subscription.terminate_period_days = (
+                    subscription.plan_id.terminate_period_days 
+                    if subscription.plan_id.terminate_period_days > 0 
+                    else sys_terminate
+                )
+            else:
+                # No plan, use system defaults
+                subscription.grace_period_days = sys_grace
+                subscription.suspend_period_days = sys_suspend
+                subscription.terminate_period_days = sys_terminate
     
     @api.depends('paid_through_date', 'grace_period_days', 'suspend_period_days', 
                  'terminate_period_days', 'state')

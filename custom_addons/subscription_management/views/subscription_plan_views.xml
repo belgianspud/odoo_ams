@@ -109,6 +109,46 @@
                                 </group>
                             </group>
                         </page>
+                        
+                        <page string="Lifecycle Management" name="lifecycle">
+                            <div class="alert alert-info" role="alert">
+                                <strong>Plan-specific Lifecycle Settings</strong>
+                                <p class="mb-0">
+                                    Configure custom grace, suspension, and termination periods for this plan. 
+                                    Set to 0 to use the system defaults configured in Settings.
+                                </p>
+                            </div>
+                            
+                            <group>
+                                <group string="Grace Period">
+                                    <field name="grace_period_days"/>
+                                    <div class="text-muted" colspan="2">
+                                        Days after subscription expires before suspension. 
+                                        Full access maintained during grace period.
+                                        <br/><em>0 = use system default</em>
+                                    </div>
+                                </group>
+                                <group string="Suspension Period">
+                                    <field name="suspend_period_days"/>
+                                    <div class="text-muted" colspan="2">
+                                        Days in suspended state before termination. 
+                                        Limited access during suspension.
+                                        <br/><em>0 = use system default</em>
+                                    </div>
+                                </group>
+                            </group>
+                            
+                            <group>
+                                <group string="Termination">
+                                    <field name="terminate_period_days"/>
+                                    <div class="text-muted" colspan="2">
+                                        Total days before final termination.
+                                        <br/><em>0 = use system default</em>
+                                    </div>
+                                </group>
+                                <group/>
+                            </group>
+                        </page>
                     </notebook>
                 </sheet>
                 <div class="oe_chatter">
