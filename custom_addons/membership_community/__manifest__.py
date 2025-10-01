@@ -1,82 +1,97 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'Membership Community (Merged with AMS Foundation)',
-    'version': '1.0.0',
+    'name': 'Membership Community',
+    'version': '2.0.0',
     'category': 'Membership',
-    'summary': 'Comprehensive membership and association management system',
-    'description': """
-        Membership Community Management - Merged Module
-        ================================================
-        
-        This module combines:
-        - Original membership_community features
-        - AMS Foundation advanced member management
-        
-        Features:
-        - Member directory and profiles
-        - Membership types and records
-        - Payment tracking
-        - Member status management (prospective, active, grace, lapsed, suspended, terminated)
-        - Professional information tracking
-        - Portal user management
-        - Engagement scoring system
-        - Multiple membership configurations
-        - Pro-rating and billing options
-        - Automated status transitions
-        - Communication preferences
-    """,
-    'author': 'Your Company',
-    'website': 'https://www.yourcompany.com',
+    'summary': 'Enhanced membership management with subscription integration',
+    'description': '''
+Membership Community Module
+===========================
+
+Comprehensive membership management system that extends subscription_management
+with member-specific features for professional associations.
+
+Key Features:
+* Membership Records - Track member history and status
+* Member Categories - Individual, Student, Corporate, Honorary, etc.
+* Membership Benefits - Define benefits included with memberships
+* Membership Features - Technical features for module integration
+* Anniversary vs Calendar Year - Flexible membership year types
+* Subscription Integration - Leverages subscription_management for billing/renewal
+* Chapter Memberships - Support for chapter/section memberships
+* Organizational Support - Foundation for seat-based organizational memberships
+* Professional Integration - Extension points for professional features
+* Portal Ready - Member portal access configuration
+
+Member Categories:
+* Individual Members
+* Organizational/Corporate Members
+* Student Members
+* Honorary Members
+* Retired Members
+* Emeritus Members
+* Affiliate Members
+* Associate Members
+
+Membership Year Types:
+* Calendar Year - Jan 1 - Dec 31 (with prorating)
+* Anniversary Year - 12 months from join date
+
+Integration Points:
+* Extends subscription_management for billing and renewal
+* Ready for membership_professional module (credentials, CE, designations)
+* Ready for membership_organizational module (seats, org admin)
+* Portal integration for member self-service
+
+This module provides the foundation for professional association membership
+management while leveraging proven subscription infrastructure.
+    ''',
+    'author': 'Your Organization',
+    'website': 'https://www.yourorganization.com',
     'license': 'LGPL-3',
     'depends': [
         'base',
-        'mail',
-        'account',
+        'contacts',
         'product',
+        'sale',
+        'sale_management',
+        'subscription_management',  # KEY DEPENDENCY - for billing/renewal
         'portal',
+        'mail',
     ],
     'data': [
         # Security
         'security/membership_security.xml',
         'security/ir.model.access.csv',
         
-        # Data - sequences and settings (always load)
-        'data/sequences.xml',
-        'data/settings_data.xml',
+        # Data
+        'data/membership_sequence.xml',
+        'data/membership_category_data.xml',
+        'data/membership_feature_data.xml',
+        'data/membership_benefit_data.xml',
         
-        # Data - membership types (original module, always load)
-        'data/member_types_data.xml',
+        # Views - Master Data
+        'views/membership_category_views.xml',
+        'views/membership_feature_views.xml',
+        'views/membership_benefit_views.xml',
         
-        # Data - cron jobs
-        'data/cron_jobs.xml',
-        
-        # Views - Settings and Configuration
-        'views/ams_settings_views.xml',
-        'views/ams_member_type_views.xml',
-        'views/res_engagement_rule_views.xml',
-        
-        # Views - Core membership
-        'views/ams_member_type_views.xml',
-        'views/membership_views.xml',  
-        'views/membership_payment_views.xml',
+        # Views - Core
+        'views/membership_record_views.xml',
+        'views/product_template_views.xml',
         'views/res_partner_views.xml',
         
-        # Portal templates
-        'views/portal_templates.xml',
-        
-        # Wizards
-        'wizard/membership_invoice_wizard_views.xml',
-        'wizard/portal_user_wizard_views.xml',
-        
-        # Menus (must be last)
-        'views/membership_menus.xml',
+        # Menus
+        'views/menu_views.xml',
     ],
     'demo': [
-        # Demo data - AMS member types (only loaded in demo mode)
-        # Commented out to avoid conflicts with existing data
-        # 'data/member_types_data.xml',
+        'demo/membership_demo.xml',
+    ],
+    'images': [
+        'static/description/banner.png',
     ],
     'installable': True,
-    'application': True,
     'auto_install': False,
+    'application': True,
+    'sequence': 10,
+    'post_init_hook': 'post_init_hook',
 }

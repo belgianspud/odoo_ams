@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ========================================== -->
+        <!-- MEMBERSHIP CATEGORIES -->
+        <!-- Default categories for professional associations -->
+        <!-- ========================================== -->
+
+        <!-- Individual Member -->
+        <record id="category_individual" model="membership.category">
+            <field name="name">Individual Member</field>
+            <field name="code">IND</field>
+            <field name="sequence">10</field>
+            <field name="category_type">individual</field>
+            <field name="is_voting_member">True</field>
+            <field name="is_full_member">True</field>
+            <field name="member_tier">standard</field>
+            <field name="default_portal_access">standard</field>
+            <field name="allows_chapter_membership">True</field>
+            <field name="allows_committee_participation">True</field>
+            <field name="allows_event_registration">True</field>
+            <field name="description">Standard individual membership for professionals in the field</field>
+        </record>
+
+        <!-- Student Member -->
+        <record id="category_student" model="membership.category">
+            <field name="name">Student Member</field>
+            <field name="code">STU</field>
+            <field name="sequence">20</field>
+            <field name="category_type">student</field>
+            <field name="is_voting_member">False</field>
+            <field name="is_full_member">True</field>
+            <field name="member_tier">basic</field>
+            <field name="default_portal_access">basic</field>
+            <field name="allows_chapter_membership">True</field>
+            <field name="allows_committee_participation">True</field>
+            <field name="allows_event_registration">True</field>
+            <field name="requires_verification">True</field>
+            <field name="max_age">30</field>
+            <field name="requires_enrollment_verification">True</field>
+            <field name="enrollment_verification_frequency">annual</field>
+            <field name="typical_discount_percent">50.0</field>
+            <field name="description">Discounted membership for currently enrolled students</field>
+            <field name="eligibility_requirements">Must be currently enrolled in an accredited educational institution</field>
+            <field name="verification_documents">Current student ID, enrollment verification letter, or class schedule</field>
+        </record>
+
+        <!-- Corporate Member -->
+        <record id="category_corporate" model="membership.category">
+            <field name="name">Corporate Member</field>
+            <field name="code">CORP</field>
+            <field name="sequence">30</field>
+            <field name="category_type">organizational</field>
+            <field name="is_voting_member">True</field>
+            <field name="is_full_member">True</field>
+            <field name="member_tier">premium</field>
+            <field name="default_portal_access">premium</field>
+            <field name="allows_chapter_membership">True</field>
+            <field name="allows_committee_participation">True</field>
+            <field name="allows_event_registration">True</field>
+            <field name="requires_ein">True</field>
+            <field name="description">Organizational membership for companies and corporations</field>
+            <field name="eligibility_requirements">Must be a registered business entity</field>
+        </record>
+
+        <!-- Honorary Member -->
+        <record id="category_honorary" model="membership.category">
+            <field name="name">Honorary Member</field>
+            <field name="code">HON</field>
+            <field name="sequence">40</field>
+            <field name="category_type">honorary</field>
+            <field name="is_voting_member">True</field>
+            <field name="is_full_member">True</field>
+            <field name="member_tier">platinum</field>
+            <field name="default_portal_access">premium</field>
+            <field name="allows_chapter_membership">True</field>
+            <field name="allows_committee_participation">True</field>
+            <field name="allows_event_registration">True</field>
+            <field name="requires_verification">True</field>
+            <field name="requires_sponsorship">True</field>
+            <field name="min_sponsors_required">3</field>
+            <field name="typical_discount_percent">100.0</field>
+            <field name="description">Complimentary membership for distinguished individuals</field>
+            <field name="eligibility_requirements">Significant contributions to the field, requires board approval</field>
+        </record>
+
+        <!-- Retired Member -->
+        <record id="category_retired" model="membership.category">
+            <field name="name">Retired Member</field>
+            <field name="code">RET</field>
+            <field name="sequence">50</field>
+            <field name="category_type">retired</field>
+            <field name="is_voting_member">True</field>
+            <field name="is_full_member">True</field>
+            <field name="member_tier">standard</field>
+            <field name="default_portal_access">standard</field>
+            <field name="allows_chapter_membership">True</field>
+            <field name="allows_committee_participation">True</field>
+            <field name="allows_event_registration">True</field>
+            <field name="min_age">60</field>
+            <field name="typical_discount_percent">50.0</field>
+            <field name="description">Discounted membership for retired professionals</field>
+            <field name="eligibility_requirements">Must be retired from active practice and minimum age 60</field>
+        </record>
+
+        <!-- Emeritus Member -->
+        <record id="category_emeritus" model="membership.category">
+            <field name="name">Emeritus Member</field>
+            <field name="code">EMER</field>
+            <field name="sequence">60</field>
+            <field name="category_type">emeritus</field>
+            <field name="is_voting_member">True</field>
+            <field name="is_full_member">True</field>
+            <field name="member_tier">platinum</field>
+            <field name="default_portal_access">premium</field>
+            <field name="allows_chapter_membership">True</field>
+            <field name="allows_committee_participation">True</field>
+            <field name="allows_event_registration">True</field>
+            <field name="requires_verification">True</field>
+            <field name="requires_experience">True</field>
+            <field name="min_years_experience">25</field>
+            <field name="typical_discount_percent">75.0</field>
+            <field name="description">Lifetime achievement recognition with reduced dues</field>
+            <field name="eligibility_requirements">Minimum 25 years membership, significant contributions to the profession</field>
+        </record>
+
+        <!-- Affiliate Member -->
+        <record id="category_affiliate" model="membership.category">
+            <field name="name">Affiliate Member</field>
+            <field name="code">AFF</field>
+            <field name="sequence">70</field>
+            <field name="category_type">affiliate</field>
+            <field name="is_voting_member">False</field>
+            <field name="is_full_member">False</field>
+            <field name="member_tier">basic</field>
+            <field name="default_portal_access">basic</field>
+            <field name="allows_chapter_membership">True</field>
+            <field name="allows_committee_participation">False</field>
+            <field name="allows_event_registration">True</field>
+            <field name="description">Non-voting membership for allied professionals</field>
+            <field name="eligibility_requirements">Work in related field but not directly in primary profession</field>
+        </record>
+
+        <!-- Associate Member -->
+        <record id="category_associate" model="membership.category">
+            <field name="name">Associate Member</field>
+            <field name="code">ASSOC</field>
+            <field name="sequence">80</field>
+            <field name="category_type">associate</field>
+            <field name="is_voting_member">False</field>
+            <field name="is_full_member">False</field>
+            <field name="member_tier">basic</field>
+            <field name="default_portal_access">basic</field>
+            <field name="allows_chapter_membership">False</field>
+            <field name="allows_committee_participation">False</field>
+            <field name="allows_event_registration">True</field>
+            <field name="description">Limited membership for individuals pursuing entry into the profession</field>
+            <field name="eligibility_requirements">In process of meeting full membership requirements</field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- CATEGORY TRANSITIONS -->
+        <!-- Define allowed upgrade/downgrade paths -->
+        <!-- ========================================== -->
+
+        <!-- Student can upgrade to Individual -->
+        <record id="category_student" model="membership.category">
+            <field name="allows_upgrade_to" eval="[(4, ref('category_individual'))]"/>
+        </record>
+
+        <!-- Associate can upgrade to Individual -->
+        <record id="category_associate" model="membership.category">
+            <field name="allows_upgrade_to" eval="[(4, ref('category_individual'))]"/>
+        </record>
+
+        <!-- Individual can upgrade to Honorary or Emeritus -->
+        <record id="category_individual" model="membership.category">
+            <field name="allows_upgrade_to" eval="[(4, ref('category_honorary')), (4, ref('category_emeritus'))]"/>
+        </record>
+
+        <!-- Individual can downgrade to Retired -->
+        <record id="category_individual" model="membership.category">
+            <field name="allows_downgrade_to" eval="[(4, ref('category_retired'))]"/>
+        </record>
+
+        <!-- Auto-transition Student to Individual at age 26 -->
+        <record id="category_student" model="membership.category">
+            <field name="auto_transition_age">26</field>
+            <field name="auto_transition_category_id" ref="category_individual"/>
+        </record>
+
+    </data>
+</odoo>

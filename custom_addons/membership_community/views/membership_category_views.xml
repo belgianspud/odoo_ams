@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ========================================== -->
+        <!-- MEMBERSHIP CATEGORY VIEWS -->
+        <!-- ========================================== -->
+
+        <!-- Tree View -->
+        <record id="view_membership_category_tree" model="ir.ui.view">
+            <field name="name">membership.category.tree</field>
+            <field name="model">membership.category</field>
+            <field name="arch" type="xml">
+                <tree string="Member Categories">
+                    <field name="sequence" widget="handle"/>
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="category_type"/>
+                    <field name="member_tier"/>
+                    <field name="is_voting_member"/>
+                    <field name="member_count"/>
+                    <field name="typical_discount_percent" optional="show"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Form View -->
+        <record id="view_membership_category_form" model="ir.ui.view">
+            <field name="name">membership.category.form</field>
+            <field name="model">membership.category</field>
+            <field name="arch" type="xml">
+                <form string="Member Category">
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_members" type="object" class="oe_stat_button" icon="fa-users">
+                                <field name="member_count" widget="statinfo" string="Members"/>
+                            </button>
+                        </div>
+
+                        <widget name="web_ribbon" title="Archived" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
+
+                        <field name="color" widget="color_picker" class="float-right"/>
+
+                        <div class="oe_title">
+                            <label for="name" class="oe_edit_only"/>
+                            <h1>
+                                <field name="name" placeholder="e.g. Individual Member"/>
+                            </h1>
+                        </div>
+
+                        <group>
+                            <group name="basic" string="Basic Information">
+                                <field name="code"/>
+                                <field name="sequence"/>
+                                <field name="category_type"/>
+                                <field name="member_tier"/>
+                                <field name="active"/>
+                            </group>
+                            <group name="classification" string="Classification">
+                                <field name="is_voting_member"/>
+                                <field name="is_full_member"/>
+                                <field name="is_organizational" readonly="1"/>
+                                <field name="is_student_category" readonly="1"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <field name="description" placeholder="Description of this member category..."/>
+                        </group>
+
+                        <notebook>
+                            <page name="access" string="Access &amp; Features">
+                                <group>
+                                    <group name="portal" string="Portal Access">
+                                        <field name="default_portal_access"/>
+                                    </group>
+                                    <group name="privileges" string="Privileges">
+                                        <field name="allows_chapter_membership"/>
+                                        <field name="allows_committee_participation"/>
+                                        <field name="allows_event_registration"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="eligibility" string="Eligibility Requirements">
+                                <group>
+                                    <group name="verification" string="Verification">
+                                        <field name="requires_verification"/>
+                                    </group>
+                                    <group name="age" string="Age Requirements">
+                                        <field name="min_age"/>
+                                        <field name="max_age"/>
+                                    </group>
+                                </group>
+
+                                <group name="sponsorship" string="Sponsorship">
+                                    <field name="requires_sponsorship"/>
+                                    <field name="min_sponsors_required" attrs="{'invisible': [('requires_sponsorship', '=', False)]}"/>
+                                </group>
+
+                                <separator string="Eligibility Requirements"/>
+                                <field name="eligibility_requirements" placeholder="Describe who is eligible for this category..."/>
+
+                                <separator string="Required Documents" attrs="{'invisible': [('requires_verification', '=', False)]}"/>
+                                <field name="verification_documents" placeholder="List documents required for verification..." attrs="{'invisible': [('requires_verification', '=', False)]}"/>
+                            </page>
+
+                            <page name="professional" string="Professional Requirements" attrs="{'invisible': [('is_student_category', '=', True)]}">
+                                <group>
+                                    <group name="education" string="Education">
+                                        <field name="requires_degree"/>
+                                        <field name="required_degree_level" attrs="{'invisible': [('requires_degree', '=', False)]}"/>
+                                    </group>
+                                    <group name="license" string="Licensing">
+                                        <field name="requires_license"/>
+                                        <field name="required_license_types" attrs="{'invisible': [('requires_license', '=', False)]}"/>
+                                    </group>
+                                </group>
+                                <group>
+                                    <group name="experience" string="Experience">
+                                        <field name="requires_experience"/>
+                                        <field name="min_years_experience" attrs="{'invisible': [('requires_experience', '=', False)]}"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="student" string="Student Settings" attrs="{'invisible': [('is_student_category', '=', False)]}">
+                                <group>
+                                    <group name="enrollment" string="Enrollment Verification">
+                                        <field name="requires_enrollment_verification"/>
+                                        <field name="enrollment_verification_frequency" attrs="{'invisible': [('requires_enrollment_verification', '=', False)]}"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="organizational" string="Organizational Settings" attrs="{'invisible': [('is_organizational', '=', False)]}">
+                                <group>
+                                    <group name="org_requirements" string="Requirements">
+                                        <field name="requires_ein"/>
+                                        <field name="min_employee_count"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="progression" string="Category Transitions">
+                                <group>
+                                    <group name="transitions" string="Allowed Transitions">
+                                        <field name="allows_upgrade_to" widget="many2many_tags"/>
+                                        <field name="allows_downgrade_to" widget="many2many_tags"/>
+                                    </group>
+                                    <group name="auto_transition" string="Auto-Transition">
+                                        <field name="auto_transition_age"/>
+                                        <field name="auto_transition_category_id" attrs="{'invisible': [('auto_transition_age', '=', 0)]}"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="term_limits" string="Term Limits">
+                                <group>
+                                    <group name="limits" string="Term Restrictions">
+                                        <field name="has_term_limit"/>
+                                        <field name="max_term_years" attrs="{'invisible': [('has_term_limit', '=', False)]}"/>
+                                        <field name="max_consecutive_terms" attrs="{'invisible': [('has_term_limit', '=', False)]}"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="pricing" string="Pricing">
+                                <group>
+                                    <group name="discounts" string="Typical Pricing">
+                                        <field name="typical_discount_percent"/>
+                                        <field name="has_discounted_pricing" readonly="1"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="products" string="Products">
+                                <group>
+                                    <group name="product_mapping" string="Product Mapping">
+                                        <field name="default_product_id" options="{'no_create': True}" domain="[('is_membership_product', '=', True)]"/>
+                                    </group>
+                                </group>
+                                <separator string="Allowed Products"/>
+                                <field name="allowed_product_ids" nolabel="1" domain="[('is_membership_product', '=', True)]">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="list_price"/>
+                                        <field name="subscription_product_type"/>
+                                    </tree>
+                                </field>
+                            </page>
+
+                            <page name="statistics" string="Statistics">
+                                <group>
+                                    <group name="counts" string="Member Counts">
+                                        <field name="member_count"/>
+                                        <field name="total_members_all_time"/>
+                                    </group>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Search View -->
+        <record id="view_membership_category_search" model="ir.ui.view">
+            <field name="name">membership.category.search</field>
+            <field name="model">membership.category</field>
+            <field name="arch" type="xml">
+                <search string="Member Categories">
+                    <field name="name" string="Category Name"/>
+                    <field name="code" string="Code"/>
+                    
+                    <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                    <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                    
+                    <separator/>
+                    <filter string="Individual" name="individual" domain="[('category_type', '=', 'individual')]"/>
+                    <filter string="Organizational" name="organizational" domain="[('category_type', '=', 'organizational')]"/>
+                    <filter string="Student" name="student" domain="[('category_type', '=', 'student')]"/>
+                    <filter string="Honorary" name="honorary" domain="[('category_type', '=', 'honorary')]"/>
+                    <filter string="Retired" name="retired" domain="[('category_type', '=', 'retired')]"/>
+                    
+                    <separator/>
+                    <filter string="Voting Members" name="voting" domain="[('is_voting_member', '=', True)]"/>
+                    <filter string="Full Members" name="full_member" domain="[('is_full_member', '=', True)]"/>
+                    <filter string="Discounted" name="discounted" domain="[('has_discounted_pricing', '=', True)]"/>
+                    
+                    <group expand="0" string="Group By">
+                        <filter string="Category Type" name="group_type" context="{'group_by': 'category_type'}"/>
+                        <filter string="Member Tier" name="group_tier" context="{'group_by': 'member_tier'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Kanban View -->
+        <record id="view_membership_category_kanban" model="ir.ui.view">
+            <field name="name">membership.category.kanban</field>
+            <field name="model">membership.category</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_small_column">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="category_type"/>
+                    <field name="member_tier"/>
+                    <field name="member_count"/>
+                    <field name="color"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div t-attf-class="oe_kanban_color_#{kanban_getcolor(record.color.raw_value)} oe_kanban_global_click">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title"><field name="name"/></strong>
+                                        <br/>
+                                        <span class="o_kanban_record_subtitle">
+                                            <field name="code"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <field name="category_type" widget="badge"/>
+                                    <br/>
+                                    <field name="member_tier" widget="badge"/>
+                                </div>
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <span><i class="fa fa-users"/> <field name="member_count"/> members</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- Actions -->
+        <record id="action_membership_category" model="ir.actions.act_window">
+            <field name="name">Member Categories</field>
+            <field name="res_model">membership.category</field>
+            <field name="view_mode">tree,kanban,form</field>
+            <field name="search_view_id" ref="view_membership_category_search"/>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first member category
+                </p>
+                <p>
+                    Define categories for different types of members (Individual, Student, Corporate, etc.)
+                    with specific eligibility requirements and benefits.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

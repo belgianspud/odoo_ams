@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ========================================== -->
+        <!-- MEMBERSHIP FEATURE VIEWS -->
+        <!-- ========================================== -->
+
+        <!-- Tree View -->
+        <record id="view_membership_feature_tree" model="ir.ui.view">
+            <field name="name">membership.feature.tree</field>
+            <field name="model">membership.feature</field>
+            <field name="arch" type="xml">
+                <tree string="Membership Features">
+                    <field name="sequence" widget="handle"/>
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="category"/>
+                    <field name="feature_type"/>
+                    <field name="is_premium_feature"/>
+                    <field name="module_installed" invisible="1"/>
+                    <field name="is_currently_valid"/>
+                    <field name="product_count"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Form View -->
+        <record id="view_membership_feature_form" model="ir.ui.view">
+            <field name="name">membership.feature.form</field>
+            <field name="model">membership.feature</field>
+            <field name="arch" type="xml">
+                <form string="Membership Feature">
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_products" type="object" class="oe_stat_button" icon="fa-cube">
+                                <field name="product_count" widget="statinfo" string="Products"/>
+                            </button>
+                            <button name="action_track_usage" type="object" class="oe_stat_button" icon="fa-chart-line" attrs="{'invisible': [('track_usage', '=', False)]}">
+                                <field name="usage_count" widget="statinfo" string="Usage"/>
+                            </button>
+                        </div>
+
+                        <widget name="web_ribbon" title="Archived" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
+                        <widget name="web_ribbon" title="Premium" bg_color="bg-success" attrs="{'invisible': [('is_premium_feature', '=', False)]}"/>
+                        <widget name="web_ribbon" title="Module Required" bg_color="bg-warning" attrs="{'invisible': ['|', ('requires_module', '=', False), ('module_installed', '=', True)]}"/>
+
+                        <field name="color" widget="color_picker" class="float-right"/>
+
+                        <div class="oe_title">
+                            <label for="name" class="oe_edit_only"/>
+                            <h1>
+                                <field name="name" placeholder="e.g. Event Registration Discount"/>
+                            </h1>
+                        </div>
+
+                        <group>
+                            <group name="basic" string="Basic Information">
+                                <field name="code"/>
+                                <field name="sequence"/>
+                                <field name="category"/>
+                                <field name="feature_type"/>
+                                <field name="active"/>
+                            </group>
+                            <group name="classification" string="Classification">
+                                <field name="is_premium_feature"/>
+                                <field name="requires_verification"/>
+                                <field name="icon"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <field name="description" placeholder="Description of this feature..."/>
+                        </group>
+
+                        <notebook>
+                            <page name="value_config" string="Value Configuration">
+                                <group>
+                                    <group name="default_value" string="Default Value">
+                                        <field name="default_value"/>
+                                        <field name="value_uom" attrs="{'invisible': [('feature_type', 'not in', ['quantity'])]}"/>
+                                    </group>
+                                    <group name="value_range" string="Value Range" attrs="{'invisible': [('feature_type', 'not in', ['quantity', 'percentage', 'amount'])]}">
+                                        <field name="min_value"/>
+                                        <field name="max_value"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="discounts" string="Discount Configuration" attrs="{'invisible': [('category', '!=', 'discount')]}">
+                                <group>
+                                    <group name="discount_settings" string="Discount Settings">
+                                        <field name="discount_type"/>
+                                        <field name="applies_to"/>
+                                    </group>
+                                    <group name="discount_values" string="Discount Values">
+                                        <field name="discount_percentage" attrs="{'invisible': [('discount_type', '!=', 'percentage')]}"/>
+                                        <field name="discount_amount" widget="monetary" attrs="{'invisible': [('discount_type', '!=', 'fixed')]}"/>
+                                        <field name="currency_id" invisible="1"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="access" string="Access Configuration" attrs="{'invisible': [('category', '!=', 'access')]}">
+                                <group>
+                                    <group name="portal" string="Portal Access">
+                                        <field name="grants_portal_access"/>
+                                        <field name="portal_access_level" attrs="{'invisible': [('grants_portal_access', '=', False)]}"/>
+                                    </group>
+                                    <group name="directory" string="Directory">
+                                        <field name="grants_directory_listing"/>
+                                        <field name="directory_visibility" attrs="{'invisible': [('grants_directory_listing', '=', False)]}"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="publications" string="Publication Configuration" attrs="{'invisible': [('category', '!=', 'publication')]}">
+                                <group>
+                                    <group name="pub_access" string="Access Type">
+                                        <field name="publication_access_type"/>
+                                        <field name="download_limit"/>
+                                        <field name="archive_access_years"/>
+                                    </group>
+                                </group>
+                                <separator string="Included Publications"/>
+                                <field name="publication_ids" nolabel="1">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="subscription_product_type"/>
+                                        <field name="list_price"/>
+                                    </tree>
+                                </field>
+                            </page>
+
+                            <page name="events" string="Event Configuration" attrs="{'invisible': [('category', '!=', 'event')]}">
+                                <group>
+                                    <group name="event_benefits" string="Event Benefits">
+                                        <field name="event_registration_benefit"/>
+                                        <field name="free_event_count" attrs="{'invisible': [('event_registration_benefit', '!=', 'free')]}"/>
+                                        <field name="event_discount_percentage" attrs="{'invisible': [('event_registration_benefit', '!=', 'discount')]}"/>
+                                        <field name="early_registration_days" attrs="{'invisible': [('event_registration_benefit', '!=', 'priority')]}"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="professional" string="Professional Configuration" attrs="{'invisible': [('category', '!=', 'professional')]}">
+                                <group>
+                                    <group name="prof_features" string="Professional Features">
+                                        <field name="enables_credential_tracking"/>
+                                        <field name="enables_ce_tracking"/>
+                                        <field name="ce_credit_reporting"/>
+                                        <field name="enables_designation_application"/>
+                                    </group>
+                                    <group name="prof_discounts" string="Discounts">
+                                        <field name="certification_discount"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="networking" string="Networking Configuration" attrs="{'invisible': [('category', '!=', 'networking')]}">
+                                <group>
+                                    <group name="network_features" string="Networking Features">
+                                        <field name="enables_member_directory"/>
+                                        <field name="enables_messaging"/>
+                                        <field name="enables_mentorship"/>
+                                        <field name="enables_job_board"/>
+                                        <field name="networking_event_access"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="usage" string="Usage Settings">
+                                <group>
+                                    <group name="usage_limits" string="Usage Limits">
+                                        <field name="has_usage_limit"/>
+                                        <field name="usage_limit" attrs="{'invisible': [('has_usage_limit', '=', False)]}"/>
+                                        <field name="usage_period" attrs="{'invisible': [('has_usage_limit', '=', False)]}"/>
+                                    </group>
+                                    <group name="tracking" string="Tracking">
+                                        <field name="is_trackable"/>
+                                        <field name="usage_count" readonly="1" attrs="{'invisible': [('is_trackable', '=', False)]}"/>
+                                        <field name="active_users_count" readonly="1" attrs="{'invisible': [('is_trackable', '=', False)]}"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="validity" string="Validity Period">
+                                <group>
+                                    <group name="dates" string="Validity Dates">
+                                        <field name="start_date"/>
+                                        <field name="end_date"/>
+                                        <field name="is_currently_valid" readonly="1"/>
+                                    </group>
+                                    <group name="seasonal" string="Seasonal Availability">
+                                        <field name="seasonal"/>
+                                        <field name="available_months" attrs="{'invisible': [('seasonal', '=', False)]}"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="integration" string="Module Integration">
+                                <group>
+                                    <group name="module" string="Required Module">
+                                        <field name="requires_module"/>
+                                        <field name="module_installed" readonly="1"/>
+                                    </group>
+                                </group>
+                                <separator string="Integration Data"/>
+                                <field name="integration_data" widget="ace" options="{'mode': 'json'}"/>
+                            </page>
+
+                            <page name="products" string="Associated Products">
+                                <field name="product_ids" nolabel="1">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="subscription_product_type"/>
+                                        <field name="list_price"/>
+                                        <field name="is_membership_product"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Search View -->
+        <record id="view_membership_feature_search" model="ir.ui.view">
+            <field name="name">membership.feature.search</field>
+            <field name="model">membership.feature</field>
+            <field name="arch" type="xml">
+                <search string="Membership Features">
+                    <field name="name" string="Feature Name"/>
+                    <field name="code" string="Code"/>
+                    
+                    <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                    <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                    
+                    <separator/>
+                    <filter string="Premium Features" name="premium" domain="[('is_premium_feature', '=', True)]"/>
+                    <filter string="Currently Valid" name="valid" domain="[('is_currently_valid', '=', True)]"/>
+                    <filter string="Trackable" name="trackable" domain="[('is_trackable', '=', True)]"/>
+                    
+                    <separator/>
+                    <filter string="Access" name="access" domain="[('category', '=', 'access')]"/>
+                    <filter string="Discounts" name="discounts" domain="[('category', '=', 'discount')]"/>
+                    <filter string="Publications" name="publications" domain="[('category', '=', 'publication')]"/>
+                    <filter string="Events" name="events" domain="[('category', '=', 'event')]"/>
+                    <filter string="Professional" name="professional" domain="[('category', '=', 'professional')]"/>
+                    <filter string="Networking" name="networking" domain="[('category', '=', 'networking')]"/>
+                    <filter string="Education" name="education" domain="[('category', '=', 'education')]"/>
+                    
+                    <separator/>
+                    <filter string="Module Installed" name="module_ok" domain="[('module_installed', '=', True)]"/>
+                    <filter string="Missing Module" name="module_missing" domain="[('requires_module', '!=', False), ('module_installed', '=', False)]"/>
+                    
+                    <group expand="0" string="Group By">
+                        <filter string="Category" name="group_category" context="{'group_by': 'category'}"/>
+                        <filter string="Feature Type" name="group_type" context="{'group_by': 'feature_type'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Kanban View -->
+        <record id="view_membership_feature_kanban" model="ir.ui.view">
+            <field name="name">membership.feature.kanban</field>
+            <field name="model">membership.feature</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_small_column">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="category"/>
+                    <field name="feature_type"/>
+                    <field name="is_premium_feature"/>
+                    <field name="icon"/>
+                    <field name="color"/>
+                    <field name="product_count"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div t-attf-class="oe_kanban_color_#{kanban_getcolor(record.color.raw_value)} oe_kanban_global_click">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <i t-if="record.icon.raw_value" t-attf-class="fa #{record.icon.raw_value}"/> 
+                                            <field name="name"/>
+                                        </strong>
+                                        <br/>
+                                        <span class="o_kanban_record_subtitle">
+                                            <field name="code"/>
+                                        </span>
+                                    </div>
+                                    <span class="float-right" t-if="record.is_premium_feature.raw_value">
+                                        <span class="badge badge-success">Premium</span>
+                                    </span>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <field name="category" widget="badge"/>
+                                    <br/>
+                                    <field name="feature_type" widget="badge"/>
+                                </div>
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <span><i class="fa fa-cube"/> <field name="product_count"/> products</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- Actions -->
+        <record id="action_membership_feature" model="ir.actions.act_window">
+            <field name="name">Membership Features</field>
+            <field name="res_model">membership.feature</field>
+            <field name="view_mode">tree,kanban,form</field>
+            <field name="search_view_id" ref="view_membership_feature_search"/>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first membership feature
+                </p>
+                <p>
+                    Define technical features that provide specific capabilities to members
+                    (portal access, credential tracking, event discounts, etc.)
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

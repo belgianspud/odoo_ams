@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ========================================== -->
+        <!-- MAIN MENU STRUCTURE -->
+        <!-- ========================================== -->
+
+        <!-- Root Menu: Membership -->
+        <menuitem id="menu_membership_root"
+                  name="Membership"
+                  sequence="50"
+                  web_icon="membership_community,static/description/icon.png"/>
+
+        <!-- ========================================== -->
+        <!-- MEMBERSHIPS SECTION -->
+        <!-- ========================================== -->
+
+        <menuitem id="menu_membership_management"
+                  name="Memberships"
+                  parent="menu_membership_root"
+                  sequence="10"/>
+
+        <menuitem id="menu_membership_record"
+                  name="All Memberships"
+                  parent="menu_membership_management"
+                  action="action_membership_record"
+                  sequence="10"/>
+
+        <menuitem id="menu_membership_record_active"
+                  name="Active Memberships"
+                  parent="menu_membership_management"
+                  action="action_membership_record_active"
+                  sequence="20"/>
+
+        <menuitem id="menu_membership_record_renewal"
+                  name="Due for Renewal"
+                  parent="menu_membership_management"
+                  action="action_membership_record_renewal"
+                  sequence="30"/>
+
+        <!-- ========================================== -->
+        <!-- MEMBERS SECTION -->
+        <!-- ========================================== -->
+
+        <menuitem id="menu_members"
+                  name="Members"
+                  parent="menu_membership_root"
+                  sequence="20"/>
+
+        <menuitem id="menu_member_directory"
+                  name="Member Directory"
+                  parent="menu_members"
+                  action="action_member_directory"
+                  sequence="10"/>
+
+        <menuitem id="menu_partners_all"
+                  name="All Contacts"
+                  parent="menu_members"
+                  action="base.action_partner_form"
+                  sequence="20"/>
+
+        <!-- ========================================== -->
+        <!-- CONFIGURATION SECTION -->
+        <!-- ========================================== -->
+
+        <menuitem id="menu_membership_configuration"
+                  name="Configuration"
+                  parent="menu_membership_root"
+                  sequence="90"/>
+
+        <!-- Products Submenu -->
+        <menuitem id="menu_membership_products"
+                  name="Products"
+                  parent="menu_membership_configuration"
+                  sequence="10"/>
+
+        <menuitem id="menu_product_membership"
+                  name="Membership Products"
+                  parent="menu_membership_products"
+                  action="product.product_template_action"
+                  sequence="10"/>
+
+        <!-- Categories Submenu -->
+        <menuitem id="menu_membership_categories_config"
+                  name="Member Categories"
+                  parent="menu_membership_configuration"
+                  sequence="20"/>
+
+        <menuitem id="menu_membership_category"
+                  name="Categories"
+                  parent="menu_membership_categories_config"
+                  action="action_membership_category"
+                  sequence="10"/>
+
+        <!-- Features & Benefits Submenu -->
+        <menuitem id="menu_membership_features_benefits"
+                  name="Features &amp; Benefits"
+                  parent="menu_membership_configuration"
+                  sequence="30"/>
+
+        <menuitem id="menu_membership_feature"
+                  name="Features"
+                  parent="menu_membership_features_benefits"
+                  action="action_membership_feature"
+                  sequence="10"/>
+
+        <menuitem id="menu_membership_benefit"
+                  name="Benefits"
+                  parent="menu_membership_features_benefits"
+                  action="action_membership_benefit"
+                  sequence="20"/>
+
+        <!-- ========================================== -->
+        <!-- REPORTING SECTION -->
+        <!-- ========================================== -->
+
+        <menuitem id="menu_membership_reporting"
+                  name="Reporting"
+                  parent="menu_membership_root"
+                  sequence="80"/>
+
+        <menuitem id="menu_membership_analysis"
+                  name="Membership Analysis"
+                  parent="menu_membership_reporting"
+                  action="action_membership_record"
+                  sequence="10"/>
+
+    </data>
+</odoo>

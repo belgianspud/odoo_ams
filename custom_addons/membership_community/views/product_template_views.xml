@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ========================================== -->
+        <!-- PRODUCT TEMPLATE VIEWS (MEMBERSHIP EXTENSIONS) -->
+        <!-- ========================================== -->
+
+        <!-- Inherit Product Form View to Add Membership Fields -->
+        <record id="view_product_template_membership_form" model="ir.ui.view">
+            <field name="name">product.template.membership.form</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_form_view"/>
+            <field name="arch" type="xml">
+                
+                <!-- Add Membership checkbox after Can be Sold -->
+                <xpath expr="//field[@name='sale_ok']" position="after">
+                    <field name="is_membership_product"/>
+                </xpath>
+
+                <!-- Add Membership Page in Notebook -->
+                <xpath expr="//notebook" position="inside">
+                    <page name="membership" string="Membership" attrs="{'invisible': [('is_membership_product', '=', False)]}">
+                        
+                        <group name="membership_config" string="Membership Configuration">
+                            <group name="year_type" string="Membership Year">
+                                <field name="membership_year_type"/>
+                                <field name="calendar_year_start" attrs="{'invisible': [('membership_year_type', '!=', 'calendar')]}"/>
+                                <field name="prorate_partial_periods" attrs="{'invisible': [('membership_year_type', '!=', 'calendar')]}"/>
+                            </group>
+                            <group name="categories" string="Member Categories">
+                                <field name="default_member_category_id" options="{'no_create': True}"/>
+                            </group>
+                        </group>
+
+                        <separator string="Allowed Member Categories"/>
+                        <field name="allowed_member_categories" nolabel="1" widget="many2many_tags">
+                            <tree>
+                                <field name="name"/>
+                                <field name="code"/>
+                                <field name="category_type"/>
+                            </tree>
+                        </field>
+
+                        <group name="membership_features" string="Features &amp; Benefits">
+                            <group name="features_left">
+                                <label for="feature_ids"/>
+                                <field name="feature_ids" nolabel="1" widget="many2many_tags"/>
+                            </group>
+                            <group name="benefits_right">
+                                <label for="benefit_ids"/>
+                                <field name="benefit_ids" nolabel="1" widget="many2many_tags"/>
+                            </group>
+                        </group>
+
+                        <group name="professional_settings" string="Professional Features">
+                            <group name="prof_left">
+                                <field name="enables_credentials"/>
+                                <field name="enables_ce_tracking"/>
+                            </group>
+                            <group name="prof_right">
+                                <field name="enables_designations"/>
+                            </group>
+                        </group>
+
+                        <group name="organizational_settings" string="Organizational Membership" attrs="{'invisible': [('subscription_product_type', '!=', 'organizational_membership')]}">
+                            <group name="org_left">
+                                <field name="is_organizational_only"/>
+                                <field name="supports_seats"/>
+                                <field name="min_seats_required" attrs="{'invisible': [('supports_seats', '=', False)]}"/>
+                            </group>
+                            <group name="org_right">
+                                <field name="seat_product_id" attrs="{'invisible': [('supports_seats', '=', False)]}" domain="[('subscription_product_type', '=', 'seat')]"/>
+                            </group>
+                        </group>
+
+                        <group name="chapter_settings" string="Chapter Membership" attrs="{'invisible': [('is_chapter_membership', '=', False)]}">
+                            <group name="chapter_left">
+                                <field name="is_chapter_membership" invisible="1"/>
+                                <field name="requires_primary_membership"/>
+                            </group>
+                            <group name="chapter_right">
+                            </group>
+                        </group>
+
+                        <separator string="Required Primary Memberships" attrs="{'invisible': [('requires_primary_membership', '=', False)]}"/>
+                        <field name="primary_membership_product_ids" nolabel="1" attrs="{'invisible': [('requires_primary_membership', '=', False)]}" domain="[('is_membership_product', '=', True)]">
+                            <tree>
+                                <field name="name"/>
+                                <field name="list_price"/>
+                                <field name="subscription_product_type"/>
+                            </tree>
+                        </field>
+
+                        <separator string="Associated Chapters" attrs="{'invisible': [('is_chapter_membership', '=', False)]}"/>
+                        <field name="chapter_ids" nolabel="1" attrs="{'invisible': [('is_chapter_membership', '=', False)]}">
+                            <tree>
+                                <field name="name"/>
+                            </tree>
+                        </field>
+
+                        <group name="portal_config" string="Portal Configuration">
+                            <group name="portal_left">
+                                <field name="portal_access_level"/>
+                            </group>
+                            <group name="portal_right">
+                                <field name="portal_features" widget="ace" options="{'mode': 'json'}"/>
+                            </group>
+                        </group>
+
+                        <group name="eligibility" string="Eligibility &amp; Approval">
+                            <group name="elig_left">
+                                <field name="requires_eligibility_verification"/>
+                                <field name="requires_approval"/>
+                            </group>
+                            <group name="elig_right">
+                                <field name="max_members"/>
+                                <field name="current_member_count" readonly="1"/>
+                                <field name="is_at_capacity" readonly="1"/>
+                            </group>
+                        </group>
+
+                        <separator string="Eligibility Criteria"/>
+                        <field name="eligibility_criteria" placeholder="Describe eligibility requirements for this membership..."/>
+
+                        <group name="progression" string="Upgrade/Downgrade Paths">
+                            <group name="upgrade">
+                                <label for="upgrade_product_ids"/>
+                                <field name="upgrade_product_ids" nolabel="1" widget="many2many_tags" domain="[('is_membership_product', '=', True)]"/>
+                            </group>
+                            <group name="downgrade">
+                                <label for="downgrade_product_ids"/>
+                                <field name="downgrade_product_ids" nolabel="1" widget="many2many_tags" domain="[('is_membership_product', '=', True)]"/>
+                            </group>
+                        </group>
+
+                        <separator string="Membership Description (for Portal/Website)"/>
+                        <field name="membership_description_html"/>
+
+                    </page>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- Extend Product Tree View -->
+        <record id="view_product_template_membership_tree" model="ir.ui.view">
+            <field name="name">product.template.membership.tree</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_tree_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='name']" position="after">
+                    <field name="is_membership_product" optional="show"/>
+                    <field name="subscription_product_type" optional="show"/>
+                    <field name="current_member_count" optional="hide"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Extend Product Search View -->
+        <record id="view_product_template_membership_search" model="ir.ui.view">
+            <field name="name">product.template.membership.search</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_search_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//filter[@name='filter_to_sell']" position="after">
+                    <filter string="Membership Products" name="membership_products" domain="[('is_membership_product', '=', True)]"/>
+                    <separator/>
+                    <filter string="Individual Membership" name="individual_membership" domain="[('subscription_product_type', '=', 'membership')]"/>
+                    <filter string="Organizational Membership" name="org_membership" domain="[('subscription_product_type', '=', 'organizational_membership')]"/>
+                    <filter string="Chapter Membership" name="chapter_membership" domain="[('subscription_product_type', '=', 'chapter')]"/>
+                    <filter string="Seat Products" name="seat_products" domain="[('subscription_product_type', '=', 'seat')]"/>
+                    <separator/>
+                    <filter string="At Capacity" name="at_capacity" domain="[('is_at_capacity', '=', True)]"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Action to View Active Members for Product -->
+        <record id="action_product_view_members" model="ir.actions.act_window">
+            <field name="name">Members</field>
+            <field name="res_model">membership.record</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('product_id', '=', active_id)]</field>
+            <field name="context">{'default_product_id': active_id, 'search_default_active': 1}</field>
+        </record>
+
+        <!-- Add Smart Button to Product Form -->
+        <record id="view_product_template_membership_button" model="ir.ui.view">
+            <field name="name">product.template.membership.button</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_only_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_members" type="object" class="oe_stat_button" icon="fa-users" attrs="{'invisible': [('is_membership_product', '=', False)]}">
+                        <field name="current_member_count" widget="statinfo" string="Members"/>
+                    </button>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

@@ -1,64 +1,225 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="1">
-        <!-- Categories -->
+    <data noupdate="0">
+
+        <!-- ========================================== -->
+        <!-- MODULE CATEGORY -->
+        <!-- ========================================== -->
+        
         <record id="module_category_membership" model="ir.module.category">
-            <field name="name">Membership Management</field>
-            <field name="description">Comprehensive membership and association management</field>
+            <field name="name">Membership</field>
+            <field name="description">Manage membership features and access rights</field>
             <field name="sequence">10</field>
         </record>
 
-        <!-- Groups -->
+        <!-- ========================================== -->
+        <!-- SECURITY GROUPS -->
+        <!-- ========================================== -->
+
+        <!-- Member (Portal User) -->
+        <record id="group_membership_member" model="res.groups">
+            <field name="name">Member (Portal)</field>
+            <field name="category_id" ref="module_category_membership"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="comment">Portal members can view their own membership information</field>
+        </record>
+
+        <!-- Membership User -->
         <record id="group_membership_user" model="res.groups">
-            <field name="name">User</field>
+            <field name="name">Membership User</field>
             <field name="category_id" ref="module_category_membership"/>
             <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
-            <field name="comment">Basic member access - can view their own membership data</field>
+            <field name="comment">Can view and create memberships, limited editing</field>
         </record>
 
+        <!-- Membership Manager -->
         <record id="group_membership_manager" model="res.groups">
-            <field name="name">Manager</field>
+            <field name="name">Membership Manager</field>
             <field name="category_id" ref="module_category_membership"/>
             <field name="implied_ids" eval="[(4, ref('group_membership_user'))]"/>
-            <field name="comment">Full membership management access including configuration</field>
+            <field name="comment">Full access to membership management</field>
         </record>
 
-        <!-- Record Rules -->
-        <record id="membership_user_rule" model="ir.rule">
-            <field name="name">Membership: User Access</field>
-            <field name="model_id" ref="model_membership_membership"/>
-            <field name="domain_force">['|', ('partner_id.user_ids', 'in', [user.id]), ('company_id', '=', user.company_id.id)]</field>
-            <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
+        <!-- Organization Admin -->
+        <record id="group_organization_admin" model="res.groups">
+            <field name="name">Organization Admin</field>
+            <field name="category_id" ref="module_category_membership"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="comment">Portal admins for organizational memberships can manage their organization's seats</field>
         </record>
 
-        <record id="membership_manager_rule" model="ir.rule">
-            <field name="name">Membership: Manager Access</field>
-            <field name="model_id" ref="model_membership_membership"/>
-            <field name="domain_force">[(1, '=', 1)]</field>
-            <field name="groups" eval="[(4, ref('group_membership_manager'))]"/>
-        </record>
+        <!-- ========================================== -->
+        <!-- RECORD RULES - MEMBERSHIP.RECORD -->
+        <!-- ========================================== -->
 
-        <!-- Partner Record Rules -->
-        <record id="rule_partner_member_own_data" model="ir.rule">
-            <field name="name">Members: Own Data Only</field>
-            <field name="model_id" ref="base.model_res_partner"/>
-            <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
-            <field name="domain_force">[('id', '=', user.partner_id.id)]</field>
+        <!-- Members can see their own memberships -->
+        <record id="membership_record_member_rule" model="ir.rule">
+            <field name="name">Member: Own Memberships</field>
+            <field name="model_id" ref="model_membership_record"/>
+            <field name="domain_force">[('partner_id.user_ids', 'in', [user.id])]</field>
+            <field name="groups" eval="[(4, ref('group_membership_member'))]"/>
             <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="True"/>
+            <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="False"/>
             <field name="perm_unlink" eval="False"/>
         </record>
 
-        <record id="rule_partner_manager_all_data" model="ir.rule">
-            <field name="name">Managers: All Member Data</field>
-            <field name="model_id" ref="base.model_res_partner"/>
-            <field name="groups" eval="[(4, ref('group_membership_manager'))]"/>
+        <!-- Membership Users can see all memberships -->
+        <record id="membership_record_user_rule" model="ir.rule">
+            <field name="name">User: All Memberships</field>
+            <field name="model_id" ref="model_membership_record"/>
             <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Membership Managers have full access -->
+        <record id="membership_record_manager_rule" model="ir.rule">
+            <field name="name">Manager: All Memberships</field>
+            <field name="model_id" ref="model_membership_record"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_manager'))]"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
             <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Organization Admins can see their organization's memberships -->
+        <record id="membership_record_org_admin_rule" model="ir.rule">
+            <field name="name">Org Admin: Organization Memberships</field>
+            <field name="model_id" ref="model_membership_record"/>
+            <field name="domain_force">[
+                '|',
+                    ('partner_id.user_ids', 'in', [user.id]),
+                    '&amp;',
+                        ('parent_membership_id.partner_id.user_ids', 'in', [user.id]),
+                        ('is_organizational_child', '=', True)
+            ]</field>
+            <field name="groups" eval="[(4, ref('group_organization_admin'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- RECORD RULES - MEMBERSHIP.CATEGORY -->
+        <!-- ========================================== -->
+
+        <!-- All portal users can see categories -->
+        <record id="membership_category_portal_rule" model="ir.rule">
+            <field name="name">Portal: View Categories</field>
+            <field name="model_id" ref="model_membership_category"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Membership Users can manage categories -->
+        <record id="membership_category_user_rule" model="ir.rule">
+            <field name="name">User: Manage Categories</field>
+            <field name="model_id" ref="model_membership_category"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Membership Managers have full access to categories -->
+        <record id="membership_category_manager_rule" model="ir.rule">
+            <field name="name">Manager: Full Category Access</field>
+            <field name="model_id" ref="model_membership_category"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- RECORD RULES - MEMBERSHIP.FEATURE -->
+        <!-- ========================================== -->
+
+        <!-- All portal users can see features -->
+        <record id="membership_feature_portal_rule" model="ir.rule">
+            <field name="name">Portal: View Features</field>
+            <field name="model_id" ref="model_membership_feature"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Membership Managers can manage features -->
+        <record id="membership_feature_manager_rule" model="ir.rule">
+            <field name="name">Manager: Manage Features</field>
+            <field name="model_id" ref="model_membership_feature"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- RECORD RULES - MEMBERSHIP.BENEFIT -->
+        <!-- ========================================== -->
+
+        <!-- All portal users can see benefits -->
+        <record id="membership_benefit_portal_rule" model="ir.rule">
+            <field name="name">Portal: View Benefits</field>
+            <field name="model_id" ref="model_membership_benefit"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Membership Managers can manage benefits -->
+        <record id="membership_benefit_manager_rule" model="ir.rule">
+            <field name="name">Manager: Manage Benefits</field>
+            <field name="model_id" ref="model_membership_benefit"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- RECORD RULES - RES.PARTNER -->
+        <!-- ========================================== -->
+
+        <!-- Members can see their own contact info -->
+        <record id="partner_member_rule" model="ir.rule">
+            <field name="name">Member: Own Contact</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="domain_force">[
+                '|',
+                    ('user_ids', 'in', [user.id]),
+                    ('id', 'child_of', [user.partner_id.commercial_partner_id.id])
+            ]</field>
+            <field name="groups" eval="[(4, ref('group_membership_member'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
         </record>
 
     </data>

@@ -13,6 +13,8 @@ class AMSMemberType(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'sequence, name'
 
+    # ... [Keep all the field definitions exactly as they are until _create_default_product method]
+    
     # Basic Information
     name = fields.Char('Member Type', required=True, tracking=True)
     code = fields.Char('Code', required=True, tracking=True)
@@ -232,6 +234,13 @@ class AMSMemberType(models.Model):
         
         return super().write(vals)
 
+    def _get_product_class_label(self):
+        """Get the human-readable label for product_class"""
+        self.ensure_one()
+        # Get the selection field definition
+        selection_dict = dict(self._fields['product_class'].selection)
+        return selection_dict.get(self.product_class, self.product_class)
+
     def _create_default_product(self):
         """Create default product for this member type"""
         self.ensure_one()
@@ -239,21 +248,20 @@ class AMSMemberType(models.Model):
         if self.default_product_id:
             return self.default_product_id
         
+        # Get the product class label
+        product_class_label = self._get_product_class_label()
+        
         product_vals = {
-            'name': f"{self.name} - {self.get_product_class_display()}",
+            'name': f"{self.name} - {product_class_label}",
             'type': 'service',
-            'is_subscription_product': True,
-            'product_class': self.product_class,
-            'member_type_id': self.id,
             'list_price': self.base_annual_fee,
-            'recurrence_period': self.recurrence_period,
-            'membership_period_type': self.membership_period_type,
-            'membership_duration': self.membership_duration,
+            'description_sale': self.description or f"{self.name} membership",
         }
         
         try:
             product = self.env['product.template'].create(product_vals)
             self.default_product_id = product.id
+            _logger.info(f"Created product {product.name} for member type {self.name}")
             return product
         except Exception as e:
             _logger.warning(f"Failed to create default product for member type {self.name}: {str(e)}")

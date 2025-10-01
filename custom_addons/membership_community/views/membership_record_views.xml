@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ========================================== -->
+        <!-- MEMBERSHIP RECORD VIEWS -->
+        <!-- ========================================== -->
+
+        <!-- Tree View -->
+        <record id="view_membership_record_tree" model="ir.ui.view">
+            <field name="name">membership.record.tree</field>
+            <field name="model">membership.record</field>
+            <field name="arch" type="xml">
+                <tree string="Memberships" decoration-success="state=='active'" decoration-muted="state in ('expired','cancelled')" decoration-warning="state=='pending'">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="membership_category_id"/>
+                    <field name="product_id"/>
+                    <field name="start_date"/>
+                    <field name="end_date"/>
+                    <field name="days_until_expiry" optional="show"/>
+                    <field name="state" decoration-success="state=='active'" decoration-warning="state=='pending'" decoration-danger="state in ('expired','cancelled')"/>
+                    <field name="amount" sum="Total Amount" widget="monetary" optional="show"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="source_type" optional="hide"/>
+                    <field name="is_organizational_parent" optional="hide"/>
+                    <field name="child_membership_count" optional="hide"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Form View -->
+        <record id="view_membership_record_form" model="ir.ui.view">
+            <field name="name">membership.record.form</field>
+            <field name="model">membership.record</field>
+            <field name="arch" type="xml">
+                <form string="Membership">
+                    <header>
+                        <button name="action_activate" string="Activate" type="object" states="draft,pending" class="oe_highlight"/>
+                        <button name="action_suspend" string="Suspend" type="object" states="active" confirm="Are you sure you want to suspend this membership?"/>
+                        <button name="action_cancel" string="Cancel" type="object" states="draft,pending,active,suspended" confirm="Are you sure you want to cancel this membership?"/>
+                        <button name="action_renew" string="Renew" type="object" attrs="{'invisible': [('can_renew', '=', False)]}" class="oe_highlight"/>
+                        <button name="action_create_invoice" string="Create Invoice" type="object" attrs="{'invisible': ['|', ('invoice_id', '!=', False), ('state', '=', 'draft')]}"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,pending,active,expired"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_memberships" type="object" class="oe_stat_button" icon="fa-history" attrs="{'invisible': [('previous_membership_id', '=', False)]}">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_text">History</span>
+                                </div>
+                            </button>
+                            <button name="action_view_memberships" type="object" class="oe_stat_button" icon="fa-users" attrs="{'invisible': [('child_membership_count', '=', 0)]}">
+                                <field name="child_membership_count" widget="statinfo" string="Seats"/>
+                            </button>
+                        </div>
+
+                        <widget name="web_ribbon" title="Expired" bg_color="bg-danger" attrs="{'invisible': [('state', '!=', 'expired')]}"/>
+                        <widget name="web_ribbon" title="Active" bg_color="bg-success" attrs="{'invisible': [('state', '!=', 'active')]}"/>
+
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" readonly="1"/>
+                            </h1>
+                        </div>
+
+                        <group>
+                            <group name="member_info" string="Member Information">
+                                <field name="partner_id" options="{'no_create': True}"/>
+                                <field name="membership_category_id" options="{'no_create': True}"/>
+                                <field name="member_type" readonly="1"/>
+                                <field name="join_date"/>
+                            </group>
+                            <group name="membership_info" string="Membership Details">
+                                <field name="product_id" options="{'no_create': True}"/>
+                                <field name="subscription_id" readonly="1" attrs="{'invisible': [('subscription_id', '=', False)]}"/>
+                                <field name="membership_year_type"/>
+                                <field name="anniversary_month" attrs="{'invisible': [('membership_year_type', '!=', 'anniversary')]}"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group name="dates" string="Dates">
+                                <field name="start_date"/>
+                                <field name="end_date"/>
+                                <field name="renewal_date" attrs="{'invisible': [('renewal_date', '=', False)]}"/>
+                                <field name="days_until_expiry" attrs="{'invisible': [('state', '!=', 'active')]}"/>
+                            </group>
+                            <group name="financial" string="Financial">
+                                <field name="amount" widget="monetary"/>
+                                <field name="currency_id" invisible="1"/>
+                                <field name="invoice_id" readonly="1"/>
+                                <field name="payment_state" readonly="1" attrs="{'invisible': [('invoice_id', '=', False)]}"/>
+                            </group>
+                        </group>
+
+                        <group name="portal_access" string="Portal Access">
+                            <field name="portal_enabled"/>
+                            <field name="portal_access_level" attrs="{'invisible': [('portal_enabled', '=', False)]}"/>
+                        </group>
+
+                        <notebook>
+                            <page name="source" string="Source &amp; History">
+                                <group>
+                                    <group name="source" string="Source Information">
+                                        <field name="source_type"/>
+                                        <field name="source_model" readonly="1" attrs="{'invisible': [('source_model', '=', False)]}"/>
+                                        <field name="source_id" readonly="1" attrs="{'invisible': [('source_id', '=', False)]}"/>
+                                    </group>
+                                    <group name="history" string="Renewal History">
+                                        <field name="previous_membership_id" readonly="1"/>
+                                        <field name="renewed_membership_id" readonly="1"/>
+                                        <field name="can_renew" readonly="1"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="organizational" string="Organizational" attrs="{'invisible': ['&amp;', ('is_organizational_parent', '=', False), ('is_organizational_child', '=', False)]}">
+                                <group>
+                                    <group string="Hierarchy">
+                                        <field name="is_organizational_parent"/>
+                                        <field name="is_organizational_child"/>
+                                        <field name="parent_membership_id" attrs="{'invisible': [('is_organizational_child', '=', False)]}"/>
+                                    </group>
+                                </group>
+                                <field name="child_membership_ids" attrs="{'invisible': [('is_organizational_parent', '=', False)]}">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="partner_id"/>
+                                        <field name="start_date"/>
+                                        <field name="end_date"/>
+                                        <field name="state"/>
+                                    </tree>
+                                </field>
+                            </page>
+
+                            <page name="features" string="Module Features">
+                                <group>
+                                    <group string="Professional Module">
+                                        <field name="has_professional_profile" readonly="1"/>
+                                    </group>
+                                    <group string="Organizational Module">
+                                        <field name="has_organizational_seat" readonly="1"/>
+                                    </group>
+                                </group>
+                                <separator string="Extension Data"/>
+                                <field name="extension_data" widget="ace" options="{'mode': 'json'}"/>
+                            </page>
+
+                            <page name="eligibility" string="Eligibility &amp; Verification">
+                                <group>
+                                    <group string="Verification">
+                                        <field name="eligibility_verified"/>
+                                        <field name="eligibility_verified_by" attrs="{'invisible': [('eligibility_verified', '=', False)]}"/>
+                                        <field name="eligibility_verified_date" attrs="{'invisible': [('eligibility_verified', '=', False)]}"/>
+                                    </group>
+                                    <group string="Requirements">
+                                        <field name="requirements_met" widget="ace" options="{'mode': 'json'}"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page name="notes" string="Notes">
+                                <field name="notes" placeholder="Internal notes about this membership..."/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!-- Search View -->
+        <record id="view_membership_record_search" model="ir.ui.view">
+            <field name="name">membership.record.search</field>
+            <field name="model">membership.record</field>
+            <field name="arch" type="xml">
+                <search string="Memberships">
+                    <field name="name" string="Membership Number"/>
+                    <field name="partner_id" string="Member"/>
+                    <field name="product_id" string="Membership Product"/>
+                    <field name="membership_category_id" string="Category"/>
+                    
+                    <filter string="Active" name="active" domain="[('state', '=', 'active')]"/>
+                    <filter string="Pending" name="pending" domain="[('state', '=', 'pending')]"/>
+                    <filter string="Expired" name="expired" domain="[('state', '=', 'expired')]"/>
+                    <filter string="Renewal Due" name="renewal_due" domain="[('can_renew', '=', True)]"/>
+                    <filter string="Expiring Soon" name="expiring_soon" domain="[('days_until_expiry', '&lt;=', 30), ('days_until_expiry', '&gt;', 0)]"/>
+                    
+                    <separator/>
+                    <filter string="Individual" name="individual" domain="[('member_type', '=', 'individual')]"/>
+                    <filter string="Organizational" name="organizational" domain="[('member_type', '=', 'organizational')]"/>
+                    <filter string="Student" name="student" domain="[('member_type', '=', 'student')]"/>
+                    
+                    <separator/>
+                    <filter string="Has Subscription" name="has_subscription" domain="[('subscription_id', '!=', False)]"/>
+                    <filter string="Organizational Parent" name="org_parent" domain="[('is_organizational_parent', '=', True)]"/>
+                    <filter string="Organizational Child" name="org_child" domain="[('is_organizational_child', '=', True)]"/>
+                    
+                    <separator/>
+                    <filter string="Calendar Year" name="calendar_year" domain="[('membership_year_type', '=', 'calendar')]"/>
+                    <filter string="Anniversary Year" name="anniversary_year" domain="[('membership_year_type', '=', 'anniversary')]"/>
+                    
+                    <group expand="0" string="Group By">
+                        <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+                        <filter string="Member" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                        <filter string="Product" name="group_product" context="{'group_by': 'product_id'}"/>
+                        <filter string="Category" name="group_category" context="{'group_by': 'membership_category_id'}"/>
+                        <filter string="Source Type" name="group_source" context="{'group_by': 'source_type'}"/>
+                        <filter string="Start Date" name="group_start_date" context="{'group_by': 'start_date'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Kanban View -->
+        <record id="view_membership_record_kanban" model="ir.ui.view">
+            <field name="name">membership.record.kanban</field>
+            <field name="model">membership.record</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_mobile">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="product_id"/>
+                    <field name="membership_category_id"/>
+                    <field name="state"/>
+                    <field name="start_date"/>
+                    <field name="end_date"/>
+                    <field name="amount"/>
+                    <field name="currency_id"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_global_click">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title"><field name="name"/></strong>
+                                        <br/>
+                                        <span class="o_kanban_record_subtitle">
+                                            <field name="partner_id"/>
+                                        </span>
+                                    </div>
+                                    <span class="float-right">
+                                        <field name="state" widget="label_selection" options="{'classes': {'active': 'success', 'pending': 'warning', 'expired': 'danger'}}"/>
+                                    </span>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <field name="product_id"/>
+                                    <br/>
+                                    <field name="membership_category_id"/>
+                                </div>
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <span><i class="fa fa-calendar"/> <field name="end_date"/></span>
+                                    </div>
+                                    <div class="oe_kanban_bottom_right">
+                                        <field name="amount" widget="monetary"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- Calendar View -->
+        <record id="view_membership_record_calendar" model="ir.ui.view">
+            <field name="name">membership.record.calendar</field>
+            <field name="model">membership.record</field>
+            <field name="arch" type="xml">
+                <calendar string="Memberships" date_start="start_date" date_stop="end_date" color="state" mode="month">
+                    <field name="partner_id"/>
+                    <field name="product_id"/>
+                    <field name="state"/>
+                </calendar>
+            </field>
+        </record>
+
+        <!-- Pivot View -->
+        <record id="view_membership_record_pivot" model="ir.ui.view">
+            <field name="name">membership.record.pivot</field>
+            <field name="model">membership.record</field>
+            <field name="arch" type="xml">
+                <pivot string="Membership Analysis">
+                    <field name="membership_category_id" type="row"/>
+                    <field name="state" type="col"/>
+                    <field name="amount" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <!-- Graph View -->
+        <record id="view_membership_record_graph" model="ir.ui.view">
+            <field name="name">membership.record.graph</field>
+            <field name="model">membership.record</field>
+            <field name="arch" type="xml">
+                <graph string="Membership Statistics" type="bar">
+                    <field name="membership_category_id"/>
+                    <field name="amount" type="measure"/>
+                </graph>
+            </field>
+        </record>
+
+        <!-- Actions -->
+        <record id="action_membership_record" model="ir.actions.act_window">
+            <field name="name">Memberships</field>
+            <field name="res_model">membership.record</field>
+            <field name="view_mode">tree,form,kanban,calendar,pivot,graph</field>
+            <field name="search_view_id" ref="view_membership_record_search"/>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first membership record
+                </p>
+                <p>
+                    Track individual and organizational memberships with integrated subscription billing.
+                </p>
+            </field>
+        </record>
+
+        <record id="action_membership_record_active" model="ir.actions.act_window">
+            <field name="name">Active Memberships</field>
+            <field name="res_model">membership.record</field>
+            <field name="view_mode">tree,form,kanban</field>
+            <field name="domain">[('state', '=', 'active')]</field>
+            <field name="context">{'search_default_active': 1}</field>
+        </record>
+
+        <record id="action_membership_record_renewal" model="ir.actions.act_window">
+            <field name="name">Memberships Due for Renewal</field>
+            <field name="res_model">membership.record</field>
+            <field name="view_mode">tree,form,kanban</field>
+            <field name="domain">[('can_renew', '=', True)]</field>
+            <field name="context">{'search_default_renewal_due': 1}</field>
+        </record>
+
+    </data>
+</odoo>

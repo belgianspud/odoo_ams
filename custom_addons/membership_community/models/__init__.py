@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# AMS Foundation models
-from . import ams_settings
-from . import ams_member_type
-from . import ams_engagement_rule
-
-# Membership Community models
-from . import membership
-from . import membership_payment
-from . import account_move
-
-# Partner integration (merged functionality)
+from . import membership_record
+from . import membership_category
+from . import membership_feature
+from . import membership_benefit
+from . import product_template
 from . import res_partner
