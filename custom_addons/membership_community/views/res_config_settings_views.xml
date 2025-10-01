@@ -7,67 +7,61 @@
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="base.res_config_settings_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//div[hasclass('settings')]" position="inside">
-                <div class="app_settings_block" data-string="Membership" 
-                     string="Membership" data-key="membership_community">
+            <xpath expr="//form" position="inside">
+                <app string="Membership" name="membership_community" groups="membership_community.group_membership_manager">
                     
-                    <h2>Membership Lifecycle Management</h2>
-                    
-                    <div class="row mt16 o_settings_container">
-                        <div class="col-12 col-lg-6 o_setting_box">
-                            <div class="o_setting_left_pane">
-                                <field name="membership_grace_period_days"/>
-                            </div>
-                            <div class="o_setting_right_pane">
-                                <label for="membership_grace_period_days"/>
-                                <div class="text-muted">
-                                    Number of days after expiry before suspension
-                                </div>
-                                <div class="content-group">
-                                    <div class="mt16">
-                                        <field name="membership_grace_send_email" class="o_light_label"/>
-                                        <label for="membership_grace_send_email"/>
-                                    </div>
-                                    <div class="mt8" invisible="not membership_grace_send_email">
-                                        <label for="membership_grace_email_frequency" class="o_light_label"/>
-                                        <field name="membership_grace_email_frequency"/>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <block title="Membership Lifecycle Management" name="membership_lifecycle">
                         
-                        <div class="col-12 col-lg-6 o_setting_box">
-                            <div class="o_setting_left_pane">
-                                <field name="membership_suspend_period_days"/>
-                            </div>
-                            <div class="o_setting_right_pane">
-                                <label for="membership_suspend_period_days"/>
+                        <setting id="membership_grace_period" string="Grace Period">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label for="membership_grace_period_days" class="col-lg-3 o_light_label"/>
+                                    <field name="membership_grace_period_days"/>
+                                </div>
                                 <div class="text-muted">
-                                    Number of days in suspension before termination
+                                    Number of days after expiry before suspension. Member retains full access during grace period.
                                 </div>
-                                <div class="content-group">
-                                    <div class="mt16">
-                                        <field name="membership_suspend_restrict_portal" class="o_light_label"/>
-                                        <label for="membership_suspend_restrict_portal"/>
-                                    </div>
-                                    <div class="mt8">
-                                        <field name="membership_suspend_send_email" class="o_light_label"/>
-                                        <label for="membership_suspend_send_email"/>
-                                    </div>
+                                <div class="mt16">
+                                    <field name="membership_grace_send_email" class="o_light_label"/>
+                                    <label for="membership_grace_send_email"/>
+                                </div>
+                                <div class="mt8" invisible="not membership_grace_send_email">
+                                    <label for="membership_grace_email_frequency" class="o_light_label"/>
+                                    <field name="membership_grace_email_frequency"/>
                                 </div>
                             </div>
-                        </div>
+                        </setting>
                         
-                        <div class="col-12 col-lg-6 o_setting_box">
-                            <div class="o_setting_left_pane">
-                                <field name="membership_terminate_period_days"/>
-                            </div>
-                            <div class="o_setting_right_pane">
-                                <label for="membership_terminate_period_days"/>
-                                <div class="text-muted">
-                                    Total days before final termination
+                        <setting id="membership_suspend_period" string="Suspension Period">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label for="membership_suspend_period_days" class="col-lg-3 o_light_label"/>
+                                    <field name="membership_suspend_period_days"/>
                                 </div>
-                                <div class="alert alert-info mt8" role="alert">
+                                <div class="text-muted">
+                                    Number of days in suspension before termination. Member has limited access during suspension.
+                                </div>
+                                <div class="mt16">
+                                    <field name="membership_suspend_restrict_portal" class="o_light_label"/>
+                                    <label for="membership_suspend_restrict_portal"/>
+                                </div>
+                                <div class="mt8">
+                                    <field name="membership_suspend_send_email" class="o_light_label"/>
+                                    <label for="membership_suspend_send_email"/>
+                                </div>
+                            </div>
+                        </setting>
+                        
+                        <setting id="membership_terminate_period" string="Termination Period">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label for="membership_terminate_period_days" class="col-lg-3 o_light_label"/>
+                                    <field name="membership_terminate_period_days"/>
+                                </div>
+                                <div class="text-muted">
+                                    Total days before final termination. After this period, membership is permanently terminated.
+                                </div>
+                                <div class="alert alert-info mt16" role="alert">
                                     <strong>Timeline:</strong> After expiry, members go through:
                                     <ul class="mb-0 mt-2">
                                         <li>Grace Period (full access with warnings)</li>
@@ -76,9 +70,10 @@
                                     </ul>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
+                        </setting>
+                        
+                    </block>
+                </app>
             </xpath>
         </field>
     </record>

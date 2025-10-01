@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ========================================== -->
+        <!-- MEMBERSHIP CATEGORIES -->
+        <!-- ========================================== -->
+
+        <!-- Individual Member Categories -->
+        <record id="category_individual_standard" model="membership.category">
+            <field name="name">Individual Standard Member</field>
+            <field name="code">IND-STD</field>
+            <field name="sequence">10</field>
+            <field name="category_type">individual</field>
+            <field name="member_tier">standard</field>
+            <field name="is_voting_member" eval="True"/>
+            <field name="is_full_member" eval="True"/>
+            <field name="default_portal_access">standard</field>
+            <field name="requires_verification" eval="False"/>
+            <field name="color">3</field>
+            <field name="description">Standard individual membership with full voting rights and access to all member benefits.</field>
+        </record>
+
+        <record id="category_individual_premium" model="membership.category">
+            <field name="name">Individual Premium Member</field>
+            <field name="code">IND-PREM</field>
+            <field name="sequence">20</field>
+            <field name="category_type">individual</field>
+            <field name="member_tier">premium</field>
+            <field name="is_voting_member" eval="True"/>
+            <field name="is_full_member" eval="True"/>
+            <field name="default_portal_access">premium</field>
+            <field name="requires_verification" eval="False"/>
+            <field name="color">5</field>
+            <field name="description">Premium individual membership with enhanced benefits and priority access to events.</field>
+        </record>
+
+        <record id="category_individual_basic" model="membership.category">
+            <field name="name">Individual Basic Member</field>
+            <field name="code">IND-BASIC</field>
+            <field name="sequence">30</field>
+            <field name="category_type">individual</field>
+            <field name="member_tier">basic</field>
+            <field name="is_voting_member" eval="False"/>
+            <field name="is_full_member" eval="False"/>
+            <field name="default_portal_access">basic</field>
+            <field name="requires_verification" eval="False"/>
+            <field name="color">7</field>
+            <field name="description">Basic individual membership with limited benefits and no voting rights.</field>
+        </record>
+
+        <!-- Organizational Member Category -->
+        <record id="category_organizational" model="membership.category">
+            <field name="name">Organizational Member</field>
+            <field name="code">ORG</field>
+            <field name="sequence">40</field>
+            <field name="category_type">organizational</field>
+            <field name="member_tier">premium</field>
+            <field name="is_voting_member" eval="True"/>
+            <field name="is_full_member" eval="True"/>
+            <field name="default_portal_access">premium</field>
+            <field name="requires_verification" eval="True"/>
+            <field name="color">9</field>
+            <field name="description">Corporate or organizational membership with multiple user seats and enhanced benefits.</field>
+        </record>
+
+        <!-- Chapter Member Category -->
+        <record id="category_chapter" model="membership.category">
+            <field name="name">Chapter Member</field>
+            <field name="code">CHAP</field>
+            <field name="sequence">50</field>
+            <field name="category_type">chapter</field>
+            <field name="member_tier">standard</field>
+            <field name="is_voting_member" eval="True"/>
+            <field name="is_full_member" eval="True"/>
+            <field name="default_portal_access">standard</field>
+            <field name="requires_verification" eval="True"/>
+            <field name="color">2</field>
+            <field name="description">Regional chapter membership with local benefits and national access.</field>
+        </record>
+
+    </data>
+</odoo>

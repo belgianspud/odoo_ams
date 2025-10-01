@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- ========================================== -->
+        <!-- DEFAULT MEMBERSHIP CATEGORIES -->
+        <!-- Essential placeholders for initial setup -->
+        <!-- ========================================== -->
+
+        <!-- Standard Individual Member -->
+        <record id="membership_category_individual_default" model="membership.category">
+            <field name="name">Individual Member</field>
+            <field name="code">INDIVIDUAL</field>
+            <field name="sequence">10</field>
+            <field name="category_type">individual</field>
+            <field name="member_tier">standard</field>
+            <field name="is_voting_member" eval="True"/>
+            <field name="is_full_member" eval="True"/>
+            <field name="default_portal_access">standard</field>
+            <field name="requires_verification" eval="False"/>
+            <field name="color">3</field>
+            <field name="description">Standard individual membership</field>
+        </record>
+
+        <!-- Organizational Member -->
+        <record id="membership_category_organizational_default" model="membership.category">
+            <field name="name">Organizational Member</field>
+            <field name="code">ORGANIZATION</field>
+            <field name="sequence">20</field>
+            <field name="category_type">organizational</field>
+            <field name="member_tier">premium</field>
+            <field name="is_voting_member" eval="True"/>
+            <field name="is_full_member" eval="True"/>
+            <field name="default_portal_access">premium</field>
+            <field name="requires_verification" eval="True"/>
+            <field name="color">5</field>
+            <field name="description">Corporate or organizational membership</field>
+        </record>
+
+        <!-- Chapter Member -->
+        <record id="membership_category_chapter_default" model="membership.category">
+            <field name="name">Chapter Member</field>
+            <field name="code">CHAPTER</field>
+            <field name="sequence">30</field>
+            <field name="category_type">chapter</field>
+            <field name="member_tier">standard</field>
+            <field name="is_voting_member" eval="True"/>
+            <field name="is_full_member" eval="True"/>
+            <field name="default_portal_access">standard</field>
+            <field name="requires_verification" eval="True"/>
+            <field name="color">2</field>
+            <field name="description">Regional chapter membership</field>
+        </record>
+
+    </data>
+</odoo>

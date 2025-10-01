@@ -39,16 +39,29 @@ Note: Install specialized modules for specific membership types.
         'security/membership_security.xml',
         'security/ir.model.access.csv',
         
-        # Core Views - No data files
+        # Data files - Load before views
+        'data/membership_category_data.xml',
+        'data/membership_feature_data.xml',
+        'data/membership_benefit_data.xml',
+        'data/product_template_data.xml',
+        'data/membership_cron.xml',
+        'data/membership_email_templates.xml',
+        
+        # Core Views
         'views/membership_category_views.xml',
         'views/membership_feature_views.xml',
         'views/membership_benefit_views.xml',
         'views/product_template_views.xml',
         'views/subscription_views.xml',
         'views/res_partner_views.xml',
+        'views/res_config_settings_views.xml',
         'views/menu_views.xml',
     ],
-    'demo': [],
+    'demo': [
+        'demo/membership_category_demo.xml',
+        'demo/membership_feature_demo.xml',
+        'demo/membership_benefit_demo.xml',
+    ],
     'installable': True,
     'application': True,
     'auto_install': False,

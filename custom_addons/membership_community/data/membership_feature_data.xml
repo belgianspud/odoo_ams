@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- ========================================== -->
+        <!-- DEFAULT MEMBERSHIP FEATURES -->
+        <!-- Essential features for basic functionality -->
+        <!-- ========================================== -->
+
+        <!-- Portal Access -->
+        <record id="feature_portal_access" model="membership.feature">
+            <field name="name">Portal Access</field>
+            <field name="code">PORTAL_ACCESS</field>
+            <field name="sequence">10</field>
+            <field name="category">portal</field>
+            <field name="feature_type">boolean</field>
+            <field name="is_premium_feature" eval="False"/>
+            <field name="icon">fa-user-circle</field>
+            <field name="color">1</field>
+            <field name="description">Access to member portal</field>
+            <field name="default_value">true</field>
+        </record>
+
+        <!-- Directory Listing -->
+        <record id="feature_directory" model="membership.feature">
+            <field name="name">Directory Listing</field>
+            <field name="code">DIRECTORY</field>
+            <field name="sequence">20</field>
+            <field name="category">directory</field>
+            <field name="feature_type">boolean</field>
+            <field name="is_premium_feature" eval="False"/>
+            <field name="icon">fa-address-book</field>
+            <field name="color">2</field>
+            <field name="description">Member directory listing</field>
+            <field name="default_value">true</field>
+        </record>
+
+        <!-- Event Registration -->
+        <record id="feature_event_registration" model="membership.feature">
+            <field name="name">Event Registration</field>
+            <field name="code">EVENT_REGISTRATION</field>
+            <field name="sequence">30</field>
+            <field name="category">event</field>
+            <field name="feature_type">boolean</field>
+            <field name="is_premium_feature" eval="False"/>
+            <field name="icon">fa-calendar</field>
+            <field name="color">3</field>
+            <field name="description">Register for member events</field>
+            <field name="default_value">true</field>
+        </record>
+
+        <!-- Publications -->
+        <record id="feature_publications" model="membership.feature">
+            <field name="name">Publication Access</field>
+            <field name="code">PUBLICATIONS</field>
+            <field name="sequence">40</field>
+            <field name="category">publication</field>
+            <field name="feature_type">boolean</field>
+            <field name="is_premium_feature" eval="False"/>
+            <field name="icon">fa-book</field>
+            <field name="color">4</field>
+            <field name="description">Access to member publications</field>
+            <field name="default_value">true</field>
+        </record>
+
+        <!-- Networking -->
+        <record id="feature_networking" model="membership.feature">
+            <field name="name">Networking Tools</field>
+            <field name="code">NETWORKING</field>
+            <field name="sequence">50</field>
+            <field name="category">networking</field>
+            <field name="feature_type">boolean</field>
+            <field name="is_premium_feature" eval="False"/>
+            <field name="icon">fa-users</field>
+            <field name="color">5</field>
+            <field name="description">Access to networking features</field>
+            <field name="default_value">true</field>
+        </record>
+
+    </data>
+</odoo>

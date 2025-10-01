@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- ========================================== -->
+        <!-- DEFAULT MEMBERSHIP BENEFITS -->
+        <!-- Essential benefits for basic functionality -->
+        <!-- ========================================== -->
+
+        <!-- Event Discount -->
+        <record id="benefit_event_discount" model="membership.benefit">
+            <field name="name">Event Discount</field>
+            <field name="code">EVENT_DISCOUNT</field>
+            <field name="sequence">10</field>
+            <field name="category">discount</field>
+            <field name="benefit_type">monetary</field>
+            <field name="is_premium_benefit" eval="False"/>
+            <field name="is_highlighted" eval="True"/>
+            <field name="icon">fa-percent</field>
+            <field name="color">1</field>
+            <field name="description">Discounted pricing on event registrations</field>
+            <field name="short_description">Member discount on events</field>
+            <field name="has_monetary_value" eval="True"/>
+            <field name="monetary_value">50.00</field>
+            <field name="display_on_website" eval="True"/>
+            <field name="display_order">10</field>
+            <field name="marketing_tagline">Save on Events!</field>
+        </record>
+
+        <!-- Publication Access -->
+        <record id="benefit_publication_access" model="membership.benefit">
+            <field name="name">Publication Access</field>
+            <field name="code">PUBLICATION_ACCESS</field>
+            <field name="sequence">20</field>
+            <field name="category">publication</field>
+            <field name="benefit_type">service</field>
+            <field name="is_premium_benefit" eval="False"/>
+            <field name="is_highlighted" eval="True"/>
+            <field name="icon">fa-book</field>
+            <field name="color">2</field>
+            <field name="description">Access to member publications and resources</field>
+            <field name="short_description">Full publication access</field>
+            <field name="has_monetary_value" eval="True"/>
+            <field name="monetary_value">100.00</field>
+            <field name="display_on_website" eval="True"/>
+            <field name="display_order">20</field>
+            <field name="marketing_tagline">Stay Informed!</field>
+        </record>
+
+        <!-- Directory Listing -->
+        <record id="benefit_directory_listing" model="membership.benefit">
+            <field name="name">Directory Listing</field>
+            <field name="code">DIRECTORY_LISTING</field>
+            <field name="sequence">30</field>
+            <field name="category">networking</field>
+            <field name="benefit_type">privilege</field>
+            <field name="is_premium_benefit" eval="False"/>
+            <field name="icon">fa-address-book</field>
+            <field name="color">3</field>
+            <field name="description">Profile listing in member directory</field>
+            <field name="short_description">Directory profile</field>
+            <field name="display_on_website" eval="True"/>
+            <field name="display_order">30</field>
+            <field name="marketing_tagline">Get Found!</field>
+        </record>
+
+        <!-- Networking Events -->
+        <record id="benefit_networking_events" model="membership.benefit">
+            <field name="name">Networking Events</field>
+            <field name="code">NETWORKING_EVENTS</field>
+            <field name="sequence">40</field>
+            <field name="category">event</field>
+            <field name="benefit_type">privilege</field>
+            <field name="is_premium_benefit" eval="False"/>
+            <field name="icon">fa-handshake</field>
+            <field name="color">4</field>
+            <field name="description">Access to member networking events</field>
+            <field name="short_description">Networking opportunities</field>
+            <field name="display_on_website" eval="True"/>
+            <field name="display_order">40</field>
+            <field name="marketing_tagline">Build Connections!</field>
+        </record>
+
+        <!-- Member Support -->
+        <record id="benefit_member_support" model="membership.benefit">
+            <field name="name">Member Support</field>
+            <field name="code">MEMBER_SUPPORT</field>
+            <field name="sequence">50</field>
+            <field name="category">other</field>
+            <field name="benefit_type">service</field>
+            <field name="is_premium_benefit" eval="False"/>
+            <field name="icon">fa-life-ring</field>
+            <field name="color">5</field>
+            <field name="description">Dedicated member support services</field>
+            <field name="short_description">Priority support</field>
+            <field name="display_on_website" eval="False"/>
+            <field name="display_order">50</field>
+        </record>
+
+    </data>
+</odoo>

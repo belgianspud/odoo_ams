@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ========================================== -->
+        <!-- MEMBERSHIP BENEFITS -->
+        <!-- ========================================== -->
+
+        <!-- Discount Benefits -->
+        <record id="benefit_event_discount_10" model="membership.benefit">
+            <field name="name">10% Event Registration Discount</field>
+            <field name="code">EVENT_DISC_10</field>
+            <field name="sequence">10</field>
+            <field name="category">discount</field>
+            <field name="benefit_type">monetary</field>
+            <field name="is_premium_benefit" eval="False"/>
+            <field name="is_highlighted" eval="True"/>
+            <field name="icon">fa-percent</field>
+            <field name="color">2</field>
+            <field name="description">Save 10% on all event registration fees including conferences, webinars, and workshops.</field>
+            <field name="short_description">10% discount on event registrations</field>
+            <field name="has_monetary_value" eval="True"/>
+            <field name="monetary_value">50.00</field>
+            <field name="quantifiable_value">Up to $50 savings per year</field>
+            <field name="marketing_tagline">Save on Every Event!</field>
+            <field name="display_on_website" eval="True"/>
+            <field name="display_order">10</field>
+        </record>
+
+        <record id="benefit_event_discount_20" model="membership.benefit">
+            <field name="name">20% Event Registration Discount</field>
+            <field name="code">EVENT_DISC_20</field>
+            <field name="sequence">20</field>
+            <field name="category">discount</field>
+            <field name="benefit_type">monetary</field>
+            <field name="is_premium_benefit" eval="True"/>
+            <field name="is_highlighted" eval="True"/>
+            <field name="icon">fa-percent</field>
+            <field name="color">5</field>
+            <field name="description">Premium 20% discount on all event registration fees, workshops, and professional development courses.</field>
+            <field name="short_description">20% discount on event registrations</field>
+            <field name="has_monetary_value" eval="True"/>
+            <field name="monetary_value">100.00</field>
+            <field name="quantifiable_value">Up to $100 savings per year</field>
+            <field name="marketing_tagline">Premium Savings on Every Event!</field>
+            <field name="display_on_website" eval="True"/>
+            <field name="display_order">5</field>
+        </record>
+
+        <record id="benefit_publication_discount" model="membership.benefit">
+            <field name="name">Publication Discounts</field>
+            <field name="code">PUB_DISC</field>
+            <field name="sequence">30</field>
+            <field name="category">discount</field>
+            <field name="benefit_type">monetary</field>
+            <field name="is_premium_benefit" eval="False"/>
+            <field name="icon">fa-book</field>
+            <field name="color">3</field>
+            <field name="description">Members-only pricing on books, journals, and educational materials.</field>
+            <field name="short_description">Discounted publications</field>
+            <field name="has_monetary_value" eval="True"/>
+            <field name="monetary_value">75.00</field>
+            <field name="quantifiable_value">Save 15-30% on all publications</field>
+            <field name="marketing_tagline">Members Save on Professional Resources</field>
+            <field name="display_on_website" eval="True"/>
+            <field name="display_order">20</field>
+        </record>
+
+        <!-- Access & Resource Benefits -->
+        <record id="benefit_journal_online" model="membership.benefit">
+            <field name="name">Online Journal Access</field>
+            <field name="code">JOURNAL_ONLINE</field>
+            <field name="sequence">40</field>
+            <field name="category">publication</field>
+            <field name="benefit_type">service</field>
+            <field name="is_premium_benefit" eval="False"/>
+            <field name="is_highlighted" eval="True"/>
+            <field name="icon">fa-laptop</field>
+            <field name="color">1</field>
+            <field name="description">Unlimited online access to current and archived journal issues, research papers, and case studies.</field>
+            <field name="short_description">Unlimited journal access</field>
+            <field name="has_monetary_value" eval="True"/>
+            <field name="monetary_value">200.00</field>
+            <field name="quantifiable_value">Unlimited digital access</field>
+            <field name="marketing_tagline">Stay Current with Professional Research</field>
+            <field name="display_on_website" eval="True"/>
+            <field name="display_order">8</field>
+        </record>
+
+        <record id="benefit_resource_library" model="membership.benefit">
+            <field name="name">Digital Resource Library</field>
+            <field name="code">RES_LIB</field>
+            <field name="sequence">50</field>
+            <field name="category">access</field>
+            <field name="benefit_type">resource</field>
+            <field name="is_premium_benefit" eval="False"/>
+            <field name="icon">fa-folder-open</field>
+            <field name="color">4</field>
+            <field name="description">Access to comprehensive digital library including templates, tools, guides, and best practices.</field>
+            <field name="short_description">Digital resource library</field>
+            <field name="has_monetary_value" eval="True"/>
+            <field name="monetary_value">150.00</field>
+            <field name="quantifiable_value">1000+ resources available</field>
+            <field name="marketing_tagline">Everything You Need in One Place</field>
+            <field name="display_on_website" eval="True"/>
+            <field name="display_order">15</field>
+        </record>
+
+        <record id="benefit_webinar_access" model="membership.benefit">
+            <field name="name">Monthly Webinar Series</field>
+            <field name="code">WEBINAR</field>
+            <field name="sequence">60</field>
+            <field name="category">education</field>
+            <field name="benefit_type">service</field>
+            <field name="is_premium_benefit" eval="False"/>
+            <field name="icon">fa-video</field>
+            <field name="color">6</field>
+            <field name="description">Free access to monthly professional development webinars with industry experts.</field>
+            <field name="short_description">Free monthly webinars</field>
+            <field name="has_monetary_value" eval="True"/>
+            <field name="monetary_value">120.00</field>
+            <field name="quantifiable_value">12 webinars per year</field>
+            <field name="marketing_tagline">Learn from the Best</field>
+            <field name="display_on_website" eval="True"/>
+            <field name="display_order">12</field>
+        </record>
+
+        <!-- Networking Benefits -->
+        <record id="benefit_directory_listing" model="membership.benefit">
+            <field name="name">Member Directory Listing</field>
+            <field name="code">DIR_LIST</field>
+            <field name="sequence">70</field>
+            <field name="category">networking</field>
+            <field name="benefit_type">privilege</field>
+            <field name="is_premium_benefit" eval="False"/>
+            <field name="icon">fa-users</field>
+            <field name="color">7</field>
+            <field name="description">Professional profile listing in the searchable member directory.</field>
+            <field name="short_description">Directory profile</field>
+            <field name="quantifiable_value">Searchable by 10,000+ members</field>
+            <field name="marketing_tagline">Connect with Your Peers</field>
+            <field name="display_on_website" eval="True"/>
+            <field name="display_order">18</field>
+        </record>
+
+        <record id="benefit_networking_events" model="membership.benefit">
+            <field name="name">Exclusive Networking Events</field>
+            <field name="code">NETWORK_EVENT</field>
+            <field name="sequence">80</field>
+            <field name="category">event</field>
+            <field name="benefit_type">privilege</field>
+            <field name="is_premium_benefit" eval="True"/>
+            <field name="is_highlighted" eval="True"/>
+            <field name="icon">fa-handshake</field>
+            <field name="color">5</field>
+            <field name="description">Invitations to exclusive members-only networking receptions and VIP events.</field>
+            <field name="short_description">VIP networking events</field>
+            <field name="has_monetary_value" eval="True"/>
+            <field name="monetary_value">300.00</field>
+            <field name="quantifiable_value">4-6 exclusive events per year</field>
+            <field name="marketing_tagline">Network at the Highest Level</field>
+            <field name="display_on_website" eval="True"/>
+            <field name="display_order">3</field>
+        </record>
+
+        <!-- Recognition Benefits -->
+        <record id="benefit_member_certificate" model="membership.benefit">
+            <field name="name">Membership Certificate</field>
+            <field name="code">CERT</field>
+            <field name="sequence">90</field>
+            <field name="category">recognition</field>
+            <field name="benefit_type">tangible</field>
+            <field name="is_premium_benefit" eval="False"/>
+            <field name="icon">fa-certificate</field>
+            <field name="color">8</field>
+            <field name="description">Personalized membership certificate suitable for framing and display.</field>
+            <field name="short_description">Membership certificate</field>
+            <field name="quantifiable_value">One certificate per year</field>
+            <field name="display_on_website" eval="False"/>
+            <field name="display_order">25</field>
+        </record>
+
+        <record id="benefit_member_badge" model="membership.benefit">
+            <field name="name">Digital Member Badge</field>
+            <field name="code">BADGE</field>
+            <field name="sequence">100</field>
+            <field name="category">recognition</field>
+            <field name="benefit_type">privilege</field>
+            <field name="is_premium_benefit" eval="False"/>
+            <field name="icon">fa-id-badge</field>
+            <field name="color">9</field>
+            <field name="description">Digital membership badge for email signatures and social media profiles.</field>
+            <field name="short_description">Digital badge</field>
+            <field name="display_on_website" eval="False"/>
+            <field name="display_order">30</field>
+        </record>
+
+        <!-- Professional Development -->
+        <record id="benefit_mentorship" model="membership.benefit">
+            <field name="name">Mentorship Program Access</field>
+            <field name="code">MENTOR</field>
+            <field name="sequence">110</field>
+            <field name="category">professional</field>
+            <field name="benefit_type">service</field>
+            <field name="is_premium_benefit" eval="True"/>
+            <field name="icon">fa-chalkboard-teacher</field>
+            <field name="color">2</field>
+            <field name="description">Connect with experienced mentors in your field for career guidance and professional development.</field>
+            <field name="short_description">Mentorship matching</field>
+            <field name="has_monetary_value" eval="True"/>
+            <field name="monetary_value">500.00</field>
+            <field name="quantifiable_value">Up to 12 sessions per year</field>
+            <field name="marketing_tagline">Accelerate Your Career</field>
+            <field name="display_on_website" eval="True"/>
+            <field name="display_order">6</field>
+        </record>
+
+        <record id="benefit_job_board" model="membership.benefit">
+            <field name="name">Career Center Access</field>
+            <field name="code">JOB_BOARD</field>
+            <field name="sequence">120</field>
+            <field name="category">professional</field>
+            <field name="benefit_type">service</field>
+            <field name="is_premium_benefit" eval="False"/>
+            <field name="icon">fa-briefcase</field>
+            <field name="color">4</field>
+            <field name="description">Post your resume and access exclusive job listings from top employers.</field>
+            <field name="short_description">Job board access</field>
+            <field name="quantifiable_value">500+ exclusive listings</field>
+            <field name="marketing_tagline">Find Your Next Opportunity</field>
+            <field name="display_on_website" eval="True"/>
+            <field name="display_order">22</field>
+        </record>
+
+    </data>
+</odoo>

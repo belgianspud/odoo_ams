@@ -56,6 +56,21 @@
                             </group>
                         </group>
 
+                        <group name="lifecycle" string="Lifecycle Status" invisible="not is_member">
+                            <group>
+                                <field name="paid_through_date"/>
+                                <field name="grace_period_end_date" invisible="not is_in_grace_period"/>
+                                <field name="lifecycle_stage" widget="badge"
+                                       decoration-success="lifecycle_stage=='active'"
+                                       decoration-warning="lifecycle_stage=='grace'"
+                                       decoration-danger="lifecycle_stage in ('suspended','terminated')"/>
+                            </group>
+                            <group>
+                                <field name="days_until_suspension" invisible="not is_in_grace_period"/>
+                                <field name="days_until_termination" invisible="lifecycle_stage not in ('grace','suspended')"/>
+                            </group>
+                        </group>
+
                         <group name="portal" string="Portal Access">
                             <group>
                                 <field name="portal_access_level"/>
@@ -210,24 +225,6 @@
                 </kanban>
             </field>
         </record>
-<xpath expr="//group[@string='Summary']" position="after">
-    <group string="Lifecycle Status" invisible="not is_member">
-        <group>
-            <field name="paid_through_date"/>
-            <field name="grace_period_end_date" 
-                   invisible="not is_in_grace_period"/>
-            <field name="lifecycle_stage" widget="badge"
-                   decoration-success="lifecycle_stage=='active'"
-                   decoration-warning="lifecycle_stage=='grace'"
-                   decoration-danger="lifecycle_stage in ('suspended','terminated')"/>
-        </group>
-        <group>
-            <field name="days_until_suspension" 
-                   invisible="not is_in_grace_period"/>
-            <field name="days_until_termination" 
-                   invisible="lifecycle_stage not in ('grace','suspended')"/>
-        </group>
-    </group>
-</xpath>
+
     </data>
 </odoo>

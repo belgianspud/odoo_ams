@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ========================================== -->
+        <!-- MEMBERSHIP FEATURES -->
+        <!-- ========================================== -->
+
+        <!-- Portal & Access Features -->
+        <record id="feature_portal_basic" model="membership.feature">
+            <field name="name">Basic Portal Access</field>
+            <field name="code">PORTAL_BASIC</field>
+            <field name="sequence">10</field>
+            <field name="category">portal</field>
+            <field name="feature_type">boolean</field>
+            <field name="is_premium_feature" eval="False"/>
+            <field name="icon">fa-user</field>
+            <field name="color">1</field>
+            <field name="description">Access to the member portal with basic features including profile management and document downloads.</field>
+        </record>
+
+        <record id="feature_portal_standard" model="membership.feature">
+            <field name="name">Standard Portal Access</field>
+            <field name="code">PORTAL_STANDARD</field>
+            <field name="sequence">20</field>
+            <field name="category">portal</field>
+            <field name="feature_type">boolean</field>
+            <field name="is_premium_feature" eval="False"/>
+            <field name="icon">fa-user-circle</field>
+            <field name="color">3</field>
+            <field name="description">Full portal access with member directory, forums, and resource library.</field>
+        </record>
+
+        <record id="feature_portal_premium" model="membership.feature">
+            <field name="name">Premium Portal Access</field>
+            <field name="code">PORTAL_PREMIUM</field>
+            <field name="sequence">30</field>
+            <field name="category">portal</field>
+            <field name="feature_type">boolean</field>
+            <field name="is_premium_feature" eval="True"/>
+            <field name="icon">fa-star</field>
+            <field name="color">5</field>
+            <field name="description">Premium portal features including advanced search, analytics, and priority support.</field>
+        </record>
+
+        <!-- Directory Features -->
+        <record id="feature_directory_listing" model="membership.feature">
+            <field name="name">Member Directory Listing</field>
+            <field name="code">DIR_LISTING</field>
+            <field name="sequence">40</field>
+            <field name="category">directory</field>
+            <field name="feature_type">boolean</field>
+            <field name="is_premium_feature" eval="False"/>
+            <field name="icon">fa-address-book</field>
+            <field name="color">2</field>
+            <field name="description">Appear in the member directory visible to other members.</field>
+        </record>
+
+        <record id="feature_directory_search" model="membership.feature">
+            <field name="name">Advanced Directory Search</field>
+            <field name="code">DIR_SEARCH</field>
+            <field name="sequence">50</field>
+            <field name="category">directory</field>
+            <field name="feature_type">boolean</field>
+            <field name="is_premium_feature" eval="True"/>
+            <field name="icon">fa-search</field>
+            <field name="color">4</field>
+            <field name="description">Search and filter member directory by skills, location, and expertise.</field>
+        </record>
+
+        <!-- Event Features -->
+        <record id="feature_event_registration" model="membership.feature">
+            <field name="name">Event Registration</field>
+            <field name="code">EVENT_REG</field>
+            <field name="sequence">60</field>
+            <field name="category">event</field>
+            <field name="feature_type">quantity</field>
+            <field name="is_premium_feature" eval="False"/>
+            <field name="icon">fa-calendar</field>
+            <field name="color">6</field>
+            <field name="default_value">3</field>
+            <field name="description">Register for up to 3 events per year at member rates.</field>
+        </record>
+
+        <record id="feature_event_unlimited" model="membership.feature">
+            <field name="name">Unlimited Event Registration</field>
+            <field name="code">EVENT_UNLIMITED</field>
+            <field name="sequence">70</field>
+            <field name="category">event</field>
+            <field name="feature_type">unlimited</field>
+            <field name="is_premium_feature" eval="True"/>
+            <field name="icon">fa-calendar-check</field>
+            <field name="color">5</field>
+            <field name="description">Unlimited event registrations at discounted member rates.</field>
+        </record>
+
+        <!-- Professional Features -->
+        <record id="feature_credential_tracking" model="membership.feature">
+            <field name="name">Credential Tracking</field>
+            <field name="code">CRED_TRACK</field>
+            <field name="sequence">80</field>
+            <field name="category">professional</field>
+            <field name="feature_type">boolean</field>
+            <field name="is_premium_feature" eval="True"/>
+            <field name="icon">fa-certificate</field>
+            <field name="color">8</field>
+            <field name="description">Track and manage professional credentials and certifications.</field>
+        </record>
+
+        <record id="feature_ce_tracking" model="membership.feature">
+            <field name="name">Continuing Education Tracking</field>
+            <field name="code">CE_TRACK</field>
+            <field name="sequence">90</field>
+            <field name="category">education</field>
+            <field name="feature_type">boolean</field>
+            <field name="is_premium_feature" eval="False"/>
+            <field name="icon">fa-graduation-cap</field>
+            <field name="color">3</field>
+            <field name="description">Track continuing education credits and maintain professional development records.</field>
+        </record>
+
+        <!-- Networking Features -->
+        <record id="feature_messaging" model="membership.feature">
+            <field name="name">Member Messaging</field>
+            <field name="code">MSG</field>
+            <field name="sequence">100</field>
+            <field name="category">networking</field>
+            <field name="feature_type">boolean</field>
+            <field name="is_premium_feature" eval="False"/>
+            <field name="icon">fa-comments</field>
+            <field name="color">7</field>
+            <field name="description">Send and receive messages from other members through the portal.</field>
+        </record>
+
+        <!-- Publication Features -->
+        <record id="feature_journal_access" model="membership.feature">
+            <field name="name">Journal Access</field>
+            <field name="code">JOURNAL</field>
+            <field name="sequence">110</field>
+            <field name="category">publication</field>
+            <field name="feature_type">boolean</field>
+            <field name="is_premium_feature" eval="False"/>
+            <field name="icon">fa-book</field>
+            <field name="color">9</field>
+            <field name="description">Online access to current and archived journal publications.</field>
+        </record>
+
+    </data>
+</odoo>

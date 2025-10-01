@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- ========================================== -->
+        <!-- DEFAULT MEMBERSHIP PRODUCTS -->
+        <!-- Template products for quick setup -->
+        <!-- ========================================== -->
+
+        <!-- Individual Membership Product -->
+        <record id="product_membership_individual" model="product.template">
+            <field name="name">Individual Membership - Annual</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">100.00</field>
+            <field name="is_membership_product" eval="True"/>
+            <field name="subscription_product_type">membership</field>
+            <field name="default_member_category_id" ref="membership_category_individual_default"/>
+            <field name="portal_access_level">standard</field>
+            <field name="feature_ids" eval="[(6, 0, [
+                ref('feature_portal_access'),
+                ref('feature_directory'),
+                ref('feature_event_registration'),
+                ref('feature_publications'),
+                ref('feature_networking')
+            ])]"/>
+            <field name="benefit_ids" eval="[(6, 0, [
+                ref('benefit_event_discount'),
+                ref('benefit_publication_access'),
+                ref('benefit_directory_listing'),
+                ref('benefit_networking_events'),
+                ref('benefit_member_support')
+            ])]"/>
+            <field name="description">Annual individual membership with full access to all member benefits and services.</field>
+        </record>
+
+        <!-- Organizational Membership Product -->
+        <record id="product_membership_organizational" model="product.template">
+            <field name="name">Organizational Membership - Annual</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">500.00</field>
+            <field name="is_membership_product" eval="True"/>
+            <field name="subscription_product_type">organizational_membership</field>
+            <field name="default_member_category_id" ref="membership_category_organizational_default"/>
+            <field name="portal_access_level">premium</field>
+            <field name="feature_ids" eval="[(6, 0, [
+                ref('feature_portal_access'),
+                ref('feature_directory'),
+                ref('feature_event_registration'),
+                ref('feature_publications'),
+                ref('feature_networking')
+            ])]"/>
+            <field name="benefit_ids" eval="[(6, 0, [
+                ref('benefit_event_discount'),
+                ref('benefit_publication_access'),
+                ref('benefit_directory_listing'),
+                ref('benefit_networking_events'),
+                ref('benefit_member_support')
+            ])]"/>
+            <field name="description">Annual organizational membership with enhanced benefits and multiple user access.</field>
+        </record>
+
+        <!-- Chapter Membership Product -->
+        <record id="product_membership_chapter" model="product.template">
+            <field name="name">Chapter Membership - Annual</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">75.00</field>
+            <field name="is_membership_product" eval="True"/>
+            <field name="subscription_product_type">chapter</field>
+            <field name="default_member_category_id" ref="membership_category_chapter_default"/>
+            <field name="portal_access_level">standard</field>
+            <field name="feature_ids" eval="[(6, 0, [
+                ref('feature_portal_access'),
+                ref('feature_directory'),
+                ref('feature_event_registration'),
+                ref('feature_publications'),
+                ref('feature_networking')
+            ])]"/>
+            <field name="benefit_ids" eval="[(6, 0, [
+                ref('benefit_event_discount'),
+                ref('benefit_publication_access'),
+                ref('benefit_directory_listing'),
+                ref('benefit_networking_events'),
+                ref('benefit_member_support')
+            ])]"/>
+            <field name="description">Annual chapter membership with regional benefits and national access.</field>
+        </record>
+
+    </data>
+</odoo>
