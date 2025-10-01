@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ========================================== -->
+        <!-- MEMBERSHIP REPORT VIEWS -->
+        <!-- ========================================== -->
+
+        <!-- Membership Report - Graph View -->
+        <record id="view_membership_report_graph" model="ir.ui.view">
+            <field name="name">membership.report.graph</field>
+            <field name="model">membership.report</field>
+            <field name="arch" type="xml">
+                <graph string="Membership Analysis" type="line" stacked="False">
+                    <field name="date" type="row" interval="month"/>
+                    <field name="subscription_count" type="measure"/>
+                    <field name="total_revenue" type="measure"/>
+                </graph>
+            </field>
+        </record>
+
+        <!-- Membership Report - Pivot View -->
+        <record id="view_membership_report_pivot" model="ir.ui.view">
+            <field name="name">membership.report.pivot</field>
+            <field name="model">membership.report</field>
+            <field name="arch" type="xml">
+                <pivot string="Membership Analysis" sample="1">
+                    <field name="date" type="row" interval="month"/>
+                    <field name="membership_category_id" type="col"/>
+                    <field name="subscription_count" type="measure"/>
+                    <field name="total_revenue" type="measure"/>
+                    <field name="recurring_revenue" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <!-- Membership Report - Search View -->
+        <record id="view_membership_report_search" model="ir.ui.view">
+            <field name="name">membership.report.search</field>
+            <field name="model">membership.report</field>
+            <field name="arch" type="xml">
+                <search string="Membership Analysis">
+                    <field name="partner_id"/>
+                    <field name="product_id"/>
+                    <field name="membership_category_id"/>
+                    
+                    <filter string="Active" name="active" domain="[('state', 'in', ['active', 'trial'])]"/>
+                    <filter string="Cancelled" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
+                    <filter string="Expired" name="expired" domain="[('state', '=', 'expired')]"/>
+                    
+                    <separator/>
+                    <filter string="This Month" name="this_month" 
+                            domain="[('date', '&gt;=', (context_today() - relativedelta(months=1)).strftime('%Y-%m-01'))]"/>
+                    <filter string="This Quarter" name="this_quarter" 
+                            domain="[('date', '&gt;=', (context_today() - relativedelta(months=3)).strftime('%Y-%m-01'))]"/>
+                    <filter string="This Year" name="this_year" 
+                            domain="[('date', '&gt;=', context_today().strftime('%Y-01-01'))]"/>
+                    
+                    <separator/>
+                    <filter string="Individual" name="individual" domain="[('category_type', '=', 'individual')]"/>
+                    <filter string="Organizational" name="organizational" domain="[('category_type', '=', 'organizational')]"/>
+                    <filter string="Student" name="student" domain="[('category_type', '=', 'student')]"/>
+                    
+                    <group expand="1" string="Group By">
+                        <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+                        <filter string="Category" name="group_category" context="{'group_by': 'membership_category_id'}"/>
+                        <filter string="Category Type" name="group_category_type" context="{'group_by': 'category_type'}"/>
+                        <filter string="Member Tier" name="group_tier" context="{'group_by': 'member_tier'}"/>
+                        <filter string="Product" name="group_product" context="{'group_by': 'product_id'}"/>
+                        <filter string="Source" name="group_source" context="{'group_by': 'source_type'}"/>
+                        <separator/>
+                        <filter string="Start Date: Month" name="group_month" context="{'group_by': 'date_start:month'}"/>
+                        <filter string="Start Date: Quarter" name="group_quarter" context="{'group_by': 'date_start:quarter'}"/>
+                        <filter string="Start Date: Year" name="group_year" context="{'group_by': 'date_start:year'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Membership Report Action -->
+        <record id="action_membership_report" model="ir.actions.act_window">
+            <field name="name">Membership Analysis</field>
+            <field name="res_model">membership.report</field>
+            <field name="view_mode">graph,pivot</field>
+            <field name="context">{
+                'search_default_active': 1,
+                'search_default_this_year': 1
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_empty_folder">
+                    No membership data to analyze
+                </p>
+                <p>
+                    This report provides comprehensive analysis of your membership data including
+                    subscriptions, revenue, retention, and churn metrics.
+                </p>
+            </field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- CATEGORY REPORT VIEWS -->
+        <!-- ========================================== -->
+
+        <!-- Category Report - Graph View -->
+        <record id="view_membership_category_report_graph" model="ir.ui.view">
+            <field name="name">membership.category.report.graph</field>
+            <field name="model">membership.category.report</field>
+            <field name="arch" type="xml">
+                <graph string="Members by Category" type="bar">
+                    <field name="membership_category_id" type="row"/>
+                    <field name="active_count" type="measure"/>
+                    <field name="total_revenue" type="measure"/>
+                </graph>
+            </field>
+        </record>
+
+        <!-- Category Report - Pivot View -->
+        <record id="view_membership_category_report_pivot" model="ir.ui.view">
+            <field name="name">membership.category.report.pivot</field>
+            <field name="model">membership.category.report</field>
+            <field name="arch" type="xml">
+                <pivot string="Category Analysis">
+                    <field name="membership_category_id" type="row"/>
+                    <field name="member_count" type="measure"/>
+                    <field name="active_count" type="measure"/>
+                    <field name="total_revenue" type="measure"/>
+                    <field name="avg_price" type="measure"/>
+                    <field name="retention_rate" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <!-- Category Report - Tree View -->
+        <record id="view_membership_category_report_tree" model="ir.ui.view">
+            <field name="name">membership.category.report.tree</field>
+            <field name="model">membership.category.report</field>
+            <field name="arch" type="xml">
+                <tree string="Category Analysis" create="false" edit="false" delete="false">
+                    <field name="membership_category_id"/>
+                    <field name="category_type"/>
+                    <field name="member_tier"/>
+                    <field name="member_count" sum="Total Members"/>
+                    <field name="active_count" sum="Total Active"/>
+                    <field name="trial_count" sum="Total Trial"/>
+                    <field name="expired_count" sum="Total Expired"/>
+                    <field name="total_revenue" sum="Total Revenue" widget="monetary"/>
+                    <field name="avg_price" avg="Avg Price" widget="monetary"/>
+                    <field name="retention_rate" avg="Avg Retention" widget="percentage"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Category Report Action -->
+        <record id="action_membership_category_report" model="ir.actions.act_window">
+            <field name="name">Members by Category</field>
+            <field name="res_model">membership.category.report</field>
+            <field name="view_mode">tree,graph,pivot</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_empty_folder">
+                    No category data available
+                </p>
+                <p>
+                    This report shows membership statistics by category including
+                    member counts, revenue, and retention rates.
+                </p>
+            </field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- REVENUE REPORT VIEWS -->
+        <!-- ========================================== -->
+
+        <!-- Revenue Report - Graph View -->
+        <record id="view_membership_revenue_report_graph" model="ir.ui.view">
+            <field name="name">membership.revenue.report.graph</field>
+            <field name="model">membership.revenue.report</field>
+            <field name="arch" type="xml">
+                <graph string="Membership Revenue" type="line">
+                    <field name="month" type="row"/>
+                    <field name="total_revenue" type="measure"/>
+                    <field name="mrr" type="measure"/>
+                </graph>
+            </field>
+        </record>
+
+        <!-- Revenue Report - Pivot View -->
+        <record id="view_membership_revenue_report_pivot" model="ir.ui.view">
+            <field name="name">membership.revenue.report.pivot</field>
+            <field name="model">membership.revenue.report</field>
+            <field name="arch" type="xml">
+                <pivot string="Revenue Analysis">
+                    <field name="month" type="row"/>
+                    <field name="membership_category_id" type="col"/>
+                    <field name="total_revenue" type="measure"/>
+                    <field name="mrr" type="measure"/>
+                    <field name="arr" type="measure"/>
+                    <field name="subscription_count" type="measure"/>
+                    <field name="new_subscriptions" type="measure"/>
+                    <field name="renewals" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <!-- Revenue Report - Tree View -->
+        <record id="view_membership_revenue_report_tree" model="ir.ui.view">
+            <field name="name">membership.revenue.report.tree</field>
+            <field name="model">membership.revenue.report</field>
+            <field name="arch" type="xml">
+                <tree string="Revenue Report" create="false" edit="false" delete="false">
+                    <field name="date"/>
+                    <field name="month"/>
+                    <field name="quarter"/>
+                    <field name="product_id"/>
+                    <field name="membership_category_id"/>
+                    <field name="subscription_count" sum="Total Subscriptions"/>
+                    <field name="new_subscriptions" sum="Total New"/>
+                    <field name="renewals" sum="Total Renewals"/>
+                    <field name="total_revenue" sum="Total Revenue" widget="monetary"/>
+                    <field name="mrr" sum="Total MRR" widget="monetary"/>
+                    <field name="arr" sum="Total ARR" widget="monetary"/>
+                    <field name="avg_subscription_value" avg="Avg Value" widget="monetary"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Revenue Report Search View -->
+        <record id="view_membership_revenue_report_search" model="ir.ui.view">
+            <field name="name">membership.revenue.report.search</field>
+            <field name="model">membership.revenue.report</field>
+            <field name="arch" type="xml">
+                <search string="Revenue Analysis">
+                    <field name="product_id"/>
+                    <field name="membership_category_id"/>
+                    
+                    <filter string="This Year" name="this_year" 
+                            domain="[('date', '&gt;=', context_today().strftime('%Y-01-01'))]"/>
+                    <filter string="Last Year" name="last_year" 
+                            domain="[('date', '&gt;=', (context_today() - relativedelta(years=1)).strftime('%Y-01-01')),
+                                     ('date', '&lt;', context_today().strftime('%Y-01-01'))]"/>
+                    
+                    <group expand="1" string="Group By">
+                        <filter string="Product" name="group_product" context="{'group_by': 'product_id'}"/>
+                        <filter string="Category" name="group_category" context="{'group_by': 'membership_category_id'}"/>
+                        <filter string="Month" name="group_month" context="{'group_by': 'month'}"/>
+                        <filter string="Quarter" name="group_quarter" context="{'group_by': 'quarter'}"/>
+                        <filter string="Year" name="group_year" context="{'group_by': 'year'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Revenue Report Action -->
+        <record id="action_membership_revenue_report" model="ir.actions.act_window">
+            <field name="name">Membership Revenue</field>
+            <field name="res_model">membership.revenue.report</field>
+            <field name="view_mode">graph,pivot,tree</field>
+            <field name="context">{
+                'search_default_this_year': 1
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_empty_folder">
+                    No revenue data available
+                </p>
+                <p>
+                    This report provides detailed revenue analysis including MRR, ARR,
+                    new subscriptions, and renewals.
+                </p>
+            </field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- CHURN REPORT VIEWS -->
+        <!-- ========================================== -->
+
+        <!-- Churn Report - Graph View -->
+        <record id="view_membership_churn_report_graph" model="ir.ui.view">
+            <field name="name">membership.churn.report.graph</field>
+            <field name="model">membership.churn.report</field>
+            <field name="arch" type="xml">
+                <graph string="Churn Analysis" type="line">
+                    <field name="month" type="row"/>
+                    <field name="churn_rate" type="measure"/>
+                    <field name="retention_rate" type="measure"/>
+                </graph>
+            </field>
+        </record>
+
+        <!-- Churn Report - Pivot View -->
+        <record id="view_membership_churn_report_pivot" model="ir.ui.view">
+            <field name="name">membership.churn.report.pivot</field>
+            <field name="model">membership.churn.report</field>
+            <field name="arch" type="xml">
+                <pivot string="Churn Analysis">
+                    <field name="month" type="row"/>
+                    <field name="membership_category_id" type="col"/>
+                    <field name="churn_rate" type="measure"/>
+                    <field name="retention_rate" type="measure"/>
+                    <field name="net_growth" type="measure"/>
+                    <field name="growth_rate" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <!-- Churn Report - Tree View -->
+        <record id="view_membership_churn_report_tree" model="ir.ui.view">
+            <field name="name">membership.churn.report.tree</field>
+            <field name="model">membership.churn.report</field>
+            <field name="arch" type="xml">
+                <tree string="Churn Report" create="false" edit="false" delete="false" 
+                      decoration-danger="churn_rate &gt; 10" decoration-success="churn_rate &lt; 5">
+                    <field name="date"/>
+                    <field name="month"/>
+                    <field name="membership_category_id"/>
+                    <field name="total_members" sum="Total"/>
+                    <field name="active_members" sum="Total Active"/>
+                    <field name="churned_members" sum="Total Churned"/>
+                    <field name="new_members" sum="Total New"/>
+                    <field name="churn_rate" avg="Avg Churn Rate" widget="percentage"/>
+                    <field name="retention_rate" avg="Avg Retention" widget="percentage"/>
+                    <field name="net_growth" sum="Total Growth"/>
+                    <field name="growth_rate" avg="Avg Growth Rate" widget="percentage"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Churn Report Search View -->
+        <record id="view_membership_churn_report_search" model="ir.ui.view">
+            <field name="name">membership.churn.report.search</field>
+            <field name="model">membership.churn.report</field>
+            <field name="arch" type="xml">
+                <search string="Churn Analysis">
+                    <field name="membership_category_id"/>
+                    <field name="product_id"/>
+                    
+                    <filter string="High Churn (&gt;10%)" name="high_churn" 
+                            domain="[('churn_rate', '&gt;', 10)]"/>
+                    <filter string="Low Churn (&lt;5%)" name="low_churn" 
+                            domain="[('churn_rate', '&lt;', 5)]"/>
+                    
+                    <separator/>
+                    <filter string="This Year" name="this_year" 
+                            domain="[('date', '&gt;=', context_today().strftime('%Y-01-01'))]"/>
+                    
+                    <group expand="1" string="Group By">
+                        <filter string="Category" name="group_category" context="{'group_by': 'membership_category_id'}"/>
+                        <filter string="Product" name="group_product" context="{'group_by': 'product_id'}"/>
+                        <filter string="Month" name="group_month" context="{'group_by': 'month'}"/>
+                        <filter string="Year" name="group_year" context="{'group_by': 'year'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Churn Report Action -->
+        <record id="action_membership_churn_report" model="ir.actions.act_window">
+            <field name="name">Churn &amp; Retention Analysis</field>
+            <field name="res_model">membership.churn.report</field>
+            <field name="view_mode">graph,pivot,tree</field>
+            <field name="context">{
+                'search_default_this_year': 1
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_empty_folder">
+                    No churn data available
+                </p>
+                <p>
+                    This report analyzes member churn and retention rates over time,
+                    helping you identify trends and areas for improvement.
+                </p>
+            </field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- DASHBOARD / MENU ITEMS -->
+        <!-- ========================================== -->
+
+        <!-- Add to Reporting Menu -->
+        <menuitem id="menu_membership_report_analysis"
+                  name="Membership Analysis"
+                  parent="menu_membership_reporting"
+                  action="action_membership_report"
+                  sequence="10"/>
+
+        <menuitem id="menu_membership_category_report"
+                  name="By Category"
+                  parent="menu_membership_reporting"
+                  action="action_membership_category_report"
+                  sequence="20"/>
+
+        <menuitem id="menu_membership_revenue_report"
+                  name="Revenue Analysis"
+                  parent="menu_membership_reporting"
+                  action="action_membership_revenue_report"
+                  sequence="30"/>
+
+        <menuitem id="menu_membership_churn_report"
+                  name="Churn &amp; Retention"
+                  parent="menu_membership_reporting"
+                  action="action_membership_churn_report"
+                  sequence="40"/>
+
+    </data>
+</odoo>
