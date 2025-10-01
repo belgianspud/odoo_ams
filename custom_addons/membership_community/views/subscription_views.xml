@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ========================================== -->
+        <!-- SUBSCRIPTION.SUBSCRIPTION VIEWS (MEMBERSHIP EXTENSIONS) -->
+        <!-- ========================================== -->
+
+        <!-- Extend Subscription List View -->
+        <record id="view_subscription_membership_tree" model="ir.ui.view">
+            <field name="name">subscription.subscription.membership.tree</field>
+            <field name="model">subscription.subscription</field>
+            <field name="inherit_id" ref="subscription_management.subscription_subscription_view_list"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='plan_id']" position="after">
+                    <field name="membership_category_id" optional="show"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Extend Subscription Form View -->
+        <record id="view_subscription_membership_form" model="ir.ui.view">
+            <field name="name">subscription.subscription.membership.form</field>
+            <field name="model">subscription.subscription</field>
+            <field name="inherit_id" ref="subscription_management.subscription_subscription_view_form"/>
+            <field name="arch" type="xml">
+                
+                <!-- Add membership status ribbons -->
+                <xpath expr="//header" position="before">
+                    <widget name="web_ribbon" title="Requires Approval" bg_color="bg-warning" 
+                            attrs="{'invisible': ['|', ('requires_approval', '=', False), ('approval_status', '=', 'approved')]}"/>
+                    <widget name="web_ribbon" title="Eligibility Not Verified" bg_color="bg-danger" 
+                            attrs="{'invisible': ['|', ('requires_verification', '=', False), ('eligibility_verified', '=', True)]}"/>
+                </xpath>
+
+                <!-- Add membership actions to header -->
+                <xpath expr="//header/button[@name='action_reactivate']" position="after">
+                    <button name="action_approve_membership" string="Approve" type="object" 
+                            class="btn-success" attrs="{'invisible': [('approval_status', '!=', 'pending')]}"
+                            groups="membership_community.group_membership_manager"/>
+                    <button name="action_verify_eligibility" string="Verify Eligibility" type="object" 
+                            class="btn-primary" attrs="{'invisible': [('eligibility_verified', '=', True)]}"
+                            groups="membership_community.group_membership_manager"/>
+                    <button name="action_check_primary_membership" string="Check Primary" type="object" 
+                            attrs="{'invisible': [('requires_primary_membership', '=', False)]}"/>
+                </xpath>
+
+                <!-- Add membership category after plan -->
+                <xpath expr="//field[@name='plan_id']" position="after">
+                    <field name="membership_category_id" options="{'no_create': True}"/>
+                </xpath>
+
+                <!-- Add membership verification group -->
+                <xpath expr="//group[@string='Subscription Details']" position="after">
+                    <group string="Membership Details" attrs="{'invisible': [('membership_category_id', '=', False)]}">
+                        <group name="verification">
+                            <field name="eligibility_verified" readonly="1"/>
+                            <field name="eligibility_verified_by" readonly="1" attrs="{'invisible': [('eligibility_verified', '=', False)]}"/>
+                            <field name="eligibility_verified_date" readonly="1" attrs="{'invisible': [('eligibility_verified', '=', False)]}"/>
+                        </group>
+                        <group name="approval">
+                            <field name="requires_approval" readonly="1"/>
+                            <field name="approval_status" readonly="1" attrs="{'invisible': [('requires_approval', '=', False)]}"/>
+                            <field name="approved_by" readonly="1" attrs="{'invisible': [('approval_status', '!=', 'approved')]}"/>
+                            <field name="approval_date" readonly="1" attrs="{'invisible': [('approval_status', '!=', 'approved')]}"/>
+                        </group>
+                    </group>
+
+                    <group string="Chapter Membership" attrs="{'invisible': [('requires_primary_membership', '=', False)]}">
+                        <group>
+                            <field name="requires_primary_membership" readonly="1"/>
+                            <field name="primary_membership_valid" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="primary_membership_ids" nolabel="1" colspan="2">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="product_id"/>
+                                    <field name="state"/>
+                                    <field name="date_end"/>
+                                </tree>
+                            </field>
+                        </group>
+                    </group>
+
+                    <group string="Membership Source" attrs="{'invisible': [('membership_category_id', '=', False)]}">
+                        <group>
+                            <field name="join_date"/>
+                            <field name="source_type"/>
+                        </group>
+                        <group>
+                            <field name="membership_notes" placeholder="Internal notes about this membership..."/>
+                        </group>
+                    </group>
+                </xpath>
+
+                <!-- Add rejection reason field if rejected -->
+                <xpath expr="//group[@name='approval']" position="after">
+                    <group attrs="{'invisible': [('approval_status', '!=', 'rejected')]}">
+                        <field name="rejection_reason" readonly="1" colspan="2"/>
+                    </group>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- Extend Subscription Search View -->
+        <record id="view_subscription_membership_search" model="ir.ui.view">
+            <field name="name">subscription.subscription.membership.search</field>
+            <field name="model">subscription.subscription</field>
+            <field name="inherit_id" ref="subscription_management.subscription_subscription_view_search"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='plan_id']" position="after">
+                    <field name="membership_category_id"/>
+                </xpath>
+                
+                <xpath expr="//filter[@name='due_billing']" position="after">
+                    <separator/>
+                    <filter string="Pending Approval" name="pending_approval" 
+                            domain="[('approval_status', '=', 'pending')]"/>
+                    <filter string="Not Verified" name="not_verified" 
+                            domain="[('eligibility_verified', '=', False)]"/>
+                    <filter string="Chapter Memberships" name="chapters" 
+                            domain="[('requires_primary_membership', '=', True)]"/>
+                    <filter string="New Members (This Month)" name="new_this_month" 
+                            domain="[('join_date', '&gt;=', (context_today() - relativedelta(months=1)).strftime('%Y-%m-01'))]"/>
+                </xpath>
+                
+                <xpath expr="//filter[@name='status']" position="after">
+                    <filter string="Member Category" name="group_category" context="{'group_by': 'membership_category_id'}"/>
+                    <filter string="Source Type" name="group_source" context="{'group_by': 'source_type'}"/>
+                </xpath>
+            </xpath>
+        </record>
+
+        <!-- Membership-focused Subscription Actions -->
+        
+        <!-- All Memberships -->
+        <record id="action_membership_subscription_all" model="ir.actions.act_window">
+            <field name="name">All Memberships</field>
+            <field name="res_model">subscription.subscription</field>
+            <field name="view_mode">tree,kanban,form</field>
+            <field name="domain">[('product_id.is_membership_product', '=', True)]</field>
+            <field name="context">{
+                'search_default_active': 1,
+                'default_product_id': False
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No memberships found
+                </p>
+                <p>
+                    Create your first membership subscription.
+                </p>
+            </field>
+        </record>
+
+        <!-- Active Memberships -->
+        <record id="action_membership_subscription_active" model="ir.actions.act_window">
+            <field name="name">Active Memberships</field>
+            <field name="res_model">subscription.subscription</field>
+            <field name="view_mode">tree,kanban,form</field>
+            <field name="domain">[
+                ('product_id.is_membership_product', '=', True),
+                ('state', 'in', ['active', 'trial'])
+            ]</field>
+            <field name="context">{}</field>
+        </record>
+
+        <!-- Pending Approval -->
+        <record id="action_membership_subscription_pending" model="ir.actions.act_window">
+            <field name="name">Pending Approval</field>
+            <field name="res_model">subscription.subscription</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[
+                ('product_id.is_membership_product', '=', True),
+                ('approval_status', '=', 'pending')
+            ]</field>
+            <field name="context">{'search_default_pending_approval': 1}</field>
+        </record>
+
+        <!-- Due for Renewal -->
+        <record id="action_membership_subscription_renewal" model="ir.actions.act_window">
+            <field name="name">Due for Renewal</field>
+            <field name="res_model">subscription.subscription</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[
+                ('product_id.is_membership_product', '=', True),
+                ('state', '=', 'active'),
+                ('date_end', '!=', False),
+                ('date_end', '&lt;=', (context_today() + relativedelta(days=90)).strftime('%Y-%m-%d'))
+            ]</field>
+            <field name="context">{}</field>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ========================================== -->
+        <!-- DEMO DATA FOR MEMBERSHIP COMMUNITY -->
+        <!-- ========================================== -->
+
+        <!-- Demo Partners (Members) -->
+        
+        <record id="demo_partner_individual_1" model="res.partner">
+            <field name="name">John Smith</field>
+            <field name="email">john.smith@example.com</field>
+            <field name="phone">+1-555-0101</field>
+            <field name="street">123 Main Street</field>
+            <field name="city">New York</field>
+            <field name="state_id" ref="base.state_us_27"/>
+            <field name="zip">10001</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="is_company">False</field>
+        </record>
+
+        <record id="demo_partner_individual_2" model="res.partner">
+            <field name="name">Sarah Johnson</field>
+            <field name="email">sarah.johnson@example.com</field>
+            <field name="phone">+1-555-0102</field>
+            <field name="street">456 Oak Avenue</field>
+            <field name="city">Los Angeles</field>
+            <field name="state_id" ref="base.state_us_5"/>
+            <field name="zip">90001</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="is_company">False</field>
+        </record>
+
+        <record id="demo_partner_student_1" model="res.partner">
+            <field name="name">Emily Davis</field>
+            <field name="email">emily.davis@university.edu</field>
+            <field name="phone">+1-555-0103</field>
+            <field name="street">789 College Road</field>
+            <field name="city">Boston</field>
+            <field name="state_id" ref="base.state_us_22"/>
+            <field name="zip">02101</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="is_company">False</field>
+        </record>
+
+        <record id="demo_partner_corporate_1" model="res.partner">
+            <field name="name">Tech Solutions Inc.</field>
+            <field name="email">info@techsolutions.com</field>
+            <field name="phone">+1-555-0200</field>
+            <field name="street">1000 Business Parkway</field>
+            <field name="city">San Francisco</field>
+            <field name="state_id" ref="base.state_us_5"/>
+            <field name="zip">94102</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="is_company">True</field>
+        </record>
+
+        <record id="demo_partner_retired_1" model="res.partner">
+            <field name="name">Robert Williams</field>
+            <field name="email">robert.williams@example.com</field>
+            <field name="phone">+1-555-0104</field>
+            <field name="street">321 Sunset Boulevard</field>
+            <field name="city">Miami</field>
+            <field name="state_id" ref="base.state_us_10"/>
+            <field name="zip">33101</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="is_company">False</field>
+        </record>
+
+        <!-- Demo Membership Products -->
+
+        <record id="demo_product_individual_membership" model="product.template">
+            <field name="name">Individual Member - Annual</field>
+            <field name="type">service</field>
+            <field name="list_price">299.00</field>
+            <field name="is_subscription">True</field>
+            <field name="is_membership_product">True</field>
+            <field name="default_member_category_id" ref="category_individual"/>
+            <field name="portal_access_level">standard</field>
+            <field name="enables_credentials">True</field>
+            <field name="enables_ce_tracking">True</field>
+            <field name="description">
+                <![CDATA[
+                <p>Full individual membership with access to all member benefits including:</p>
+                <ul>
+                    <li>Member portal access</li>
+                    <li>Event discounts</li>
+                    <li>Digital journal access</li>
+                    <li>Networking opportunities</li>
+                    <li>Professional development resources</li>
+                </ul>
+                ]]>
+            </field>
+            <field name="benefit_ids" eval="[(6, 0, [
+                ref('benefit_portal_access'),
+                ref('benefit_event_discount_20'),
+                ref('benefit_journal_digital'),
+                ref('benefit_newsletter'),
+                ref('benefit_member_directory'),
+                ref('benefit_directory_listing'),
+                ref('benefit_webinar_library'),
+                ref('benefit_voting_rights')
+            ])]"/>
+            <field name="feature_ids" eval="[(6, 0, [
+                ref('feature_portal_access'),
+                ref('feature_directory_listing'),
+                ref('feature_directory_search'),
+                ref('feature_event_discount'),
+                ref('feature_journal_digital'),
+                ref('feature_newsletter'),
+                ref('feature_webinar_access'),
+                ref('feature_voting_rights')
+            ])]"/>
+        </record>
+
+        <record id="demo_product_student_membership" model="product.template">
+            <field name="name">Student Member - Annual</field>
+            <field name="type">service</field>
+            <field name="list_price">99.00</field>
+            <field name="is_subscription">True</field>
+            <field name="is_membership_product">True</field>
+            <field name="default_member_category_id" ref="category_student"/>
+            <field name="portal_access_level">basic</field>
+            <field name="requires_eligibility_verification">True</field>
+            <field name="eligibility_criteria">
+                <![CDATA[
+                <p>Must be currently enrolled in an accredited educational institution.</p>
+                <p>Required documentation: Current student ID or enrollment verification letter.</p>
+                ]]>
+            </field>
+            <field name="benefit_ids" eval="[(6, 0, [
+                ref('benefit_portal_access'),
+                ref('benefit_event_discount_20'),
+                ref('benefit_journal_digital'),
+                ref('benefit_newsletter'),
+                ref('benefit_member_directory'),
+                ref('benefit_webinar_library')
+            ])]"/>
+            <field name="feature_ids" eval="[(6, 0, [
+                ref('feature_portal_access'),
+                ref('feature_directory_listing'),
+                ref('feature_event_discount'),
+                ref('feature_journal_digital'),
+                ref('feature_newsletter'),
+                ref('feature_webinar_access')
+            ])]"/>
+        </record>
+
+        <record id="demo_product_corporate_membership" model="product.template">
+            <field name="name">Corporate Member - Annual</field>
+            <field name="type">service</field>
+            <field name="list_price">1499.00</field>
+            <field name="is_subscription">True</field>
+            <field name="is_membership_product">True</field>
+            <field name="default_member_category_id" ref="category_corporate"/>
+            <field name="portal_access_level">premium</field>
+            <field name="description">
+                <![CDATA[
+                <p>Corporate membership with premium benefits for organizations:</p>
+                <ul>
+                    <li>Multiple seat access (5 included)</li>
+                    <li>Premium event discounts</li>
+                    <li>Print and digital journal access</li>
+                    <li>Priority event registration</li>
+                    <li>Enhanced networking opportunities</li>
+                    <li>Business services access</li>
+                </ul>
+                ]]>
+            </field>
+            <field name="benefit_ids" eval="[(6, 0, [
+                ref('benefit_portal_access'),
+                ref('benefit_event_discount_20'),
+                ref('benefit_journal_digital'),
+                ref('benefit_journal_print'),
+                ref('benefit_newsletter'),
+                ref('benefit_priority_registration'),
+                ref('benefit_member_directory'),
+                ref('benefit_directory_listing'),
+                ref('benefit_networking_events'),
+                ref('benefit_webinar_library'),
+                ref('benefit_voting_rights'),
+                ref('benefit_practice_resources')
+            ])]"/>
+            <field name="feature_ids" eval="[(6, 0, [
+                ref('feature_portal_premium'),
+                ref('feature_directory_listing'),
+                ref('feature_directory_search'),
+                ref('feature_event_discount'),
+                ref('feature_event_priority'),
+                ref('feature_journal_digital'),
+                ref('feature_journal_print'),
+                ref('feature_newsletter'),
+                ref('feature_webinar_access'),
+                ref('feature_networking_events'),
+                ref('feature_voting_rights'),
+                ref('feature_practice_resources')
+            ])]"/>
+        </record>
+
+        <!-- Demo Subscription Plans -->
+
+        <record id="demo_plan_individual_annual" model="subscription.plan">
+            <field name="name">Individual Member - Annual</field>
+            <field name="code">IND-ANNUAL</field>
+            <field name="product_template_id" ref="demo_product_individual_membership"/>
+            <field name="price">299.00</field>
+            <field name="billing_period">yearly</field>
+            <field name="billing_interval">1</field>
+            <field name="billing_type">anniversary</field>
+            <field name="trial_period">30</field>
+            <field name="trial_price">0.00</field>
+            <field name="auto_renew">True</field>
+            <field name="description">
+                <![CDATA[
+                <p>Annual individual membership with full access to all member benefits.</p>
+                <p>Includes 30-day free trial period.</p>
+                ]]>
+            </field>
+        </record>
+
+        <record id="demo_plan_student_annual" model="subscription.plan">
+            <field name="name">Student Member - Annual</field>
+            <field name="code">STU-ANNUAL</field>
+            <field name="product_template_id" ref="demo_product_student_membership"/>
+            <field name="price">99.00</field>
+            <field name="billing_period">yearly</field>
+            <field name="billing_interval">1</field>
+            <field name="billing_type">anniversary</field>
+            <field name="trial_period">14</field>
+            <field name="trial_price">0.00</field>
+            <field name="auto_renew">True</field>
+            <field name="description">
+                <![CDATA[
+                <p>Discounted annual membership for students.</p>
+                <p>Includes 14-day free trial period.</p>
+                ]]>
+            </field>
+        </record>
+
+        <record id="demo_plan_corporate_annual" model="subscription.plan">
+            <field name="name">Corporate Member - Annual</field>
+            <field name="code">CORP-ANNUAL</field>
+            <field name="product_template_id" ref="demo_product_corporate_membership"/>
+            <field name="price">1499.00</field>
+            <field name="billing_period">yearly</field>
+            <field name="billing_interval">1</field>
+            <field name="billing_type">calendar</field>
+            <field name="auto_renew">True</field>
+            <field name="user_limit">5</field>
+            <field name="description">
+                <![CDATA[
+                <p>Corporate membership with premium benefits.</p>
+                <p>Includes 5 user seats.</p>
+                ]]>
+            </field>
+        </record>
+
+        <!-- Demo Active Subscriptions -->
+
+        <record id="demo_subscription_individual_1" model="subscription.subscription">
+            <field name="partner_id" ref="demo_partner_individual_1"/>
+            <field name="partner_invoice_id" ref="demo_partner_individual_1"/>
+            <field name="partner_shipping_id" ref="demo_partner_individual_1"/>
+            <field name="plan_id" ref="demo_plan_individual_annual"/>
+            <field name="date_start" eval="(DateTime.today() - timedelta(days=180)).strftime('%Y-%m-%d')"/>
+            <field name="date_end" eval="(DateTime.today() + timedelta(days=185)).strftime('%Y-%m-%d')"/>
+            <field name="state">active</field>
+            <field name="membership_category_id" ref="category_individual"/>
+            <field name="eligibility_verified">True</field>
+            <field name="join_date" eval="(DateTime.today() - timedelta(days=180)).strftime('%Y-%m-%d')"/>
+            <field name="source_type">direct</field>
+        </record>
+
+        <record id="demo_subscription_student_1" model="subscription.subscription">
+            <field name="partner_id" ref="demo_partner_student_1"/>
+            <field name="partner_invoice_id" ref="demo_partner_student_1"/>
+            <field name="partner_shipping_id" ref="demo_partner_student_1"/>
+            <field name="plan_id" ref="demo_plan_student_annual"/>
+            <field name="date_start" eval="(DateTime.today() - timedelta(days=90)).strftime('%Y-%m-%d')"/>
+            <field name="date_end" eval="(DateTime.today() + timedelta(days=275)).strftime('%Y-%m-%d')"/>
+            <field name="state">active</field>
+            <field name="membership_category_id" ref="category_student"/>
+            <field name="eligibility_verified">True</field>
+            <field name="join_date" eval="(DateTime.today() - timedelta(days=90)).strftime('%Y-%m-%d')"/>
+            <field name="source_type">direct</field>
+        </record>
+
+        <record id="demo_subscription_corporate_1" model="subscription.subscription">
+            <field name="partner_id" ref="demo_partner_corporate_1"/>
+            <field name="partner_invoice_id" ref="demo_partner_corporate_1"/>
+            <field name="partner_shipping_id" ref="demo_partner_corporate_1"/>
+            <field name="plan_id" ref="demo_plan_corporate_annual"/>
+            <field name="date_start" eval="(DateTime.today() - timedelta(days=60)).strftime('%Y-%m-%d')"/>
+            <field name="date_end" eval="DateTime(DateTime.today().year, 12, 31).strftime('%Y-%m-%d')"/>
+            <field name="state">active</field>
+            <field name="membership_category_id" ref="category_corporate"/>
+            <field name="eligibility_verified">True</field>
+            <field name="join_date" eval="(DateTime.today() - timedelta(days=60)).strftime('%Y-%m-%d')"/>
+            <field name="source_type">direct</field>
+        </record>
+
+        <!-- Demo Trial Subscription -->
+
+        <record id="demo_subscription_trial_1" model="subscription.subscription">
+            <field name="partner_id" ref="demo_partner_individual_2"/>
+            <field name="partner_invoice_id" ref="demo_partner_individual_2"/>
+            <field name="partner_shipping_id" ref="demo_partner_individual_2"/>
+            <field name="plan_id" ref="demo_plan_individual_annual"/>
+            <field name="date_start" eval="(DateTime.today() - timedelta(days=10)).strftime('%Y-%m-%d')"/>
+            <field name="date_end" eval="(DateTime.today() + timedelta(days=355)).strftime('%Y-%m-%d')"/>
+            <field name="state">trial</field>
+            <field name="membership_category_id" ref="category_individual"/>
+            <field name="eligibility_verified">True</field>
+            <field name="join_date" eval="(DateTime.today() - timedelta(days=10)).strftime('%Y-%m-%d')"/>
+            <field name="source_type">direct</field>
+        </record>
+
+        <!-- Demo Subscription Lines -->
+
+        <record id="demo_subscription_line_1" model="subscription.line">
+            <field name="subscription_id" ref="demo_subscription_individual_1"/>
+            <field name="product_id" eval="obj().env.ref('membership_community.demo_product_individual_membership').product_variant_id.id"/>
+            <field name="name">Individual Member - Annual</field>
+            <field name="quantity">1</field>
+            <field name="price_unit">299.00</field>
+        </record>
+
+        <record id="demo_subscription_line_2" model="subscription.line">
+            <field name="subscription_id" ref="demo_subscription_student_1"/>
+            <field name="product_id" eval="obj().env.ref('membership_community.demo_product_student_membership').product_variant_id.id"/>
+            <field name="name">Student Member - Annual</field>
+            <field name="quantity">1</field>
+            <field name="price_unit">99.00</field>
+        </record>
+
+        <record id="demo_subscription_line_3" model="subscription.line">
+            <field name="subscription_id" ref="demo_subscription_corporate_1"/>
+            <field name="product_id" eval="obj().env.ref('membership_community.demo_product_corporate_membership').product_variant_id.id"/>
+            <field name="name">Corporate Member - Annual</field>
+            <field name="quantity">1</field>
+            <field name="price_unit">1499.00</field>
+        </record>
+
+    </data>
+</odoo>

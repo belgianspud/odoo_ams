@@ -9,8 +9,7 @@
         <!-- Root Menu: Membership -->
         <menuitem id="menu_membership_root"
                   name="Membership"
-                  sequence="50"
-                  web_icon="membership_community,static/description/icon.png"/>
+                  sequence="50"/>
 
         <!-- ========================================== -->
         <!-- MEMBERSHIPS SECTION -->
@@ -21,23 +20,29 @@
                   parent="menu_membership_root"
                   sequence="10"/>
 
-        <menuitem id="menu_membership_record"
+        <menuitem id="menu_membership_subscription_all"
                   name="All Memberships"
                   parent="menu_membership_management"
-                  action="action_membership_record"
+                  action="action_membership_subscription_all"
                   sequence="10"/>
 
-        <menuitem id="menu_membership_record_active"
+        <menuitem id="menu_membership_subscription_active"
                   name="Active Memberships"
                   parent="menu_membership_management"
-                  action="action_membership_record_active"
+                  action="action_membership_subscription_active"
                   sequence="20"/>
 
-        <menuitem id="menu_membership_record_renewal"
+        <menuitem id="menu_membership_subscription_pending"
+                  name="Pending Approval"
+                  parent="menu_membership_management"
+                  action="action_membership_subscription_pending"
+                  sequence="30"/>
+
+        <menuitem id="menu_membership_subscription_renewal"
                   name="Due for Renewal"
                   parent="menu_membership_management"
-                  action="action_membership_record_renewal"
-                  sequence="30"/>
+                  action="action_membership_subscription_renewal"
+                  sequence="40"/>
 
         <!-- ========================================== -->
         <!-- MEMBERS SECTION -->
@@ -61,6 +66,27 @@
                   sequence="20"/>
 
         <!-- ========================================== -->
+        <!-- PRODUCTS SECTION -->
+        <!-- ========================================== -->
+
+        <menuitem id="menu_membership_products"
+                  name="Products"
+                  parent="menu_membership_root"
+                  sequence="30"/>
+
+        <menuitem id="menu_product_membership"
+                  name="Membership Products"
+                  parent="menu_membership_products"
+                  action="action_membership_products"
+                  sequence="10"/>
+
+        <menuitem id="menu_subscription_plans"
+                  name="Subscription Plans"
+                  parent="menu_membership_products"
+                  action="subscription_management.action_subscription_plan"
+                  sequence="20"/>
+
+        <!-- ========================================== -->
         <!-- CONFIGURATION SECTION -->
         <!-- ========================================== -->
 
@@ -69,23 +95,11 @@
                   parent="menu_membership_root"
                   sequence="90"/>
 
-        <!-- Products Submenu -->
-        <menuitem id="menu_membership_products"
-                  name="Products"
-                  parent="menu_membership_configuration"
-                  sequence="10"/>
-
-        <menuitem id="menu_product_membership"
-                  name="Membership Products"
-                  parent="menu_membership_products"
-                  action="product.product_template_action"
-                  sequence="10"/>
-
         <!-- Categories Submenu -->
         <menuitem id="menu_membership_categories_config"
                   name="Member Categories"
                   parent="menu_membership_configuration"
-                  sequence="20"/>
+                  sequence="10"/>
 
         <menuitem id="menu_membership_category"
                   name="Categories"
@@ -97,7 +111,7 @@
         <menuitem id="menu_membership_features_benefits"
                   name="Features &amp; Benefits"
                   parent="menu_membership_configuration"
-                  sequence="30"/>
+                  sequence="20"/>
 
         <menuitem id="menu_membership_feature"
                   name="Features"
@@ -123,8 +137,35 @@
         <menuitem id="menu_membership_analysis"
                   name="Membership Analysis"
                   parent="menu_membership_reporting"
-                  action="action_membership_record"
+                  action="action_membership_subscription_all"
                   sequence="10"/>
+
+        <!-- ========================================== -->
+        <!-- ADDITIONAL PRODUCT ACTION -->
+        <!-- ========================================== -->
+
+        <!-- Membership Products Action -->
+        <record id="action_membership_products" model="ir.actions.act_window">
+            <field name="name">Membership Products</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('is_membership_product', '=', True)]</field>
+            <field name="context">{
+                'default_is_membership_product': True,
+                'default_is_subscription': True,
+                'default_type': 'service',
+                'search_default_membership_products': 1
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first membership product
+                </p>
+                <p>
+                    Membership products define the different types of memberships you offer.
+                    They are linked to subscription plans for billing and categories for member classification.
+                </p>
+            </field>
+        </record>
 
     </data>
 </odoo>

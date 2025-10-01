@@ -49,13 +49,13 @@
         </record>
 
         <!-- ========================================== -->
-        <!-- RECORD RULES - MEMBERSHIP.RECORD -->
+        <!-- RECORD RULES - SUBSCRIPTION.SUBSCRIPTION -->
         <!-- ========================================== -->
 
-        <!-- Members can see their own memberships -->
-        <record id="membership_record_member_rule" model="ir.rule">
-            <field name="name">Member: Own Memberships</field>
-            <field name="model_id" ref="model_membership_record"/>
+        <!-- Members can see their own subscriptions -->
+        <record id="subscription_subscription_member_rule" model="ir.rule">
+            <field name="name">Member: Own Subscriptions</field>
+            <field name="model_id" ref="subscription_management.model_subscription_subscription"/>
             <field name="domain_force">[('partner_id.user_ids', 'in', [user.id])]</field>
             <field name="groups" eval="[(4, ref('group_membership_member'))]"/>
             <field name="perm_read" eval="True"/>
@@ -64,10 +64,10 @@
             <field name="perm_unlink" eval="False"/>
         </record>
 
-        <!-- Membership Users can see all memberships -->
-        <record id="membership_record_user_rule" model="ir.rule">
-            <field name="name">User: All Memberships</field>
-            <field name="model_id" ref="model_membership_record"/>
+        <!-- Membership Users can see all subscriptions -->
+        <record id="subscription_subscription_user_rule" model="ir.rule">
+            <field name="name">User: All Subscriptions</field>
+            <field name="model_id" ref="subscription_management.model_subscription_subscription"/>
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
             <field name="perm_read" eval="True"/>
@@ -77,9 +77,9 @@
         </record>
 
         <!-- Membership Managers have full access -->
-        <record id="membership_record_manager_rule" model="ir.rule">
-            <field name="name">Manager: All Memberships</field>
-            <field name="model_id" ref="model_membership_record"/>
+        <record id="subscription_subscription_manager_rule" model="ir.rule">
+            <field name="name">Manager: All Subscriptions</field>
+            <field name="model_id" ref="subscription_management.model_subscription_subscription"/>
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_membership_manager'))]"/>
             <field name="perm_read" eval="True"/>
@@ -88,16 +88,14 @@
             <field name="perm_unlink" eval="True"/>
         </record>
 
-        <!-- Organization Admins can see their organization's memberships -->
-        <record id="membership_record_org_admin_rule" model="ir.rule">
-            <field name="name">Org Admin: Organization Memberships</field>
-            <field name="model_id" ref="model_membership_record"/>
+        <!-- Organization Admins can see their organization's subscriptions -->
+        <record id="subscription_subscription_org_admin_rule" model="ir.rule">
+            <field name="name">Org Admin: Organization Subscriptions</field>
+            <field name="model_id" ref="subscription_management.model_subscription_subscription"/>
             <field name="domain_force">[
                 '|',
                     ('partner_id.user_ids', 'in', [user.id]),
-                    '&amp;',
-                        ('parent_membership_id.partner_id.user_ids', 'in', [user.id]),
-                        ('is_organizational_child', '=', True)
+                    ('partner_id.parent_id.user_ids', 'in', [user.id])
             ]</field>
             <field name="groups" eval="[(4, ref('group_organization_admin'))]"/>
             <field name="perm_read" eval="True"/>
@@ -216,6 +214,22 @@
                     ('id', 'child_of', [user.partner_id.commercial_partner_id.id])
             ]</field>
             <field name="groups" eval="[(4, ref('group_membership_member'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- RECORD RULES - PRODUCT.TEMPLATE -->
+        <!-- ========================================== -->
+
+        <!-- Portal users can view membership products -->
+        <record id="product_template_portal_rule" model="ir.rule">
+            <field name="name">Portal: View Membership Products</field>
+            <field name="model_id" ref="product.model_product_template"/>
+            <field name="domain_force">[('is_membership_product', '=', True)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="False"/>
