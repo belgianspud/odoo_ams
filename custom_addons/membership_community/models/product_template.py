@@ -13,7 +13,7 @@ class ProductTemplate(models.Model):
     # ==========================================
     
     is_membership_product = fields.Boolean(
-        string='Is Membership Product',
+        string='Membership',
         default=False,
         help="Check this if this product represents a membership. "
              "Works with subscription features for billing and renewal."

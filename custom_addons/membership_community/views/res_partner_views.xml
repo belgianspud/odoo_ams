@@ -111,7 +111,7 @@
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="base.view_partner_tree"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='display_name']" position="after">
+                <xpath expr="//list" position="inside">
                     <field name="is_member" optional="show"/>
                     <field name="membership_state" optional="show"/>
                     <field name="membership_category_id" optional="hide"/>

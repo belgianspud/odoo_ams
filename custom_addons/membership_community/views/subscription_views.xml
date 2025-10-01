@@ -34,7 +34,7 @@
                 </xpath>
 
                 <!-- Add membership verification button to header -->
-                <xpath expr="//header/button[@name='action_reactivate']" position="after">
+                <xpath expr="//header/button[@name='action_renew']" position="after">
                     <button name="action_verify_eligibility" string="Verify Eligibility" type="object" 
                             class="btn-primary" invisible="eligibility_verified or not is_membership"
                             groups="membership_community.group_membership_manager"/>
@@ -47,19 +47,16 @@
                     <field name="subscription_product_type" invisible="1"/>
                 </xpath>
 
-                <!-- Add membership verification group -->
-                <xpath expr="//group[@string='Billing Information']" position="after">
-                    <group string="Membership Details" invisible="not is_membership">
-                        <group name="verification">
-                            <field name="eligibility_verified"/>
-                            <field name="eligibility_verified_by" invisible="not eligibility_verified"/>
-                            <field name="eligibility_verified_date" invisible="not eligibility_verified"/>
-                        </group>
-                        <group name="source">
-                            <field name="join_date"/>
-                            <field name="source_type"/>
-                        </group>
-                    </group>
+                <!-- Add membership details as fields in existing groups -->
+                <xpath expr="//field[@name='last_invoice_date']" position="after">
+                    <field name="eligibility_verified" invisible="not is_membership"/>
+                    <field name="eligibility_verified_by" invisible="not eligibility_verified or not is_membership"/>
+                    <field name="eligibility_verified_date" invisible="not eligibility_verified or not is_membership"/>
+                </xpath>
+
+                <xpath expr="//field[@name='date_start']" position="after">
+                    <field name="join_date" invisible="not is_membership"/>
+                    <field name="source_type" invisible="not is_membership"/>
                 </xpath>
 
             </field>
@@ -76,7 +73,7 @@
                     <field name="subscription_product_type"/>
                 </xpath>
                 
-                <xpath expr="//filter[@name='due_billing']" position="after">
+                <xpath expr="//filter[@name='active']" position="after">
                     <separator/>
                     <filter string="Not Verified" name="not_verified" 
                             domain="[('eligibility_verified', '=', False), ('is_membership', '=', True)]"/>
@@ -90,7 +87,7 @@
                             domain="[('join_date', '&gt;=', (context_today() - relativedelta(months=1)).strftime('%Y-%m-01'))]"/>
                 </xpath>
                 
-                <xpath expr="//filter[@name='status']" position="after">
+                <xpath expr="//filter[@name='customer']" position="after">
                     <filter string="Member Category" name="group_category" context="{'group_by': 'membership_category_id'}"/>
                     <filter string="Subscription Type" name="group_sub_type" context="{'group_by': 'subscription_product_type'}"/>
                     <filter string="Source Type" name="group_source" context="{'group_by': 'source_type'}"/>
