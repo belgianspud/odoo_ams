@@ -102,30 +102,7 @@
             <field name="perm_unlink" eval="True"/>
         </record>
 
-        <!-- Subscription (Membership) Rules - Extend subscription_management security -->
-        <record id="subscription_rule_membership_user" model="ir.rule">
-            <field name="name">Subscription: Membership User - Read Own Company</field>
-            <field name="model_id" ref="subscription_management.model_subscription_subscription"/>
-            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
-            <field name="groups" eval="[(4, ref('group_membership_user'))]"/>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="False"/>
-            <field name="perm_create" eval="False"/>
-            <field name="perm_unlink" eval="False"/>
-        </record>
-
-        <record id="subscription_rule_membership_manager" model="ir.rule">
-            <field name="name">Subscription: Membership Manager - Full Access Own Company</field>
-            <field name="model_id" ref="subscription_management.model_subscription_subscription"/>
-            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
-            <field name="groups" eval="[(4, ref('group_membership_manager'))]"/>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="True"/>
-            <field name="perm_create" eval="True"/>
-            <field name="perm_unlink" eval="True"/>
-        </record>
-
-        <!-- Partner (Member) Rules - Additional access for membership users -->
+        <!-- Partner (Member) Rules -->
         <record id="partner_rule_membership_user" model="ir.rule">
             <field name="name">Partner: Membership User - Read All</field>
             <field name="model_id" ref="base.model_res_partner"/>
