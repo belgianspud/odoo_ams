@@ -15,6 +15,7 @@ Features:
 * Recurring Billing Automation
 * Payment Processing
 * Subscription Lifecycle Management
+* Grace Period, Suspension, and Termination Management
 * Usage Tracking and Metering
 * Customer Portal
 * Analytics and Reporting
@@ -47,6 +48,7 @@ This module provides a complete subscription management system for Odoo Communit
         'views/subscription_menus.xml',
         'views/product_template_views.xml',
         'views/res_partner_views.xml',
+        'views/res_config_settings_views.xml',
         'views/sale_order_views.xml',
         'views/portal_templates.xml',
         'reports/subscription_reports.xml',

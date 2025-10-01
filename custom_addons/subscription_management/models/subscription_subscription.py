@@ -103,6 +103,139 @@ class SubscriptionSubscription(models.Model):
     coupon_id = fields.Many2one('subscription.coupon', 'Applied Coupon')
     original_price = fields.Float('Original Price')
     
+    # ==========================================
+    # GRACE PERIOD & LIFECYCLE FIELDS
+    # ==========================================
+    
+    # Period Overrides (can be customized per subscription)
+    grace_period_days = fields.Integer(
+        string='Grace Period (Days)',
+        default=lambda self: int(self.env['ir.config_parameter'].sudo().get_param(
+            'subscription.grace_period_days', '30')),
+        help='Days after expiry before suspension'
+    )
+    
+    suspend_period_days = fields.Integer(
+        string='Suspension Period (Days)',
+        default=lambda self: int(self.env['ir.config_parameter'].sudo().get_param(
+            'subscription.suspend_period_days', '60')),
+        help='Days in suspension before termination'
+    )
+    
+    terminate_period_days = fields.Integer(
+        string='Termination Period (Days)',
+        default=lambda self: int(self.env['ir.config_parameter'].sudo().get_param(
+            'subscription.terminate_period_days', '90')),
+        help='Total days before termination'
+    )
+    
+    # Computed Dates
+    paid_through_date = fields.Date(
+        string='Paid Through Date',
+        compute='_compute_paid_through_date',
+        store=True,
+        help='Last date subscription is paid for (same as date_end for active subscriptions)'
+    )
+    
+    grace_period_end_date = fields.Date(
+        string='Grace Period End Date',
+        compute='_compute_lifecycle_dates',
+        store=True,
+        help='Date when grace period ends and suspension begins'
+    )
+    
+    suspend_end_date = fields.Date(
+        string='Suspension End Date',
+        compute='_compute_lifecycle_dates',
+        store=True,
+        help='Date when suspension ends and termination occurs'
+    )
+    
+    terminate_date = fields.Date(
+        string='Termination Date',
+        compute='_compute_lifecycle_dates',
+        store=True,
+        help='Final termination date'
+    )
+    
+    # Status Flags
+    is_in_grace_period = fields.Boolean(
+        string='In Grace Period',
+        compute='_compute_lifecycle_status',
+        store=True,
+        help='Subscription is past expiry but within grace period'
+    )
+    
+    is_pending_suspension = fields.Boolean(
+        string='Pending Suspension',
+        compute='_compute_lifecycle_status',
+        store=True,
+        help='Grace period has ended, suspension is pending'
+    )
+    
+    is_pending_termination = fields.Boolean(
+        string='Pending Termination',
+        compute='_compute_lifecycle_status',
+        store=True,
+        help='Suspension period has ended, termination is pending'
+    )
+    
+    lifecycle_stage = fields.Selection([
+        ('active', 'Active'),
+        ('grace', 'Grace Period'),
+        ('suspended', 'Suspended'),
+        ('terminated', 'Terminated'),
+    ], string='Lifecycle Stage',
+       compute='_compute_lifecycle_status',
+       store=True,
+       help='Current stage in subscription lifecycle')
+    
+    days_in_grace = fields.Integer(
+        string='Days in Grace',
+        compute='_compute_lifecycle_status',
+        help='Number of days currently in grace period'
+    )
+    
+    days_until_suspension = fields.Integer(
+        string='Days Until Suspension',
+        compute='_compute_lifecycle_status',
+        help='Days remaining before suspension'
+    )
+    
+    days_until_termination = fields.Integer(
+        string='Days Until Termination',
+        compute='_compute_lifecycle_status',
+        help='Days remaining before termination'
+    )
+    
+    # Tracking
+    grace_period_start_date = fields.Date(
+        string='Grace Period Started',
+        readonly=True,
+        tracking=True,
+        help='Date when subscription entered grace period'
+    )
+    
+    actual_suspend_date = fields.Date(
+        string='Actually Suspended On',
+        readonly=True,
+        tracking=True,
+        help='Date when subscription was actually suspended'
+    )
+    
+    actual_terminate_date = fields.Date(
+        string='Actually Terminated On',
+        readonly=True,
+        tracking=True,
+        help='Date when subscription was actually terminated'
+    )
+    
+    # Email Tracking
+    last_grace_email_date = fields.Date(
+        string='Last Grace Email',
+        help='Last date grace period email was sent'
+    )
+    
     # SQL Constraints
     _sql_constraints = [
         ('unique_active_subscription',
@@ -201,6 +334,134 @@ class SubscriptionSubscription(models.Model):
         for subscription in self:
             subscription.failed_invoice_count = len(subscription.failed_invoice_ids)
     
+    # ==========================================
+    # LIFECYCLE COMPUTE METHODS
+    # ==========================================
+    
+    @api.depends('date_end', 'last_invoice_date')
+    def _compute_paid_through_date(self):
+        """Calculate the date subscription is paid through"""
+        for subscription in self:
+            if subscription.state in ('active', 'trial'):
+                subscription.paid_through_date = subscription.date_end
+            else:
+                subscription.paid_through_date = False
+    
+    @api.depends('paid_through_date', 'grace_period_days', 'suspend_period_days', 
+                 'terminate_period_days', 'state')
+    def _compute_lifecycle_dates(self):
+        """Calculate grace, suspend, and terminate dates"""
+        for subscription in self:
+            if subscription.paid_through_date:
+                base_date = subscription.paid_through_date
+                
+                # Grace period end date
+                subscription.grace_period_end_date = base_date + timedelta(
+                    days=subscription.grace_period_days
+                )
+                
+                # Suspend end date (grace + suspend period)
+                subscription.suspend_end_date = base_date + timedelta(
+                    days=subscription.grace_period_days + subscription.suspend_period_days
+                )
+                
+                # Terminate date (total period)
+                subscription.terminate_date = base_date + timedelta(
+                    days=subscription.terminate_period_days
+                )
+            else:
+                subscription.grace_period_end_date = False
+                subscription.suspend_end_date = False
+                subscription.terminate_date = False
+    
+    @api.depends('paid_through_date', 'grace_period_end_date', 'suspend_end_date',
+                 'terminate_date', 'state')
+    def _compute_lifecycle_status(self):
+        """Determine current lifecycle status"""
+        today = fields.Date.today()
+        
+        for subscription in self:
+            if not subscription.paid_through_date:
+                subscription.is_in_grace_period = False
+                subscription.is_pending_suspension = False
+                subscription.is_pending_termination = False
+                subscription.lifecycle_stage = 'active' if subscription.state == 'active' else False
+                subscription.days_in_grace = 0
+                subscription.days_until_suspension = 0
+                subscription.days_until_termination = 0
+                continue
+            
+            paid_through = subscription.paid_through_date
+            grace_end = subscription.grace_period_end_date
+            suspend_end = subscription.suspend_end_date
+            terminate = subscription.terminate_date
+            
+            # Determine lifecycle stage
+            if subscription.state == 'active':
+                if today <= paid_through:
+                    # Still within paid period
+                    subscription.lifecycle_stage = 'active'
+                    subscription.is_in_grace_period = False
+                    subscription.is_pending_suspension = False
+                    subscription.is_pending_termination = False
+                    subscription.days_in_grace = 0
+                    subscription.days_until_suspension = (grace_end - today).days if grace_end else 0
+                    subscription.days_until_termination = (terminate - today).days if terminate else 0
+                    
+                elif today <= grace_end:
+                    # In grace period
+                    subscription.lifecycle_stage = 'grace'
+                    subscription.is_in_grace_period = True
+                    subscription.is_pending_suspension = False
+                    subscription.is_pending_termination = False
+                    subscription.days_in_grace = (today - paid_through).days
+                    subscription.days_until_suspension = (grace_end - today).days
+                    subscription.days_until_termination = (terminate - today).days if terminate else 0
+                    
+                else:
+                    # Past grace period, should be suspended
+                    subscription.lifecycle_stage = 'grace'
+                    subscription.is_in_grace_period = False
+                    subscription.is_pending_suspension = True
+                    subscription.is_pending_termination = False
+                    subscription.days_in_grace = subscription.grace_period_days
+                    subscription.days_until_suspension = 0
+                    subscription.days_until_termination = (terminate - today).days if terminate else 0
+                    
+            elif subscription.state == 'suspended':
+                subscription.lifecycle_stage = 'suspended'
+                subscription.is_in_grace_period = False
+                subscription.is_pending_suspension = False
+                
+                if suspend_end and today > suspend_end:
+                    subscription.is_pending_termination = True
+                    subscription.days_until_termination = 0
+                else:
+                    subscription.is_pending_termination = False
+                    subscription.days_until_termination = (terminate - today).days if terminate else 0
+                    
+                subscription.days_in_grace = 0
+                subscription.days_until_suspension = 0
+                
+            elif subscription.state in ('cancelled', 'expired'):
+                subscription.lifecycle_stage = 'terminated'
+                subscription.is_in_grace_period = False
+                subscription.is_pending_suspension = False
+                subscription.is_pending_termination = False
+                subscription.days_in_grace = 0
+                subscription.days_until_suspension = 0
+                subscription.days_until_termination = 0
+                
+            else:
+                # Draft, trial, etc.
+                subscription.lifecycle_stage = False
+                subscription.is_in_grace_period = False
+                subscription.is_pending_suspension = False
+                subscription.is_pending_termination = False
+                subscription.days_in_grace = 0
+                subscription.days_until_suspension = 0
+                subscription.days_until_termination = 0
+    
     @api.onchange('plan_id', 'date_start')
     def _onchange_plan_set_end_date(self):
         """Automatically set end date when plan or start date changes"""
@@ -239,13 +500,10 @@ class SubscriptionSubscription(models.Model):
         # For calendar-based subscriptions, offer renewal closer to period end
         if self.plan_id.billing_type == 'calendar':
             if self.plan_id.billing_period == 'yearly':
-                # Offer renewal 2 months before year end
                 return self.date_end - relativedelta(months=2)
             elif self.plan_id.billing_period == 'quarterly':
-                # Offer renewal 2 weeks before quarter end
                 return self.date_end - relativedelta(weeks=2)
             else:
-                # Offer renewal 1 week before month end
                 return self.date_end - relativedelta(weeks=1)
         else:
             # Anniversary-based: offer renewal 1 week before
@@ -304,25 +562,20 @@ class SubscriptionSubscription(models.Model):
         if self.plan_id.auto_renew:
             # Calculate new end date based on billing type
             if self.plan_id.billing_type == 'calendar':
-                # For calendar-based, set to next calendar period end
                 current_end = self.date_end or self.date_start
                 
                 if self.plan_id.billing_period == 'yearly':
-                    # Next year end
                     self.date_end = date(current_end.year + 1, 12, 31)
                 elif self.plan_id.billing_period == 'quarterly':
-                    # Next quarter end
                     next_quarter_start = current_end + relativedelta(days=1)
                     self.date_end = self.plan_id._get_calendar_based_billing_date(next_quarter_start)
                 elif self.plan_id.billing_period == 'monthly':
-                    # Next month end
                     next_month_start = current_end + relativedelta(days=1)
                     self.date_end = self.plan_id._get_calendar_based_billing_date(next_month_start)
                 else:
-                    # For daily/weekly, use anniversary
                     self.date_end = self.plan_id.get_next_billing_date(current_end)
             else:
-                # Anniversary-based: add billing period to current end date
+                # Anniversary-based
                 self.date_end = self.plan_id.get_next_billing_date(
                     self.date_end or self.date_start
                 )
@@ -342,7 +595,7 @@ class SubscriptionSubscription(models.Model):
         if self.state not in ('suspended', 'cancelled', 'expired'):
             raise UserError(_('Only suspended, cancelled or expired subscriptions can be reactivated.'))
         
-        # For suspended subscriptions, simply reactivate without changing dates
+        # For suspended subscriptions, simply reactivate
         if self.state == 'suspended':
             self.write({
                 'state': 'active',
@@ -350,6 +603,7 @@ class SubscriptionSubscription(models.Model):
                 'dunning_level': 'none',
                 'last_payment_error': False,
                 'payment_retry_date': False,
+                'actual_suspend_date': False,
             })
             
             self.message_post(
@@ -357,26 +611,25 @@ class SubscriptionSubscription(models.Model):
                 message_type='notification'
             )
         
-        # For cancelled/expired subscriptions, reset dates and create new invoice
+        # For cancelled/expired subscriptions, reset dates
         else:
-            # Set new dates
             today = fields.Date.today()
             self.date_start = today
-            
-            # Calculate new end date based on billing type
             self.date_end = self.plan_id.get_subscription_end_date(today)
             
-            # Reset dunning state
             self.write({
                 'state': 'active',
                 'payment_retry_count': 0,
                 'dunning_level': 'none',
                 'last_payment_error': False,
                 'payment_retry_date': False,
+                'grace_period_start_date': False,
+                'actual_suspend_date': False,
+                'actual_terminate_date': False,
             })
             
             # Create reactivation invoice
-            invoice = self._create_initial_invoice()
+            self._create_initial_invoice()
             
             self.message_post(
                 body=_('Subscription reactivated with new billing period'),
@@ -401,6 +654,86 @@ class SubscriptionSubscription(models.Model):
                 'sticky': False,
             }
         }
+    
+    # ==========================================
+    # GRACE PERIOD BUSINESS METHODS
+    # ==========================================
+    
+    def action_enter_grace_period(self):
+        """Manually enter grace period (usually automatic)"""
+        self.ensure_one()
+        if self.state == 'active' and not self.is_in_grace_period:
+            self.grace_period_start_date = fields.Date.today()
+            self._send_grace_period_email()
+            
+            self.message_post(
+                body=f"Entered grace period. Grace ends on {self.grace_period_end_date}",
+                message_type='notification'
+            )
+    
+    def action_suspend_from_grace(self):
+        """Suspend subscription after grace period ends"""
+        self.ensure_one()
+        
+        if self.state == 'active':
+            self.actual_suspend_date = fields.Date.today()
+            self.action_suspend()
+            
+            # Send suspension email
+            send_email = self.env['ir.config_parameter'].sudo().get_param(
+                'subscription.suspend_send_email', 'True'
+            )
+            if send_email == 'True':
+                self._send_suspension_email()
+            
+            self.message_post(
+                body=f"Suspended after grace period ended. Suspension ends on {self.suspend_end_date}",
+                message_type='notification'
+            )
+    
+    def action_terminate_from_suspension(self):
+        """Terminate subscription after suspension period ends"""
+        self.ensure_one()
+        
+        if self.state == 'suspended':
+            self.actual_terminate_date = fields.Date.today()
+            self.state = 'expired'
+            
+            # Send termination email
+            self._send_termination_email()
+            
+            self.message_post(
+                body=f"Subscription terminated after suspension period ended.",
+                message_type='notification'
+            )
+    
+    def _send_grace_period_email(self):
+        """Send grace period notification email"""
+        template = self.env.ref(
+            'subscription_management.email_template_grace_period',
+            raise_if_not_found=False
+        )
+        if template:
+            template.send_mail(self.id, force_send=False)
+            self.last_grace_email_date = fields.Date.today()
+    
+    def _send_suspension_email(self):
+        """Send suspension notification email"""
+        template = self.env.ref(
+            'subscription_management.email_template_suspended_from_grace',
+            raise_if_not_found=False
+        )
+        if template:
+            template.send_mail(self.id, force_send=False)
+    
+    def _send_termination_email(self):
+        """Send termination notification email"""
+        template = self.env.ref(
+            'subscription_management.email_template_terminated',
+            raise_if_not_found=False
+        )
+        if template:
+            template.send_mail(self.id, force_send=False)
     
     def action_view_invoices(self):
         """Action to view subscription invoices"""
@@ -430,8 +763,6 @@ class SubscriptionSubscription(models.Model):
         
         for invoice in self.failed_invoice_ids:
             if invoice.state == 'posted' and invoice.payment_state == 'not_paid':
-                # Here you would integrate with your payment provider
-                # For now, we'll just log it
                 _logger.info(f"Manual payment retry requested for invoice {invoice.name}")
                 
                 # Create activity for follow-up
@@ -509,9 +840,6 @@ class SubscriptionSubscription(models.Model):
         max_retries = int(self.env['ir.config_parameter'].sudo().get_param(
             'subscription.settings.max_billing_retries', '3'
         ))
-        grace_period = int(self.env['ir.config_parameter'].sudo().get_param(
-            'subscription.settings.grace_period_days', '7'
-        ))
         
         self.payment_retry_count += 1
         self.last_payment_error = f"Payment failed for invoice {invoice.name} on {fields.Date.today()}"
@@ -520,7 +848,6 @@ class SubscriptionSubscription(models.Model):
         
         # Determine dunning level and actions
         if self.payment_retry_count >= max_retries:
-            # Final attempt failed - suspend subscription
             self.dunning_level = 'final'
             self.action_suspend()
             self._send_dunning_email('final_notice')
@@ -530,26 +857,24 @@ class SubscriptionSubscription(models.Model):
             )
             
         elif self.payment_retry_count >= 2:
-            # Second retry - hard dunning
             self.dunning_level = 'hard'
             self._send_dunning_email('hard_dunning')
             
         else:
-            # First retry - soft dunning
             self.dunning_level = 'soft'
             self._send_dunning_email('soft_dunning')
         
         # Schedule next retry
-        retry_days = self.payment_retry_count * 3  # 3, 6, 9 days
+        retry_days = self.payment_retry_count * 3
         self.payment_retry_date = fields.Date.today() + timedelta(days=retry_days)
         
-        # Create activity for sales team to follow up
+        # Create activity for sales team
         if self.payment_retry_count >= 2:
             self.activity_schedule(
                 'mail.mail_activity_data_call',
                 summary=f'Payment Failed - Contact Customer ({self.payment_retry_count} attempts)',
                 note=f'Customer {self.partner_id.name} has failed payment {self.payment_retry_count} times. Please contact them.',
-                user_id=self.env.ref('base.user_admin').id  # Assign to admin or sales manager
+                user_id=self.env.ref('base.user_admin').id
             )
     
     def _process_successful_payment(self, invoice):
@@ -595,6 +920,108 @@ class SubscriptionSubscription(models.Model):
             except Exception as e:
                 _logger.error(f"Failed to send {email_type} email for subscription {self.name}: {e}")
     
+    # ==========================================
+    # CRON METHODS
+    # ==========================================
+    
+    @api.model
+    def _cron_process_grace_periods(self):
+        """Process subscriptions entering or in grace period"""
+        today = fields.Date.today()
+        
+        # Find subscriptions that should enter grace period
+        entering_grace = self.search([
+            ('state', '=', 'active'),
+            ('paid_through_date', '<', today),
+            ('grace_period_start_date', '=', False),
+            ('grace_period_end_date', '>=', today),
+        ])
+        
+        for subscription in entering_grace:
+            subscription.action_enter_grace_period()
+        
+        _logger.info(f"Processed {len(entering_grace)} subscriptions entering grace period")
+        
+        # Send reminders for subscriptions in grace period
+        send_reminders = self.env['ir.config_parameter'].sudo().get_param(
+            'subscription.grace_send_email', 'True'
+        )
+        if send_reminders == 'True':
+            self._send_grace_reminders()
+    
+    @api.model
+    def _cron_process_suspensions(self):
+        """Process subscriptions that should be suspended"""
+        today = fields.Date.today()
+        
+        # Find subscriptions past grace period
+        to_suspend = self.search([
+            ('state', '=', 'active'),
+            ('grace_period_end_date', '<', today),
+            ('actual_suspend_date', '=', False),
+        ])
+        
+        for subscription in to_suspend:
+            subscription.action_suspend_from_grace()
+        
+        _logger.info(f"Suspended {len(to_suspend)} subscriptions after grace period")
+    
+    @api.model
+    def _cron_process_terminations(self):
+        """Process subscriptions that should be terminated"""
+        today = fields.Date.today()
+        
+        # Find suspended subscriptions past suspension period
+        to_terminate = self.search([
+            ('state', '=', 'suspended'),
+            ('suspend_end_date', '<', today),
+            ('actual_terminate_date', '=', False),
+        ])
+        
+        for subscription in to_terminate:
+            subscription.action_terminate_from_suspension()
+        
+        _logger.info(f"Terminated {len(to_terminate)} subscriptions after suspension period")
+    
+    @api.model
+    def _send_grace_reminders(self):
+        """Send reminder emails to subscriptions in grace period"""
+        today = fields.Date.today()
+        frequency = self.env['ir.config_parameter'].sudo().get_param(
+            'subscription.grace_email_frequency', 'weekly'
+        )
+        
+        # Determine which subscriptions need reminders
+        domain = [
+            ('is_in_grace_period', '=', True),
+            ('state', '=', 'active'),
+        ]
+        
+        if frequency == 'once':
+            domain.append(('last_grace_email_date', '=', False))
+        elif frequency == 'weekly':
+            domain.append('|')
+            domain.append(('last_grace_email_date', '=', False))
+            domain.append(('last_grace_email_date', '<=', today - timedelta(days=7)))
+        elif frequency == 'daily':
+            domain.append('|')
+            domain.append(('last_grace_email_date', '=', False))
+            domain.append(('last_grace_email_date', '<', today))
+        
+        subscriptions = self.search(domain)
+        
+        template = self.env.ref(
+            'subscription_management.email_template_grace_reminder',
+            raise_if_not_found=False
+        )
+        
+        if template:
+            for subscription in subscriptions:
+                template.send_mail(subscription.id, force_send=False)
+                subscription.last_grace_email_date = today
+        
+        _logger.info(f"Sent grace reminders to {len(subscriptions)} subscriptions")
+    
     @api.model
     def _cron_retry_failed_payments(self):
         """Cron job to retry failed payments"""
@@ -611,17 +1038,9 @@ class SubscriptionSubscription(models.Model):
         
         for subscription in subscriptions:
             try:
-                # Find the last failed invoice
                 failed_invoice = subscription.failed_invoice_ids[:1]
                 if failed_invoice:
-                    # Here you would trigger payment retry with your payment provider
-                    # For now, we'll just log it and create an activity
                     _logger.info(f"Retrying payment for subscription {subscription.name}, invoice {failed_invoice.name}")
-                    
-                    # In a real implementation, you would:
-                    # 1. Call payment provider API to retry payment
-                    # 2. Update invoice payment state based on response
-                    # 3. Call _process_successful_payment or _process_failed_payment
                     
             except Exception as e:
                 _logger.error(f"Error retrying payment for subscription {subscription.name}: {e}")
@@ -631,7 +1050,6 @@ class SubscriptionSubscription(models.Model):
         """Check for subscriptions that need renewal and send reminders"""
         today = fields.Date.today()
         
-        # Find subscriptions that should offer renewal
         subscriptions = self.search([
             ('state', 'in', ['active', 'trial']),
             ('date_end', '!=', False)
@@ -643,12 +1061,10 @@ class SubscriptionSubscription(models.Model):
         for subscription in subscriptions:
             try:
                 if subscription.should_offer_renewal():
-                    # Check if reminder already sent recently
                     last_message = subscription.message_ids.filtered(
                         lambda m: 'Renewal reminder sent' in (m.body or '')
                     )[:1]
                     
-                    # Only send reminder once per week
                     send_reminder = True
                     if last_message:
                         days_since_last = (today - last_message.date.date()).days
@@ -656,7 +1072,6 @@ class SubscriptionSubscription(models.Model):
                             send_reminder = False
                     
                     if send_reminder:
-                        # Send renewal reminder email
                         template = self.env.ref(
                             'subscription_management.email_template_subscription_renewal_reminder',
                             raise_if_not_found=False
@@ -669,7 +1084,6 @@ class SubscriptionSubscription(models.Model):
                             )
                             reminder_count += 1
                         
-                        # Create activity for sales team
                         subscription.activity_schedule(
                             'mail.mail_activity_data_call',
                             summary=f'Follow up on renewal for {subscription.partner_id.name}',
@@ -683,10 +1097,6 @@ class SubscriptionSubscription(models.Model):
                 _logger.error(f"Error checking renewal for subscription {subscription.name}: {e}")
         
         _logger.info(f"Renewal check completed: {renewal_count} subscriptions due for renewal, {reminder_count} reminders sent")
-    
-    # ==========================================
-    # Existing Cron Methods
-    # ==========================================
     
     @api.model
     def _cron_process_billing(self):
@@ -712,7 +1122,6 @@ class SubscriptionSubscription(models.Model):
         if self.state not in ('active', 'trial'):
             return
         
-        # Create invoice
         invoice_vals = self._prepare_invoice_vals()
         
         # Add usage overage if applicable
@@ -727,7 +1136,6 @@ class SubscriptionSubscription(models.Model):
         
         invoice = self.env['account.move'].create(invoice_vals)
         
-        # Update subscription
         self.last_invoice_id = invoice.id
         self.last_invoice_date = fields.Date.today()
         
@@ -761,7 +1169,6 @@ class SubscriptionSubscription(models.Model):
         today = fields.Date.today()
         tomorrow = today + relativedelta(days=1)
         
-        # Find trials expiring tomorrow (send reminder)
         trials_expiring = self.search([
             ('state', '=', 'trial'),
             ('trial_end_date', '=', tomorrow)
@@ -776,7 +1183,6 @@ class SubscriptionSubscription(models.Model):
                 except Exception as e:
                     _logger.error(f"Failed to send trial expiry email for {subscription.name}: {e}")
         
-        # Find trials that expired today (convert to active)
         trials_expired = self.search([
             ('state', '=', 'trial'),
             ('trial_end_date', '<=', today)
@@ -803,7 +1209,7 @@ class SubscriptionSubscription(models.Model):
     def _cron_auto_renew(self):
         """Process auto-renewals for expiring subscriptions"""
         today = fields.Date.today()
-        renew_date = today + relativedelta(days=7)  # Renew 7 days before expiry
+        renew_date = today + relativedelta(days=7)
         
         subscriptions_to_renew = self.search([
             ('state', '=', 'active'),
@@ -819,7 +1225,7 @@ class SubscriptionSubscription(models.Model):
     def _cron_send_billing_reminders(self):
         """Send billing reminders for upcoming billing"""
         today = fields.Date.today()
-        reminder_date = today + relativedelta(days=3)  # Remind 3 days before billing
+        reminder_date = today + relativedelta(days=3)
         
         subscriptions = self.search([
             ('state', '=', 'active'),
@@ -841,7 +1247,6 @@ class SubscriptionSubscription(models.Model):
         active_subscriptions = self.search([('state', '=', 'active')])
         
         for subscription in active_subscriptions:
-            # Custom logic to calculate usage
             pass
     
     def _get_portal_return_action(self):
