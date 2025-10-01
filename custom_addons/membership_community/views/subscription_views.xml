@@ -190,6 +190,54 @@
                 </xpath>
             </field>
         </record>
+<!-- Add to the existing subscription form view -->
+<xpath expr="//group[@string='Dates']" position="after">
+    <group string="Lifecycle Management" invisible="not is_membership">
+        <group name="lifecycle_dates">
+            <field name="paid_through_date" readonly="1"/>
+            <field name="grace_period_end_date" readonly="1"/>
+            <field name="suspend_end_date" readonly="1"/>
+            <field name="terminate_date" readonly="1"/>
+        </group>
+        <group name="lifecycle_status">
+            <field name="lifecycle_stage" widget="badge"
+                   decoration-success="lifecycle_stage=='active'"
+                   decoration-warning="lifecycle_stage=='grace'"
+                   decoration-danger="lifecycle_stage in ('suspended','terminated')"/>
+            <field name="is_in_grace_period" invisible="1"/>
+            <field name="days_until_suspension" 
+                   invisible="not is_in_grace_period"/>
+            <field name="days_until_termination" 
+                   invisible="lifecycle_stage not in ('grace','suspended')"/>
+        </group>
+    </group>
+    
+    <group string="Period Overrides" invisible="not is_membership">
+        <group>
+            <field name="grace_period_days"/>
+            <field name="suspend_period_days"/>
+        </group>
+        <group>
+            <field name="terminate_period_days"/>
+        </group>
+    </group>
+</xpath>
+<xpath expr="//field[@name='state']" position="after">
+    <field name="lifecycle_stage" optional="show" widget="badge"
+           decoration-success="lifecycle_stage=='active'"
+           decoration-warning="lifecycle_stage=='grace'"
+           decoration-danger="lifecycle_stage in ('suspended','terminated')"/>
+    <field name="days_until_suspension" optional="hide"/>
+</xpath>
 
+<!-- Add alert ribbons -->
+<xpath expr="//header" position="before">
+    <widget name="web_ribbon" title="In Grace Period" 
+            bg_color="text-bg-warning" 
+            invisible="not is_in_grace_period"/>
+    <widget name="web_ribbon" title="Pending Suspension" 
+            bg_color="text-bg-danger" 
+            invisible="not is_pending_suspension"/>
+</xpath>
     </data>
 </odoo>

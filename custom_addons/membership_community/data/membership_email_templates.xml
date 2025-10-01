@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Grace Period Notification -->
+    <record id="email_template_grace_period" model="mail.template">
+        <field name="name">Membership: Grace Period Started</field>
+        <field name="model_id" ref="subscription_management.model_subscription_subscription"/>
+        <field name="subject">⚠️ Your Membership Has Expired - Grace Period Active</field>
+        <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+        <field name="email_to">{{ object.partner_id.email }}</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+    <div style="background: #ff9800; padding: 30px; text-align: center;">
+        <h2 style="color: white; margin: 0;">⚠️ Grace Period Active</h2>
+    </div>
+    
+    <div style="padding: 30px; background: #f8f9fa;">
+        <p style="font-size: 16px;">Dear {{ object.partner_id.name }},</p>
+        
+        <p style="font-size: 16px;">Your membership expired on <strong>{{ object.paid_through_date }}</strong>, but we've entered you into a <strong>{{ object.grace_period_days }}-day grace period</strong>.</p>
+        
+        <div style="background: #fff3cd; border-left: 4px solid #ff9800; padding: 20px; margin: 20px 0; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #856404;">📅 Important Dates:</h3>
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Membership Expired:</strong></td>
+                    <td style="padding: 8px 0; font-size: 16px;">{{ object.paid_through_date }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Grace Period Ends:</strong></td>
+                    <td style="padding: 8px 0; font-size: 18px; color: #ff9800;"><strong>{{ object.grace_period_end_date }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Days Remaining:</strong></td>
+                    <td style="padding: 8px 0; font-size: 18px; color: #dc3545;"><strong>{{ object.days_until_suspension }}</strong></td>
+                </tr>
+            </table>
+        </div>
+        
+        <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="font-size: 14px; margin: 0; color: #155724;"><strong>✅ Good News:</strong> You still have full access to all membership benefits during this grace period!</p>
+        </div>
+        
+        <p style="font-size: 16px;"><strong>What happens next:</strong></p>
+        <ul style="font-size: 14px;">
+            <li><strong>Now - {{ object.grace_period_end_date }}:</strong> Full access continues (Grace Period)</li>
+            <li><strong>After {{ object.grace_period_end_date }}:</strong> Membership will be suspended with limited access</li>
+            <li><strong>After {{ object.suspend_end_date }}:</strong> Membership will be terminated</li>
+        </ul>
+        
+        <p style="font-size: 16px;"><strong>Please renew now to avoid any interruption in service.</strong></p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/my/subscriptions/{{ object.id }}" style="background: #ff9800; color: white; padding: 18px 50px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 18px;">Renew My Membership</a>
+        </div>
+        
+        <p style="font-size: 14px; color: #6c757d;">If you have already renewed, please disregard this message.</p>
+        
+        <p style="font-size: 14px; color: #6c757d;">Best regards,<br/>{{ user.name }}</p>
+    </div>
+</div>
+        </field>
+    </record>
+
+    <!-- Grace Period Reminder -->
+    <record id="email_template_grace_reminder" model="mail.template">
+        <field name="name">Membership: Grace Period Reminder</field>
+        <field name="model_id" ref="subscription_management.model_subscription_subscription"/>
+        <field name="subject">⏰ Reminder: Your Membership Grace Period is Ending Soon</field>
+        <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+        <field name="email_to">{{ object.partner_id.email }}</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+    <div style="background: #dc3545; padding: 30px; text-align: center;">
+        <h2 style="color: white; margin: 0;">⏰ Grace Period Ending Soon</h2>
+    </div>
+    
+    <div style="padding: 30px; background: #f8f9fa;">
+        <p style="font-size: 16px;">Hi {{ object.partner_id.name }},</p>
+        
+        <p style="font-size: 18px; color: #dc3545;"><strong>Your membership grace period is ending in {{ object.days_until_suspension }} days.</strong></p>
+        
+        <div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 20px; margin: 20px 0; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #721c24;">⚠️ Urgent Action Needed:</h3>
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Grace Period Ends:</strong></td>
+                    <td style="padding: 8px 0; font-size: 20px; color: #dc3545;"><strong>{{ object.grace_period_end_date }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Days Remaining:</strong></td>
+                    <td style="padding: 8px 0; font-size: 24px; color: #dc3545;"><strong>{{ object.days_until_suspension }}</strong></td>
+                </tr>
+            </table>
+        </div>
+        
+        <p style="font-size: 16px;"><strong>If you don't renew by {{ object.grace_period_end_date }}:</strong></p>
+        <ul style="font-size: 14px; color: #721c24;">
+            <li>Your membership will be <strong>suspended</strong></li>
+            <li>Your access to member benefits will be <strong>restricted</strong></li>
+            <li>Your member portal access will be <strong>limited</strong></li>
+        </ul>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/my/subscriptions/{{ object.id }}" style="background: #dc3545; color: white; padding: 18px 50px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 18px;">Renew Now to Keep Full Access</a>
+        </div>
+        
+        <p style="font-size: 14px; color: #6c757d;">Questions? Contact us - we're here to help!</p>
+        
+        <p style="font-size: 14px; color: #6c757d;">Best regards,<br/>{{ user.name }}</p>
+    </div>
+</div>
+        </field>
+    </record>
+
+    <!-- Suspended After Grace -->
+    <record id="email_template_suspended_from_grace" model="mail.template">
+        <field name="name">Membership: Suspended After Grace Period</field>
+        <field name="model_id" ref="subscription_management.model_subscription_subscription"/>
+        <field name="subject">🔒 Your Membership Has Been Suspended</field>
+        <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+        <field name="email_to">{{ object.partner_id.email }}</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+    <div style="background: #6c757d; padding: 30px; text-align: center;">
+        <h2 style="color: white; margin: 0;">🔒 Membership Suspended</h2>
+    </div>
+    
+    <div style="padding: 30px; background: #f8f9fa;">
+        <p style="font-size: 16px;">Dear {{ object.partner_id.name }},</p>
+        
+        <p style="font-size: 16px;">Your membership has been suspended because your grace period ended on {{ object.grace_period_end_date }} without renewal.</p>
+        
+        <div style="background: #e2e3e5; border-left: 4px solid #6c757d; padding: 20px; margin: 20px 0; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #383d41;">Membership Status:</h3>
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Status:</strong></td>
+                    <td style="padding: 8px 0; color: #6c757d;"><strong>SUSPENDED</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Suspended On:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.actual_suspend_date }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Termination Date:</strong></td>
+                    <td style="padding: 8px 0; font-size: 16px; color: #dc3545;">{{ object.suspend_end_date }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Days Until Termination:</strong></td>
+                    <td style="padding: 8px 0; font-size: 18px; color: #dc3545;"><strong>{{ object.days_until_termination }}</strong></td>
+                </tr>
+            </table>
+        </div>
+        
+        <p style="font-size: 16px;"><strong>What this means:</strong></p>
+        <ul style="font-size: 14px;">
+            <li>Your access to member benefits is now <strong>restricted</strong></li>
+            <li>Your member portal access is <strong>limited</strong></li>
+            <li>If not renewed by <strong>{{ object.suspend_end_date }}</strong>, your membership will be <strong>terminated</strong></li>
+        </ul>
+        
+        <div style="background: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="font-size: 14px; margin: 0; color: #0c5460;"><strong>💡 You can still reactivate!</strong> Renew now to restore full access immediately. All your data and settings are safe.</p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/my/subscriptions/{{ object.id }}" style="background: #28a745; color: white; padding: 18px 50px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 18px;">Reactivate My Membership</a>
+        </div>
+        
+        <p style="font-size: 14px; color: #6c757d;">Need help? Please contact us - we'd love to have you back!</p>
+        
+        <p style="font-size: 14px; color: #6c757d;">Best regards,<br/>{{ user.name }}</p>
+    </div>
+</div>
+        </field>
+    </record>
+
+    <!-- Terminated -->
+    <record id="email_template_terminated" model="mail.template">
+        <field name="name">Membership: Terminated</field>
+        <field name="model_id" ref="subscription_management.model_subscription_subscription"/>
+        <field name="subject">Membership Terminated - We Hope to See You Again</field>
+        <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+        <field name="email_to">{{ object.partner_id.email }}</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+    <div style="background: #343a40; padding: 30px; text-align: center;">
+        <h2 style="color: white; margin: 0;">Membership Terminated</h2>
+    </div>
+    
+    <div style="padding: 30px; background: #f8f9fa;">
+        <p style="font-size: 16px;">Dear {{ object.partner_id.name }},</p>
+        
+        <p style="font-size: 16px;">Your membership has been terminated after the suspension period ended on {{ object.suspend_end_date }}.</p>
+        
+        <div style="background: #f8f9fa; border: 2px solid #dee2e6; padding: 20px; margin: 20px 0; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #495057;">Final Status:</h3>
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Status:</strong></td>
+                    <td style="padding: 8px 0;"><strong>TERMINATED</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Original Expiry:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.paid_through_date }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Grace Period:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.paid_through_date }} - {{ object.grace_period_end_date }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Suspension Period:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.actual_suspend_date }} - {{ object.suspend_end_date }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Terminated:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.actual_terminate_date }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <p style="font-size: 16px;">We're sorry to see you go! We hope you found value in your membership.</p>
+        
+        <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="font-size: 14px; margin: 0; color: #155724;"><strong>✨ You're always welcome back!</strong> You can rejoin at any time. We'd love to have you as a member again.</p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/subscription/plans" style="background: #667eea; color: white; padding: 18px 50px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 18px;">View Membership Plans</a>
+        </div>
+        
+        <p style="font-size: 14px; color: #6c757d;">Thank you for being a member. If you have any questions or feedback, please don't hesitate to contact us.</p>
+        
+        <p style="font-size: 14px; color: #6c757d;">Best regards,<br/>{{ user.name }}</p>
+    </div>
+</div>
+        </field>
+    </record>
+
+</odoo>

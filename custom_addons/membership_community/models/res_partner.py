@@ -149,6 +149,65 @@ class ResPartner(models.Model):
         help='Benefits available through current memberships'
     )
 
+
+    # ==========================================
+    # GRACE PERIOD & LIFECYCLE FIELDS (from primary membership)
+    # ==========================================
+    
+    paid_through_date = fields.Date(
+        string='Paid Through',
+        compute='_compute_membership_lifecycle',
+        store=True,
+        help='Date member is paid through'
+    )
+    
+    grace_period_end_date = fields.Date(
+        string='Grace Period Ends',
+        compute='_compute_membership_lifecycle',
+        store=True,
+        help='Date when grace period ends'
+    )
+    
+    suspend_end_date = fields.Date(
+        string='Suspension Ends',
+        compute='_compute_membership_lifecycle',
+        store=True,
+        help='Date when suspension period ends'
+    )
+    
+    terminate_date = fields.Date(
+        string='Termination Date',
+        compute='_compute_membership_lifecycle',
+        store=True,
+        help='Final termination date'
+    )
+    
+    is_in_grace_period = fields.Boolean(
+        string='In Grace Period',
+        compute='_compute_membership_lifecycle',
+        store=True,
+        help='Member is in grace period'
+    )
+    
+    lifecycle_stage = fields.Selection([
+        ('active', 'Active'),
+        ('grace', 'Grace Period'),
+        ('suspended', 'Suspended'),
+        ('terminated', 'Terminated'),
+    ], string='Lifecycle Stage',
+       compute='_compute_membership_lifecycle',
+       store=True)
+    
+    days_until_suspension = fields.Integer(
+        string='Days Until Suspension',
+        compute='_compute_membership_lifecycle'
+    )
+    
+    days_until_termination = fields.Integer(
+        string='Days Until Termination',
+        compute='_compute_membership_lifecycle'
+    )
+
     # ==========================================
     # COMPUTE METHODS - Core only
     # ==========================================
@@ -354,3 +413,34 @@ class ResPartner(models.Model):
             return False
         
         return benefit in self.available_benefits
+
+
+    @api.depends('primary_membership_id', 'primary_membership_id.paid_through_date',
+                 'primary_membership_id.grace_period_end_date',
+                 'primary_membership_id.suspend_end_date',
+                 'primary_membership_id.terminate_date',
+                 'primary_membership_id.is_in_grace_period',
+                 'primary_membership_id.lifecycle_stage',
+                 'primary_membership_id.days_until_suspension',
+                 'primary_membership_id.days_until_termination')
+    def _compute_membership_lifecycle(self):
+        """Get lifecycle information from primary membership"""
+        for partner in self:
+            if partner.primary_membership_id:
+                partner.paid_through_date = partner.primary_membership_id.paid_through_date
+                partner.grace_period_end_date = partner.primary_membership_id.grace_period_end_date
+                partner.suspend_end_date = partner.primary_membership_id.suspend_end_date
+                partner.terminate_date = partner.primary_membership_id.terminate_date
+                partner.is_in_grace_period = partner.primary_membership_id.is_in_grace_period
+                partner.lifecycle_stage = partner.primary_membership_id.lifecycle_stage
+                partner.days_until_suspension = partner.primary_membership_id.days_until_suspension
+                partner.days_until_termination = partner.primary_membership_id.days_until_termination
+            else:
+                partner.paid_through_date = False
+                partner.grace_period_end_date = False
+                partner.suspend_end_date = False
+                partner.terminate_date = False
+                partner.is_in_grace_period = False
+                partner.lifecycle_stage = False
+                partner.days_until_suspension = 0
+                partner.days_until_termination = 0

@@ -16,7 +16,7 @@
                 <!-- Add Membership checkbox after Can be Sold -->
                 <xpath expr="//label[@for='is_subscription']" position="after">
                     <field name="is_membership_product"/>
-                    <label for="is_membership_product"/>
+                    <label for="is_membership_product" string="Membership"/>
                 </xpath>
 
                 <!-- Add Membership Page in Notebook -->
