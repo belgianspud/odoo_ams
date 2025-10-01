@@ -32,6 +32,7 @@
 
                 <!-- Add Membership Fields in Main Form -->
                 <xpath expr="//field[@name='category_id']" position="after">
+                    <field name="member_number" invisible="not is_member" readonly="1"/>
                     <field name="is_member" invisible="not is_member"/>
                     <field name="membership_state" invisible="not is_member"/>
                     <field name="membership_category_id" invisible="not is_member"/>
@@ -43,6 +44,7 @@
                         
                         <group name="membership_summary" string="Membership Summary">
                             <group name="status">
+                                <field name="member_number" readonly="1"/>
                                 <field name="is_member"/>
                                 <field name="membership_state"/>
                                 <field name="member_since"/>
@@ -91,6 +93,20 @@
                             </list>
                         </field>
 
+                        <separator string="Membership Invoices"/>
+                        <field name="invoice_ids" nolabel="1" 
+                               domain="[('move_type', '=', 'out_invoice')]"
+                               context="{'default_move_type': 'out_invoice', 'default_partner_id': id}">
+                            <list decoration-success="payment_state=='paid'" decoration-info="state=='draft'" decoration-warning="payment_state in ('partial','not_paid')">
+                                <field name="name"/>
+                                <field name="invoice_date"/>
+                                <field name="invoice_date_due"/>
+                                <field name="amount_total" sum="Total"/>
+                                <field name="payment_state" widget="badge"/>
+                                <field name="state" widget="badge"/>
+                            </list>
+                        </field>
+
                     </page>
 
                     <page name="member_features" string="Features &amp; Benefits" invisible="not is_member">
@@ -127,6 +143,7 @@
             <field name="inherit_id" ref="base.view_partner_tree"/>
             <field name="arch" type="xml">
                 <xpath expr="//list" position="inside">
+                    <field name="member_number" optional="show"/>
                     <field name="is_member" optional="show"/>
                     <field name="membership_state" optional="show"/>
                     <field name="membership_category_id" optional="hide"/>
@@ -183,6 +200,7 @@
                     <field name="name"/>
                     <field name="email"/>
                     <field name="phone"/>
+                    <field name="member_number"/>
                     <field name="is_member"/>
                     <field name="membership_state"/>
                     <field name="membership_category_id"/>
@@ -198,6 +216,9 @@
                                             <strong class="o_kanban_record_title">
                                                 <field name="name"/>
                                             </strong>
+                                            <div t-if="record.member_number.raw_value" class="text-muted">
+                                                <field name="member_number"/>
+                                            </div>
                                         </div>
                                         <span class="float-end">
                                             <field name="membership_state" widget="badge" 

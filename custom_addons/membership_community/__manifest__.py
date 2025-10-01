@@ -40,6 +40,7 @@ Note: Install specialized modules for specific membership types.
         'security/ir.model.access.csv',
         
         # Data files - Load before views
+        'data/ir_sequence_data.xml',
         'data/membership_category_data.xml',
         'data/membership_feature_data.xml',
         'data/membership_benefit_data.xml',

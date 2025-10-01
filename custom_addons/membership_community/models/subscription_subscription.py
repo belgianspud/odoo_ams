@@ -254,6 +254,23 @@ class SubscriptionSubscription(models.Model):
         
         return super().create(vals_list)
 
+    def write(self, vals):
+        """Override to handle membership activation"""
+        result = super().write(vals)
+        
+        # Auto-activate membership subscriptions when they move to active state
+        for subscription in self:
+            if subscription.is_membership and subscription.state == 'active':
+                # Assign member number if not already assigned
+                if not subscription.partner_id.member_number:
+                    subscription.partner_id.member_number = self.env['ir.sequence'].next_by_code('member.number')
+                
+                # Set join date if not set
+                if not subscription.join_date and 'join_date' not in vals:
+                    subscription.join_date = subscription.date_start or fields.Date.today()
+        
+        return result
+
     # ==========================================
     # BUSINESS METHODS - Basic only
     # ==========================================
@@ -282,6 +299,22 @@ class SubscriptionSubscription(models.Model):
                     'eligibility_verified_date': fields.Date.today(),
                 })
         return True
+
+    def action_confirm(self):
+        """Confirm subscription and activate if membership"""
+        result = super().action_confirm()
+        
+        for subscription in self:
+            if subscription.is_membership:
+                # Assign member number
+                if not subscription.partner_id.member_number:
+                    subscription.partner_id.member_number = self.env['ir.sequence'].next_by_code('member.number')
+                
+                # Set join date
+                if not subscription.join_date:
+                    subscription.join_date = subscription.date_start or fields.Date.today()
+        
+        return result
 
     # ==========================================
     # CONSTRAINTS - Basic validation only

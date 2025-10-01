@@ -12,6 +12,13 @@ class ResPartner(models.Model):
     # CORE MEMBERSHIP STATUS
     # ==========================================
     
+    member_number = fields.Char(
+        string='Member Number',
+        copy=False,
+        readonly=True,
+        help='Unique member identification number'
+    )
+    
     is_member = fields.Boolean(
         string='Is Member',
         compute='_compute_is_member',

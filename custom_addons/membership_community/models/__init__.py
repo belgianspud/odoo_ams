@@ -7,3 +7,4 @@ from . import product_template
 from . import res_partner
 from . import subscription_subscription
 from . import res_config_settings
+from . import account_move
