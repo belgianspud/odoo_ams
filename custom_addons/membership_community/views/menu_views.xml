@@ -10,7 +10,7 @@
         <menuitem id="menu_membership_root"
                   name="Membership"
                   sequence="50"
-                  web_icon="membership_community,static/description/icon.png"/>
+                  groups="membership_community.group_membership_user"/>
 
         <!-- ========================================== -->
         <!-- MEMBERSHIPS SECTION -->
@@ -24,25 +24,25 @@
         <menuitem id="menu_membership_subscription_all"
                   name="All Memberships"
                   parent="menu_membership_management"
-                  action="action_membership_subscription_all"
+                  action="membership_community.action_membership_subscription_all"
                   sequence="10"/>
 
         <menuitem id="menu_membership_subscription_active"
                   name="Active Memberships"
                   parent="menu_membership_management"
-                  action="action_membership_subscription_active"
+                  action="membership_community.action_membership_subscription_active"
                   sequence="20"/>
 
         <menuitem id="menu_membership_subscription_pending"
-                  name="Pending Approval"
+                  name="Pending Verification"
                   parent="menu_membership_management"
-                  action="action_membership_subscription_pending"
+                  action="membership_community.action_membership_subscription_pending"
                   sequence="30"/>
 
         <menuitem id="menu_membership_subscription_renewal"
                   name="Due for Renewal"
                   parent="menu_membership_management"
-                  action="action_membership_subscription_renewal"
+                  action="membership_community.action_membership_subscription_renewal"
                   sequence="40"/>
 
         <!-- ========================================== -->
@@ -57,7 +57,7 @@
         <menuitem id="menu_member_directory"
                   name="Member Directory"
                   parent="menu_members"
-                  action="action_member_directory"
+                  action="membership_community.action_member_directory"
                   sequence="10"/>
 
         <menuitem id="menu_partners_all"
@@ -78,7 +78,7 @@
         <menuitem id="menu_product_membership"
                   name="Membership Products"
                   parent="menu_membership_products"
-                  action="action_membership_products"
+                  action="membership_community.action_membership_products"
                   sequence="10"/>
 
         <menuitem id="menu_subscription_plans"
@@ -94,7 +94,8 @@
         <menuitem id="menu_membership_configuration"
                   name="Configuration"
                   parent="menu_membership_root"
-                  sequence="90"/>
+                  sequence="90"
+                  groups="membership_community.group_membership_manager"/>
 
         <!-- Categories Submenu -->
         <menuitem id="menu_membership_categories_config"
@@ -105,7 +106,7 @@
         <menuitem id="menu_membership_category"
                   name="Categories"
                   parent="menu_membership_categories_config"
-                  action="action_membership_category"
+                  action="membership_community.action_membership_category"
                   sequence="10"/>
 
         <!-- Features & Benefits Submenu -->
@@ -117,13 +118,13 @@
         <menuitem id="menu_membership_feature"
                   name="Features"
                   parent="menu_membership_features_benefits"
-                  action="action_membership_feature"
+                  action="membership_community.action_membership_feature"
                   sequence="10"/>
 
         <menuitem id="menu_membership_benefit"
                   name="Benefits"
                   parent="menu_membership_features_benefits"
-                  action="action_membership_benefit"
+                  action="membership_community.action_membership_benefit"
                   sequence="20"/>
 
         <!-- ========================================== -->
@@ -133,16 +134,17 @@
         <menuitem id="menu_membership_reporting"
                   name="Reporting"
                   parent="menu_membership_root"
-                  sequence="80"/>
+                  sequence="80"
+                  groups="membership_community.group_membership_user"/>
 
         <menuitem id="menu_membership_analysis"
                   name="Membership Analysis"
                   parent="menu_membership_reporting"
-                  action="action_membership_subscription_all"
+                  action="membership_community.action_membership_subscription_all"
                   sequence="10"/>
 
         <!-- ========================================== -->
-        <!-- ADDITIONAL PRODUCT ACTION -->
+        <!-- MEMBERSHIP PRODUCTS ACTION -->
         <!-- ========================================== -->
 
         <!-- Membership Products Action -->
@@ -153,7 +155,6 @@
             <field name="domain">[('is_membership_product', '=', True)]</field>
             <field name="context">{
                 'default_is_membership_product': True,
-                'default_is_subscription': True,
                 'default_type': 'service',
                 'search_default_membership_products': 1
             }</field>

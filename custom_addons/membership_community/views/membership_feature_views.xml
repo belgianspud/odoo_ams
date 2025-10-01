@@ -3,7 +3,7 @@
     <data>
 
         <!-- ========================================== -->
-        <!-- MEMBERSHIP FEATURE VIEWS -->
+        <!-- MEMBERSHIP FEATURE VIEWS (BASE - SIMPLIFIED) -->
         <!-- ========================================== -->
 
         <!-- List View -->
@@ -18,15 +18,13 @@
                     <field name="category"/>
                     <field name="feature_type"/>
                     <field name="is_premium_feature"/>
-                    <field name="module_installed" column_invisible="1"/>
-                    <field name="is_currently_valid"/>
                     <field name="product_count"/>
                     <field name="active"/>
                 </list>
             </field>
         </record>
 
-        <!-- Form View -->
+        <!-- Form View (BASE FIELDS ONLY) -->
         <record id="view_membership_feature_form" model="ir.ui.view">
             <field name="name">membership.feature.form</field>
             <field name="model">membership.feature</field>
@@ -41,7 +39,6 @@
 
                         <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
                         <widget name="web_ribbon" title="Premium" bg_color="text-bg-success" invisible="not is_premium_feature"/>
-                        <widget name="web_ribbon" title="Module Required" bg_color="text-bg-warning" invisible="not requires_module or module_installed"/>
 
                         <field name="color" widget="color_picker" class="float-end"/>
 
@@ -62,7 +59,6 @@
                             </group>
                             <group name="classification" string="Classification">
                                 <field name="is_premium_feature"/>
-                                <field name="requires_verification"/>
                                 <field name="icon"/>
                             </group>
                         </group>
@@ -72,111 +68,31 @@
                         </group>
 
                         <notebook>
-                            <page name="value_config" string="Value Configuration">
+                            <page name="value_config" string="Configuration">
                                 <group>
                                     <group name="default_value" string="Default Value">
-                                        <field name="default_value"/>
-                                        <field name="value_uom" invisible="feature_type != 'quantity'"/>
-                                    </group>
-                                    <group name="value_range" string="Value Range" invisible="feature_type not in ['quantity', 'percentage']">
-                                        <field name="min_value"/>
-                                        <field name="max_value"/>
+                                        <field name="default_value" placeholder="Enter default value for this feature"/>
                                     </group>
                                 </group>
-                            </page>
-
-                            <page name="access" string="Access Configuration" invisible="category != 'access'">
-                                <group>
-                                    <group name="portal" string="Portal Access">
-                                        <field name="grants_portal_access"/>
-                                        <field name="portal_access_level" invisible="not grants_portal_access"/>
-                                    </group>
-                                    <group name="directory" string="Directory">
-                                        <field name="grants_directory_listing"/>
-                                        <field name="directory_visibility" invisible="not grants_directory_listing"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="professional" string="Professional Configuration" invisible="category != 'professional'">
-                                <group>
-                                    <group name="prof_features" string="Professional Features">
-                                        <field name="enables_credential_tracking"/>
-                                        <field name="enables_ce_tracking"/>
-                                        <field name="ce_credit_reporting"/>
-                                        <field name="enables_designation_application"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="networking" string="Networking Configuration" invisible="category != 'networking'">
-                                <group>
-                                    <group name="network_features" string="Networking Features">
-                                        <field name="enables_member_directory"/>
-                                        <field name="enables_messaging"/>
-                                        <field name="enables_mentorship"/>
-                                        <field name="enables_job_board"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="usage" string="Usage Settings">
-                                <group>
-                                    <group name="usage_limits" string="Usage Limits">
-                                        <field name="has_usage_limit"/>
-                                        <field name="usage_limit" invisible="not has_usage_limit"/>
-                                        <field name="usage_period" invisible="not has_usage_limit"/>
-                                    </group>
-                                    <group name="tracking" string="Tracking">
-                                        <field name="is_trackable"/>
-                                        <field name="usage_count" readonly="1" invisible="not is_trackable"/>
-                                        <field name="active_users_count" readonly="1" invisible="not is_trackable"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="validity" string="Validity Period">
-                                <group>
-                                    <group name="dates" string="Validity Dates">
-                                        <field name="start_date"/>
-                                        <field name="end_date"/>
-                                        <field name="is_currently_valid" readonly="1"/>
-                                    </group>
-                                    <group name="seasonal" string="Seasonal Availability">
-                                        <field name="seasonal"/>
-                                        <field name="available_months" invisible="not seasonal"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="terms" string="Terms &amp; Conditions">
-                                <group>
-                                    <group name="terms_settings" string="Terms Settings">
-                                        <field name="requires_acceptance"/>
-                                    </group>
-                                </group>
-                                <separator string="Terms &amp; Conditions" invisible="not requires_acceptance"/>
-                                <field name="terms_and_conditions" invisible="not requires_acceptance"/>
-                            </page>
-
-                            <page name="integration" string="Module Integration">
-                                <group>
-                                    <group name="module" string="Required Module">
-                                        <field name="requires_module"/>
-                                        <field name="module_installed" readonly="1"/>
-                                    </group>
-                                </group>
-                                <separator string="Integration Data"/>
-                                <field name="integration_data" widget="ace" options="{'mode': 'json'}"/>
+                                <separator string="Notes"/>
+                                <div class="alert alert-info" role="alert">
+                                    <p class="mb-0">
+                                        <i class="fa fa-info-circle"/> 
+                                        <strong>Extensibility:</strong> This is the base feature model. 
+                                        Install specialized modules (membership_individual, membership_organizational, etc.) 
+                                        to add advanced feature configurations like usage limits, seasonal availability, 
+                                        and module integrations.
+                                    </p>
+                                </div>
                             </page>
 
                             <page name="products" string="Associated Products">
                                 <field name="product_ids" nolabel="1">
                                     <list>
                                         <field name="name"/>
-                                        <field name="subscription_product_type"/>
-                                        <field name="list_price"/>
                                         <field name="is_membership_product"/>
+                                        <field name="subscription_product_type" optional="show"/>
+                                        <field name="list_price"/>
                                     </list>
                                 </field>
                             </page>
@@ -200,8 +116,6 @@
                     
                     <separator/>
                     <filter string="Premium Features" name="premium" domain="[('is_premium_feature', '=', True)]"/>
-                    <filter string="Currently Valid" name="valid" domain="[('is_currently_valid', '=', True)]"/>
-                    <filter string="Trackable" name="trackable" domain="[('is_trackable', '=', True)]"/>
                     
                     <separator/>
                     <filter string="Access" name="access" domain="[('category', '=', 'access')]"/>
@@ -213,10 +127,6 @@
                     <filter string="Education" name="education" domain="[('category', '=', 'education')]"/>
                     <filter string="Certification" name="certification" domain="[('category', '=', 'certification')]"/>
                     <filter string="Publications" name="publications" domain="[('category', '=', 'publication')]"/>
-                    
-                    <separator/>
-                    <filter string="Module Installed" name="module_ok" domain="[('module_installed', '=', True)]"/>
-                    <filter string="Missing Module" name="module_missing" domain="[('requires_module', '!=', False), ('module_installed', '=', False)]"/>
                     
                     <group expand="0" string="Group By">
                         <filter string="Category" name="group_category" context="{'group_by': 'category'}"/>
@@ -288,7 +198,13 @@
                 </p>
                 <p>
                     Define technical features that provide specific capabilities to members
-                    (portal access, credential tracking, event discounts, etc.)
+                    (portal access, directory listing, event registration, etc.)
+                </p>
+                <p class="text-muted">
+                    <small>
+                        Note: This is the base feature model. Install specialized modules 
+                        (membership_individual, membership_organizational) for advanced configurations.
+                    </small>
                 </p>
             </field>
         </record>
