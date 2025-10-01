@@ -3,7 +3,7 @@
     <data>
 
         <!-- ========================================== -->
-        <!-- MEMBERSHIP CATEGORY VIEWS -->
+        <!-- MEMBERSHIP CATEGORY VIEWS (BASE - SIMPLIFIED) -->
         <!-- ========================================== -->
 
         <!-- List View -->
@@ -19,13 +19,12 @@
                     <field name="member_tier"/>
                     <field name="is_voting_member"/>
                     <field name="member_count"/>
-                    <field name="typical_discount_percent" optional="show"/>
                     <field name="active"/>
                 </list>
             </field>
         </record>
 
-        <!-- Form View -->
+        <!-- Form View (BASE FIELDS ONLY) -->
         <record id="view_membership_category_form" model="ir.ui.view">
             <field name="name">membership.category.form</field>
             <field name="model">membership.category</field>
@@ -60,8 +59,6 @@
                             <group name="classification" string="Classification">
                                 <field name="is_voting_member"/>
                                 <field name="is_full_member"/>
-                                <field name="is_organizational" readonly="1"/>
-                                <field name="is_student_category" readonly="1"/>
                             </group>
                         </group>
 
@@ -70,107 +67,13 @@
                         </group>
 
                         <notebook>
-                            <page name="access" string="Access &amp; Features">
+                            <page name="access" string="Access">
                                 <group>
                                     <group name="portal" string="Portal Access">
                                         <field name="default_portal_access"/>
                                     </group>
-                                    <group name="privileges" string="Privileges">
-                                        <field name="allows_chapter_membership"/>
-                                        <field name="allows_committee_participation"/>
-                                        <field name="allows_event_registration"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="eligibility" string="Eligibility Requirements">
-                                <group>
                                     <group name="verification" string="Verification">
                                         <field name="requires_verification"/>
-                                    </group>
-                                    <group name="age" string="Age Requirements">
-                                        <field name="min_age"/>
-                                        <field name="max_age"/>
-                                    </group>
-                                </group>
-
-                                <group name="sponsorship" string="Sponsorship">
-                                    <field name="requires_sponsorship"/>
-                                    <field name="min_sponsors_required" invisible="not requires_sponsorship"/>
-                                </group>
-
-                                <separator string="Eligibility Requirements"/>
-                                <field name="eligibility_requirements" placeholder="Describe who is eligible for this category..."/>
-
-                                <separator string="Required Documents" invisible="not requires_verification"/>
-                                <field name="verification_documents" placeholder="List documents required for verification..." invisible="not requires_verification"/>
-                            </page>
-
-                            <page name="professional" string="Professional Requirements" invisible="is_student_category">
-                                <group>
-                                    <group name="education" string="Education">
-                                        <field name="requires_degree"/>
-                                        <field name="required_degree_level" invisible="not requires_degree"/>
-                                    </group>
-                                    <group name="license" string="Licensing">
-                                        <field name="requires_license"/>
-                                        <field name="required_license_types" invisible="not requires_license"/>
-                                    </group>
-                                </group>
-                                <group>
-                                    <group name="experience" string="Experience">
-                                        <field name="requires_experience"/>
-                                        <field name="min_years_experience" invisible="not requires_experience"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="student" string="Student Settings" invisible="not is_student_category">
-                                <group>
-                                    <group name="enrollment" string="Enrollment Verification">
-                                        <field name="requires_enrollment_verification"/>
-                                        <field name="enrollment_verification_frequency" invisible="not requires_enrollment_verification"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="organizational" string="Organizational Settings" invisible="not is_organizational">
-                                <group>
-                                    <group name="org_requirements" string="Requirements">
-                                        <field name="requires_ein"/>
-                                        <field name="min_employee_count"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="progression" string="Category Transitions">
-                                <group>
-                                    <group name="transitions" string="Allowed Transitions">
-                                        <field name="allows_upgrade_to" widget="many2many_tags"/>
-                                        <field name="allows_downgrade_to" widget="many2many_tags"/>
-                                    </group>
-                                    <group name="auto_transition" string="Auto-Transition">
-                                        <field name="auto_transition_age"/>
-                                        <field name="auto_transition_category_id" invisible="auto_transition_age == 0"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="term_limits" string="Term Limits">
-                                <group>
-                                    <group name="limits" string="Term Restrictions">
-                                        <field name="has_term_limit"/>
-                                        <field name="max_term_years" invisible="not has_term_limit"/>
-                                        <field name="max_consecutive_terms" invisible="not has_term_limit"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="pricing" string="Pricing">
-                                <group>
-                                    <group name="discounts" string="Typical Pricing">
-                                        <field name="typical_discount_percent"/>
-                                        <field name="has_discounted_pricing" readonly="1"/>
                                     </group>
                                 </group>
                             </page>
@@ -181,21 +84,12 @@
                                         <field name="default_product_id" options="{'no_create': True}" domain="[('is_membership_product', '=', True)]"/>
                                     </group>
                                 </group>
-                                <separator string="Allowed Products"/>
-                                <field name="allowed_product_ids" nolabel="1" domain="[('is_membership_product', '=', True)]">
-                                    <list>
-                                        <field name="name"/>
-                                        <field name="list_price"/>
-                                        <field name="subscription_product_type"/>
-                                    </list>
-                                </field>
                             </page>
 
                             <page name="statistics" string="Statistics">
                                 <group>
                                     <group name="counts" string="Member Counts">
                                         <field name="member_count"/>
-                                        <field name="total_members_all_time"/>
                                     </group>
                                 </group>
                             </page>
@@ -223,14 +117,11 @@
                     <separator/>
                     <filter string="Individual" name="individual" domain="[('category_type', '=', 'individual')]"/>
                     <filter string="Organizational" name="organizational" domain="[('category_type', '=', 'organizational')]"/>
-                    <filter string="Student" name="student" domain="[('category_type', '=', 'student')]"/>
-                    <filter string="Honorary" name="honorary" domain="[('category_type', '=', 'honorary')]"/>
-                    <filter string="Retired" name="retired" domain="[('category_type', '=', 'retired')]"/>
+                    <filter string="Chapter" name="chapter" domain="[('category_type', '=', 'chapter')]"/>
                     
                     <separator/>
                     <filter string="Voting Members" name="voting" domain="[('is_voting_member', '=', True)]"/>
                     <filter string="Full Members" name="full_member" domain="[('is_full_member', '=', True)]"/>
-                    <filter string="Discounted" name="discounted" domain="[('has_discounted_pricing', '=', True)]"/>
                     
                     <group expand="0" string="Group By">
                         <filter string="Category Type" name="group_type" context="{'group_by': 'category_type'}"/>
@@ -293,8 +184,14 @@
                     Create your first member category
                 </p>
                 <p>
-                    Define categories for different types of members (Individual, Student, Corporate, etc.)
-                    with specific eligibility requirements and benefits.
+                    Define categories for different types of members with specific eligibility 
+                    requirements and benefits.
+                </p>
+                <p class="text-muted">
+                    <small>
+                        Note: Install specialized modules (membership_individual, membership_organizational, 
+                        membership_chapter) for advanced category features.
+                    </small>
                 </p>
             </field>
         </record>

@@ -3,10 +3,10 @@
     <data>
 
         <!-- ========================================== -->
-        <!-- RES.PARTNER VIEWS (MEMBERSHIP EXTENSIONS) -->
+        <!-- RES.PARTNER VIEWS (BASE - SIMPLIFIED) -->
         <!-- ========================================== -->
 
-        <!-- Inherit Partner Form View to Add Membership Info -->
+        <!-- Inherit Partner Form View -->
         <record id="view_partner_membership_form" model="ir.ui.view">
             <field name="name">res.partner.membership.form</field>
             <field name="model">res.partner</field>
@@ -21,11 +21,6 @@
                             <span class="o_stat_text">Memberships</span>
                         </div>
                     </button>
-                    <button name="action_view_subscriptions" type="object" class="oe_stat_button" icon="fa-sync" invisible="subscription_count == 0">
-                        <field name="subscription_count" widget="statinfo" string="Subscriptions"/>
-                    </button>
-                    <button name="action_create_membership" type="object" class="oe_stat_button" icon="fa-plus-circle" invisible="is_member" string="Create Membership"/>
-                    <button name="action_renew_membership" type="object" class="oe_stat_button btn-warning" icon="fa-refresh" invisible="not is_member or not membership_renewal_due" string="Renew"/>
                 </xpath>
 
                 <!-- Add Membership Status Ribbon -->
@@ -33,7 +28,6 @@
                     <widget name="web_ribbon" title="Active Member" bg_color="text-bg-success" invisible="membership_state != 'active'"/>
                     <widget name="web_ribbon" title="Trial Member" bg_color="text-bg-info" invisible="membership_state != 'trial'"/>
                     <widget name="web_ribbon" title="Expired" bg_color="text-bg-danger" invisible="membership_state != 'expired'"/>
-                    <widget name="web_ribbon" title="Renewal Due" bg_color="text-bg-warning" invisible="not membership_renewal_due"/>
                 </xpath>
 
                 <!-- Add Membership Fields in Main Form -->
@@ -59,48 +53,18 @@
                                 <field name="membership_start_date"/>
                                 <field name="membership_end_date"/>
                                 <field name="days_until_expiry" invisible="membership_state not in ['active', 'trial']"/>
-                                <field name="membership_renewal_due"/>
                             </group>
                         </group>
 
-                        <group name="classification" string="Classification">
-                            <group name="member_types">
-                                <field name="is_organizational_member"/>
-                                <field name="is_student_member"/>
-                                <field name="is_honorary_member"/>
-                                <field name="is_retired_member"/>
-                            </group>
-                            <group name="portal_access">
+                        <group name="portal" string="Portal Access">
+                            <group>
                                 <field name="portal_access_level"/>
                                 <field name="has_portal_access"/>
                             </group>
                         </group>
 
-                        <group name="organizational_info" string="Organizational Details" invisible="not is_seat_member">
-                            <group>
-                                <field name="is_seat_member"/>
-                                <field name="parent_organization_id"/>
-                                <field name="organizational_role"/>
-                            </group>
-                            <group>
-                                <field name="employee_number"/>
-                            </group>
-                        </group>
-
-                        <group name="current_membership" string="Current Membership">
-                            <field name="current_membership_id" nolabel="1" invisible="not current_membership_id">
-                                <list>
-                                    <field name="name"/>
-                                    <field name="plan_id"/>
-                                    <field name="date_start"/>
-                                    <field name="date_end"/>
-                                    <field name="state"/>
-                                </list>
-                            </field>
-                        </group>
-
-                        <separator string="All Memberships"/>
-                        <field name="membership_ids" nolabel="1">
+                        <separator string="All Membership Subscriptions"/>
+                        <field name="membership_subscription_ids" nolabel="1">
                             <list decoration-success="state=='active'" decoration-info="state=='trial'" decoration-muted="state in ('expired','cancelled')">
                                 <field name="name"/>
                                 <field name="plan_id"/>
@@ -112,44 +76,10 @@
                             </list>
                         </field>
 
-                        <group name="chapters" string="Chapter Memberships" invisible="chapter_count == 0">
-                            <field name="chapter_count"/>
-                            <field name="chapter_membership_ids" nolabel="1">
-                                <list>
-                                    <field name="name"/>
-                                    <field name="plan_id"/>
-                                    <field name="date_start"/>
-                                    <field name="date_end"/>
-                                    <field name="state"/>
-                                </list>
-                            </field>
-                        </group>
-
-                        <group name="financial" string="Financial Summary">
-                            <group>
-                                <field name="total_membership_fees" widget="monetary"/>
-                                <field name="current_membership_value" widget="monetary"/>
-                                <field name="currency_id" invisible="1"/>
-                            </group>
-                        </group>
-
                     </page>
 
                     <page name="member_features" string="Features &amp; Benefits" invisible="not is_member">
                         
-                        <group name="module_features" string="Module Features">
-                            <group name="professional">
-                                <field name="has_professional_features"/>
-                                <field name="has_professional_profile" invisible="not has_professional_features"/>
-                                <field name="has_credentials" invisible="not has_professional_features"/>
-                                <field name="has_ce_records" invisible="not has_professional_features"/>
-                            </group>
-                            <group name="organizational">
-                                <field name="has_organizational_features"/>
-                                <field name="has_organizational_seat" invisible="not has_organizational_features"/>
-                            </group>
-                        </group>
-
                         <separator string="Available Features"/>
                         <field name="available_features" nolabel="1" widget="many2many_tags">
                             <list>
@@ -169,15 +99,6 @@
                             </list>
                         </field>
 
-                    </page>
-
-                    <page name="member_engagement" string="Engagement" invisible="not is_member">
-                        <group name="engagement_metrics" string="Engagement Metrics">
-                            <group>
-                                <field name="last_membership_activity"/>
-                                <field name="engagement_score" widget="progressbar"/>
-                            </group>
-                        </group>
                     </page>
                 </xpath>
 
@@ -211,14 +132,8 @@
                     <filter string="Active Members" name="active_members" domain="[('membership_state', '=', 'active')]"/>
                     <filter string="Trial Members" name="trial_members" domain="[('membership_state', '=', 'trial')]"/>
                     <filter string="Expired Members" name="expired_members" domain="[('membership_state', '=', 'expired')]"/>
-                    <filter string="Renewal Due" name="renewal_due" domain="[('membership_renewal_due', '=', True)]"/>
-                    <separator/>
-                    <filter string="Individual Members" name="individual_members" domain="[('member_category_type', '=', 'individual')]"/>
-                    <filter string="Organizational Members" name="org_members" domain="[('is_organizational_member', '=', True)]"/>
-                    <filter string="Student Members" name="student_members" domain="[('is_student_member', '=', True)]"/>
                     <separator/>
                     <filter string="Has Portal Access" name="has_portal" domain="[('has_portal_access', '=', True)]"/>
-                    <filter string="Seat Members" name="seat_members" domain="[('is_seat_member', '=', True)]"/>
                 </xpath>
                 <xpath expr="//group" position="inside">
                     <filter string="Membership State" name="group_membership_state" context="{'group_by': 'membership_state'}"/>
@@ -239,7 +154,7 @@
                     No members found
                 </p>
                 <p>
-                    The member directory shows all active members of your association.
+                    The member directory shows all active members of your organization.
                 </p>
             </field>
         </record>

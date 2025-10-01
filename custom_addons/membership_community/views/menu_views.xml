@@ -9,7 +9,8 @@
         <!-- Root Menu: Membership -->
         <menuitem id="menu_membership_root"
                   name="Membership"
-                  sequence="50"/>
+                  sequence="50"
+                  web_icon="membership_community,static/description/icon.png"/>
 
         <!-- ========================================== -->
         <!-- MEMBERSHIPS SECTION -->

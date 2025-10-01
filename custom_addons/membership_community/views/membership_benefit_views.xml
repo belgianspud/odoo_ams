@@ -3,7 +3,7 @@
     <data>
 
         <!-- ========================================== -->
-        <!-- MEMBERSHIP BENEFIT VIEWS -->
+        <!-- MEMBERSHIP BENEFIT VIEWS (BASE - SIMPLIFIED) -->
         <!-- ========================================== -->
 
         <!-- List View -->
@@ -22,13 +22,12 @@
                     <field name="monetary_value" optional="show" widget="monetary"/>
                     <field name="currency_id" column_invisible="1"/>
                     <field name="product_count"/>
-                    <field name="display_on_website"/>
                     <field name="active"/>
                 </list>
             </field>
         </record>
 
-        <!-- Form View -->
+        <!-- Form View (BASE FIELDS ONLY) -->
         <record id="view_membership_benefit_form" model="ir.ui.view">
             <field name="name">membership.benefit.form</field>
             <field name="model">membership.benefit</field>
@@ -46,7 +45,6 @@
                         <widget name="web_ribbon" title="Highlighted" bg_color="text-bg-info" invisible="not is_highlighted"/>
 
                         <field name="color" widget="color_picker" class="float-end"/>
-                        <field name="image" widget="image" class="oe_avatar"/>
 
                         <div class="oe_title">
                             <label for="name" class="oe_edit_only"/>
@@ -76,122 +74,15 @@
                         </group>
 
                         <notebook>
-                            <page name="value" string="Value &amp; Quantification">
+                            <page name="value" string="Value">
                                 <group>
                                     <group name="monetary" string="Monetary Value">
                                         <field name="has_monetary_value"/>
                                         <field name="monetary_value" widget="monetary" invisible="not has_monetary_value"/>
                                         <field name="currency_id" invisible="1"/>
-                                        <field name="value_frequency" invisible="not has_monetary_value"/>
                                     </group>
                                     <group name="quantity" string="Quantification">
-                                        <field name="quantifiable_value"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="discounts" string="Discount Configuration" invisible="category != 'discount'">
-                                <group>
-                                    <group name="discount_settings" string="Discount Settings">
-                                        <field name="discount_type"/>
-                                        <field name="discount_applies_to"/>
-                                    </group>
-                                    <group name="discount_values" string="Discount Values">
-                                        <field name="discount_percentage" invisible="discount_type != 'percentage'"/>
-                                        <field name="discount_amount" widget="monetary" invisible="discount_type != 'fixed'"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="access" string="Access &amp; Eligibility">
-                                <group>
-                                    <group name="activation" string="Activation">
-                                        <field name="requires_activation"/>
-                                        <field name="auto_activate" invisible="not requires_activation"/>
-                                        <field name="requires_opt_in"/>
-                                    </group>
-                                    <group name="usage" string="Usage Limits">
-                                        <field name="has_usage_limit"/>
-                                        <field name="usage_limit" invisible="not has_usage_limit"/>
-                                        <field name="usage_period" invisible="not has_usage_limit"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="redemption" string="Redemption">
-                                <group>
-                                    <group name="method" string="Redemption Method">
-                                        <field name="redemption_method"/>
-                                        <field name="redemption_url" invisible="redemption_method not in ['portal', 'code']"/>
-                                    </group>
-                                    <group name="contact" string="Contact Information">
-                                        <field name="contact_email"/>
-                                        <field name="contact_phone"/>
-                                    </group>
-                                </group>
-                                <separator string="Redemption Instructions"/>
-                                <field name="redemption_instructions"/>
-                            </page>
-
-                            <page name="partner" string="Partner Organization" invisible="not is_partner_benefit">
-                                <group>
-                                    <group name="partner_info" string="Partner Information">
-                                        <field name="is_partner_benefit"/>
-                                        <field name="partner_organization"/>
-                                        <field name="partner_url"/>
-                                    </group>
-                                </group>
-                                <field name="partner_logo" widget="image"/>
-                            </page>
-
-                            <page name="terms" string="Terms &amp; Conditions">
-                                <group>
-                                    <group name="terms_settings" string="Terms Settings">
-                                        <field name="has_terms"/>
-                                    </group>
-                                </group>
-                                <separator string="Eligibility Requirements"/>
-                                <field name="eligibility_requirements" placeholder="Who is eligible for this benefit..."/>
-                                <separator string="Exclusions"/>
-                                <field name="exclusions" placeholder="What is excluded from this benefit..."/>
-                                <separator string="Terms &amp; Conditions" invisible="not has_terms"/>
-                                <field name="terms_and_conditions" invisible="not has_terms"/>
-                            </page>
-
-                            <page name="validity" string="Validity Period">
-                                <group>
-                                    <group name="dates" string="Validity Dates">
-                                        <field name="has_validity_period"/>
-                                        <field name="valid_from" invisible="not has_validity_period"/>
-                                        <field name="valid_until" invisible="not has_validity_period"/>
-                                        <field name="is_currently_valid" readonly="1"/>
-                                    </group>
-                                    <group name="seasonal" string="Seasonal Availability">
-                                        <field name="seasonal"/>
-                                        <field name="available_months" invisible="not seasonal"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="marketing" string="Marketing &amp; Display">
-                                <group>
-                                    <group name="display" string="Display Settings">
-                                        <field name="display_on_website"/>
-                                        <field name="display_order"/>
-                                    </group>
-                                    <group name="marketing_text" string="Marketing">
-                                        <field name="marketing_tagline"/>
-                                        <field name="call_to_action"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="tracking" string="Usage Tracking">
-                                <group>
-                                    <group name="tracking_settings" string="Tracking">
-                                        <field name="track_usage"/>
-                                        <field name="usage_count" readonly="1" invisible="not track_usage"/>
-                                        <field name="active_users" readonly="1" invisible="not track_usage"/>
+                                        <field name="quantifiable_value" placeholder="e.g., Up to 5 events, Unlimited downloads"/>
                                     </group>
                                 </group>
                             </page>
@@ -220,14 +111,16 @@
                                 </field>
                             </page>
 
-                            <page name="internal" string="Internal">
+                            <page name="marketing" string="Marketing">
                                 <group>
-                                    <group name="costs" string="Costs">
-                                        <field name="cost_to_association" widget="monetary"/>
+                                    <group name="display" string="Display Settings">
+                                        <field name="display_on_website"/>
+                                        <field name="display_order"/>
+                                    </group>
+                                    <group name="marketing_text" string="Marketing Text">
+                                        <field name="marketing_tagline" placeholder="Catchy tagline for marketing"/>
                                     </group>
                                 </group>
-                                <separator string="Internal Notes"/>
-                                <field name="internal_notes" placeholder="Internal notes (not visible to members)..."/>
                             </page>
                         </notebook>
                     </sheet>
@@ -251,7 +144,6 @@
                     <filter string="Premium Benefits" name="premium" domain="[('is_premium_benefit', '=', True)]"/>
                     <filter string="Highlighted" name="highlighted" domain="[('is_highlighted', '=', True)]"/>
                     <filter string="Display on Website" name="on_website" domain="[('display_on_website', '=', True)]"/>
-                    <filter string="Currently Valid" name="valid" domain="[('is_currently_valid', '=', True)]"/>
                     
                     <separator/>
                     <filter string="Discounts" name="discounts" domain="[('category', '=', 'discount')]"/>
@@ -259,13 +151,9 @@
                     <filter string="Publications" name="publications" domain="[('category', '=', 'publication')]"/>
                     <filter string="Events" name="events" domain="[('category', '=', 'event')]"/>
                     <filter string="Education" name="education" domain="[('category', '=', 'education')]"/>
-                    <filter string="Professional Development" name="professional" domain="[('category', '=', 'professional')]"/>
-                    <filter string="Networking" name="networking" domain="[('category', '=', 'networking')]"/>
-                    <filter string="Recognition" name="recognition" domain="[('category', '=', 'recognition')]"/>
                     
                     <separator/>
                     <filter string="Has Monetary Value" name="has_value" domain="[('has_monetary_value', '=', True)]"/>
-                    <filter string="Partner Benefits" name="partner" domain="[('is_partner_benefit', '=', True)]"/>
                     
                     <group expand="0" string="Group By">
                         <filter string="Category" name="group_category" context="{'group_by': 'category'}"/>

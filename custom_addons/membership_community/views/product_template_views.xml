@@ -3,23 +3,24 @@
     <data>
 
         <!-- ========================================== -->
-        <!-- PRODUCT TEMPLATE VIEWS (MEMBERSHIP EXTENSIONS) -->
+        <!-- PRODUCT TEMPLATE VIEWS (BASE - SIMPLIFIED) -->
         <!-- ========================================== -->
 
-        <!-- Inherit Product Form View to Add Membership Fields -->
+        <!-- Inherit Product Form View -->
         <record id="view_product_template_membership_form" model="ir.ui.view">
             <field name="name">product.template.membership.form</field>
             <field name="model">product.template</field>
-            <field name="inherit_id" ref="product.product_template_form_view"/>
+            <field name="inherit_id" ref="product.product_template_only_form_view"/>
             <field name="arch" type="xml">
                 
                 <!-- Add Membership checkbox after Can be Sold -->
-                <xpath expr="//field[@name='sale_ok']" position="after">
+                <xpath expr="//label[@for='sale_ok']" position="after">
                     <field name="is_membership_product"/>
+                    <label for="is_membership_product"/>
                 </xpath>
 
                 <!-- Add Membership Page in Notebook -->
-                <xpath expr="//notebook" position="inside">
+                <xpath expr="//page[@name='general_information']" position="after">
                     <page name="membership" string="Membership" invisible="not is_membership_product">
                         
                         <group name="membership_basic" string="Membership Type">
@@ -27,29 +28,9 @@
                                 <field name="subscription_product_type"/>
                             </group>
                             <group>
-                                <field name="is_chapter_membership" readonly="1"/>
-                            </group>
-                        </group>
-                        
-                        <group name="membership_config" string="Membership Configuration">
-                            <group name="year_type" string="Membership Year">
-                                <field name="membership_year_type"/>
-                                <field name="calendar_year_start" invisible="membership_year_type != 'calendar'"/>
-                                <field name="prorate_partial_periods" invisible="membership_year_type != 'calendar'"/>
-                            </group>
-                            <group name="categories" string="Member Categories">
                                 <field name="default_member_category_id" options="{'no_create': True}"/>
                             </group>
                         </group>
-
-                        <separator string="Allowed Member Categories"/>
-                        <field name="allowed_member_categories" nolabel="1" widget="many2many_tags">
-                            <list>
-                                <field name="name"/>
-                                <field name="code"/>
-                                <field name="category_type"/>
-                            </list>
-                        </field>
 
                         <group name="membership_features" string="Features &amp; Benefits">
                             <group name="features_left">
@@ -62,92 +43,28 @@
                             </group>
                         </group>
 
-                        <group name="professional_settings" string="Professional Features">
-                            <group name="prof_left">
-                                <field name="enables_credentials"/>
-                                <field name="enables_ce_tracking"/>
-                            </group>
-                            <group name="prof_right">
-                                <field name="enables_designations"/>
-                            </group>
-                        </group>
-
-                        <group name="organizational_settings" string="Organizational Membership" invisible="subscription_product_type != 'organizational_membership'">
-                            <group name="org_left">
-                                <field name="is_organizational_only"/>
-                                <field name="supports_seats"/>
-                                <field name="min_seats_required" invisible="not supports_seats"/>
-                            </group>
-                            <group name="org_right">
-                                <field name="seat_product_id" invisible="not supports_seats" domain="[('subscription_product_type', '=', 'seat')]"/>
-                            </group>
-                        </group>
-
-                        <group name="chapter_settings" string="Chapter Membership" invisible="not is_chapter_membership">
-                            <group name="chapter_left">
-                                <field name="requires_primary_membership"/>
-                            </group>
-                            <group name="chapter_right">
-                            </group>
-                        </group>
-
-                        <separator string="Required Primary Memberships" invisible="not requires_primary_membership"/>
-                        <field name="primary_membership_product_ids" nolabel="1" invisible="not requires_primary_membership" domain="[('is_membership_product', '=', True), ('subscription_product_type', '=', 'membership')]">
-                            <list>
-                                <field name="name"/>
-                                <field name="list_price"/>
-                                <field name="subscription_product_type"/>
-                            </list>
-                        </field>
-
-                        <separator string="Associated Chapters" invisible="not is_chapter_membership"/>
-                        <field name="chapter_ids" nolabel="1" invisible="not is_chapter_membership">
-                            <list>
-                                <field name="name"/>
-                            </list>
-                        </field>
-
-                        <group name="portal_config" string="Portal Configuration">
-                            <group name="portal_left">
+                        <group name="portal_config" string="Portal Access">
+                            <group>
                                 <field name="portal_access_level"/>
                             </group>
-                            <group name="portal_right">
-                                <field name="portal_features" widget="ace" options="{'mode': 'json'}"/>
-                            </group>
                         </group>
 
-                        <group name="eligibility" string="Eligibility &amp; Approval">
-                            <group name="elig_left">
-                                <field name="requires_eligibility_verification"/>
-                                <field name="requires_approval"/>
-                            </group>
-                            <group name="elig_right">
-                                <field name="max_members"/>
+                        <group name="statistics" string="Statistics">
+                            <group>
                                 <field name="current_member_count" readonly="1"/>
-                                <field name="is_at_capacity" readonly="1"/>
                             </group>
                         </group>
 
-                        <separator string="Eligibility Criteria"/>
-                        <field name="eligibility_criteria" placeholder="Describe eligibility requirements for this membership..."/>
-
-                        <group name="progression" string="Upgrade/Downgrade Paths">
-                            <group name="upgrade">
-                                <label for="upgrade_product_ids"/>
-                                <field name="upgrade_product_ids" nolabel="1" widget="many2many_tags" domain="[('is_membership_product', '=', True)]"/>
-                            </group>
-                            <group name="downgrade">
-                                <label for="downgrade_product_ids"/>
-                                <field name="downgrade_product_ids" nolabel="1" widget="many2many_tags" domain="[('is_membership_product', '=', True)]"/>
-                            </group>
-                        </group>
-
-                        <separator string="Membership Description (for Portal/Website)"/>
-                        <field name="membership_description_html"/>
+                        <div class="alert alert-info mt-3" role="alert">
+                            <p class="mb-0">
+                                <i class="fa fa-info-circle"/> 
+                                <strong>Note:</strong> This product will be linked to subscription plans for billing and renewals.
+                            </p>
+                        </div>
 
                     </page>
                 </xpath>
-
+                
             </field>
         </record>
 
@@ -172,14 +89,15 @@
             <field name="inherit_id" ref="product.product_template_search_view"/>
             <field name="arch" type="xml">
                 <xpath expr="//filter[@name='filter_to_sell']" position="after">
+                    <separator/>
                     <filter string="Membership Products" name="membership_products" domain="[('is_membership_product', '=', True)]"/>
                     <separator/>
                     <filter string="Individual Membership" name="individual_membership" domain="[('subscription_product_type', '=', 'membership')]"/>
                     <filter string="Organizational Membership" name="org_membership" domain="[('subscription_product_type', '=', 'organizational_membership')]"/>
                     <filter string="Chapter Membership" name="chapter_membership" domain="[('subscription_product_type', '=', 'chapter')]"/>
-                    <filter string="Seat Products" name="seat_products" domain="[('subscription_product_type', '=', 'seat')]"/>
-                    <separator/>
-                    <filter string="At Capacity" name="at_capacity" domain="[('is_at_capacity', '=', True)]"/>
+                </xpath>
+                <xpath expr="//group" position="inside">
+                    <filter string="Subscription Type" name="group_subscription_type" context="{'group_by': 'subscription_product_type'}"/>
                 </xpath>
             </field>
         </record>
