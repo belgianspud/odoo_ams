@@ -6,12 +6,12 @@
         <!-- MEMBERSHIP BENEFIT VIEWS -->
         <!-- ========================================== -->
 
-        <!-- Tree View -->
+        <!-- List View -->
         <record id="view_membership_benefit_tree" model="ir.ui.view">
-            <field name="name">membership.benefit.tree</field>
+            <field name="name">membership.benefit.list</field>
             <field name="model">membership.benefit</field>
             <field name="arch" type="xml">
-                <tree string="Membership Benefits">
+                <list string="Membership Benefits">
                     <field name="sequence" widget="handle"/>
                     <field name="name"/>
                     <field name="code"/>
@@ -20,11 +20,11 @@
                     <field name="is_premium_benefit"/>
                     <field name="is_highlighted"/>
                     <field name="monetary_value" optional="show" widget="monetary"/>
-                    <field name="currency_id" invisible="1"/>
+                    <field name="currency_id" column_invisible="1"/>
                     <field name="product_count"/>
                     <field name="display_on_website"/>
                     <field name="active"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -39,16 +39,13 @@
                             <button name="action_view_products" type="object" class="oe_stat_button" icon="fa-cube">
                                 <field name="product_count" widget="statinfo" string="Products"/>
                             </button>
-                            <button name="action_view_usage" type="object" class="oe_stat_button" icon="fa-chart-line" attrs="{'invisible': [('track_usage', '=', False)]}">
-                                <field name="usage_count" widget="statinfo" string="Usage"/>
-                            </button>
                         </div>
 
-                        <widget name="web_ribbon" title="Archived" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
-                        <widget name="web_ribbon" title="Premium" bg_color="bg-success" attrs="{'invisible': [('is_premium_benefit', '=', False)]}"/>
-                        <widget name="web_ribbon" title="Highlighted" bg_color="bg-info" attrs="{'invisible': [('is_highlighted', '=', False)]}"/>
+                        <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                        <widget name="web_ribbon" title="Premium" bg_color="text-bg-success" invisible="not is_premium_benefit"/>
+                        <widget name="web_ribbon" title="Highlighted" bg_color="text-bg-info" invisible="not is_highlighted"/>
 
-                        <field name="color" widget="color_picker" class="float-right"/>
+                        <field name="color" widget="color_picker" class="float-end"/>
                         <field name="image" widget="image" class="oe_avatar"/>
 
                         <div class="oe_title">
@@ -83,9 +80,9 @@
                                 <group>
                                     <group name="monetary" string="Monetary Value">
                                         <field name="has_monetary_value"/>
-                                        <field name="monetary_value" widget="monetary" attrs="{'invisible': [('has_monetary_value', '=', False)]}"/>
+                                        <field name="monetary_value" widget="monetary" invisible="not has_monetary_value"/>
                                         <field name="currency_id" invisible="1"/>
-                                        <field name="value_frequency" attrs="{'invisible': [('has_monetary_value', '=', False)]}"/>
+                                        <field name="value_frequency" invisible="not has_monetary_value"/>
                                     </group>
                                     <group name="quantity" string="Quantification">
                                         <field name="quantifiable_value"/>
@@ -93,15 +90,15 @@
                                 </group>
                             </page>
 
-                            <page name="discounts" string="Discount Configuration" attrs="{'invisible': [('category', '!=', 'discount')]}">
+                            <page name="discounts" string="Discount Configuration" invisible="category != 'discount'">
                                 <group>
                                     <group name="discount_settings" string="Discount Settings">
                                         <field name="discount_type"/>
                                         <field name="discount_applies_to"/>
                                     </group>
                                     <group name="discount_values" string="Discount Values">
-                                        <field name="discount_percentage" attrs="{'invisible': [('discount_type', '!=', 'percentage')]}"/>
-                                        <field name="discount_amount" widget="monetary" attrs="{'invisible': [('discount_type', '!=', 'fixed')]}"/>
+                                        <field name="discount_percentage" invisible="discount_type != 'percentage'"/>
+                                        <field name="discount_amount" widget="monetary" invisible="discount_type != 'fixed'"/>
                                     </group>
                                 </group>
                             </page>
@@ -110,42 +107,13 @@
                                 <group>
                                     <group name="activation" string="Activation">
                                         <field name="requires_activation"/>
-                                        <field name="auto_activate" attrs="{'invisible': [('requires_activation', '=', False)]}"/>
+                                        <field name="auto_activate" invisible="not requires_activation"/>
                                         <field name="requires_opt_in"/>
                                     </group>
                                     <group name="usage" string="Usage Limits">
                                         <field name="has_usage_limit"/>
-                                        <field name="usage_limit" attrs="{'invisible': [('has_usage_limit', '=', False)]}"/>
-                                        <field name="usage_period" attrs="{'invisible': [('has_usage_limit', '=', False)]}"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="publications" string="Publication Configuration" attrs="{'invisible': [('category', '!=', 'publication')]}">
-                                <group>
-                                    <group name="pub_access" string="Access Type">
-                                        <field name="publication_access_type"/>
-                                        <field name="download_limit"/>
-                                        <field name="archive_access_years"/>
-                                    </group>
-                                </group>
-                                <separator string="Included Publications"/>
-                                <field name="publication_ids" nolabel="1">
-                                    <tree>
-                                        <field name="name"/>
-                                        <field name="subscription_product_type"/>
-                                        <field name="list_price"/>
-                                    </tree>
-                                </field>
-                            </page>
-
-                            <page name="events" string="Event Configuration" attrs="{'invisible': [('category', '!=', 'event')]}">
-                                <group>
-                                    <group name="event_benefits" string="Event Benefits">
-                                        <field name="event_registration_benefit"/>
-                                        <field name="free_event_count" attrs="{'invisible': [('event_registration_benefit', '!=', 'free')]}"/>
-                                        <field name="event_discount_percentage" attrs="{'invisible': [('event_registration_benefit', '!=', 'discount')]}"/>
-                                        <field name="early_registration_days" attrs="{'invisible': [('event_registration_benefit', '!=', 'priority')]}"/>
+                                        <field name="usage_limit" invisible="not has_usage_limit"/>
+                                        <field name="usage_period" invisible="not has_usage_limit"/>
                                     </group>
                                 </group>
                             </page>
@@ -154,7 +122,7 @@
                                 <group>
                                     <group name="method" string="Redemption Method">
                                         <field name="redemption_method"/>
-                                        <field name="redemption_url" attrs="{'invisible': [('redemption_method', 'not in', ['portal', 'code'])]}"/>
+                                        <field name="redemption_url" invisible="redemption_method not in ['portal', 'code']"/>
                                     </group>
                                     <group name="contact" string="Contact Information">
                                         <field name="contact_email"/>
@@ -165,7 +133,7 @@
                                 <field name="redemption_instructions"/>
                             </page>
 
-                            <page name="partner" string="Partner Organization" attrs="{'invisible': [('is_partner_benefit', '=', False)]}">
+                            <page name="partner" string="Partner Organization" invisible="not is_partner_benefit">
                                 <group>
                                     <group name="partner_info" string="Partner Information">
                                         <field name="is_partner_benefit"/>
@@ -180,28 +148,27 @@
                                 <group>
                                     <group name="terms_settings" string="Terms Settings">
                                         <field name="has_terms"/>
-                                        <field name="requires_acceptance" attrs="{'invisible': [('has_terms', '=', False)]}"/>
                                     </group>
                                 </group>
                                 <separator string="Eligibility Requirements"/>
                                 <field name="eligibility_requirements" placeholder="Who is eligible for this benefit..."/>
                                 <separator string="Exclusions"/>
                                 <field name="exclusions" placeholder="What is excluded from this benefit..."/>
-                                <separator string="Terms &amp; Conditions" attrs="{'invisible': [('has_terms', '=', False)]}"/>
-                                <field name="terms_and_conditions" attrs="{'invisible': [('has_terms', '=', False)]}"/>
+                                <separator string="Terms &amp; Conditions" invisible="not has_terms"/>
+                                <field name="terms_and_conditions" invisible="not has_terms"/>
                             </page>
 
                             <page name="validity" string="Validity Period">
                                 <group>
                                     <group name="dates" string="Validity Dates">
                                         <field name="has_validity_period"/>
-                                        <field name="valid_from" attrs="{'invisible': [('has_validity_period', '=', False)]}"/>
-                                        <field name="valid_until" attrs="{'invisible': [('has_validity_period', '=', False)]}"/>
+                                        <field name="valid_from" invisible="not has_validity_period"/>
+                                        <field name="valid_until" invisible="not has_validity_period"/>
                                         <field name="is_currently_valid" readonly="1"/>
                                     </group>
                                     <group name="seasonal" string="Seasonal Availability">
                                         <field name="seasonal"/>
-                                        <field name="available_months" attrs="{'invisible': [('seasonal', '=', False)]}"/>
+                                        <field name="available_months" invisible="not seasonal"/>
                                     </group>
                                 </group>
                             </page>
@@ -223,8 +190,8 @@
                                 <group>
                                     <group name="tracking_settings" string="Tracking">
                                         <field name="track_usage"/>
-                                        <field name="usage_count" readonly="1" attrs="{'invisible': [('track_usage', '=', False)]}"/>
-                                        <field name="active_users" readonly="1" attrs="{'invisible': [('track_usage', '=', False)]}"/>
+                                        <field name="usage_count" readonly="1" invisible="not track_usage"/>
+                                        <field name="active_users" readonly="1" invisible="not track_usage"/>
                                     </group>
                                 </group>
                             </page>
@@ -237,19 +204,19 @@
                                 </group>
                                 <separator string="Associated Products"/>
                                 <field name="product_ids" nolabel="1">
-                                    <tree>
+                                    <list>
                                         <field name="name"/>
                                         <field name="subscription_product_type"/>
                                         <field name="list_price"/>
-                                    </tree>
+                                    </list>
                                 </field>
                                 <separator string="Associated Categories"/>
                                 <field name="category_ids" nolabel="1">
-                                    <tree>
+                                    <list>
                                         <field name="name"/>
                                         <field name="code"/>
                                         <field name="category_type"/>
-                                    </tree>
+                                    </list>
                                 </field>
                             </page>
 
@@ -340,9 +307,9 @@
                                             <field name="code"/>
                                         </span>
                                     </div>
-                                    <span class="float-right">
-                                        <span t-if="record.is_premium_benefit.raw_value" class="badge badge-success">Premium</span>
-                                        <span t-if="record.is_highlighted.raw_value" class="badge badge-info">Featured</span>
+                                    <span class="float-end">
+                                        <span t-if="record.is_premium_benefit.raw_value" class="badge text-bg-success">Premium</span>
+                                        <span t-if="record.is_highlighted.raw_value" class="badge text-bg-info">Featured</span>
                                     </span>
                                 </div>
                                 <div class="o_kanban_record_body">
@@ -373,7 +340,7 @@
         <record id="action_membership_benefit" model="ir.actions.act_window">
             <field name="name">Membership Benefits</field>
             <field name="res_model">membership.benefit</field>
-            <field name="view_mode">tree,kanban,form</field>
+            <field name="view_mode">list,kanban,form</field>
             <field name="search_view_id" ref="view_membership_benefit_search"/>
             <field name="context">{'search_default_active': 1}</field>
             <field name="help" type="html">

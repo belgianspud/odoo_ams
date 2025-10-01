@@ -15,36 +15,37 @@
                 
                 <!-- Add Smart Buttons -->
                 <xpath expr="//div[@name='button_box']" position="inside">
-                    <button name="action_view_memberships" type="object" class="oe_stat_button" icon="fa-id-card" attrs="{'invisible': [('membership_count', '=', 0)]}">
+                    <button name="action_view_memberships" type="object" class="oe_stat_button" icon="fa-id-card" invisible="membership_count == 0">
                         <div class="o_field_widget o_stat_info">
                             <span class="o_stat_value"><field name="active_membership_count"/>/<field name="membership_count"/></span>
                             <span class="o_stat_text">Memberships</span>
                         </div>
                     </button>
-                    <button name="action_view_subscriptions" type="object" class="oe_stat_button" icon="fa-sync" attrs="{'invisible': [('subscription_count', '=', 0)]}">
+                    <button name="action_view_subscriptions" type="object" class="oe_stat_button" icon="fa-sync" invisible="subscription_count == 0">
                         <field name="subscription_count" widget="statinfo" string="Subscriptions"/>
                     </button>
-                    <button name="action_create_membership" type="object" class="oe_stat_button" icon="fa-plus-circle" attrs="{'invisible': [('is_member', '=', True)]}" string="Create Membership"/>
-                    <button name="action_renew_membership" type="object" class="oe_stat_button" icon="fa-refresh" attrs="{'invisible': ['|', ('is_member', '=', False), ('membership_renewal_due', '=', False)]}" string="Renew" class="btn-warning"/>
+                    <button name="action_create_membership" type="object" class="oe_stat_button" icon="fa-plus-circle" invisible="is_member" string="Create Membership"/>
+                    <button name="action_renew_membership" type="object" class="oe_stat_button btn-warning" icon="fa-refresh" invisible="not is_member or not membership_renewal_due" string="Renew"/>
                 </xpath>
 
                 <!-- Add Membership Status Ribbon -->
                 <xpath expr="//sheet" position="before">
-                    <widget name="web_ribbon" title="Active Member" bg_color="bg-success" attrs="{'invisible': [('membership_state', '!=', 'active')]}"/>
-                    <widget name="web_ribbon" title="Expired" bg_color="bg-danger" attrs="{'invisible': [('membership_state', '!=', 'expired')]}"/>
-                    <widget name="web_ribbon" title="Renewal Due" bg_color="bg-warning" attrs="{'invisible': [('membership_renewal_due', '=', False)]}"/>
+                    <widget name="web_ribbon" title="Active Member" bg_color="text-bg-success" invisible="membership_state != 'active'"/>
+                    <widget name="web_ribbon" title="Trial Member" bg_color="text-bg-info" invisible="membership_state != 'trial'"/>
+                    <widget name="web_ribbon" title="Expired" bg_color="text-bg-danger" invisible="membership_state != 'expired'"/>
+                    <widget name="web_ribbon" title="Renewal Due" bg_color="text-bg-warning" invisible="not membership_renewal_due"/>
                 </xpath>
 
                 <!-- Add Membership Fields in Main Form -->
                 <xpath expr="//field[@name='category_id']" position="after">
-                    <field name="is_member" attrs="{'invisible': [('is_member', '=', False)]}"/>
-                    <field name="membership_state" attrs="{'invisible': [('is_member', '=', False)]}"/>
-                    <field name="membership_category_id" attrs="{'invisible': [('is_member', '=', False)]}"/>
+                    <field name="is_member" invisible="not is_member"/>
+                    <field name="membership_state" invisible="not is_member"/>
+                    <field name="membership_category_id" invisible="not is_member"/>
                 </xpath>
 
                 <!-- Add Membership Page in Notebook -->
                 <xpath expr="//notebook" position="inside">
-                    <page name="membership" string="Membership" attrs="{'invisible': [('membership_count', '=', 0)]}">
+                    <page name="membership" string="Membership" invisible="membership_count == 0">
                         
                         <group name="membership_summary" string="Membership Summary">
                             <group name="status">
@@ -57,7 +58,7 @@
                             <group name="dates">
                                 <field name="membership_start_date"/>
                                 <field name="membership_end_date"/>
-                                <field name="days_until_expiry" attrs="{'invisible': [('membership_state', '!=', 'active')]}"/>
+                                <field name="days_until_expiry" invisible="membership_state not in ['active', 'trial']"/>
                                 <field name="membership_renewal_due"/>
                             </group>
                         </group>
@@ -75,7 +76,7 @@
                             </group>
                         </group>
 
-                        <group name="organizational_info" string="Organizational Details" attrs="{'invisible': [('is_seat_member', '=', False)]}">
+                        <group name="organizational_info" string="Organizational Details" invisible="not is_seat_member">
                             <group>
                                 <field name="is_seat_member"/>
                                 <field name="parent_organization_id"/>
@@ -87,40 +88,40 @@
                         </group>
 
                         <group name="current_membership" string="Current Membership">
-                            <field name="current_membership_id" nolabel="1" attrs="{'invisible': [('current_membership_id', '=', False)]}">
-                                <tree>
+                            <field name="current_membership_id" nolabel="1" invisible="not current_membership_id">
+                                <list>
                                     <field name="name"/>
-                                    <field name="product_id"/>
-                                    <field name="start_date"/>
-                                    <field name="end_date"/>
+                                    <field name="plan_id"/>
+                                    <field name="date_start"/>
+                                    <field name="date_end"/>
                                     <field name="state"/>
-                                </tree>
+                                </list>
                             </field>
                         </group>
 
                         <separator string="All Memberships"/>
                         <field name="membership_ids" nolabel="1">
-                            <tree decoration-success="state=='active'" decoration-muted="state in ('expired','cancelled')">
+                            <list decoration-success="state=='active'" decoration-info="state=='trial'" decoration-muted="state in ('expired','cancelled')">
                                 <field name="name"/>
-                                <field name="product_id"/>
+                                <field name="plan_id"/>
                                 <field name="membership_category_id"/>
-                                <field name="start_date"/>
-                                <field name="end_date"/>
+                                <field name="date_start"/>
+                                <field name="date_end"/>
                                 <field name="state"/>
-                                <field name="amount" sum="Total"/>
-                            </tree>
+                                <field name="price" sum="Total"/>
+                            </list>
                         </field>
 
-                        <group name="chapters" string="Chapter Memberships" attrs="{'invisible': [('chapter_count', '=', 0)]}">
+                        <group name="chapters" string="Chapter Memberships" invisible="chapter_count == 0">
                             <field name="chapter_count"/>
                             <field name="chapter_membership_ids" nolabel="1">
-                                <tree>
+                                <list>
                                     <field name="name"/>
-                                    <field name="product_id"/>
-                                    <field name="start_date"/>
-                                    <field name="end_date"/>
+                                    <field name="plan_id"/>
+                                    <field name="date_start"/>
+                                    <field name="date_end"/>
                                     <field name="state"/>
-                                </tree>
+                                </list>
                             </field>
                         </group>
 
@@ -134,43 +135,43 @@
 
                     </page>
 
-                    <page name="member_features" string="Features &amp; Benefits" attrs="{'invisible': [('is_member', '=', False)]}">
+                    <page name="member_features" string="Features &amp; Benefits" invisible="not is_member">
                         
                         <group name="module_features" string="Module Features">
                             <group name="professional">
                                 <field name="has_professional_features"/>
-                                <field name="has_professional_profile" attrs="{'invisible': [('has_professional_features', '=', False)]}"/>
-                                <field name="has_credentials" attrs="{'invisible': [('has_professional_features', '=', False)]}"/>
-                                <field name="has_ce_records" attrs="{'invisible': [('has_professional_features', '=', False)]}"/>
+                                <field name="has_professional_profile" invisible="not has_professional_features"/>
+                                <field name="has_credentials" invisible="not has_professional_features"/>
+                                <field name="has_ce_records" invisible="not has_professional_features"/>
                             </group>
                             <group name="organizational">
                                 <field name="has_organizational_features"/>
-                                <field name="has_organizational_seat" attrs="{'invisible': [('has_organizational_features', '=', False)]}"/>
+                                <field name="has_organizational_seat" invisible="not has_organizational_features"/>
                             </group>
                         </group>
 
                         <separator string="Available Features"/>
                         <field name="available_features" nolabel="1" widget="many2many_tags">
-                            <tree>
+                            <list>
                                 <field name="name"/>
                                 <field name="category"/>
                                 <field name="feature_type"/>
-                            </tree>
+                            </list>
                         </field>
 
                         <separator string="Available Benefits"/>
                         <field name="available_benefits" nolabel="1" widget="many2many_tags">
-                            <tree>
+                            <list>
                                 <field name="name"/>
                                 <field name="category"/>
                                 <field name="benefit_type"/>
                                 <field name="monetary_value"/>
-                            </tree>
+                            </list>
                         </field>
 
                     </page>
 
-                    <page name="member_engagement" string="Engagement" attrs="{'invisible': [('is_member', '=', False)]}">
+                    <page name="member_engagement" string="Engagement" invisible="not is_member">
                         <group name="engagement_metrics" string="Engagement Metrics">
                             <group>
                                 <field name="last_membership_activity"/>
@@ -183,9 +184,9 @@
             </field>
         </record>
 
-        <!-- Inherit Partner Tree View -->
+        <!-- Inherit Partner List View -->
         <record id="view_partner_membership_tree" model="ir.ui.view">
-            <field name="name">res.partner.membership.tree</field>
+            <field name="name">res.partner.membership.list</field>
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="base.view_partner_tree"/>
             <field name="arch" type="xml">
@@ -208,6 +209,7 @@
                     <separator/>
                     <filter string="Members" name="members" domain="[('is_member', '=', True)]"/>
                     <filter string="Active Members" name="active_members" domain="[('membership_state', '=', 'active')]"/>
+                    <filter string="Trial Members" name="trial_members" domain="[('membership_state', '=', 'trial')]"/>
                     <filter string="Expired Members" name="expired_members" domain="[('membership_state', '=', 'expired')]"/>
                     <filter string="Renewal Due" name="renewal_due" domain="[('membership_renewal_due', '=', True)]"/>
                     <separator/>
@@ -229,7 +231,7 @@
         <record id="action_member_directory" model="ir.actions.act_window">
             <field name="name">Member Directory</field>
             <field name="res_model">res.partner</field>
-            <field name="view_mode">kanban,tree,form</field>
+            <field name="view_mode">kanban,list,form</field>
             <field name="domain">[('is_member', '=', True)]</field>
             <field name="context">{'search_default_active_members': 1}</field>
             <field name="help" type="html">
@@ -255,11 +257,11 @@
                     <field name="membership_state"/>
                     <field name="membership_category_id"/>
                     <field name="member_since"/>
-                    <field name="image_128"/>
+                    <field name="avatar_128"/>
                     <templates>
                         <t t-name="kanban-box">
                             <div class="oe_kanban_global_click o_kanban_record_has_image_fill">
-                                <div class="o_kanban_image_fill_left d-none d-md-block" t-attf-style="background-image: url('#{kanban_image('res.partner', 'image_128', record.id.raw_value)}')"/>
+                                <div class="o_kanban_image_fill_left d-none d-md-block" t-attf-style="background-image: url('#{kanban_image('res.partner', 'avatar_128', record.id.raw_value)}')"/>
                                 <div class="oe_kanban_details">
                                     <div class="o_kanban_record_top">
                                         <div class="o_kanban_record_headings">
@@ -267,8 +269,11 @@
                                                 <field name="name"/>
                                             </strong>
                                         </div>
-                                        <span class="float-right">
-                                            <field name="membership_state" widget="label_selection" options="{'classes': {'active': 'success', 'expired': 'danger'}}"/>
+                                        <span class="float-end">
+                                            <field name="membership_state" widget="badge" 
+                                                   decoration-success="membership_state=='active'"
+                                                   decoration-info="membership_state=='trial'"
+                                                   decoration-danger="membership_state=='expired'"/>
                                         </span>
                                     </div>
                                     <div class="o_kanban_record_body">

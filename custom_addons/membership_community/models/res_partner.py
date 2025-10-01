@@ -28,7 +28,8 @@ class ResPartner(models.Model):
     membership_state = fields.Selection([
         ('none', 'Not a Member'),
         ('active', 'Active Member'),
-        ('pending', 'Pending'),
+        ('trial', 'Trial'),
+        ('suspended', 'Suspended'),
         ('expired', 'Expired'),
         ('cancelled', 'Cancelled')
     ], string='Membership Status',
@@ -45,7 +46,7 @@ class ResPartner(models.Model):
         'subscription.subscription',
         'partner_id',
         string='Membership Subscriptions',
-        domain=[('product_id.is_membership_product', '=', True)],
+        domain=[('plan_id.product_template_id.is_membership_product', '=', True)],
         help='All membership subscriptions for this partner'
     )
     
@@ -67,6 +68,23 @@ class ResPartner(models.Model):
         string='Active Memberships',
         compute='_compute_membership_counts',
         help='Number of currently active memberships'
+    )
+    
+    # Alias for membership_ids to maintain compatibility
+    membership_ids = fields.One2many(
+        'subscription.subscription',
+        'partner_id',
+        string='All Memberships',
+        domain=[('plan_id.product_template_id.is_membership_product', '=', True)],
+        help='All membership subscriptions (alias for membership_subscription_ids)'
+    )
+    
+    current_membership_id = fields.Many2one(
+        'subscription.subscription',
+        string='Current Membership',
+        compute='_compute_current_membership',
+        store=True,
+        help='Primary active membership'
     )
 
     # ==========================================
@@ -108,6 +126,13 @@ class ResPartner(models.Model):
         compute='_compute_member_flags',
         store=True,
         help='Partner is an honorary member'
+    )
+    
+    is_retired_member = fields.Boolean(
+        string='Retired Member',
+        compute='_compute_member_flags',
+        store=True,
+        help='Partner is a retired member'
     )
 
     # ==========================================
@@ -190,7 +215,7 @@ class ResPartner(models.Model):
         'subscription.subscription',
         'partner_id',
         string='Chapter Memberships',
-        domain=[('product_id.subscription_product_type', '=', 'chapter')],
+        domain=[('plan_id.product_template_id.subscription_product_type', '=', 'chapter')],
         help='Chapter membership subscriptions'
     )
     
@@ -198,6 +223,89 @@ class ResPartner(models.Model):
         string='Chapters',
         compute='_compute_chapter_count',
         help='Number of chapters member belongs to'
+    )
+
+    # ==========================================
+    # ORGANIZATIONAL MEMBERSHIP (SEATS)
+    # ==========================================
+    
+    is_seat_member = fields.Boolean(
+        string='Is Seat Member',
+        default=False,
+        help='This partner is a seat under an organizational membership'
+    )
+    
+    parent_organization_id = fields.Many2one(
+        'res.partner',
+        string='Parent Organization',
+        domain=[('is_company', '=', True)],
+        help='Organization this seat belongs to'
+    )
+    
+    organizational_role = fields.Char(
+        string='Role in Organization',
+        help='Role or title within the organization'
+    )
+    
+    employee_number = fields.Char(
+        string='Employee Number',
+        help='Employee or member number within organization'
+    )
+    
+    has_organizational_seat = fields.Boolean(
+        string='Has Organizational Seat',
+        compute='_compute_organizational_flags',
+        help='Has a seat in an organizational membership'
+    )
+
+    # ==========================================
+    # PROFESSIONAL FEATURES FLAGS
+    # ==========================================
+    
+    has_professional_features = fields.Boolean(
+        string='Has Professional Features',
+        compute='_compute_professional_flags',
+        help='Has access to professional features'
+    )
+    
+    has_professional_profile = fields.Boolean(
+        string='Has Professional Profile',
+        compute='_compute_professional_flags',
+        help='Has a professional profile'
+    )
+    
+    has_credentials = fields.Boolean(
+        string='Has Credentials',
+        compute='_compute_professional_flags',
+        help='Has credential tracking enabled'
+    )
+    
+    has_ce_records = fields.Boolean(
+        string='Has CE Records',
+        compute='_compute_professional_flags',
+        help='Has continuing education tracking'
+    )
+    
+    has_organizational_features = fields.Boolean(
+        string='Has Organizational Features',
+        compute='_compute_organizational_flags',
+        help='Has organizational membership features'
+    )
+
+    # ==========================================
+    # ENGAGEMENT METRICS
+    # ==========================================
+    
+    last_membership_activity = fields.Date(
+        string='Last Activity',
+        compute='_compute_engagement_metrics',
+        help='Date of last membership-related activity'
+    )
+    
+    engagement_score = fields.Float(
+        string='Engagement Score',
+        compute='_compute_engagement_metrics',
+        help='Member engagement score (0-100)'
     )
 
     # ==========================================
@@ -255,7 +363,7 @@ class ResPartner(models.Model):
         for partner in self:
             partner.is_member = bool(
                 partner.membership_subscription_ids.filtered(
-                    lambda s: s.state in ['open', 'active']
+                    lambda s: s.state in ['trial', 'active']
                 )
             )
 
@@ -276,24 +384,28 @@ class ResPartner(models.Model):
         """Compute overall membership state"""
         for partner in self:
             active_subs = partner.membership_subscription_ids.filtered(
-                lambda s: s.state in ['open', 'active']
+                lambda s: s.state in ['trial', 'active']
             )
             
             if active_subs:
-                partner.membership_state = 'active'
+                # If any trial, show trial, else show active
+                if any(s.state == 'trial' for s in active_subs):
+                    partner.membership_state = 'trial'
+                else:
+                    partner.membership_state = 'active'
             else:
                 # Check for other states
-                pending = partner.membership_subscription_ids.filtered(
-                    lambda s: s.state == 'pending'
+                suspended = partner.membership_subscription_ids.filtered(
+                    lambda s: s.state == 'suspended'
                 )
-                if pending:
-                    partner.membership_state = 'pending'
+                if suspended:
+                    partner.membership_state = 'suspended'
                 else:
                     expired = partner.membership_subscription_ids.filtered(
-                        lambda s: s.state == 'close'
+                        lambda s: s.state == 'expired'
                     )
                     cancelled = partner.membership_subscription_ids.filtered(
-                        lambda s: s.state == 'cancel'
+                        lambda s: s.state == 'cancelled'
                     )
                     
                     if expired:
@@ -309,8 +421,8 @@ class ResPartner(models.Model):
         for partner in self:
             # Get primary (non-chapter) active memberships
             primary = partner.membership_subscription_ids.filtered(
-                lambda s: s.state in ['open', 'active'] and 
-                         s.product_id.subscription_product_type == 'membership'
+                lambda s: s.state in ['trial', 'active'] and 
+                         s.plan_id.product_template_id.subscription_product_type == 'membership'
             ).sorted(lambda s: s.date_start, reverse=True)
             
             partner.primary_membership_id = primary[:1] if primary else False
@@ -322,9 +434,15 @@ class ResPartner(models.Model):
             partner.membership_count = len(partner.membership_subscription_ids)
             partner.active_membership_count = len(
                 partner.membership_subscription_ids.filtered(
-                    lambda s: s.state in ['open', 'active']
+                    lambda s: s.state in ['trial', 'active']
                 )
             )
+    
+    @api.depends('primary_membership_id')
+    def _compute_current_membership(self):
+        """Set current membership (alias for primary)"""
+        for partner in self:
+            partner.current_membership_id = partner.primary_membership_id
 
     @api.depends('primary_membership_id', 'primary_membership_id.membership_category_id')
     def _compute_membership_category(self):
@@ -334,7 +452,7 @@ class ResPartner(models.Model):
                 # Get category from subscription or product default
                 partner.membership_category_id = (
                     partner.primary_membership_id.membership_category_id or
-                    partner.primary_membership_id.product_id.default_member_category_id
+                    partner.primary_membership_id.plan_id.product_template_id.default_member_category_id
                 )
             else:
                 partner.membership_category_id = False
@@ -347,6 +465,7 @@ class ResPartner(models.Model):
             partner.is_organizational_member = (cat_type == 'organizational')
             partner.is_student_member = (cat_type == 'student')
             partner.is_honorary_member = (cat_type == 'honorary')
+            partner.is_retired_member = (cat_type == 'retired')
 
     @api.depends('primary_membership_id', 'primary_membership_id.date_start',
                  'primary_membership_id.date_end')
@@ -376,50 +495,53 @@ class ResPartner(models.Model):
         """Check if renewal is due"""
         today = fields.Date.today()
         for partner in self:
-            if partner.membership_state == 'active' and partner.membership_end_date:
+            if partner.membership_state in ['active', 'trial'] and partner.membership_end_date:
                 days_until = (partner.membership_end_date - today).days
                 partner.membership_renewal_due = days_until <= 90
             else:
                 partner.membership_renewal_due = False
 
-    @api.depends('membership_subscription_ids', 'membership_subscription_ids.product_id.portal_access_level')
+    @api.depends('membership_subscription_ids', 
+                 'membership_subscription_ids.plan_id.product_template_id.portal_access_level')
     def _compute_portal_access(self):
         """Compute portal access level (highest among active subscriptions)"""
         levels = ['none', 'basic', 'standard', 'premium', 'admin']
         
         for partner in self:
             active_subs = partner.membership_subscription_ids.filtered(
-                lambda s: s.state in ['open', 'active']
+                lambda s: s.state in ['trial', 'active']
             )
             
             if not active_subs:
                 partner.portal_access_level = 'none'
                 partner.has_portal_access = False
             else:
-                access_levels = active_subs.mapped('product_id.portal_access_level')
+                access_levels = active_subs.mapped('plan_id.product_template_id.portal_access_level')
                 # Get highest level
                 max_level = max(access_levels, key=lambda x: levels.index(x) if x in levels else 0)
                 partner.portal_access_level = max_level
                 partner.has_portal_access = max_level != 'none'
 
-    @api.depends('membership_subscription_ids', 'membership_subscription_ids.product_id.feature_ids')
+    @api.depends('membership_subscription_ids', 
+                 'membership_subscription_ids.plan_id.product_template_id.feature_ids')
     def _compute_available_features(self):
         """Get all features from active subscriptions"""
         for partner in self:
             active_subs = partner.membership_subscription_ids.filtered(
-                lambda s: s.state in ['open', 'active']
+                lambda s: s.state in ['trial', 'active']
             )
-            features = active_subs.mapped('product_id.feature_ids')
+            features = active_subs.mapped('plan_id.product_template_id.feature_ids')
             partner.available_features = features
 
-    @api.depends('membership_subscription_ids', 'membership_subscription_ids.product_id.benefit_ids')
+    @api.depends('membership_subscription_ids', 
+                 'membership_subscription_ids.plan_id.product_template_id.benefit_ids')
     def _compute_available_benefits(self):
         """Get all benefits from active subscriptions"""
         for partner in self:
             active_subs = partner.membership_subscription_ids.filtered(
-                lambda s: s.state in ['open', 'active']
+                lambda s: s.state in ['trial', 'active']
             )
-            benefits = active_subs.mapped('product_id.benefit_ids')
+            benefits = active_subs.mapped('plan_id.product_template_id.benefit_ids')
             partner.available_benefits = benefits
 
     @api.depends('chapter_membership_ids')
@@ -428,9 +550,62 @@ class ResPartner(models.Model):
         for partner in self:
             partner.chapter_count = len(
                 partner.chapter_membership_ids.filtered(
-                    lambda s: s.state in ['open', 'active']
+                    lambda s: s.state in ['trial', 'active']
                 )
             )
+
+    @api.depends('is_seat_member', 'parent_organization_id')
+    def _compute_organizational_flags(self):
+        """Compute organizational membership flags"""
+        for partner in self:
+            partner.has_organizational_seat = bool(partner.is_seat_member and partner.parent_organization_id)
+            partner.has_organizational_features = partner.is_organizational_member or partner.has_organizational_seat
+
+    @api.depends('membership_subscription_ids',
+                 'membership_subscription_ids.plan_id.product_template_id')
+    def _compute_professional_flags(self):
+        """Compute professional feature flags"""
+        for partner in self:
+            active_subs = partner.membership_subscription_ids.filtered(
+                lambda s: s.state in ['trial', 'active']
+            )
+            products = active_subs.mapped('plan_id.product_template_id')
+            
+            partner.has_credentials = any(p.enables_credentials for p in products)
+            partner.has_ce_records = any(p.enables_ce_tracking for p in products)
+            partner.has_professional_features = partner.has_credentials or partner.has_ce_records
+            partner.has_professional_profile = partner.has_professional_features
+
+    @api.depends('membership_subscription_ids', 'membership_subscription_ids.last_invoice_date')
+    def _compute_engagement_metrics(self):
+        """Calculate engagement metrics"""
+        for partner in self:
+            if partner.membership_subscription_ids:
+                # Get last activity date
+                last_dates = partner.membership_subscription_ids.filtered(
+                    lambda s: s.last_invoice_date
+                ).mapped('last_invoice_date')
+                partner.last_membership_activity = max(last_dates) if last_dates else False
+                
+                # Simple engagement score based on active memberships and recency
+                score = 0
+                if partner.active_membership_count > 0:
+                    score += 40
+                if partner.chapter_count > 0:
+                    score += 20
+                if partner.last_membership_activity:
+                    days_since = (fields.Date.today() - partner.last_membership_activity).days
+                    if days_since < 30:
+                        score += 40
+                    elif days_since < 90:
+                        score += 20
+                    elif days_since < 180:
+                        score += 10
+                
+                partner.engagement_score = min(score, 100)
+            else:
+                partner.last_membership_activity = False
+                partner.engagement_score = 0
 
     def _compute_financial_summary(self):
         """Calculate financial metrics"""
@@ -440,15 +615,15 @@ class ResPartner(models.Model):
                 ('partner_id', '=', partner.id),
                 ('move_type', '=', 'out_invoice'),
                 ('state', '=', 'posted'),
-                ('invoice_line_ids.subscription_id', 'in', partner.membership_subscription_ids.ids)
+                ('subscription_id', 'in', partner.membership_subscription_ids.ids)
             ])
             partner.total_membership_fees = sum(invoices.mapped('amount_total'))
             
             # Current active membership value
             active_subs = partner.membership_subscription_ids.filtered(
-                lambda s: s.state in ['open', 'active']
+                lambda s: s.state in ['trial', 'active']
             )
-            partner.current_membership_value = sum(active_subs.mapped('recurring_total'))
+            partner.current_membership_value = sum(active_subs.mapped('price'))
 
     # ==========================================
     # BUSINESS METHODS
@@ -461,7 +636,7 @@ class ResPartner(models.Model):
             'type': 'ir.actions.act_window',
             'name': _('Memberships'),
             'res_model': 'subscription.subscription',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('id', 'in', self.membership_subscription_ids.ids)],
             'context': {'default_partner_id': self.id}
         }
@@ -473,7 +648,7 @@ class ResPartner(models.Model):
             'type': 'ir.actions.act_window',
             'name': _('Subscriptions'),
             'res_model': 'subscription.subscription',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('partner_id', '=', self.id)],
             'context': {'default_partner_id': self.id}
         }
@@ -484,10 +659,14 @@ class ResPartner(models.Model):
         return {
             'type': 'ir.actions.act_window',
             'name': _('Create Membership'),
-            'res_model': 'membership.wizard',
+            'res_model': 'subscription.subscription',
             'view_mode': 'form',
             'target': 'new',
-            'context': {'default_partner_id': self.id}
+            'context': {
+                'default_partner_id': self.id,
+                'default_partner_invoice_id': self.id,
+                'default_partner_shipping_id': self.id,
+            }
         }
 
     def action_renew_membership(self):

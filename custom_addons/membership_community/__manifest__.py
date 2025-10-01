@@ -3,91 +3,80 @@
     'name': 'Membership Community',
     'version': '18.0.1.0.0',
     'category': 'Membership',
-    'summary': 'Association membership management extending subscriptions',
-    'description': '''
-Membership Community - Association Management
-============================================
+    'summary': 'Association Management System - Membership & Community Features',
+    'description': """
+Membership Community Module
+===========================
 
-Extends subscription_management with association-specific features:
+Complete Association Management System (AMS) for managing memberships, 
+member categories, benefits, and features.
 
-Core Features:
-* Member Categories (Individual, Student, Corporate, Honorary, etc.)
-* Membership Benefits (discounts, access, publications)
-* Membership Features (portal access, credentials, CE tracking)
-* Eligibility Requirements & Verification
-* Chapter Memberships
+Key Features:
+------------
+* Individual and Organizational Memberships
+* Chapter/Section Memberships with Primary Membership Requirements
+* Member Categories with Eligibility Requirements
+* Membership Benefits Management
+* Membership Features and Access Control
+* Portal Access Levels
+* Professional Features (Credentials, CE Tracking, Designations)
+* Organizational Seats Management
 * Member Directory
-* Professional Integration hooks
+* Membership Approval Workflows
+* Eligibility Verification
+* Upgrade/Downgrade Paths
+* Financial Tracking
 
-Leverages subscription_management for:
-* Recurring billing and invoicing
-* Subscription lifecycle management
-* Renewal and upgrade/downgrade logic
-* Seat management for organizational memberships
-* Pricing tiers and prorating
-* Calendar vs Anniversary periods
+Integration:
+-----------
+* Extends subscription_management module for billing and renewals
+* Integrates with Odoo contacts and invoicing
+* Portal integration for member self-service
 
-Perfect for:
-* Professional Associations
-* Trade Organizations
-* Non-profit Membership Organizations
-* Clubs and Societies
-    ''',
+    """,
     'author': 'Your Company',
     'website': 'https://www.yourcompany.com',
     'license': 'LGPL-3',
-    
     'depends': [
-        'subscription_management',  # Core dependency - provides billing & lifecycle
-        'portal',                   # Member portal access
-        'mail',                     # Messaging and activity tracking
+        'base',
+        'mail',
+        'product',
+        'account',
+        'subscription_management',
     ],
-    
     'data': [
         # Security
         'security/membership_security.xml',
         'security/ir.model.access.csv',
         
-        # Data - load in order
-        'data/membership_category_data.xml',
-        'data/membership_feature_data.xml',
-        'data/membership_benefit_data.xml',
+        # Data
+        'data/membership_data.xml',
         
-        # Views - Master Data
+        # Views - Order matters for dependencies
         'views/membership_category_views.xml',
-        'views/membership_benefit_views.xml',
         'views/membership_feature_views.xml',
-        
-        # Views - Extensions
+        'views/membership_benefit_views.xml',
         'views/product_template_views.xml',
-        'views/res_partner_views.xml',
         'views/subscription_views.xml',
+        'views/res_partner_views.xml',
+        'views/menu_views.xml',
         
         # Wizards
-        'wizards/membership_wizard_views.xml',
-        'wizards/category_change_wizard_views.xml',
+        # 'wizard/membership_wizard_views.xml',
+        # 'wizard/membership_rejection_wizard_views.xml',
         
-        # Menus
-        'views/menu_views.xml',
+        # Reports
+        # 'reports/membership_reports.xml',
     ],
-    
     'demo': [
-        'demo/membership_demo.xml',
+        # 'demo/membership_demo.xml',
     ],
-    
-    'assets': {
-        'web.assets_backend': [
-            'membership_community/static/src/css/membership.css',
-        ],
-    },
-    
     'images': [
         'static/description/banner.png',
         'static/description/icon.png',
     ],
-    
     'installable': True,
-    'auto_install': False,
     'application': True,
-    'sequence': 15,
+    'auto_install': False,
+    'post_init_hook': 'post_init_hook',
 }

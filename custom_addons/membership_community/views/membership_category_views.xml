@@ -6,12 +6,12 @@
         <!-- MEMBERSHIP CATEGORY VIEWS -->
         <!-- ========================================== -->
 
-        <!-- Tree View -->
+        <!-- List View -->
         <record id="view_membership_category_tree" model="ir.ui.view">
-            <field name="name">membership.category.tree</field>
+            <field name="name">membership.category.list</field>
             <field name="model">membership.category</field>
             <field name="arch" type="xml">
-                <tree string="Member Categories">
+                <list string="Member Categories">
                     <field name="sequence" widget="handle"/>
                     <field name="name"/>
                     <field name="code"/>
@@ -21,7 +21,7 @@
                     <field name="member_count"/>
                     <field name="typical_discount_percent" optional="show"/>
                     <field name="active"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -38,9 +38,9 @@
                             </button>
                         </div>
 
-                        <widget name="web_ribbon" title="Archived" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
+                        <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
 
-                        <field name="color" widget="color_picker" class="float-right"/>
+                        <field name="color" widget="color_picker" class="float-end"/>
 
                         <div class="oe_title">
                             <label for="name" class="oe_edit_only"/>
@@ -96,45 +96,45 @@
 
                                 <group name="sponsorship" string="Sponsorship">
                                     <field name="requires_sponsorship"/>
-                                    <field name="min_sponsors_required" attrs="{'invisible': [('requires_sponsorship', '=', False)]}"/>
+                                    <field name="min_sponsors_required" invisible="not requires_sponsorship"/>
                                 </group>
 
                                 <separator string="Eligibility Requirements"/>
                                 <field name="eligibility_requirements" placeholder="Describe who is eligible for this category..."/>
 
-                                <separator string="Required Documents" attrs="{'invisible': [('requires_verification', '=', False)]}"/>
-                                <field name="verification_documents" placeholder="List documents required for verification..." attrs="{'invisible': [('requires_verification', '=', False)]}"/>
+                                <separator string="Required Documents" invisible="not requires_verification"/>
+                                <field name="verification_documents" placeholder="List documents required for verification..." invisible="not requires_verification"/>
                             </page>
 
-                            <page name="professional" string="Professional Requirements" attrs="{'invisible': [('is_student_category', '=', True)]}">
+                            <page name="professional" string="Professional Requirements" invisible="is_student_category">
                                 <group>
                                     <group name="education" string="Education">
                                         <field name="requires_degree"/>
-                                        <field name="required_degree_level" attrs="{'invisible': [('requires_degree', '=', False)]}"/>
+                                        <field name="required_degree_level" invisible="not requires_degree"/>
                                     </group>
                                     <group name="license" string="Licensing">
                                         <field name="requires_license"/>
-                                        <field name="required_license_types" attrs="{'invisible': [('requires_license', '=', False)]}"/>
+                                        <field name="required_license_types" invisible="not requires_license"/>
                                     </group>
                                 </group>
                                 <group>
                                     <group name="experience" string="Experience">
                                         <field name="requires_experience"/>
-                                        <field name="min_years_experience" attrs="{'invisible': [('requires_experience', '=', False)]}"/>
+                                        <field name="min_years_experience" invisible="not requires_experience"/>
                                     </group>
                                 </group>
                             </page>
 
-                            <page name="student" string="Student Settings" attrs="{'invisible': [('is_student_category', '=', False)]}">
+                            <page name="student" string="Student Settings" invisible="not is_student_category">
                                 <group>
                                     <group name="enrollment" string="Enrollment Verification">
                                         <field name="requires_enrollment_verification"/>
-                                        <field name="enrollment_verification_frequency" attrs="{'invisible': [('requires_enrollment_verification', '=', False)]}"/>
+                                        <field name="enrollment_verification_frequency" invisible="not requires_enrollment_verification"/>
                                     </group>
                                 </group>
                             </page>
 
-                            <page name="organizational" string="Organizational Settings" attrs="{'invisible': [('is_organizational', '=', False)]}">
+                            <page name="organizational" string="Organizational Settings" invisible="not is_organizational">
                                 <group>
                                     <group name="org_requirements" string="Requirements">
                                         <field name="requires_ein"/>
@@ -151,7 +151,7 @@
                                     </group>
                                     <group name="auto_transition" string="Auto-Transition">
                                         <field name="auto_transition_age"/>
-                                        <field name="auto_transition_category_id" attrs="{'invisible': [('auto_transition_age', '=', 0)]}"/>
+                                        <field name="auto_transition_category_id" invisible="auto_transition_age == 0"/>
                                     </group>
                                 </group>
                             </page>
@@ -160,8 +160,8 @@
                                 <group>
                                     <group name="limits" string="Term Restrictions">
                                         <field name="has_term_limit"/>
-                                        <field name="max_term_years" attrs="{'invisible': [('has_term_limit', '=', False)]}"/>
-                                        <field name="max_consecutive_terms" attrs="{'invisible': [('has_term_limit', '=', False)]}"/>
+                                        <field name="max_term_years" invisible="not has_term_limit"/>
+                                        <field name="max_consecutive_terms" invisible="not has_term_limit"/>
                                     </group>
                                 </group>
                             </page>
@@ -183,11 +183,11 @@
                                 </group>
                                 <separator string="Allowed Products"/>
                                 <field name="allowed_product_ids" nolabel="1" domain="[('is_membership_product', '=', True)]">
-                                    <tree>
+                                    <list>
                                         <field name="name"/>
                                         <field name="list_price"/>
                                         <field name="subscription_product_type"/>
-                                    </tree>
+                                    </list>
                                 </field>
                             </page>
 
@@ -201,6 +201,9 @@
                             </page>
                         </notebook>
                     </sheet>
+                    <div class="oe_chatter">
+                        <chatter/>
+                    </div>
                 </form>
             </field>
         </record>
@@ -282,7 +285,7 @@
         <record id="action_membership_category" model="ir.actions.act_window">
             <field name="name">Member Categories</field>
             <field name="res_model">membership.category</field>
-            <field name="view_mode">tree,kanban,form</field>
+            <field name="view_mode">list,kanban,form</field>
             <field name="search_view_id" ref="view_membership_category_search"/>
             <field name="context">{'search_default_active': 1}</field>
             <field name="help" type="html">

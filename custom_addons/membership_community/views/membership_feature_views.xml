@@ -6,23 +6,23 @@
         <!-- MEMBERSHIP FEATURE VIEWS -->
         <!-- ========================================== -->
 
-        <!-- Tree View -->
+        <!-- List View -->
         <record id="view_membership_feature_tree" model="ir.ui.view">
-            <field name="name">membership.feature.tree</field>
+            <field name="name">membership.feature.list</field>
             <field name="model">membership.feature</field>
             <field name="arch" type="xml">
-                <tree string="Membership Features">
+                <list string="Membership Features">
                     <field name="sequence" widget="handle"/>
                     <field name="name"/>
                     <field name="code"/>
                     <field name="category"/>
                     <field name="feature_type"/>
                     <field name="is_premium_feature"/>
-                    <field name="module_installed" invisible="1"/>
+                    <field name="module_installed" column_invisible="1"/>
                     <field name="is_currently_valid"/>
                     <field name="product_count"/>
                     <field name="active"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -37,21 +37,18 @@
                             <button name="action_view_products" type="object" class="oe_stat_button" icon="fa-cube">
                                 <field name="product_count" widget="statinfo" string="Products"/>
                             </button>
-                            <button name="action_track_usage" type="object" class="oe_stat_button" icon="fa-chart-line" attrs="{'invisible': [('track_usage', '=', False)]}">
-                                <field name="usage_count" widget="statinfo" string="Usage"/>
-                            </button>
                         </div>
 
-                        <widget name="web_ribbon" title="Archived" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
-                        <widget name="web_ribbon" title="Premium" bg_color="bg-success" attrs="{'invisible': [('is_premium_feature', '=', False)]}"/>
-                        <widget name="web_ribbon" title="Module Required" bg_color="bg-warning" attrs="{'invisible': ['|', ('requires_module', '=', False), ('module_installed', '=', True)]}"/>
+                        <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                        <widget name="web_ribbon" title="Premium" bg_color="text-bg-success" invisible="not is_premium_feature"/>
+                        <widget name="web_ribbon" title="Module Required" bg_color="text-bg-warning" invisible="not requires_module or module_installed"/>
 
-                        <field name="color" widget="color_picker" class="float-right"/>
+                        <field name="color" widget="color_picker" class="float-end"/>
 
                         <div class="oe_title">
                             <label for="name" class="oe_edit_only"/>
                             <h1>
-                                <field name="name" placeholder="e.g. Event Registration Discount"/>
+                                <field name="name" placeholder="e.g. Portal Access"/>
                             </h1>
                         </div>
 
@@ -79,72 +76,29 @@
                                 <group>
                                     <group name="default_value" string="Default Value">
                                         <field name="default_value"/>
-                                        <field name="value_uom" attrs="{'invisible': [('feature_type', 'not in', ['quantity'])]}"/>
+                                        <field name="value_uom" invisible="feature_type != 'quantity'"/>
                                     </group>
-                                    <group name="value_range" string="Value Range" attrs="{'invisible': [('feature_type', 'not in', ['quantity', 'percentage', 'amount'])]}">
+                                    <group name="value_range" string="Value Range" invisible="feature_type not in ['quantity', 'percentage']">
                                         <field name="min_value"/>
                                         <field name="max_value"/>
                                     </group>
                                 </group>
                             </page>
 
-                            <page name="discounts" string="Discount Configuration" attrs="{'invisible': [('category', '!=', 'discount')]}">
-                                <group>
-                                    <group name="discount_settings" string="Discount Settings">
-                                        <field name="discount_type"/>
-                                        <field name="applies_to"/>
-                                    </group>
-                                    <group name="discount_values" string="Discount Values">
-                                        <field name="discount_percentage" attrs="{'invisible': [('discount_type', '!=', 'percentage')]}"/>
-                                        <field name="discount_amount" widget="monetary" attrs="{'invisible': [('discount_type', '!=', 'fixed')]}"/>
-                                        <field name="currency_id" invisible="1"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="access" string="Access Configuration" attrs="{'invisible': [('category', '!=', 'access')]}">
+                            <page name="access" string="Access Configuration" invisible="category != 'access'">
                                 <group>
                                     <group name="portal" string="Portal Access">
                                         <field name="grants_portal_access"/>
-                                        <field name="portal_access_level" attrs="{'invisible': [('grants_portal_access', '=', False)]}"/>
+                                        <field name="portal_access_level" invisible="not grants_portal_access"/>
                                     </group>
                                     <group name="directory" string="Directory">
                                         <field name="grants_directory_listing"/>
-                                        <field name="directory_visibility" attrs="{'invisible': [('grants_directory_listing', '=', False)]}"/>
+                                        <field name="directory_visibility" invisible="not grants_directory_listing"/>
                                     </group>
                                 </group>
                             </page>
 
-                            <page name="publications" string="Publication Configuration" attrs="{'invisible': [('category', '!=', 'publication')]}">
-                                <group>
-                                    <group name="pub_access" string="Access Type">
-                                        <field name="publication_access_type"/>
-                                        <field name="download_limit"/>
-                                        <field name="archive_access_years"/>
-                                    </group>
-                                </group>
-                                <separator string="Included Publications"/>
-                                <field name="publication_ids" nolabel="1">
-                                    <tree>
-                                        <field name="name"/>
-                                        <field name="subscription_product_type"/>
-                                        <field name="list_price"/>
-                                    </tree>
-                                </field>
-                            </page>
-
-                            <page name="events" string="Event Configuration" attrs="{'invisible': [('category', '!=', 'event')]}">
-                                <group>
-                                    <group name="event_benefits" string="Event Benefits">
-                                        <field name="event_registration_benefit"/>
-                                        <field name="free_event_count" attrs="{'invisible': [('event_registration_benefit', '!=', 'free')]}"/>
-                                        <field name="event_discount_percentage" attrs="{'invisible': [('event_registration_benefit', '!=', 'discount')]}"/>
-                                        <field name="early_registration_days" attrs="{'invisible': [('event_registration_benefit', '!=', 'priority')]}"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="professional" string="Professional Configuration" attrs="{'invisible': [('category', '!=', 'professional')]}">
+                            <page name="professional" string="Professional Configuration" invisible="category != 'professional'">
                                 <group>
                                     <group name="prof_features" string="Professional Features">
                                         <field name="enables_credential_tracking"/>
@@ -152,20 +106,16 @@
                                         <field name="ce_credit_reporting"/>
                                         <field name="enables_designation_application"/>
                                     </group>
-                                    <group name="prof_discounts" string="Discounts">
-                                        <field name="certification_discount"/>
-                                    </group>
                                 </group>
                             </page>
 
-                            <page name="networking" string="Networking Configuration" attrs="{'invisible': [('category', '!=', 'networking')]}">
+                            <page name="networking" string="Networking Configuration" invisible="category != 'networking'">
                                 <group>
                                     <group name="network_features" string="Networking Features">
                                         <field name="enables_member_directory"/>
                                         <field name="enables_messaging"/>
                                         <field name="enables_mentorship"/>
                                         <field name="enables_job_board"/>
-                                        <field name="networking_event_access"/>
                                     </group>
                                 </group>
                             </page>
@@ -174,13 +124,13 @@
                                 <group>
                                     <group name="usage_limits" string="Usage Limits">
                                         <field name="has_usage_limit"/>
-                                        <field name="usage_limit" attrs="{'invisible': [('has_usage_limit', '=', False)]}"/>
-                                        <field name="usage_period" attrs="{'invisible': [('has_usage_limit', '=', False)]}"/>
+                                        <field name="usage_limit" invisible="not has_usage_limit"/>
+                                        <field name="usage_period" invisible="not has_usage_limit"/>
                                     </group>
                                     <group name="tracking" string="Tracking">
                                         <field name="is_trackable"/>
-                                        <field name="usage_count" readonly="1" attrs="{'invisible': [('is_trackable', '=', False)]}"/>
-                                        <field name="active_users_count" readonly="1" attrs="{'invisible': [('is_trackable', '=', False)]}"/>
+                                        <field name="usage_count" readonly="1" invisible="not is_trackable"/>
+                                        <field name="active_users_count" readonly="1" invisible="not is_trackable"/>
                                     </group>
                                 </group>
                             </page>
@@ -194,9 +144,19 @@
                                     </group>
                                     <group name="seasonal" string="Seasonal Availability">
                                         <field name="seasonal"/>
-                                        <field name="available_months" attrs="{'invisible': [('seasonal', '=', False)]}"/>
+                                        <field name="available_months" invisible="not seasonal"/>
                                     </group>
                                 </group>
+                            </page>
+
+                            <page name="terms" string="Terms &amp; Conditions">
+                                <group>
+                                    <group name="terms_settings" string="Terms Settings">
+                                        <field name="requires_acceptance"/>
+                                    </group>
+                                </group>
+                                <separator string="Terms &amp; Conditions" invisible="not requires_acceptance"/>
+                                <field name="terms_and_conditions" invisible="not requires_acceptance"/>
                             </page>
 
                             <page name="integration" string="Module Integration">
@@ -212,12 +172,12 @@
 
                             <page name="products" string="Associated Products">
                                 <field name="product_ids" nolabel="1">
-                                    <tree>
+                                    <list>
                                         <field name="name"/>
                                         <field name="subscription_product_type"/>
                                         <field name="list_price"/>
                                         <field name="is_membership_product"/>
-                                    </tree>
+                                    </list>
                                 </field>
                             </page>
                         </notebook>
@@ -245,12 +205,14 @@
                     
                     <separator/>
                     <filter string="Access" name="access" domain="[('category', '=', 'access')]"/>
-                    <filter string="Discounts" name="discounts" domain="[('category', '=', 'discount')]"/>
-                    <filter string="Publications" name="publications" domain="[('category', '=', 'publication')]"/>
+                    <filter string="Portal" name="portal" domain="[('category', '=', 'portal')]"/>
+                    <filter string="Directory" name="directory" domain="[('category', '=', 'directory')]"/>
                     <filter string="Events" name="events" domain="[('category', '=', 'event')]"/>
                     <filter string="Professional" name="professional" domain="[('category', '=', 'professional')]"/>
                     <filter string="Networking" name="networking" domain="[('category', '=', 'networking')]"/>
                     <filter string="Education" name="education" domain="[('category', '=', 'education')]"/>
+                    <filter string="Certification" name="certification" domain="[('category', '=', 'certification')]"/>
+                    <filter string="Publications" name="publications" domain="[('category', '=', 'publication')]"/>
                     
                     <separator/>
                     <filter string="Module Installed" name="module_ok" domain="[('module_installed', '=', True)]"/>
@@ -292,8 +254,8 @@
                                             <field name="code"/>
                                         </span>
                                     </div>
-                                    <span class="float-right" t-if="record.is_premium_feature.raw_value">
-                                        <span class="badge badge-success">Premium</span>
+                                    <span class="float-end" t-if="record.is_premium_feature.raw_value">
+                                        <span class="badge text-bg-success">Premium</span>
                                     </span>
                                 </div>
                                 <div class="o_kanban_record_body">
@@ -317,7 +279,7 @@
         <record id="action_membership_feature" model="ir.actions.act_window">
             <field name="name">Membership Features</field>
             <field name="res_model">membership.feature</field>
-            <field name="view_mode">tree,kanban,form</field>
+            <field name="view_mode">list,kanban,form</field>
             <field name="search_view_id" ref="view_membership_feature_search"/>
             <field name="context">{'search_default_active': 1}</field>
             <field name="help" type="html">

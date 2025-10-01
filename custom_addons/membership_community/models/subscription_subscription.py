@@ -19,6 +19,26 @@ class SubscriptionSubscription(models.Model):
     )
     
     # ==========================================
+    # PRODUCT HELPER FIELDS
+    # Quick access to product fields
+    # ==========================================
+    
+    product_id = fields.Many2one(
+        'product.template',
+        string='Product',
+        related='plan_id.product_template_id',
+        store=True,
+        help='Product template from subscription plan'
+    )
+    
+    subscription_product_type = fields.Selection(
+        related='plan_id.product_template_id.subscription_product_type',
+        string='Subscription Type',
+        store=True,
+        help='Type of subscription/membership'
+    )
+    
+    # ==========================================
     # ELIGIBILITY TRACKING
     # ==========================================
     
@@ -40,13 +60,20 @@ class SubscriptionSubscription(models.Model):
         help='Date when eligibility was verified'
     )
     
+    requires_verification = fields.Boolean(
+        string='Requires Verification',
+        related='plan_id.product_template_id.requires_eligibility_verification',
+        store=True,
+        help='This membership requires eligibility verification'
+    )
+    
     # ==========================================
     # CHAPTER-SPECIFIC FIELDS
     # ==========================================
     
     requires_primary_membership = fields.Boolean(
         string='Requires Primary Membership',
-        related='product_id.requires_primary_membership',
+        related='plan_id.product_template_id.requires_primary_membership',
         store=True,
         help='This chapter membership requires an active primary membership'
     )
@@ -71,7 +98,7 @@ class SubscriptionSubscription(models.Model):
     
     requires_approval = fields.Boolean(
         string='Requires Approval',
-        related='product_id.requires_approval',
+        related='plan_id.product_template_id.requires_approval',
         store=True,
         help='This membership requires staff approval'
     )
@@ -134,18 +161,25 @@ class SubscriptionSubscription(models.Model):
     # COMPUTE METHODS
     # ==========================================
 
-    @api.depends('partner_id', 'product_id.primary_membership_product_ids', 'state')
+    @api.depends('partner_id', 'plan_id.product_template_id.primary_membership_product_ids', 'state')
     def _compute_primary_membership_valid(self):
         """Check if partner has valid primary membership (for chapters)"""
         for subscription in self:
             if not subscription.requires_primary_membership:
                 subscription.primary_membership_valid = True
             else:
+                # Get primary membership products
+                primary_products = subscription.plan_id.product_template_id.primary_membership_product_ids
+                
+                if not primary_products:
+                    subscription.primary_membership_valid = False
+                    continue
+                
                 # Check if partner has active primary membership
                 valid = bool(
                     subscription.partner_id.membership_subscription_ids.filtered(
-                        lambda s: s.state in ['open', 'active'] and
-                                 s.product_id in subscription.product_id.primary_membership_product_ids and
+                        lambda s: s.state in ['trial', 'active'] and
+                                 s.plan_id.product_template_id in primary_products and
                                  s.id != subscription.id  # Don't count self
                     )
                 )
@@ -155,11 +189,11 @@ class SubscriptionSubscription(models.Model):
     def _compute_primary_memberships(self):
         """Get partner's primary memberships"""
         for subscription in self:
-            if subscription.product_id.subscription_product_type == 'chapter':
+            if subscription.subscription_product_type == 'chapter':
                 # Get primary memberships for this partner
                 primaries = subscription.partner_id.membership_subscription_ids.filtered(
-                    lambda s: s.state in ['open', 'active'] and
-                             s.product_id.subscription_product_type == 'membership'
+                    lambda s: s.state in ['trial', 'active'] and
+                             s.subscription_product_type == 'membership'
                 )
                 subscription.primary_membership_ids = primaries
             else:
@@ -169,42 +203,45 @@ class SubscriptionSubscription(models.Model):
     # CRUD OVERRIDES
     # ==========================================
 
-    @api.model
-    def create(self, vals):
+    @api.model_create_multi
+    def create(self, vals_list):
         """Override create to set membership-specific defaults"""
         
-        # Set join_date if not provided
-        if vals.get('product_id'):
-            product = self.env['product.template'].browse(vals['product_id'])
-            if product.is_membership_product and 'join_date' not in vals:
-                vals['join_date'] = vals.get('date_start', fields.Date.today())
+        for vals in vals_list:
+            # Get plan to check if it's a membership product
+            plan_id = vals.get('plan_id')
+            if plan_id:
+                plan = self.env['subscription.plan'].browse(plan_id)
+                product = plan.product_template_id
+                
+                if product.is_membership_product:
+                    # Set join_date if not provided
+                    if 'join_date' not in vals:
+                        vals['join_date'] = vals.get('date_start', fields.Date.today())
+                    
+                    # Set default category from product if not provided
+                    if 'membership_category_id' not in vals and product.default_member_category_id:
+                        vals['membership_category_id'] = product.default_member_category_id.id
+                    
+                    # Set approval status for memberships requiring approval
+                    if product.requires_approval and 'approval_status' not in vals:
+                        vals['approval_status'] = 'pending'
+                        # Set state to draft if requires approval
+                        if 'state' not in vals:
+                            vals['state'] = 'draft'
         
-        # Set default category from product if not provided
-        if vals.get('product_id') and 'membership_category_id' not in vals:
-            product = self.env['product.template'].browse(vals['product_id'])
-            if product.default_member_category_id:
-                vals['membership_category_id'] = product.default_member_category_id.id
-        
-        # Set approval status for memberships requiring approval
-        if vals.get('product_id'):
-            product = self.env['product.template'].browse(vals['product_id'])
-            if product.requires_approval and 'approval_status' not in vals:
-                vals['approval_status'] = 'pending'
-                # Set state to pending if requires approval
-                if 'state' not in vals:
-                    vals['state'] = 'pending'
-        
-        subscription = super(SubscriptionSubscription, self).create(vals)
+        subscriptions = super(SubscriptionSubscription, self).create(vals_list)
         
         # Auto-verify eligibility if not required
-        if subscription.product_id.is_membership_product:
-            if not subscription.product_id.requires_eligibility_verification:
-                subscription.write({
-                    'eligibility_verified': True,
-                    'eligibility_verified_date': fields.Date.today(),
-                })
+        for subscription in subscriptions:
+            if subscription.plan_id.product_template_id.is_membership_product:
+                if not subscription.requires_verification:
+                    subscription.write({
+                        'eligibility_verified': True,
+                        'eligibility_verified_date': fields.Date.today(),
+                    })
         
-        return subscription
+        return subscriptions
 
     def write(self, vals):
         """Override write to handle approval status changes"""
@@ -215,7 +252,9 @@ class SubscriptionSubscription(models.Model):
             vals['approval_date'] = fields.Date.today()
             # Activate subscription if it was pending
             if 'state' not in vals:
-                vals['state'] = 'open'
+                for subscription in self:
+                    if subscription.state == 'draft':
+                        vals['state'] = 'trial' if subscription.plan_id.trial_period > 0 else 'active'
         
         return super(SubscriptionSubscription, self).write(vals)
 
@@ -233,7 +272,7 @@ class SubscriptionSubscription(models.Model):
                 'approval_status': 'approved',
                 'approved_by': self.env.user.id,
                 'approval_date': fields.Date.today(),
-                'state': 'open'
+                'state': 'trial' if subscription.plan_id.trial_period > 0 else 'active'
             })
             
             # Send approval notification
@@ -289,13 +328,16 @@ class SubscriptionSubscription(models.Model):
                 }
             }
         else:
+            primary_products = self.plan_id.product_template_id.primary_membership_product_ids
+            product_names = ', '.join(primary_products.mapped('name'))
+            
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
                     'title': _('Invalid'),
                     'message': _('Primary membership requirements are NOT met. '
-                               'Member needs an active primary membership.'),
+                               'Member needs an active primary membership from: %s') % product_names,
                     'type': 'warning',
                     'sticky': True
                 }
@@ -316,7 +358,13 @@ class SubscriptionSubscription(models.Model):
         )
         
         if template:
-            template.send_mail(self.id, force_send=True)
+            try:
+                template.send_mail(self.id, force_send=True)
+            except Exception as e:
+                # Log error but don't fail
+                import logging
+                _logger = logging.getLogger(__name__)
+                _logger.error(f"Failed to send approval email for {self.name}: {e}")
 
     def get_available_benefits(self):
         """
@@ -326,7 +374,7 @@ class SubscriptionSubscription(models.Model):
             recordset: membership.benefit records
         """
         self.ensure_one()
-        return self.product_id.benefit_ids
+        return self.plan_id.product_template_id.benefit_ids
 
     def get_available_features(self):
         """
@@ -336,7 +384,7 @@ class SubscriptionSubscription(models.Model):
             recordset: membership.feature records
         """
         self.ensure_one()
-        return self.product_id.feature_ids
+        return self.plan_id.product_template_id.feature_ids
 
     # ==========================================
     # CONSTRAINTS
@@ -346,14 +394,17 @@ class SubscriptionSubscription(models.Model):
     def _check_primary_membership(self):
         """Validate primary membership requirements"""
         for subscription in self:
-            if subscription.state in ['open', 'active']:
+            if subscription.state in ['trial', 'active']:
                 if subscription.requires_primary_membership:
                     if not subscription.primary_membership_valid:
+                        primary_products = subscription.plan_id.product_template_id.primary_membership_product_ids
+                        product_names = ', '.join(primary_products.mapped('name'))
+                        
                         raise ValidationError(
                             _("Cannot activate chapter membership '%s'. "
                               "Partner must have an active primary membership from: %s") % (
-                                subscription.product_id.name,
-                                ', '.join(subscription.product_id.primary_membership_product_ids.mapped('name'))
+                                subscription.plan_id.name,
+                                product_names
                             )
                         )
 
@@ -361,36 +412,38 @@ class SubscriptionSubscription(models.Model):
     def _check_approval_status(self):
         """Validate approval requirements"""
         for subscription in self:
-            if subscription.state in ['open', 'active']:
+            if subscription.state in ['trial', 'active']:
                 if subscription.requires_approval:
                     if subscription.approval_status != 'approved':
                         raise ValidationError(
                             _("Cannot activate membership '%s'. "
-                              "Membership requires approval.") % subscription.product_id.name
+                              "Membership requires approval.") % subscription.plan_id.name
                         )
 
-    @api.constrains('state', 'eligibility_verified', 'product_id')
+    @api.constrains('state', 'eligibility_verified', 'requires_verification')
     def _check_eligibility_verification(self):
         """Validate eligibility verification"""
         for subscription in self:
-            if subscription.state in ['open', 'active']:
-                if subscription.product_id.requires_eligibility_verification:
+            if subscription.state in ['trial', 'active']:
+                if subscription.requires_verification:
                     if not subscription.eligibility_verified:
                         raise ValidationError(
                             _("Cannot activate membership '%s'. "
-                              "Eligibility must be verified first.") % subscription.product_id.name
+                              "Eligibility must be verified first.") % subscription.plan_id.name
                         )
 
-    @api.constrains('membership_category_id', 'product_id')
+    @api.constrains('membership_category_id', 'plan_id')
     def _check_category_allowed(self):
         """Validate category is allowed for product"""
         for subscription in self:
-            if subscription.membership_category_id and subscription.product_id:
-                allowed = subscription.product_id.allowed_member_categories
+            if subscription.membership_category_id and subscription.plan_id:
+                product = subscription.plan_id.product_template_id
+                allowed = product.allowed_member_categories
+                
                 if allowed and subscription.membership_category_id not in allowed:
                     raise ValidationError(
                         _("Member category '%s' is not allowed for product '%s'.") % (
                             subscription.membership_category_id.name,
-                            subscription.product_id.name
+                            product.name
                         )
                     )

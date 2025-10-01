@@ -17,6 +17,44 @@ class ProductTemplate(models.Model):
         help="Check this if this product represents a membership. "
              "Works with subscription features for billing and renewal."
     )
+    
+    # ==========================================
+    # SUBSCRIPTION PRODUCT TYPE
+    # Categorizes the type of subscription/membership
+    # ==========================================
+    
+    subscription_product_type = fields.Selection([
+        ('membership', 'Individual Membership'),
+        ('organizational_membership', 'Organizational Membership'),
+        ('chapter', 'Chapter Membership'),
+        ('seat', 'Organizational Seat'),
+        ('publication', 'Publication Subscription'),
+        ('other', 'Other Subscription')
+    ], string='Subscription Type',
+       help='Type of subscription or membership this product represents')
+
+    # ==========================================
+    # MEMBERSHIP YEAR CONFIGURATION
+    # ==========================================
+    
+    membership_year_type = fields.Selection([
+        ('rolling', 'Rolling (Anniversary-based)'),
+        ('calendar', 'Calendar Year'),
+        ('fiscal', 'Fiscal Year')
+    ], string='Membership Year Type',
+       default='rolling',
+       help='How membership periods are calculated')
+    
+    calendar_year_start = fields.Date(
+        string='Calendar Year Start',
+        help='Start date for calendar year memberships (e.g., January 1)'
+    )
+    
+    prorate_partial_periods = fields.Boolean(
+        string='Prorate Partial Periods',
+        default=False,
+        help='Prorate membership fees for partial calendar periods'
+    )
 
     # ==========================================
     # MEMBER CATEGORY RESTRICTIONS
@@ -94,6 +132,44 @@ class ProductTemplate(models.Model):
         domain=[('is_membership_product', '=', True), ('subscription_product_type', '=', 'membership')],
         help="Which primary memberships qualify for this chapter"
     )
+    
+    chapter_ids = fields.Many2many(
+        'membership.chapter',
+        'product_chapter_rel',
+        'product_id',
+        'chapter_id',
+        string='Chapters',
+        help="Chapters associated with this membership product"
+    )
+
+    # ==========================================
+    # ORGANIZATIONAL MEMBERSHIP
+    # ==========================================
+    
+    is_organizational_only = fields.Boolean(
+        string='Organizational Members Only',
+        default=False,
+        help="Only organizations can purchase this membership"
+    )
+    
+    supports_seats = fields.Boolean(
+        string='Supports Seats',
+        default=False,
+        help="This organizational membership includes individual seats"
+    )
+    
+    min_seats_required = fields.Integer(
+        string='Minimum Seats',
+        default=1,
+        help="Minimum number of seats required for organizational membership"
+    )
+    
+    seat_product_id = fields.Many2one(
+        'product.template',
+        string='Seat Product',
+        domain=[('subscription_product_type', '=', 'seat')],
+        help="Product used for additional seats in organizational membership"
+    )
 
     # ==========================================
     # PROFESSIONAL FEATURES
@@ -131,6 +207,11 @@ class ProductTemplate(models.Model):
     ], string='Portal Access Level',
        default='standard',
        help="Default portal access level for members with this product")
+    
+    portal_features = fields.Json(
+        string='Portal Features',
+        help='JSON configuration of portal features enabled for this membership'
+    )
 
     # ==========================================
     # ELIGIBILITY & APPROVAL
@@ -221,8 +302,8 @@ class ProductTemplate(models.Model):
             if product.is_membership_product:
                 # Count active subscriptions for this product
                 count = self.env['subscription.subscription'].search_count([
-                    ('product_id', 'in', product.product_variant_ids.ids),
-                    ('state', 'in', ['open', 'active'])
+                    ('plan_id.product_template_id', '=', product.id),
+                    ('state', 'in', ['trial', 'active'])
                 ])
                 product.current_member_count = count
             else:
@@ -249,8 +330,8 @@ class ProductTemplate(models.Model):
             if hasattr(self, 'is_subscription'):
                 self.is_subscription = True
             
-            # Set subscription type if not set
-            if hasattr(self, 'subscription_product_type') and not self.subscription_product_type:
+            # Set default subscription type if not set
+            if not self.subscription_product_type:
                 self.subscription_product_type = 'membership'
             
             # Set as service product
@@ -268,11 +349,13 @@ class ProductTemplate(models.Model):
     @api.onchange('subscription_product_type')
     def _onchange_subscription_product_type(self):
         """Set defaults based on subscription type"""
-        if self.subscription_product_type in ['membership', 'chapter']:
+        if self.subscription_product_type in ['membership', 'chapter', 'organizational_membership']:
             self.is_membership_product = True
             
             if self.subscription_product_type == 'chapter':
                 self.requires_primary_membership = True
+            elif self.subscription_product_type == 'organizational_membership':
+                self.is_organizational_only = True
 
     # ==========================================
     # BUSINESS METHODS
@@ -299,9 +382,15 @@ class ProductTemplate(models.Model):
         if self.is_at_capacity:
             return (False, _("This membership type is at capacity."))
 
+        # Check organizational requirement
+        if self.is_organizational_only and not partner.is_company:
+            return (False, _("This membership is only available to organizations."))
+        
+        if not self.is_organizational_only and partner.is_company:
+            return (False, _("This membership is only available to individuals."))
+
         # Check member category restrictions
-        if self.allowed_member_categories:
-            # Get partner's current membership category
+        if self.allowed_member_categories and hasattr(partner, 'membership_category_id'):
             if partner.membership_category_id:
                 if partner.membership_category_id not in self.allowed_member_categories:
                     return (False, _("Your member category is not eligible for this product."))
@@ -310,12 +399,12 @@ class ProductTemplate(models.Model):
         if self.requires_primary_membership and self.primary_membership_product_ids:
             has_required_primary = False
             
+            # Check if partner has active subscription with any primary product
             for primary_product in self.primary_membership_product_ids:
-                # Check if partner has active subscription with primary product
                 active_primary = self.env['subscription.subscription'].search([
                     ('partner_id', '=', partner.id),
-                    ('product_id', 'in', primary_product.product_variant_ids.ids),
-                    ('state', 'in', ['open', 'active'])
+                    ('plan_id.product_template_id', '=', primary_product.id),
+                    ('state', 'in', ['trial', 'active'])
                 ], limit=1)
                 
                 if active_primary:
@@ -334,27 +423,27 @@ class ProductTemplate(models.Model):
             'type': 'ir.actions.act_window',
             'name': _('Members - %s') % self.name,
             'res_model': 'res.partner',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [
-                ('membership_subscription_ids.product_id', 'in', self.product_variant_ids.ids),
-                ('is_member', '=', True)
+                ('subscription_ids.plan_id.product_template_id', '=', self.id),
+                ('subscription_ids.state', 'in', ['trial', 'active'])
             ],
             'context': {'default_product_id': self.id}
         }
 
-    def action_view_active_members(self):
-        """View active members with this product"""
+    def action_view_active_subscriptions(self):
+        """View active subscriptions for this product"""
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Active Members - %s') % self.name,
+            'name': _('Active Subscriptions - %s') % self.name,
             'res_model': 'subscription.subscription',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [
-                ('product_id', 'in', self.product_variant_ids.ids),
-                ('state', 'in', ['open', 'active'])
+                ('plan_id.product_template_id', '=', self.id),
+                ('state', 'in', ['trial', 'active'])
             ],
-            'context': {'default_product_id': self.product_variant_ids[:1].id if self.product_variant_ids else False}
+            'context': {'default_product_template_id': self.id}
         }
 
     def get_available_categories(self):
@@ -406,3 +495,10 @@ class ProductTemplate(models.Model):
         for product in self:
             if product.max_members < 0:
                 raise ValidationError(_("Maximum members cannot be negative. Use 0 for unlimited."))
+    
+    @api.constrains('min_seats_required')
+    def _check_min_seats(self):
+        """Validate minimum seats"""
+        for product in self:
+            if product.supports_seats and product.min_seats_required < 1:
+                raise ValidationError(_("Minimum seats must be at least 1 when seats are supported."))
