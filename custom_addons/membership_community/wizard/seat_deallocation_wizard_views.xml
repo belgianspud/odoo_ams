@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Seat Deallocation Wizard Form View -->
+    <record id="seat_deallocation_wizard_form" model="ir.ui.view">
+        <field name="name">seat.deallocation.wizard.form</field>
+        <field name="model">seat.deallocation.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Deallocate Seats">
+                
+                <div class="alert alert-warning" role="alert">
+                    <h4 class="alert-heading">
+                        <i class="fa fa-user-times"/> Remove Seat Allocations
+                    </h4>
+                    <p class="mb-0">
+                        This will remove seat allocations from employees and cancel their individual subscriptions. 
+                        They will lose access to membership benefits.
+                    </p>
+                </div>
+                
+                <group>
+                    <group string="Organization Details">
+                        <field name="subscription_id" readonly="1"/>
+                        <field name="partner_id" readonly="1"/>
+                        <field name="plan_id" readonly="1"/>
+                    </group>
+                    <group string="Seat Status">
+                        <label for="max_seats"/>
+                        <div>
+                            <field name="max_seats" readonly="1" class="oe_inline"/>
+                            <span class="text-muted"> total seats</span>
+                        </div>
+                        
+                        <label for="allocated_seat_count"/>
+                        <div>
+                            <field name="allocated_seat_count" readonly="1" class="oe_inline"/>
+                            <span class="text-muted"> currently allocated</span>
+                        </div>
+                        
+                        <label for="available_seat_count"/>
+                        <div>
+                            <field name="available_seat_count" readonly="1" class="oe_inline"/>
+                            <span class="text-success">
+                                <i class="fa fa-arrow-up"/> will be available after
+                            </span>
+                        </div>
+                    </group>
+                </group>
+                
+                <group>
+                    <field name="deallocation_method" widget="radio"/>
+                </group>
+                
+                <!-- Single Seat Deallocation -->
+                <group invisible="deallocation_method != 'single'">
+                    <group string="Seat to Remove">
+                        <field name="seat_subscription_id" 
+                               domain="[('parent_subscription_id', '=', subscription_id), ('is_seat_subscription', '=', True)]"
+                               options="{'no_create': True}">
+                            <tree>
+                                <field name="name"/>
+                                <field name="seat_holder_id"/>
+                                <field name="state"/>
+                                <field name="date_start"/>
+                            </tree>
+                        </field>
+                        <field name="seat_holder_id" invisible="not seat_subscription_id"/>
+                        <field name="seat_holder_email" invisible="not seat_holder_id"/>
+                    </group>
+                </group>
+                
+                <!-- Multiple Seats Deallocation -->
+                <group invisible="deallocation_method != 'multiple'">
+                    <group string="Select Seats to Remove" colspan="2">
+                        <field name="seat_subscription_ids" nolabel="1"
+                               widget="many2many"
+                               options="{'no_create': True}"
+                               context="{'tree_view_ref': 'membership_community.seat_subscription_deallocation_tree'}">
+                            <tree decoration-success="state=='active'" 
+                                  decoration-warning="state=='suspended'"
+                                  decoration-muted="state in ('cancelled','expired')">
+                                <field name="name"/>
+                                <field name="seat_holder_id"/>
+                                <field name="date_start"/>
+                                <field name="date_end" optional="hide"/>
+                                <field name="state" widget="badge"/>
+                            </tree>
+                        </field>
+                    </group>
+                </group>
+                
+                <!-- Deallocation Details -->
+                <group string="Deallocation Details">
+                    <group>
+                        <field name="reason" required="1"/>
+                        <field name="seat_action" required="1"/>
+                    </group>
+                    <group>
+                        <field name="send_notification_email"/>
+                    </group>
+                </group>
+                
+                <group string="Additional Notes" invisible="reason != 'other'">
+                    <field name="reason_notes" nolabel="1" 
+                           placeholder="Please provide details about why these seats are being deallocated..."/>
+                </group>
+                
+                <!-- Deallocation Summary -->
+                <group>
+                    <field name="seats_to_deallocate" invisible="1"/>
+                    <field name="deallocation_summary" nolabel="1" colspan="2"/>
+                </group>
+                
+                <!-- Warnings -->
+                <div class="alert alert-danger" role="alert" 
+                     invisible="seats_to_deallocate == 0">
+                    <p class="mb-0">
+                        <i class="fa fa-exclamation-triangle"/> 
+                        <strong>Warning:</strong> This action will immediately remove access for 
+                        <strong><span t-field="seats_to_deallocate"/></strong> employee(s). 
+                        Their individual subscriptions will be <strong><span t-field="seat_action"/></strong>.
+                    </p>
+                </div>
+                
+                <div class="alert alert-info" role="alert" 
+                     invisible="not send_notification_email or seats_to_deallocate == 0">
+                    <p class="mb-0">
+                        <i class="fa fa-envelope"/> 
+                        A notification email will be sent to affected employees informing them of the seat removal.
+                    </p>
+                </div>
+                
+                <footer>
+                    <button string="🗑️ Remove Seats" 
+                            name="action_deallocate_seats" 
+                            type="object" 
+                            class="btn-danger"
+                            confirm="Are you sure you want to remove these seat allocations? The affected employees will lose access to membership benefits."
+                            invisible="seats_to_deallocate == 0"/>
+                    <button string="Cancel" 
+                            class="btn-secondary" 
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Seat Subscription Tree View for Deallocation Selection -->
+    <record id="seat_subscription_deallocation_tree" model="ir.ui.view">
+        <field name="name">subscription.subscription.seat.deallocation.tree</field>
+        <field name="model">subscription.subscription</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state=='active'" 
+                  decoration-warning="state=='suspended'"
+                  decoration-muted="state in ('cancelled','expired')"
+                  create="false" delete="false">
+                <field name="name"/>
+                <field name="seat_holder_id"/>
+                <field name="date_start"/>
+                <field name="date_end" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-success="state=='active'"
+                       decoration-warning="state=='suspended'"
+                       decoration-danger="state in ('cancelled','expired')"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Seat Deallocation Wizard Action -->
+    <record id="action_deallocate_seat_wizard" model="ir.actions.act_window">
+        <field name="name">Remove Seat</field>
+        <field name="res_model">seat.deallocation.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="subscription_management.model_subscription_subscription"/>
+        <field name="binding_view_types">form</field>
+    </record>
+
+</odoo>

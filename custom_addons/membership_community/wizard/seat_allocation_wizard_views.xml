@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Seat Allocation Wizard Form View -->
+    <record id="seat_allocation_wizard_form" model="ir.ui.view">
+        <field name="name">seat.allocation.wizard.form</field>
+        <field name="model">seat.allocation.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Allocate Seats">
+                
+                <div class="alert alert-info" role="alert">
+                    <h4 class="alert-heading">
+                        <i class="fa fa-users"/> Allocate Seats to Employees
+                    </h4>
+                    <p class="mb-0">
+                        Assign membership seats from this organizational subscription to employees. 
+                        Each employee will receive their own subscription with access to all membership benefits.
+                    </p>
+                </div>
+                
+                <group>
+                    <group string="Organization Details">
+                        <field name="subscription_id" readonly="1"/>
+                        <field name="partner_id" readonly="1"/>
+                        <field name="plan_id" readonly="1"/>
+                    </group>
+                    <group string="Seat Availability">
+                        <label for="max_seats"/>
+                        <div>
+                            <field name="max_seats" readonly="1" class="oe_inline"/>
+                            <span class="text-muted"> total seats</span>
+                        </div>
+                        
+                        <label for="allocated_seat_count"/>
+                        <div>
+                            <field name="allocated_seat_count" readonly="1" class="oe_inline"/>
+                            <span class="text-muted"> allocated</span>
+                        </div>
+                        
+                        <label for="available_seat_count"/>
+                        <div>
+                            <field name="available_seat_count" readonly="1" class="oe_inline"/>
+                            <span t-if="available_seat_count > 0" class="text-success">
+                                <i class="fa fa-check-circle"/> available
+                            </span>
+                            <span t-else="" class="text-danger">
+                                <i class="fa fa-exclamation-triangle"/> no seats available!
+                            </span>
+                        </div>
+                    </group>
+                </group>
+                
+                <group>
+                    <field name="allocation_method" widget="radio"/>
+                </group>
+                
+                <!-- Single Employee Allocation -->
+                <group invisible="allocation_method != 'single'">
+                    <group string="Employee Information">
+                        <field name="employee_id" 
+                               options="{'no_create': False, 'no_open': False}"
+                               context="{'default_parent_id': partner_id, 'default_is_company': False}"/>
+                        <field name="employee_email" invisible="not employee_id"/>
+                        <field name="employee_phone" invisible="not employee_id"/>
+                        <field name="organizational_role"/>
+                    </group>
+                    <group>
+                        <button name="action_create_new_employee" 
+                                string="➕ Create New Employee" 
+                                type="object" 
+                                class="btn-link"
+                                help="Create a new employee contact"/>
+                    </group>
+                </group>
+                
+                <!-- Multiple Employees Allocation -->
+                <group invisible="allocation_method != 'multiple'">
+                    <group string="Select Employees" colspan="2">
+                        <field name="employee_ids" nolabel="1" 
+                               widget="many2many_tags"
+                               options="{'no_create': False, 'color_field': 'color'}"
+                               context="{'default_parent_id': partner_id, 'default_is_company': False}"
+                               placeholder="Select employees to allocate seats to...">
+                            <tree>
+                                <field name="name"/>
+                                <field name="email"/>
+                                <field name="phone"/>
+                                <field name="seat_subscription_id"/>
+                            </tree>
+                        </field>
+                        <field name="organizational_role"/>
+                    </group>
+                </group>
+                
+                <!-- Options -->
+                <group string="Options">
+                    <field name="send_notification_email"/>
+                </group>
+                
+                <!-- Allocation Summary -->
+                <group>
+                    <field name="seats_to_allocate" invisible="1"/>
+                    <field name="allocation_summary" nolabel="1" colspan="2"/>
+                </group>
+                
+                <!-- Warnings -->
+                <div class="alert alert-warning" role="alert" 
+                     invisible="seats_to_allocate &lt;= available_seat_count or seats_to_allocate == 0">
+                    <p class="mb-0">
+                        <i class="fa fa-exclamation-triangle"/> 
+                        <strong>Warning:</strong> You are trying to allocate 
+                        <strong><span t-field="seats_to_allocate"/></strong> seats, 
+                        but only <strong><span t-field="available_seat_count"/></strong> are available.
+                    </p>
+                </div>
+                
+                <div class="alert alert-danger" role="alert" 
+                     invisible="available_seat_count > 0">
+                    <p class="mb-0">
+                        <i class="fa fa-times-circle"/> 
+                        <strong>No Seats Available:</strong> All seats for this subscription have been allocated. 
+                        You need to either deallocate existing seats or upgrade the subscription to add more seats.
+                    </p>
+                </div>
+                
+                <footer>
+                    <button string="🎯 Allocate Seats" 
+                            name="action_allocate_seats" 
+                            type="object" 
+                            class="btn-primary"
+                            invisible="seats_to_allocate == 0 or seats_to_allocate > available_seat_count"/>
+                    <button string="Cancel" 
+                            class="btn-secondary" 
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Seat Allocation Wizard Action -->
+    <record id="action_seat_allocation_wizard" model="ir.actions.act_window">
+        <field name="name">Allocate Seats</field>
+        <field name="res_model">seat.allocation.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="subscription_management.model_subscription_subscription"/>
+        <field name="binding_view_types">form</field>
+    </record>
+
+</odoo>
