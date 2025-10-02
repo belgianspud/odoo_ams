@@ -125,6 +125,49 @@ class MembershipCategory(models.Model):
         default=True,
         help='Full membership vs affiliate/associate status'
     )
+
+    # ==========================================
+    # CATEGORY HIERARCHY (NEW - for chapters)
+    # ==========================================
+    
+    parent_category_id = fields.Many2one(
+        'membership.category',
+        string='Parent Category',
+        index=True,
+        ondelete='restrict',
+        help='Parent membership category (e.g., National membership for chapters)'
+    )
+    
+    child_category_ids = fields.One2many(
+        'membership.category',
+        'parent_category_id',
+        string='Child Categories',
+        help='Sub-categories (e.g., Chapters under national membership)'
+    )
+    
+    child_count = fields.Integer(
+        string='Child Categories',
+        compute='_compute_child_count',
+        help='Number of child categories'
+    )
+    
+    is_parent_required = fields.Boolean(
+        string='Requires Parent Membership',
+        default=False,
+        tracking=True,
+        help='Members must have parent category membership to join this category'
+    )
+    
+    parent_membership_note = fields.Text(
+        string='Parent Membership Note',
+        help='Instructions or notes about parent membership requirement'
+    )
+    
+    @api.depends('child_category_ids')
+    def _compute_child_count(self):
+        """Count child categories"""
+        for category in self:
+            category.child_count = len(category.child_category_ids)
     
     # ==========================================
     # PRODUCT LINK - Core Connection
@@ -225,6 +268,44 @@ class MembershipCategory(models.Model):
             domain.append(('subscription_product_type', '=', sub_type))
         
         return self.env['product.template'].search(domain)
+    
+    def get_all_parent_categories(self):
+        """
+        Get all parent categories up the hierarchy
+        
+        Returns:
+            recordset: membership.category records (parents)
+        """
+        self.ensure_one()
+        
+        parents = self.env['membership.category']
+        current = self.parent_category_id
+        
+        while current:
+            parents |= current
+            current = current.parent_category_id
+        
+        return parents
+    
+    def get_all_child_categories(self, recursive=True):
+        """
+        Get all child categories
+        
+        Args:
+            recursive: If True, get all descendants; if False, only direct children
+        
+        Returns:
+            recordset: membership.category records (children)
+        """
+        self.ensure_one()
+        
+        children = self.child_category_ids
+        
+        if recursive:
+            for child in self.child_category_ids:
+                children |= child.get_all_child_categories(recursive=True)
+        
+        return children
 
     def action_view_members(self):
         """View members in this category"""
@@ -248,6 +329,18 @@ class MembershipCategory(models.Model):
             'view_mode': 'list,kanban,form',
             'domain': [('membership_category_id', '=', self.id)],
             'context': {'default_membership_category_id': self.id},
+        }
+    
+    def action_view_child_categories(self):
+        """View child categories"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Child Categories - %s') % self.name,
+            'res_model': 'membership.category',
+            'view_mode': 'list,form',
+            'domain': [('parent_category_id', '=', self.id)],
+            'context': {'default_parent_category_id': self.id},
         }
 
     @api.model
@@ -275,6 +368,38 @@ class MembershipCategory(models.Model):
         return result
 
     # ==========================================
+    # ONCHANGE METHODS
+    # ==========================================
+    
+    @api.onchange('parent_category_id')
+    def _onchange_parent_category_id(self):
+        """Set defaults when parent is selected"""
+        if self.parent_category_id:
+            if not self.is_parent_required:
+                self.is_parent_required = True
+            
+            # Suggest using same tier as parent
+            if not self.member_tier:
+                self.member_tier = self.parent_category_id.member_tier
+    
+    @api.onchange('category_type')
+    def _onchange_category_type(self):
+        """Set defaults based on category type"""
+        if self.category_type == 'chapter':
+            # Chapters typically require parent membership
+            if not self.is_parent_required:
+                self.is_parent_required = True
+            
+            # Chapters are typically voting members
+            if not self.is_voting_member:
+                self.is_voting_member = True
+        
+        elif self.category_type == 'seat':
+            # Seats are not independent members
+            self.is_voting_member = False
+            self.is_full_member = False
+
+    # ==========================================
     # CONSTRAINTS
     # ==========================================
 
@@ -289,6 +414,46 @@ class MembershipCategory(models.Model):
                 raise ValidationError(
                     _("Category code must be unique. '%s' is already used.") % category.code
                 )
+    
+    @api.constrains('parent_category_id')
+    def _check_parent_recursion(self):
+        """Prevent circular parent relationships"""
+        for category in self:
+            if category.parent_category_id:
+                # Check for direct self-reference
+                if category.parent_category_id == category:
+                    raise ValidationError(_(
+                        "A category cannot be its own parent."
+                    ))
+                
+                # Check for circular reference
+                current = category.parent_category_id
+                visited = set()
+                while current:
+                    if current.id in visited:
+                        raise ValidationError(_(
+                            "Circular parent relationship detected. "
+                            "Category '%s' is in a parent loop."
+                        ) % category.name)
+                    
+                    visited.add(current.id)
+                    
+                    if current == category:
+                        raise ValidationError(_(
+                            "Circular parent relationship detected. "
+                            "Category '%s' cannot be a parent of itself through the hierarchy."
+                        ) % category.name)
+                    
+                    current = current.parent_category_id
+    
+    @api.constrains('is_parent_required', 'parent_category_id')
+    def _check_parent_requirement(self):
+        """Validate parent requirement configuration"""
+        for category in self:
+            if category.is_parent_required and not category.parent_category_id:
+                # This is just a warning - we allow configuration where parent is required
+                # but not yet selected (will be validated when creating subscriptions)
+                pass
 
     _sql_constraints = [
         ('code_unique', 'UNIQUE(code)', 'Category code must be unique!'),

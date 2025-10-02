@@ -137,7 +137,37 @@ class MembershipQuickSetupWizard(models.TransientModel):
                 wizard.seat_price = wizard.price / 5  # Default to 5 seats
     
     # ==========================================
-    # STEP 6: FEATURES (Simple Checkboxes)
+    # STEP 6: CHAPTER-SPECIFIC (NEW)
+    # ==========================================
+    
+    geographic_scope = fields.Selection([
+        ('national', 'National'),
+        ('regional', 'Regional'),
+        ('state', 'State/Province'),
+        ('local', 'Local/City'),
+    ], string='Geographic Scope', default='regional',
+       help='Geographic area this chapter serves')
+    
+    chapter_location = fields.Char(
+        string='Chapter Location',
+        help='Geographic area this chapter serves (e.g., "California", "New York City")'
+    )
+    
+    requires_national_membership = fields.Boolean(
+        string='Requires National Membership',
+        default=True,
+        help='Members must have national membership to join chapter'
+    )
+    
+    parent_category_id = fields.Many2one(
+        'membership.category',
+        string='Parent Membership Category',
+        domain=[('category_type', 'in', ['individual', 'organizational'])],
+        help='Required parent membership (e.g., National membership)'
+    )
+    
+    # ==========================================
+    # STEP 7: FEATURES (Simple Checkboxes)
     # ==========================================
     
     has_portal_access = fields.Boolean(
@@ -171,7 +201,7 @@ class MembershipQuickSetupWizard(models.TransientModel):
     )
     
     # ==========================================
-    # STEP 7: CLASSIFICATION
+    # STEP 8: CLASSIFICATION
     # ==========================================
     
     is_voting_member = fields.Boolean(
@@ -185,7 +215,73 @@ class MembershipQuickSetupWizard(models.TransientModel):
         default=True,
         help='This is a full membership (vs associate/affiliate)'
     )
+
+    # ==========================================
+    # COMPUTED FIELDS FOR UI HINTS
+    # ==========================================
     
+    show_organization_fields = fields.Boolean(
+        compute='_compute_show_fields',
+        help='Show organization-specific fields'
+    )
+    
+    show_chapter_fields = fields.Boolean(
+        compute='_compute_show_fields',
+        help='Show chapter-specific fields'
+    )
+    
+    @api.depends('membership_type')
+    def _compute_show_fields(self):
+        """Determine which field groups to show"""
+        for wizard in self:
+            wizard.show_organization_fields = wizard.membership_type == 'organizational'
+            wizard.show_chapter_fields = wizard.membership_type == 'chapter'
+    
+    # ==========================================
+    # ONCHANGE METHODS
+    # ==========================================
+    
+    @api.onchange('membership_type')
+    def _onchange_membership_type(self):
+        """Set defaults based on membership type"""
+        if self.membership_type == 'chapter':
+            # Chapters require parent membership by default
+            self.requires_national_membership = True
+            self.is_voting_member = True
+            self.is_full_member = True
+            
+            # Try to find a national membership category
+            national_cat = self.env['membership.category'].search([
+                ('category_type', '=', 'individual'),
+                ('code', 'ilike', 'national'),
+            ], limit=1)
+            
+            if not national_cat:
+                # Find any individual category
+                national_cat = self.env['membership.category'].search([
+                    ('category_type', '=', 'individual'),
+                ], limit=1)
+            
+            if national_cat:
+                self.parent_category_id = national_cat
+        
+        elif self.membership_type == 'organizational':
+            # Set organization defaults
+            self.requires_national_membership = False
+            self.is_voting_member = True
+            self.is_full_member = True
+        
+        elif self.membership_type == 'seat':
+            # Seats are not voting members
+            self.is_voting_member = False
+            self.is_full_member = False
+    
+    @api.onchange('requires_national_membership')
+    def _onchange_requires_national_membership(self):
+        """Clear parent category if not required"""
+        if not self.requires_national_membership:
+            self.parent_category_id = False
+
     # ==========================================
     # MAIN ACTION
     # ==========================================
@@ -234,6 +330,7 @@ class MembershipQuickSetupWizard(models.TransientModel):
         if self.price <= 0:
             raise ValidationError(_('Price must be greater than zero.'))
         
+        # Validate organization-specific fields
         if self.membership_type == 'organizational':
             if self.includes_seats <= 0:
                 raise ValidationError(_('Organization memberships must include at least 1 seat.'))
@@ -242,10 +339,22 @@ class MembershipQuickSetupWizard(models.TransientModel):
                 raise ValidationError(_(
                     'Maximum seats (%s) cannot be less than included seats (%s).'
                 ) % (self.max_seats, self.includes_seats))
+        
+        # Validate chapter-specific fields
+        if self.membership_type == 'chapter':
+            if self.requires_national_membership and not self.parent_category_id:
+                raise ValidationError(_(
+                    'Please select a parent membership category or uncheck "Requires National Membership".'
+                ))
+            
+            if not self.chapter_location:
+                raise ValidationError(_(
+                    'Please specify the chapter location (e.g., "California", "New York City").'
+                ))
     
     def _create_category(self):
         """Create membership category"""
-        return self.env['membership.category'].create({
+        vals = {
             'name': self.name,
             'code': self.code,
             'description': self.description,
@@ -253,7 +362,23 @@ class MembershipQuickSetupWizard(models.TransientModel):
             'is_voting_member': self.is_voting_member,
             'is_full_member': self.is_full_member,
             'sequence': 10,
-        })
+        }
+        
+        # Add chapter-specific fields
+        if self.membership_type == 'chapter':
+            if self.requires_national_membership and self.parent_category_id:
+                vals['parent_category_id'] = self.parent_category_id.id
+                vals['is_parent_required'] = True
+                vals['parent_membership_note'] = _(
+                    'Members must have an active %s membership to join this chapter.'
+                ) % self.parent_category_id.name
+            
+            # Add location to description
+            if self.chapter_location:
+                location_note = _('\n\nGeographic Area: %s') % self.chapter_location
+                vals['description'] = (vals.get('description') or '') + location_note
+        
+        return self.env['membership.category'].create(vals)
     
     def _create_product(self, category):
         """Create product template with features"""
@@ -301,11 +426,24 @@ class MembershipQuickSetupWizard(models.TransientModel):
         else:
             sub_type = self.membership_type
         
+        # Build product name
+        product_name = self.name
+        if self.membership_type == 'chapter' and self.chapter_location:
+            product_name = f"{self.name} - {self.chapter_location}"
+        
+        # Build description
+        description = self.description or ''
+        if self.membership_type == 'chapter':
+            if self.chapter_location:
+                description += f"\n\nLocation: {self.chapter_location}"
+            if self.requires_national_membership and self.parent_category_id:
+                description += f"\n\nRequires: {self.parent_category_id.name}"
+        
         return self.env['product.template'].create({
-            'name': self.name,
+            'name': product_name,
             'type': 'service',
             'list_price': self.price,
-            'description': self.description,
+            'description': description,
             'is_membership_product': True,
             'is_subscription': True,
             'subscription_product_type': sub_type,
@@ -321,6 +459,10 @@ class MembershipQuickSetupWizard(models.TransientModel):
         plan_name = f"{self.name}"
         if self.billing_period != 'yearly':
             plan_name += f" - {self.billing_period.title()}"
+        
+        # Add location to plan name for chapters
+        if self.membership_type == 'chapter' and self.chapter_location:
+            plan_name = f"{self.name} - {self.chapter_location}"
         
         plan_vals = {
             'name': plan_name,
@@ -362,6 +504,7 @@ class MembershipQuickSetupWizard(models.TransientModel):
             'category_type': 'seat',
             'is_voting_member': False,
             'is_full_member': False,
+            'parent_category_id': parent_product.default_member_category_id.id,
         })
         
         # Create seat product
@@ -406,6 +549,12 @@ class MembershipQuickSetupWizard(models.TransientModel):
         if self.membership_type == 'organizational':
             message += f'\n👥 Included Seats: {self.includes_seats}\n'
             message += f'📊 Maximum Seats: {self.max_seats if self.max_seats > 0 else "Unlimited"}\n'
+        
+        if self.membership_type == 'chapter':
+            if self.chapter_location:
+                message += f'\n📍 Location: {self.chapter_location}\n'
+            if self.requires_national_membership and self.parent_category_id:
+                message += f'🔗 Requires: {self.parent_category_id.name}\n'
         
         if seat_product:
             message += f'\n👤 Additional Seat Product: {seat_product.name}\n'

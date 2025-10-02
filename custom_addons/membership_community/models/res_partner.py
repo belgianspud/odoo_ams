@@ -63,6 +63,36 @@ class ResPartner(models.Model):
     )
 
     # ==========================================
+    # GEOGRAPHIC INFORMATION (NEW - for chapters)
+    # ==========================================
+    
+    # Note: country_id, state_id, zip already exist in base res.partner
+    # We just ensure they're accessible and add computed fields
+    
+    eligible_chapters = fields.Many2many(
+        'membership.category',
+        compute='_compute_eligible_chapters',
+        string='Eligible Chapters',
+        help='Chapters this member is eligible to join based on location'
+    )
+    
+    chapter_memberships = fields.Many2many(
+        'membership.category',
+        'partner_chapter_membership_rel',
+        'partner_id',
+        'category_id',
+        string='Chapter Memberships',
+        domain=[('category_type', '=', 'chapter')],
+        help='Chapters this member belongs to'
+    )
+    
+    chapter_count = fields.Integer(
+        string='Number of Chapters',
+        compute='_compute_chapter_count',
+        help='Number of chapters member belongs to'
+    )
+
+    # ==========================================
     # SUBSCRIPTIONS LINK
     # ==========================================
     
@@ -516,6 +546,33 @@ class ResPartner(models.Model):
                 partner.days_until_termination = 0
 
     # ==========================================
+    # COMPUTE METHODS - GEOGRAPHIC/CHAPTERS (NEW)
+    # ==========================================
+    
+    @api.depends('country_id', 'state_id', 'zip')
+    def _compute_eligible_chapters(self):
+        """
+        Compute which chapters this member is eligible for based on location
+        Override in membership_chapter for actual geographic matching logic
+        """
+        for partner in self:
+            # Base implementation: no geographic matching
+            # membership_chapter module will override this
+            partner.eligible_chapters = self.env['membership.category']
+    
+    @api.depends('membership_subscription_ids', 
+                 'membership_subscription_ids.membership_category_id',
+                 'membership_subscription_ids.membership_category_id.category_type')
+    def _compute_chapter_count(self):
+        """Count number of chapter memberships"""
+        for partner in self:
+            chapter_subs = partner.membership_subscription_ids.filtered(
+                lambda s: s.membership_category_id.category_type == 'chapter' and
+                         s.state in ['trial', 'active']
+            )
+            partner.chapter_count = len(chapter_subs)
+
+    # ==========================================
     # ACTIONS - Basic
     # ==========================================
 
@@ -534,6 +591,19 @@ class ResPartner(models.Model):
             'view_mode': 'list,form',
             'domain': [('id', 'in', all_subs.ids)],
             'context': {'default_partner_id': self.id}
+        }
+    
+    def action_view_eligible_chapters(self):
+        """View chapters this member is eligible for"""
+        self.ensure_one()
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Eligible Chapters'),
+            'res_model': 'membership.category',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', self.eligible_chapters.ids)],
+            'context': {'default_category_type': 'chapter'}
         }
 
     def check_feature_access(self, feature_code):

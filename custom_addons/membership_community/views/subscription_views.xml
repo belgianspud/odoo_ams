@@ -24,6 +24,8 @@
                     <field name="supports_seats" invisible="1"/>
                     <field name="allocated_seat_count" optional="hide" string="Seats Used"/>
                     <field name="available_seat_count" optional="hide" string="Seats Available"/>
+                    <field name="requires_primary_membership" optional="hide"/>
+                    <field name="primary_subscription_valid" optional="hide"/>
                 </xpath>
             </field>
         </record>
@@ -45,6 +47,12 @@
                     <widget name="web_ribbon" title="Pending Suspension" 
                             bg_color="text-bg-danger" 
                             invisible="not is_pending_suspension"/>
+                    <widget name="web_ribbon" title="Primary Membership Required" 
+                            bg_color="text-bg-info" 
+                            invisible="not requires_primary_membership or primary_subscription_valid"/>
+                    <widget name="web_ribbon" title="Primary Membership Invalid" 
+                            bg_color="text-bg-danger" 
+                            invisible="not requires_primary_membership or primary_subscription_valid"/>
                 </xpath>
 
                 <!-- Add membership verification button to header -->
@@ -73,12 +81,21 @@
                             <span class="o_stat_text">Seats</span>
                         </div>
                     </button>
+                    <button name="action_view_primary_subscription" type="object" 
+                            class="oe_stat_button" icon="fa-link"
+                            invisible="not primary_subscription_id">
+                        <div class="o_field_widget o_stat_info">
+                            <span class="o_stat_text">Primary</span>
+                            <span class="o_stat_text">Membership</span>
+                        </div>
+                    </button>
                 </xpath>
 
                 <!-- Add membership category after plan -->
                 <xpath expr="//field[@name='plan_id']" position="after">
                     <field name="is_membership" invisible="1"/>
                     <field name="supports_seats" invisible="1"/>
+                    <field name="requires_primary_membership" invisible="1"/>
                     <field name="membership_category_id" options="{'no_create': True}" invisible="not is_membership"/>
                     <field name="subscription_product_type" invisible="1"/>
                 </xpath>
@@ -100,6 +117,104 @@
                     <field name="max_seats" invisible="not supports_seats"/>
                     <field name="allocated_seat_count" invisible="not supports_seats"/>
                     <field name="available_seat_count" invisible="not supports_seats"/>
+                </xpath>
+
+                <!-- Add primary membership fields (NEW) -->
+                <xpath expr="//field[@name='source_type']" position="after">
+                    <field name="primary_subscription_id" 
+                           invisible="not requires_primary_membership"
+                           options="{'no_create': True}"
+                           domain="[('partner_id', '=', partner_id), ('id', '!=', id), ('state', 'in', ['active', 'trial'])]"/>
+                    <field name="primary_subscription_valid" 
+                           invisible="not requires_primary_membership"
+                           widget="boolean"/>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- Add Primary Membership Page to Subscription Form (NEW - CORRECTED) -->
+        <record id="view_subscription_membership_primary" model="ir.ui.view">
+            <field name="name">subscription.subscription.membership.primary</field>
+            <field name="model">subscription.subscription</field>
+            <field name="inherit_id" ref="subscription_management.subscription_subscription_view_form"/>
+            <field name="arch" type="xml">
+                
+                <!-- Add Primary Membership page to notebook -->
+                <xpath expr="//notebook" position="inside">
+                    <page name="primary_membership" string="🔗 Primary Membership" 
+                          invisible="not requires_primary_membership">
+                        
+                        <div class="alert alert-info" role="alert">
+                            <h4 class="alert-heading">
+                                <i class="fa fa-link"/> Primary Membership Requirement
+                            </h4>
+                            <p class="mb-0">
+                                This membership requires an active primary/parent membership. 
+                                The member must maintain their primary membership to keep this subscription active.
+                            </p>
+                        </div>
+                        
+                        <group>
+                            <group string="Primary Membership Status">
+                                <field name="requires_primary_membership" readonly="1"/>
+                                <field name="primary_subscription_id" 
+                                       options="{'no_create': True}"
+                                       domain="[('partner_id', '=', partner_id), ('id', '!=', id), ('state', 'in', ['active', 'trial'])]"/>
+                                <field name="primary_subscription_valid" widget="boolean" readonly="1"/>
+                            </group>
+                            <group string="Category Information">
+                                <field name="membership_category_id" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Validation">
+                            <div class="alert alert-success" role="alert" 
+                                 invisible="not primary_subscription_valid">
+                                <p class="mb-0">
+                                    <i class="fa fa-check-circle"/> 
+                                    <strong>Valid:</strong> Primary membership is active.
+                                </p>
+                            </div>
+                            
+                            <div class="alert alert-danger" role="alert" 
+                                 invisible="primary_subscription_valid or not requires_primary_membership">
+                                <p class="mb-0">
+                                    <i class="fa fa-exclamation-triangle"/> 
+                                    <strong>Invalid:</strong> Primary membership is missing or inactive. 
+                                    This subscription cannot be activated until a valid primary membership is in place.
+                                </p>
+                            </div>
+                            
+                            <div class="alert alert-warning" role="alert" 
+                                 invisible="primary_subscription_id">
+                                <p class="mb-0">
+                                    <i class="fa fa-info-circle"/> 
+                                    <strong>Action Required:</strong> Please assign a primary membership to this subscription.
+                                </p>
+                            </div>
+                        </group>
+                        
+                        <separator string="Related Subscriptions"/>
+                        <field name="related_subscription_ids" nolabel="1" 
+                               context="{'default_partner_id': partner_id}">
+                            <list decoration-success="state=='active'" 
+                                  decoration-info="state=='trial'"
+                                  decoration-muted="state in ('expired','cancelled')"
+                                  create="false">
+                                <field name="name"/>
+                                <field name="plan_id"/>
+                                <field name="membership_category_id"/>
+                                <field name="date_start"/>
+                                <field name="date_end"/>
+                                <field name="state" widget="badge"
+                                       decoration-success="state=='active'"
+                                       decoration-info="state=='trial'"
+                                       decoration-danger="state in ('expired','cancelled')"/>
+                            </list>
+                        </field>
+                        
+                    </page>
                 </xpath>
 
             </field>
@@ -137,17 +252,17 @@
                                 <label for="allocated_seat_count"/>
                                 <div>
                                     <field name="allocated_seat_count" readonly="1" class="oe_inline"/>
-                                    <span class="text-muted"> seats allocated</span>
+                                    <span class="text-muted"> allocated</span>
                                 </div>
                                 
                                 <label for="available_seat_count"/>
                                 <div>
                                     <field name="available_seat_count" readonly="1" class="oe_inline"/>
                                     <span class="text-success" invisible="available_seat_count == 0">
-                                        <i class="fa fa-check-circle"/> seats available
+                                        <i class="fa fa-check-circle"/> available
                                     </span>
                                     <span class="text-danger" invisible="available_seat_count &gt; 0">
-                                        <i class="fa fa-exclamation-triangle"/> no seats available
+                                        <i class="fa fa-exclamation-triangle"/> no seats available!
                                     </span>
                                 </div>
                             </group>
@@ -289,6 +404,7 @@
                 <xpath expr="//field[@name='plan_id']" position="after">
                     <field name="membership_category_id"/>
                     <field name="subscription_product_type"/>
+                    <field name="primary_subscription_id"/>
                 </xpath>
                 
                 <xpath expr="//filter[@name='active']" position="after">
@@ -301,6 +417,12 @@
                             domain="[('subscription_product_type', '=', 'organizational_membership')]"/>
                     <filter string="Chapter Memberships" name="chapters" 
                             domain="[('subscription_product_type', '=', 'chapter')]"/>
+                    <separator/>
+                    <filter string="Requires Primary Membership" name="requires_primary" 
+                            domain="[('requires_primary_membership', '=', True)]"/>
+                    <filter string="Primary Membership Invalid" name="primary_invalid" 
+                            domain="[('requires_primary_membership', '=', True), ('primary_subscription_valid', '=', False)]"/>
+                    <separator/>
                     <filter string="Has Available Seats" name="has_seats" 
                             domain="[('available_seat_count', '>', 0)]"/>
                     <filter string="Seats Full" name="seats_full" 
@@ -406,6 +528,8 @@
                     <field name="supports_seats"/>
                     <field name="allocated_seat_count"/>
                     <field name="available_seat_count"/>
+                    <field name="requires_primary_membership"/>
+                    <field name="primary_subscription_valid"/>
                 </xpath>
                 
                 <xpath expr="//div[@class='o_kanban_record_body']//div[last()]" position="after">
@@ -416,6 +540,14 @@
                         <span class="badge text-bg-info">
                             <i class="fa fa-users"/> 
                             <field name="allocated_seat_count"/>/<field name="max_seats"/> seats
+                        </span>
+                    </div>
+                    <div invisible="not requires_primary_membership" class="mt-1">
+                        <span class="badge text-bg-warning" invisible="primary_subscription_valid">
+                            <i class="fa fa-exclamation-triangle"/> Primary Required
+                        </span>
+                        <span class="badge text-bg-success" invisible="not primary_subscription_valid">
+                            <i class="fa fa-check-circle"/> Primary Valid
                         </span>
                     </div>
                 </xpath>

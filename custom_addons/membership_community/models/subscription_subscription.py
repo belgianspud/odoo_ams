@@ -179,6 +179,40 @@ class SubscriptionSubscription(models.Model):
     )
 
     # ==========================================
+    # PRIMARY MEMBERSHIP RELATIONSHIPS (NEW - for chapters)
+    # ==========================================
+    
+    related_subscription_ids = fields.Many2many(
+        'subscription.subscription',
+        'subscription_relation_rel',
+        'subscription_id',
+        'related_subscription_id',
+        string='Related Subscriptions',
+        help='Other subscriptions this member has (e.g., national + chapter)'
+    )
+    
+    primary_subscription_id = fields.Many2one(
+        'subscription.subscription',
+        string='Primary Subscription',
+        help='Primary/parent subscription required for this membership (e.g., national membership for chapter)',
+        index=True
+    )
+    
+    primary_subscription_valid = fields.Boolean(
+        string='Primary Subscription Valid',
+        compute='_compute_primary_subscription_valid',
+        store=True,
+        help='Primary subscription is active and valid'
+    )
+    
+    requires_primary_membership = fields.Boolean(
+        string='Requires Primary Membership',
+        compute='_compute_requires_primary_membership',
+        store=True,
+        help='This subscription requires a primary/parent membership'
+    )
+
+    # ==========================================
     # COMPUTE METHODS - SEAT MANAGEMENT
     # ==========================================
     
@@ -203,6 +237,112 @@ class SubscriptionSubscription(models.Model):
                 sub.seat_utilization = (sub.allocated_seat_count / sub.max_seats) * 100
             else:
                 sub.seat_utilization = 0.0
+
+    # ==========================================
+    # COMPUTE METHODS - PRIMARY MEMBERSHIP (NEW)
+    # ==========================================
+    
+    @api.depends('membership_category_id', 'membership_category_id.is_parent_required')
+    def _compute_requires_primary_membership(self):
+        """Determine if this subscription requires a primary membership"""
+        for sub in self:
+            sub.requires_primary_membership = (
+                sub.membership_category_id and 
+                sub.membership_category_id.is_parent_required
+            )
+    
+    @api.depends('primary_subscription_id', 'primary_subscription_id.state')
+    def _compute_primary_subscription_valid(self):
+        """Check if primary subscription is active and valid"""
+        for sub in self:
+            if sub.primary_subscription_id:
+                sub.primary_subscription_valid = (
+                    sub.primary_subscription_id.state in ('active', 'trial')
+                )
+            else:
+                # If no primary required, consider it valid
+                sub.primary_subscription_valid = not sub.requires_primary_membership
+
+    # ==========================================
+    # PRIMARY MEMBERSHIP VALIDATION HOOKS (NEW)
+    # Extension points for specialized modules
+    # ==========================================
+    
+    def _check_primary_membership_requirement(self):
+        """
+        Hook for specialized modules to validate primary membership requirements
+        Override in membership_chapter to enforce national membership
+        
+        Returns:
+            tuple: (bool: is_valid, str: error_message)
+        """
+        self.ensure_one()
+        
+        # Base implementation: check if primary subscription exists and is valid
+        if self.requires_primary_membership:
+            if not self.primary_subscription_id:
+                return (False, _('This membership requires a primary membership.'))
+            
+            if not self.primary_subscription_valid:
+                return (False, _('Primary membership is not active.'))
+        
+        return (True, '')
+    
+    def _get_required_primary_categories(self):
+        """
+        Get list of membership categories that can serve as primary membership
+        Override in membership_chapter to return national membership categories
+        
+        Returns:
+            recordset: membership.category records that are valid primaries
+        """
+        if self.membership_category_id and self.membership_category_id.parent_category_id:
+            return self.membership_category_id.parent_category_id
+        return self.env['membership.category']
+    
+    def _get_valid_primary_subscriptions(self):
+        """
+        Get list of valid primary subscriptions for this member
+        Override in specialized modules to add custom filtering
+        
+        Returns:
+            recordset: subscription.subscription records that can be primaries
+        """
+        self.ensure_one()
+        
+        required_categories = self._get_required_primary_categories()
+        if not required_categories:
+            return self.env['subscription.subscription']
+        
+        return self.env['subscription.subscription'].search([
+            ('partner_id', '=', self.partner_id.id),
+            ('membership_category_id', 'in', required_categories.ids),
+            ('state', 'in', ('active', 'trial')),
+        ])
+    
+    def _auto_assign_primary_subscription(self):
+        """
+        Automatically assign primary subscription if one is available
+        Override in specialized modules to customize assignment logic
+        
+        Returns:
+            bool: True if primary was assigned, False otherwise
+        """
+        self.ensure_one()
+        
+        if not self.requires_primary_membership:
+            return False
+        
+        if self.primary_subscription_id:
+            return True  # Already has primary
+        
+        valid_primaries = self._get_valid_primary_subscriptions()
+        if valid_primaries:
+            self.primary_subscription_id = valid_primaries[0]
+            _logger.info(f"Auto-assigned primary subscription {valid_primaries[0].name} to {self.name}")
+            return True
+        
+        return False
 
     # ==========================================
     # NOTE: Lifecycle fields are inherited from subscription_management
@@ -245,7 +385,14 @@ class SubscriptionSubscription(models.Model):
                         if 'max_seats' not in vals and plan.max_seats > 0:
                             vals['max_seats'] = plan.max_seats
         
-        return super().create(vals_list)
+        subscriptions = super().create(vals_list)
+        
+        # Auto-assign primary subscriptions if needed
+        for subscription in subscriptions:
+            if subscription.requires_primary_membership:
+                subscription._auto_assign_primary_subscription()
+        
+        return subscriptions
 
     def write(self, vals):
         """Handle membership-specific updates"""
@@ -261,6 +408,10 @@ class SubscriptionSubscription(models.Model):
                 # Set join date if not set
                 if not subscription.join_date and 'join_date' not in vals:
                     subscription.join_date = subscription.date_start or fields.Date.today()
+                
+                # Try to auto-assign primary if needed
+                if subscription.requires_primary_membership and not subscription.primary_subscription_id:
+                    subscription._auto_assign_primary_subscription()
         
         return result
 
@@ -286,6 +437,11 @@ class SubscriptionSubscription(models.Model):
         """Mark eligibility as verified"""
         for subscription in self:
             if subscription.is_membership:
+                # Check primary membership requirement
+                is_valid, error_msg = subscription._check_primary_membership_requirement()
+                if not is_valid:
+                    raise UserError(error_msg)
+                
                 subscription.write({
                     'eligibility_verified': True,
                     'eligibility_verified_by': self.env.user.id,
@@ -304,6 +460,14 @@ class SubscriptionSubscription(models.Model):
         
         for subscription in self:
             if subscription.is_membership:
+                # Check primary membership requirement before activation
+                is_valid, error_msg = subscription._check_primary_membership_requirement()
+                if not is_valid:
+                    subscription.write({'state': 'draft'})
+                    raise UserError(
+                        _('Cannot activate subscription: %s') % error_msg
+                    )
+                
                 # Assign member number
                 if not subscription.partner_id.member_number:
                     subscription.partner_id.member_number = self.env['ir.sequence'].next_by_code('member.number')
@@ -468,6 +632,22 @@ class SubscriptionSubscription(models.Model):
             'res_id': self.seat_holder_id.id,
             'target': 'current',
         }
+    
+    def action_view_primary_subscription(self):
+        """View the primary subscription"""
+        self.ensure_one()
+        
+        if not self.primary_subscription_id:
+            raise UserError(_("This subscription does not have a primary subscription"))
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Primary Subscription: %s') % self.primary_subscription_id.name,
+            'res_model': 'subscription.subscription',
+            'view_mode': 'form',
+            'res_id': self.primary_subscription_id.id,
+            'target': 'current',
+        }
 
     # ==========================================
     # LIFECYCLE SYNCHRONIZATION (Parent → Child)
@@ -630,3 +810,13 @@ class SubscriptionSubscription(models.Model):
                     raise ValidationError(_(
                         "Cannot allocate more than %s seats. Currently allocated: %s"
                     ) % (subscription.max_seats, len(subscription.child_subscription_ids)))
+    
+    @api.constrains('primary_subscription_id', 'partner_id')
+    def _check_primary_subscription_partner(self):
+        """Ensure primary subscription belongs to same partner"""
+        for subscription in self:
+            if subscription.primary_subscription_id:
+                if subscription.primary_subscription_id.partner_id != subscription.partner_id:
+                    raise ValidationError(_(
+                        "Primary subscription must belong to the same partner"
+                    ))

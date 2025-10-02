@@ -3,7 +3,7 @@
     <data>
 
         <!-- ========================================== -->
-        <!-- PRODUCT TEMPLATE VIEWS (BASE - SIMPLIFIED) -->
+        <!-- PRODUCT TEMPLATE VIEWS (ENHANCED FOR SEATS) -->
         <!-- ========================================== -->
 
         <!-- Inherit Product Form View -->
@@ -29,6 +29,50 @@
                             </group>
                             <group>
                                 <field name="default_member_category_id" options="{'no_create': True}"/>
+                            </group>
+                        </group>
+
+                        <!-- SEAT PRODUCT CONFIGURATION (NEW) -->
+                        <group name="seat_product_config" string="🪑 Seat Product Configuration" 
+                               invisible="not provides_seats and not is_seat_addon">
+                            <group name="seat_basic">
+                                <field name="provides_seats"/>
+                                <field name="seat_quantity" invisible="not provides_seats"/>
+                                <field name="is_seat_addon" readonly="1"/>
+                                <field name="price_per_seat" widget="monetary" readonly="1" 
+                                       invisible="not provides_seats or seat_quantity == 0"/>
+                            </group>
+                            <group name="seat_parent">
+                                <field name="parent_membership_product_id"
+                                       invisible="not is_seat_addon"
+                                       options="{'no_create': True}"
+                                       domain="[('subscription_product_type', '=', 'organizational_membership')]"/>
+                                <div class="alert alert-info" role="alert" 
+                                     invisible="not provides_seats or seat_quantity &lt;= 1">
+                                    <p class="mb-0">
+                                        <i class="fa fa-info-circle"/> 
+                                        <strong>Seat Pack:</strong> Each purchase provides 
+                                        <field name="seat_quantity" readonly="1" nolabel="1" class="oe_inline"/> seats 
+                                        at <field name="price_per_seat" readonly="1" nolabel="1" widget="monetary" class="oe_inline"/> per seat.
+                                    </p>
+                                </div>
+                            </group>
+                        </group>
+
+                        <!-- ORGANIZATIONAL MEMBERSHIP SETTINGS (NEW) -->
+                        <group name="organizational_settings" string="🏢 Organizational Membership Settings" 
+                               invisible="subscription_product_type != 'organizational_membership'">
+                            <group name="org_requirements" string="Requirements">
+                                <field name="requires_organization_info"/>
+                                <field name="requires_primary_contact"/>
+                                <field name="require_org_tax_id"/>
+                                <field name="require_org_address"/>
+                                <field name="max_org_size"/>
+                            </group>
+                            <group name="org_management" string="Management">
+                                <field name="allow_multiple_admins"/>
+                                <field name="seat_allocation_type" widget="radio"/>
+                                <field name="seat_approval_required"/>
                             </group>
                         </group>
 
@@ -77,6 +121,9 @@
                 <xpath expr="//field[@name='name']" position="after">
                     <field name="is_membership_product" optional="show"/>
                     <field name="subscription_product_type" optional="show"/>
+                    <field name="provides_seats" optional="hide"/>
+                    <field name="seat_quantity" optional="hide"/>
+                    <field name="is_seat_addon" optional="hide"/>
                     <field name="current_member_count" optional="hide"/>
                 </xpath>
             </field>
@@ -95,27 +142,40 @@
                     <filter string="Individual Membership" name="individual_membership" domain="[('subscription_product_type', '=', 'membership')]"/>
                     <filter string="Organizational Membership" name="org_membership" domain="[('subscription_product_type', '=', 'organizational_membership')]"/>
                     <filter string="Chapter Membership" name="chapter_membership" domain="[('subscription_product_type', '=', 'chapter')]"/>
+                    <separator/>
+                    <filter string="Seat Products" name="seat_products" domain="[('provides_seats', '=', True)]"/>
+                    <filter string="Seat Add-ons" name="seat_addons" domain="[('is_seat_addon', '=', True)]"/>
                 </xpath>
                 <xpath expr="//group" position="inside">
                     <filter string="Subscription Type" name="group_subscription_type" context="{'group_by': 'subscription_product_type'}"/>
+                    <filter string="Provides Seats" name="group_provides_seats" context="{'group_by': 'provides_seats'}"/>
                 </xpath>
             </field>
         </record>
 
-        <!-- Add Smart Button to Product Form -->
+        <!-- Add Smart Buttons to Product Form -->
         <record id="view_product_template_membership_button" model="ir.ui.view">
             <field name="name">product.template.membership.button</field>
             <field name="model">product.template</field>
             <field name="inherit_id" ref="product.product_template_only_form_view"/>
             <field name="arch" type="xml">
                 <xpath expr="//div[@name='button_box']" position="inside">
-                    <button name="action_view_members" type="object" class="oe_stat_button" icon="fa-users" invisible="not is_membership_product">
+                    <button name="action_view_members" type="object" class="oe_stat_button" icon="fa-users" 
+                            invisible="not is_membership_product">
                         <field name="current_member_count" widget="statinfo" string="Members"/>
                     </button>
-                    <button name="action_view_active_subscriptions" type="object" class="oe_stat_button" icon="fa-refresh" invisible="not is_membership_product">
+                    <button name="action_view_active_subscriptions" type="object" class="oe_stat_button" icon="fa-refresh" 
+                            invisible="not is_membership_product">
                         <div class="o_stat_info">
                             <span class="o_stat_text">Active</span>
                             <span class="o_stat_text">Subscriptions</span>
+                        </div>
+                    </button>
+                    <button name="action_view_seat_addons" type="object" class="oe_stat_button" icon="fa-users"
+                            invisible="subscription_product_type != 'organizational_membership'">
+                        <div class="o_stat_info">
+                            <span class="o_stat_text">Seat</span>
+                            <span class="o_stat_text">Add-ons</span>
                         </div>
                     </button>
                 </xpath>
@@ -142,8 +202,12 @@
                     Create your first membership product
                 </p>
                 <p>
-                    Membership products define the different types of memberships you offer.
-                    They are linked to subscription plans for billing and categories for member classification.
+                    <strong>🚀 Recommended:</strong> Use the <strong>Quick Setup Wizard</strong> to create 
+                    category + product + plan + seat add-ons in one step!
+                </p>
+                <p>
+                    Or create membership products manually here. Membership products define the different 
+                    types of memberships you offer with pricing, features, benefits, and seat configurations.
                 </p>
             </field>
         </record>

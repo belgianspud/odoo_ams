@@ -21,6 +21,8 @@
                 <group>
                     <group string="1️⃣ Membership Type">
                         <field name="membership_type" widget="radio"/>
+                        <field name="show_organization_fields" invisible="1"/>
+                        <field name="show_chapter_fields" invisible="1"/>
                     </group>
                 </group>
                 
@@ -42,7 +44,8 @@
                     <field name="trial_days" invisible="not has_trial"/>
                 </group>
                 
-                <group string="5️⃣ Organization Settings" invisible="membership_type != 'organizational'">
+                <!-- Organization Settings -->
+                <group string="5️⃣ Organization Settings" invisible="not show_organization_fields">
                     <group>
                         <field name="includes_seats"/>
                         <field name="max_seats"/>
@@ -57,6 +60,39 @@
                                 • <strong>Included Seats:</strong> Seats included in base price<br/>
                                 • <strong>Max Seats:</strong> Maximum total seats (0 = unlimited)<br/>
                                 • <strong>Seat Price:</strong> Price per additional seat beyond included
+                            </p>
+                        </div>
+                    </group>
+                </group>
+                
+                <!-- Chapter Settings (NEW) -->
+                <group string="5️⃣ Chapter Settings" invisible="not show_chapter_fields">
+                    <group>
+                        <field name="geographic_scope" widget="radio"/>
+                        <field name="chapter_location" 
+                               placeholder="e.g., California, New York City, Pacific Northwest"
+                               required="show_chapter_fields"/>
+                        <field name="requires_national_membership"/>
+                    </group>
+                    <group>
+                        <field name="parent_category_id" 
+                               invisible="not requires_national_membership"
+                               required="requires_national_membership and show_chapter_fields"
+                               options="{'no_create': True}"/>
+                        <div class="alert alert-warning" role="alert" colspan="2"
+                             invisible="not requires_national_membership or parent_category_id">
+                            <p class="mb-0">
+                                <i class="fa fa-exclamation-triangle"/> 
+                                <strong>Parent Membership Required:</strong><br/>
+                                Members must have an active parent membership to join this chapter.
+                            </p>
+                        </div>
+                        <div class="alert alert-info" role="alert" colspan="2"
+                             invisible="requires_national_membership or not show_chapter_fields">
+                            <p class="mb-0">
+                                <i class="fa fa-info-circle"/> 
+                                <strong>Standalone Chapter:</strong><br/>
+                                This chapter does not require a parent membership. Members can join directly.
                             </p>
                         </div>
                     </group>

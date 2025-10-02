@@ -16,13 +16,14 @@
                 <field name="billing_interval"/>
                 <field name="supports_seats" optional="show"/>
                 <field name="included_seats" optional="hide"/>
+                <field name="additional_seat_price" optional="hide" widget="monetary"/>
                 <field name="subscription_count"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
         </field>
     </record>
 
-    <!-- Subscription Plan Form View -->
+    <!-- Subscription Plan Form View (ENHANCED) -->
     <record id="subscription_plan_view_form" model="ir.ui.view">
         <field name="name">subscription.plan.view.form</field>
         <field name="model">subscription.plan</field>
@@ -43,6 +44,10 @@
                             <field name="active_seat_subscriptions" widget="statinfo" string="Seat Subscriptions"/>
                         </button>
                     </div>
+                    
+                    <widget name="web_ribbon" title="Supports Seats" bg_color="text-bg-info" 
+                            invisible="not supports_seats"/>
+                    
                     <div class="oe_title">
                         <h1>
                             <field name="name" placeholder="Plan Name"/>
@@ -117,7 +122,7 @@
                             </group>
                         </page>
                         
-                        <page string="Seat Management" name="seats">
+                        <page string="🪑 Seat Management" name="seats">
                             <group>
                                 <group string="Seat Configuration">
                                     <field name="supports_seats"/>
@@ -125,12 +130,36 @@
                                     <field name="max_seats" invisible="not supports_seats"/>
                                     <field name="additional_seat_price" widget="monetary" invisible="not supports_seats"/>
                                     <field name="seat_product_id" invisible="not supports_seats"
-                                           domain="[('is_membership_product', '=', True)]"
+                                           domain="[('is_membership_product', '=', True), ('provides_seats', '=', True)]"
                                            options="{'no_create': True}"/>
                                 </group>
                                 <group string="Seat Statistics" invisible="not supports_seats">
                                     <field name="total_allocated_seats" readonly="1"/>
                                     <field name="active_seat_subscriptions" readonly="1"/>
+                                    <div class="alert alert-info" role="alert" colspan="2">
+                                        <p class="mb-0">
+                                            <i class="fa fa-info-circle"/> 
+                                            <strong>Current Utilization:</strong><br/>
+                                            <field name="total_allocated_seats" readonly="1" nolabel="1" class="oe_inline"/> 
+                                            seats allocated across 
+                                            <field name="subscription_count" readonly="1" nolabel="1" class="oe_inline"/> 
+                                            subscriptions
+                                        </p>
+                                    </div>
+                                </group>
+                            </group>
+                            
+                            <group string="Seat Product Details" invisible="not seat_product_id">
+                                <group>
+                                    <label for="seat_product_id"/>
+                                    <div>
+                                        <field name="seat_product_id" readonly="1" nolabel="1" class="oe_inline"/>
+                                        <button name="%(membership_community.action_membership_products)d" 
+                                                string="→ View Product" 
+                                                type="action" 
+                                                class="btn-link"
+                                                context="{'search_default_id': seat_product_id}"/>
+                                    </div>
                                 </group>
                             </group>
                             
@@ -142,7 +171,8 @@
                                     <strong>Included Seats:</strong> Number of seats included in the base price.<br/>
                                     <strong>Maximum Seats:</strong> Total seats allowed (0 = unlimited).<br/>
                                     <strong>Additional Seat Price:</strong> Price per seat beyond included seats.<br/>
-                                    <strong>Seat Product:</strong> Optional separate product for purchasing additional seats.
+                                    <strong>Seat Product:</strong> Optional separate product for purchasing additional seats. 
+                                    This product can provide multiple seats per purchase (seat packs).
                                 </p>
                             </div>
                             
@@ -215,6 +245,7 @@
                 <field name="subscription_count"/>
                 <field name="supports_seats"/>
                 <field name="included_seats"/>
+                <field name="total_allocated_seats"/>
                 <field name="active"/>
                 <templates>
                     <t t-name="kanban-box">
@@ -238,8 +269,11 @@
                                             <span><field name="price" widget="monetary"/> / <field name="billing_period"/></span>
                                             <div t-if="record.supports_seats.raw_value" class="mt-1">
                                                 <span class="badge text-bg-info">
-                                                    <i class="fa fa-users"/> <field name="included_seats"/> seats
+                                                    <i class="fa fa-users"/> <field name="included_seats"/> seats included
                                                 </span>
+                                                <div t-if="record.total_allocated_seats.raw_value &gt; 0" class="text-muted mt-1">
+                                                    <small><field name="total_allocated_seats"/> seats in use</small>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="oe_kanban_bottom_right">
@@ -271,9 +305,11 @@
                 <separator/>
                 <filter string="Supports Seats" name="supports_seats" domain="[('supports_seats', '=', True)]"/>
                 <filter string="Usage-based" name="usage_based" domain="[('usage_based', '=', True)]"/>
+                <filter string="Has Seat Product" name="has_seat_product" domain="[('seat_product_id', '!=', False)]"/>
                 <group expand="1" string="Group By">
                     <filter string="Billing Period" name="billing_period" context="{'group_by': 'billing_period'}"/>
                     <filter string="Active" name="group_active" context="{'group_by': 'active'}"/>
+                    <filter string="Supports Seats" name="group_supports_seats" context="{'group_by': 'supports_seats'}"/>
                 </group>
             </search>
         </field>
@@ -291,7 +327,12 @@
             </p>
             <p>
                 Define subscription plans with different pricing models, billing periods,
-                and features to offer to your customers.
+                seat configurations, and features to offer to your customers.
+            </p>
+            <p>
+                <strong>💡 Tip:</strong> For organizational memberships, enable "Supports Multiple Seats" 
+                and configure seat pricing. You can also link a seat add-on product that provides 
+                multiple seats per purchase.
             </p>
         </field>
     </record>

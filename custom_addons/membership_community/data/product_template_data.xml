@@ -3,8 +3,8 @@
     <data noupdate="0">
 
         <!-- ========================================== -->
-        <!-- DEFAULT MEMBERSHIP PRODUCTS -->
-        <!-- Template products for quick setup -->
+        <!-- DEFAULT MEMBERSHIP PRODUCTS (ENHANCED) -->
+        <!-- Template products with seat configurations -->
         <!-- ========================================== -->
 
         <!-- Individual Membership Product -->
@@ -34,7 +34,7 @@
             <field name="description">Annual individual membership with full access to all member benefits and services.</field>
         </record>
 
-        <!-- Organizational Membership Product -->
+        <!-- Organizational Membership Product (ENHANCED) -->
         <record id="product_membership_organizational" model="product.template">
             <field name="name">Organizational Membership - Annual</field>
             <field name="type">service</field>
@@ -58,7 +58,148 @@
                 ref('benefit_networking_events'),
                 ref('benefit_member_support')
             ])]"/>
-            <field name="description">Annual organizational membership with enhanced benefits and multiple user access.</field>
+            <!-- NEW: Organizational settings -->
+            <field name="requires_organization_info" eval="True"/>
+            <field name="requires_primary_contact" eval="True"/>
+            <field name="allow_multiple_admins" eval="True"/>
+            <field name="seat_allocation_type">admin_managed</field>
+            <field name="seat_approval_required" eval="False"/>
+            <field name="require_org_tax_id" eval="False"/>
+            <field name="require_org_address" eval="True"/>
+            <field name="max_org_size">0</field>
+            <field name="description">Annual organizational membership with enhanced benefits and multiple user access. Includes 5 seats with admin-managed allocation.</field>
+        </record>
+
+        <!-- Organizational Membership - 5 Seat Pack (NEW) -->
+        <record id="product_membership_org_5seat_pack" model="product.template">
+            <field name="name">Organizational Membership - 5 Seat Pack</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">100.00</field>
+            <field name="is_membership_product" eval="True"/>
+            <field name="is_subscription" eval="True"/>
+            <field name="subscription_product_type">membership</field>
+            <field name="default_member_category_id" ref="membership_category_organizational_default"/>
+            <field name="portal_access_level">premium</field>
+            <!-- NEW: Seat product fields -->
+            <field name="provides_seats" eval="True"/>
+            <field name="seat_quantity">5</field>
+            <field name="parent_membership_product_id" ref="product_membership_organizational"/>
+            <field name="feature_ids" eval="[(6, 0, [
+                ref('feature_portal_access'),
+                ref('feature_directory'),
+                ref('feature_event_registration'),
+                ref('feature_publications'),
+                ref('feature_networking')
+            ])]"/>
+            <field name="benefit_ids" eval="[(6, 0, [
+                ref('benefit_event_discount'),
+                ref('benefit_publication_access'),
+                ref('benefit_directory_listing'),
+                ref('benefit_networking_events'),
+                ref('benefit_member_support')
+            ])]"/>
+            <field name="description">Add 5 additional user seats to your organizational membership. Each seat provides full access to all membership benefits.</field>
+        </record>
+
+        <!-- Organizational Membership - Individual Seat Add-on (NEW) -->
+        <record id="product_membership_org_single_seat" model="product.template">
+            <field name="name">Organizational Membership - Additional Seat</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">25.00</field>
+            <field name="is_membership_product" eval="True"/>
+            <field name="is_subscription" eval="True"/>
+            <field name="subscription_product_type">membership</field>
+            <field name="default_member_category_id" ref="membership_category_organizational_default"/>
+            <field name="portal_access_level">premium</field>
+            <!-- NEW: Single seat product -->
+            <field name="provides_seats" eval="True"/>
+            <field name="seat_quantity">1</field>
+            <field name="parent_membership_product_id" ref="product_membership_organizational"/>
+            <field name="feature_ids" eval="[(6, 0, [
+                ref('feature_portal_access'),
+                ref('feature_directory'),
+                ref('feature_event_registration'),
+                ref('feature_publications'),
+                ref('feature_networking')
+            ])]"/>
+            <field name="benefit_ids" eval="[(6, 0, [
+                ref('benefit_event_discount'),
+                ref('benefit_publication_access'),
+                ref('benefit_directory_listing'),
+                ref('benefit_networking_events'),
+                ref('benefit_member_support')
+            ])]"/>
+            <field name="description">Add a single user seat to your organizational membership with full access to all benefits.</field>
+        </record>
+
+        <!-- Premium Organizational Membership - 10 Seats (NEW EXAMPLE) -->
+        <record id="product_membership_org_premium" model="product.template">
+            <field name="name">Premium Organizational Membership - Annual</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">1000.00</field>
+            <field name="is_membership_product" eval="True"/>
+            <field name="subscription_product_type">organizational_membership</field>
+            <field name="default_member_category_id" ref="membership_category_organizational_default"/>
+            <field name="portal_access_level">premium</field>
+            <field name="feature_ids" eval="[(6, 0, [
+                ref('feature_portal_access'),
+                ref('feature_directory'),
+                ref('feature_event_registration'),
+                ref('feature_publications'),
+                ref('feature_networking')
+            ])]"/>
+            <field name="benefit_ids" eval="[(6, 0, [
+                ref('benefit_event_discount'),
+                ref('benefit_publication_access'),
+                ref('benefit_directory_listing'),
+                ref('benefit_networking_events'),
+                ref('benefit_member_support')
+            ])]"/>
+            <!-- NEW: Premium organizational settings -->
+            <field name="requires_organization_info" eval="True"/>
+            <field name="requires_primary_contact" eval="True"/>
+            <field name="allow_multiple_admins" eval="True"/>
+            <field name="seat_allocation_type">self_service</field>
+            <field name="seat_approval_required" eval="True"/>
+            <field name="require_org_tax_id" eval="True"/>
+            <field name="require_org_address" eval="True"/>
+            <field name="max_org_size">100</field>
+            <field name="description">Premium organizational membership for larger organizations. Includes 10 seats with self-service allocation and approval workflow. Maximum 100 employees.</field>
+        </record>
+
+        <!-- Premium Org - 10 Seat Pack (NEW) -->
+        <record id="product_membership_org_premium_10seat_pack" model="product.template">
+            <field name="name">Premium Organizational - 10 Seat Pack</field>
+            <field name="type">service</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="list_price">180.00</field>
+            <field name="is_membership_product" eval="True"/>
+            <field name="is_subscription" eval="True"/>
+            <field name="subscription_product_type">membership</field>
+            <field name="default_member_category_id" ref="membership_category_organizational_default"/>
+            <field name="portal_access_level">premium</field>
+            <!-- NEW: Larger seat pack -->
+            <field name="provides_seats" eval="True"/>
+            <field name="seat_quantity">10</field>
+            <field name="parent_membership_product_id" ref="product_membership_org_premium"/>
+            <field name="feature_ids" eval="[(6, 0, [
+                ref('feature_portal_access'),
+                ref('feature_directory'),
+                ref('feature_event_registration'),
+                ref('feature_publications'),
+                ref('feature_networking')
+            ])]"/>
+            <field name="benefit_ids" eval="[(6, 0, [
+                ref('benefit_event_discount'),
+                ref('benefit_publication_access'),
+                ref('benefit_directory_listing'),
+                ref('benefit_networking_events'),
+                ref('benefit_member_support')
+            ])]"/>
+            <field name="description">Add 10 additional user seats to your premium organizational membership at a discounted rate. Each seat provides full access to all membership benefits.</field>
         </record>
 
         <!-- Chapter Membership Product -->
