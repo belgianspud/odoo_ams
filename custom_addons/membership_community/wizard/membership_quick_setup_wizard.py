@@ -94,6 +94,14 @@ class MembershipQuickSetupWizard(models.TransientModel):
         help='Number of user seats included (for organization memberships)'
     )
     
+    max_seats = fields.Integer(
+        string='Maximum Seats',
+        compute='_compute_max_seats',
+        readonly=False,
+        store=True,
+        help='Maximum total seats allowed (0 = unlimited)'
+    )
+    
     create_seat_addon = fields.Boolean(
         string='Create Additional Seat Product',
         default=True,
@@ -108,12 +116,23 @@ class MembershipQuickSetupWizard(models.TransientModel):
         help='Price for each additional seat beyond included seats'
     )
     
+    @api.depends('includes_seats')
+    def _compute_max_seats(self):
+        """Set default max seats to match included seats"""
+        for wizard in self:
+            if wizard.includes_seats > 0:
+                wizard.max_seats = wizard.includes_seats
+            else:
+                wizard.max_seats = 0
+    
     @api.depends('price', 'includes_seats')
     def _compute_seat_price(self):
         """Calculate per-seat price based on total price"""
         for wizard in self:
             if wizard.includes_seats > 0:
-                wizard.seat_price = wizard.price / wizard.includes_seats
+                # Add 20% premium over pro-rated base price
+                base_per_seat = wizard.price / wizard.includes_seats
+                wizard.seat_price = base_per_seat * 1.2
             else:
                 wizard.seat_price = wizard.price / 5  # Default to 5 seats
     
@@ -193,7 +212,7 @@ class MembershipQuickSetupWizard(models.TransientModel):
         # 5. Create seat add-on if organization membership
         seat_product = False
         if self.membership_type == 'organizational' and self.create_seat_addon:
-            seat_product = self._create_seat_addon(product)
+            seat_product = self._create_seat_addon(product, plan)
         
         # 6. Show success message and open product
         return self._show_success_action(product, seat_product)
@@ -215,8 +234,14 @@ class MembershipQuickSetupWizard(models.TransientModel):
         if self.price <= 0:
             raise ValidationError(_('Price must be greater than zero.'))
         
-        if self.membership_type == 'organizational' and self.includes_seats <= 0:
-            raise ValidationError(_('Organization memberships must include at least 1 seat.'))
+        if self.membership_type == 'organizational':
+            if self.includes_seats <= 0:
+                raise ValidationError(_('Organization memberships must include at least 1 seat.'))
+            
+            if self.max_seats > 0 and self.max_seats < self.includes_seats:
+                raise ValidationError(_(
+                    'Maximum seats (%s) cannot be less than included seats (%s).'
+                ) % (self.max_seats, self.includes_seats))
     
     def _create_category(self):
         """Create membership category"""
@@ -316,9 +341,18 @@ class MembershipQuickSetupWizard(models.TransientModel):
                 'trial_price': 0.0,
             })
         
+        # Add seat configuration for organizational memberships
+        if self.membership_type == 'organizational':
+            plan_vals.update({
+                'supports_seats': True,
+                'included_seats': self.includes_seats,
+                'max_seats': self.max_seats,
+                'additional_seat_price': self.seat_price,
+            })
+        
         return self.env['subscription.plan'].create(plan_vals)
     
-    def _create_seat_addon(self, parent_product):
+    def _create_seat_addon(self, parent_product, parent_plan):
         """Create additional seat product for organizations"""
         
         # Create seat category
@@ -347,7 +381,7 @@ class MembershipQuickSetupWizard(models.TransientModel):
         seat_category.default_product_id = seat_product.id
         
         # Create plan for seats
-        self.env['subscription.plan'].create({
+        seat_plan = self.env['subscription.plan'].create({
             'name': f"{self.name} - Additional Seat",
             'code': f"{self.code}_SEAT",
             'product_template_id': seat_product.id,
@@ -356,6 +390,9 @@ class MembershipQuickSetupWizard(models.TransientModel):
             'billing_interval': 1,
             'billing_type': self.billing_type,
         })
+        
+        # Link seat product to parent plan
+        parent_plan.seat_product_id = seat_product.id
         
         return seat_product
     
@@ -366,8 +403,12 @@ class MembershipQuickSetupWizard(models.TransientModel):
         message += f'📦 Product: {product.name}\n'
         message += f'💰 Price: {self.price} / {self.billing_period}\n'
         
+        if self.membership_type == 'organizational':
+            message += f'\n👥 Included Seats: {self.includes_seats}\n'
+            message += f'📊 Maximum Seats: {self.max_seats if self.max_seats > 0 else "Unlimited"}\n'
+        
         if seat_product:
-            message += f'\n👥 Additional Seat Product: {seat_product.name}\n'
+            message += f'\n👤 Additional Seat Product: {seat_product.name}\n'
             message += f'💰 Seat Price: {self.seat_price} / {self.billing_period}\n'
         
         message += f'\n✨ You can now start selling this membership!'

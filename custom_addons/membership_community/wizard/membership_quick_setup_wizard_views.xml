@@ -45,10 +45,20 @@
                 <group string="5️⃣ Organization Settings" invisible="membership_type != 'organizational'">
                     <group>
                         <field name="includes_seats"/>
+                        <field name="max_seats"/>
                         <field name="create_seat_addon"/>
                     </group>
                     <group>
-                        <field name="seat_price" invisible="not create_seat_addon"/>
+                        <field name="seat_price" invisible="not create_seat_addon" widget="monetary"/>
+                        <div class="alert alert-info" role="alert" colspan="2">
+                            <p class="mb-0">
+                                <i class="fa fa-info-circle"/> 
+                                <strong>Seat Configuration:</strong><br/>
+                                • <strong>Included Seats:</strong> Seats included in base price<br/>
+                                • <strong>Max Seats:</strong> Maximum total seats (0 = unlimited)<br/>
+                                • <strong>Seat Price:</strong> Price per additional seat beyond included
+                            </p>
+                        </div>
                     </group>
                 </group>
                 

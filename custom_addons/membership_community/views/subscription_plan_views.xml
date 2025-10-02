@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Subscription Plan List View -->
+    <record id="subscription_plan_view_list" model="ir.ui.view">
+        <field name="name">subscription.plan.view.list</field>
+        <field name="model">subscription.plan</field>
+        <field name="arch" type="xml">
+            <list string="Subscription Plans">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="price" widget="monetary"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="billing_period"/>
+                <field name="billing_interval"/>
+                <field name="supports_seats" optional="show"/>
+                <field name="included_seats" optional="hide"/>
+                <field name="subscription_count"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Subscription Plan Form View -->
+    <record id="subscription_plan_view_form" model="ir.ui.view">
+        <field name="name">subscription.plan.view.form</field>
+        <field name="model">subscription.plan</field>
+        <field name="arch" type="xml">
+            <form string="Subscription Plan">
+                <header>
+                    <field name="active" widget="boolean_toggle"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_subscriptions" type="object" 
+                                class="oe_stat_button" icon="fa-users">
+                            <field name="subscription_count" widget="statinfo" string="Subscriptions"/>
+                        </button>
+                        <button name="action_view_seat_subscriptions" type="object" 
+                                class="oe_stat_button" icon="fa-user-plus"
+                                invisible="not supports_seats">
+                            <field name="active_seat_subscriptions" widget="statinfo" string="Seat Subscriptions"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Plan Name"/>
+                        </h1>
+                        <div>
+                            <field name="code" placeholder="Plan Code"/>
+                        </div>
+                    </div>
+                    
+                    <notebook>
+                        <page string="General Information" name="general">
+                            <group>
+                                <group string="Basic Information">
+                                    <field name="sequence"/>
+                                    <field name="product_template_id" 
+                                           domain="[('is_subscription', '=', True)]"
+                                           options="{'no_create': True}"/>
+                                    <field name="description" widget="html"/>
+                                </group>
+                                <group string="Pricing">
+                                    <field name="price"/>
+                                    <field name="currency_id"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <page string="Billing Configuration" name="billing">
+                            <group>
+                                <group string="Billing Period">
+                                    <field name="billing_period"/>
+                                    <field name="billing_interval"/>
+                                </group>
+                                <group string="Billing Type">
+                                    <field name="billing_type" widget="radio"/>
+                                    <div class="alert alert-info" role="alert" colspan="2">
+                                        <strong>Billing Types:</strong>
+                                        <ul class="mb-0">
+                                            <li><strong>Anniversary-based:</strong> Billing cycle is calculated from the purchase date. 
+                                                E.g., if purchased on Jan 15 with yearly billing, next billing is Jan 15 next year.</li>
+                                            <li><strong>Calendar-based:</strong> Billing aligns with calendar periods. 
+                                                E.g., if purchased on Jan 15 with yearly billing, next billing is Dec 31 this year.</li>
+                                        </ul>
+                                    </div>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Renewal Settings">
+                                    <field name="auto_renew"/>
+                                </group>
+                                <group string="Trial Configuration">
+                                    <field name="trial_period"/>
+                                    <field name="trial_price" invisible="trial_period == 0"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <page string="Usage &amp; Limits" name="usage">
+                            <group>
+                                <group string="Plan Limits">
+                                    <field name="user_limit"/>
+                                    <field name="storage_limit"/>
+                                    <field name="min_duration"/>
+                                    <field name="max_duration"/>
+                                    <field name="cancellation_period"/>
+                                </group>
+                                <group string="Usage-based Billing">
+                                    <field name="usage_based"/>
+                                    <field name="usage_unit" invisible="not usage_based"/>
+                                    <field name="usage_price" invisible="not usage_based"/>
+                                    <field name="included_usage" invisible="not usage_based"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <page string="Seat Management" name="seats">
+                            <group>
+                                <group string="Seat Configuration">
+                                    <field name="supports_seats"/>
+                                    <field name="included_seats" invisible="not supports_seats"/>
+                                    <field name="max_seats" invisible="not supports_seats"/>
+                                    <field name="additional_seat_price" widget="monetary" invisible="not supports_seats"/>
+                                    <field name="seat_product_id" invisible="not supports_seats"
+                                           domain="[('is_membership_product', '=', True)]"
+                                           options="{'no_create': True}"/>
+                                </group>
+                                <group string="Seat Statistics" invisible="not supports_seats">
+                                    <field name="total_allocated_seats" readonly="1"/>
+                                    <field name="active_seat_subscriptions" readonly="1"/>
+                                </group>
+                            </group>
+                            
+                            <div class="alert alert-info" role="alert" invisible="not supports_seats">
+                                <h4 class="alert-heading">
+                                    <i class="fa fa-info-circle"/> About Seat Management
+                                </h4>
+                                <p class="mb-0">
+                                    <strong>Included Seats:</strong> Number of seats included in the base price.<br/>
+                                    <strong>Maximum Seats:</strong> Total seats allowed (0 = unlimited).<br/>
+                                    <strong>Additional Seat Price:</strong> Price per seat beyond included seats.<br/>
+                                    <strong>Seat Product:</strong> Optional separate product for purchasing additional seats.
+                                </p>
+                            </div>
+                            
+                            <div class="alert alert-warning" role="alert" invisible="supports_seats">
+                                <p class="mb-0">
+                                    <i class="fa fa-exclamation-triangle"/> 
+                                    <strong>Seat management is disabled.</strong> Enable "Supports Multiple Seats" to configure organizational memberships with seat allocations.
+                                </p>
+                            </div>
+                        </page>
+                        
+                        <page string="Lifecycle Management" name="lifecycle">
+                            <div class="alert alert-info" role="alert">
+                                <strong>Plan-specific Lifecycle Settings</strong>
+                                <p class="mb-0">
+                                    Configure custom grace, suspension, and termination periods for this plan. 
+                                    Set to 0 to use the system defaults configured in Settings.
+                                </p>
+                            </div>
+                            
+                            <group>
+                                <group string="Grace Period">
+                                    <field name="grace_period_days"/>
+                                    <div class="text-muted" colspan="2">
+                                        Days after subscription expires before suspension. 
+                                        Full access maintained during grace period.
+                                        <br/><em>0 = use system default</em>
+                                    </div>
+                                </group>
+                                <group string="Suspension Period">
+                                    <field name="suspend_period_days"/>
+                                    <div class="text-muted" colspan="2">
+                                        Days in suspended state before termination. 
+                                        Limited access during suspension.
+                                        <br/><em>0 = use system default</em>
+                                    </div>
+                                </group>
+                            </group>
+                            
+                            <group>
+                                <group string="Termination">
+                                    <field name="terminate_period_days"/>
+                                    <div class="text-muted" colspan="2">
+                                        Total days before final termination.
+                                        <br/><em>0 = use system default</em>
+                                    </div>
+                                </group>
+                                <group/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <chatter/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Subscription Plan Kanban View -->
+    <record id="subscription_plan_view_kanban" model="ir.ui.view">
+        <field name="name">subscription.plan.view.kanban</field>
+        <field name="model">subscription.plan</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_dashboard">
+                <field name="name"/>
+                <field name="price"/>
+                <field name="currency_id"/>
+                <field name="billing_period"/>
+                <field name="subscription_count"/>
+                <field name="supports_seats"/>
+                <field name="included_seats"/>
+                <field name="active"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                        </strong>
+                                    </div>
+                                    <div class="o_kanban_manage_button_section">
+                                        <a class="o_kanban_manage_toggle_button" href="#">
+                                            <i class="fa fa-ellipsis-v" role="img" aria-label="Manage" title="Manage"/>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div class="o_kanban_record_bottom">
+                                        <div class="oe_kanban_bottom_left">
+                                            <span><field name="price" widget="monetary"/> / <field name="billing_period"/></span>
+                                            <div t-if="record.supports_seats.raw_value" class="mt-1">
+                                                <span class="badge text-bg-info">
+                                                    <i class="fa fa-users"/> <field name="included_seats"/> seats
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="oe_kanban_bottom_right">
+                                            <span class="badge badge-pill">
+                                                <field name="subscription_count"/> subscriptions
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Subscription Plan Search View -->
+    <record id="subscription_plan_view_search" model="ir.ui.view">
+        <field name="name">subscription.plan.view.search</field>
+        <field name="model">subscription.plan</field>
+        <field name="arch" type="xml">
+            <search string="Subscription Plans">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="billing_period"/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Inactive" name="inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter string="Supports Seats" name="supports_seats" domain="[('supports_seats', '=', True)]"/>
+                <filter string="Usage-based" name="usage_based" domain="[('usage_based', '=', True)]"/>
+                <group expand="1" string="Group By">
+                    <filter string="Billing Period" name="billing_period" context="{'group_by': 'billing_period'}"/>
+                    <filter string="Active" name="group_active" context="{'group_by': 'active'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Subscription Plan Action -->
+    <record id="action_subscription_plan" model="ir.actions.act_window">
+        <field name="name">Subscription Plans</field>
+        <field name="res_model">subscription.plan</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first subscription plan!
+            </p>
+            <p>
+                Define subscription plans with different pricing models, billing periods,
+                and features to offer to your customers.
+            </p>
+        </field>
+    </record>
+
+</odoo>

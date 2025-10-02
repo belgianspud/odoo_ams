@@ -95,6 +95,46 @@ class ResPartner(models.Model):
     )
 
     # ==========================================
+    # ORGANIZATIONAL MEMBERSHIP - SEAT SUPPORT
+    # ==========================================
+    
+    parent_organization_id = fields.Many2one(
+        'res.partner',
+        string='Parent Organization',
+        help='Organization this person is affiliated with (for seat memberships)',
+        index=True
+    )
+    
+    child_member_ids = fields.One2many(
+        'res.partner',
+        'parent_organization_id',
+        string='Organization Members',
+        help='Individuals with seats under this organizational membership'
+    )
+    
+    is_seat_member = fields.Boolean(
+        string='Is Seat Member',
+        compute='_compute_is_seat_member',
+        store=True,
+        help='This member has a seat through an organizational subscription'
+    )
+    
+    seat_subscription_id = fields.Many2one(
+        'subscription.subscription',
+        string='Seat Subscription',
+        help='The seat subscription this member uses',
+        index=True
+    )
+    
+    organizational_role = fields.Selection([
+        ('primary_contact', 'Primary Contact'),
+        ('billing_contact', 'Billing Contact'),
+        ('seat_user', 'Seat User'),
+        ('admin', 'Administrator'),
+    ], string='Organizational Role',
+       help='Role within the parent organization')
+
+    # ==========================================
     # BASIC DATES
     # ==========================================
     
@@ -155,7 +195,6 @@ class ResPartner(models.Model):
         string='Available Benefits',
         help='Benefits available through current memberships'
     )
-
 
     # ==========================================
     # GRACE PERIOD & LIFECYCLE FIELDS (from primary membership)
@@ -219,35 +258,65 @@ class ResPartner(models.Model):
     # COMPUTE METHODS - Core only
     # ==========================================
 
-    @api.depends('membership_subscription_ids', 'membership_subscription_ids.state')
+    @api.depends('membership_subscription_ids', 'membership_subscription_ids.state',
+                 'seat_subscription_id', 'seat_subscription_id.state')
     def _compute_is_member(self):
-        """Compute if partner is a member"""
+        """Compute if partner is a member - includes seat memberships"""
         for partner in self:
-            partner.is_member = bool(
+            # Check direct memberships
+            has_direct = bool(
                 partner.membership_subscription_ids.filtered(
                     lambda s: s.state in ['trial', 'active']
                 )
             )
+            
+            # Check seat membership
+            has_seat = bool(
+                partner.seat_subscription_id and 
+                partner.seat_subscription_id.state in ['trial', 'active']
+            )
+            
+            partner.is_member = has_direct or has_seat
 
-    @api.depends('membership_subscription_ids', 'membership_subscription_ids.date_start')
-    def _compute_member_since(self):
-        """Find earliest membership start date"""
+    @api.depends('seat_subscription_id')
+    def _compute_is_seat_member(self):
+        """Determine if this is a seat member"""
         for partner in self:
+            partner.is_seat_member = bool(partner.seat_subscription_id)
+
+    @api.depends('membership_subscription_ids', 'membership_subscription_ids.date_start',
+                 'seat_subscription_id', 'seat_subscription_id.date_start')
+    def _compute_member_since(self):
+        """Find earliest membership start date - includes seat memberships"""
+        for partner in self:
+            dates = []
+            
+            # Direct memberships
             if partner.membership_subscription_ids:
-                dates = partner.membership_subscription_ids.filtered(
+                direct_dates = partner.membership_subscription_ids.filtered(
                     lambda s: s.date_start
                 ).mapped('date_start')
-                partner.member_since = min(dates) if dates else False
-            else:
-                partner.member_since = False
+                dates.extend(direct_dates)
+            
+            # Seat membership
+            if partner.seat_subscription_id and partner.seat_subscription_id.date_start:
+                dates.append(partner.seat_subscription_id.date_start)
+            
+            partner.member_since = min(dates) if dates else False
 
-    @api.depends('membership_subscription_ids', 'membership_subscription_ids.state')
+    @api.depends('membership_subscription_ids', 'membership_subscription_ids.state',
+                 'seat_subscription_id', 'seat_subscription_id.state')
     def _compute_membership_state(self):
-        """Compute overall membership state"""
+        """Compute overall membership state - includes seat memberships"""
         for partner in self:
+            # Check direct subscriptions
             active_subs = partner.membership_subscription_ids.filtered(
                 lambda s: s.state in ['trial', 'active']
             )
+            
+            # Check seat subscription
+            if partner.seat_subscription_id and partner.seat_subscription_id.state in ['trial', 'active']:
+                active_subs |= partner.seat_subscription_id
             
             if active_subs:
                 if any(s.state == 'trial' for s in active_subs):
@@ -255,40 +324,60 @@ class ResPartner(models.Model):
                 else:
                     partner.membership_state = 'active'
             else:
-                expired = partner.membership_subscription_ids.filtered(
-                    lambda s: s.state == 'expired'
-                )
+                # Check for expired
+                all_subs = partner.membership_subscription_ids
+                if partner.seat_subscription_id:
+                    all_subs |= partner.seat_subscription_id
+                
+                expired = all_subs.filtered(lambda s: s.state == 'expired')
                 partner.membership_state = 'expired' if expired else 'none'
 
-    @api.depends('membership_subscription_ids', 'membership_subscription_ids.state')
+    @api.depends('membership_subscription_ids', 'membership_subscription_ids.state',
+                 'seat_subscription_id', 'seat_subscription_id.state')
     def _compute_primary_membership(self):
-        """Find current active primary membership"""
+        """Find current active primary membership - prioritizes direct over seat"""
         for partner in self:
+            # First, try direct memberships
             primary = partner.membership_subscription_ids.filtered(
                 lambda s: s.state in ['trial', 'active']
             ).sorted(lambda s: s.date_start, reverse=True)
             
-            partner.primary_membership_id = primary[:1] if primary else False
+            if primary:
+                partner.primary_membership_id = primary[:1]
+            elif partner.seat_subscription_id and partner.seat_subscription_id.state in ['trial', 'active']:
+                # Fall back to seat subscription if no direct membership
+                partner.primary_membership_id = partner.seat_subscription_id
+            else:
+                partner.primary_membership_id = False
 
-    @api.depends('membership_subscription_ids')
+    @api.depends('membership_subscription_ids', 'seat_subscription_id')
     def _compute_membership_counts(self):
-        """Count total and active memberships"""
+        """Count total and active memberships - includes seat"""
         for partner in self:
-            partner.membership_count = len(partner.membership_subscription_ids)
+            all_subs = partner.membership_subscription_ids
+            if partner.seat_subscription_id:
+                all_subs |= partner.seat_subscription_id
+            
+            partner.membership_count = len(all_subs)
             partner.active_membership_count = len(
-                partner.membership_subscription_ids.filtered(
-                    lambda s: s.state in ['trial', 'active']
-                )
+                all_subs.filtered(lambda s: s.state in ['trial', 'active'])
             )
 
-    @api.depends('primary_membership_id', 'primary_membership_id.membership_category_id')
+    @api.depends('primary_membership_id', 'primary_membership_id.membership_category_id',
+                 'seat_subscription_id', 'seat_subscription_id.membership_category_id')
     def _compute_membership_category(self):
-        """Get current member category"""
+        """Get current member category - handles seat memberships"""
         for partner in self:
             if partner.primary_membership_id:
                 partner.membership_category_id = (
                     partner.primary_membership_id.membership_category_id or
                     partner.primary_membership_id.plan_id.product_template_id.default_member_category_id
+                )
+            elif partner.seat_subscription_id:
+                # Get category from seat subscription
+                partner.membership_category_id = (
+                    partner.seat_subscription_id.membership_category_id or
+                    partner.seat_subscription_id.plan_id.product_template_id.default_member_category_id
                 )
             else:
                 partner.membership_category_id = False
@@ -317,15 +406,21 @@ class ResPartner(models.Model):
                 partner.days_until_expiry = 0
 
     @api.depends('membership_subscription_ids', 
-                 'membership_subscription_ids.plan_id.product_template_id.portal_access_level')
+                 'membership_subscription_ids.plan_id.product_template_id.portal_access_level',
+                 'seat_subscription_id',
+                 'seat_subscription_id.plan_id.product_template_id.portal_access_level')
     def _compute_portal_access(self):
-        """Compute portal access level"""
+        """Compute portal access level - includes seat subscriptions"""
         levels = ['none', 'basic', 'standard', 'premium']
         
         for partner in self:
             active_subs = partner.membership_subscription_ids.filtered(
                 lambda s: s.state in ['trial', 'active']
             )
+            
+            # Add seat subscription if active
+            if partner.seat_subscription_id and partner.seat_subscription_id.state in ['trial', 'active']:
+                active_subs |= partner.seat_subscription_id
             
             if not active_subs:
                 partner.portal_access_level = 'none'
@@ -342,26 +437,83 @@ class ResPartner(models.Model):
                 partner.has_portal_access = max_level != 'none'
 
     @api.depends('membership_subscription_ids', 
-                 'membership_subscription_ids.plan_id.product_template_id.feature_ids')
+                 'membership_subscription_ids.plan_id.product_template_id.feature_ids',
+                 'seat_subscription_id',
+                 'seat_subscription_id.plan_id.product_template_id.feature_ids')
     def _compute_available_features(self):
-        """Get all features from active subscriptions"""
+        """Get all features from active subscriptions - includes seat subscriptions"""
         for partner in self:
             active_subs = partner.membership_subscription_ids.filtered(
                 lambda s: s.state in ['trial', 'active']
             )
+            
+            # Add seat subscription if active
+            if partner.seat_subscription_id and partner.seat_subscription_id.state in ['trial', 'active']:
+                active_subs |= partner.seat_subscription_id
+            
             features = active_subs.mapped('plan_id.product_template_id.feature_ids')
             partner.available_features = features
 
     @api.depends('membership_subscription_ids', 
-                 'membership_subscription_ids.plan_id.product_template_id.benefit_ids')
+                 'membership_subscription_ids.plan_id.product_template_id.benefit_ids',
+                 'seat_subscription_id',
+                 'seat_subscription_id.plan_id.product_template_id.benefit_ids',
+                 'parent_organization_id',
+                 'parent_organization_id.membership_subscription_ids',
+                 'parent_organization_id.membership_subscription_ids.plan_id.product_template_id.benefit_ids')
     def _compute_available_benefits(self):
-        """Get all benefits from active subscriptions"""
+        """Get all benefits from active subscriptions - includes seat subscriptions and parent org"""
         for partner in self:
+            benefits = self.env['membership.benefit']
+            
+            # Direct subscriptions
             active_subs = partner.membership_subscription_ids.filtered(
                 lambda s: s.state in ['trial', 'active']
             )
-            benefits = active_subs.mapped('plan_id.product_template_id.benefit_ids')
+            benefits |= active_subs.mapped('plan_id.product_template_id.benefit_ids')
+            
+            # Seat subscription
+            if partner.seat_subscription_id and partner.seat_subscription_id.state in ['trial', 'active']:
+                benefits |= partner.seat_subscription_id.plan_id.product_template_id.benefit_ids
+            
+            # Inherit from parent organization if seat member
+            if partner.parent_organization_id and partner.is_seat_member:
+                parent_subs = partner.parent_organization_id.membership_subscription_ids.filtered(
+                    lambda s: s.state in ['trial', 'active']
+                )
+                benefits |= parent_subs.mapped('plan_id.product_template_id.benefit_ids')
+            
             partner.available_benefits = benefits
+
+    @api.depends('primary_membership_id', 'primary_membership_id.paid_through_date',
+                 'primary_membership_id.grace_period_end_date',
+                 'primary_membership_id.suspend_end_date',
+                 'primary_membership_id.terminate_date',
+                 'primary_membership_id.is_in_grace_period',
+                 'primary_membership_id.lifecycle_stage',
+                 'primary_membership_id.days_until_suspension',
+                 'primary_membership_id.days_until_termination')
+    def _compute_membership_lifecycle(self):
+        """Get lifecycle information from primary membership"""
+        for partner in self:
+            if partner.primary_membership_id:
+                partner.paid_through_date = partner.primary_membership_id.paid_through_date
+                partner.grace_period_end_date = partner.primary_membership_id.grace_period_end_date
+                partner.suspend_end_date = partner.primary_membership_id.suspend_end_date
+                partner.terminate_date = partner.primary_membership_id.terminate_date
+                partner.is_in_grace_period = partner.primary_membership_id.is_in_grace_period
+                partner.lifecycle_stage = partner.primary_membership_id.lifecycle_stage
+                partner.days_until_suspension = partner.primary_membership_id.days_until_suspension
+                partner.days_until_termination = partner.primary_membership_id.days_until_termination
+            else:
+                partner.paid_through_date = False
+                partner.grace_period_end_date = False
+                partner.suspend_end_date = False
+                partner.terminate_date = False
+                partner.is_in_grace_period = False
+                partner.lifecycle_stage = False
+                partner.days_until_suspension = 0
+                partner.days_until_termination = 0
 
     # ==========================================
     # ACTIONS - Basic
@@ -370,12 +522,17 @@ class ResPartner(models.Model):
     def action_view_memberships(self):
         """View all membership subscriptions"""
         self.ensure_one()
+        
+        all_subs = self.membership_subscription_ids
+        if self.seat_subscription_id:
+            all_subs |= self.seat_subscription_id
+        
         return {
             'type': 'ir.actions.act_window',
             'name': _('Memberships'),
             'res_model': 'subscription.subscription',
             'view_mode': 'list,form',
-            'domain': [('id', 'in', self.membership_subscription_ids.ids)],
+            'domain': [('id', 'in', all_subs.ids)],
             'context': {'default_partner_id': self.id}
         }
 
@@ -420,34 +577,3 @@ class ResPartner(models.Model):
             return False
         
         return benefit in self.available_benefits
-
-
-    @api.depends('primary_membership_id', 'primary_membership_id.paid_through_date',
-                 'primary_membership_id.grace_period_end_date',
-                 'primary_membership_id.suspend_end_date',
-                 'primary_membership_id.terminate_date',
-                 'primary_membership_id.is_in_grace_period',
-                 'primary_membership_id.lifecycle_stage',
-                 'primary_membership_id.days_until_suspension',
-                 'primary_membership_id.days_until_termination')
-    def _compute_membership_lifecycle(self):
-        """Get lifecycle information from primary membership"""
-        for partner in self:
-            if partner.primary_membership_id:
-                partner.paid_through_date = partner.primary_membership_id.paid_through_date
-                partner.grace_period_end_date = partner.primary_membership_id.grace_period_end_date
-                partner.suspend_end_date = partner.primary_membership_id.suspend_end_date
-                partner.terminate_date = partner.primary_membership_id.terminate_date
-                partner.is_in_grace_period = partner.primary_membership_id.is_in_grace_period
-                partner.lifecycle_stage = partner.primary_membership_id.lifecycle_stage
-                partner.days_until_suspension = partner.primary_membership_id.days_until_suspension
-                partner.days_until_termination = partner.primary_membership_id.days_until_termination
-            else:
-                partner.paid_through_date = False
-                partner.grace_period_end_date = False
-                partner.suspend_end_date = False
-                partner.terminate_date = False
-                partner.is_in_grace_period = False
-                partner.lifecycle_stage = False
-                partner.days_until_suspension = 0
-                partner.days_until_termination = 0
