@@ -105,19 +105,5 @@
         <field name="view_mode">form</field>
         <field name="target">new</field>
     </record>
-    
-    <!-- Add to Configuration Menu (Priority 1 - at the top) -->
-    <menuitem id="menu_membership_quick_setup"
-              name="🚀 Quick Setup"
-              parent="menu_membership_configuration"
-              action="action_membership_quick_setup"
-              sequence="1"/>
-    
-    <!-- Also add to main Membership menu for visibility -->
-    <menuitem id="menu_membership_quick_setup_main"
-              name="🚀 Quick Setup"
-              parent="menu_membership_root"
-              action="action_membership_quick_setup"
-              sequence="5"/>
 
 </odoo>

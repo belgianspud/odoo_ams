@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ========================================== -->
+    <!-- SEAT ALLOCATION/DEALLOCATION EMAIL TEMPLATES -->
+    <!-- ========================================== -->
+
+    <!-- Seat Allocated Notification -->
+    <record id="email_template_seat_allocated" model="mail.template">
+        <field name="name">Membership: Seat Allocated</field>
+        <field name="model_id" ref="subscription_management.model_subscription_subscription"/>
+        <field name="subject">🎉 Your Membership Seat Has Been Activated</field>
+        <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+        <field name="email_to">{{ object.seat_holder_id.email }}</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+    <div style="background: #28a745; padding: 30px; text-align: center;">
+        <h2 style="color: white; margin: 0;">🎉 Welcome to Your Membership!</h2>
+    </div>
+    
+    <div style="padding: 30px; background: #f8f9fa;">
+        <p style="font-size: 16px;">Dear {{ object.seat_holder_id.name }},</p>
+        
+        <p style="font-size: 16px;">Great news! You've been granted a membership seat through your organization, <strong>{{ object.parent_subscription_id.partner_id.name }}</strong>.</p>
+        
+        <div style="background: #d4edda; border-left: 4px solid #28a745; padding: 20px; margin: 20px 0; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #155724;">📋 Your Membership Details:</h3>
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Membership Type:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.membership_category_id.name or 'Organization Member' }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Organization:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.parent_subscription_id.partner_id.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Plan:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.plan_id.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Start Date:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.date_start }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>End Date:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.date_end or 'Ongoing' }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Status:</strong></td>
+                    <td style="padding: 8px 0; color: #28a745;"><strong>✓ ACTIVE</strong></td>
+                </tr>
+            </table>
+        </div>
+        
+        <h3 style="color: #28a745;">🎁 Your Membership Benefits:</h3>
+        <p style="font-size: 14px;">As a seat member, you have access to all the benefits of your organization's membership plan:</p>
+        <ul style="font-size: 14px;">
+            {% set benefits = object.plan_id.product_template_id.benefit_ids %}
+            {% if benefits %}
+                {% for benefit in benefits[:5] %}
+                <li><strong>{{ benefit.name }}</strong> - {{ benefit.short_description or benefit.description or '' }}</li>
+                {% endfor %}
+                {% if benefits|length > 5 %}
+                <li><em>...and {{ benefits|length - 5 }} more benefits!</em></li>
+                {% endif %}
+            {% else %}
+                <li>Full access to member portal</li>
+                <li>Member directory listing</li>
+                <li>Event registration privileges</li>
+                <li>Publication access</li>
+                <li>Networking tools</li>
+            {% endif %}
+        </ul>
+        
+        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="font-size: 14px; margin: 0; color: #856404;">
+                <strong>💡 Getting Started:</strong><br/>
+                Your membership is active immediately! You can now access all member resources and benefits through the member portal.
+            </p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/my/home" style="background: #28a745; color: white; padding: 18px 50px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 18px;">Access Member Portal</a>
+        </div>
+        
+        <h3 style="color: #333;">📞 Need Help?</h3>
+        <p style="font-size: 14px; color: #6c757d;">
+            If you have any questions about your membership or need assistance accessing member resources, 
+            please don't hesitate to contact us or reach out to your organization's membership administrator.
+        </p>
+        
+        <p style="font-size: 14px; color: #6c757d;">Welcome aboard!<br/>{{ user.name }}</p>
+    </div>
+    
+    <div style="background: #343a40; color: white; padding: 20px; text-align: center; font-size: 12px;">
+        <p style="margin: 0;">
+            This is an organizational seat membership provided by {{ object.parent_subscription_id.partner_id.name }}.
+        </p>
+    </div>
+</div>
+        </field>
+    </record>
+
+    <!-- Seat Deallocated Notification -->
+    <record id="email_template_seat_deallocated" model="mail.template">
+        <field name="name">Membership: Seat Deallocated</field>
+        <field name="model_id" ref="subscription_management.model_subscription_subscription"/>
+        <field name="subject">Your Membership Seat Has Been Removed</field>
+        <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+        <field name="email_to">{{ object.seat_holder_id.email }}</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+    <div style="background: #6c757d; padding: 30px; text-align: center;">
+        <h2 style="color: white; margin: 0;">Membership Seat Removed</h2>
+    </div>
+    
+    <div style="padding: 30px; background: #f8f9fa;">
+        <p style="font-size: 16px;">Dear {{ object.seat_holder_id.name }},</p>
+        
+        <p style="font-size: 16px;">
+            Your membership seat through <strong>{{ object.parent_subscription_id.partner_id.name }}</strong> 
+            has been removed and your subscription has been cancelled.
+        </p>
+        
+        <div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 20px; margin: 20px 0; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #721c24;">📋 Deallocation Details:</h3>
+            <table style="width: 100%; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Organization:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.parent_subscription_id.partner_id.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Membership Plan:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.plan_id.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Subscription:</strong></td>
+                    <td style="padding: 8px 0;">{{ object.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Removal Date:</strong></td>
+                    <td style="padding: 8px 0;">{{ context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% if ctx.get('reason') %}
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Reason:</strong></td>
+                    <td style="padding: 8px 0;">{{ ctx.get('reason') }}</td>
+                </tr>
+                {% endif %}
+                {% if ctx.get('reason_notes') %}
+                <tr>
+                    <td style="padding: 8px 0;"><strong>Notes:</strong></td>
+                    <td style="padding: 8px 0;">{{ ctx.get('reason_notes') }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+        
+        <h3 style="color: #dc3545;">What This Means:</h3>
+        <ul style="font-size: 14px; color: #721c24;">
+            <li>Your access to member benefits has been <strong>terminated</strong></li>
+            <li>You will no longer have access to the <strong>member portal</strong></li>
+            <li>Your <strong>directory listing</strong> has been removed</li>
+            <li>You cannot register for <strong>member-only events</strong></li>
+            <li>Access to <strong>publications and resources</strong> has ended</li>
+        </ul>
+        
+        <div style="background: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="font-size: 14px; margin: 0; color: #0c5460;">
+                <strong>💡 Want to Continue Your Membership?</strong><br/>
+                If you'd like to maintain access to membership benefits, you can sign up for an individual membership. 
+                Contact us for more information about individual membership options.
+            </p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/subscription/plans" style="background: #667eea; color: white; padding: 18px 50px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 18px;">View Membership Plans</a>
+        </div>
+        
+        <h3 style="color: #333;">Questions?</h3>
+        <p style="font-size: 14px; color: #6c757d;">
+            If you believe this was done in error or have questions about your membership status, 
+            please contact us or reach out to {{ object.parent_subscription_id.partner_id.name }}.
+        </p>
+        
+        <p style="font-size: 14px; color: #6c757d;">
+            Thank you for being a member. We hope to see you again in the future!
+        </p>
+        
+        <p style="font-size: 14px; color: #6c757d;">Best regards,<br/>{{ user.name }}</p>
+    </div>
+    
+    <div style="background: #343a40; color: white; padding: 20px; text-align: center; font-size: 12px;">
+        <p style="margin: 0;">
+            This seat was provided by {{ object.parent_subscription_id.partner_id.name }}.
+        </p>
+    </div>
+</div>
+        </field>
+    </record>
+
+</odoo>

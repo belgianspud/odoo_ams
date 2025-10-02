@@ -56,14 +56,7 @@
                     <group string="Seat to Remove">
                         <field name="seat_subscription_id" 
                                domain="[('parent_subscription_id', '=', subscription_id), ('is_seat_subscription', '=', True)]"
-                               options="{'no_create': True}">
-                            <tree>
-                                <field name="name"/>
-                                <field name="seat_holder_id"/>
-                                <field name="state"/>
-                                <field name="date_start"/>
-                            </tree>
-                        </field>
+                               options="{'no_create': True}"/>
                         <field name="seat_holder_id" invisible="not seat_subscription_id"/>
                         <field name="seat_holder_email" invisible="not seat_holder_id"/>
                     </group>
@@ -75,17 +68,7 @@
                         <field name="seat_subscription_ids" nolabel="1"
                                widget="many2many"
                                options="{'no_create': True}"
-                               context="{'tree_view_ref': 'membership_community.seat_subscription_deallocation_tree'}">
-                            <tree decoration-success="state=='active'" 
-                                  decoration-warning="state=='suspended'"
-                                  decoration-muted="state in ('cancelled','expired')">
-                                <field name="name"/>
-                                <field name="seat_holder_id"/>
-                                <field name="date_start"/>
-                                <field name="date_end" optional="hide"/>
-                                <field name="state" widget="badge"/>
-                            </tree>
-                        </field>
+                               domain="[('parent_subscription_id', '=', subscription_id), ('is_seat_subscription', '=', True)]"/>
                     </group>
                 </group>
                 
@@ -116,9 +99,8 @@
                      invisible="seats_to_deallocate == 0">
                     <p class="mb-0">
                         <i class="fa fa-exclamation-triangle"/> 
-                        <strong>Warning:</strong> This action will immediately remove access for 
-                        <strong><span t-field="seats_to_deallocate"/></strong> employee(s). 
-                        Their individual subscriptions will be <strong><span t-field="seat_action"/></strong>.
+                        <strong>Warning:</strong> This action will immediately remove access for the selected employee(s). 
+                        Their individual subscriptions will be cancelled.
                     </p>
                 </div>
                 
@@ -150,7 +132,7 @@
         <field name="name">subscription.subscription.seat.deallocation.tree</field>
         <field name="model">subscription.subscription</field>
         <field name="arch" type="xml">
-            <tree decoration-success="state=='active'" 
+            <list decoration-success="state=='active'" 
                   decoration-warning="state=='suspended'"
                   decoration-muted="state in ('cancelled','expired')"
                   create="false" delete="false">
@@ -162,7 +144,7 @@
                        decoration-success="state=='active'"
                        decoration-warning="state=='suspended'"
                        decoration-danger="state in ('cancelled','expired')"/>
-            </tree>
+            </list>
         </field>
     </record>
 

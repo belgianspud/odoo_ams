@@ -40,10 +40,10 @@
                         <label for="available_seat_count"/>
                         <div>
                             <field name="available_seat_count" readonly="1" class="oe_inline"/>
-                            <span t-if="available_seat_count > 0" class="text-success">
+                            <span class="text-success" invisible="available_seat_count == 0">
                                 <i class="fa fa-check-circle"/> available
                             </span>
-                            <span t-else="" class="text-danger">
+                            <span class="text-danger" invisible="available_seat_count &gt; 0">
                                 <i class="fa fa-exclamation-triangle"/> no seats available!
                             </span>
                         </div>
@@ -78,16 +78,9 @@
                     <group string="Select Employees" colspan="2">
                         <field name="employee_ids" nolabel="1" 
                                widget="many2many_tags"
-                               options="{'no_create': False, 'color_field': 'color'}"
+                               options="{'no_create': False}"
                                context="{'default_parent_id': partner_id, 'default_is_company': False}"
-                               placeholder="Select employees to allocate seats to...">
-                            <tree>
-                                <field name="name"/>
-                                <field name="email"/>
-                                <field name="phone"/>
-                                <field name="seat_subscription_id"/>
-                            </tree>
-                        </field>
+                               placeholder="Select employees to allocate seats to..."/>
                         <field name="organizational_role"/>
                     </group>
                 </group>
@@ -108,14 +101,12 @@
                      invisible="seats_to_allocate &lt;= available_seat_count or seats_to_allocate == 0">
                     <p class="mb-0">
                         <i class="fa fa-exclamation-triangle"/> 
-                        <strong>Warning:</strong> You are trying to allocate 
-                        <strong><span t-field="seats_to_allocate"/></strong> seats, 
-                        but only <strong><span t-field="available_seat_count"/></strong> are available.
+                        <strong>Warning:</strong> You are trying to allocate more seats than available.
                     </p>
                 </div>
                 
                 <div class="alert alert-danger" role="alert" 
-                     invisible="available_seat_count > 0">
+                     invisible="available_seat_count &gt; 0">
                     <p class="mb-0">
                         <i class="fa fa-times-circle"/> 
                         <strong>No Seats Available:</strong> All seats for this subscription have been allocated. 
@@ -128,7 +119,7 @@
                             name="action_allocate_seats" 
                             type="object" 
                             class="btn-primary"
-                            invisible="seats_to_allocate == 0 or seats_to_allocate > available_seat_count"/>
+                            invisible="seats_to_allocate == 0 or seats_to_allocate &gt; available_seat_count"/>
                     <button string="Cancel" 
                             class="btn-secondary" 
                             special="cancel"/>

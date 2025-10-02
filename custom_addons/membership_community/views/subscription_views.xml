@@ -143,10 +143,10 @@
                                 <label for="available_seat_count"/>
                                 <div>
                                     <field name="available_seat_count" readonly="1" class="oe_inline"/>
-                                    <span t-if="available_seat_count > 0" class="text-success">
+                                    <span class="text-success" invisible="available_seat_count == 0">
                                         <i class="fa fa-check-circle"/> seats available
                                     </span>
-                                    <span t-else="" class="text-danger">
+                                    <span class="text-danger" invisible="available_seat_count &gt; 0">
                                         <i class="fa fa-exclamation-triangle"/> no seats available
                                     </span>
                                 </div>
@@ -183,7 +183,7 @@
                         
                         <field name="child_subscription_ids" nolabel="1" 
                                context="{'default_parent_subscription_id': id}">
-                            <tree decoration-success="state=='active'" 
+                            <list decoration-success="state=='active'" 
                                   decoration-warning="state=='suspended'"
                                   decoration-muted="state in ('cancelled','expired')"
                                   create="false" delete="false">
@@ -208,10 +208,10 @@
                                         class="btn-link text-danger"
                                         context="{'default_subscription_id': parent.id, 'default_seat_subscription_id': id}"
                                         confirm="Are you sure you want to remove this seat allocation?"/>
-                            </tree>
+                            </list>
                         </field>
                         
-                        <div class="alert alert-warning mt-3" role="alert" invisible="allocated_seat_count > 0">
+                        <div class="alert alert-warning mt-3" role="alert" invisible="allocated_seat_count &gt; 0">
                             <p class="mb-0">
                                 <i class="fa fa-exclamation-circle"/> 
                                 <strong>No seats allocated yet.</strong> Click "Allocate Seats" above to assign seats to employees.
@@ -409,13 +409,13 @@
                 </xpath>
                 
                 <xpath expr="//div[@class='o_kanban_record_body']//div[last()]" position="after">
-                    <div t-if="record.membership_category_id.value">
+                    <div invisible="not membership_category_id">
                         Category: <field name="membership_category_id"/>
                     </div>
-                    <div t-if="record.supports_seats.raw_value" class="mt-1">
+                    <div invisible="not supports_seats" class="mt-1">
                         <span class="badge text-bg-info">
                             <i class="fa fa-users"/> 
-                            <field name="allocated_seat_count"/>/<field name="available_seat_count"/> seats
+                            <field name="allocated_seat_count"/>/<field name="max_seats"/> seats
                         </span>
                     </div>
                 </xpath>
