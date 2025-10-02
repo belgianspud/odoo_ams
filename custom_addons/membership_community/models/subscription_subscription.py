@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -111,6 +111,78 @@ class SubscriptionSubscription(models.Model):
     )
 
     # ==========================================
+    # ORGANIZATIONAL MEMBERSHIP - SEAT SUPPORT
+    # ==========================================
+    
+    # Parent-Child Subscription Relationships (REQUIRED for org memberships)
+    parent_subscription_id = fields.Many2one(
+        'subscription.subscription',
+        string='Parent Subscription',
+        help='Parent organizational subscription (for seat subscriptions)',
+        index=True,
+        ondelete='cascade'
+    )
+    
+    child_subscription_ids = fields.One2many(
+        'subscription.subscription',
+        'parent_subscription_id',
+        string='Seat Subscriptions',
+        help='Child seat subscriptions under this organizational subscription'
+    )
+    
+    is_seat_subscription = fields.Boolean(
+        string='Is Seat Subscription',
+        compute='_compute_is_seat_subscription',
+        store=True,
+        help='This subscription is a seat under an organizational subscription'
+    )
+    
+    seat_holder_id = fields.Many2one(
+        'res.partner',
+        string='Seat Holder',
+        help='Individual using this seat (for seat subscriptions)',
+        index=True
+    )
+    
+    # Seat Allocation (REQUIRED for org memberships)
+    max_seats = fields.Integer(
+        string='Maximum Seats',
+        help='Maximum number of seats allowed for this subscription',
+        default=0
+    )
+    
+    allocated_seat_count = fields.Integer(
+        string='Allocated Seats',
+        compute='_compute_seat_counts',
+        store=True,
+        help='Number of seats currently allocated'
+    )
+    
+    available_seat_count = fields.Integer(
+        string='Available Seats',
+        compute='_compute_seat_counts',
+        store=True,
+        help='Number of seats still available'
+    )
+
+    # ==========================================
+    # COMPUTE METHODS - SEAT MANAGEMENT
+    # ==========================================
+    
+    @api.depends('parent_subscription_id')
+    def _compute_is_seat_subscription(self):
+        """Determine if this is a seat subscription"""
+        for sub in self:
+            sub.is_seat_subscription = bool(sub.parent_subscription_id)
+    
+    @api.depends('child_subscription_ids', 'max_seats')
+    def _compute_seat_counts(self):
+        """Calculate allocated and available seat counts"""
+        for sub in self:
+            sub.allocated_seat_count = len(sub.child_subscription_ids)
+            sub.available_seat_count = max(0, sub.max_seats - sub.allocated_seat_count)
+
+    # ==========================================
     # NOTE: Lifecycle fields are inherited from subscription_management
     # We do NOT redefine them here:
     # - grace_period_days, suspend_period_days, terminate_period_days
@@ -145,6 +217,11 @@ class SubscriptionSubscription(models.Model):
                     # Set default category from product if not provided
                     if 'membership_category_id' not in vals and product.default_member_category_id:
                         vals['membership_category_id'] = product.default_member_category_id.id
+                    
+                    # Set max_seats from plan if organizational subscription
+                    if product.subscription_product_type == 'organizational_membership':
+                        if 'max_seats' not in vals and plan.max_seats > 0:
+                            vals['max_seats'] = plan.max_seats
         
         return super().create(vals_list)
 
@@ -238,6 +315,180 @@ class SubscriptionSubscription(models.Model):
                     _logger.error(f"Failed to send welcome email for {self.name}: {e}")
 
     # ==========================================
+    # ORGANIZATIONAL MEMBERSHIP - SEAT METHODS
+    # ==========================================
+    
+    def action_allocate_seat(self, employee_partner_id):
+        """
+        Allocate a seat to an employee
+        
+        Args:
+            employee_partner_id: ID of the partner to assign the seat to
+            
+        Returns:
+            subscription.subscription: The created seat subscription
+        """
+        self.ensure_one()
+        
+        if not self.plan_id.supports_seats:
+            raise UserError(_("This subscription plan does not support multiple seats"))
+        
+        if self.available_seat_count <= 0:
+            raise UserError(_(
+                "No available seats. Maximum seats: %s, Allocated: %s"
+            ) % (self.max_seats, self.allocated_seat_count))
+        
+        # Get employee
+        employee = self.env['res.partner'].browse(employee_partner_id)
+        
+        # Check if employee already has a seat
+        existing_seat = self.child_subscription_ids.filtered(
+            lambda s: s.seat_holder_id == employee
+        )
+        if existing_seat:
+            raise UserError(_(
+                "%s already has a seat subscription (%s)"
+            ) % (employee.name, existing_seat.name))
+        
+        # Create seat subscription
+        seat_sub = self.env['subscription.subscription'].create({
+            'partner_id': employee_partner_id,
+            'plan_id': self.plan_id.id,
+            'parent_subscription_id': self.id,
+            'seat_holder_id': employee_partner_id,
+            'membership_category_id': self.membership_category_id.id,
+            'date_start': self.date_start,
+            'date_end': self.date_end,
+            'state': 'active' if self.state == 'active' else 'draft',
+            'price': 0.0,  # Seat price is covered by parent
+        })
+        
+        # Link employee to organization
+        employee.write({
+            'parent_organization_id': self.partner_id.id,
+            'seat_subscription_id': seat_sub.id,
+        })
+        
+        self.message_post(
+            body=_("Seat allocated to %s") % employee.name,
+            message_type='notification'
+        )
+        
+        _logger.info(f"Allocated seat {seat_sub.name} to {employee.name} under {self.name}")
+        
+        return seat_sub
+    
+    def action_deallocate_seat(self, seat_subscription_id):
+        """
+        Deallocate a seat
+        
+        Args:
+            seat_subscription_id: ID of the seat subscription to deallocate
+            
+        Returns:
+            bool: True if successful
+        """
+        self.ensure_one()
+        
+        seat_sub = self.env['subscription.subscription'].browse(seat_subscription_id)
+        
+        if seat_sub.parent_subscription_id != self:
+            raise UserError(_("This seat does not belong to this subscription"))
+        
+        employee_name = seat_sub.seat_holder_id.name if seat_sub.seat_holder_id else 'Unknown'
+        
+        # Remove seat holder link
+        if seat_sub.seat_holder_id:
+            seat_sub.seat_holder_id.write({
+                'seat_subscription_id': False,
+            })
+        
+        # Cancel seat subscription
+        seat_sub.action_cancel()
+        
+        self.message_post(
+            body=_("Seat deallocated from %s") % employee_name,
+            message_type='notification'
+        )
+        
+        _logger.info(f"Deallocated seat {seat_sub.name} from {employee_name}")
+        
+        return True
+    
+    def action_view_seats(self):
+        """View all seat subscriptions for this organization"""
+        self.ensure_one()
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Seat Subscriptions - %s') % self.name,
+            'res_model': 'subscription.subscription',
+            'view_mode': 'list,form',
+            'domain': [('parent_subscription_id', '=', self.id)],
+            'context': {
+                'default_parent_subscription_id': self.id,
+                'default_plan_id': self.plan_id.id,
+            }
+        }
+
+    # ==========================================
+    # LIFECYCLE SYNCHRONIZATION (Parent → Child)
+    # ==========================================
+    
+    def action_suspend(self):
+        """Suspend subscription and cascade to child seats"""
+        result = super().action_suspend()
+        
+        # Suspend all child seat subscriptions
+        if self.child_subscription_ids:
+            for child in self.child_subscription_ids:
+                if child.state in ['active', 'trial']:
+                    child.write({'state': 'suspended'})
+                    child.message_post(
+                        body=_("Suspended due to parent organization suspension"),
+                        message_type='notification'
+                    )
+            
+            _logger.info(f"Suspended {len(self.child_subscription_ids)} child seats under {self.name}")
+        
+        return result
+    
+    def action_cancel(self):
+        """Cancel subscription and cascade to child seats"""
+        result = super().action_cancel()
+        
+        # Cancel all child seat subscriptions
+        if self.child_subscription_ids:
+            for child in self.child_subscription_ids:
+                if child.state not in ['cancelled', 'expired']:
+                    child.write({'state': 'cancelled'})
+                    child.message_post(
+                        body=_("Cancelled due to parent organization cancellation"),
+                        message_type='notification'
+                    )
+            
+            _logger.info(f"Cancelled {len(self.child_subscription_ids)} child seats under {self.name}")
+        
+        return result
+    
+    def action_activate(self):
+        """Activate subscription and cascade to child seats"""
+        result = super().action_activate()
+        
+        # Reactivate child seat subscriptions
+        if self.child_subscription_ids:
+            for child in self.child_subscription_ids.filtered(lambda s: s.state == 'suspended'):
+                child.write({'state': 'active'})
+                child.message_post(
+                    body=_("Reactivated due to parent organization reactivation"),
+                    message_type='notification'
+                )
+            
+            _logger.info(f"Reactivated {len(self.child_subscription_ids)} child seats under {self.name}")
+        
+        return result
+
+    # ==========================================
     # EMAIL TEMPLATE OVERRIDES
     # Override parent methods to use membership-specific templates
     # These methods are called by subscription_management cron jobs
@@ -315,3 +566,29 @@ class SubscriptionSubscription(models.Model):
                         ),
                         message_type='notification'
                     )
+    
+    @api.constrains('parent_subscription_id', 'seat_holder_id')
+    def _check_seat_subscription_integrity(self):
+        """Validate seat subscription setup"""
+        for subscription in self:
+            # If this is a seat subscription, it must have a seat holder
+            if subscription.parent_subscription_id and not subscription.seat_holder_id:
+                raise ValidationError(_(
+                    "Seat subscriptions must have a seat holder assigned"
+                ))
+            
+            # Cannot have both parent and children
+            if subscription.parent_subscription_id and subscription.child_subscription_ids:
+                raise ValidationError(_(
+                    "A subscription cannot be both a parent and a child (seat)"
+                ))
+    
+    @api.constrains('max_seats', 'child_subscription_ids')
+    def _check_seat_allocation_limit(self):
+        """Ensure we don't exceed max seats"""
+        for subscription in self:
+            if subscription.max_seats > 0:
+                if len(subscription.child_subscription_ids) > subscription.max_seats:
+                    raise ValidationError(_(
+                        "Cannot allocate more than %s seats. Currently allocated: %s"
+                    ) % (subscription.max_seats, len(subscription.child_subscription_ids)))
