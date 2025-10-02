@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Quick Setup Wizard Form View -->
+    <record id="membership_quick_setup_wizard_form" model="ir.ui.view">
+        <field name="name">membership.quick.setup.wizard.form</field>
+        <field name="model">membership.quick.setup.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Quick Membership Setup">
+                
+                <div class="alert alert-info" role="alert">
+                    <h4 class="alert-heading">
+                        <i class="fa fa-rocket"/> Quick Membership Setup
+                    </h4>
+                    <p class="mb-0">
+                        This wizard will create a complete membership configuration in one step:
+                        <strong>Category + Product + Subscription Plan</strong>
+                    </p>
+                </div>
+                
+                <group>
+                    <group string="1️⃣ Membership Type">
+                        <field name="membership_type" widget="radio"/>
+                    </group>
+                </group>
+                
+                <group>
+                    <group string="2️⃣ Basic Information">
+                        <field name="name" placeholder="e.g., Standard Individual Member"/>
+                        <field name="code" placeholder="e.g., IND_STD"/>
+                        <field name="description" placeholder="Describe what this membership includes..."/>
+                    </group>
+                    <group string="3️⃣ Pricing">
+                        <field name="price"/>
+                        <field name="billing_period" widget="radio"/>
+                        <field name="billing_type" widget="radio"/>
+                    </group>
+                </group>
+                
+                <group string="4️⃣ Trial Period (Optional)">
+                    <field name="has_trial"/>
+                    <field name="trial_days" invisible="not has_trial"/>
+                </group>
+                
+                <group string="5️⃣ Organization Settings" invisible="membership_type != 'organizational'">
+                    <group>
+                        <field name="includes_seats"/>
+                        <field name="create_seat_addon"/>
+                    </group>
+                    <group>
+                        <field name="seat_price" invisible="not create_seat_addon"/>
+                    </group>
+                </group>
+                
+                <group string="6️⃣ Included Features">
+                    <group>
+                        <field name="has_portal_access"/>
+                        <field name="has_directory"/>
+                        <field name="has_events"/>
+                    </group>
+                    <group>
+                        <field name="has_publications"/>
+                        <field name="has_networking"/>
+                    </group>
+                </group>
+                
+                <group string="7️⃣ Member Classification">
+                    <group>
+                        <field name="is_voting_member"/>
+                        <field name="is_full_member"/>
+                    </group>
+                </group>
+                
+                <div class="alert alert-success mt-3" role="alert">
+                    <p class="mb-0">
+                        <i class="fa fa-check-circle"/> 
+                        <strong>Ready to create:</strong> This will generate a complete membership 
+                        configuration that's ready to sell immediately!
+                    </p>
+                </div>
+                
+                <footer>
+                    <button string="🚀 Create Membership" name="action_create_membership" 
+                            type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Quick Setup Wizard Action -->
+    <record id="action_membership_quick_setup" model="ir.actions.act_window">
+        <field name="name">Quick Membership Setup</field>
+        <field name="res_model">membership.quick.setup.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    
+    <!-- Add to Configuration Menu (Priority 1 - at the top) -->
+    <menuitem id="menu_membership_quick_setup"
+              name="🚀 Quick Setup"
+              parent="menu_membership_configuration"
+              action="action_membership_quick_setup"
+              sequence="1"/>
+    
+    <!-- Also add to main Membership menu for visibility -->
+    <menuitem id="menu_membership_quick_setup_main"
+              name="🚀 Quick Setup"
+              parent="menu_membership_root"
+              action="action_membership_quick_setup"
+              sequence="5"/>
+
+</odoo>

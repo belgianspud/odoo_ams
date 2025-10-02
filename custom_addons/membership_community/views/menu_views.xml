@@ -3,7 +3,7 @@
     <data>
 
         <!-- ========================================== -->
-        <!-- MAIN MENU STRUCTURE -->
+        <!-- MAIN MENU STRUCTURE (SIMPLIFIED) -->
         <!-- ========================================== -->
 
         <!-- Root Menu: Membership -->
@@ -11,6 +11,16 @@
                   name="Membership"
                   sequence="50"
                   groups="membership_community.group_membership_user"/>
+
+        <!-- ========================================== -->
+        <!-- QUICK SETUP - TOP PRIORITY -->
+        <!-- ========================================== -->
+        
+        <menuitem id="menu_membership_quick_setup_top"
+                  name="🚀 Quick Setup"
+                  parent="menu_membership_root"
+                  action="action_membership_quick_setup"
+                  sequence="5"/>
 
         <!-- ========================================== -->
         <!-- MEMBERSHIPS SECTION -->
@@ -97,6 +107,13 @@
                   sequence="90"
                   groups="membership_community.group_membership_manager"/>
 
+        <!-- Quick Setup in Configuration too -->
+        <menuitem id="menu_membership_quick_setup_config"
+                  name="🚀 Quick Setup"
+                  parent="menu_membership_configuration"
+                  action="action_membership_quick_setup"
+                  sequence="1"/>
+
         <!-- Categories Submenu -->
         <menuitem id="menu_membership_categories_config"
                   name="Member Categories"
@@ -126,6 +143,14 @@
                   parent="menu_membership_features_benefits"
                   action="membership_community.action_membership_benefit"
                   sequence="20"/>
+
+        <!-- Settings - Link to Subscription Management Settings -->
+        <menuitem id="menu_membership_settings"
+                  name="Settings"
+                  parent="menu_membership_configuration"
+                  action="subscription_management.action_subscription_settings"
+                  sequence="90"
+                  groups="membership_community.group_membership_manager"/>
 
         <!-- ========================================== -->
         <!-- REPORTING SECTION -->
@@ -161,6 +186,10 @@
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
                     Create your first membership product
+                </p>
+                <p>
+                    Use the <strong>🚀 Quick Setup</strong> wizard for easy configuration, or create 
+                    membership products manually here.
                 </p>
                 <p>
                     Membership products define the different types of memberships you offer.

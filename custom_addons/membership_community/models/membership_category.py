@@ -5,7 +5,10 @@ from odoo.exceptions import ValidationError
 
 class MembershipCategory(models.Model):
     """
-    Base Membership Category - Simplified for extension by specialized modules
+    Simplified Membership Category - Classification only
+    
+    The product defines behavior (pricing, billing, features, benefits)
+    The category just classifies the member type
     """
     _name = 'membership.category'
     _description = 'Membership Category'
@@ -55,30 +58,22 @@ class MembershipCategory(models.Model):
     )
 
     # ==========================================
-    # CATEGORY TYPE - Base types only
-    # Specialized modules extend this selection
+    # CATEGORY TYPE - This determines behavior
     # ==========================================
     
-    category_type = fields.Selection(
-        selection='_get_category_types',
-        string='Category Type',
-        required=True,
-        default='individual',
-        tracking=True,
-        help='Primary classification of this member category'
-    )
+    category_type = fields.Selection([
+        ('individual', 'Individual Member'),
+        ('organizational', 'Organization Member'),
+        ('chapter', 'Chapter Member'),
+        ('seat', 'Organization Seat'),
+    ], string='Category Type',
+       required=True,
+       default='individual',
+       tracking=True,
+       help='Primary classification - determines member type and available products')
     
-    @api.model
-    def _get_category_types(self):
-        """Base category types - extended by other modules"""
-        return [
-            ('individual', 'Individual'),
-            ('organizational', 'Organizational'),
-            ('chapter', 'Chapter'),
-        ]
-
     # ==========================================
-    # BASIC CLASSIFICATION
+    # SIMPLE CLASSIFICATION FLAGS
     # ==========================================
     
     is_voting_member = fields.Boolean(
@@ -93,48 +88,17 @@ class MembershipCategory(models.Model):
         default=True,
         help='This is a full membership category (vs affiliate/associate)'
     )
-    
-    member_tier = fields.Selection([
-        ('basic', 'Basic'),
-        ('standard', 'Standard'),
-        ('premium', 'Premium'),
-        ('platinum', 'Platinum')
-    ], string='Member Tier',
-       default='standard',
-       help='Tier level for benefits and access')
 
     # ==========================================
-    # BASIC ACCESS
-    # ==========================================
-    
-    default_portal_access = fields.Selection([
-        ('none', 'No Access'),
-        ('basic', 'Basic'),
-        ('standard', 'Standard'),
-        ('premium', 'Premium')
-    ], string='Default Portal Access',
-       default='standard',
-       help='Default portal access level for this category')
-
-    # ==========================================
-    # VERIFICATION - Core only
-    # ==========================================
-    
-    requires_verification = fields.Boolean(
-        string='Requires Verification',
-        default=False,
-        help='Membership in this category requires staff verification'
-    )
-
-    # ==========================================
-    # PRODUCT MAPPING
+    # PRODUCT LINK - THE CORE CONNECTION
+    # This is what defines pricing, billing, features, benefits
     # ==========================================
     
     default_product_id = fields.Many2one(
         'product.template',
-        string='Default Product',
+        string='Membership Product',
         domain=[('is_membership_product', '=', True)],
-        help='Default membership product for this category'
+        help='The subscription product that defines pricing, billing, features, and benefits for this category'
     )
 
     # ==========================================
@@ -161,36 +125,6 @@ class MembershipCategory(models.Model):
     # BUSINESS METHODS - Simplified
     # ==========================================
 
-    def check_eligibility(self, partner_id):
-        """
-        Basic eligibility check - extended by specialized modules
-        
-        Args:
-            partner_id: res.partner record or ID
-        
-        Returns:
-            tuple: (bool: is_eligible, list: reasons if not eligible)
-        """
-        self.ensure_one()
-        
-        if isinstance(partner_id, int):
-            partner = self.env['res.partner'].browse(partner_id)
-        else:
-            partner = partner_id
-        
-        reasons = []
-        
-        # Basic checks only - specialized modules add their own
-        # Check organizational compatibility
-        if self.category_type == 'organizational' and not partner.is_company:
-            reasons.append(_("This category is for organizations only."))
-        
-        if self.category_type != 'organizational' and partner.is_company:
-            reasons.append(_("This category is for individuals only."))
-        
-        is_eligible = len(reasons) == 0
-        return (is_eligible, reasons)
-
     def get_available_products(self):
         """
         Get products available to this category
@@ -200,12 +134,24 @@ class MembershipCategory(models.Model):
         """
         self.ensure_one()
         
-        # Return all active membership products
-        # Specialized modules can add filtering
-        return self.env['product.template'].search([
+        # If category has default product, return it
+        if self.default_product_id:
+            return self.default_product_id
+        
+        # Otherwise return all membership products of matching type
+        domain = [
             ('is_membership_product', '=', True),
             ('active', '=', True)
-        ])
+        ]
+        
+        # Filter by subscription type if available
+        if self.category_type in ['individual', 'organizational', 'chapter', 'seat']:
+            domain.append(('subscription_product_type', '=', 
+                          'membership' if self.category_type == 'individual' 
+                          else 'organizational_membership' if self.category_type == 'organizational'
+                          else self.category_type))
+        
+        return self.env['product.template'].search(domain)
 
     def action_view_members(self):
         """View members in this category"""
@@ -246,7 +192,7 @@ class MembershipCategory(models.Model):
         return result
 
     # ==========================================
-    # CONSTRAINTS - Basic only
+    # CONSTRAINTS
     # ==========================================
 
     @api.constrains('code')

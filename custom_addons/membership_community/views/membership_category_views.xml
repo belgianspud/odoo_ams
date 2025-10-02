@@ -3,7 +3,7 @@
     <data>
 
         <!-- ========================================== -->
-        <!-- MEMBERSHIP CATEGORY VIEWS (BASE - SIMPLIFIED) -->
+        <!-- MEMBERSHIP CATEGORY VIEWS (SIMPLIFIED) -->
         <!-- ========================================== -->
 
         <!-- List View -->
@@ -16,7 +16,7 @@
                     <field name="name"/>
                     <field name="code"/>
                     <field name="category_type"/>
-                    <field name="member_tier"/>
+                    <field name="default_product_id"/>
                     <field name="is_voting_member"/>
                     <field name="member_count"/>
                     <field name="active"/>
@@ -24,7 +24,7 @@
             </field>
         </record>
 
-        <!-- Form View (BASE FIELDS ONLY) -->
+        <!-- Form View (SIMPLIFIED) -->
         <record id="view_membership_category_form" model="ir.ui.view">
             <field name="name">membership.category.form</field>
             <field name="model">membership.category</field>
@@ -44,7 +44,7 @@
                         <div class="oe_title">
                             <label for="name" class="oe_edit_only"/>
                             <h1>
-                                <field name="name" placeholder="e.g. Individual Member"/>
+                                <field name="name" placeholder="e.g., Individual Member"/>
                             </h1>
                         </div>
 
@@ -53,7 +53,6 @@
                                 <field name="code"/>
                                 <field name="sequence"/>
                                 <field name="category_type"/>
-                                <field name="member_tier"/>
                                 <field name="active"/>
                             </group>
                             <group name="classification" string="Classification">
@@ -66,34 +65,29 @@
                             <field name="description" placeholder="Description of this member category..."/>
                         </group>
 
-                        <notebook>
-                            <page name="access" string="Access">
-                                <group>
-                                    <group name="portal" string="Portal Access">
-                                        <field name="default_portal_access"/>
-                                    </group>
-                                    <group name="verification" string="Verification">
-                                        <field name="requires_verification"/>
-                                    </group>
-                                </group>
-                            </page>
+                        <group name="product_link" string="🔗 Product Link">
+                            <group>
+                                <field name="default_product_id" 
+                                       options="{'no_create': True}" 
+                                       domain="[('is_membership_product', '=', True)]"/>
+                            </group>
+                            <group>
+                                <div class="alert alert-info" role="alert">
+                                    <p class="mb-0">
+                                        <i class="fa fa-info-circle"/> 
+                                        <strong>Tip:</strong> The linked product defines pricing, billing, features, and benefits. 
+                                        Use <strong>🚀 Quick Setup</strong> to create category + product together!
+                                    </p>
+                                </div>
+                            </group>
+                        </group>
 
-                            <page name="products" string="Products">
-                                <group>
-                                    <group name="product_mapping" string="Product Mapping">
-                                        <field name="default_product_id" options="{'no_create': True}" domain="[('is_membership_product', '=', True)]"/>
-                                    </group>
-                                </group>
-                            </page>
-
-                            <page name="statistics" string="Statistics">
-                                <group>
-                                    <group name="counts" string="Member Counts">
-                                        <field name="member_count"/>
-                                    </group>
-                                </group>
-                            </page>
-                        </notebook>
+                        <group name="statistics" string="Statistics">
+                            <group>
+                                <field name="member_count" readonly="1"/>
+                            </group>
+                            <group/>
+                        </group>
                     </sheet>
                     <div class="oe_chatter">
                         <chatter/>
@@ -118,14 +112,16 @@
                     <filter string="Individual" name="individual" domain="[('category_type', '=', 'individual')]"/>
                     <filter string="Organizational" name="organizational" domain="[('category_type', '=', 'organizational')]"/>
                     <filter string="Chapter" name="chapter" domain="[('category_type', '=', 'chapter')]"/>
+                    <filter string="Seat" name="seat" domain="[('category_type', '=', 'seat')]"/>
                     
                     <separator/>
                     <filter string="Voting Members" name="voting" domain="[('is_voting_member', '=', True)]"/>
                     <filter string="Full Members" name="full_member" domain="[('is_full_member', '=', True)]"/>
+                    <filter string="Has Product Link" name="has_product" domain="[('default_product_id', '!=', False)]"/>
+                    <filter string="Missing Product Link" name="no_product" domain="[('default_product_id', '=', False)]"/>
                     
                     <group expand="0" string="Group By">
                         <filter string="Category Type" name="group_type" context="{'group_by': 'category_type'}"/>
-                        <filter string="Member Tier" name="group_tier" context="{'group_by': 'member_tier'}"/>
                     </group>
                 </search>
             </field>
@@ -140,8 +136,8 @@
                     <field name="name"/>
                     <field name="code"/>
                     <field name="category_type"/>
-                    <field name="member_tier"/>
                     <field name="member_count"/>
+                    <field name="default_product_id"/>
                     <field name="color"/>
                     <templates>
                         <t t-name="kanban-box">
@@ -158,7 +154,12 @@
                                 <div class="o_kanban_record_body">
                                     <field name="category_type" widget="badge"/>
                                     <br/>
-                                    <field name="member_tier" widget="badge"/>
+                                    <div t-if="record.default_product_id.value">
+                                        <i class="fa fa-link text-success"/> <field name="default_product_id"/>
+                                    </div>
+                                    <div t-else="">
+                                        <i class="fa fa-unlink text-warning"/> No product linked
+                                    </div>
                                 </div>
                                 <div class="o_kanban_record_bottom">
                                     <div class="oe_kanban_bottom_left">
@@ -184,14 +185,12 @@
                     Create your first member category
                 </p>
                 <p>
-                    Define categories for different types of members with specific eligibility 
-                    requirements and benefits.
+                    <strong>🚀 Recommended:</strong> Use the <strong>Quick Setup Wizard</strong> to create 
+                    category + product + plan in one step!
                 </p>
-                <p class="text-muted">
-                    <small>
-                        Note: Install specialized modules (membership_individual, membership_organizational, 
-                        membership_chapter) for advanced category features.
-                    </small>
+                <p>
+                    Or create categories manually here. Categories classify different types of members 
+                    and link to membership products that define pricing and benefits.
                 </p>
             </field>
         </record>
