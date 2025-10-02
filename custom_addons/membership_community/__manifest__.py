@@ -30,6 +30,7 @@ Key Features:
 - Quick Setup Wizard: Create complete membership configurations in one step
 - Leverages subscription_management for lifecycle management
 - Simplified configuration focused on ease of use
+- No duplicate lifecycle code - inherits from subscription_management
     """,
     'author': 'Your Company',
     'website': 'https://www.yourcompany.com',
@@ -38,7 +39,7 @@ Key Features:
         'base',
         'mail',
         'product',
-        'subscription_management',
+        'subscription_management',  # Core dependency for lifecycle management
     ],
     'data': [
         # Security - Load first
@@ -55,7 +56,7 @@ Key Features:
         'data/membership_email_templates.xml',
         
         # Wizard views
-        'views/membership_quick_setup_wizard_views.xml',
+        'wizards/membership_quick_setup_wizard_views.xml',
         
         # Core Views
         'views/membership_category_views.xml',
@@ -65,6 +66,9 @@ Key Features:
         'views/subscription_views.xml',
         'views/res_partner_views.xml',
         'views/menu_views.xml',
+        
+        # NOTE: res_config_settings_views.xml REMOVED
+        # Settings are now in subscription_management module
     ],
     'demo': [
         'demo/membership_category_demo.xml',

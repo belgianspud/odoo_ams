@@ -5,10 +5,15 @@ from odoo.exceptions import ValidationError
 
 class MembershipCategory(models.Model):
     """
-    Simplified Membership Category - Classification only
+    Simplified Membership Category - Classification Only
     
-    The product defines behavior (pricing, billing, features, benefits)
-    The category just classifies the member type
+    Philosophy:
+    - Category = Classification (what type of member)
+    - Product = Behavior (pricing, features, benefits)
+    - Plan = Billing (when and how they pay)
+    
+    This keeps the category model simple and delegates complexity
+    to products and plans where it belongs.
     """
     _name = 'membership.category'
     _description = 'Membership Category'
@@ -16,7 +21,7 @@ class MembershipCategory(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
     # ==========================================
-    # CORE FIELDS ONLY
+    # CORE IDENTIFICATION
     # ==========================================
     
     name = fields.Char(
@@ -24,20 +29,20 @@ class MembershipCategory(models.Model):
         required=True,
         translate=True,
         tracking=True,
-        help='Display name for this member category (e.g., Individual Member, Student Member)'
+        help='Display name (e.g., Individual Member, Student Member, Premium Corporate)'
     )
     
     code = fields.Char(
         string='Code',
         required=True,
         tracking=True,
-        help='Unique code (e.g., IND, ORG, CHAP)'
+        help='Unique identifier (e.g., IND, STU, CORP_PREM)'
     )
     
     sequence = fields.Integer(
         string='Sequence',
         default=10,
-        help='Display order in lists and forms'
+        help='Display order in lists'
     )
     
     active = fields.Boolean(
@@ -58,20 +63,52 @@ class MembershipCategory(models.Model):
     )
 
     # ==========================================
-    # CATEGORY TYPE - This determines behavior
+    # TYPE CLASSIFICATION
     # ==========================================
     
-    category_type = fields.Selection([
-        ('individual', 'Individual Member'),
-        ('organizational', 'Organization Member'),
-        ('chapter', 'Chapter Member'),
-        ('seat', 'Organization Seat'),
-    ], string='Category Type',
-       required=True,
-       default='individual',
-       tracking=True,
-       help='Primary classification - determines member type and available products')
+    category_type = fields.Selection(
+        selection='_get_category_types',
+        string='Category Type',
+        required=True,
+        default='individual',
+        tracking=True,
+        help='Primary classification determining member type'
+    )
     
+    @api.model
+    def _get_category_types(self):
+        """
+        Base category types - can be extended by other modules
+        
+        Extension pattern:
+        class MembershipCategory(models.Model):
+            _inherit = 'membership.category'
+            
+            @api.model
+            def _get_category_types(self):
+                types = super()._get_category_types()
+                types.extend([
+                    ('student', 'Student'),
+                    ('retired', 'Retired'),
+                ])
+                return types
+        """
+        return [
+            ('individual', 'Individual Member'),
+            ('organizational', 'Organization Member'),
+            ('chapter', 'Chapter Member'),
+            ('seat', 'Organization Seat'),
+        ]
+    
+    member_tier = fields.Selection([
+        ('basic', 'Basic'),
+        ('standard', 'Standard'),
+        ('premium', 'Premium'),
+        ('platinum', 'Platinum'),
+    ], string='Member Tier',
+       default='standard',
+       help='Tier level for this category')
+
     # ==========================================
     # SIMPLE CLASSIFICATION FLAGS
     # ==========================================
@@ -86,19 +123,37 @@ class MembershipCategory(models.Model):
     is_full_member = fields.Boolean(
         string='Full Membership',
         default=True,
-        help='This is a full membership category (vs affiliate/associate)'
+        help='Full membership vs affiliate/associate status'
     )
-
+    
     # ==========================================
-    # PRODUCT LINK - THE CORE CONNECTION
-    # This is what defines pricing, billing, features, benefits
+    # PRODUCT LINK - Core Connection
     # ==========================================
     
     default_product_id = fields.Many2one(
         'product.template',
-        string='Membership Product',
+        string='Default Product',
         domain=[('is_membership_product', '=', True)],
-        help='The subscription product that defines pricing, billing, features, and benefits for this category'
+        help='Default product that defines pricing, billing, features, and benefits'
+    )
+    
+    # ==========================================
+    # PORTAL & VERIFICATION - Basic
+    # ==========================================
+    
+    default_portal_access = fields.Selection([
+        ('none', 'No Access'),
+        ('basic', 'Basic'),
+        ('standard', 'Standard'),
+        ('premium', 'Premium'),
+    ], string='Default Portal Access',
+       default='standard',
+       help='Default portal access level for this category')
+    
+    requires_verification = fields.Boolean(
+        string='Requires Verification',
+        default=False,
+        help='Memberships in this category require eligibility verification'
     )
 
     # ==========================================
@@ -110,46 +165,64 @@ class MembershipCategory(models.Model):
         compute='_compute_member_count',
         help='Number of active members in this category'
     )
+    
+    subscription_count = fields.Integer(
+        string='Active Subscriptions',
+        compute='_compute_subscription_count',
+        help='Number of active subscriptions'
+    )
 
-    @api.depends('name')  # Dummy dependency - recompute manually when needed
+    @api.depends('code')  # Dummy dependency
     def _compute_member_count(self):
-        """Calculate member statistics"""
+        """Count active members in this category"""
         for category in self:
-            active_members = self.env['res.partner'].search_count([
+            category.member_count = self.env['res.partner'].search_count([
                 ('membership_category_id', '=', category.id),
-                ('is_member', '=', True)
+                ('is_member', '=', True),
             ])
-            category.member_count = active_members
+    
+    @api.depends('code')  # Dummy dependency
+    def _compute_subscription_count(self):
+        """Count active subscriptions"""
+        for category in self:
+            category.subscription_count = self.env['subscription.subscription'].search_count([
+                ('membership_category_id', '=', category.id),
+                ('state', 'in', ['trial', 'active']),
+            ])
 
     # ==========================================
-    # BUSINESS METHODS - Simplified
+    # BUSINESS METHODS
     # ==========================================
 
     def get_available_products(self):
         """
-        Get products available to this category
+        Get products available for this category
         
         Returns:
             recordset: product.template records
         """
         self.ensure_one()
         
-        # If category has default product, return it
         if self.default_product_id:
             return self.default_product_id
         
-        # Otherwise return all membership products of matching type
+        # Return all membership products of matching type
         domain = [
             ('is_membership_product', '=', True),
-            ('active', '=', True)
+            ('active', '=', True),
         ]
         
-        # Filter by subscription type if available
-        if self.category_type in ['individual', 'organizational', 'chapter', 'seat']:
-            domain.append(('subscription_product_type', '=', 
-                          'membership' if self.category_type == 'individual' 
-                          else 'organizational_membership' if self.category_type == 'organizational'
-                          else self.category_type))
+        # Filter by subscription type
+        type_map = {
+            'individual': 'membership',
+            'organizational': 'organizational_membership',
+            'chapter': 'chapter',
+            'seat': 'membership',
+        }
+        
+        sub_type = type_map.get(self.category_type)
+        if sub_type:
+            domain.append(('subscription_product_type', '=', sub_type))
         
         return self.env['product.template'].search(domain)
 
@@ -160,11 +233,21 @@ class MembershipCategory(models.Model):
             'type': 'ir.actions.act_window',
             'name': _('Members - %s') % self.name,
             'res_model': 'res.partner',
-            'view_mode': 'tree,form',
+            'view_mode': 'kanban,list,form',
             'domain': [('membership_category_id', '=', self.id)],
-            'context': {
-                'default_membership_category_id': self.id,
-            }
+            'context': {'default_membership_category_id': self.id},
+        }
+    
+    def action_view_subscriptions(self):
+        """View subscriptions in this category"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Subscriptions - %s') % self.name,
+            'res_model': 'subscription.subscription',
+            'view_mode': 'list,kanban,form',
+            'domain': [('membership_category_id', '=', self.id)],
+            'context': {'default_membership_category_id': self.id},
         }
 
     @api.model
@@ -174,14 +257,14 @@ class MembershipCategory(models.Model):
         
         Args:
             code: Category code
-        
+            
         Returns:
             membership.category record or False
         """
         return self.search([('code', '=', code)], limit=1)
 
     def name_get(self):
-        """Custom name_get to show code in parentheses"""
+        """Custom name_get to show code"""
         result = []
         for record in self:
             if record.code:
