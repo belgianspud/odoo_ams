@@ -47,6 +47,13 @@ class SubscriptionSubscription(models.Model):
         string='Subscription Type',
         store=True
     )
+    
+    supports_seats = fields.Boolean(
+        string='Supports Seats',
+        related='plan_id.supports_seats',
+        store=True,
+        help='This subscription plan supports multiple seats'
+    )
 
     # ==========================================
     # ELIGIBILITY VERIFICATION - Basic
@@ -164,6 +171,12 @@ class SubscriptionSubscription(models.Model):
         store=True,
         help='Number of seats still available'
     )
+    
+    seat_utilization = fields.Float(
+        string='Seat Utilization %',
+        compute='_compute_seat_utilization',
+        help='Percentage of seats currently in use'
+    )
 
     # ==========================================
     # COMPUTE METHODS - SEAT MANAGEMENT
@@ -181,6 +194,15 @@ class SubscriptionSubscription(models.Model):
         for sub in self:
             sub.allocated_seat_count = len(sub.child_subscription_ids)
             sub.available_seat_count = max(0, sub.max_seats - sub.allocated_seat_count)
+    
+    @api.depends('allocated_seat_count', 'max_seats')
+    def _compute_seat_utilization(self):
+        """Calculate seat utilization percentage"""
+        for sub in self:
+            if sub.max_seats > 0:
+                sub.seat_utilization = (sub.allocated_seat_count / sub.max_seats) * 100
+            else:
+                sub.seat_utilization = 0.0
 
     # ==========================================
     # NOTE: Lifecycle fields are inherited from subscription_management
@@ -429,6 +451,22 @@ class SubscriptionSubscription(models.Model):
                 'default_parent_subscription_id': self.id,
                 'default_plan_id': self.plan_id.id,
             }
+        }
+    
+    def action_view_seat_holder(self):
+        """View the partner record for the seat holder"""
+        self.ensure_one()
+        
+        if not self.seat_holder_id:
+            raise UserError(_("This subscription does not have a seat holder assigned"))
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Seat Holder: %s') % self.seat_holder_id.name,
+            'res_model': 'res.partner',
+            'view_mode': 'form',
+            'res_id': self.seat_holder_id.id,
+            'target': 'current',
         }
 
     # ==========================================

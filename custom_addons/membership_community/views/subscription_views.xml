@@ -3,7 +3,7 @@
     <data>
 
         <!-- ========================================== -->
-        <!-- SUBSCRIPTION.SUBSCRIPTION VIEWS (BASE - FIXED) -->
+        <!-- SUBSCRIPTION.SUBSCRIPTION VIEWS (BASE - ENHANCED) -->
         <!-- ========================================== -->
 
         <!-- Extend Subscription List View -->
@@ -21,6 +21,9 @@
                            decoration-warning="lifecycle_stage=='grace'"
                            decoration-danger="lifecycle_stage in ('suspended','terminated')"/>
                     <field name="days_until_suspension" optional="hide"/>
+                    <field name="supports_seats" invisible="1"/>
+                    <field name="allocated_seat_count" optional="hide" string="Seats Used"/>
+                    <field name="available_seat_count" optional="hide" string="Seats Available"/>
                 </xpath>
             </field>
         </record>
@@ -51,9 +54,31 @@
                             groups="membership_community.group_membership_manager"/>
                 </xpath>
 
+                <!-- Add seat management button to header for org subscriptions -->
+                <xpath expr="//header/button[@name='action_verify_eligibility']" position="after">
+                    <button name="action_view_seats" string="View Seats" type="object" 
+                            class="btn-info" invisible="not supports_seats"
+                            groups="membership_community.group_membership_user"/>
+                </xpath>
+
+                <!-- Add smart button for seat count -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_seats" type="object" 
+                            class="oe_stat_button" icon="fa-users"
+                            invisible="not supports_seats">
+                        <div class="o_field_widget o_stat_info">
+                            <span class="o_stat_value">
+                                <field name="allocated_seat_count"/>/<field name="max_seats"/>
+                            </span>
+                            <span class="o_stat_text">Seats</span>
+                        </div>
+                    </button>
+                </xpath>
+
                 <!-- Add membership category after plan -->
                 <xpath expr="//field[@name='plan_id']" position="after">
                     <field name="is_membership" invisible="1"/>
+                    <field name="supports_seats" invisible="1"/>
                     <field name="membership_category_id" options="{'no_create': True}" invisible="not is_membership"/>
                     <field name="subscription_product_type" invisible="1"/>
                 </xpath>
@@ -68,6 +93,132 @@
                 <xpath expr="//field[@name='date_start']" position="after">
                     <field name="join_date" invisible="not is_membership"/>
                     <field name="source_type" invisible="not is_membership"/>
+                </xpath>
+
+                <!-- Add seat configuration fields for org subscriptions -->
+                <xpath expr="//field[@name='tag_ids']" position="after">
+                    <field name="max_seats" invisible="not supports_seats"/>
+                    <field name="allocated_seat_count" invisible="not supports_seats"/>
+                    <field name="available_seat_count" invisible="not supports_seats"/>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- Add Seat Management Page to Subscription Form -->
+        <record id="view_subscription_membership_seats" model="ir.ui.view">
+            <field name="name">subscription.subscription.membership.seats</field>
+            <field name="model">subscription.subscription</field>
+            <field name="inherit_id" ref="subscription_management.subscription_subscription_view_form"/>
+            <field name="arch" type="xml">
+                
+                <!-- Add Seat Management page to notebook -->
+                <xpath expr="//notebook" position="inside">
+                    <page name="seats" string="🪑 Seat Management" invisible="not supports_seats">
+                        
+                        <div class="alert alert-info" role="alert">
+                            <h4 class="alert-heading">
+                                <i class="fa fa-users"/> Organizational Seat Management
+                            </h4>
+                            <p class="mb-0">
+                                Allocate seats to employees so they can access membership benefits. 
+                                Each seat creates a linked subscription for the individual.
+                            </p>
+                        </div>
+                        
+                        <group>
+                            <group string="Seat Capacity">
+                                <label for="max_seats"/>
+                                <div>
+                                    <field name="max_seats" readonly="1" class="oe_inline"/>
+                                    <span class="text-muted"> total seats</span>
+                                </div>
+                                
+                                <label for="allocated_seat_count"/>
+                                <div>
+                                    <field name="allocated_seat_count" readonly="1" class="oe_inline"/>
+                                    <span class="text-muted"> seats allocated</span>
+                                </div>
+                                
+                                <label for="available_seat_count"/>
+                                <div>
+                                    <field name="available_seat_count" readonly="1" class="oe_inline"/>
+                                    <span t-if="available_seat_count > 0" class="text-success">
+                                        <i class="fa fa-check-circle"/> seats available
+                                    </span>
+                                    <span t-else="" class="text-danger">
+                                        <i class="fa fa-exclamation-triangle"/> no seats available
+                                    </span>
+                                </div>
+                            </group>
+                            
+                            <group string="Seat Utilization">
+                                <field name="seat_utilization" widget="progressbar"/>
+                                <div class="text-muted" colspan="2">
+                                    <small>
+                                        <i class="fa fa-info-circle"/> 
+                                        To add more seats, increase the <strong>max_seats</strong> value or 
+                                        contact your administrator to upgrade your plan.
+                                    </small>
+                                </div>
+                            </group>
+                        </group>
+                        
+                        <group>
+                            <button name="%(membership_community.action_seat_allocation_wizard)d" 
+                                    string="🎯 Allocate Seats" 
+                                    type="action" 
+                                    class="btn-primary"
+                                    context="{'default_subscription_id': id}"
+                                    invisible="available_seat_count &lt;= 0 or state not in ('active', 'trial')"/>
+                            
+                            <button name="action_view_seats" 
+                                    string="📋 View All Seats" 
+                                    type="object" 
+                                    class="btn-secondary"
+                                    invisible="allocated_seat_count == 0"/>
+                        </group>
+                        
+                        <separator string="Allocated Seats"/>
+                        
+                        <field name="child_subscription_ids" nolabel="1" 
+                               context="{'default_parent_subscription_id': id}">
+                            <tree decoration-success="state=='active'" 
+                                  decoration-warning="state=='suspended'"
+                                  decoration-muted="state in ('cancelled','expired')"
+                                  create="false" delete="false">
+                                <field name="name"/>
+                                <field name="seat_holder_id"/>
+                                <field name="partner_id" optional="hide"/>
+                                <field name="date_start"/>
+                                <field name="date_end" optional="hide"/>
+                                <field name="state" widget="badge"
+                                       decoration-success="state=='active'"
+                                       decoration-warning="state=='suspended'"
+                                       decoration-danger="state in ('cancelled','expired')"/>
+                                <button name="action_view_seat_holder" 
+                                        string="View Member" 
+                                        type="object" 
+                                        icon="fa-user"
+                                        class="btn-link"/>
+                                <button name="%(membership_community.action_deallocate_seat_wizard)d" 
+                                        string="Remove Seat" 
+                                        type="action" 
+                                        icon="fa-trash"
+                                        class="btn-link text-danger"
+                                        context="{'default_subscription_id': parent.id, 'default_seat_subscription_id': id}"
+                                        confirm="Are you sure you want to remove this seat allocation?"/>
+                            </tree>
+                        </field>
+                        
+                        <div class="alert alert-warning mt-3" role="alert" invisible="allocated_seat_count > 0">
+                            <p class="mb-0">
+                                <i class="fa fa-exclamation-circle"/> 
+                                <strong>No seats allocated yet.</strong> Click "Allocate Seats" above to assign seats to employees.
+                            </p>
+                        </div>
+                        
+                    </page>
                 </xpath>
 
             </field>
@@ -150,6 +301,10 @@
                             domain="[('subscription_product_type', '=', 'organizational_membership')]"/>
                     <filter string="Chapter Memberships" name="chapters" 
                             domain="[('subscription_product_type', '=', 'chapter')]"/>
+                    <filter string="Has Available Seats" name="has_seats" 
+                            domain="[('available_seat_count', '>', 0)]"/>
+                    <filter string="Seats Full" name="seats_full" 
+                            domain="[('supports_seats', '=', True), ('available_seat_count', '=', 0)]"/>
                     <filter string="New Members (This Month)" name="new_this_month" 
                             domain="[('join_date', '&gt;=', (context_today() - relativedelta(months=1)).strftime('%Y-%m-01'))]"/>
                 </xpath>
@@ -248,11 +403,20 @@
                     <field name="membership_category_id"/>
                     <field name="subscription_product_type"/>
                     <field name="is_membership"/>
+                    <field name="supports_seats"/>
+                    <field name="allocated_seat_count"/>
+                    <field name="available_seat_count"/>
                 </xpath>
                 
                 <xpath expr="//div[@class='o_kanban_record_body']//div[last()]" position="after">
                     <div t-if="record.membership_category_id.value">
                         Category: <field name="membership_category_id"/>
+                    </div>
+                    <div t-if="record.supports_seats.raw_value" class="mt-1">
+                        <span class="badge text-bg-info">
+                            <i class="fa fa-users"/> 
+                            <field name="allocated_seat_count"/>/<field name="available_seat_count"/> seats
+                        </span>
                     </div>
                 </xpath>
             </field>
