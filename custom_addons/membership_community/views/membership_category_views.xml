@@ -18,13 +18,16 @@
                     <field name="category_type"/>
                     <field name="default_product_id"/>
                     <field name="is_voting_member"/>
+                    <field name="is_lifetime_category" optional="hide"/>
+                    <field name="is_emeritus_category" optional="hide"/>
+                    <field name="is_honorary_category" optional="hide"/>
                     <field name="member_count"/>
                     <field name="active"/>
                 </list>
             </field>
         </record>
 
-        <!-- Form View (SIMPLIFIED) -->
+        <!-- Form View (SIMPLIFIED + ENHANCED) -->
         <record id="view_membership_category_form" model="ir.ui.view">
             <field name="name">membership.category.form</field>
             <field name="model">membership.category</field>
@@ -35,9 +38,20 @@
                             <button name="action_view_members" type="object" class="oe_stat_button" icon="fa-users">
                                 <field name="member_count" widget="statinfo" string="Members"/>
                             </button>
+                            <button name="action_view_eligible_members" type="object" 
+                                    class="oe_stat_button" icon="fa-user-plus"
+                                    invisible="not is_emeritus_category and not is_honorary_category">
+                                <div class="o_stat_info">
+                                    <span class="o_stat_text">Eligible</span>
+                                    <span class="o_stat_text">Members</span>
+                                </div>
+                            </button>
                         </div>
 
                         <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                        <widget name="web_ribbon" title="Lifetime" bg_color="text-bg-success" invisible="not is_lifetime_category"/>
+                        <widget name="web_ribbon" title="Emeritus" bg_color="text-bg-info" invisible="not is_emeritus_category"/>
+                        <widget name="web_ribbon" title="Honorary" bg_color="text-bg-warning" invisible="not is_honorary_category"/>
 
                         <field name="color" widget="color_picker" class="float-end"/>
 
@@ -63,6 +77,43 @@
 
                         <group>
                             <field name="description" placeholder="Description of this member category..."/>
+                        </group>
+
+                        <group name="lifetime_emeritus" string="Lifetime &amp; Emeritus Configuration"
+                               invisible="not is_lifetime_category and not is_emeritus_category and not is_honorary_category">
+                            <group name="category_flags">
+                                <field name="is_lifetime_category"/>
+                                <field name="is_emeritus_category"/>
+                                <field name="is_honorary_category"/>
+                            </group>
+                            <group name="auto_qualify" invisible="not is_emeritus_category">
+                                <field name="auto_qualify_age"/>
+                                <field name="auto_qualify_years"/>
+                                <field name="requires_board_approval"/>
+                            </group>
+                        </group>
+
+                        <group name="dues_configuration" string="Dues Configuration"
+                               invisible="not has_reduced_dues and not is_complimentary">
+                            <group>
+                                <field name="has_reduced_dues"/>
+                                <field name="dues_percentage" invisible="not has_reduced_dues" widget="percentage"/>
+                                <field name="is_complimentary"/>
+                            </group>
+                            <group>
+                                <div class="alert alert-info" role="alert" invisible="not is_complimentary">
+                                    <p class="mb-0">
+                                        <i class="fa fa-gift"/> 
+                                        <strong>Complimentary Membership:</strong> Members in this category receive free membership with no dues.
+                                    </p>
+                                </div>
+                                <div class="alert alert-info" role="alert" invisible="not has_reduced_dues or is_complimentary">
+                                    <p class="mb-0">
+                                        <i class="fa fa-percent"/> 
+                                        <strong>Reduced Dues:</strong> Members pay <field name="dues_percentage" readonly="1" nolabel="1" class="oe_inline"/>% of standard dues.
+                                    </p>
+                                </div>
+                            </group>
                         </group>
 
                         <group name="product_link" string="🔗 Product Link">
@@ -113,10 +164,17 @@
                     <filter string="Organizational" name="organizational" domain="[('category_type', '=', 'organizational')]"/>
                     <filter string="Chapter" name="chapter" domain="[('category_type', '=', 'chapter')]"/>
                     <filter string="Seat" name="seat" domain="[('category_type', '=', 'seat')]"/>
+                    <filter string="Emeritus" name="emeritus" domain="[('category_type', '=', 'emeritus')]"/>
+                    <filter string="Honorary" name="honorary" domain="[('category_type', '=', 'honorary')]"/>
+                    <filter string="Lifetime" name="lifetime" domain="[('category_type', '=', 'lifetime')]"/>
                     
                     <separator/>
                     <filter string="Voting Members" name="voting" domain="[('is_voting_member', '=', True)]"/>
                     <filter string="Full Members" name="full_member" domain="[('is_full_member', '=', True)]"/>
+                    <filter string="Lifetime Categories" name="lifetime_cat" domain="[('is_lifetime_category', '=', True)]"/>
+                    <filter string="Emeritus Categories" name="emeritus_cat" domain="[('is_emeritus_category', '=', True)]"/>
+                    <filter string="Honorary Categories" name="honorary_cat" domain="[('is_honorary_category', '=', True)]"/>
+                    <filter string="Complimentary" name="complimentary" domain="[('is_complimentary', '=', True)]"/>
                     <filter string="Has Product Link" name="has_product" domain="[('default_product_id', '!=', False)]"/>
                     <filter string="Missing Product Link" name="no_product" domain="[('default_product_id', '=', False)]"/>
                     
@@ -138,6 +196,10 @@
                     <field name="category_type"/>
                     <field name="member_count"/>
                     <field name="default_product_id"/>
+                    <field name="is_lifetime_category"/>
+                    <field name="is_emeritus_category"/>
+                    <field name="is_honorary_category"/>
+                    <field name="is_complimentary"/>
                     <field name="color"/>
                     <templates>
                         <t t-name="kanban-box">
@@ -150,6 +212,12 @@
                                             <field name="code"/>
                                         </span>
                                     </div>
+                                    <span class="float-end">
+                                        <span t-if="record.is_lifetime_category.raw_value" class="badge text-bg-success">Lifetime</span>
+                                        <span t-if="record.is_emeritus_category.raw_value" class="badge text-bg-info">Emeritus</span>
+                                        <span t-if="record.is_honorary_category.raw_value" class="badge text-bg-warning">Honorary</span>
+                                        <span t-if="record.is_complimentary.raw_value" class="badge text-bg-primary">Free</span>
+                                    </span>
                                 </div>
                                 <div class="o_kanban_record_body">
                                     <field name="category_type" widget="badge"/>

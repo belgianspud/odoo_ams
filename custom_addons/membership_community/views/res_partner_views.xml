@@ -3,177 +3,251 @@
     <data>
 
         <!-- ========================================== -->
-        <!-- RES.PARTNER VIEWS (BASE - SIMPLIFIED) -->
+        <!-- PARTNER/MEMBER VIEWS (ENHANCED - CORRECTED) -->
         <!-- ========================================== -->
 
-        <!-- Inherit Partner Form View -->
-        <record id="view_partner_membership_form" model="ir.ui.view">
-            <field name="name">res.partner.membership.form</field>
+        <!-- Inherited Form View - Add Membership Tab -->
+        <record id="view_partner_form_membership" model="ir.ui.view">
+            <field name="name">res.partner.form.membership</field>
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="base.view_partner_form"/>
             <field name="arch" type="xml">
                 
-                <!-- Add Smart Buttons -->
-                <xpath expr="//div[@name='button_box']" position="inside">
-                    <button name="action_view_memberships" type="object" class="oe_stat_button" icon="fa-id-card" invisible="membership_count == 0">
+                <!-- Add smart buttons -->
+                <div name="button_box" position="inside">
+                    <button name="action_view_memberships" type="object" 
+                            class="oe_stat_button" icon="fa-refresh"
+                            invisible="not is_member">
                         <div class="o_field_widget o_stat_info">
-                            <span class="o_stat_value"><field name="active_membership_count"/>/<field name="membership_count"/></span>
+                            <span class="o_stat_value">
+                                <field name="active_membership_count"/>/<field name="membership_count"/>
+                            </span>
                             <span class="o_stat_text">Memberships</span>
                         </div>
                     </button>
-                </xpath>
+                </div>
 
-                <!-- Add Membership Status Ribbon -->
-                <xpath expr="//sheet" position="before">
-                    <widget name="web_ribbon" title="Active Member" bg_color="text-bg-success" invisible="membership_state != 'active'"/>
-                    <widget name="web_ribbon" title="Trial Member" bg_color="text-bg-info" invisible="membership_state != 'trial'"/>
-                    <widget name="web_ribbon" title="Expired" bg_color="text-bg-danger" invisible="membership_state != 'expired'"/>
-                    <widget name="web_ribbon" title="Seat Member" bg_color="text-bg-warning" invisible="not is_seat_member"/>
-                </xpath>
+                <!-- Add membership status after name -->
+                <field name="function" position="after">
+                    <field name="is_member" invisible="1"/>
+                    <field name="membership_state" invisible="1"/>
+                    <field name="is_lifetime_member" invisible="1"/>
+                    <field name="is_emeritus_eligible" invisible="1"/>
+                    
+                    <div class="badge-container" invisible="not is_member">
+                        <span class="badge text-bg-success me-1" invisible="membership_state != 'active'">
+                            <i class="fa fa-check-circle"/> Active Member
+                        </span>
+                        <span class="badge text-bg-info me-1" invisible="membership_state != 'trial'">
+                            <i class="fa fa-clock-o"/> Trial
+                        </span>
+                        <span class="badge text-bg-danger me-1" invisible="membership_state != 'expired'">
+                            <i class="fa fa-times-circle"/> Expired
+                        </span>
+                        <span class="badge text-bg-info me-1" invisible="not is_lifetime_member">
+                            <i class="fa fa-star"/> Lifetime
+                        </span>
+                        <span class="badge text-bg-primary me-1" invisible="not is_emeritus_eligible">
+                            <i class="fa fa-graduation-cap"/> Emeritus Eligible
+                        </span>
+                    </div>
+                </field>
 
-                <!-- Add Membership Fields in Main Form -->
-                <xpath expr="//field[@name='category_id']" position="after">
-                    <field name="member_number" invisible="not is_member" readonly="1"/>
-                    <field name="is_member" invisible="not is_member"/>
-                    <field name="membership_state" invisible="not is_member"/>
-                    <field name="membership_category_id" invisible="not is_member"/>
-                    <field name="is_seat_member" invisible="1"/>
-                </xpath>
-
-                <!-- Add Membership Page in Notebook -->
+                <!-- Add membership page -->
                 <xpath expr="//notebook" position="inside">
-                    <page name="membership" string="Membership" invisible="membership_count == 0">
+                    <page string="Membership" name="membership" invisible="not is_member">
                         
-                        <group name="membership_summary" string="Membership Summary">
-                            <group name="status">
+                        <!-- Membership Status Section -->
+                        <group name="membership_status" string="Membership Status">
+                            <group name="status_left">
+                                <field name="is_member" readonly="1"/>
                                 <field name="member_number" readonly="1"/>
-                                <field name="is_member"/>
-                                <field name="membership_state"/>
-                                <field name="member_since"/>
-                                <field name="membership_category_id"/>
+                                <field name="membership_state" widget="badge" 
+                                       decoration-success="membership_state == 'active'"
+                                       decoration-info="membership_state == 'trial'"
+                                       decoration-danger="membership_state == 'expired'"/>
+                                <field name="membership_category_id" 
+                                       options="{'no_create': True}"/>
                                 <field name="member_category_type" readonly="1"/>
                             </group>
-                            <group name="dates">
-                                <field name="membership_start_date"/>
-                                <field name="membership_end_date"/>
-                                <field name="days_until_expiry" invisible="membership_state not in ['active', 'trial']"/>
+                            <group name="status_right">
+                                <field name="member_since"/>
+                                <field name="membership_start_date" readonly="1"/>
+                                <field name="membership_end_date" readonly="1"/>
+                                <field name="days_until_expiry" readonly="1" 
+                                       invisible="membership_state not in ['active', 'trial']"/>
                             </group>
                         </group>
 
-                        <group name="organizational" string="Organizational Membership" 
-                               invisible="not parent_organization_id and not child_member_ids">
-                            <group name="org_member">
-                                <field name="parent_organization_id" invisible="not parent_organization_id"/>
-                                <field name="organizational_role" invisible="not parent_organization_id"/>
-                                <field name="seat_subscription_id" invisible="not is_seat_member"/>
-                                <field name="is_seat_member" invisible="not is_seat_member"/>
+                        <!-- Lifetime & Emeritus Info Section -->
+                        <group name="lifetime_emeritus" string="Lifetime &amp; Emeritus Information"
+                               invisible="not is_lifetime_member and not is_emeritus_eligible">
+                            <group name="lifetime_left">
+                                <field name="birthdate"/>
+                                <field name="age" readonly="1"/>
+                                <field name="years_of_membership" readonly="1" widget="float"/>
                             </group>
-                            <group name="org_parent">
-                                <div class="alert alert-info" role="alert" invisible="not child_member_ids">
-                                    <p class="mb-0">
-                                        <i class="fa fa-info-circle" title="Information" aria-label="Information"/> 
-                                        <strong>Organization Seats:</strong> This organization has 
-                                        <strong><field name="child_member_ids" readonly="1" nolabel="1" 
-                                                widget="integer"/> seat members</strong>.
-                                    </p>
-                                </div>
+                            <group name="lifetime_right">
+                                <field name="is_lifetime_member" readonly="1"/>
+                                <field name="is_emeritus_eligible" readonly="1"/>
+                                
+                                <button name="action_transition_to_emeritus" 
+                                        string="Transition to Emeritus" 
+                                        type="object" 
+                                        class="btn-primary"
+                                        invisible="not is_emeritus_eligible"
+                                        groups="membership_community.group_membership_manager"/>
                             </group>
                         </group>
 
-                        <separator string="Organization Seat Members" invisible="not child_member_ids"/>
-                        <field name="child_member_ids" nolabel="1" invisible="not child_member_ids">
-                            <list>
-                                <field name="name"/>
-                                <field name="email"/>
-                                <field name="organizational_role"/>
-                                <field name="membership_state" widget="badge"
-                                       decoration-success="membership_state=='active'"
-                                       decoration-info="membership_state=='trial'"
-                                       decoration-danger="membership_state=='expired'"/>
-                                <field name="seat_subscription_id"/>
-                            </list>
-                        </field>
+                        <!-- Alert for Emeritus Eligibility -->
+                        <div class="alert alert-info" role="alert" 
+                             invisible="not is_emeritus_eligible">
+                            <p class="mb-0">
+                                <i class="fa fa-info-circle"/> 
+                                <strong>Emeritus Eligible:</strong> This member qualifies for emeritus status 
+                                based on age and/or years of membership. Click the button above to transition them.
+                            </p>
+                        </div>
 
-                        <group name="lifecycle" string="Lifecycle Status" invisible="not is_member">
+                        <!-- Primary Subscription Section -->
+                        <group name="primary_subscription" string="Primary Subscription"
+                               invisible="not primary_membership_id">
                             <group>
-                                <field name="paid_through_date"/>
-                                <field name="grace_period_end_date" invisible="not is_in_grace_period"/>
-                                <field name="lifecycle_stage" widget="badge"
+                                <field name="primary_membership_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <button name="action_view_memberships" 
+                                        string="View Subscription Details" 
+                                        type="object" 
+                                        class="btn-link"
+                                        icon="fa-external-link"/>
+                            </group>
+                        </group>
+
+                        <!-- Organization Seat Info (for seat members) -->
+                        <group name="seat_info" string="Organization Seat Information"
+                               invisible="not is_seat_member">
+                            <group>
+                                <field name="parent_organization_id" readonly="1"/>
+                                <field name="seat_subscription_id" readonly="1"/>
+                                <field name="is_seat_member" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="organizational_role"/>
+                            </group>
+                        </group>
+
+                        <!-- Organizational Members (for organizations with seats) -->
+                        <group name="org_members" string="Organization Seat Members"
+                               invisible="not child_member_ids">
+                            <field name="child_member_ids" nolabel="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="email"/>
+                                    <field name="organizational_role"/>
+                                    <field name="membership_state" widget="badge"
+                                           decoration-success="membership_state=='active'"
+                                           decoration-info="membership_state=='trial'"
+                                           decoration-danger="membership_state=='expired'"/>
+                                    <field name="seat_subscription_id"/>
+                                </list>
+                            </field>
+                        </group>
+
+                        <!-- Portal Access -->
+                        <group name="portal_access" string="Portal Access">
+                            <group>
+                                <field name="portal_access_level" readonly="1"/>
+                                <field name="has_portal_access" readonly="1"/>
+                            </group>
+                        </group>
+
+                        <!-- Lifecycle Status -->
+                        <group name="lifecycle" string="Lifecycle Status" 
+                               invisible="not is_in_grace_period and lifecycle_stage == 'active'">
+                            <group>
+                                <field name="paid_through_date" readonly="1"/>
+                                <field name="grace_period_end_date" readonly="1" 
+                                       invisible="not is_in_grace_period"/>
+                                <field name="lifecycle_stage" widget="badge" readonly="1"
                                        decoration-success="lifecycle_stage=='active'"
                                        decoration-warning="lifecycle_stage=='grace'"
                                        decoration-danger="lifecycle_stage in ('suspended','terminated')"/>
                             </group>
                             <group>
-                                <field name="days_until_suspension" invisible="not is_in_grace_period"/>
-                                <field name="days_until_termination" invisible="lifecycle_stage not in ('grace','suspended')"/>
+                                <field name="is_in_grace_period" readonly="1" 
+                                       invisible="not is_in_grace_period"/>
+                                <field name="days_until_suspension" readonly="1" 
+                                       invisible="not is_in_grace_period"/>
+                                <field name="days_until_termination" readonly="1" 
+                                       invisible="lifecycle_stage not in ('grace','suspended')"/>
                             </group>
                         </group>
 
-                        <group name="portal" string="Portal Access">
-                            <group>
-                                <field name="portal_access_level"/>
-                                <field name="has_portal_access"/>
+                        <!-- Features & Benefits -->
+                        <group name="features_benefits" string="Available Features &amp; Benefits">
+                            <group name="features">
+                                <label for="available_features"/>
+                                <field name="available_features" nolabel="1" widget="many2many_tags">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="category"/>
+                                        <field name="feature_type"/>
+                                    </tree>
+                                </field>
+                            </group>
+                            <group name="benefits">
+                                <label for="available_benefits"/>
+                                <field name="available_benefits" nolabel="1" widget="many2many_tags">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="category"/>
+                                        <field name="benefit_type"/>
+                                        <field name="monetary_value"/>
+                                    </tree>
+                                </field>
                             </group>
                         </group>
 
+                        <!-- All Subscriptions List -->
                         <separator string="All Membership Subscriptions"/>
-                        <field name="membership_subscription_ids" nolabel="1">
-                            <list decoration-success="state=='active'" decoration-info="state=='trial'" decoration-muted="state in ('expired','cancelled')">
+                        <field name="membership_subscription_ids" nolabel="1" 
+                               context="{'default_partner_id': active_id}">
+                            <list string="Subscriptions" 
+                                  decoration-success="state=='active'" 
+                                  decoration-info="state=='trial'" 
+                                  decoration-muted="state in ('expired','cancelled')">
                                 <field name="name"/>
                                 <field name="plan_id"/>
                                 <field name="membership_category_id"/>
                                 <field name="is_seat_subscription" optional="show"/>
+                                <field name="state" widget="badge"
+                                       decoration-success="state=='active'"
+                                       decoration-info="state=='trial'"
+                                       decoration-danger="state in ('expired','cancelled')"/>
                                 <field name="date_start"/>
                                 <field name="date_end"/>
-                                <field name="state"/>
+                                <field name="is_lifetime" optional="show"/>
                                 <field name="price" sum="Total"/>
                             </list>
                         </field>
 
-                        <separator string="Membership Invoices"/>
-                        <field name="invoice_ids" nolabel="1" 
-                               domain="[('move_type', '=', 'out_invoice')]"
-                               context="{'default_move_type': 'out_invoice', 'default_partner_id': id}">
-                            <list decoration-success="payment_state=='paid'" decoration-info="state=='draft'" decoration-warning="payment_state in ('partial','not_paid')">
-                                <field name="name"/>
-                                <field name="invoice_date"/>
-                                <field name="invoice_date_due"/>
-                                <field name="amount_total" sum="Total"/>
-                                <field name="payment_state" widget="badge"/>
-                                <field name="state" widget="badge"/>
-                            </list>
-                        </field>
-
-                    </page>
-
-                    <page name="member_features" string="Features &amp; Benefits" invisible="not is_member">
-                        
-                        <div class="alert alert-success" role="alert" invisible="not is_seat_member">
-                            <p class="mb-0">
-                                <i class="fa fa-users" title="Seat Member" aria-label="Seat Member"/> 
-                                <strong>Seat Member:</strong> Benefits inherited from 
-                                <field name="parent_organization_id" readonly="1" nolabel="1"/> organization membership.
-                            </p>
-                        </div>
-
-                        <separator string="Available Features"/>
-                        <field name="available_features" nolabel="1" widget="many2many_tags">
-                            <list>
-                                <field name="name"/>
-                                <field name="category"/>
-                                <field name="feature_type"/>
-                            </list>
-                        </field>
-
-                        <separator string="Available Benefits"/>
-                        <field name="available_benefits" nolabel="1" widget="many2many_tags">
-                            <list>
-                                <field name="name"/>
-                                <field name="category"/>
-                                <field name="benefit_type"/>
-                                <field name="monetary_value"/>
-                            </list>
-                        </field>
+                        <!-- Chapter Memberships (if applicable) -->
+                        <group name="chapters" string="Chapter Memberships"
+                               invisible="not chapter_count">
+                            <group>
+                                <field name="chapter_count" readonly="1"/>
+                                <field name="chapter_memberships" widget="many2many_tags" readonly="1"/>
+                            </group>
+                            <group>
+                                <button name="action_view_eligible_chapters" 
+                                        string="View Eligible Chapters" 
+                                        type="object" 
+                                        class="btn-link"
+                                        icon="fa-map-marker"/>
+                            </group>
+                        </group>
 
                     </page>
                 </xpath>
@@ -181,128 +255,198 @@
             </field>
         </record>
 
-        <!-- Inherit Partner List View -->
-        <record id="view_partner_membership_tree" model="ir.ui.view">
-            <field name="name">res.partner.membership.list</field>
+        <!-- Members List View -->
+        <record id="view_partner_list_members" model="ir.ui.view">
+            <field name="name">res.partner.list.members</field>
             <field name="model">res.partner</field>
-            <field name="inherit_id" ref="base.view_partner_tree"/>
+            <field name="priority">20</field>
             <field name="arch" type="xml">
-                <xpath expr="//list" position="inside">
+                <list string="Members">
+                    <field name="name" string="Member Name"/>
                     <field name="member_number" optional="show"/>
-                    <field name="is_member" optional="show"/>
-                    <field name="is_seat_member" optional="hide"/>
-                    <field name="membership_state" optional="show"/>
-                    <field name="membership_category_id" optional="hide"/>
-                    <field name="membership_end_date" optional="hide"/>
-                    <field name="parent_organization_id" optional="hide"/>
-                </xpath>
-            </field>
-        </record>
-
-        <!-- Inherit Partner Search View -->
-        <record id="view_partner_membership_search" model="ir.ui.view">
-            <field name="name">res.partner.membership.search</field>
-            <field name="model">res.partner</field>
-            <field name="inherit_id" ref="base.view_res_partner_filter"/>
-            <field name="arch" type="xml">
-                <xpath expr="//filter[@name='customer']" position="after">
-                    <separator/>
-                    <filter string="Members" name="members" domain="[('is_member', '=', True)]"/>
-                    <filter string="Active Members" name="active_members" domain="[('membership_state', '=', 'active')]"/>
-                    <filter string="Trial Members" name="trial_members" domain="[('membership_state', '=', 'trial')]"/>
-                    <filter string="Expired Members" name="expired_members" domain="[('membership_state', '=', 'expired')]"/>
-                    <separator/>
-                    <filter string="Seat Members" name="seat_members" domain="[('is_seat_member', '=', True)]"/>
-                    <filter string="Organizations with Seats" name="organizations_with_seats" domain="[('child_member_ids', '!=', False)]"/>
-                    <separator/>
-                    <filter string="Has Portal Access" name="has_portal" domain="[('has_portal_access', '=', True)]"/>
-                </xpath>
-                <xpath expr="//group" position="inside">
-                    <filter string="Membership State" name="group_membership_state" context="{'group_by': 'membership_state'}"/>
-                    <filter string="Member Category" name="group_member_category" context="{'group_by': 'membership_category_id'}"/>
-                    <filter string="Parent Organization" name="group_parent_org" context="{'group_by': 'parent_organization_id'}"/>
-                </xpath>
-            </field>
-        </record>
-
-        <!-- Member Directory Action -->
-        <record id="action_member_directory" model="ir.actions.act_window">
-            <field name="name">Member Directory</field>
-            <field name="res_model">res.partner</field>
-            <field name="view_mode">kanban,list,form</field>
-            <field name="domain">[('is_member', '=', True)]</field>
-            <field name="context">{'search_default_active_members': 1}</field>
-            <field name="help" type="html">
-                <p class="o_view_nocontent_smiling_face">
-                    No members found
-                </p>
-                <p>
-                    The member directory shows all active members of your organization.
-                </p>
-            </field>
-        </record>
-
-        <!-- Kanban View for Member Directory -->
-        <record id="view_partner_member_directory_kanban" model="ir.ui.view">
-            <field name="name">res.partner.member.directory.kanban</field>
-            <field name="model">res.partner</field>
-            <field name="arch" type="xml">
-                <kanban class="o_kanban_mobile">
-                    <field name="name"/>
                     <field name="email"/>
                     <field name="phone"/>
-                    <field name="member_number"/>
-                    <field name="is_member"/>
-                    <field name="is_seat_member"/>
-                    <field name="membership_state"/>
                     <field name="membership_category_id"/>
+                    <field name="membership_state" widget="badge"
+                           decoration-success="membership_state == 'active'"
+                           decoration-info="membership_state == 'trial'"
+                           decoration-danger="membership_state == 'expired'"/>
+                    <field name="is_lifetime_member" optional="hide"/>
+                    <field name="is_emeritus_eligible" optional="hide"/>
+                    <field name="is_seat_member" optional="hide"/>
+                    <field name="member_since"/>
+                    <field name="membership_start_date" optional="hide"/>
+                    <field name="membership_end_date"/>
+                    <field name="parent_organization_id" optional="hide"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Members Search View -->
+        <record id="view_partner_search_members" model="ir.ui.view">
+            <field name="name">res.partner.search.members</field>
+            <field name="model">res.partner</field>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+                <search string="Members">
+                    <field name="name" string="Member Name"/>
+                    <field name="member_number"/>
+                    <field name="email"/>
+                    <field name="membership_category_id"/>
+                    
+                    <filter string="Active Members" name="active_members" 
+                            domain="[('membership_state', '=', 'active')]"/>
+                    <filter string="Trial Members" name="trial_members" 
+                            domain="[('membership_state', '=', 'trial')]"/>
+                    <filter string="Expired Members" name="expired_members" 
+                            domain="[('membership_state', '=', 'expired')]"/>
+                    
+                    <separator/>
+                    <filter string="Lifetime Members" name="lifetime_members" 
+                            domain="[('is_lifetime_member', '=', True)]"/>
+                    <filter string="Emeritus Eligible" name="emeritus_eligible" 
+                            domain="[('is_emeritus_eligible', '=', True)]"/>
+                    <filter string="Seat Members" name="seat_members" 
+                            domain="[('is_seat_member', '=', True)]"/>
+                    <filter string="Organizations with Seats" name="organizations_with_seats" 
+                            domain="[('child_member_ids', '!=', False)]"/>
+                    
+                    <separator/>
+                    <filter string="In Grace Period" name="grace_period" 
+                            domain="[('is_in_grace_period', '=', True)]"/>
+                    <filter string="Has Portal Access" name="has_portal" 
+                            domain="[('has_portal_access', '=', True)]"/>
+                    
+                    <separator/>
+                    <filter string="Individual" name="individual_members"
+                            domain="[('member_category_type', '=', 'individual')]"/>
+                    <filter string="Organizational" name="org_members"
+                            domain="[('member_category_type', '=', 'organizational')]"/>
+                    <filter string="Emeritus" name="emeritus_members"
+                            domain="[('member_category_type', '=', 'emeritus')]"/>
+                    <filter string="Honorary" name="honorary_members"
+                            domain="[('member_category_type', '=', 'honorary')]"/>
+                    
+                    <separator/>
+                    <filter string="Expiring Soon" name="expiring_soon"
+                            domain="[('membership_end_date', '&lt;=', (context_today() + relativedelta(months=1)).strftime('%Y-%m-%d')), ('membership_end_date', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                    
+                    <group expand="0" string="Group By">
+                        <filter string="Membership Category" name="group_category" 
+                                context="{'group_by': 'membership_category_id'}"/>
+                        <filter string="Membership State" name="group_state" 
+                                context="{'group_by': 'membership_state'}"/>
+                        <filter string="Member Type" name="group_type" 
+                                context="{'group_by': 'member_category_type'}"/>
+                        <filter string="Lifecycle Stage" name="group_lifecycle" 
+                                context="{'group_by': 'lifecycle_stage'}"/>
+                        <filter string="Join Year" name="group_join_year" 
+                                context="{'group_by': 'member_since:year'}"/>
+                        <filter string="Parent Organization" name="group_parent_org" 
+                                context="{'group_by': 'parent_organization_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Members Kanban View -->
+        <record id="view_partner_kanban_members" model="ir.ui.view">
+            <field name="name">res.partner.kanban.members</field>
+            <field name="model">res.partner</field>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+                <kanban class="o_res_partner_kanban">
+                    <field name="name"/>
+                    <field name="member_number"/>
+                    <field name="email"/>
+                    <field name="phone"/>
+                    <field name="membership_category_id"/>
+                    <field name="membership_state"/>
+                    <field name="is_lifetime_member"/>
+                    <field name="is_emeritus_eligible"/>
+                    <field name="is_seat_member"/>
                     <field name="member_since"/>
                     <field name="parent_organization_id"/>
-                    <field name="avatar_128"/>
                     <templates>
-                        <t t-name="card">
-                            <div class="oe_kanban_global_click o_kanban_record_has_image_fill">
-                                <div class="o_kanban_image_fill_left d-none d-md-block" t-attf-style="background-image: url('#{kanban_image('res.partner', 'avatar_128', record.id.raw_value)}')"/>
-                                <div class="oe_kanban_details">
-                                    <div class="o_kanban_record_top">
-                                        <div class="o_kanban_record_headings">
-                                            <strong class="o_kanban_record_title">
-                                                <field name="name"/>
-                                            </strong>
-                                            <div t-if="record.member_number.raw_value" class="text-muted">
-                                                <field name="member_number"/>
-                                            </div>
-                                        </div>
-                                        <span class="float-end">
-                                            <field name="membership_state" widget="badge" 
-                                                   decoration-success="membership_state=='active'"
-                                                   decoration-info="membership_state=='trial'"
-                                                   decoration-danger="membership_state=='expired'"/>
-                                            <span t-if="record.is_seat_member.raw_value" class="badge text-bg-warning ms-1">
-                                                <i class="fa fa-users" title="Seat Member" aria-label="Seat Member"/> Seat
-                                            </span>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_global_click">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                        </strong>
+                                        <br/>
+                                        <span class="o_kanban_record_subtitle text-muted">
+                                            <field name="member_number"/>
+                                        </span>
+                                        <br/>
+                                        <span class="o_kanban_record_subtitle">
+                                            <field name="membership_category_id"/>
                                         </span>
                                     </div>
-                                    <div class="o_kanban_record_body">
-                                        <field name="membership_category_id"/>
-                                        <div t-if="record.parent_organization_id.raw_value" class="text-muted">
-                                            <i class="fa fa-building" title="Organization" aria-label="Organization"/> <field name="parent_organization_id"/>
-                                        </div>
-                                        <div t-if="record.member_since.raw_value">
-                                            <i class="fa fa-calendar" title="Member Since" aria-label="Member Since"/> Member since <field name="member_since"/>
-                                        </div>
-                                        <div t-if="record.email.raw_value">
-                                            <i class="fa fa-envelope" title="Email" aria-label="Email"/> <field name="email"/>
-                                        </div>
-                                        <div t-if="record.phone.raw_value">
-                                            <i class="fa fa-phone" title="Phone" aria-label="Phone"/> <field name="phone"/>
-                                        </div>
+                                    <span class="float-end">
+                                        <span t-if="record.membership_state.raw_value == 'active'" 
+                                              class="badge text-bg-success">Active</span>
+                                        <span t-if="record.membership_state.raw_value == 'trial'" 
+                                              class="badge text-bg-info">Trial</span>
+                                        <span t-if="record.membership_state.raw_value == 'expired'" 
+                                              class="badge text-bg-danger">Expired</span>
+                                    </span>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div t-if="record.email.value">
+                                        <i class="fa fa-envelope"/> <field name="email"/>
+                                    </div>
+                                    <div t-if="record.phone.value">
+                                        <i class="fa fa-phone"/> <field name="phone"/>
+                                    </div>
+                                    <div t-if="record.parent_organization_id.value" class="text-muted">
+                                        <i class="fa fa-building"/> <field name="parent_organization_id"/>
+                                    </div>
+                                    <div class="mt-2">
+                                        <span t-if="record.is_lifetime_member.raw_value" 
+                                              class="badge text-bg-info me-1">
+                                            <i class="fa fa-star"/> Lifetime
+                                        </span>
+                                        <span t-if="record.is_emeritus_eligible.raw_value" 
+                                              class="badge text-bg-primary me-1">
+                                            <i class="fa fa-graduation-cap"/> Emeritus Eligible
+                                        </span>
+                                        <span t-if="record.is_seat_member.raw_value" 
+                                              class="badge text-bg-warning me-1">
+                                            <i class="fa fa-users"/> Seat
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <span t-if="record.member_since.value">
+                                            Member since <field name="member_since"/>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
                         </t>
                     </templates>
                 </kanban>
+            </field>
+        </record>
+
+        <!-- Members Action -->
+        <record id="action_membership_members" model="ir.actions.act_window">
+            <field name="name">Members</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="domain">[('is_member', '=', True)]</field>
+            <field name="context">{'search_default_active_members': 1}</field>
+            <field name="search_view_id" ref="view_partner_search_members"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No members found
+                </p>
+                <p>
+                    Create your first member or convert existing contacts to members.
+                </p>
             </field>
         </record>
 

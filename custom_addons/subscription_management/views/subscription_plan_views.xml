@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Subscription Plan List View -->
+    <!-- Subscription Plan List View (ENHANCED) -->
     <record id="subscription_plan_view_list" model="ir.ui.view">
         <field name="name">subscription.plan.view.list</field>
         <field name="model">subscription.plan</field>
@@ -13,14 +13,15 @@
                 <field name="price" widget="monetary"/>
                 <field name="currency_id" column_invisible="1"/>
                 <field name="billing_period"/>
-                <field name="billing_interval"/>
+                <field name="billing_interval" optional="hide"/>
+                <field name="is_lifetime" optional="show"/>
                 <field name="subscription_count"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
         </field>
     </record>
 
-    <!-- Subscription Plan Form View -->
+    <!-- Subscription Plan Form View (ENHANCED FOR LIFETIME) -->
     <record id="subscription_plan_view_form" model="ir.ui.view">
         <field name="name">subscription.plan.view.form</field>
         <field name="model">subscription.plan</field>
@@ -36,6 +37,10 @@
                             <field name="subscription_count" widget="statinfo" string="Subscriptions"/>
                         </button>
                     </div>
+                    
+                    <widget name="web_ribbon" title="Lifetime Plan" bg_color="text-bg-success" 
+                            invisible="not is_lifetime"/>
+                    
                     <div class="oe_title">
                         <h1>
                             <field name="name" placeholder="Plan Name"/>
@@ -63,10 +68,33 @@
                         </page>
                         
                         <page string="Billing Configuration" name="billing">
-                            <group>
+                            
+                            <!-- Lifetime Configuration Section -->
+                            <group name="lifetime_config" string="Lifetime Membership"
+                                   invisible="not is_lifetime">
+                                <group>
+                                    <field name="is_lifetime"/>
+                                    <div class="alert alert-success" role="alert">
+                                        <p class="mb-0">
+                                            <i class="fa fa-star"/> 
+                                            <strong>Lifetime Membership Plan:</strong> One-time payment, never expires. 
+                                            Members pay once and retain access permanently.
+                                        </p>
+                                        <ul class="mt-2 mb-0">
+                                            <li>No recurring billing</li>
+                                            <li>No expiration date</li>
+                                            <li>No renewal required</li>
+                                            <li>Auto-renew is automatically disabled</li>
+                                        </ul>
+                                    </div>
+                                </group>
+                            </group>
+                            
+                            <!-- Regular Billing Configuration -->
+                            <group invisible="is_lifetime">
                                 <group string="Billing Period">
                                     <field name="billing_period"/>
-                                    <field name="billing_interval"/>
+                                    <field name="billing_interval" invisible="billing_period == 'lifetime'"/>
                                 </group>
                                 <group string="Billing Type">
                                     <field name="billing_type" widget="radio"/>
@@ -81,13 +109,50 @@
                                     </div>
                                 </group>
                             </group>
-                            <group>
+                            
+                            <!-- Show checkbox to enable/disable lifetime -->
+                            <group string="Plan Type" invisible="is_lifetime">
+                                <group>
+                                    <field name="is_lifetime"/>
+                                    <div class="alert alert-warning" role="alert" invisible="not is_lifetime">
+                                        <p class="mb-0">
+                                            <i class="fa fa-info-circle"/> 
+                                            <strong>Note:</strong> Enabling lifetime membership will:
+                                        </p>
+                                        <ul class="mt-2 mb-0">
+                                            <li>Set billing period to "Lifetime"</li>
+                                            <li>Disable auto-renewal</li>
+                                            <li>Remove trial period</li>
+                                            <li>Clear usage-based billing</li>
+                                        </ul>
+                                    </div>
+                                </group>
+                            </group>
+                            
+                            <group invisible="is_lifetime">
                                 <group string="Renewal Settings">
                                     <field name="auto_renew"/>
                                 </group>
                                 <group string="Trial Configuration">
                                     <field name="trial_period"/>
                                     <field name="trial_price" invisible="trial_period == 0"/>
+                                </group>
+                            </group>
+                            
+                            <!-- Show disabled fields for lifetime plans -->
+                            <group invisible="not is_lifetime">
+                                <group string="Lifetime Plan Settings">
+                                    <label for="auto_renew"/>
+                                    <div>
+                                        <field name="auto_renew" readonly="1" nolabel="1"/>
+                                        <span class="text-muted"> (Always disabled for lifetime plans)</span>
+                                    </div>
+                                    
+                                    <label for="trial_period"/>
+                                    <div>
+                                        <field name="trial_period" readonly="1" nolabel="1"/>
+                                        <span class="text-muted"> (Not applicable for lifetime plans)</span>
+                                    </div>
                                 </group>
                             </group>
                         </page>
@@ -97,20 +162,33 @@
                                 <group string="Plan Limits">
                                     <field name="user_limit"/>
                                     <field name="storage_limit"/>
-                                    <field name="min_duration"/>
-                                    <field name="max_duration"/>
-                                    <field name="cancellation_period"/>
+                                    <field name="min_duration" invisible="is_lifetime"/>
+                                    <field name="max_duration" invisible="is_lifetime"/>
+                                    <field name="cancellation_period" invisible="is_lifetime"/>
+                                    
+                                    <div class="text-muted" colspan="2" invisible="not is_lifetime">
+                                        <i class="fa fa-info-circle"/> 
+                                        Duration and cancellation settings are not applicable for lifetime plans.
+                                    </div>
                                 </group>
-                                <group string="Usage-based Billing">
+                                <group string="Usage-based Billing" invisible="is_lifetime">
                                     <field name="usage_based"/>
                                     <field name="usage_unit" invisible="not usage_based"/>
                                     <field name="usage_price" invisible="not usage_based"/>
                                     <field name="included_usage" invisible="not usage_based"/>
                                 </group>
+                                <group invisible="not is_lifetime">
+                                    <div class="alert alert-info" role="alert">
+                                        <p class="mb-0">
+                                            <i class="fa fa-info-circle"/> 
+                                            <strong>Note:</strong> Usage-based billing is not available for lifetime plans.
+                                        </p>
+                                    </div>
+                                </group>
                             </group>
                         </page>
                         
-                        <page string="Lifecycle Management" name="lifecycle">
+                        <page string="Lifecycle Management" name="lifecycle" invisible="is_lifetime">
                             <div class="alert alert-info" role="alert">
                                 <strong>Plan-specific Lifecycle Settings</strong>
                                 <p class="mb-0">
@@ -149,6 +227,25 @@
                                 <group/>
                             </group>
                         </page>
+                        
+                        <!-- Lifecycle not applicable for lifetime plans -->
+                        <page string="Lifetime Plan - No Lifecycle" name="lifetime_info" invisible="not is_lifetime">
+                            <div class="alert alert-success" role="alert">
+                                <h4 class="alert-heading">
+                                    <i class="fa fa-star"/> Lifetime Membership Plan
+                                </h4>
+                                <p class="mb-0">
+                                    Lifetime plans do not have lifecycle management (grace periods, suspension, termination) 
+                                    because they never expire. Once a member purchases a lifetime plan:
+                                </p>
+                                <ul class="mt-2 mb-0">
+                                    <li>Access is permanent and never expires</li>
+                                    <li>No billing or renewal occurs</li>
+                                    <li>No expiration date is set</li>
+                                    <li>Member retains all benefits indefinitely</li>
+                                </ul>
+                            </div>
+                        </page>
                     </notebook>
                 </sheet>
                 <div class="oe_chatter">
@@ -158,7 +255,7 @@
         </field>
     </record>
 
-    <!-- Subscription Plan Kanban View -->
+    <!-- Subscription Plan Kanban View (ENHANCED) -->
     <record id="subscription_plan_view_kanban" model="ir.ui.view">
         <field name="name">subscription.plan.view.kanban</field>
         <field name="model">subscription.plan</field>
@@ -168,6 +265,7 @@
                 <field name="price"/>
                 <field name="currency_id"/>
                 <field name="billing_period"/>
+                <field name="is_lifetime"/>
                 <field name="subscription_count"/>
                 <field name="active"/>
                 <templates>
@@ -179,6 +277,11 @@
                                         <strong class="o_kanban_record_title">
                                             <field name="name"/>
                                         </strong>
+                                        <div t-if="record.is_lifetime.raw_value" class="mt-1">
+                                            <span class="badge text-bg-success">
+                                                <i class="fa fa-star"/> Lifetime Plan
+                                            </span>
+                                        </div>
                                     </div>
                                     <div class="o_kanban_manage_button_section">
                                         <a class="o_kanban_manage_toggle_button" href="#">
@@ -189,7 +292,15 @@
                                 <div class="o_kanban_record_body">
                                     <div class="o_kanban_record_bottom">
                                         <div class="oe_kanban_bottom_left">
-                                            <span><field name="price" widget="monetary"/> / <field name="billing_period"/></span>
+                                            <span>
+                                                <field name="price" widget="monetary"/>
+                                                <span t-if="!record.is_lifetime.raw_value">
+                                                    / <field name="billing_period"/>
+                                                </span>
+                                                <span t-if="record.is_lifetime.raw_value" class="text-success">
+                                                    <strong>(One-time)</strong>
+                                                </span>
+                                            </span>
                                         </div>
                                         <div class="oe_kanban_bottom_right">
                                             <span class="badge badge-pill">
@@ -206,7 +317,7 @@
         </field>
     </record>
 
-    <!-- Subscription Plan Search View -->
+    <!-- Subscription Plan Search View (ENHANCED) -->
     <record id="subscription_plan_view_search" model="ir.ui.view">
         <field name="name">subscription.plan.view.search</field>
         <field name="model">subscription.plan</field>
@@ -215,11 +326,31 @@
                 <field name="name"/>
                 <field name="code"/>
                 <field name="billing_period"/>
+                
                 <filter string="Active" name="active" domain="[('active', '=', True)]"/>
                 <filter string="Inactive" name="inactive" domain="[('active', '=', False)]"/>
+                
+                <separator/>
+                <filter string="Lifetime Plans" name="lifetime" domain="[('is_lifetime', '=', True)]"/>
+                <filter string="Recurring Plans" name="recurring" domain="[('is_lifetime', '=', False)]"/>
+                
+                <separator/>
+                <filter string="Daily" name="daily" domain="[('billing_period', '=', 'daily')]"/>
+                <filter string="Weekly" name="weekly" domain="[('billing_period', '=', 'weekly')]"/>
+                <filter string="Monthly" name="monthly" domain="[('billing_period', '=', 'monthly')]"/>
+                <filter string="Quarterly" name="quarterly" domain="[('billing_period', '=', 'quarterly')]"/>
+                <filter string="Yearly" name="yearly" domain="[('billing_period', '=', 'yearly')]"/>
+                
+                <separator/>
+                <filter string="Usage-based" name="usage_based" domain="[('usage_based', '=', True)]"/>
+                <filter string="With Trial" name="with_trial" domain="[('trial_period', '>', 0)]"/>
+                <filter string="Auto-Renew" name="auto_renew" domain="[('auto_renew', '=', True)]"/>
+                
                 <group expand="1" string="Group By">
                     <filter string="Billing Period" name="billing_period" context="{'group_by': 'billing_period'}"/>
+                    <filter string="Billing Type" name="billing_type" context="{'group_by': 'billing_type'}"/>
                     <filter string="Active" name="group_active" context="{'group_by': 'active'}"/>
+                    <filter string="Lifetime" name="group_lifetime" context="{'group_by': 'is_lifetime'}"/>
                 </group>
             </search>
         </field>
@@ -230,7 +361,7 @@
         <field name="name">Subscription Plans</field>
         <field name="res_model">subscription.plan</field>
         <field name="view_mode">kanban,list,form</field>
-        <field name="context">{}</field>
+        <field name="context">{'search_default_active': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create your first subscription plan!
@@ -238,6 +369,10 @@
             <p>
                 Define subscription plans with different pricing models, billing periods,
                 and features to offer to your customers.
+            </p>
+            <p class="mt-3">
+                <strong>💡 Tip:</strong> You can create both recurring subscription plans 
+                (monthly, yearly, etc.) and lifetime plans (one-time payment, never expires).
             </p>
         </field>
     </record>

@@ -104,6 +104,75 @@ class SubscriptionPlan(models.Model):
         help='Plan-specific termination period. 0 = use system default'
     )
     
+    # ==========================================
+    # SEAT MANAGEMENT (NEW - for organizational memberships)
+    # ==========================================
+    
+    supports_seats = fields.Boolean(
+        string='Supports Multiple Seats',
+        default=False,
+        tracking=True,
+        help='This plan allows seat-based subscriptions (organizational memberships)'
+    )
+    
+    included_seats = fields.Integer(
+        string='Included Seats',
+        default=0,
+        help='Number of seats included in the base price'
+    )
+    
+    max_seats = fields.Integer(
+        string='Maximum Seats',
+        default=0,
+        help='Maximum number of seats allowed (0 = unlimited)'
+    )
+    
+    additional_seat_price = fields.Monetary(
+        string='Additional Seat Price',
+        currency_field='currency_id',
+        default=0.0,
+        help='Price per additional seat beyond included seats'
+    )
+    
+    seat_product_id = fields.Many2one(
+        'product.template',
+        string='Seat Add-on Product',
+        domain=[('is_membership_product', '=', True), ('provides_seats', '=', True)],
+        help='Optional product for purchasing additional seats (seat packs)'
+    )
+    
+    # Seat Statistics
+    total_allocated_seats = fields.Integer(
+        string='Total Allocated Seats',
+        compute='_compute_seat_statistics',
+        help='Total seats allocated across all subscriptions'
+    )
+    
+    active_seat_subscriptions = fields.Integer(
+        string='Active Seat Subscriptions',
+        compute='_compute_seat_statistics',
+        help='Number of active seat subscriptions'
+    )
+    
+    @api.depends('subscription_ids', 'subscription_ids.allocated_seat_count',
+                 'subscription_ids.child_subscription_ids')
+    def _compute_seat_statistics(self):
+        """Calculate seat allocation statistics"""
+        for plan in self:
+            if plan.supports_seats:
+                active_subs = plan.subscription_ids.filtered(
+                    lambda s: s.state in ('active', 'trial')
+                )
+                plan.total_allocated_seats = sum(active_subs.mapped('allocated_seat_count'))
+                
+                # Count all child subscriptions (seat subscriptions)
+                plan.active_seat_subscriptions = len(
+                    active_subs.mapped('child_subscription_ids')
+                )
+            else:
+                plan.total_allocated_seats = 0
+                plan.active_seat_subscriptions = 0
+    
     @api.depends('subscription_ids')
     def _compute_subscription_count(self):
         for plan in self:
@@ -134,6 +203,31 @@ class SubscriptionPlan(models.Model):
             if plan.billing_period == 'lifetime' and not plan.is_lifetime:
                 plan.is_lifetime = True  # Auto-fix
     
+    @api.constrains('is_lifetime', 'auto_renew')
+    def _check_lifetime_auto_renew(self):
+        """Lifetime plans cannot auto-renew"""
+        for plan in self:
+            if plan.is_lifetime and plan.auto_renew:
+                raise ValidationError(_(
+                    'Lifetime plans cannot have auto-renewal enabled. '
+                    'Lifetime memberships are one-time payments that never expire.'
+                ))
+    
+    # NEW: Seat validation
+    @api.constrains('supports_seats', 'included_seats', 'max_seats')
+    def _check_seat_configuration(self):
+        """Validate seat configuration"""
+        for plan in self:
+            if plan.supports_seats:
+                if plan.included_seats < 0:
+                    raise ValidationError(_('Included seats cannot be negative'))
+                if plan.max_seats < 0:
+                    raise ValidationError(_('Maximum seats cannot be negative'))
+                if plan.max_seats > 0 and plan.included_seats > plan.max_seats:
+                    raise ValidationError(_(
+                        'Included seats cannot exceed maximum seats'
+                    ))
+    
     # NEW: Lifetime onchange
     @api.onchange('is_lifetime')
     def _onchange_is_lifetime(self):
@@ -144,6 +238,20 @@ class SubscriptionPlan(models.Model):
             self.trial_period = 0
             self.max_duration = 0
             self.usage_based = False
+    
+    @api.onchange('billing_period')
+    def _onchange_billing_period(self):
+        """Handle lifetime billing period selection"""
+        if self.billing_period == 'lifetime':
+            self.is_lifetime = True
+            self.auto_renew = False
+            self.trial_period = 0
+    
+    @api.onchange('supports_seats')
+    def _onchange_supports_seats(self):
+        """Set defaults when seat support is enabled"""
+        if self.supports_seats and self.included_seats == 0:
+            self.included_seats = 1
     
     def get_next_billing_date(self, start_date):
         """Calculate next billing date based on plan configuration and billing type"""
@@ -235,4 +343,28 @@ class SubscriptionPlan(models.Model):
             'view_mode': 'list,form',
             'domain': [('plan_id', '=', self.id)],
             'context': {'default_plan_id': self.id},
+        }
+    
+    def action_view_seat_subscriptions(self):
+        """Action to view seat subscriptions for this plan"""
+        self.ensure_one()
+        
+        # Get all parent subscriptions for this plan
+        parent_subs = self.subscription_ids.filtered(
+            lambda s: s.state in ('active', 'trial') and s.supports_seats
+        )
+        
+        # Get all child (seat) subscriptions
+        seat_subs = parent_subs.mapped('child_subscription_ids')
+        
+        return {
+            'name': _('Seat Subscriptions - %s') % self.name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'subscription.subscription',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', seat_subs.ids)],
+            'context': {
+                'default_plan_id': self.id,
+                'search_default_active': 1,
+            },
         }
