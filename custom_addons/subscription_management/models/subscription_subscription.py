@@ -39,6 +39,14 @@ class SubscriptionSubscription(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency',
                                   related='plan_id.currency_id', store=True)
     
+    # Lifetime Support (NEW)
+    is_lifetime = fields.Boolean(
+        string='Is Lifetime',
+        related='plan_id.is_lifetime',
+        store=True,
+        help='This is a lifetime subscription that never expires'
+    )
+    
     # Subscription Lifecycle
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -282,8 +290,8 @@ class SubscriptionSubscription(models.Model):
         if 'plan_id' in vals or 'date_start' in vals:
             for subscription in self:
                 if subscription.plan_id and subscription.date_start:
-                    # Only update end date if calendar-based
-                    if subscription.plan_id.billing_type == 'calendar' and not vals.get('date_end'):
+                    # Only update end date if calendar-based and not lifetime
+                    if not subscription.is_lifetime and subscription.plan_id.billing_type == 'calendar' and not vals.get('date_end'):
                         subscription.date_end = subscription.plan_id.get_subscription_end_date(
                             subscription.date_start
                         )
@@ -300,9 +308,15 @@ class SubscriptionSubscription(models.Model):
             else:
                 subscription.trial_end_date = False
     
-    @api.depends('date_start', 'plan_id', 'last_invoice_date', 'state', 'plan_id.billing_type')
+    # UPDATED: Handle lifetime subscriptions
+    @api.depends('date_start', 'plan_id', 'last_invoice_date', 'state', 'plan_id.billing_type', 'is_lifetime')
     def _compute_next_billing_date(self):
         for subscription in self:
+            # NEW: Lifetime subscriptions don't have next billing
+            if subscription.is_lifetime:
+                subscription.next_billing_date = False
+                continue
+            
             if subscription.state in ('active', 'trial') and subscription.plan_id:
                 if subscription.last_invoice_date:
                     base_date = subscription.last_invoice_date
@@ -505,12 +519,19 @@ class SubscriptionSubscription(models.Model):
             # Set end date based on billing type
             self.date_end = self.plan_id.get_subscription_end_date(self.date_start)
     
+    # UPDATED: Handle lifetime subscriptions
     def _set_subscription_dates(self):
         """Set subscription dates based on plan billing type"""
         self.ensure_one()
         
         if not self.date_start:
             self.date_start = fields.Date.today()
+        
+        # NEW: Lifetime subscriptions never expire
+        if self.is_lifetime:
+            self.date_end = False
+            self.next_billing_date = False
+            return
         
         # Set end date if not already set
         if not self.date_end and self.plan_id:
@@ -530,6 +551,10 @@ class SubscriptionSubscription(models.Model):
         """Get the date when renewal should be offered"""
         self.ensure_one()
         
+        # NEW: Lifetime subscriptions don't need renewal
+        if self.is_lifetime:
+            return False
+        
         if not self.date_end:
             return False
         
@@ -548,6 +573,10 @@ class SubscriptionSubscription(models.Model):
     def should_offer_renewal(self):
         """Check if renewal should be offered now"""
         self.ensure_one()
+        
+        # NEW: Lifetime subscriptions don't need renewal
+        if self.is_lifetime:
+            return False
         
         if self.state not in ('active', 'trial'):
             return False
@@ -589,11 +618,17 @@ class SubscriptionSubscription(models.Model):
         """Cancel subscription"""
         self.ensure_one()
         self.state = 'cancelled'
-        self.date_end = fields.Date.today()
+        # NEW: Only set end date for non-lifetime subscriptions
+        if not self.is_lifetime:
+            self.date_end = fields.Date.today()
     
     def action_renew(self):
         """Renew subscription - handle calendar vs anniversary billing"""
         self.ensure_one()
+        
+        # NEW: Lifetime subscriptions cannot be renewed
+        if self.is_lifetime:
+            raise UserError(_('Lifetime subscriptions do not require renewal'))
         
         if self.plan_id.auto_renew:
             # Calculate new end date based on billing type
@@ -647,11 +682,16 @@ class SubscriptionSubscription(models.Model):
                 message_type='notification'
             )
         
-        # For cancelled/expired subscriptions, reset dates
+        # For cancelled/expired subscriptions, reset dates (unless lifetime)
         else:
             today = fields.Date.today()
             self.date_start = today
-            self.date_end = self.plan_id.get_subscription_end_date(today)
+            
+            # NEW: Lifetime subscriptions never have end date
+            if not self.is_lifetime:
+                self.date_end = self.plan_id.get_subscription_end_date(today)
+            else:
+                self.date_end = False
             
             self.write({
                 'state': 'active',
@@ -1088,7 +1128,8 @@ class SubscriptionSubscription(models.Model):
         
         subscriptions = self.search([
             ('state', 'in', ['active', 'trial']),
-            ('date_end', '!=', False)
+            ('date_end', '!=', False),
+            ('is_lifetime', '=', False),  # NEW: Skip lifetime subscriptions
         ])
         
         renewal_count = 0
@@ -1140,7 +1181,8 @@ class SubscriptionSubscription(models.Model):
         today = fields.Date.today()
         subscriptions = self.search([
             ('state', 'in', ['active', 'trial']),
-            ('next_billing_date', '<=', today)
+            ('next_billing_date', '<=', today),
+            ('is_lifetime', '=', False),  # NEW: Skip lifetime subscriptions
         ])
         
         _logger.info(f"Processing billing for {len(subscriptions)} subscriptions")
@@ -1227,15 +1269,17 @@ class SubscriptionSubscription(models.Model):
         for subscription in trials_expired:
             subscription.action_activate()
     
+    # UPDATED: Skip lifetime subscriptions
     @api.model
     def _cron_check_expiry(self):
-        """Check for subscriptions that have expired"""
+        """Check for subscriptions that have expired - skip lifetime"""
         today = fields.Date.today()
         
         expired_subscriptions = self.search([
             ('state', 'in', ['active', 'suspended']),
             ('date_end', '<=', today),
-            ('date_end', '!=', False)
+            ('date_end', '!=', False),
+            ('is_lifetime', '=', False),  # NEW: Skip lifetime subscriptions
         ])
         
         for subscription in expired_subscriptions:
@@ -1251,7 +1295,8 @@ class SubscriptionSubscription(models.Model):
             ('state', '=', 'active'),
             ('date_end', '<=', renew_date),
             ('date_end', '!=', False),
-            ('plan_id.auto_renew', '=', True)
+            ('plan_id.auto_renew', '=', True),
+            ('is_lifetime', '=', False),  # NEW: Skip lifetime subscriptions
         ])
         
         for subscription in subscriptions_to_renew:
@@ -1265,7 +1310,8 @@ class SubscriptionSubscription(models.Model):
         
         subscriptions = self.search([
             ('state', '=', 'active'),
-            ('next_billing_date', '=', reminder_date)
+            ('next_billing_date', '=', reminder_date),
+            ('is_lifetime', '=', False),  # NEW: Skip lifetime subscriptions
         ])
         
         template = self.env.ref('subscription_management.email_template_subscription_billing_reminder', 

@@ -23,6 +23,15 @@ class SubscriptionPlan(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', 
                                   default=lambda self: self.env.company.currency_id)
     
+    # Lifetime Membership Support (NEW)
+    is_lifetime = fields.Boolean(
+        string='Lifetime Membership',
+        default=False,
+        tracking=True,
+        help='One-time payment membership that never expires. '
+             'Members pay once and have access forever.'
+    )
+    
     # Billing Configuration
     billing_period = fields.Selection([
         ('daily', 'Daily'),
@@ -30,12 +39,13 @@ class SubscriptionPlan(models.Model):
         ('monthly', 'Monthly'),
         ('quarterly', 'Quarterly'),
         ('yearly', 'Yearly'),
+        ('lifetime', 'Lifetime'),  # NEW
     ], string='Billing Period', required=True, default='monthly', tracking=True)
     
     billing_interval = fields.Integer('Billing Interval', default=1, 
                                       help='Repeat every X periods')
     
-    # Billing Type - NEW FIELD
+    # Billing Type
     billing_type = fields.Selection([
         ('anniversary', 'Anniversary-based'),
         ('calendar', 'Calendar-based'),
@@ -111,9 +121,37 @@ class SubscriptionPlan(models.Model):
             if plan.price < 0:
                 raise ValidationError(_('Price cannot be negative'))
     
+    # NEW: Lifetime validation
+    @api.constrains('is_lifetime', 'billing_period')
+    def _check_lifetime_configuration(self):
+        """Validate lifetime membership configuration"""
+        for plan in self:
+            if plan.is_lifetime and plan.billing_period != 'lifetime':
+                raise ValidationError(_(
+                    'Lifetime memberships must have billing period set to "Lifetime"'
+                ))
+            
+            if plan.billing_period == 'lifetime' and not plan.is_lifetime:
+                plan.is_lifetime = True  # Auto-fix
+    
+    # NEW: Lifetime onchange
+    @api.onchange('is_lifetime')
+    def _onchange_is_lifetime(self):
+        """Set defaults when lifetime is enabled"""
+        if self.is_lifetime:
+            self.billing_period = 'lifetime'
+            self.auto_renew = False
+            self.trial_period = 0
+            self.max_duration = 0
+            self.usage_based = False
+    
     def get_next_billing_date(self, start_date):
         """Calculate next billing date based on plan configuration and billing type"""
         self.ensure_one()
+        
+        # NEW: Lifetime memberships don't have next billing
+        if self.is_lifetime or self.billing_period == 'lifetime':
+            return False
         
         if self.billing_type == 'calendar':
             return self._get_calendar_based_billing_date(start_date)
@@ -178,6 +216,10 @@ class SubscriptionPlan(models.Model):
     def get_subscription_end_date(self, start_date):
         """Calculate subscription end date based on billing type"""
         self.ensure_one()
+        
+        # NEW: Lifetime memberships never expire
+        if self.is_lifetime or self.billing_period == 'lifetime':
+            return False  # Never expires
         
         if self.billing_type == 'calendar':
             return self._get_calendar_based_billing_date(start_date)

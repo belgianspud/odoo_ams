@@ -98,6 +98,9 @@ class MembershipCategory(models.Model):
             ('organizational', 'Organization Member'),
             ('chapter', 'Chapter Member'),
             ('seat', 'Organization Seat'),
+            ('emeritus', 'Emeritus/Retired Member'),  # NEW
+            ('honorary', 'Honorary Member'),  # NEW
+            ('lifetime', 'Lifetime Member'),  # NEW
         ]
     
     member_tier = fields.Selection([
@@ -127,7 +130,72 @@ class MembershipCategory(models.Model):
     )
 
     # ==========================================
-    # CATEGORY HIERARCHY (NEW - for chapters)
+    # LIFETIME & EMERITUS CONFIGURATION (NEW)
+    # ==========================================
+    
+    is_lifetime_category = fields.Boolean(
+        string='Lifetime Membership Category',
+        default=False,
+        tracking=True,
+        help='This category is for lifetime memberships (one-time payment, never expires)'
+    )
+    
+    is_emeritus_category = fields.Boolean(
+        string='Emeritus/Retired Category',
+        default=False,
+        tracking=True,
+        help='This category is for emeritus/retired members'
+    )
+    
+    is_honorary_category = fields.Boolean(
+        string='Honorary Category',
+        default=False,
+        tracking=True,
+        help='This category is for honorary members'
+    )
+    
+    # Auto-qualification Rules
+    auto_qualify_age = fields.Integer(
+        string='Auto-Qualify Age',
+        default=0,
+        help='Age at which members automatically qualify for this category (e.g., 65 for emeritus). 0 = disabled'
+    )
+    
+    auto_qualify_years = fields.Integer(
+        string='Auto-Qualify Years',
+        default=0,
+        help='Years of continuous membership required for auto-qualification (e.g., 25 years for emeritus). 0 = disabled'
+    )
+    
+    requires_board_approval = fields.Boolean(
+        string='Requires Board Approval',
+        default=False,
+        tracking=True,
+        help='Transitions to this category require board/committee approval'
+    )
+    
+    # Dues Configuration
+    has_reduced_dues = fields.Boolean(
+        string='Reduced Dues',
+        default=False,
+        help='This category pays reduced dues'
+    )
+    
+    dues_percentage = fields.Float(
+        string='Dues Percentage',
+        default=100.0,
+        help='Percentage of standard dues (100 = full, 50 = half, 0 = free)'
+    )
+    
+    is_complimentary = fields.Boolean(
+        string='Complimentary Membership',
+        default=False,
+        tracking=True,
+        help='This category receives complimentary (free) membership'
+    )
+
+    # ==========================================
+    # CATEGORY HIERARCHY (for chapters)
     # ==========================================
     
     parent_category_id = fields.Many2one(
@@ -261,6 +329,9 @@ class MembershipCategory(models.Model):
             'organizational': 'organizational_membership',
             'chapter': 'chapter',
             'seat': 'membership',
+            'emeritus': 'membership',  # NEW
+            'honorary': 'membership',  # NEW
+            'lifetime': 'membership',  # NEW
         }
         
         sub_type = type_map.get(self.category_type)
@@ -306,6 +377,82 @@ class MembershipCategory(models.Model):
                 children |= child.get_all_child_categories(recursive=True)
         
         return children
+
+    # ==========================================
+    # EMERITUS/LIFETIME BUSINESS METHODS (NEW)
+    # ==========================================
+    
+    def check_emeritus_eligibility(self, partner):
+        """
+        Check if a partner is eligible for emeritus status
+        
+        Args:
+            partner: res.partner record
+        
+        Returns:
+            tuple: (bool: is_eligible, str: reason)
+        """
+        self.ensure_one()
+        
+        if not self.is_emeritus_category:
+            return (False, _('This is not an emeritus category'))
+        
+        # Check age requirement
+        if self.auto_qualify_age > 0:
+            if not partner.birthdate:
+                return (False, _('Member age cannot be determined'))
+            
+            age = (fields.Date.today() - partner.birthdate).days / 365.25
+            if age < self.auto_qualify_age:
+                return (False, _(
+                    'Member must be %s years old (currently %s)'
+                ) % (self.auto_qualify_age, int(age)))
+        
+        # Check years of membership
+        if self.auto_qualify_years > 0:
+            if not partner.member_since:
+                return (False, _('Member join date unknown'))
+            
+            years = (fields.Date.today() - partner.member_since).days / 365.25
+            if years < self.auto_qualify_years:
+                return (False, _(
+                    'Member must have %s years of membership (currently %s)'
+                ) % (self.auto_qualify_years, int(years)))
+        
+        return (True, '')
+    
+    def action_view_eligible_members(self):
+        """View members eligible for this category (emeritus/honorary)"""
+        self.ensure_one()
+        
+        if not (self.is_emeritus_category or self.is_honorary_category):
+            raise UserError(_('This action is only for emeritus/honorary categories'))
+        
+        # Find eligible members
+        eligible_partners = self.env['res.partner']
+        
+        if self.is_emeritus_category and (self.auto_qualify_age > 0 or self.auto_qualify_years > 0):
+            all_members = self.env['res.partner'].search([
+                ('is_member', '=', True),
+                ('membership_category_id', '!=', self.id),
+            ])
+            
+            for partner in all_members:
+                is_eligible, reason = self.check_emeritus_eligibility(partner)
+                if is_eligible:
+                    eligible_partners |= partner
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Eligible Members - %s') % self.name,
+            'res_model': 'res.partner',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', eligible_partners.ids)],
+            'context': {
+                'default_membership_category_id': self.id,
+                'search_default_eligible': 1,
+            }
+        }
 
     def action_view_members(self):
         """View members in this category"""
@@ -398,6 +545,33 @@ class MembershipCategory(models.Model):
             # Seats are not independent members
             self.is_voting_member = False
             self.is_full_member = False
+        
+        # NEW: Emeritus defaults
+        elif self.category_type == 'emeritus':
+            self.is_emeritus_category = True
+            self.has_reduced_dues = True
+            self.dues_percentage = 0.0  # Free by default
+            self.is_voting_member = True
+        
+        # NEW: Honorary defaults
+        elif self.category_type == 'honorary':
+            self.is_honorary_category = True
+            self.is_complimentary = True
+            self.requires_board_approval = True
+            self.is_voting_member = False
+        
+        # NEW: Lifetime defaults
+        elif self.category_type == 'lifetime':
+            self.is_lifetime_category = True
+            self.is_voting_member = True
+    
+    # NEW: Complimentary onchange
+    @api.onchange('is_complimentary')
+    def _onchange_is_complimentary(self):
+        """Free memberships have 0% dues"""
+        if self.is_complimentary:
+            self.has_reduced_dues = True
+            self.dues_percentage = 0.0
 
     # ==========================================
     # CONSTRAINTS
@@ -454,6 +628,35 @@ class MembershipCategory(models.Model):
                 # This is just a warning - we allow configuration where parent is required
                 # but not yet selected (will be validated when creating subscriptions)
                 pass
+    
+    # NEW: Dues percentage constraint
+    @api.constrains('dues_percentage')
+    def _check_dues_percentage(self):
+        """Validate dues percentage"""
+        for category in self:
+            if category.dues_percentage < 0 or category.dues_percentage > 100:
+                raise ValidationError(_(
+                    'Dues percentage must be between 0 and 100'
+                ))
+    
+    # NEW: Auto-qualification constraints
+    @api.constrains('auto_qualify_age')
+    def _check_auto_qualify_age(self):
+        """Validate auto-qualify age"""
+        for category in self:
+            if category.auto_qualify_age < 0:
+                raise ValidationError(_(
+                    'Auto-qualify age cannot be negative'
+                ))
+    
+    @api.constrains('auto_qualify_years')
+    def _check_auto_qualify_years(self):
+        """Validate auto-qualify years"""
+        for category in self:
+            if category.auto_qualify_years < 0:
+                raise ValidationError(_(
+                    'Auto-qualify years cannot be negative'
+                ))
 
     _sql_constraints = [
         ('code_unique', 'UNIQUE(code)', 'Category code must be unique!'),

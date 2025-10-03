@@ -65,19 +65,20 @@ Organizational Membership Support:
         'data/product_template_data.xml',
         'data/membership_cron.xml',
         'data/membership_email_templates.xml',
-        'data/seat_notification_email_templates.xml',  # NEW: Seat allocation/deallocation emails
+        'data/seat_notification_email_templates.xml',
+        'data/cron_data.xml',
         
         # Wizard views
         'wizard/membership_quick_setup_wizard_views.xml',
-        'wizard/seat_allocation_wizard_views.xml',  # NEW: Seat allocation wizard
-        'wizard/seat_deallocation_wizard_views.xml',  # NEW: Seat deallocation wizard
+        'wizard/seat_allocation_wizard_views.xml', 
+        'wizard/seat_deallocation_wizard_views.xml', 
         
         # Core Views
         'views/membership_category_views.xml',
         'views/membership_feature_views.xml',
         'views/membership_benefit_views.xml',
         'views/product_template_views.xml',
-        'views/subscription_plan_views.xml',  # NEW: Enhanced with seat configuration
+        'views/subscription_plan_views.xml',
         'views/subscription_views.xml',
         'views/res_partner_views.xml',
         'views/menu_views.xml',

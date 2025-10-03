@@ -5,208 +5,409 @@ from odoo.exceptions import ValidationError
 
 class SubscriptionPlan(models.Model):
     """
-    Extend Subscription Plan with Seat Management for Organizational Memberships
+    Subscription Plan - Defines pricing and billing configuration
+    ENHANCED: Now supports lifetime memberships
     """
-    _inherit = 'subscription.plan'
+    _name = 'subscription.plan'
+    _description = 'Subscription Plan'
+    _order = 'sequence, name'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     # ==========================================
-    # SEAT CONFIGURATION - For Organizational Memberships
+    # BASIC INFORMATION
     # ==========================================
     
-    supports_seats = fields.Boolean(
-        string='Supports Multiple Seats',
-        default=False,
-        help='This plan allows multiple seat subscriptions (for organizational memberships)'
+    name = fields.Char(
+        string='Plan Name',
+        required=True,
+        tracking=True,
+        translate=True,
+        help='Display name for this subscription plan'
     )
     
-    included_seats = fields.Integer(
-        string='Included Seats',
-        default=1,
-        help='Number of seats included in base price'
+    code = fields.Char(
+        string='Plan Code',
+        help='Unique identifier for this plan'
     )
     
-    max_seats = fields.Integer(
-        string='Maximum Seats',
-        default=0,
-        help='Maximum seats allowed (0 = unlimited)'
+    sequence = fields.Integer(
+        string='Sequence',
+        default=10,
+        help='Display order'
     )
     
-    additional_seat_price = fields.Float(
-        string='Additional Seat Price',
-        help='Price per additional seat beyond included seats'
+    active = fields.Boolean(
+        default=True,
+        tracking=True,
+        help='Inactive plans cannot be selected for new subscriptions'
     )
     
-    seat_product_id = fields.Many2one(
+    description = fields.Html(
+        string='Description',
+        translate=True,
+        help='Detailed description shown to customers'
+    )
+
+    # ==========================================
+    # PRODUCT LINK
+    # ==========================================
+    
+    product_template_id = fields.Many2one(
         'product.template',
-        string='Seat Add-on Product',
-        domain=[('is_membership_product', '=', True)],
-        help='Product used for additional seat purchases'
+        string='Product',
+        required=True,
+        domain=[('is_subscription', '=', True)],
+        help='Product that customers will purchase'
+    )
+
+    # ==========================================
+    # PRICING
+    # ==========================================
+    
+    price = fields.Float(
+        string='Price',
+        required=True,
+        tracking=True,
+        help='Subscription price per billing period'
     )
     
+    currency_id = fields.Many2one(
+        'res.currency',
+        string='Currency',
+        default=lambda self: self.env.company.currency_id,
+        required=True
+    )
+
+    # ==========================================
+    # BILLING CONFIGURATION (ENHANCED)
+    # ==========================================
+    
+    billing_period = fields.Selection([
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+        ('yearly', 'Yearly'),
+        ('lifetime', 'Lifetime'),  # NEW
+    ], string='Billing Period',
+       default='monthly',
+       required=True,
+       tracking=True,
+       help='How often the subscription is billed')
+    
+    billing_interval = fields.Integer(
+        string='Billing Interval',
+        default=1,
+        required=True,
+        help='Number of periods between billings (e.g., 2 = every 2 months)'
+    )
+    
+    billing_type = fields.Selection([
+        ('anniversary', 'Anniversary-based'),
+        ('calendar', 'Calendar-based'),
+    ], string='Billing Type',
+       default='anniversary',
+       required=True,
+       help='Anniversary: bills from signup date. Calendar: aligns to calendar periods')
+    
+    # NEW: Lifetime membership flag
+    is_lifetime = fields.Boolean(
+        string='Lifetime Membership',
+        compute='_compute_is_lifetime',
+        store=True,
+        help='One-time payment, never expires'
+    )
+    
+    @api.depends('billing_period')
+    def _compute_is_lifetime(self):
+        """Determine if this is a lifetime plan"""
+        for plan in self:
+            plan.is_lifetime = (plan.billing_period == 'lifetime')
+
+    # ==========================================
+    # RENEWAL CONFIGURATION
+    # ==========================================
+    
+    auto_renew = fields.Boolean(
+        string='Auto-Renew',
+        default=True,
+        help='Automatically renew subscriptions when they expire'
+    )
+
+    # ==========================================
+    # TRIAL CONFIGURATION
+    # ==========================================
+    
+    trial_period = fields.Integer(
+        string='Trial Period',
+        default=0,
+        help='Number of days for free trial (0 = no trial)'
+    )
+    
+    trial_price = fields.Float(
+        string='Trial Price',
+        default=0.0,
+        help='Price during trial period (usually 0)'
+    )
+
+    # ==========================================
+    # PLAN LIMITS
+    # ==========================================
+    
+    user_limit = fields.Integer(
+        string='User Limit',
+        default=0,
+        help='Maximum number of users (0 = unlimited)'
+    )
+    
+    storage_limit = fields.Integer(
+        string='Storage Limit (GB)',
+        default=0,
+        help='Storage quota in GB (0 = unlimited)'
+    )
+    
+    min_duration = fields.Integer(
+        string='Minimum Duration',
+        default=0,
+        help='Minimum subscription duration in months'
+    )
+    
+    max_duration = fields.Integer(
+        string='Maximum Duration',
+        default=0,
+        help='Maximum subscription duration in months (0 = unlimited)'
+    )
+    
+    cancellation_period = fields.Integer(
+        string='Cancellation Period',
+        default=0,
+        help='Notice period required for cancellation in days'
+    )
+
+    # ==========================================
+    # USAGE-BASED BILLING
+    # ==========================================
+    
+    usage_based = fields.Boolean(
+        string='Usage-Based Billing',
+        default=False,
+        help='Enable metered/usage-based billing'
+    )
+    
+    usage_unit = fields.Char(
+        string='Usage Unit',
+        help='Unit of measurement (e.g., GB, API calls, users)'
+    )
+    
+    usage_price = fields.Float(
+        string='Price per Unit',
+        help='Price per usage unit'
+    )
+    
+    included_usage = fields.Float(
+        string='Included Usage',
+        default=0,
+        help='Usage included in base price'
+    )
+
+    # ==========================================
+    # LIFECYCLE MANAGEMENT (Plan-specific overrides)
+    # ==========================================
+    
+    grace_period_days = fields.Integer(
+        string='Grace Period (Days)',
+        default=0,
+        help='Plan-specific grace period. 0 = use system default'
+    )
+    
+    suspend_period_days = fields.Integer(
+        string='Suspension Period (Days)',
+        default=0,
+        help='Plan-specific suspension period. 0 = use system default'
+    )
+    
+    terminate_period_days = fields.Integer(
+        string='Termination Period (Days)',
+        default=0,
+        help='Plan-specific termination period. 0 = use system default'
+    )
+
     # ==========================================
     # STATISTICS
     # ==========================================
     
-    total_allocated_seats = fields.Integer(
-        string='Total Allocated Seats',
-        compute='_compute_seat_statistics',
-        help='Total number of seats allocated across all subscriptions'
-    )
-    
-    active_seat_subscriptions = fields.Integer(
-        string='Active Seat Subscriptions',
-        compute='_compute_seat_statistics',
-        help='Number of active seat subscriptions'
+    subscription_count = fields.Integer(
+        string='Subscriptions',
+        compute='_compute_subscription_count',
+        help='Number of active subscriptions using this plan'
     )
 
-    @api.depends('subscription_ids', 'subscription_ids.child_subscription_ids')
-    def _compute_seat_statistics(self):
-        """Calculate seat allocation statistics"""
+    @api.depends('product_template_id')
+    def _compute_subscription_count(self):
+        """Count subscriptions using this plan"""
         for plan in self:
-            if plan.supports_seats:
-                # Get all active parent subscriptions for this plan
-                parent_subs = plan.subscription_ids.filtered(
-                    lambda s: s.state in ['trial', 'active'] and not s.parent_subscription_id
-                )
-                
-                # Count total allocated seats
-                total_seats = sum(parent_subs.mapped('allocated_seat_count'))
-                plan.total_allocated_seats = total_seats
-                
-                # Count active seat subscriptions
-                seat_subs = parent_subs.mapped('child_subscription_ids').filtered(
-                    lambda s: s.state in ['trial', 'active']
-                )
-                plan.active_seat_subscriptions = len(seat_subs)
-            else:
-                plan.total_allocated_seats = 0
-                plan.active_seat_subscriptions = 0
-
-    # ==========================================
-    # CONSTRAINTS
-    # ==========================================
-
-    @api.constrains('included_seats', 'max_seats')
-    def _check_seat_configuration(self):
-        """Validate seat configuration"""
-        for plan in self:
-            if plan.supports_seats:
-                if plan.included_seats <= 0:
-                    raise ValidationError(_(
-                        'Plans that support seats must include at least 1 seat.'
-                    ))
-                
-                if plan.max_seats > 0 and plan.max_seats < plan.included_seats:
-                    raise ValidationError(_(
-                        'Maximum seats (%s) cannot be less than included seats (%s).'
-                    ) % (plan.max_seats, plan.included_seats))
-    
-    @api.constrains('additional_seat_price')
-    def _check_additional_seat_price(self):
-        """Validate additional seat price"""
-        for plan in self:
-            if plan.supports_seats and plan.additional_seat_price < 0:
-                raise ValidationError(_(
-                    'Additional seat price cannot be negative.'
-                ))
+            plan.subscription_count = self.env['subscription.subscription'].search_count([
+                ('plan_id', '=', plan.id)
+            ])
 
     # ==========================================
     # BUSINESS METHODS
     # ==========================================
 
-    def get_seat_price(self, quantity=1):
+    def get_billing_frequency_display(self):
+        """Get human-readable billing frequency"""
+        self.ensure_one()
+        
+        if self.is_lifetime:
+            return _('One-time payment')
+        
+        if self.billing_interval == 1:
+            return dict(self._fields['billing_period'].selection)[self.billing_period]
+        else:
+            return _('Every %s %s') % (
+                self.billing_interval,
+                dict(self._fields['billing_period'].selection)[self.billing_period]
+            )
+
+    def calculate_next_billing_date(self, start_date):
         """
-        Calculate price for additional seats
+        Calculate next billing date based on plan configuration
         
         Args:
-            quantity: Number of additional seats
-        
+            start_date: Starting date for calculation
+            
         Returns:
-            float: Total price for additional seats
+            date: Next billing date, or False for lifetime plans
         """
         self.ensure_one()
         
-        if not self.supports_seats:
-            return 0.0
+        # Lifetime plans never have a next billing date
+        if self.is_lifetime:
+            return False
         
-        # Calculate seats beyond included
-        additional_seats = max(0, quantity - self.included_seats)
-        
-        return additional_seats * self.additional_seat_price
+        if self.billing_type == 'anniversary':
+            return self._calculate_anniversary_date(start_date)
+        else:
+            return self._calculate_calendar_date(start_date)
     
-    def check_seat_availability(self, subscription_id, requested_seats=1):
-        """
-        Check if seats are available for allocation
+    def _calculate_anniversary_date(self, start_date):
+        """Calculate anniversary-based next billing date"""
+        from dateutil.relativedelta import relativedelta
         
-        Args:
-            subscription_id: ID of parent subscription
-            requested_seats: Number of seats requested
+        if self.billing_period == 'daily':
+            return start_date + relativedelta(days=self.billing_interval)
+        elif self.billing_period == 'weekly':
+            return start_date + relativedelta(weeks=self.billing_interval)
+        elif self.billing_period == 'monthly':
+            return start_date + relativedelta(months=self.billing_interval)
+        elif self.billing_period == 'quarterly':
+            return start_date + relativedelta(months=3 * self.billing_interval)
+        elif self.billing_period == 'yearly':
+            return start_date + relativedelta(years=self.billing_interval)
         
-        Returns:
-            tuple: (bool: available, str: message)
-        """
-        self.ensure_one()
-        
-        if not self.supports_seats:
-            return (False, _('This plan does not support multiple seats'))
-        
-        subscription = self.env['subscription.subscription'].browse(subscription_id)
-        
-        if not subscription:
-            return (False, _('Subscription not found'))
-        
-        if subscription.available_seat_count < requested_seats:
-            return (False, _(
-                'Only %s seats available. Requested: %s'
-            ) % (subscription.available_seat_count, requested_seats))
-        
-        return (True, '')
+        return False
     
-    def action_view_seat_subscriptions(self):
-        """View all seat subscriptions for this plan"""
+    def _calculate_calendar_date(self, start_date):
+        """Calculate calendar-aligned next billing date"""
+        from dateutil.relativedelta import relativedelta
+        
+        if self.billing_period == 'monthly':
+            # End of current month + interval
+            next_date = start_date + relativedelta(day=31, months=self.billing_interval)
+            return next_date
+        elif self.billing_period == 'quarterly':
+            # End of current quarter
+            quarter = (start_date.month - 1) // 3
+            next_quarter_start = start_date.replace(month=quarter * 3 + 1, day=1)
+            next_date = next_quarter_start + relativedelta(months=3 * self.billing_interval, day=31)
+            return next_date
+        elif self.billing_period == 'yearly':
+            # End of current year
+            return start_date.replace(month=12, day=31) + relativedelta(years=self.billing_interval - 1)
+        
+        # Default to anniversary for other periods
+        return self._calculate_anniversary_date(start_date)
+
+    def action_view_subscriptions(self):
+        """View all subscriptions using this plan"""
         self.ensure_one()
-        
-        # Get all parent subscriptions
-        parent_subs = self.subscription_ids.filtered(
-            lambda s: not s.parent_subscription_id
-        )
-        
-        # Get all child seat subscriptions
-        seat_subs = parent_subs.mapped('child_subscription_ids')
         
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Seat Subscriptions - %s') % self.name,
+            'name': _('Subscriptions - %s') % self.name,
             'res_model': 'subscription.subscription',
             'view_mode': 'list,form',
-            'domain': [('id', 'in', seat_subs.ids)],
+            'domain': [('plan_id', '=', self.id)],
             'context': {
                 'default_plan_id': self.id,
             }
         }
 
+    def name_get(self):
+        """Custom display name"""
+        result = []
+        for plan in self:
+            name = plan.name
+            if plan.code:
+                name = f"[{plan.code}] {name}"
+            if plan.is_lifetime:
+                name = f"{name} (Lifetime)"
+            result.append((plan.id, name))
+        return result
+
+    # ==========================================
+    # CONSTRAINTS
+    # ==========================================
+
+    @api.constrains('price')
+    def _check_price(self):
+        """Validate price is positive"""
+        for plan in self:
+            if plan.price < 0:
+                raise ValidationError(_('Plan price cannot be negative'))
+
+    @api.constrains('billing_interval')
+    def _check_billing_interval(self):
+        """Validate billing interval"""
+        for plan in self:
+            if plan.billing_interval < 1:
+                raise ValidationError(_('Billing interval must be at least 1'))
+    
+    @api.constrains('billing_period', 'auto_renew')
+    def _check_lifetime_auto_renew(self):
+        """Lifetime plans cannot auto-renew"""
+        for plan in self:
+            if plan.is_lifetime and plan.auto_renew:
+                raise ValidationError(_(
+                    'Lifetime plans cannot have auto-renewal enabled. '
+                    'Lifetime memberships are one-time payments that never expire.'
+                ))
+    
+    @api.constrains('billing_period', 'billing_interval')
+    def _check_lifetime_interval(self):
+        """Lifetime plans must have interval of 1"""
+        for plan in self:
+            if plan.is_lifetime and plan.billing_interval != 1:
+                raise ValidationError(_(
+                    'Lifetime plans must have a billing interval of 1.'
+                ))
+
     # ==========================================
     # ONCHANGE METHODS
     # ==========================================
-
-    @api.onchange('supports_seats')
-    def _onchange_supports_seats(self):
-        """Set defaults when enabling seat support"""
-        if self.supports_seats:
-            if not self.included_seats or self.included_seats <= 0:
-                self.included_seats = 5
-            if not self.max_seats:
-                self.max_seats = self.included_seats
-            
-            # Calculate suggested seat price (20% of base price per seat)
-            if not self.additional_seat_price and self.price > 0 and self.included_seats > 0:
-                self.additional_seat_price = (self.price / self.included_seats) * 1.2
     
-    @api.onchange('included_seats', 'price')
-    def _onchange_calculate_seat_price(self):
-        """Auto-calculate additional seat price based on base price"""
-        if self.supports_seats and self.price > 0 and self.included_seats > 0:
-            if not self.additional_seat_price:
-                # Suggest 20% premium over pro-rated base price
-                base_per_seat = self.price / self.included_seats
-                self.additional_seat_price = base_per_seat * 1.2
+    @api.onchange('billing_period')
+    def _onchange_billing_period(self):
+        """Handle lifetime selection"""
+        if self.billing_period == 'lifetime':
+            # Disable auto-renew for lifetime plans
+            self.auto_renew = False
+            self.billing_interval = 1
+            
+            # Clear trial period (doesn't make sense for lifetime)
+            self.trial_period = 0
+            self.trial_price = 0.0
+
+    _sql_constraints = [
+        ('code_unique', 'UNIQUE(code)', 'Plan code must be unique!'),
+    ]

@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
+from odoo.exceptions import UserError
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class ResPartner(models.Model):
@@ -63,7 +67,41 @@ class ResPartner(models.Model):
     )
 
     # ==========================================
-    # GEOGRAPHIC INFORMATION (NEW - for chapters)
+    # EMERITUS/LIFETIME FIELDS (NEW)
+    # ==========================================
+    
+    birthdate = fields.Date(
+        string='Date of Birth',
+        help='Used for age-based emeritus qualification'
+    )
+    
+    age = fields.Integer(
+        string='Age',
+        compute='_compute_age',
+        help='Current age in years'
+    )
+    
+    years_of_membership = fields.Float(
+        string='Years of Membership',
+        compute='_compute_years_of_membership',
+        help='Years as a member'
+    )
+    
+    is_emeritus_eligible = fields.Boolean(
+        string='Emeritus Eligible',
+        compute='_compute_emeritus_eligible',
+        help='Eligible for emeritus status based on age and years'
+    )
+    
+    is_lifetime_member = fields.Boolean(
+        string='Lifetime Member',
+        compute='_compute_is_lifetime_member',
+        store=True,
+        help='Has a lifetime membership'
+    )
+
+    # ==========================================
+    # GEOGRAPHIC INFORMATION (for chapters)
     # ==========================================
     
     # Note: country_id, state_id, zip already exist in base res.partner
@@ -546,7 +584,68 @@ class ResPartner(models.Model):
                 partner.days_until_termination = 0
 
     # ==========================================
-    # COMPUTE METHODS - GEOGRAPHIC/CHAPTERS (NEW)
+    # COMPUTE METHODS - EMERITUS/LIFETIME (NEW)
+    # ==========================================
+    
+    @api.depends('birthdate')
+    def _compute_age(self):
+        """Calculate current age"""
+        today = fields.Date.today()
+        for partner in self:
+            if partner.birthdate:
+                partner.age = int((today - partner.birthdate).days / 365.25)
+            else:
+                partner.age = 0
+    
+    @api.depends('member_since')
+    def _compute_years_of_membership(self):
+        """Calculate years of membership"""
+        today = fields.Date.today()
+        for partner in self:
+            if partner.member_since:
+                partner.years_of_membership = (today - partner.member_since).days / 365.25
+            else:
+                partner.years_of_membership = 0.0
+    
+    @api.depends('age', 'years_of_membership', 'membership_category_id')
+    def _compute_emeritus_eligible(self):
+        """Check if eligible for emeritus based on current category rules"""
+        for partner in self:
+            partner.is_emeritus_eligible = False
+            
+            if not partner.membership_category_id:
+                continue
+            
+            # Find emeritus categories
+            emeritus_categories = self.env['membership.category'].search([
+                ('is_emeritus_category', '=', True),
+                ('active', '=', True),
+            ])
+            
+            for category in emeritus_categories:
+                is_eligible, reason = category.check_emeritus_eligibility(partner)
+                if is_eligible:
+                    partner.is_emeritus_eligible = True
+                    break
+    
+    @api.depends('membership_subscription_ids', 'membership_subscription_ids.is_lifetime',
+                 'seat_subscription_id', 'seat_subscription_id.is_lifetime')
+    def _compute_is_lifetime_member(self):
+        """Check if member has any lifetime subscriptions"""
+        for partner in self:
+            has_lifetime = bool(
+                partner.membership_subscription_ids.filtered(
+                    lambda s: s.is_lifetime and s.state in ['active', 'trial']
+                )
+            )
+            
+            if not has_lifetime and partner.seat_subscription_id:
+                has_lifetime = partner.seat_subscription_id.is_lifetime
+            
+            partner.is_lifetime_member = has_lifetime
+
+    # ==========================================
+    # COMPUTE METHODS - GEOGRAPHIC/CHAPTERS
     # ==========================================
     
     @api.depends('country_id', 'state_id', 'zip')
@@ -636,6 +735,155 @@ class ResPartner(models.Model):
             'domain': [('id', 'in', self.eligible_chapters.ids)],
             'context': {'default_category_type': 'chapter'}
         }
+
+    # ==========================================
+    # EMERITUS TRANSITION ACTIONS (NEW)
+    # ==========================================
+    
+    def action_transition_to_emeritus(self):
+        """Transition member to emeritus status"""
+        self.ensure_one()
+        
+        # Find emeritus category
+        emeritus_category = self.env['membership.category'].search([
+            ('is_emeritus_category', '=', True),
+            ('active', '=', True),
+        ], limit=1)
+        
+        if not emeritus_category:
+            raise UserError(_('No emeritus category configured'))
+        
+        # Check eligibility
+        is_eligible, reason = emeritus_category.check_emeritus_eligibility(self)
+        if not is_eligible:
+            raise UserError(_('Member is not eligible for emeritus status: %s') % reason)
+        
+        # Check if approval required
+        if emeritus_category.requires_board_approval:
+            # Create approval activity
+            self.activity_schedule(
+                'mail.mail_activity_data_todo',
+                summary=_('Emeritus Status Approval'),
+                note=_('Please review and approve emeritus status transition for %s') % self.name,
+                user_id=self.env.ref('base.user_admin').id
+            )
+            
+            self.message_post(
+                body=_('Emeritus status transition requested - pending board approval'),
+                message_type='notification'
+            )
+            
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Approval Required'),
+                    'message': _('Emeritus transition has been submitted for board approval'),
+                    'type': 'info',
+                }
+            }
+        
+        # Auto-approve
+        return self._complete_emeritus_transition(emeritus_category)
+    
+    def _complete_emeritus_transition(self, emeritus_category):
+        """Complete the transition to emeritus"""
+        self.ensure_one()
+        
+        old_category = self.membership_category_id
+        
+        # Update member category
+        self.membership_category_id = emeritus_category
+        
+        # Update active subscriptions to emeritus plan
+        active_subs = self.membership_subscription_ids.filtered(
+            lambda s: s.state in ['active', 'trial']
+        )
+        
+        # Find emeritus product/plan
+        emeritus_product = emeritus_category.default_product_id
+        if emeritus_product:
+            emeritus_plan = self.env['subscription.plan'].search([
+                ('product_template_id', '=', emeritus_product.id),
+                ('active', '=', True),
+            ], limit=1)
+            
+            if emeritus_plan:
+                for subscription in active_subs:
+                    subscription.plan_id = emeritus_plan
+                    subscription.message_post(
+                        body=_('Subscription updated to emeritus plan'),
+                        message_type='notification'
+                    )
+        
+        self.message_post(
+            body=_('Member transitioned from %s to %s (Emeritus)') % (
+                old_category.name if old_category else 'Unknown',
+                emeritus_category.name
+            ),
+            message_type='notification'
+        )
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Success'),
+                'message': _('Member successfully transitioned to emeritus status'),
+                'type': 'success',
+            }
+        }
+    
+    # ==========================================
+    # CRON METHOD - AUTO EMERITUS TRANSITION (NEW)
+    # ==========================================
+    
+    @api.model
+    def _cron_auto_transition_emeritus(self):
+        """
+        Cron job to automatically transition eligible members to emeritus status
+        Runs monthly
+        """
+        # Find emeritus categories that allow auto-transition
+        emeritus_categories = self.env['membership.category'].search([
+            ('is_emeritus_category', '=', True),
+            ('active', '=', True),
+            ('requires_board_approval', '=', False),  # Only auto-approve categories
+            '|',
+            ('auto_qualify_age', '>', 0),
+            ('auto_qualify_years', '>', 0),
+        ])
+        
+        if not emeritus_categories:
+            _logger.info("No auto-transition emeritus categories configured")
+            return
+        
+        transition_count = 0
+        
+        for category in emeritus_categories:
+            # Find eligible members not already in emeritus
+            eligible_members = self.search([
+                ('is_member', '=', True),
+                ('membership_category_id', '!=', category.id),
+                ('membership_category_id.is_emeritus_category', '=', False),
+            ])
+            
+            for member in eligible_members:
+                is_eligible, reason = category.check_emeritus_eligibility(member)
+                
+                if is_eligible:
+                    try:
+                        member._complete_emeritus_transition(category)
+                        transition_count += 1
+                        _logger.info(f"Auto-transitioned {member.name} to emeritus status")
+                    except Exception as e:
+                        _logger.error(f"Failed to auto-transition {member.name} to emeritus: {e}")
+        
+        _logger.info(f"Emeritus auto-transition completed: {transition_count} members transitioned")
+
+    # ==========================================
+    # HELPER METHODS
+    # ==========================================
 
     def check_feature_access(self, feature_code):
         """
