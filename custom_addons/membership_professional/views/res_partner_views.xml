@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ========================================== -->
+        <!-- PARTNER FORM VIEW - PROFESSIONAL TAB -->
+        <!-- ========================================== -->
+
+        <record id="view_partner_form_professional" model="ir.ui.view">
+            <field name="name">res.partner.form.professional</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="membership_community.view_partner_form_membership"/>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+                
+                <!-- Add smart buttons -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_licenses" type="object" 
+                            class="oe_stat_button" icon="fa-certificate"
+                            invisible="license_count == 0">
+                        <div class="o_field_widget o_stat_info">
+                            <span class="o_stat_value">
+                                <field name="active_license_count"/>/<field name="license_count"/>
+                            </span>
+                            <span class="o_stat_text">Licenses</span>
+                        </div>
+                    </button>
+                    
+                    <button name="action_view_credentials" type="object" 
+                            class="oe_stat_button" icon="fa-graduation-cap"
+                            invisible="credential_count == 0">
+                        <field name="credential_count" widget="statinfo" string="Credentials"/>
+                    </button>
+                </xpath>
+
+                <!-- Add professional status badges -->
+                <xpath expr="//field[@name='function']" position="after">
+                    <field name="license_status" invisible="1"/>
+                    <field name="ce_compliance_status" invisible="1"/>
+                    <field name="has_expired_license" invisible="1"/>
+                    <field name="has_expiring_license" invisible="1"/>
+                    
+                    <div class="badge-container" invisible="not is_member">
+                        <!-- License Status Badges -->
+                        <span class="badge text-bg-danger me-1" invisible="license_status != 'expired'">
+                            <i class="fa fa-exclamation-triangle"/> Expired License
+                        </span>
+                        <span class="badge text-bg-warning me-1" invisible="license_status != 'expiring'">
+                            <i class="fa fa-clock-o"/> License Expiring
+                        </span>
+                        <span class="badge text-bg-success me-1" invisible="license_status != 'good'">
+                            <i class="fa fa-check-circle"/> Licenses Current
+                        </span>
+                        
+                        <!-- CE Compliance Badge -->
+                        <span class="badge text-bg-danger me-1" invisible="ce_compliance_status != 'non_compliant'">
+                            <i class="fa fa-exclamation"/> CE Non-Compliant
+                        </span>
+                        <span class="badge text-bg-success me-1" invisible="ce_compliance_status != 'compliant'">
+                            <i class="fa fa-check"/> CE Compliant
+                        </span>
+                        
+                        <!-- Credentials Display -->
+                        <span class="badge text-bg-info me-1" invisible="not credential_display">
+                            <i class="fa fa-graduation-cap"/> <field name="credential_display" nolabel="1"/>
+                        </span>
+                    </div>
+                </xpath>
+
+                <!-- Add Professional Information Page -->
+                <xpath expr="//page[@name='membership']" position="after">
+                    <page string="Professional" name="professional" invisible="not is_member">
+                        
+                        <!-- Credentials Section -->
+                        <group name="credentials" string="Professional Credentials">
+                            <group name="credentials_left">
+                                <field name="professional_credentials" widget="many2many_tags"
+                                       options="{'color_field': 'color', 'no_create': True}"/>
+                                <field name="primary_credential_id" 
+                                       domain="[('id', 'in', professional_credentials)]"
+                                       options="{'no_create': True}"/>
+                            </group>
+                            <group name="credentials_right">
+                                <button name="action_view_credentials" 
+                                        string="View Credential History" 
+                                        type="object" 
+                                        class="btn-link"
+                                        icon="fa-history"/>
+                            </group>
+                        </group>
+
+                        <!-- Specialties Section -->
+                        <group name="specialties" string="Areas of Specialty">
+                            <group>
+                                <field name="specialty_ids" widget="many2many_tags"
+                                       options="{'color_field': 'color', 'no_create': True}"/>
+                                <field name="primary_specialty_id" 
+                                       domain="[('id', 'in', specialty_ids)]"
+                                       options="{'no_create': True}"/>
+                            </group>
+                        </group>
+
+                        <!-- Employment Information -->
+                        <group name="employment" string="Employment Information">
+                            <group name="employment_left">
+                                <field name="employer_name"/>
+                                <field name="job_title"/>
+                                <field name="department"/>
+                                <field name="industry_sector"/>
+                            </group>
+                            <group name="employment_right">
+                                <field name="employment_status"/>
+                                <field name="employment_start_date"/>
+                                <field name="years_with_employer" readonly="1"/>
+                            </group>
+                        </group>
+
+                        <!-- Experience -->
+                        <group name="experience" string="Professional Experience">
+                            <group>
+                                <field name="career_start_date"/>
+                                <field name="years_of_experience" readonly="1" widget="float"/>
+                                <field name="experience_level" readonly="1"/>
+                            </group>
+                        </group>
+
+                        <!-- Education -->
+                        <group name="education" string="Education">
+                            <group>
+                                <field name="highest_education"/>
+                                <field name="graduation_year"/>
+                                <field name="alma_mater"/>
+                            </group>
+                        </group>
+
+                        <!-- Licenses Section -->
+                        <separator string="Professional Licenses"/>
+                        
+                        <div class="alert alert-danger" role="alert" 
+                             invisible="not has_expired_license">
+                            <p class="mb-0">
+                                <i class="fa fa-exclamation-triangle"/> 
+                                <strong>Action Required:</strong> This member has one or more expired licenses.
+                            </p>
+                        </div>
+                        
+                        <div class="alert alert-warning" role="alert" 
+                             invisible="not has_expiring_license or has_expired_license">
+                            <p class="mb-0">
+                                <i class="fa fa-clock-o"/> 
+                                <strong>Warning:</strong> This member has licenses expiring soon.
+                            </p>
+                        </div>
+                        
+                        <field name="license_ids" nolabel="1" 
+                               context="{'default_partner_id': id}">
+                            <list decoration-danger="status=='expired'"
+                                  decoration-warning="status=='expiring_soon'"
+                                  decoration-success="status=='active'">
+                                <field name="name"/>
+                                <field name="credential_id"/>
+                                <field name="license_number"/>
+                                <field name="issuing_authority"/>
+                                <field name="issuing_state_id" optional="show"/>
+                                <field name="issue_date" optional="hide"/>
+                                <field name="expiration_date"/>
+                                <field name="days_until_expiry" optional="show"/>
+                                <field name="status" widget="badge"
+                                       decoration-success="status=='active'"
+                                       decoration-warning="status=='expiring_soon'"
+                                       decoration-danger="status=='expired'"/>
+                                <field name="verification_status" widget="badge" optional="show"
+                                       decoration-success="verification_status=='verified'"
+                                       decoration-warning="verification_status=='pending'"
+                                       decoration-danger="verification_status=='rejected'"/>
+                                <button name="action_send_expiration_reminder" 
+                                        string="Send Reminder" 
+                                        type="object" 
+                                        icon="fa-envelope"
+                                        invisible="status not in ['expiring_soon', 'expired']"/>
+                            </list>
+                        </field>
+
+                        <group name="ce_tracking" string="Continuing Education">
+                            <group>
+                                <field name="ce_hours_current_cycle" readonly="1"/>
+                                <field name="ce_compliance_status" readonly="1" widget="badge"
+                                       decoration-success="ce_compliance_status=='compliant'"
+                                       decoration-danger="ce_compliance_status=='non_compliant'"
+                                       decoration-muted="ce_compliance_status=='not_required'"/>
+                            </group>
+                        </group>
+
+                    </page>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- PARTNER LIST VIEW - PROFESSIONAL COLUMNS -->
+        <!-- ========================================== -->
+
+        <record id="view_partner_list_professional" model="ir.ui.view">
+            <field name="name">res.partner.list.professional</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="membership_community.view_partner_list_members"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='membership_end_date']" position="after">
+                    <field name="credential_display" optional="show"/>
+                    <field name="primary_specialty_id" optional="hide"/>
+                    <field name="license_status" widget="badge" optional="show"
+                           decoration-success="license_status=='good'"
+                           decoration-warning="license_status=='expiring'"
+                           decoration-danger="license_status=='expired'"/>
+                    <field name="years_of_experience" optional="hide"/>
+                    <field name="experience_level" optional="hide"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- PARTNER SEARCH VIEW - PROFESSIONAL FILTERS -->
+        <!-- ========================================== -->
+
+        <record id="view_partner_search_professional" model="ir.ui.view">
+            <field name="name">res.partner.search.professional</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="membership_community.view_partner_search_members"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='membership_category_id']" position="after">
+                    <field name="professional_credentials"/>
+                    <field name="specialty_ids"/>
+                    <field name="employer_name"/>
+                </xpath>
+                
+                <xpath expr="//filter[@name='expiring_soon']" position="after">
+                    <separator/>
+                    <filter string="Has Expired License" name="expired_license"
+                            domain="[('has_expired_license', '=', True)]"/>
+                    <filter string="Has Expiring License" name="expiring_license"
+                            domain="[('has_expiring_license', '=', True)]"/>
+                    <filter string="CE Non-Compliant" name="ce_non_compliant"
+                            domain="[('ce_compliance_status', '=', 'non_compliant')]"/>
+                    <separator/>
+                    <filter string="By Credential" name="by_credential"
+                            context="{'group_by': 'primary_credential_id'}"/>
+                    <filter string="By Specialty" name="by_specialty"
+                            context="{'group_by': 'primary_specialty_id'}"/>
+                    <filter string="By Experience Level" name="by_experience"
+                            context="{'group_by': 'experience_level'}"/>
+                    <filter string="By Industry Sector" name="by_sector"
+                            context="{'group_by': 'industry_sector'}"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ========================================== -->
+        <!-- CATEGORIES -->
+        <!-- ========================================== -->
+
+        <record id="module_category_membership_professional" model="ir.module.category">
+            <field name="name">Membership Professional</field>
+            <field name="description">Professional credential and license management</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- GROUPS -->
+        <!-- ========================================== -->
+
+        <!-- Membership Professional User -->
+        <record id="group_membership_professional_user" model="res.groups">
+            <field name="name">Professional User</field>
+            <field name="category_id" ref="module_category_membership_professional"/>
+            <field name="implied_ids" eval="[(4, ref('membership_community.group_membership_user'))]"/>
+            <field name="comment">Can view and manage professional credentials and licenses</field>
+        </record>
+
+        <!-- Membership Professional Manager -->
+        <record id="group_membership_professional_manager" model="res.groups">
+            <field name="name">Professional Manager</field>
+            <field name="category_id" ref="module_category_membership_professional"/>
+            <field name="implied_ids" eval="[(4, ref('group_membership_professional_user')), (4, ref('membership_community.group_membership_manager'))]"/>
+            <field name="comment">Can configure credentials, verify licenses, and access compliance reports</field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- RECORD RULES -->
+        <!-- ========================================== -->
+
+        <!-- Credential Rules -->
+        <record id="membership_credential_rule_user" model="ir.rule">
+            <field name="name">Credential: User - All</field>
+            <field name="model_id" ref="model_membership_credential"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_professional_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="membership_credential_rule_manager" model="ir.rule">
+            <field name="name">Credential: Manager - All</field>
+            <field name="model_id" ref="model_membership_credential"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_professional_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Specialty Rules -->
+        <record id="membership_specialty_rule_user" model="ir.rule">
+            <field name="name">Specialty: User - All</field>
+            <field name="model_id" ref="model_membership_specialty"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_professional_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="membership_specialty_rule_manager" model="ir.rule">
+            <field name="name">Specialty: Manager - All</field>
+            <field name="model_id" ref="model_membership_specialty"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_professional_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- License Rules -->
+        <record id="membership_license_rule_user" model="ir.rule">
+            <field name="name">License: User - All</field>
+            <field name="model_id" ref="model_membership_license"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_professional_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="membership_license_rule_manager" model="ir.rule">
+            <field name="name">License: Manager - All</field>
+            <field name="model_id" ref="model_membership_license"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_professional_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Portal Users - Own Licenses Only -->
+        <record id="membership_license_rule_portal" model="ir.rule">
+            <field name="name">License: Portal - Own Only</field>
+            <field name="model_id" ref="model_membership_license"/>
+            <field name="domain_force">[('partner_id.user_ids', 'in', user.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Credential History Rules -->
+        <record id="membership_credential_history_rule_user" model="ir.rule">
+            <field name="name">Credential History: User - All</field>
+            <field name="model_id" ref="model_membership_credential_history"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_membership_professional_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Portal Users - Own Credential History Only -->
+        <record id="membership_credential_history_rule_portal" model="ir.rule">
+            <field name="name">Credential History: Portal - Own Only</field>
+            <field name="model_id" ref="model_membership_credential_history"/>
+            <field name="domain_force">[('partner_id.user_ids', 'in', user.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+    </data>
+</odoo>
