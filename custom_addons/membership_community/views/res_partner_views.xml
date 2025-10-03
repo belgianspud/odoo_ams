@@ -188,32 +188,17 @@
                         <!-- Features & Benefits -->
                         <group name="features_benefits" string="Available Features &amp; Benefits">
                             <group name="features">
-                                <label for="available_features"/>
-                                <field name="available_features" nolabel="1" widget="many2many_tags">
-                                    <tree>
-                                        <field name="name"/>
-                                        <field name="category"/>
-                                        <field name="feature_type"/>
-                                    </tree>
-                                </field>
+                                <field name="available_features" widget="many2many_tags"/>
                             </group>
                             <group name="benefits">
-                                <label for="available_benefits"/>
-                                <field name="available_benefits" nolabel="1" widget="many2many_tags">
-                                    <tree>
-                                        <field name="name"/>
-                                        <field name="category"/>
-                                        <field name="benefit_type"/>
-                                        <field name="monetary_value"/>
-                                    </tree>
-                                </field>
+                                <field name="available_benefits" widget="many2many_tags"/>
                             </group>
                         </group>
 
                         <!-- All Subscriptions List -->
                         <separator string="All Membership Subscriptions"/>
                         <field name="membership_subscription_ids" nolabel="1" 
-                               context="{'default_partner_id': active_id}">
+                               context="{'default_partner_id': id}">
                             <list string="Subscriptions" 
                                   decoration-success="state=='active'" 
                                   decoration-info="state=='trial'" 
@@ -302,20 +287,10 @@
                             domain="[('membership_state', '=', 'expired')]"/>
                     
                     <separator/>
-                    <filter string="Lifetime Members" name="lifetime_members" 
-                            domain="[('is_lifetime_member', '=', True)]"/>
-                    <filter string="Emeritus Eligible" name="emeritus_eligible" 
-                            domain="[('is_emeritus_eligible', '=', True)]"/>
                     <filter string="Seat Members" name="seat_members" 
                             domain="[('is_seat_member', '=', True)]"/>
                     <filter string="Organizations with Seats" name="organizations_with_seats" 
                             domain="[('child_member_ids', '!=', False)]"/>
-                    
-                    <separator/>
-                    <filter string="In Grace Period" name="grace_period" 
-                            domain="[('is_in_grace_period', '=', True)]"/>
-                    <filter string="Has Portal Access" name="has_portal" 
-                            domain="[('has_portal_access', '=', True)]"/>
                     
                     <separator/>
                     <filter string="Individual" name="individual_members"

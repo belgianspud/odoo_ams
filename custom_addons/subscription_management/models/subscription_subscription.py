@@ -101,6 +101,67 @@ class SubscriptionSubscription(models.Model):
                                   'Invoices')
     tag_ids = fields.Many2many('subscription.tag', string='Tags')
     
+    # ==========================================
+    # SEAT MANAGEMENT (BASE - for organizational subscriptions)
+    # ==========================================
+    
+    # Parent-Child Subscription Relationships
+    parent_subscription_id = fields.Many2one(
+        'subscription.subscription',
+        string='Parent Subscription',
+        help='Parent organizational subscription (for seat subscriptions)',
+        index=True,
+        ondelete='cascade'
+    )
+    
+    child_subscription_ids = fields.One2many(
+        'subscription.subscription',
+        'parent_subscription_id',
+        string='Seat Subscriptions',
+        help='Child seat subscriptions under this organizational subscription'
+    )
+    
+    is_seat_subscription = fields.Boolean(
+        string='Is Seat Subscription',
+        compute='_compute_is_seat_subscription',
+        store=True,
+        help='This subscription is a seat under an organizational subscription'
+    )
+    
+    seat_holder_id = fields.Many2one(
+        'res.partner',
+        string='Seat Holder',
+        help='Individual using this seat (for seat subscriptions)',
+        index=True
+    )
+    
+    # Seat Allocation
+    max_seats = fields.Integer(
+        string='Maximum Seats',
+        help='Maximum number of seats allowed for this subscription',
+        default=0
+    )
+    
+    allocated_seat_count = fields.Integer(
+        string='Allocated Seats',
+        compute='_compute_seat_counts',
+        store=True,
+        help='Number of seats currently allocated'
+    )
+    
+    available_seat_count = fields.Integer(
+        string='Available Seats',
+        compute='_compute_seat_counts',
+        store=True,
+        help='Number of seats still available'
+    )
+    
+    seat_utilization = fields.Float(
+        string='Seat Utilization %',
+        compute='_compute_seat_utilization',
+        help='Percentage of seats currently in use'
+    )
+    
     # Counts
     invoice_count = fields.Integer('Invoice Count', compute='_compute_invoice_count')
     
@@ -347,6 +408,32 @@ class SubscriptionSubscription(models.Model):
     def _compute_failed_invoice_count(self):
         for subscription in self:
             subscription.failed_invoice_count = len(subscription.failed_invoice_ids)
+    
+    # ==========================================
+    # COMPUTE METHODS - SEAT MANAGEMENT
+    # ==========================================
+    
+    @api.depends('parent_subscription_id')
+    def _compute_is_seat_subscription(self):
+        """Determine if this is a seat subscription"""
+        for sub in self:
+            sub.is_seat_subscription = bool(sub.parent_subscription_id)
+    
+    @api.depends('child_subscription_ids', 'max_seats')
+    def _compute_seat_counts(self):
+        """Calculate allocated and available seat counts"""
+        for sub in self:
+            sub.allocated_seat_count = len(sub.child_subscription_ids)
+            sub.available_seat_count = max(0, sub.max_seats - sub.allocated_seat_count)
+    
+    @api.depends('allocated_seat_count', 'max_seats')
+    def _compute_seat_utilization(self):
+        """Calculate seat utilization percentage"""
+        for sub in self:
+            if sub.max_seats > 0:
+                sub.seat_utilization = (sub.allocated_seat_count / sub.max_seats) * 100
+            else:
+                sub.seat_utilization = 0.0
     
     # ==========================================
     # LIFECYCLE COMPUTE METHODS

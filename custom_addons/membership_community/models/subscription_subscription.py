@@ -12,10 +12,11 @@ class SubscriptionSubscription(models.Model):
     
     Key Philosophy:
     - Lifecycle management (grace, suspend, terminate) = subscription_management
+    - Seat management (parent/child, allocation) = subscription_management
     - Membership-specific fields and classification = membership_community
     - Email notifications = membership_community overrides
     
-    This keeps the model lean by inheriting all lifecycle compute methods
+    This keeps the model lean by inheriting all lifecycle and seat compute methods
     from subscription_management rather than duplicating them.
     """
     _inherit = 'subscription.subscription'
@@ -118,65 +119,13 @@ class SubscriptionSubscription(models.Model):
     )
 
     # ==========================================
-    # ORGANIZATIONAL MEMBERSHIP - SEAT SUPPORT
+    # NOTE: SEAT MANAGEMENT FIELDS INHERITED FROM BASE
+    # The following fields are defined in subscription_management:
+    # - parent_subscription_id, child_subscription_ids, is_seat_subscription
+    # - seat_holder_id, max_seats, allocated_seat_count, available_seat_count
+    # - seat_utilization
+    # - _compute_is_seat_subscription(), _compute_seat_counts(), _compute_seat_utilization()
     # ==========================================
-    
-    # Parent-Child Subscription Relationships (REQUIRED for org memberships)
-    parent_subscription_id = fields.Many2one(
-        'subscription.subscription',
-        string='Parent Subscription',
-        help='Parent organizational subscription (for seat subscriptions)',
-        index=True,
-        ondelete='cascade'
-    )
-    
-    child_subscription_ids = fields.One2many(
-        'subscription.subscription',
-        'parent_subscription_id',
-        string='Seat Subscriptions',
-        help='Child seat subscriptions under this organizational subscription'
-    )
-    
-    is_seat_subscription = fields.Boolean(
-        string='Is Seat Subscription',
-        compute='_compute_is_seat_subscription',
-        store=True,
-        help='This subscription is a seat under an organizational subscription'
-    )
-    
-    seat_holder_id = fields.Many2one(
-        'res.partner',
-        string='Seat Holder',
-        help='Individual using this seat (for seat subscriptions)',
-        index=True
-    )
-    
-    # Seat Allocation (REQUIRED for org memberships)
-    max_seats = fields.Integer(
-        string='Maximum Seats',
-        help='Maximum number of seats allowed for this subscription',
-        default=0
-    )
-    
-    allocated_seat_count = fields.Integer(
-        string='Allocated Seats',
-        compute='_compute_seat_counts',
-        store=True,
-        help='Number of seats currently allocated'
-    )
-    
-    available_seat_count = fields.Integer(
-        string='Available Seats',
-        compute='_compute_seat_counts',
-        store=True,
-        help='Number of seats still available'
-    )
-    
-    seat_utilization = fields.Float(
-        string='Seat Utilization %',
-        compute='_compute_seat_utilization',
-        help='Percentage of seats currently in use'
-    )
 
     # ==========================================
     # PRIMARY MEMBERSHIP RELATIONSHIPS (NEW - for chapters)
@@ -211,32 +160,6 @@ class SubscriptionSubscription(models.Model):
         store=True,
         help='This subscription requires a primary/parent membership'
     )
-
-    # ==========================================
-    # COMPUTE METHODS - SEAT MANAGEMENT
-    # ==========================================
-    
-    @api.depends('parent_subscription_id')
-    def _compute_is_seat_subscription(self):
-        """Determine if this is a seat subscription"""
-        for sub in self:
-            sub.is_seat_subscription = bool(sub.parent_subscription_id)
-    
-    @api.depends('child_subscription_ids', 'max_seats')
-    def _compute_seat_counts(self):
-        """Calculate allocated and available seat counts"""
-        for sub in self:
-            sub.allocated_seat_count = len(sub.child_subscription_ids)
-            sub.available_seat_count = max(0, sub.max_seats - sub.allocated_seat_count)
-    
-    @api.depends('allocated_seat_count', 'max_seats')
-    def _compute_seat_utilization(self):
-        """Calculate seat utilization percentage"""
-        for sub in self:
-            if sub.max_seats > 0:
-                sub.seat_utilization = (sub.allocated_seat_count / sub.max_seats) * 100
-            else:
-                sub.seat_utilization = 0.0
 
     # ==========================================
     # COMPUTE METHODS - PRIMARY MEMBERSHIP (NEW)
