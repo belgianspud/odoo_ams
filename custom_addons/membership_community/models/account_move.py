@@ -28,7 +28,14 @@ class AccountMove(models.Model):
                 if subscriptions:
                     _logger.info(f"Auto-activating {len(subscriptions)} membership subscriptions from paid invoice {move.name}")
                     for subscription in subscriptions:
-                        subscription.action_confirm()
+                        try:
+                            # Activate subscription based on trial period
+                            if subscription.plan_id.trial_period > 0:
+                                subscription.action_start_trial()
+                            else:
+                                subscription.action_activate()
+                        except Exception as e:
+                            _logger.error(f"Failed to activate subscription {subscription.name}: {e}")
         
         return result
 
@@ -113,7 +120,11 @@ class AccountPayment(models.Model):
                         _logger.info(f"Payment posted for invoice {invoice.name} - activating {len(subscriptions)} memberships")
                         for subscription in subscriptions:
                             try:
-                                subscription.action_confirm()
+                                # Activate based on trial period
+                                if subscription.plan_id.trial_period > 0:
+                                    subscription.action_start_trial()
+                                else:
+                                    subscription.action_activate()
                                 _logger.info(f"Activated subscription {subscription.name} for member {subscription.partner_id.name}")
                             except Exception as e:
                                 _logger.error(f"Failed to activate subscription {subscription.name}: {str(e)}")

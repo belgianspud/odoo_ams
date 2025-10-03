@@ -454,20 +454,22 @@ class SubscriptionSubscription(models.Model):
                 )
         return True
 
-    def action_confirm(self):
+    def action_activate(self):
         """Override to handle membership activation"""
-        result = super().action_confirm()
-        
+        # Pre-activation checks for memberships
         for subscription in self:
             if subscription.is_membership:
                 # Check primary membership requirement before activation
                 is_valid, error_msg = subscription._check_primary_membership_requirement()
                 if not is_valid:
-                    subscription.write({'state': 'draft'})
-                    raise UserError(
-                        _('Cannot activate subscription: %s') % error_msg
-                    )
-                
+                    raise UserError(_('Cannot activate subscription: %s') % error_msg)
+        
+        # Call parent activation
+        result = super().action_activate()
+        
+        # Post-activation membership tasks
+        for subscription in self:
+            if subscription.is_membership and subscription.state == 'active':
                 # Assign member number
                 if not subscription.partner_id.member_number:
                     subscription.partner_id.member_number = self.env['ir.sequence'].next_by_code('member.number')
@@ -477,9 +479,38 @@ class SubscriptionSubscription(models.Model):
                 if not subscription.join_date:
                     subscription.join_date = subscription.date_start or fields.Date.today()
                 
-                # Send welcome email if configured
-                if subscription.state in ['trial', 'active']:
-                    self._send_membership_welcome_email()
+                # Send welcome email
+                subscription._send_membership_welcome_email()
+        
+        return result
+
+    def action_start_trial(self):
+        """Override to handle trial start for memberships"""
+        # Pre-trial checks for memberships
+        for subscription in self:
+            if subscription.is_membership:
+                # Check primary membership requirement before trial
+                is_valid, error_msg = subscription._check_primary_membership_requirement()
+                if not is_valid:
+                    raise UserError(_('Cannot start trial: %s') % error_msg)
+        
+        # Call parent trial start
+        result = super().action_start_trial()
+        
+        # Post-trial membership tasks
+        for subscription in self:
+            if subscription.is_membership and subscription.state == 'trial':
+                # Assign member number
+                if not subscription.partner_id.member_number:
+                    subscription.partner_id.member_number = self.env['ir.sequence'].next_by_code('member.number')
+                    _logger.info(f"Assigned member number {subscription.partner_id.member_number} to {subscription.partner_id.name}")
+                
+                # Set join date
+                if not subscription.join_date:
+                    subscription.join_date = subscription.date_start or fields.Date.today()
+                
+                # Send welcome email  
+                subscription._send_membership_welcome_email()
         
         return result
 
@@ -686,23 +717,6 @@ class SubscriptionSubscription(models.Model):
                     )
             
             _logger.info(f"Cancelled {len(self.child_subscription_ids)} child seats under {self.name}")
-        
-        return result
-    
-    def action_activate(self):
-        """Activate subscription and cascade to child seats"""
-        result = super().action_activate()
-        
-        # Reactivate child seat subscriptions
-        if self.child_subscription_ids:
-            for child in self.child_subscription_ids.filtered(lambda s: s.state == 'suspended'):
-                child.write({'state': 'active'})
-                child.message_post(
-                    body=_("Reactivated due to parent organization reactivation"),
-                    message_type='notification'
-                )
-            
-            _logger.info(f"Reactivated {len(self.child_subscription_ids)} child seats under {self.name}")
         
         return result
 

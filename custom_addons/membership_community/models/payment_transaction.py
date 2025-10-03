@@ -28,7 +28,7 @@ class PaymentTransaction(models.Model):
                             subscription.state == 'draft'):
                             
                             try:
-                                # Activate the subscription
+                                # Activate the subscription based on trial period
                                 if subscription.plan_id.trial_period > 0:
                                     subscription.action_start_trial()
                                 else:
