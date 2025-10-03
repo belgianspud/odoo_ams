@@ -1,7 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_ams_communication_preference_user,ams.communication.preference user,model_ams_communication_preference,base.group_user,1,0,0,0
-access_ams_communication_preference_manager,ams.communication.preference manager,model_ams_communication_preference,base.group_system,1,1,1,1
-access_ams_communication_log_user,ams.communication.log user,model_ams_communication_log,base.group_user,1,0,0,0
-access_ams_communication_log_manager,ams.communication.log manager,model_ams_communication_log,base.group_system,1,1,1,1
-access_ams_communication_preference_portal,ams.communication.preference portal,model_ams_communication_preference,base.group_portal,1,1,0,0
-access_ams_communication_log_portal,ams.communication.log portal,model_ams_communication_log,base.group_portal,1,0,0,0

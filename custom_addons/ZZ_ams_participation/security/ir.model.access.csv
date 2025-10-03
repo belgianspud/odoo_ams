@@ -1,7 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_ams_participation_user,ams.participation user,model_ams_participation,base.group_user,1,0,0,0
-access_ams_participation_manager,ams.participation manager,model_ams_participation,base.group_system,1,1,1,1
-access_ams_participation_history_user,ams.participation.history user,model_ams_participation_history,base.group_user,1,0,0,0
-access_ams_participation_history_manager,ams.participation.history manager,model_ams_participation_history,base.group_system,1,1,1,0
-access_ams_cancellation_reason_user,ams.cancellation.reason user,model_ams_cancellation_reason,base.group_user,1,0,0,0
-access_ams_cancellation_reason_manager,ams.cancellation.reason manager,model_ams_cancellation_reason,base.group_system,1,1,1,1

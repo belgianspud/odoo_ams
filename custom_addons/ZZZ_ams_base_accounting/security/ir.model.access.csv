@@ -1,5 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_ams_accounting_config_admin,ams.accounting.config admin,model_ams_accounting_config,account.group_account_manager,1,1,1,1
-access_ams_accounting_config_user,ams.accounting.config user,model_ams_accounting_config,account.group_account_user,1,0,0,0
-access_ams_accounting_setup_wizard_admin,ams.accounting.setup.wizard admin,model_ams_accounting_setup_wizard,account.group_account_manager,1,1,1,1
-access_ams_accounting_setup_wizard_user,ams.accounting.setup.wizard user,model_ams_accounting_setup_wizard,account.group_account_user,1,0,0,0
