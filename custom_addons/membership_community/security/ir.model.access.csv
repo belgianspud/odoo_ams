@@ -11,3 +11,9 @@ access_membership_feature_public,membership.feature.public,model_membership_feat
 access_membership_category_portal,membership.category.portal,model_membership_category,base.group_portal,1,0,0,0
 access_membership_benefit_portal,membership.benefit.portal,model_membership_benefit,base.group_portal,1,0,0,0
 access_membership_feature_portal,membership.feature.portal,model_membership_feature,base.group_portal,1,0,0,0
+access_membership_quick_setup_wizard_user,membership.quick.setup.wizard.user,model_membership_quick_setup_wizard,group_membership_user,1,1,1,0
+access_membership_quick_setup_wizard_manager,membership.quick.setup.wizard.manager,model_membership_quick_setup_wizard,group_membership_manager,1,1,1,1
+access_seat_allocation_wizard_user,seat.allocation.wizard.user,model_seat_allocation_wizard,group_membership_user,1,1,1,0
+access_seat_allocation_wizard_manager,seat.allocation.wizard.manager,model_seat_allocation_wizard,group_membership_manager,1,1,1,1
+access_seat_deallocation_wizard_user,seat.deallocation.wizard.user,model_seat_deallocation_wizard,group_membership_user,1,1,1,0
+access_seat_deallocation_wizard_manager,seat.deallocation.wizard.manager,model_seat_deallocation_wizard,group_membership_manager,1,1,1,1

@@ -3,7 +3,7 @@
     <data>
 
         <!-- ========================================== -->
-        <!-- MAIN MENU STRUCTURE (SIMPLIFIED) -->
+        <!-- MAIN MENU STRUCTURE -->
         <!-- ========================================== -->
 
         <!-- Root Menu: Membership -->
@@ -11,16 +11,6 @@
                   name="Membership"
                   sequence="50"
                   groups="membership_community.group_membership_user"/>
-
-        <!-- ========================================== -->
-        <!-- QUICK SETUP - TOP PRIORITY -->
-        <!-- ========================================== -->
-        
-        <menuitem id="menu_membership_quick_setup_top"
-                  name="🚀 Quick Setup"
-                  parent="menu_membership_root"
-                  action="action_membership_quick_setup"
-                  sequence="5"/>
 
         <!-- ========================================== -->
         <!-- MEMBERSHIPS SECTION -->
@@ -107,13 +97,6 @@
                   sequence="90"
                   groups="membership_community.group_membership_manager"/>
 
-        <!-- Quick Setup in Configuration too -->
-        <menuitem id="menu_membership_quick_setup_config"
-                  name="🚀 Quick Setup"
-                  parent="menu_membership_configuration"
-                  action="action_membership_quick_setup"
-                  sequence="1"/>
-
         <!-- Categories Submenu -->
         <menuitem id="menu_membership_categories_config"
                   name="Member Categories"
@@ -143,6 +126,13 @@
                   parent="menu_membership_features_benefits"
                   action="membership_community.action_membership_benefit"
                   sequence="20"/>
+
+        <!-- Quick Setup Wizard - Optional tool in Configuration -->
+        <menuitem id="menu_membership_quick_setup_config"
+                  name="Quick Setup Wizard"
+                  parent="menu_membership_configuration"
+                  action="action_membership_quick_setup"
+                  sequence="30"/>
 
         <!-- Settings - Link to Subscription Management Settings -->
         <menuitem id="menu_membership_settings"
@@ -188,12 +178,12 @@
                     Create your first membership product
                 </p>
                 <p>
-                    Use the <strong>🚀 Quick Setup</strong> wizard for easy configuration, or create 
-                    membership products manually here.
+                    Membership products define the different types of memberships you offer 
+                    with pricing, features, benefits, and seat configurations.
                 </p>
-                <p>
-                    Membership products define the different types of memberships you offer.
-                    They are linked to subscription plans for billing and categories for member classification.
+                <p class="text-muted">
+                    <strong>💡 Tip:</strong> You can also use the Quick Setup Wizard 
+                    (Configuration → Quick Setup Wizard) to create category + product + plan together.
                 </p>
             </field>
         </record>

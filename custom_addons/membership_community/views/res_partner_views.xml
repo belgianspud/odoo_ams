@@ -71,7 +71,7 @@
                             <group name="org_parent">
                                 <div class="alert alert-info" role="alert" invisible="not child_member_ids">
                                     <p class="mb-0">
-                                        <i class="fa fa-info-circle"/> 
+                                        <i class="fa fa-info-circle" title="Information" aria-label="Information"/> 
                                         <strong>Organization Seats:</strong> This organization has 
                                         <strong><field name="child_member_ids" readonly="1" nolabel="1" 
                                                 widget="integer"/> seat members</strong>.
@@ -150,7 +150,7 @@
                         
                         <div class="alert alert-success" role="alert" invisible="not is_seat_member">
                             <p class="mb-0">
-                                <i class="fa fa-users"/> 
+                                <i class="fa fa-users" title="Seat Member" aria-label="Seat Member"/> 
                                 <strong>Seat Member:</strong> Benefits inherited from 
                                 <field name="parent_organization_id" readonly="1" nolabel="1"/> organization membership.
                             </p>
@@ -260,7 +260,7 @@
                     <field name="parent_organization_id"/>
                     <field name="avatar_128"/>
                     <templates>
-                        <t t-name="kanban-box">
+                        <t t-name="card">
                             <div class="oe_kanban_global_click o_kanban_record_has_image_fill">
                                 <div class="o_kanban_image_fill_left d-none d-md-block" t-attf-style="background-image: url('#{kanban_image('res.partner', 'avatar_128', record.id.raw_value)}')"/>
                                 <div class="oe_kanban_details">
@@ -279,23 +279,23 @@
                                                    decoration-info="membership_state=='trial'"
                                                    decoration-danger="membership_state=='expired'"/>
                                             <span t-if="record.is_seat_member.raw_value" class="badge text-bg-warning ms-1">
-                                                <i class="fa fa-users"/> Seat
+                                                <i class="fa fa-users" title="Seat Member" aria-label="Seat Member"/> Seat
                                             </span>
                                         </span>
                                     </div>
                                     <div class="o_kanban_record_body">
                                         <field name="membership_category_id"/>
                                         <div t-if="record.parent_organization_id.raw_value" class="text-muted">
-                                            <i class="fa fa-building"/> <field name="parent_organization_id"/>
+                                            <i class="fa fa-building" title="Organization" aria-label="Organization"/> <field name="parent_organization_id"/>
                                         </div>
                                         <div t-if="record.member_since.raw_value">
-                                            <i class="fa fa-calendar"/> Member since <field name="member_since"/>
+                                            <i class="fa fa-calendar" title="Member Since" aria-label="Member Since"/> Member since <field name="member_since"/>
                                         </div>
                                         <div t-if="record.email.raw_value">
-                                            <i class="fa fa-envelope"/> <field name="email"/>
+                                            <i class="fa fa-envelope" title="Email" aria-label="Email"/> <field name="email"/>
                                         </div>
                                         <div t-if="record.phone.raw_value">
-                                            <i class="fa fa-phone"/> <field name="phone"/>
+                                            <i class="fa fa-phone" title="Phone" aria-label="Phone"/> <field name="phone"/>
                                         </div>
                                     </div>
                                 </div>

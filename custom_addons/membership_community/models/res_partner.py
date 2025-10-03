@@ -576,6 +576,37 @@ class ResPartner(models.Model):
     # ACTIONS - Basic
     # ==========================================
 
+    def action_activate_member(self):
+        """
+        Action to activate a member or create a new membership subscription
+        Opens a wizard or form to create/activate membership
+        """
+        self.ensure_one()
+        
+        # If partner already has active membership, show it
+        if self.primary_membership_id:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Active Membership'),
+                'res_model': 'subscription.subscription',
+                'res_id': self.primary_membership_id.id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
+        
+        # Otherwise, create a new subscription
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Create Membership'),
+            'res_model': 'subscription.subscription',
+            'view_mode': 'form',
+            'context': {
+                'default_partner_id': self.id,
+                'default_is_membership': True,
+            },
+            'target': 'new',
+        }
+
     def action_view_memberships(self):
         """View all membership subscriptions"""
         self.ensure_one()

@@ -213,7 +213,11 @@
                                        decoration-danger="state in ('expired','cancelled')"/>
                             </list>
                         </field>
-                        
+                        <button name="action_activate" string="Activate Now" type="object" 
+                                class="btn-success" 
+                                invisible="state != 'draft'"
+                                confirm="This will activate the subscription immediately. Continue?"
+                                groups="membership_community.group_membership_manager"/>
                     </page>
                 </xpath>
 

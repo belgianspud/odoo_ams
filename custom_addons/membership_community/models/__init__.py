@@ -8,3 +8,5 @@ from . import res_partner
 from . import subscription_plan
 from . import subscription_subscription
 from . import account_move
+from . import sale_order
+from . import payment_transaction
