@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_membership_license_tree" model="ir.ui.view">
+            <field name="name">membership.license.list</field>
+            <field name="model">membership.license</field>
+            <field name="arch" type="xml">
+                <list string="Professional Licenses" decoration-danger="status=='expired'" decoration-warning="status=='expiring_soon'">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="credential_id"/>
+                    <field name="license_number"/>
+                    <field name="expiration_date"/>
+                    <field name="days_until_expiry"/>
+                    <field name="status" widget="badge"/>
+                    <field name="verification_status" widget="badge"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="action_membership_license" model="ir.ui.view">
+            <field name="name">Professional Licenses</field>
+            <field name="res_model">membership.license</field>
+            <field name="view_mode">list,form</field>
+        </record>
+    </data>
+</odoo>

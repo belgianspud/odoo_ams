@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Add to Membership menu -->
+        <menuitem id="menu_membership_professional_config"
+                  name="Professional"
+                  parent="membership_community.menu_membership_configuration"
+                  sequence="40"/>
+
+        <menuitem id="menu_membership_credential"
+                  name="Credentials"
+                  parent="menu_membership_professional_config"
+                  action="action_membership_credential"
+                  sequence="10"/>
+
+        <menuitem id="menu_membership_specialty"
+                  name="Specialties"
+                  parent="menu_membership_professional_config"
+                  action="action_membership_specialty"
+                  sequence="20"/>
+
+        <menuitem id="menu_membership_license"
+                  name="Licenses"
+                  parent="membership_community.menu_membership_management"
+                  action="action_membership_license"
+                  sequence="50"/>
+    </data>
+</odoo>
